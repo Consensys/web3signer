@@ -10,9 +10,23 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package tech.pegasys.eth2signer.dsl.utils;
 
-rootProject.name='eth2signer'
-include 'app'
-include 'acceptance-tests'
-include 'commandline'
-include 'core'
+import java.util.concurrent.TimeUnit;
+
+import org.awaitility.Awaitility;
+import org.awaitility.core.ThrowingRunnable;
+
+public class WaitUtils {
+
+  public static void waitFor(final ThrowingRunnable condition) {
+    waitFor(30, condition);
+  }
+
+  public static void waitFor(final int timeoutSeconds, final ThrowingRunnable condition) {
+    Awaitility.await()
+        .ignoreExceptions()
+        .atMost(timeoutSeconds, TimeUnit.SECONDS)
+        .untilAsserted(condition);
+  }
+}

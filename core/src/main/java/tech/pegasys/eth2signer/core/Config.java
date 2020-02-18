@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,17 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer;
+package tech.pegasys.eth2signer.core;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.nio.file.Path;
 
-public class Eth2Signer {
+import org.apache.logging.log4j.Level;
 
-  private static final Logger LOG = LogManager.getLogger();
+public interface Config {
 
-  public static void main(final String... args) {
-    System.out.println("Eth2Signer has started with args" + String.join(",", args));
-    LOG.info("Eth2Signer has exited.");
-  }
+  Level getLogLevel();
+
+  String getHttpListenHost();
+
+  Integer getHttpListenPort();
+
+  Path getDataPath();
+
+  Path getKeyConfigPath();
 }
