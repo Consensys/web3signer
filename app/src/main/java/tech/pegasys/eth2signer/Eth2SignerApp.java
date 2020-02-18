@@ -12,15 +12,28 @@
  */
 package tech.pegasys.eth2signer;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.PrintWriter;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Eth2Signer {
+public class Eth2SignerApp {
 
   private static final Logger LOG = LogManager.getLogger();
 
   public static void main(final String... args) {
     System.out.println("Eth2Signer has started with args" + String.join(",", args));
+
+    final Eth2SignerCommand baseCommand = new Eth2SignerCommand();
+    final PrintWriter outputWriter = new PrintWriter(System.out, true, UTF_8);
+    final PrintWriter errorWriter = new PrintWriter(System.err, true, UTF_8);
+    final CommandlineParser cmdLineParser =
+        new CommandlineParser(baseCommand, outputWriter, errorWriter);
+
+    cmdLineParser.parseCommandLine(args);
+
     LOG.info("Eth2Signer has exited.");
   }
 }

@@ -13,6 +13,7 @@ jar {
 
 dependencies {
 
+  implementation project(":core")
   implementation 'info.picocli:picocli'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'

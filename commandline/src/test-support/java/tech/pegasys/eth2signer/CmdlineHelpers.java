@@ -15,22 +15,10 @@ package tech.pegasys.eth2signer;
 public class CmdlineHelpers {
 
   public static String validBaseCommandOptions() {
-    return "--downstream-http-host=8.8.8.8 "
-        + "--downstream-http-port=5000 "
-        + "--downstream-http-request-timeout=10000 "
-        + "--http-listen-port=5001 "
+    return "--http-listen-port=5001 "
         + "--http-listen-host=localhost "
-        + "--chain-id=6 "
-        + "--logging=INFO "
-        + "--tls-keystore-file=./keystore.pfx "
-        + "--tls-keystore-password-file=./keystore.passwd "
-        + "--tls-known-clients-file=./known_clients "
-        + "--tls-allow-ca-clients "
-        + "--downstream-http-tls-enabled "
-        + "--downstream-http-tls-keystore-file=./test.ks "
-        + "--downstream-http-tls-keystore-password-file=./test.pass "
-        + "--downstream-http-tls-ca-auth-enabled=false "
-        + "--downstream-http-tls-known-servers-file=./test.txt ";
+        + "--key-store-path=./keys "
+        + "--logging=INFO ";
   }
 
   public static String removeFieldFrom(final String input, final String... fieldNames) {
@@ -39,9 +27,5 @@ public class CmdlineHelpers {
       updatedInput = updatedInput.replaceAll("--" + fieldName + ".*?(\\s|$)", "");
     }
     return updatedInput;
-  }
-
-  public static String modifyField(final String input, final String fieldName, final String value) {
-    return input.replaceFirst("--" + fieldName + "=[^\\s]*", "--" + fieldName + "=" + value);
   }
 }

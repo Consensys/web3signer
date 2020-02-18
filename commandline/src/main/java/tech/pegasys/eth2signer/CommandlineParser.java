@@ -12,26 +12,16 @@
  */
 package tech.pegasys.eth2signer;
 
-import tech.pegasys.eth2signer.config.InvalidCommandLineOptionsException;
-import tech.pegasys.eth2signer.core.InitializationException;
-
 import java.io.PrintWriter;
-import java.util.List;
 
-import com.google.common.collect.Lists;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.ParameterException;
 
 public class CommandlineParser {
 
-  private static final Logger LOG = LogManager.getLogger();
-
-  private final List<SignerSubCommand> signers = Lists.newArrayList();
-  private final EthSignerBaseCommand baseCommand;
+  private final Eth2SignerCommand baseCommand;
   private final PrintWriter outputWriter;
   private final PrintWriter errorWriter;
 
@@ -40,16 +30,12 @@ public class CommandlineParser {
       "Failed to construct a signer from supplied arguments.";
 
   public CommandlineParser(
-      final EthSignerBaseCommand baseCommand,
+      final Eth2SignerCommand baseCommand,
       final PrintWriter outputWriter,
       final PrintWriter errorWriter) {
     this.baseCommand = baseCommand;
     this.outputWriter = outputWriter;
     this.errorWriter = errorWriter;
-  }
-
-  public void registerSigner(final SignerSubCommand signerSubCommand) {
-    signers.add(signerSubCommand);
   }
 
   public boolean parseCommandLine(final String... args) {
@@ -61,10 +47,6 @@ public class CommandlineParser {
     commandLine.setErr(errorWriter);
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);
     commandLine.setParameterExceptionHandler(this::handleParseException);
-
-    for (final SignerSubCommand subcommand : signers) {
-      commandLine.addSubcommand(subcommand.getCommandName(), subcommand);
-    }
 
     final int resultCode = commandLine.execute(args);
     return resultCode == CommandLine.ExitCode.OK;
@@ -89,23 +71,6 @@ public class CommandlineParser {
       final Exception ex,
       final CommandLine commandLine,
       final CommandLine.ParseResult parseResult) {
-    if (!parseResult.hasSubcommand()) {
-      errorWriter.println(MISSING_SUBCOMMAND_ERROR);
-    } else {
-      if (ex instanceof TransactionSignerInitializationException) {
-        errorWriter.println(SIGNER_CREATION_ERROR);
-        errorWriter.println("Cause: " + ex.getMessage());
-      } else if (ex instanceof InitializationException) {
-        errorWriter.println("Failed to initialize EthSigner");
-        errorWriter.println("Cause: " + ex.getMessage());
-      } else if (ex instanceof InvalidCommandLineOptionsException) {
-        errorWriter.println(ex.getMessage());
-      } else {
-        LOG.error("EthSigner has suffered an unrecoverable failure", ex);
-        errorWriter.println("EthSigner has suffered an unrecoverable failure " + ex.toString());
-      }
-    }
-
     commandLine.usage(outputWriter);
     return commandLine.getCommandSpec().exitCodeOnExecutionException();
   }
