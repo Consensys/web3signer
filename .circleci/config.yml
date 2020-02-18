@@ -36,6 +36,7 @@ commands:
   prepare:
     description: "Prepare"
     steps:
+      - checkout
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
