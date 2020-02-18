@@ -20,7 +20,7 @@ public class Eth2Signer {
   private static final Logger LOG = LogManager.getLogger();
 
   public static void main(final String... args) {
-    System.out.println("Portunus has started with args" + String.join(",", args));
-    LOG.info("Portunus has exited.");
+    System.out.println("Eth2Signer has started with args" + String.join(",", args));
+    LOG.info("Eth2Signer has exited.");
   }
 }
