@@ -4,10 +4,6 @@ FROM openjdk:11.0.2-jre-slim-stretch
 COPY eth2signer /opt/eth2signer/
 WORKDIR /opt/eth2signer
 
-# Expose services ports
-# 8545 HTTP JSON-RPC
-EXPOSE 8545
-
 ENTRYPOINT ["/opt/eth2signer/bin/eth2signer"]
 
 # Build-time metadata as defined at http://label-schema.org
