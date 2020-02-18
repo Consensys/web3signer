@@ -1,5 +1,5 @@
 file:
-  /opt/ethsigner/bin/ethsigner:
+  /opt/eth2signer/bin/eth2signer:
     exists: true
     mode: "0755"
     owner: root
