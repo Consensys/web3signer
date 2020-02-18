@@ -10,8 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package tech.pegasys.eth2signer;
 
-rootProject.name='eth2signer'
-include 'app'
-include 'acceptance-tests'
-include 'commandline'
+import picocli.CommandLine.IVersionProvider;
+
+public class VersionInfo implements IVersionProvider {
+
+  @Override
+  public String[] getVersion() throws Exception {
+    return new String[] {"Version 0.0.1"};
+  }
+}

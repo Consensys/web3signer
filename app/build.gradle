@@ -13,7 +13,7 @@
 
 
 jar {
-  archiveBaseName = 'portunus'
+  archiveBaseName = 'eth2signer-app'
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
