@@ -1,0 +1,72 @@
+/*
+ * Copyright 2018 ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
+dependencyManagement {
+  dependencies {
+    dependency 'com.github.docker-java:docker-java:3.1.1'
+
+    dependency 'com.google.errorprone:error_prone_annotation:2.3.4'
+    dependency 'com.google.errorprone:error_prone_check_api:2.3.4'
+    dependency 'com.google.errorprone:error_prone_core:2.3.4'
+    dependency 'com.google.errorprone:error_prone_test_helpers:2.3.4'
+
+    dependency 'com.google.guava:guava:28.2-jre'
+
+    dependency 'com.microsoft.aad:adal4j:0.0.2'
+
+    dependency 'com.microsoft.azure:azure-keyvault:1.2.2'
+
+    dependency 'com.squareup.okhttp3:okhttp:4.3.1'
+
+    dependency 'commons-cli:commons-cli:1.4'
+
+    dependency 'info.picocli:picocli:4.2.0'
+
+    dependency 'io.rest-assured:rest-assured:4.2.0'
+
+    dependency 'io.vertx:vertx-codegen:3.8.2'
+    dependency 'io.vertx:vertx-core:3.8.2'
+    dependency 'io.vertx:vertx-unit:3.8.2'
+    dependency 'io.vertx:vertx-web-client:3.8.2'
+    dependency 'io.vertx:vertx-web:3.8.2'
+
+    dependency 'javax.activation:activation:1.1.1'
+
+    dependency 'org.apache.logging.log4j:log4j-api:2.13.0'
+    dependency 'org.apache.logging.log4j:log4j-core:2.13.0'
+    dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.0'
+
+    dependency 'org.apache.tuweni:tuweni-net:0.10.0'
+    dependency 'org.apache.tuweni:tuweni-toml:0.10.0'
+
+    dependency 'org.assertj:assertj-core:3.15.0'
+
+    dependency 'org.awaitility:awaitility:4.0.2'
+
+    dependency 'org.bouncycastle:bcpkix-jdk15on:1.64'
+
+    dependency 'org.junit.jupiter:junit-jupiter-api:5.6.0'
+    dependency 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
+    dependency 'org.junit.jupiter:junit-jupiter-params:5.6.0'
+
+    dependency 'org.mock-server:mockserver-netty:5.9.0'
+
+    dependency 'org.mockito:mockito-core:3.2.4'
+    dependency 'org.mockito:mockito-inline:3.2.4'
+    dependency 'org.mockito:mockito-junit-jupiter:3.2.4'
+
+    dependency 'org.web3j:besu:4.5.14'
+    dependency 'org.web3j:core:4.5.14'
+    dependency 'org.web3j:crypto:4.5.14'
+  }
+}
