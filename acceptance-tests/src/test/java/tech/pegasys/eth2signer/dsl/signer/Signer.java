@@ -16,6 +16,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 
+import tech.pegasys.eth2signer.core.http.SigningRequestBody;
+import tech.pegasys.eth2signer.crypto.PublicKey;
+import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;
 
 import java.util.concurrent.CompletableFuture;
@@ -26,8 +29,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class Signer {
 
@@ -93,6 +98,45 @@ public class Signer {
       throw new RuntimeException("Thread was interrupted waiting for Eth2Signer response.");
     }
     return "OK".equals(body);
+  }
+
+  public HttpResponse signData(
+      final String endpoint, final PublicKey publicKey, final Bytes message, final Bytes domain)
+      throws ExecutionException, InterruptedException {
+    final SigningRequestBody requestBody =
+        new SigningRequestBody(publicKey.toString(), message.toHexString(), domain.toHexString());
+    final String httpBody = Json.encode(requestBody);
+
+    final CompletableFuture<HttpResponse> responseBodyFuture = new CompletableFuture<>();
+    final HttpClientRequest request =
+        httpClient.post(
+            endpoint,
+            response ->
+                response.bodyHandler(
+                    body ->
+                        responseBodyFuture.complete(
+                            new HttpResponse(response.statusCode(), body.toString(UTF_8)))));
+
+    request.end(httpBody);
+
+    return responseBodyFuture.get();
+  }
+
+  public HttpResponse postRawRequest(final String endpoint, final String requestBody)
+      throws ExecutionException, InterruptedException {
+    final CompletableFuture<HttpResponse> responseBodyFuture = new CompletableFuture<>();
+    final HttpClientRequest request =
+        httpClient.post(
+            endpoint,
+            response ->
+                response.bodyHandler(
+                    body ->
+                        responseBodyFuture.complete(
+                            new HttpResponse(response.statusCode(), body.toString(UTF_8)))));
+
+    request.end(requestBody);
+
+    return responseBodyFuture.get();
   }
 
   public void awaitStartupCompletion() {
