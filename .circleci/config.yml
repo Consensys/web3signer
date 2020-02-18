@@ -36,12 +36,6 @@ commands:
   prepare:
     description: "Prepare"
     steps:
-      - checkout
-      - run:
-          name: Install Packages - LibSodium
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y libsodium18 libsodium-dev apt-transport-https
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
@@ -125,25 +119,6 @@ jobs:
       - notify            
       - capture_test_results
 
-  azureTests:
-    executor: executor_machine
-    steps:
-      - prepare
-      - run:
-          name: Install Packages - Java 11
-          command: |
-            sudo add-apt-repository -y ppa:openjdk-r/ppa
-            sudo apt update
-            sudo apt install -y openjdk-11-jdk
-            sudo update-java-alternatives -s java-1.11.0-openjdk-amd64
-      - run:
-          name: Azure tests
-          command: |
-            ./gradlew --no-daemon --parallel :ethsigner:signer:azure:test
-            ./gradlew --no-daemon --parallel acceptanceTest --tests *Azure*
-      - notify            
-      - capture_test_results
-
   buildDocker:
     executor: executor_med
     steps:
@@ -200,14 +175,6 @@ workflows:
       - acceptanceTests:
           requires:
             - build
-      - azureTests:
-          filters:
-            branches:
-              only:
-                - master
-                - /^release-.*/
-          requires:
-            - build
       - buildDocker:
           requires:
             - build
@@ -220,7 +187,6 @@ workflows:
           requires:
             - build
             - acceptanceTests
-            - azureTests
       - publishDocker:
           filters:
             branches:
@@ -230,5 +196,4 @@ workflows:
           requires:
             - build
             - acceptanceTests
-            - azureTests
             - buildDocker
