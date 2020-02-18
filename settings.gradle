@@ -11,4 +11,6 @@
  * specific language governing permissions and limitations under the License.
  */
 
+rootProject.name='eth2signer'
 include 'app'
+include 'acceptance-tests'
