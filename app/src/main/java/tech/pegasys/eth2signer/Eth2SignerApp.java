@@ -36,7 +36,7 @@ public class Eth2SignerApp {
         new CommandlineParser(command, outputWriter, errorWriter);
     int result = cmdLineParser.parseCommandLine(args);
 
-    if(result != 0) {
+    if (result != 0) {
       System.exit(result);
     }
     // else, let Vertx hold the application open as a daemon
