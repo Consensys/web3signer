@@ -34,7 +34,7 @@ public class Eth2SignerApp {
     final PrintWriter errorWriter = new PrintWriter(System.err, true, UTF_8);
     final CommandlineParser cmdLineParser =
         new CommandlineParser(command, outputWriter, errorWriter);
-    int result = cmdLineParser.parseCommandLine(args);
+    final int result = cmdLineParser.parseCommandLine(args);
 
     if (result != 0) {
       System.exit(result);
