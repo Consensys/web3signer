@@ -34,11 +34,11 @@ public class Eth2SignerApp {
     final PrintWriter errorWriter = new PrintWriter(System.err, true, UTF_8);
     final CommandlineParser cmdLineParser =
         new CommandlineParser(command, outputWriter, errorWriter);
-    cmdLineParser.parseCommandLine(args);
+    int result = cmdLineParser.parseCommandLine(args);
 
-    // Cannot set exitCode as that causes the system to quick out
-    //System.exit();
-
-    LOG.info("Main program of Eth2Signer has exited.");
+    if(result != 0) {
+      System.exit(result);
+    }
+    // else, let Vertx hold the application open as a daemon
   }
 }
