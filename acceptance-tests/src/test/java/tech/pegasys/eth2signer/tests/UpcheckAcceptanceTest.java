@@ -23,7 +23,10 @@ public class UpcheckAcceptanceTest {
   public void upcheckOnCorrectPortRespondsWithOK() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     final Signer signer = new Signer(builder.build());
-    signer.start(); // This returns once "OK" has been returned from an upcheck.
-    signer.shutdown();
+    try {
+      signer.start(); // This returns once "OK" has been returned from an upcheck.
+    } finally {
+      signer.shutdown();
+    }
   }
 }

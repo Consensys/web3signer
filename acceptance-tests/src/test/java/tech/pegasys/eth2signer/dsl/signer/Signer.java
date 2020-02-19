@@ -89,7 +89,7 @@ public class Signer {
     } catch (final InterruptedException e) {
       throw new RuntimeException("Thread was interrupted waiting for Eth2Signer response.");
     }
-    return body.equals("OK");
+    return "OK".equals(body);
   }
 
   public void awaitStartupCompletion() {

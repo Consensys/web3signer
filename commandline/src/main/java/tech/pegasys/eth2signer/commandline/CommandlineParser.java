@@ -25,10 +25,6 @@ public class CommandlineParser {
   private final PrintWriter outputWriter;
   private final PrintWriter errorWriter;
 
-  public static final String MISSING_SUBCOMMAND_ERROR = "Signer subcommand must be defined.";
-  public static final String SIGNER_CREATION_ERROR =
-      "Failed to construct a signer from supplied arguments.";
-
   public CommandlineParser(
       final Eth2SignerCommand baseCommand,
       final PrintWriter outputWriter,
@@ -38,7 +34,7 @@ public class CommandlineParser {
     this.errorWriter = errorWriter;
   }
 
-  public boolean parseCommandLine(final String... args) {
+  public int parseCommandLine(final String... args) {
 
     final CommandLine commandLine = new CommandLine(baseCommand);
     commandLine.setCaseInsensitiveEnumValuesAllowed(true);
@@ -48,8 +44,7 @@ public class CommandlineParser {
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);
     commandLine.setParameterExceptionHandler(this::handleParseException);
 
-    final int resultCode = commandLine.execute(args);
-    return resultCode == CommandLine.ExitCode.OK;
+    return commandLine.execute(args);
   }
 
   private int handleParseException(final ParameterException ex, final String[] args) {

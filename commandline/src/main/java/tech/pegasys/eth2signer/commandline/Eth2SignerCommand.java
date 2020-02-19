@@ -20,6 +20,8 @@ import java.nio.file.Path;
 
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
@@ -42,6 +44,8 @@ import picocli.CommandLine.Option;
     subcommands = {HelpCommand.class},
     footer = "EthSigner is licensed under the Apache License 2.0")
 public class Eth2SignerCommand implements Config, Runnable {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   @Option(
       names = {"--data-path"},
@@ -117,7 +121,7 @@ public class Eth2SignerCommand implements Config, Runnable {
 
   @Override
   public void run() {
-    System.out.println("Commandline has been parsed with: " + toString());
+    LOG.debug("Commandline has been parsed with: " + toString());
     final Eth2Signer eth2Signer = new Eth2Signer(this);
     eth2Signer.run();
   }

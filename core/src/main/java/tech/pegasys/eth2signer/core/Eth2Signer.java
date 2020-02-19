@@ -82,7 +82,8 @@ public class Eth2Signer implements Runnable {
         writePortsToFile(portsFile, httpServer.actualPort());
       }
     } catch (final ExecutionException | InterruptedException e) {
-      LOG.error("Failed to create Http server.", e.getCause());
+      vertx.close();
+      throw new RuntimeException("Failed to create Http Server", e.getCause());
     } catch (final Throwable t) {
       vertx.close();
       throw t;

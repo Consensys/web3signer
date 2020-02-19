@@ -36,13 +36,12 @@ class CommandlineParserTest {
   private final PrintWriter outputWriter = new PrintWriter(commandOutput, true);
   private final PrintWriter errorWriter = new PrintWriter(commandError, true);
 
-  private Eth2SignerCommand config;
+  private Eth2SignerCommand config = new MockEth2SignerCommand();
   private CommandlineParser parser;
   private String defaultUsageText;
 
   @BeforeEach
   void setup() {
-    config = new Eth2SignerCommand();
     parser = new CommandlineParser(config, outputWriter, errorWriter);
 
     final CommandLine commandLine = new CommandLine(new Eth2SignerCommand());
@@ -51,9 +50,9 @@ class CommandlineParserTest {
 
   @Test
   void fullyPopulatedCommandLineParsesIntoVariables() {
-    final boolean result = parser.parseCommandLine(validBaseCommandOptions().split(" "));
+    final int result = parser.parseCommandLine(validBaseCommandOptions().split(" "));
 
-    assertThat(result).isTrue();
+    assertThat(result).isZero();
 
     assertThat(config.getLogLevel()).isEqualTo(Level.INFO);
     assertThat(config.getHttpListenHost()).isEqualTo("localhost");
@@ -62,15 +61,15 @@ class CommandlineParserTest {
 
   @Test
   void mainCommandHelpIsDisplayedWhenNoOptionsOtherThanHelp() {
-    final boolean result = parser.parseCommandLine("--help");
-    assertThat(result).isTrue();
+    final int result = parser.parseCommandLine("--help");
+    assertThat(result).isZero();
     assertThat(commandOutput.toString()).isEqualTo(defaultUsageText);
   }
 
   @Test
   void mainCommandHelpIsDisplayedWhenNoOptionsOtherThanHelpWithoutDashes() {
-    final boolean result = parser.parseCommandLine("help");
-    assertThat(result).isTrue();
+    final int result = parser.parseCommandLine("help");
+    assertThat(result).isZero();
     assertThat(commandOutput.toString()).containsOnlyOnce(defaultUsageText);
   }
 
@@ -90,10 +89,10 @@ class CommandlineParserTest {
 
   @Test
   void misspeltCommandLineOptionDisplaysErrorMessage() {
-    final boolean result =
+    final int result =
         parser.parseCommandLine(
             "--downstream-http-port=8500", "--chain-id=1", "--nonExistentOption=9");
-    assertThat(result).isFalse();
+    assertThat(result).isNotZero();
     assertThat(commandOutput.toString()).containsOnlyOnce(defaultUsageText);
   }
 
@@ -102,8 +101,8 @@ class CommandlineParserTest {
 
     String cmdLine = removeFieldFrom(validBaseCommandOptions(), paramToRemove);
 
-    final boolean result = parser.parseCommandLine(cmdLine.split(" "));
-    assertThat(result).isTrue();
+    final int result = parser.parseCommandLine(cmdLine.split(" "));
+    assertThat(result).isZero();
     assertThat(actualValueGetter.get()).isEqualTo(expectedValue);
     assertThat(commandOutput.toString()).isEmpty();
   }
