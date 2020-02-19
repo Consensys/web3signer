@@ -12,9 +12,10 @@
  */
 package tech.pegasys.eth2signer.tests;
 
-import org.junit.jupiter.api.Test;
 import tech.pegasys.eth2signer.dsl.signer.Signer;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
+
+import org.junit.jupiter.api.Test;
 
 public class UpcheckAcceptanceTest {
 
