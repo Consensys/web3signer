@@ -39,6 +39,6 @@ public class Eth2SignerApp {
     // Cannot set exitCode as that causes the system to quick out
     //System.exit();
 
-    LOG.info("Eth2Signer has exited.");
+    LOG.info("Main program of Eth2Signer has exited.");
   }
 }
