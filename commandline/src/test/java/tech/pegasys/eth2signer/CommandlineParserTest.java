@@ -15,12 +15,13 @@ package tech.pegasys.eth2signer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.CmdlineHelpers.removeFieldFrom;
 import static tech.pegasys.eth2signer.CmdlineHelpers.validBaseCommandOptions;
-import static tech.pegasys.eth2signer.util.CommandLineParserAssertions.parseCommandLineWithMissingParamsShowsError;
+
+import tech.pegasys.eth2signer.commandline.CommandlineParser;
+import tech.pegasys.eth2signer.commandline.Eth2SignerCommand;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
-import java.util.List;
 import java.util.function.Supplier;
 
 import org.apache.logging.log4j.Level;
@@ -71,17 +72,6 @@ class CommandlineParserTest {
     final boolean result = parser.parseCommandLine("help");
     assertThat(result).isTrue();
     assertThat(commandOutput.toString()).containsOnlyOnce(defaultUsageText);
-  }
-
-  @Test
-  void missingRequiredParamShowsAppropriateError() {
-    parseCommandLineWithMissingParamsShowsError(
-        parser,
-        commandOutput,
-        commandError,
-        defaultUsageText,
-        validBaseCommandOptions(),
-        List.of("downstream-http-port"));
   }
 
   @Test

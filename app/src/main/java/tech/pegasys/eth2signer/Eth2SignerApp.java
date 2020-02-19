@@ -14,6 +14,9 @@ package tech.pegasys.eth2signer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import tech.pegasys.eth2signer.commandline.CommandlineParser;
+import tech.pegasys.eth2signer.commandline.Eth2SignerCommand;
+
 import java.io.PrintWriter;
 
 import org.apache.logging.log4j.LogManager;
@@ -26,11 +29,11 @@ public class Eth2SignerApp {
   public static void main(final String... args) {
     System.out.println("Eth2Signer has started with args" + String.join(",", args));
 
-    final Eth2SignerCommand baseCommand = new Eth2SignerCommand();
+    final Eth2SignerCommand command = new Eth2SignerCommand();
     final PrintWriter outputWriter = new PrintWriter(System.out, true, UTF_8);
     final PrintWriter errorWriter = new PrintWriter(System.err, true, UTF_8);
     final CommandlineParser cmdLineParser =
-        new CommandlineParser(baseCommand, outputWriter, errorWriter);
+        new CommandlineParser(command, outputWriter, errorWriter);
 
     cmdLineParser.parseCommandLine(args);
 

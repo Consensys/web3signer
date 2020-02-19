@@ -15,7 +15,7 @@ package tech.pegasys.eth2signer.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.CmdlineHelpers.removeFieldFrom;
 
-import tech.pegasys.eth2signer.CommandlineParser;
+import tech.pegasys.eth2signer.commandline.CommandlineParser;
 
 import java.io.Writer;
 import java.util.List;

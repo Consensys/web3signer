@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright 2020 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,13 +9,18 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
-package tech.pegasys.eth2signer;
+package tech.pegasys.eth2signer.core;
+
+import tech.pegasys.eth2signer.core.http.LogErrorHandler;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.util.concurrent.CompleteFuture;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -23,14 +28,8 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import tech.pegasys.eth2signer.http.LogErrorHandler;
 
 public class Eth2Signer implements Runnable {
 
@@ -64,16 +63,17 @@ public class Eth2Signer implements Runnable {
           .handler(routingContext -> routingContext.response().end("OK"));
 
       final HttpServer httpServer = vertx.createHttpServer(serverOptions);
-      final CompletableFuture<Void> serverRunningFuture = new CompleteFuture<>();
-      httpServer.requestHandler(router).listen(
-          result -> {
-            if (result.succeeded()) {
-              serverRunningFuture.complete(null);
-            } else {
-              serverRunningFuture.completeExceptionally(result.cause());
-            }
-          }
-      );
+      final CompletableFuture<Void> serverRunningFuture = new CompletableFuture<>();
+      httpServer
+          .requestHandler(router)
+          .listen(
+              result -> {
+                if (result.succeeded()) {
+                  serverRunningFuture.complete(null);
+                } else {
+                  serverRunningFuture.completeExceptionally(result.cause());
+                }
+              });
       serverRunningFuture.get();
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
       if (config.getDataPath() != null) {
@@ -81,7 +81,7 @@ public class Eth2Signer implements Runnable {
         portsFile.deleteOnExit();
         writePortsToFile(portsFile, httpServer.actualPort());
       }
-    } catch(final ExecutionException|InterruptedException e) {
+    } catch (final ExecutionException | InterruptedException e) {
       LOG.error("Failed to create Http server.", e.getCause());
     } catch (final Throwable t) {
       vertx.close();

@@ -10,11 +10,10 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer;
+package tech.pegasys.eth2signer.commandline;
 
-import static tech.pegasys.eth2signer.DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP;
-import static tech.pegasys.eth2signer.DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP;
-import static tech.pegasys.eth2signer.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
+import tech.pegasys.eth2signer.core.Config;
+import tech.pegasys.eth2signer.core.Eth2Signer;
 
 import java.net.InetAddress;
 import java.nio.file.Path;
@@ -47,16 +46,16 @@ public class Eth2SignerCommand implements Config, Runnable {
   @Option(
       names = {"--data-path"},
       description = "The path to a directory to store temporary files",
-      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
       arity = "1")
   private Path dataPath;
 
   @Option(
       names = {"--key-store-path"},
       description = "The path to a directory storing toml files defining available keys",
-      paramLabel = MANDATORY_PATH_FORMAT_HELP,
+      paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
       arity = "1")
-  private Path keyStorePath;
+  private Path keyStorePath = Path.of("./");
 
   @Option(
       names = {"--logging", "-l"},
@@ -69,16 +68,16 @@ public class Eth2SignerCommand implements Config, Runnable {
   @Option(
       names = {"--http-listen-host"},
       description = "Host for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
       arity = "1")
   private String httpListenHost = InetAddress.getLoopbackAddress().getHostAddress();
 
   @Option(
       names = {"--http-listen-port"},
       description = "Port for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
       arity = "1")
-  private final Integer httpListenPort = 8545;
+  private final Integer httpListenPort = 9000;
 
   @Override
   public Level getLogLevel() {
