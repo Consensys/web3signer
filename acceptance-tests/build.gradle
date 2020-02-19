@@ -1,0 +1,44 @@
+/*
+ * Copyright 2019 ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
+dependencies {
+
+  testRuntimeOnly 'javax.activation:activation'
+  testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testRuntimeOnly 'org.bouncycastle:bcpkix-jdk15on'
+
+  testImplementation 'com.github.docker-java:docker-java'
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'io.vertx:vertx-core'
+  testImplementation 'io.vertx:vertx-web'
+  testImplementation 'org.apache.tuweni:tuweni-net'
+  testImplementation 'org.web3j:crypto'
+  testImplementation 'org.web3j:besu'
+  testImplementation 'org.apache.logging.log4j:log4j-api'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.awaitility:awaitility'
+}
+
+test.enabled = false
+
+task acceptanceTest(type: Test) {
+  mustRunAfter rootProject.subprojects*.test
+  description = 'Runs Eth2Signer acceptance tests.'
+  group = 'verification'
+
+  useJUnitPlatform()
+  // toggle to show standard out and standard error of the test JVM(s) on the console
+  testLogging.showStandardStreams = false
+}
+acceptanceTest.dependsOn(rootProject.installDist)
