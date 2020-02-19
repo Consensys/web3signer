@@ -1,5 +1,5 @@
 
-FROM openjdk:11.0.2-jre-slim-stretch
+FROM openjdk:11.0.3-jre-slim-stretch
 
 COPY eth2signer /opt/eth2signer/
 WORKDIR /opt/eth2signer
