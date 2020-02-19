@@ -34,8 +34,10 @@ public class Eth2SignerApp {
     final PrintWriter errorWriter = new PrintWriter(System.err, true, UTF_8);
     final CommandlineParser cmdLineParser =
         new CommandlineParser(command, outputWriter, errorWriter);
+    cmdLineParser.parseCommandLine(args);
 
-    System.exit(cmdLineParser.parseCommandLine(args));
+    // Cannot set exitCode as that causes the system to quick out
+    //System.exit();
 
     LOG.info("Eth2Signer has exited.");
   }
