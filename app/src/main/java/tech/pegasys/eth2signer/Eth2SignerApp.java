@@ -26,7 +26,7 @@ public class Eth2SignerApp {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  public static int main(final String... args) {
+  public static void main(final String... args) {
     LOG.info("Eth2Signer has started with args" + String.join(",", args));
 
     final Eth2SignerCommand command = new Eth2SignerCommand();
@@ -35,10 +35,8 @@ public class Eth2SignerApp {
     final CommandlineParser cmdLineParser =
         new CommandlineParser(command, outputWriter, errorWriter);
 
-    final int exitCode = cmdLineParser.parseCommandLine(args);
+    System.exit(cmdLineParser.parseCommandLine(args));
 
     LOG.info("Eth2Signer has exited.");
-
-    return exitCode;
   }
 }
