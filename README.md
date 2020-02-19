@@ -1,6 +1,6 @@
 # Eth2Signer
 
-A application able to sign Eth2 artefacts (attestations and blocks) using BLS12-381 private key.
+An application able to sign Eth2 artefacts (attestations and blocks) using BLS12-381 private key.
 
 ## Issues
 
