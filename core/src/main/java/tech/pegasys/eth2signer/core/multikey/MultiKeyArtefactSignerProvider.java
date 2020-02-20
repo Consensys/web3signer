@@ -28,14 +28,14 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class MultiKeyTransactionSignerProvider
+public class MultiKeyArtefactSignerProvider
     implements ArtefactSignerProvider, MultiSignerFactory {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final SigningMetadataTomlConfigLoader signingMetadataTomlConfigLoader;
 
-  MultiKeyTransactionSignerProvider(
+  public MultiKeyArtefactSignerProvider(
       final SigningMetadataTomlConfigLoader signingMetadataTomlConfigLoader) {
     this.signingMetadataTomlConfigLoader = signingMetadataTomlConfigLoader;
   }

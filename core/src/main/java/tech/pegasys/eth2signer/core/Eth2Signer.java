@@ -30,6 +30,9 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import tech.pegasys.eth2signer.core.multikey.MultiKeyArtefactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.SigningMetadataTomlConfigLoader;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
 
 public class Eth2Signer implements Runnable {
 
@@ -50,6 +53,10 @@ public class Eth2Signer implements Runnable {
             .setHost(config.getHttpListenHost())
             .setReuseAddress(true)
             .setReusePort(true);
+
+    final SigningMetadataTomlConfigLoader configLoader =
+        new SigningMetadataTomlConfigLoader(config.getKeyConfigPath());
+    final MultiKeyArtefactSignerProvider signerProvider = new MultiKeyArtefactSignerProvider(configLoader);
 
     final Vertx vertx = Vertx.vertx();
     try {

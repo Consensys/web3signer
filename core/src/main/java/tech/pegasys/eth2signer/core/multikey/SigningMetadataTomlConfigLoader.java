@@ -12,6 +12,9 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
+import org.apache.tuweni.toml.TomlInvalidTypeException;
+import org.apache.tuweni.toml.TomlParseResult;
+import org.apache.tuweni.toml.TomlTable;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileBasedSigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
@@ -30,11 +33,8 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.toml.TomlInvalidTypeException;
-import org.apache.tuweni.toml.TomlParseResult;
-import org.apache.tuweni.toml.TomlTable;
 
-class SigningMetadataTomlConfigLoader {
+public class SigningMetadataTomlConfigLoader {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -43,7 +43,7 @@ class SigningMetadataTomlConfigLoader {
 
   private final Path tomlConfigsDirectory;
 
-  SigningMetadataTomlConfigLoader(final Path rootDirectory) {
+  public SigningMetadataTomlConfigLoader(final Path rootDirectory) {
     this.tomlConfigsDirectory = rootDirectory;
   }
 
