@@ -13,7 +13,7 @@
 
 
 jar {
-  archiveBaseName = 'portunus'
+  archiveBaseName = 'eth2signer-app'
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -26,6 +26,8 @@ jar {
 
 
 dependencies {
+  implementation project(':commandline')
+  implementation project(':core')
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
 

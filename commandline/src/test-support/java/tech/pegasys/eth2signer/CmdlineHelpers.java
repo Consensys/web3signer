@@ -10,9 +10,22 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package tech.pegasys.eth2signer;
 
-rootProject.name='eth2signer'
-include 'app'
-include 'acceptance-tests'
-include 'commandline'
-include 'core'
+public class CmdlineHelpers {
+
+  public static String validBaseCommandOptions() {
+    return "--http-listen-port=5001 "
+        + "--http-listen-host=localhost "
+        + "--key-store-path=./keys "
+        + "--logging=INFO ";
+  }
+
+  public static String removeFieldFrom(final String input, final String... fieldNames) {
+    String updatedInput = input;
+    for (String fieldName : fieldNames) {
+      updatedInput = updatedInput.replaceAll("--" + fieldName + ".*?(\\s|$)", "");
+    }
+    return updatedInput;
+  }
+}
