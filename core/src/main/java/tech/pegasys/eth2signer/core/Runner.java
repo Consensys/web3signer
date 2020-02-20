@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.core;
 
+import io.vertx.ext.web.Route;
+import io.vertx.ext.web.RoutingContext;
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
 
 import java.io.File;
@@ -32,15 +34,18 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
 import tech.pegasys.eth2signer.core.multikey.MultiKeyArtefactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SigningMetadataTomlConfigLoader;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
+import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
 
 public class Runner implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private static final String TEXT = HttpHeaderValues.TEXT_PLAIN.toString() + "; charset=utf-8";
+  private static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
   private final Config config;
 
   public Runner(final Config config) {
@@ -49,10 +54,6 @@ public class Runner implements Runnable {
 
   @Override
   public void run() {
-
-    final SigningMetadataTomlConfigLoader configLoader =
-        new SigningMetadataTomlConfigLoader(config.getKeyConfigPath());
-    final MultiKeyArtefactSignerProvider signerProvider = new MultiKeyArtefactSignerProvider(configLoader);
 
     final Vertx vertx = Vertx.vertx();
     try {
@@ -80,7 +81,29 @@ public class Runner implements Runnable {
         .failureHandler(new LogErrorHandler())
         .handler(routingContext -> routingContext.response().end("OK"));
 
+    final SigningMetadataTomlConfigLoader configLoader =
+        new SigningMetadataTomlConfigLoader(config.getKeyConfigPath());
+    final ArtefactSignerProvider signerProvider = new MultiKeyArtefactSignerProvider(configLoader);
+
+    final SigningRequestHandler handler = new SigningRequestHandler(signerProvider);
+
+    router
+        .routeWithRegex(HttpMethod.POST, "/sign/" + "(attestation|block)")
+        .produces(JSON)
+        .handler(BodyHandler.create())
+        .handler(ResponseContentTypeHandler.create())
+        .failureHandler(new LogErrorHandler())
+        .handler(handler);
+
     return router;
+  }
+
+  private void setRouteMetaData(final Route input, final Handler<RoutingContext> handler) {
+    input.produces(JSON)
+        .handler(BodyHandler.create())
+        .handler(ResponseContentTypeHandler.create())
+        .failureHandler(new LogErrorHandler())
+        .handler(handler);
   }
 
   private HttpServer createServerAndWait(
