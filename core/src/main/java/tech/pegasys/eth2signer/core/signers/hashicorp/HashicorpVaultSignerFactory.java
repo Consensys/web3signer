@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.signers.hashicorp;
 
-import tech.pegasys.eth2signer.core.signing.ArtefactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.util.Map;
 
@@ -23,13 +23,13 @@ public class HashicorpVaultSignerFactory {
   private static final String KEY_MISSING_MSG =
       "Required key [%s] doesn't exist in Hashicorp Vault Response";
 
-  public static ArtefactSigner createSigner(final HashicorpConfig hashicorpConfig) {
+  public static ArtifactSigner createSigner(final HashicorpConfig hashicorpConfig) {
     final JsonObject jsonResponse = new HashicorpVaultKVEngineClient().requestData(hashicorpConfig);
     final Map<String, String> dataMap = HashicorpKVResponseMapper.extractKeyValues(jsonResponse);
     if (!dataMap.containsKey(VAULT_KV_MAP_KEY)) {
       throw new RuntimeException(String.format(KEY_MISSING_MSG, VAULT_KV_MAP_KEY));
     }
     final String privateKey = dataMap.get(VAULT_KV_MAP_KEY);
-    return new ArtefactSigner(privateKey);
+    return new ArtifactSigner(privateKey);
   }
 }

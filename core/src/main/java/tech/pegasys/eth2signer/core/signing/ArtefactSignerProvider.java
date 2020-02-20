@@ -17,7 +17,7 @@ import java.util.Set;
 
 public interface ArtefactSignerProvider {
 
-  Optional<ArtefactSigner> getSigner(final String pubKey);
+  Optional<ArtifactSigner> getSigner(final String pubKey);
 
   Set<String> availableAddresses();
 }

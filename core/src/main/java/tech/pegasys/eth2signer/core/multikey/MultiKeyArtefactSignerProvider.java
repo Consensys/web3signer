@@ -17,7 +17,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadataFi
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
 import tech.pegasys.eth2signer.core.signers.filebased.FileBasedSignerFactory;
 import tech.pegasys.eth2signer.core.signers.hashicorp.HashicorpVaultSignerFactory;
-import tech.pegasys.eth2signer.core.signing.ArtefactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
 
 import java.util.Objects;
@@ -41,7 +41,7 @@ public class MultiKeyArtefactSignerProvider
   }
 
   @Override
-  public Optional<ArtefactSigner> getSigner(final String address) {
+  public Optional<ArtifactSigner> getSigner(final String address) {
     return signingMetadataTomlConfigLoader
         .loadMetadataForAddress(address)
         .map(metadataFile -> metadataFile.createSigner(this));
@@ -52,13 +52,13 @@ public class MultiKeyArtefactSignerProvider
     return signingMetadataTomlConfigLoader.loadAvailableSigningMetadataTomlConfigs().stream()
         .map(metadataFile -> metadataFile.createSigner(this))
         .filter(Objects::nonNull)
-        .map(ArtefactSigner::getAddress)
+        .map(ArtifactSigner::getAddress)
         .collect(Collectors.toSet());
   }
 
   @Override
-  public ArtefactSigner createSigner(final HashicorpSigningMetadataFile metadataFile) {
-    final ArtefactSigner signer;
+  public ArtifactSigner createSigner(final HashicorpSigningMetadataFile metadataFile) {
+    final ArtifactSigner signer;
     try {
       signer = HashicorpVaultSignerFactory.createSigner(metadataFile.getConfig());
     } catch (final RuntimeException e) {
@@ -75,9 +75,9 @@ public class MultiKeyArtefactSignerProvider
   }
 
   @Override
-  public ArtefactSigner createSigner(final FileBasedSigningMetadataFile metadataFile) {
+  public ArtifactSigner createSigner(final FileBasedSigningMetadataFile metadataFile) {
     try {
-      final ArtefactSigner signer =
+      final ArtifactSigner signer =
           FileBasedSignerFactory.createSigner(
               metadataFile.getKeyPath(), metadataFile.getPasswordPath());
       if (filenameMatchesSigningAddress(signer, metadataFile)) {
@@ -94,7 +94,7 @@ public class MultiKeyArtefactSignerProvider
   }
 
   private boolean filenameMatchesSigningAddress(
-      final ArtefactSigner signer, final SigningMetadataFile metadataFile) {
+      final ArtifactSigner signer, final SigningMetadataFile metadataFile) {
 
     // strip leading 0x from the address.
     final String signerAddress = signer.getAddress().substring(2).toLowerCase();

@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.signers.filebased;
 
-import tech.pegasys.eth2signer.core.signing.ArtefactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,7 +27,7 @@ public class FileBasedSignerFactory {
   private static final Logger LOG = LogManager.getLogger();
   private static final String READ_PWD_FILE_MESSAGE = "Error when reading the password from file. ";
 
-  public static ArtefactSigner createSigner(final Path keyFilePath, final Path passwordFilePath) {
+  public static ArtifactSigner createSigner(final Path keyFilePath, final Path passwordFilePath) {
     final String password;
     try {
       password = readPasswordFromFile(passwordFilePath);
@@ -37,7 +37,7 @@ public class FileBasedSignerFactory {
       throw new RuntimeException(message, e);
     }
 
-    return new ArtefactSigner("FakeKey - no idea.");
+    return new ArtifactSigner("FakeKey - no idea.");
   }
 
   private static String readPasswordFromFile(final Path path) throws IOException {

@@ -14,7 +14,7 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.multikey.MultiSignerFactory;
 import tech.pegasys.eth2signer.core.signers.hashicorp.HashicorpConfig;
-import tech.pegasys.eth2signer.core.signing.ArtefactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 public class HashicorpSigningMetadataFile extends SigningMetadataFile {
 
@@ -31,7 +31,7 @@ public class HashicorpSigningMetadataFile extends SigningMetadataFile {
   }
 
   @Override
-  public ArtefactSigner createSigner(final MultiSignerFactory factory) {
+  public ArtifactSigner createSigner(final MultiSignerFactory factory) {
     return factory.createSigner(this);
   }
 }

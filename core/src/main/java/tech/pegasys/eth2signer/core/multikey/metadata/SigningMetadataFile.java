@@ -13,7 +13,7 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.multikey.MultiSignerFactory;
-import tech.pegasys.eth2signer.core.signing.ArtefactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 public abstract class SigningMetadataFile {
 
@@ -35,5 +35,5 @@ public abstract class SigningMetadataFile {
     }
   }
 
-  public abstract ArtefactSigner createSigner(final MultiSignerFactory factory);
+  public abstract ArtifactSigner createSigner(final MultiSignerFactory factory);
 }

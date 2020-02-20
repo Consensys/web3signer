@@ -12,11 +12,17 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-public class ArtefactSigner {
+import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.eth2signer.crypto.BLS12381;
+import tech.pegasys.eth2signer.crypto.KeyPair;
+import tech.pegasys.eth2signer.crypto.Signature;
+import tech.pegasys.eth2signer.crypto.SignatureAndPublicKey;
 
-  private final String key;
+public class ArtifactSigner {
 
-  public ArtefactSigner(String key) {
+  private final KeyPair key;
+
+  public ArtifactSigner(final KeyPair key) {
     this.key = key;
   }
 
@@ -25,11 +31,8 @@ public class ArtefactSigner {
     return "hi";
   }
 
-  Signature signBlock(final byte[] bytesToSign) {
-    return null;
-  }
-
-  Signature signAttestation(final byte[] bytesToSign) {
-    return null;
+  public Signature sign(final Bytes bytesToSign, final Bytes domain) {
+    SignatureAndPublicKey signatureResult = BLS12381.sign(key, bytesToSign, domain);
+    return signatureResult.signature();
   }
 }
