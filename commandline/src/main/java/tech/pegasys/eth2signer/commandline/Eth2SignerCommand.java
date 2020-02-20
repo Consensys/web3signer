@@ -29,10 +29,10 @@ import picocli.CommandLine.Option;
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
 @Command(
     description =
-        "This command runs the EthSigner.\n"
-            + "Documentation can be found at https://docs.ethsigner.pegasys.tech.",
+        "This command runs the Eth2Signer.\n"
+            + "Documentation can be found at https://docs.eth2signer.pegasys.tech.",
     abbreviateSynopsis = true,
-    name = "ethsigner",
+    name = "eth2signer",
     sortOptions = false,
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
@@ -42,7 +42,7 @@ import picocli.CommandLine.Option;
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
     subcommands = {HelpCommand.class},
-    footer = "EthSigner is licensed under the Apache License 2.0")
+    footer = "Eth2Signer is licensed under the Apache License 2.0")
 public class Eth2SignerCommand implements Config, Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
