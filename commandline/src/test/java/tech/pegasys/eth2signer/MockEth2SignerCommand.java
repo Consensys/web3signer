@@ -17,7 +17,5 @@ import tech.pegasys.eth2signer.commandline.Eth2SignerCommand;
 public class MockEth2SignerCommand extends Eth2SignerCommand {
 
   @Override
-  public void run() {
-    return;
-  }
+  public void run() {}
 }
