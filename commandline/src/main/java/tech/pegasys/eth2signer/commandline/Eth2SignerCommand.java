@@ -13,7 +13,7 @@
 package tech.pegasys.eth2signer.commandline;
 
 import tech.pegasys.eth2signer.core.Config;
-import tech.pegasys.eth2signer.core.Eth2Signer;
+import tech.pegasys.eth2signer.core.Runner;
 
 import java.net.InetAddress;
 import java.nio.file.Path;
@@ -71,14 +71,14 @@ public class Eth2SignerCommand implements Config, Runnable {
   @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
   @Option(
       names = {"--http-listen-host"},
-      description = "Host for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
+      description = "Host for HTTP to listen on (default: ${DEFAULT-VALUE})",
       paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
       arity = "1")
   private String httpListenHost = InetAddress.getLoopbackAddress().getHostAddress();
 
   @Option(
       names = {"--http-listen-port"},
-      description = "Port for JSON-RPC HTTP to listen on (default: ${DEFAULT-VALUE})",
+      description = "Port for HTTP to listen on (default: ${DEFAULT-VALUE})",
       paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
       arity = "1")
   private final Integer httpListenPort = 9000;
@@ -122,7 +122,7 @@ public class Eth2SignerCommand implements Config, Runnable {
   @Override
   public void run() {
     LOG.debug("Commandline has been parsed with: " + toString());
-    final Eth2Signer eth2Signer = new Eth2Signer(this);
-    eth2Signer.run();
+    final Runner runner = new Runner(this);
+    runner.run();
   }
 }

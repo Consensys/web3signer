@@ -21,66 +21,39 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Eth2Signer implements Runnable {
+public class Runner implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private static final String TEXT = HttpHeaderValues.TEXT_PLAIN.toString() + "; charset=utf-8";
   private final Config config;
 
-  public Eth2Signer(Config config) {
+  public Runner(final Config config) {
     this.config = config;
   }
 
   @Override
   public void run() {
-    final HttpServerOptions serverOptions =
-        new HttpServerOptions()
-            .setPort(config.getHttpListenPort())
-            .setHost(config.getHttpListenHost())
-            .setReuseAddress(true)
-            .setReusePort(true);
 
     final Vertx vertx = Vertx.vertx();
     try {
-      final Router router = Router.router(vertx);
-      router
-          .route(HttpMethod.GET, "/upcheck")
-          .produces(TEXT)
-          .handler(BodyHandler.create())
-          .handler(ResponseContentTypeHandler.create())
-          .failureHandler(new LogErrorHandler())
-          .handler(routingContext -> routingContext.response().end("OK"));
-
-      final HttpServer httpServer = vertx.createHttpServer(serverOptions);
-      final CompletableFuture<Void> serverRunningFuture = new CompletableFuture<>();
-      httpServer
-          .requestHandler(router)
-          .listen(
-              result -> {
-                if (result.succeeded()) {
-                  serverRunningFuture.complete(null);
-                } else {
-                  serverRunningFuture.completeExceptionally(result.cause());
-                }
-              });
-      serverRunningFuture.get();
+      final Handler<HttpServerRequest> requestHandler = createRouter(vertx);
+      final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
-      if (config.getDataPath() != null) {
-        final File portsFile = new File(config.getDataPath().toFile(), "eth2signer.ports");
-        portsFile.deleteOnExit();
-        writePortsToFile(portsFile, httpServer.actualPort());
-      }
+
+      persistPortInformation(httpServer.actualPort());
     } catch (final ExecutionException | InterruptedException e) {
       vertx.close();
       throw new RuntimeException("Failed to create Http Server", e.getCause());
@@ -90,7 +63,54 @@ public class Eth2Signer implements Runnable {
     }
   }
 
-  private void writePortsToFile(final File portsFile, final int listeningPort) {
+  private Handler<HttpServerRequest> createRouter(final Vertx vertx) {
+    final Router router = Router.router(vertx);
+    router
+        .route(HttpMethod.GET, "/upcheck")
+        .produces(TEXT)
+        .handler(BodyHandler.create())
+        .handler(ResponseContentTypeHandler.create())
+        .failureHandler(new LogErrorHandler())
+        .handler(routingContext -> routingContext.response().end("OK"));
+
+    return router;
+  }
+
+  private HttpServer createServerAndWait(
+      final Vertx vertx, final Handler<HttpServerRequest> requestHandler)
+      throws ExecutionException, InterruptedException {
+    final HttpServerOptions serverOptions =
+        new HttpServerOptions()
+            .setPort(config.getHttpListenPort())
+            .setHost(config.getHttpListenHost())
+            .setReuseAddress(true)
+            .setReusePort(true);
+
+    final HttpServer httpServer = vertx.createHttpServer(serverOptions);
+    final CompletableFuture<Void> serverRunningFuture = new CompletableFuture<>();
+    httpServer
+        .requestHandler(requestHandler)
+        .listen(
+            result -> {
+              if (result.succeeded()) {
+                serverRunningFuture.complete(null);
+              } else {
+                serverRunningFuture.completeExceptionally(result.cause());
+              }
+            });
+    serverRunningFuture.get();
+
+    return httpServer;
+  }
+
+  private void persistPortInformation(final int listeningPort) {
+    if (config.getDataPath() == null) {
+      return;
+    }
+
+    final File portsFile = new File(config.getDataPath().toFile(), "eth2signer.ports");
+    portsFile.deleteOnExit();
+
     final Properties properties = new Properties();
     properties.setProperty("http-jsonrpc", String.valueOf(listeningPort));
 
