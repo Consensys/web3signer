@@ -12,7 +12,11 @@
  */
 package tech.pegasys.eth2signer.core.signers.hashicorp;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.crypto.KeyPair;
+import tech.pegasys.eth2signer.crypto.SecretKey;
 
 import java.util.Map;
 
@@ -30,6 +34,7 @@ public class HashicorpVaultSignerFactory {
       throw new RuntimeException(String.format(KEY_MISSING_MSG, VAULT_KV_MAP_KEY));
     }
     final String privateKey = dataMap.get(VAULT_KV_MAP_KEY);
-    return new ArtifactSigner(privateKey);
+    final SecretKey key = SecretKey.fromBytes(privateKey.getBytes(UTF_8));
+    return new ArtifactSigner(new KeyPair(key));
   }
 }

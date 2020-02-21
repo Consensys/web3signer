@@ -15,11 +15,14 @@ package tech.pegasys.eth2signer.core.multikey;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileBasedSigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
+import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 import tech.pegasys.eth2signer.core.signers.filebased.FileBasedSignerFactory;
 import tech.pegasys.eth2signer.core.signers.hashicorp.HashicorpVaultSignerFactory;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signers.unencryptedfile.UnencryptedKeyFileSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
+import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -28,8 +31,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class MultiKeyArtefactSignerProvider
-    implements ArtefactSignerProvider, MultiSignerFactory {
+public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, MultiSignerFactory {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -63,6 +65,24 @@ public class MultiKeyArtefactSignerProvider
       signer = HashicorpVaultSignerFactory.createSigner(metadataFile.getConfig());
     } catch (final RuntimeException e) {
       LOG.error("Failed to construct Hashicorp signer from " + metadataFile.getBaseFilename());
+      return null;
+    }
+
+    if (filenameMatchesSigningAddress(signer, metadataFile)) {
+      LOG.info("Loaded signer for address {}", signer.getAddress());
+      return signer;
+    }
+
+    return null;
+  }
+
+  @Override
+  public ArtifactSigner createSigner(final UnencryptedKeyMetadataFile metadataFile) {
+    final ArtifactSigner signer;
+    try {
+      signer = UnencryptedKeyFileSignerFactory.createSigner(metadataFile.getKeyFile());
+    } catch (final IOException e) {
+      LOG.error("Unable to read key from file, {}.", metadataFile.getKeyFile().toString());
       return null;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright 2020 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,18 +10,28 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.multikey;
+package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.FileBasedSigningMetadataFile;
-import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadataFile;
-import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
+import tech.pegasys.eth2signer.core.multikey.MultiSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
-public interface MultiSignerFactory {
+import java.nio.file.Path;
 
-  ArtifactSigner createSigner(FileBasedSigningMetadataFile metadataFile);
+public class UnencryptedKeyMetadataFile extends SigningMetadataFile {
 
-  ArtifactSigner createSigner(HashicorpSigningMetadataFile metadataFile);
+  final Path keyFile;
 
-  ArtifactSigner createSigner(UnencryptedKeyMetadataFile metadataFile);
+  public UnencryptedKeyMetadataFile(final String filename, final Path keyFile) {
+    super(filename);
+    this.keyFile = keyFile;
+  }
+
+  public Path getKeyFile() {
+    return keyFile;
+  }
+
+  @Override
+  public ArtifactSigner createSigner(final MultiSignerFactory factory) {
+    return factory.createSigner(this);
+  }
 }

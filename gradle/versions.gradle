@@ -71,5 +71,7 @@ dependencyManagement {
     dependency 'org.mockito:mockito-junit-jupiter:3.2.4'
 
     dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
+
+    dependency 'tech.pegasyseng.artemis.internal:util:0.8.2-SNAPSHOT'
   }
 }

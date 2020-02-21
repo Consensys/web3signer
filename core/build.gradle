@@ -13,6 +13,7 @@ jar {
 
 dependencies {
 
+
   implementation project(':crypto')
 
   implementation 'info.picocli:picocli'

@@ -12,12 +12,10 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import org.apache.tuweni.toml.TomlInvalidTypeException;
-import org.apache.tuweni.toml.TomlParseResult;
-import org.apache.tuweni.toml.TomlTable;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileBasedSigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
+import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 import tech.pegasys.eth2signer.core.signers.hashicorp.HashicorpConfig;
 
 import java.io.IOException;
@@ -33,6 +31,9 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.toml.TomlInvalidTypeException;
+import org.apache.tuweni.toml.TomlParseResult;
+import org.apache.tuweni.toml.TomlTable;
 
 public class SigningMetadataTomlConfigLoader {
 
@@ -149,6 +150,20 @@ public class SigningMetadataTomlConfigLoader {
             table.getOptionalString("tls-known-server-file").map(this::makeRelativePathAbsolute));
 
     return Optional.of(new HashicorpSigningMetadataFile(filename, builder.build()));
+  }
+
+  private Optional<SigningMetadataFile> getUnencryptedKeyFromToml(
+      final String filename, final TomlParseResult result) {
+    final Optional<TomlTableAdapter> signingTable = getSigningTableFrom(filename, result);
+    if (signingTable.isEmpty()) {
+      return Optional.empty();
+    }
+
+    final TomlTableAdapter table = signingTable.get();
+
+    return Optional.of(
+        new UnencryptedKeyMetadataFile(
+            filename, makeRelativePathAbsolute(table.getString("signing-key-path"))));
   }
 
   private Optional<TomlTableAdapter> getSigningTableFrom(
