@@ -31,8 +31,8 @@ public class ArtifactSigner {
     return key.publicKey().toString();
   }
 
-  public Signature sign(final Bytes bytesToSign, final Bytes domain) {
-    SignatureAndPublicKey signatureResult = BLS12381.sign(key, bytesToSign, domain);
+  public Signature sign(final Bytes message, final Bytes domain) {
+    final SignatureAndPublicKey signatureResult = BLS12381.sign(key, message, domain);
     return signatureResult.signature();
   }
 }

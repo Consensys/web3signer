@@ -100,10 +100,10 @@ public class Signer {
     return "OK".equals(body);
   }
 
-  public String signData(final PublicKey publicKey, final Bytes data, final Bytes domain)
+  public String signData(final PublicKey publicKey, final Bytes message, final Bytes domain)
       throws ExecutionException, InterruptedException {
     final SigningRequestBody requestBody =
-        new SigningRequestBody(publicKey.toString(), data.toHexString(), domain.toHexString());
+        new SigningRequestBody(publicKey.toString(), message.toHexString(), domain.toHexString());
     final String httpBody = Json.encode(requestBody);
 
     final CompletableFuture<String> responseBodyFuture = new CompletableFuture<>();

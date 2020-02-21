@@ -21,16 +21,16 @@ public class SigningRequestBody {
 
   private final Bytes domain;
   private final String publicKey;
-  private final Bytes dataToSign;
+  private final Bytes message;
 
   @JsonCreator
   public SigningRequestBody(
       @JsonProperty("publicKey") final String publicKey,
-      @JsonProperty("domain") final String domain,
-      @JsonProperty("dataToSign") final String dataToSign) {
+      @JsonProperty("message") final String message,
+      @JsonProperty("domain") final String domain) {
     this.publicKey = publicKey;
+    this.message = Bytes.fromHexString(message);
     this.domain = Bytes.fromHexString(domain);
-    this.dataToSign = Bytes.fromHexString(dataToSign);
   }
 
   public Bytes domain() {
@@ -42,8 +42,8 @@ public class SigningRequestBody {
     return publicKey;
   }
 
-  public Bytes dataToSign() {
-    return dataToSign;
+  public Bytes message() {
+    return message;
   }
 
   @JsonGetter("domain")
@@ -51,8 +51,8 @@ public class SigningRequestBody {
     return domain.toHexString();
   }
 
-  @JsonGetter("dataToSign")
-  public String getDataToSign() {
-    return dataToSign.toHexString();
+  @JsonGetter("message")
+  public String getMessage() {
+    return message.toHexString();
   }
 }

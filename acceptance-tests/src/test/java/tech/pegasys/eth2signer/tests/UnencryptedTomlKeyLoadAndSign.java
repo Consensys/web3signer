@@ -61,6 +61,6 @@ public class UnencryptedTomlKeyLoadAndSign {
     final Bytes domain = Bytes.ofUnsignedLong(42L);
     final String responseText = signer.signData(keyPair.publicKey(), message, domain);
 
-    assertThat(responseText).isEqualTo(expectedSignature);
+    assertThat(responseText.toLowerCase()).isEqualTo(expectedSignature.toLowerCase());
   }
 }

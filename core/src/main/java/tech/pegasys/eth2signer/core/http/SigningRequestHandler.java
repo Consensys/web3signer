@@ -50,7 +50,7 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(signingRequest.publicKey());
 
     if (signer.isPresent()) {
-      final Bytes dataToSign = signingRequest.dataToSign();
+      final Bytes dataToSign = signingRequest.message();
       final Bytes domain = signingRequest.domain();
       final Signature signature = signer.get().sign(dataToSign, domain);
       response.end(signature.toString());
