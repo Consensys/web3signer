@@ -52,6 +52,7 @@ public class Signer {
   public void start() {
     LOG.info("Starting Eth2Signer");
     runner.start(PROCESS_NAME);
+
     final String httpUrl = getUrl();
     LOG.info("Http requests being submitted to : {} ", httpUrl);
 
@@ -113,7 +114,9 @@ public class Signer {
           if (response.statusCode() == HttpResponseStatus.OK.code()) {
             response.bodyHandler(body -> responseBodyFuture.complete(body.toString(UTF_8)));
           }
-          responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
+          else {
+            responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
+          }
         });
 
     request.end(httpBody);

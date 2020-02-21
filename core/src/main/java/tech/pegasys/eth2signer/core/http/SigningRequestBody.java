@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.core.http;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -24,23 +25,34 @@ public class SigningRequestBody {
 
   @JsonCreator
   public SigningRequestBody(
-      @JsonProperty("domain") final String publicKey,
+      @JsonProperty("publicKey") final String publicKey,
       @JsonProperty("domain") final String domain,
-      @JsonProperty("domain") final String dataToSign) {
+      @JsonProperty("dataToSign") final String dataToSign) {
     this.publicKey = publicKey;
     this.domain = Bytes.fromHexString(domain);
     this.dataToSign = Bytes.fromHexString(dataToSign);
   }
 
-  public Bytes getDomain() {
+  public Bytes domain() {
     return domain;
   }
 
-  public String getPublicKey() {
+  @JsonGetter("publicKey")
+  public String publicKey() {
     return publicKey;
   }
 
-  public Bytes getDataToSign() {
+  public Bytes dataToSign() {
     return dataToSign;
+  }
+
+  @JsonGetter("domain")
+  public String getDomain() {
+    return domain.toHexString();
+  }
+
+  @JsonGetter("dataToSign")
+  public String getDataToSign() {
+    return dataToSign.toHexString();
   }
 }

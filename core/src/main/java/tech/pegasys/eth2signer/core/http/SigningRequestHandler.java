@@ -44,16 +44,16 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
 
   private void generateResponseFromBody(
       final HttpServerResponse response, final Buffer requestBody) {
-    LOG.trace("Body receeived {}", requestBody.toString());
+    LOG.trace("Body received {}", requestBody.toString());
     final SigningRequestBody signingRequest =
         Json.decodeValue(requestBody, SigningRequestBody.class);
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(signingRequest.getPublicKey());
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(signingRequest.publicKey());
 
     if (signer.isPresent()) {
-      final Bytes dataToSign = signingRequest.getDataToSign();
-      final Bytes domain = signingRequest.getDomain();
+      final Bytes dataToSign = signingRequest.dataToSign();
+      final Bytes domain = signingRequest.domain();
       final Signature signature = signer.get().sign(dataToSign, domain);
-      response.end(signature.toBytes().toHexString());
+      response.end(signature.toString());
     } else {
       LOG.error("Unable to find an appropriate signer for request.");
     }

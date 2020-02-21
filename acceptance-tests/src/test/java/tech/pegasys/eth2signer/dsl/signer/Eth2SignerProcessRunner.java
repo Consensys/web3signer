@@ -39,6 +39,7 @@ import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
+import tech.pegasys.eth2signer.Eth2SignerApp;
 
 public class Eth2SignerProcessRunner {
 
@@ -107,7 +108,7 @@ public class Eth2SignerProcessRunner {
     final String loggingLevel = "TRACE";
 
     final List<String> params = new ArrayList<>();
-    params.add(executableLocation());
+    //params.add(executableLocation());
     params.add("--logging");
     params.add(loggingLevel);
     params.add("--http-listen-host");
@@ -136,14 +137,29 @@ public class Eth2SignerProcessRunner {
     }
     processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
 
+    final Runnable eth2SignerRunnable = new Runnable() {
+
+      @Override
+      public void run() {
+        Eth2SignerApp.main(params.toArray(new String[params.size()]));
+      }
+    };
+
+    Thread thread = new Thread(eth2SignerRunnable);
+    thread.start();
+
+    /*
     try {
-      final Process process = processBuilder.start();
-      outputProcessorExecutor.submit(() -> printOutput(processName, process));
-      processes.put(processName, process);
+
+      //final Process process = processBuilder.start();
+      //outputProcessorExecutor.submit(() -> printOutput(processName, process));
+      //processes.put(processName, process);
     } catch (final IOException e) {
       LOG.error("Error starting EthSigner process", e);
       throw new RuntimeException("Failed to start the Ethsigner process");
     }
+
+     */
 
     if (useDynamicPortAllocation) {
       loadPortsFile();

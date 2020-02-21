@@ -26,7 +26,7 @@ public class TomlHelpers {
     final String toml =
         new TomlStringBuilder("signing")
             .withQuotedString("type", "unencrypted-file-signer")
-            .withQuotedString("key-file", keyFile.toString())
+            .withQuotedString("signing-key-path", keyFile.toString())
             .build();
 
     createTomlFile(tomlPath, toml);
