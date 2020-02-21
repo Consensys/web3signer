@@ -31,6 +31,7 @@ public class FileBasedSignerFactory {
     final String password;
     try {
       password = readPasswordFromFile(passwordFilePath);
+      LOG.info("The passsword is {}", password);
     } catch (final IOException e) {
       final String message = READ_PWD_FILE_MESSAGE;
       LOG.error(message, e);

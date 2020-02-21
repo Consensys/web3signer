@@ -25,8 +25,6 @@ import org.apache.logging.log4j.Logger;
 
 public class UnencryptedKeyFileSignerFactory {
 
-  private static final Logger LOG = LogManager.getLogger();
-
   public static ArtifactSigner createSigner(final Path keyFilePath) throws IOException {
     final byte[] fileContent = Files.readAllBytes(keyFilePath);
     final KeyPair keys = new KeyPair(SecretKey.fromBytes(fileContent));

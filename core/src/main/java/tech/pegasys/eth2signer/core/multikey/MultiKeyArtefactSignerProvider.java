@@ -54,7 +54,7 @@ public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, M
     return signingMetadataTomlConfigLoader.loadAvailableSigningMetadataTomlConfigs().stream()
         .map(metadataFile -> metadataFile.createSigner(this))
         .filter(Objects::nonNull)
-        .map(ArtifactSigner::getAddress)
+        .map(ArtifactSigner::getIdentifier)
         .collect(Collectors.toSet());
   }
 
@@ -69,7 +69,7 @@ public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, M
     }
 
     if (filenameMatchesSigningAddress(signer, metadataFile)) {
-      LOG.info("Loaded signer for address {}", signer.getAddress());
+      LOG.info("Loaded signer for address {}", signer.getIdentifier());
       return signer;
     }
 
@@ -87,7 +87,7 @@ public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, M
     }
 
     if (filenameMatchesSigningAddress(signer, metadataFile)) {
-      LOG.info("Loaded signer for address {}", signer.getAddress());
+      LOG.info("Loaded signer for address {}", signer.getIdentifier());
       return signer;
     }
 
@@ -101,7 +101,7 @@ public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, M
           FileBasedSignerFactory.createSigner(
               metadataFile.getKeyPath(), metadataFile.getPasswordPath());
       if (filenameMatchesSigningAddress(signer, metadataFile)) {
-        LOG.info("Loaded signer for address {}", signer.getAddress());
+        LOG.info("Loaded signer for address {}", signer.getIdentifier());
         return signer;
       }
 
@@ -117,7 +117,7 @@ public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, M
       final ArtifactSigner signer, final SigningMetadataFile metadataFile) {
 
     // strip leading 0x from the address.
-    final String signerAddress = signer.getAddress().substring(2).toLowerCase();
+    final String signerAddress = signer.getIdentifier().substring(2).toLowerCase();
     if (!metadataFile.getBaseFilename().toLowerCase().endsWith(signerAddress)) {
       LOG.error(
           String.format(

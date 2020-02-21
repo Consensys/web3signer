@@ -13,6 +13,9 @@
 
 dependencies {
 
+  testImplementation project(":app")
+  testImplementation project(":core")
+
   testRuntimeOnly 'javax.activation:activation'
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'

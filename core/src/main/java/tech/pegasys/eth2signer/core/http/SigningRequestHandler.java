@@ -38,11 +38,13 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(final RoutingContext context) {
+    LOG.info("Received a request.");
     context.request().bodyHandler(body -> generateResponseFromBody(context.response(), body));
   }
 
   private void generateResponseFromBody(
       final HttpServerResponse response, final Buffer requestBody) {
+    LOG.trace("Body receeived {}", requestBody.toString());
     final SigningRequestBody signingRequest =
         Json.decodeValue(requestBody, SigningRequestBody.class);
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(signingRequest.getPublicKey());

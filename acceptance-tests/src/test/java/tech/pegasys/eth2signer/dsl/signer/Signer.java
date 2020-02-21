@@ -16,6 +16,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 
+import io.vertx.core.json.Json;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -26,6 +27,9 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.eth2signer.core.http.SigningRequestBody;
+import tech.pegasys.eth2signer.crypto.PublicKey;
 
 public class Signer {
 
@@ -48,13 +52,15 @@ public class Signer {
   public void start() {
     LOG.info("Starting Eth2Signer");
     runner.start(PROCESS_NAME);
-    final String httpJsonRpcUrl = getUrl();
-    LOG.info("Http requests being submitted to : {} ", httpJsonRpcUrl);
+    final String httpUrl = getUrl();
+    LOG.info("Http requests being submitted to : {} ", httpUrl);
 
     HttpClientOptions options = new HttpClientOptions();
-    options.setDefaultHost(this.hostname);
+    options.setDefaultHost(hostname);
     options.setDefaultPort(runner.httpJsonRpcPort());
-    httpClient = vertx.createHttpClient();
+    httpClient = vertx.createHttpClient(options);
+
+    awaitStartupCompletion();
   }
 
   public void shutdown() {
@@ -75,8 +81,9 @@ public class Signer {
             response -> {
               if (response.statusCode() == HttpResponseStatus.OK.code()) {
                 response.bodyHandler(body -> responseBodyFuture.complete(body.toString(UTF_8)));
+              } else {
+                responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
               }
-              responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
             });
     request.setChunked(false);
     request.end();
@@ -90,6 +97,28 @@ public class Signer {
       throw new RuntimeException("Thread was interrupted waiting for Eth2Signer response.");
     }
     return "OK".equals(body);
+  }
+
+  public String signData(final PublicKey publicKey, final Bytes data, final Bytes domain)
+      throws ExecutionException, InterruptedException {
+    final SigningRequestBody requestBody =
+        new SigningRequestBody(publicKey.toString(), data.toHexString(), domain.toHexString());
+    final String httpBody = Json.encode(requestBody);
+
+    final CompletableFuture<String> responseBodyFuture = new CompletableFuture<>();
+    final HttpClientRequest request =
+    httpClient.post(
+        "/sign/block",
+        response -> {
+          if (response.statusCode() == HttpResponseStatus.OK.code()) {
+            response.bodyHandler(body -> responseBodyFuture.complete(body.toString(UTF_8)));
+          }
+          responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
+        });
+
+    request.end(httpBody);
+
+    return responseBodyFuture.get();
   }
 
   public void awaitStartupCompletion() {

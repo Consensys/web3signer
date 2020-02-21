@@ -27,9 +27,8 @@ public class ArtifactSigner {
     this.key = key;
   }
 
-  // TODO(tmm): Remove this, replace with PubKey?
-  public String getAddress() {
-    return "hi";
+  public String getIdentifier() {
+    return key.publicKey().toString();
   }
 
   public Signature sign(final Bytes bytesToSign, final Bytes domain) {

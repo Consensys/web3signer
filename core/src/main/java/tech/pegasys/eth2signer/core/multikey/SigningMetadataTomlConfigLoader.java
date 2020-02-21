@@ -98,6 +98,8 @@ public class SigningMetadataTomlConfigLoader {
         return getFileBasedSigningMetadataFromToml(filename, result);
       } else if (SignerType.fromString(type).equals(SignerType.HASHICORP_SIGNER)) {
         return getHashicorpMetadataFromToml(file.getFileName().toString(), result);
+      } else if(SignerType.fromString(type).equals(SignerType.UNENCRYPTED_FILE_SIGNER)) {
+        return getUnencryptedKeyFromToml(file.getFileName().toString(), result);
       } else {
         LOG.error("Unknown signing type in metadata: " + type);
         return Optional.empty();

@@ -24,11 +24,11 @@ public class SigningRequestBody {
 
   @JsonCreator
   public SigningRequestBody(
-      @JsonProperty("domain") final String domain,
       @JsonProperty("domain") final String publicKey,
+      @JsonProperty("domain") final String domain,
       @JsonProperty("domain") final String dataToSign) {
-    this.domain = Bytes.fromHexString(domain);
     this.publicKey = publicKey;
+    this.domain = Bytes.fromHexString(domain);
     this.dataToSign = Bytes.fromHexString(dataToSign);
   }
 

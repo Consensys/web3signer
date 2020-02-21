@@ -12,18 +12,6 @@
  */
 package tech.pegasys.eth2signer.core;
 
-import tech.pegasys.eth2signer.core.http.LogErrorHandler;
-import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
-import tech.pegasys.eth2signer.core.multikey.MultiKeyArtefactSignerProvider;
-import tech.pegasys.eth2signer.core.multikey.SigningMetadataTomlConfigLoader;
-import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -31,13 +19,21 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import tech.pegasys.eth2signer.core.http.LogErrorHandler;
+import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
+import tech.pegasys.eth2signer.core.multikey.MultiKeyArtefactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.SigningMetadataTomlConfigLoader;
+import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
 
 public class Runner implements Runnable {
 
@@ -95,15 +91,6 @@ public class Runner implements Runnable {
         .handler(handler);
 
     return router;
-  }
-
-  private void setRouteMetaData(final Route input, final Handler<RoutingContext> handler) {
-    input
-        .produces(JSON)
-        .handler(BodyHandler.create())
-        .handler(ResponseContentTypeHandler.create())
-        .failureHandler(new LogErrorHandler())
-        .handler(handler);
   }
 
   private HttpServer createServerAndWait(
