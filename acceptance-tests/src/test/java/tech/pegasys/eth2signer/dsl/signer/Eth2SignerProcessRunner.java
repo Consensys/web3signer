@@ -105,10 +105,10 @@ public class Eth2SignerProcessRunner {
   }
 
   public void start(final String processName) {
-    final String loggingLevel = "TRACE";
+    final String loggingLevel = "DEBUG";
 
     final List<String> params = new ArrayList<>();
-    //params.add(executableLocation());
+    params.add(executableLocation());
     params.add("--logging");
     params.add(loggingLevel);
     params.add("--http-listen-host");
@@ -137,29 +137,14 @@ public class Eth2SignerProcessRunner {
     }
     processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
 
-    final Runnable eth2SignerRunnable = new Runnable() {
-
-      @Override
-      public void run() {
-        Eth2SignerApp.main(params.toArray(new String[params.size()]));
-      }
-    };
-
-    Thread thread = new Thread(eth2SignerRunnable);
-    thread.start();
-
-    /*
     try {
-
-      //final Process process = processBuilder.start();
-      //outputProcessorExecutor.submit(() -> printOutput(processName, process));
-      //processes.put(processName, process);
+      final Process process = processBuilder.start();
+      outputProcessorExecutor.submit(() -> printOutput(processName, process));
+      processes.put(processName, process);
     } catch (final IOException e) {
       LOG.error("Error starting EthSigner process", e);
       throw new RuntimeException("Failed to start the Ethsigner process");
     }
-
-     */
 
     if (useDynamicPortAllocation) {
       loadPortsFile();

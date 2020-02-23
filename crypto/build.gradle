@@ -17,11 +17,10 @@ dependencies {
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
 
-  implementation 'org.bouncycastle:bcprov-jdk15on'
+  api 'org.bouncycastle:bcprov-jdk15on'
   implementation 'org.apache.tuweni:tuweni-crypto'
   implementation 'org.miracl.milagro.amcl:milagro-crypto-java'
   implementation 'org.apache.tuweni:tuweni-bytes'
-  api 'org.bouncycastle:bcprov-jdk15on'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 

@@ -85,7 +85,6 @@ public class Runner implements Runnable {
     router
         .routeWithRegex(HttpMethod.POST, "/sign/" + "(attestation|block)")
         .produces(JSON)
-        //.handler(BodyHandler.create())
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(new LogErrorHandler())
         .handler(handler);

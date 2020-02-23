@@ -43,14 +43,14 @@ public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, M
   }
 
   @Override
-  public Optional<ArtifactSigner> getSigner(final String address) {
+  public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
     return signingMetadataTomlConfigLoader
-        .loadMetadataForAddress(address)
+        .loadMetadataForAddress(signerIdentifier)
         .map(metadataFile -> metadataFile.createSigner(this));
   }
 
   @Override
-  public Set<String> availableAddresses() {
+  public Set<String> availableSigners() {
     return signingMetadataTomlConfigLoader.loadAvailableSigningMetadataTomlConfigs().stream()
         .map(metadataFile -> metadataFile.createSigner(this))
         .filter(Objects::nonNull)

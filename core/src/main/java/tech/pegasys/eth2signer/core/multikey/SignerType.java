@@ -13,9 +13,9 @@
 package tech.pegasys.eth2signer.core.multikey;
 
 public enum SignerType {
-  FILE_BASED_SIGNER("file-based-signer"),
+  BLS12_KEYSTORE_FILE("bls12-keystore-file"),
   HASHICORP_SIGNER("hashicorp-signer"),
-  UNENCRYPTED_FILE_SIGNER("unencrypted-file-signer"),
+  RAW_BLS12_KEY("raw-bls12-key"),
   UNKNOWN_TYPE_SIGNER("unknown");
 
   private final String type;
