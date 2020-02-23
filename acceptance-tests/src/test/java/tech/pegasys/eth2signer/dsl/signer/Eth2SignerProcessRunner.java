@@ -39,7 +39,6 @@ import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import tech.pegasys.eth2signer.Eth2SignerApp;
 
 public class Eth2SignerProcessRunner {
 

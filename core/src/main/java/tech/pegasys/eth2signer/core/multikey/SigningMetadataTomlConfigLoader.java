@@ -98,7 +98,7 @@ public class SigningMetadataTomlConfigLoader {
         return getFileBasedSigningMetadataFromToml(filename, result);
       } else if (SignerType.fromString(type).equals(SignerType.HASHICORP_SIGNER)) {
         return getHashicorpMetadataFromToml(file.getFileName().toString(), result);
-      } else if(SignerType.fromString(type).equals(SignerType.RAW_BLS12_KEY)) {
+      } else if (SignerType.fromString(type).equals(SignerType.RAW_BLS12_KEY)) {
         return getUnencryptedKeyFromToml(file.getFileName().toString(), result);
       } else {
         LOG.error("Unknown signing type in metadata: " + type);

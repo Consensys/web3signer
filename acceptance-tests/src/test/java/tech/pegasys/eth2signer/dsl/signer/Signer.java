@@ -16,7 +16,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 
-import io.vertx.core.json.Json;
+import tech.pegasys.eth2signer.core.http.SigningRequestBody;
+import tech.pegasys.eth2signer.crypto.PublicKey;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -25,11 +27,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.eth2signer.core.http.SigningRequestBody;
-import tech.pegasys.eth2signer.crypto.PublicKey;
 
 public class Signer {
 
@@ -108,16 +109,15 @@ public class Signer {
 
     final CompletableFuture<String> responseBodyFuture = new CompletableFuture<>();
     final HttpClientRequest request =
-    httpClient.post(
-        "/sign/block",
-        response -> {
-          if (response.statusCode() == HttpResponseStatus.OK.code()) {
-            response.bodyHandler(body -> responseBodyFuture.complete(body.toString(UTF_8)));
-          }
-          else {
-            responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
-          }
-        });
+        httpClient.post(
+            "/sign/block",
+            response -> {
+              if (response.statusCode() == HttpResponseStatus.OK.code()) {
+                response.bodyHandler(body -> responseBodyFuture.complete(body.toString(UTF_8)));
+              } else {
+                responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
+              }
+            });
 
     request.end(httpBody);
 

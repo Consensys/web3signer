@@ -56,7 +56,7 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
       response.end(signature.toString());
     } else {
       LOG.error("Unable to find an appropriate signer for request.");
-      //TODO(tmm): MUST report a failure HERE
+      // TODO(tmm): MUST report a failure HERE
     }
   }
 }
