@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
+import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 
@@ -117,8 +118,8 @@ public class SigningMetadataTomlConfigLoader {
     final TomlTableAdapter table = signingTable.get();
 
     return Optional.of(
-        new UnencryptedKeyMetadataFile(
-            filename, makeRelativePathAbsolute(table.getString("signing-key-path"))));
+        new UnencryptedKeyMetadataFile(filename,
+            Bytes.fromHexString(table.getString("signing-key"))));
   }
 
   private Optional<TomlTableAdapter> getSigningTableFrom(
@@ -139,15 +140,5 @@ public class SigningMetadataTomlConfigLoader {
     } else {
       return address.toLowerCase();
     }
-  }
-
-  private Path makeRelativePathAbsolute(final String input) {
-    final Path parsedInput = Path.of(input);
-
-    if (parsedInput.isAbsolute()) {
-      return parsedInput;
-    }
-
-    return tomlConfigsDirectory.resolve(input);
   }
 }

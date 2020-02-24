@@ -20,11 +20,11 @@ import java.nio.file.Path;
 
 public class TomlHelpers {
 
-  public void createUnencryptedTomlFileAt(final Path tomlPath, final Path keyFile) {
+  public void createUnencryptedTomlFileAt(final Path tomlPath, final String keyContent) {
     final String toml =
         new TomlStringBuilder("signing")
             .withQuotedString("type", "raw-bls12-key")
-            .withQuotedString("signing-key-path", keyFile.toString())
+            .withQuotedString("signing-key", keyContent)
             .build();
 
     createTomlFile(tomlPath, toml);

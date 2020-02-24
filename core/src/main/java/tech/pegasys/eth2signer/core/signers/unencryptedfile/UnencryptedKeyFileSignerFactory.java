@@ -12,23 +12,16 @@
  */
 package tech.pegasys.eth2signer.core.signers.unencryptedfile;
 
+import java.io.IOException;
+import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.crypto.KeyPair;
 import tech.pegasys.eth2signer.crypto.SecretKey;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import com.google.common.base.Charsets;
-import org.apache.tuweni.bytes.Bytes;
-
 public class UnencryptedKeyFileSignerFactory {
 
-  public static ArtifactSigner createSigner(final Path keyFilePath) throws IOException {
-    final byte[] fileContent = Files.readAllBytes(keyFilePath);
-    final String keyString = new String(fileContent, Charsets.UTF_8);
-    final KeyPair keys = new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(keyString)));
+  public static ArtifactSigner createSigner(final Bytes keyFilePath) {
+    final KeyPair keys = new KeyPair(SecretKey.fromBytes(keyFilePath));
 
     return new ArtifactSigner(keys);
   }

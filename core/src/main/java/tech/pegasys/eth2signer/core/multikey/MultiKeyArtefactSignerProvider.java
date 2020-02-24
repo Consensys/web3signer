@@ -57,12 +57,7 @@ public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, M
   @Override
   public ArtifactSigner createSigner(final UnencryptedKeyMetadataFile metadataFile) {
     final ArtifactSigner signer;
-    try {
-      signer = UnencryptedKeyFileSignerFactory.createSigner(metadataFile.getKeyFile());
-    } catch (final IOException e) {
-      LOG.error("Unable to read key from file, {}.", metadataFile.getKeyFile().toString());
-      return null;
-    }
+    signer = UnencryptedKeyFileSignerFactory.createSigner(metadataFile.getPrivateKeyBytes());
 
     if (filenameMatchesSigningAddress(signer, metadataFile)) {
       LOG.info("Loaded signer for address {}", signer.getIdentifier());
