@@ -12,7 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 
@@ -29,6 +28,7 @@ import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.toml.TomlInvalidTypeException;
 import org.apache.tuweni.toml.TomlParseResult;
 import org.apache.tuweni.toml.TomlTable;
@@ -118,8 +118,8 @@ public class SigningMetadataTomlConfigLoader {
     final TomlTableAdapter table = signingTable.get();
 
     return Optional.of(
-        new UnencryptedKeyMetadataFile(filename,
-            Bytes.fromHexString(table.getString("signing-key"))));
+        new UnencryptedKeyMetadataFile(
+            filename, Bytes.fromHexString(table.getString("signing-key"))));
   }
 
   private Optional<TomlTableAdapter> getSigningTableFrom(

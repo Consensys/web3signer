@@ -12,11 +12,10 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.eth2signer.core.multikey.MultiSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
-import java.nio.file.Path;
+import org.apache.tuweni.bytes.Bytes;
 
 public class UnencryptedKeyMetadataFile extends SigningMetadataFile {
 

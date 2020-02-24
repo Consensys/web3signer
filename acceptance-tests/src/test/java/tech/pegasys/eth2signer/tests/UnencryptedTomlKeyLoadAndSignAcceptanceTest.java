@@ -16,17 +16,19 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.nio.file.Path;
-import java.util.concurrent.ExecutionException;
-import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import tech.pegasys.eth2signer.crypto.KeyPair;
 import tech.pegasys.eth2signer.crypto.PublicKey;
 import tech.pegasys.eth2signer.crypto.SecretKey;
 import tech.pegasys.eth2signer.dsl.signer.Signer;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.TomlHelpers;
+
+import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class UnencryptedTomlKeyLoadAndSignAcceptanceTest {
 

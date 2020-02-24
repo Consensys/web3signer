@@ -18,7 +18,6 @@ import tech.pegasys.eth2signer.core.signers.unencryptedfile.UnencryptedKeyFileSi
 import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
