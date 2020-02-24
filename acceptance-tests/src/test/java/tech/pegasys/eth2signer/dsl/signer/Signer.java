@@ -38,14 +38,20 @@ public class Signer {
   private static final Logger LOG = LogManager.getLogger();
   private static final String PROCESS_NAME = "Eth2Signer";
 
-  private final Eth2SignerProcessRunner runner;
+  private final Eth2SignerRunner runner;
   private final String hostname;
   private final String urlFormatting;
   private final Vertx vertx;
   private HttpClient httpClient;
 
   public Signer(final SignerConfiguration signerConfig) {
-    this.runner = new Eth2SignerProcessRunner(signerConfig);
+
+    if(Boolean.getBoolean("acctests.runEth2SignerAsProcess")) {
+      this.runner = new Eth2SignerProcessRunner(signerConfig);
+    } else {
+      this.runner = new Eth2SignerThreadRunner(signerConfig);
+    }
+
     this.hostname = signerConfig.hostname();
     urlFormatting = "http://%s:%s";
     vertx = Vertx.vertx();
@@ -53,12 +59,12 @@ public class Signer {
 
   public void start() {
     LOG.info("Starting Eth2Signer");
-    runner.start(PROCESS_NAME);
+    runner.start();
 
     final String httpUrl = getUrl();
     LOG.info("Http requests being submitted to : {} ", httpUrl);
 
-    HttpClientOptions options = new HttpClientOptions();
+    final HttpClientOptions options = new HttpClientOptions();
     options.setDefaultHost(hostname);
     options.setDefaultPort(runner.httpJsonRpcPort());
     httpClient = vertx.createHttpClient(options);

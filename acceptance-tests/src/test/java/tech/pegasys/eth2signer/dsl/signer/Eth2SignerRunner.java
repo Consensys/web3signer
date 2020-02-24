@@ -144,4 +144,8 @@ public abstract class Eth2SignerRunner {
     return signerConfig.httpPort() == UNASSIGNED_PORT;
   }
 
+  public int httpJsonRpcPort() {
+    return 0;
+  }
+
 }
