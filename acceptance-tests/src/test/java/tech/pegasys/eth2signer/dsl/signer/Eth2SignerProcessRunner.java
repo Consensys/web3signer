@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.dsl.signer;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.collect.Lists;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,6 +40,7 @@ import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
+import tech.pegasys.eth2signer.Eth2SignerApp;
 
 public class Eth2SignerProcessRunner {
 
@@ -47,7 +49,7 @@ public class Eth2SignerProcessRunner {
       LogManager.getLogger("tech.pegasys.eth2signer.SubProcessLog");
 
   private static final String PORTS_FILENAME = "eth2signer.ports";
-  private static final String HTTP_JSON_RPC_KEY = "http-jsonrpc";
+  private static final String HTTP_JSON_RPC_KEY = "http-port";
 
   private final Map<String, Process> processes = new HashMap<>();
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
@@ -107,7 +109,7 @@ public class Eth2SignerProcessRunner {
     final String loggingLevel = "DEBUG";
 
     final List<String> params = new ArrayList<>();
-    params.add(executableLocation());
+    //params.add(executableLocation());
     params.add("--logging");
     params.add(loggingLevel);
     params.add("--http-listen-host");
@@ -125,24 +127,35 @@ public class Eth2SignerProcessRunner {
 
     LOG.info("Creating Eth2Signer process with params {}", params);
 
-    final ProcessBuilder processBuilder =
-        new ProcessBuilder(params)
-            .directory(new File(System.getProperty("user.dir")).getParentFile())
-            .redirectErrorStream(true)
-            .redirectInput(Redirect.INHERIT);
-
-    if (Boolean.getBoolean("debugSubProcess")) {
-      javaOpts.add("-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
+    boolean useThread = false;
+    String[] paramsAsArray = params.toArray(new String[params.size()]);
+    if(useThread) {
+      final Thread thread =
+          new Thread(() -> Eth2SignerApp.main(paramsAsArray));
+      thread.start();
     }
-    processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
+    else {
+      final List<String> paramsWithCmd = Lists.asList(executableLocation(), paramsAsArray);
+      final ProcessBuilder processBuilder =
+          new ProcessBuilder(paramsWithCmd)
+              .directory(new File(System.getProperty("user.dir")).getParentFile())
+              .redirectErrorStream(true)
+              .redirectInput(Redirect.INHERIT);
 
-    try {
-      final Process process = processBuilder.start();
-      outputProcessorExecutor.submit(() -> printOutput(processName, process));
-      processes.put(processName, process);
-    } catch (final IOException e) {
-      LOG.error("Error starting EthSigner process", e);
-      throw new RuntimeException("Failed to start the Ethsigner process");
+      if (Boolean.getBoolean("debugSubProcess")) {
+        javaOpts.add("-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
+      }
+      processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
+
+      try {
+
+        final Process process = processBuilder.start();
+        outputProcessorExecutor.submit(() -> printOutput(processName, process));
+        processes.put(processName, process);
+      } catch (final IOException e) {
+        LOG.error("Error starting EthSigner process", e);
+        throw new RuntimeException("Failed to start the Ethsigner process");
+      }
     }
 
     if (useDynamicPortAllocation) {

@@ -31,6 +31,7 @@ import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.eth2signer.dsl.HttpResponse;
 
 public class Signer {
 
@@ -101,22 +102,19 @@ public class Signer {
     return "OK".equals(body);
   }
 
-  public String signData(final PublicKey publicKey, final Bytes message, final Bytes domain)
+  public HttpResponse signData(final PublicKey publicKey, final Bytes message, final Bytes domain)
       throws ExecutionException, InterruptedException {
     final SigningRequestBody requestBody =
         new SigningRequestBody(publicKey.toString(), message.toHexString(), domain.toHexString());
     final String httpBody = Json.encode(requestBody);
 
-    final CompletableFuture<String> responseBodyFuture = new CompletableFuture<>();
+    final CompletableFuture<HttpResponse> responseBodyFuture = new CompletableFuture<>();
     final HttpClientRequest request =
         httpClient.post(
-            "/sign/block",
+            "/signer/block",
             response -> {
-              if (response.statusCode() == HttpResponseStatus.OK.code()) {
-                response.bodyHandler(body -> responseBodyFuture.complete(body.toString(UTF_8)));
-              } else {
-                responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
-              }
+              response.bodyHandler(body -> responseBodyFuture
+                  .complete(new HttpResponse(response.statusCode(), body.toString(UTF_8))));
             });
 
     request.end(httpBody);

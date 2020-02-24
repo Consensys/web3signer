@@ -14,21 +14,19 @@ package tech.pegasys.eth2signer.tests;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import tech.pegasys.eth2signer.crypto.KeyPair;
-import tech.pegasys.eth2signer.crypto.PublicKey;
-import tech.pegasys.eth2signer.crypto.SecretKey;
-import tech.pegasys.eth2signer.dsl.signer.Signer;
-import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.eth2signer.dsl.utils.TomlHelpers;
-
+import io.netty.handler.codec.http.HttpResponseStatus;
 import java.nio.file.Path;
-import java.util.concurrent.ExecutionException;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import tech.pegasys.eth2signer.crypto.KeyPair;
+import tech.pegasys.eth2signer.crypto.PublicKey;
+import tech.pegasys.eth2signer.crypto.SecretKey;
+import tech.pegasys.eth2signer.dsl.HttpResponse;
+import tech.pegasys.eth2signer.dsl.signer.Signer;
+import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.eth2signer.dsl.utils.TomlHelpers;
 
 public class UnencryptedTomlKeyLoadAndSignAcceptanceTest {
 
@@ -57,16 +55,16 @@ public class UnencryptedTomlKeyLoadAndSignAcceptanceTest {
 
       final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
       final Bytes domain = Bytes.ofUnsignedLong(42L);
-      final String responseText = signer.signData(keyPair.publicKey(), message, domain);
-
-      assertThat(responseText.toLowerCase()).isEqualTo(expectedSignature.toLowerCase());
+      final HttpResponse response = signer.signData(keyPair.publicKey(), message, domain);
+      assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
+      assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature);
     } finally {
       signer.shutdown();
     }
   }
 
   @Test
-  public void receiveA404IfRequestedKeyDoesNotExist() {
+  public void receiveA404IfRequestedKeyDoesNotExist() throws Exception {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     final Signer signer = new Signer(builder.build());
     signer.start();
@@ -74,8 +72,8 @@ public class UnencryptedTomlKeyLoadAndSignAcceptanceTest {
     try {
       final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
       final Bytes domain = Bytes.ofUnsignedLong(42L);
-      assertThatThrownBy(() -> signer.signData(PublicKey.random(), message, domain))
-          .isInstanceOf(ExecutionException.class);
+      final HttpResponse response = signer.signData(PublicKey.random(), message, domain);
+      assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.NOT_FOUND.code());
     } finally {
       signer.shutdown();
     }

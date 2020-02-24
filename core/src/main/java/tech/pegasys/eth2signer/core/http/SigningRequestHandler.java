@@ -12,28 +12,29 @@
  */
 package tech.pegasys.eth2signer.core.http;
 
-import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.crypto.Signature;
-
-import java.util.Optional;
-
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
+import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.utils.JsonDecoder;
+import tech.pegasys.eth2signer.crypto.Signature;
 
 public class SigningRequestHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
   final ArtefactSignerProvider signerProvider;
+  private final JsonDecoder jsonDecoder;
 
-  public SigningRequestHandler(final ArtefactSignerProvider signerProvider) {
+  public SigningRequestHandler(final ArtefactSignerProvider signerProvider,
+      final JsonDecoder jsonDecoder) {
     this.signerProvider = signerProvider;
+    this.jsonDecoder = jsonDecoder;
   }
 
   @Override
@@ -46,7 +47,7 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
       final HttpServerResponse response, final Buffer requestBody) {
     LOG.trace("Body received {}", requestBody.toString());
     final SigningRequestBody signingRequest =
-        Json.decodeValue(requestBody, SigningRequestBody.class);
+        jsonDecoder.decodeValue(requestBody, SigningRequestBody.class);
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(signingRequest.publicKey());
 
     if (signer.isPresent()) {
