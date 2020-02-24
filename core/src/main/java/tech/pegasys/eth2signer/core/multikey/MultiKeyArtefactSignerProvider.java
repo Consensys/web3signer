@@ -12,12 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.FileBasedSigningMetadataFile;
-import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
-import tech.pegasys.eth2signer.core.signers.filebased.FileBasedSignerFactory;
-import tech.pegasys.eth2signer.core.signers.hashicorp.HashicorpVaultSignerFactory;
 import tech.pegasys.eth2signer.core.signers.unencryptedfile.UnencryptedKeyFileSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
@@ -59,24 +55,6 @@ public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, M
   }
 
   @Override
-  public ArtifactSigner createSigner(final HashicorpSigningMetadataFile metadataFile) {
-    final ArtifactSigner signer;
-    try {
-      signer = HashicorpVaultSignerFactory.createSigner(metadataFile.getConfig());
-    } catch (final RuntimeException e) {
-      LOG.error("Failed to construct Hashicorp signer from " + metadataFile.getBaseFilename());
-      return null;
-    }
-
-    if (filenameMatchesSigningAddress(signer, metadataFile)) {
-      LOG.info("Loaded signer for address {}", signer.getIdentifier());
-      return signer;
-    }
-
-    return null;
-  }
-
-  @Override
   public ArtifactSigner createSigner(final UnencryptedKeyMetadataFile metadataFile) {
     final ArtifactSigner signer;
     try {
@@ -92,25 +70,6 @@ public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, M
     }
 
     return null;
-  }
-
-  @Override
-  public ArtifactSigner createSigner(final FileBasedSigningMetadataFile metadataFile) {
-    try {
-      final ArtifactSigner signer =
-          FileBasedSignerFactory.createSigner(
-              metadataFile.getKeyPath(), metadataFile.getPasswordPath());
-      if (filenameMatchesSigningAddress(signer, metadataFile)) {
-        LOG.info("Loaded signer for address {}", signer.getIdentifier());
-        return signer;
-      }
-
-      return null;
-
-    } catch (final RuntimeException e) {
-      LOG.error("Unable to load signer with key " + metadataFile.getKeyPath().getFileName(), e);
-      return null;
-    }
   }
 
   private boolean filenameMatchesSigningAddress(

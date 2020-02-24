@@ -12,16 +12,9 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.FileBasedSigningMetadataFile;
-import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 public interface MultiSignerFactory {
-
-  ArtifactSigner createSigner(FileBasedSigningMetadataFile metadataFile);
-
-  ArtifactSigner createSigner(HashicorpSigningMetadataFile metadataFile);
-
   ArtifactSigner createSigner(UnencryptedKeyMetadataFile metadataFile);
 }

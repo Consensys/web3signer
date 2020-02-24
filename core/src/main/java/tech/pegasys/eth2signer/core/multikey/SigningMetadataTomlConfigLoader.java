@@ -12,11 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.FileBasedSigningMetadataFile;
-import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
-import tech.pegasys.eth2signer.core.signers.hashicorp.HashicorpConfig;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -94,11 +91,7 @@ public class SigningMetadataTomlConfigLoader {
       }
 
       final String type = signingTable.get().getString("type");
-      if (SignerType.fromString(type).equals(SignerType.BLS12_KEYSTORE_FILE)) {
-        return getFileBasedSigningMetadataFromToml(filename, result);
-      } else if (SignerType.fromString(type).equals(SignerType.HASHICORP_SIGNER)) {
-        return getHashicorpMetadataFromToml(file.getFileName().toString(), result);
-      } else if (SignerType.fromString(type).equals(SignerType.RAW_BLS12_KEY)) {
+      if (SignerType.fromString(type).equals(SignerType.RAW_BLS12_KEY)) {
         return getUnencryptedKeyFromToml(file.getFileName().toString(), result);
       } else {
         LOG.error("Unknown signing type in metadata: " + type);
@@ -112,46 +105,6 @@ public class SigningMetadataTomlConfigLoader {
       LOG.error("Could not load TOML file " + file, e);
       return Optional.empty();
     }
-  }
-
-  private Optional<SigningMetadataFile> getFileBasedSigningMetadataFromToml(
-      final String filename, final TomlParseResult result) {
-    final Optional<TomlTableAdapter> signingTable = getSigningTableFrom(filename, result);
-    if (signingTable.isEmpty()) {
-      return Optional.empty();
-    }
-    final TomlTableAdapter table = signingTable.get();
-
-    final String keyFilename = table.getString("key-file");
-    final Path keyPath = makeRelativePathAbsolute(keyFilename);
-    final String passwordFilename = table.getString("password-file");
-    final Path passwordPath = makeRelativePathAbsolute(passwordFilename);
-    return Optional.of(new FileBasedSigningMetadataFile(filename, keyPath, passwordPath));
-  }
-
-  private Optional<SigningMetadataFile> getHashicorpMetadataFromToml(
-      final String filename, final TomlParseResult result) {
-
-    final Optional<TomlTableAdapter> signingTable = getSigningTableFrom(filename, result);
-    if (signingTable.isEmpty()) {
-      return Optional.empty();
-    }
-
-    final HashicorpConfig.HashicorpConfigBuilder builder =
-        new HashicorpConfig.HashicorpConfigBuilder();
-    final TomlTableAdapter table = signingTable.get();
-
-    builder
-        .withSigningKeyPath(table.getString("signing-key-path"))
-        .withHost(table.getString("host"))
-        .withPort(table.getLong("port").intValue())
-        .withAuthFilePath(makeRelativePathAbsolute(table.getString("auth-file")))
-        .withTimeout(table.getLong("timeout"))
-        .withTlsEnabled(table.getOptionalBoolean("tls-enabled").orElse(true))
-        .withTlsKnownServerFile(
-            table.getOptionalString("tls-known-server-file").map(this::makeRelativePathAbsolute));
-
-    return Optional.of(new HashicorpSigningMetadataFile(filename, builder.build()));
   }
 
   private Optional<SigningMetadataFile> getUnencryptedKeyFromToml(

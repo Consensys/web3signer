@@ -14,8 +14,11 @@ package tech.pegasys.eth2signer.tests;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.concurrent.ExecutionException;
 import tech.pegasys.eth2signer.crypto.KeyPair;
+import tech.pegasys.eth2signer.crypto.PublicKey;
 import tech.pegasys.eth2signer.crypto.SecretKey;
 import tech.pegasys.eth2signer.dsl.signer.Signer;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
@@ -29,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-public class UnencryptedTomlKeyLoadAndSign {
+public class UnencryptedTomlKeyLoadAndSignAcceptanceTest {
 
   private final TomlHelpers tomlHelpers = new TomlHelpers();
 
@@ -50,7 +53,6 @@ public class UnencryptedTomlKeyLoadAndSign {
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
-    builder.withHttpRpcPort(0);
     final Signer signer = new Signer(builder.build());
     try {
       signer.start();
@@ -63,8 +65,23 @@ public class UnencryptedTomlKeyLoadAndSign {
       final String responseText = signer.signData(keyPair.publicKey(), message, domain);
 
       assertThat(responseText.toLowerCase()).isEqualTo(expectedSignature.toLowerCase());
+    } finally {
+      signer.shutdown();
     }
-    finally {
+  }
+
+  @Test
+  public void receiveA404IfRequestedKeyDoesNotExist() {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    final Signer signer = new Signer(builder.build());
+    signer.start();
+
+    try {
+      final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
+      final Bytes domain = Bytes.ofUnsignedLong(42L);
+      assertThatThrownBy(() -> signer.signData(PublicKey.random(), message, domain))
+          .isInstanceOf(ExecutionException.class);
+    } finally {
       signer.shutdown();
     }
   }
