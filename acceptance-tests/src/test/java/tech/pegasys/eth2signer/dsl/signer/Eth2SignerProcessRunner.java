@@ -65,7 +65,7 @@ public class Eth2SignerProcessRunner {
     Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
 
     this.signerHostname = signerConfig.hostname();
-    this.signerHttpRpcPort = signerConfig.httpRpcPort();
+    this.signerHttpRpcPort = signerConfig.httpPort();
     this.portsProperties = new Properties();
     this.signerConfig = signerConfig;
 
@@ -211,32 +211,5 @@ public class Eth2SignerProcessRunner {
     }
   }
 
-  private void loadPortsFile() {
-    final File portsFile = new File(dataPath.toFile(), PORTS_FILENAME);
-    LOG.info("Awaiting presence of ethsigner.ports file: {}", portsFile.getAbsolutePath());
-    awaitPortsFile(dataPath);
-    LOG.info("Found ethsigner.ports file: {}", portsFile.getAbsolutePath());
 
-    try (final FileInputStream fis = new FileInputStream(portsFile)) {
-      portsProperties.load(fis);
-      LOG.info("EthSigner ports: {}", portsProperties);
-    } catch (final IOException e) {
-      throw new RuntimeException("Error reading Web3Provider ports file", e);
-    }
-  }
-
-  private void awaitPortsFile(final Path dataDir) {
-    final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 30;
-    final File file = new File(dataDir.toFile(), PORTS_FILENAME);
-    Awaitility.waitAtMost(secondsToWait, TimeUnit.SECONDS)
-        .until(
-            () -> {
-              if (file.exists()) {
-                try (final Stream<String> s = Files.lines(file.toPath())) {
-                  return s.count() > 0;
-                }
-              }
-              return false;
-            });
-  }
 }

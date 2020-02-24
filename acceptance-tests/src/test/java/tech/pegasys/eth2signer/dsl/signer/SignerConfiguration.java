@@ -33,7 +33,7 @@ public class SignerConfiguration {
     return hostname;
   }
 
-  public int httpRpcPort() {
+  public int httpPort() {
     return httpRpcPort;
   }
 
