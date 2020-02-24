@@ -112,7 +112,7 @@ public class Runner implements Runnable {
     portsFile.deleteOnExit();
 
     final Properties properties = new Properties();
-    properties.setProperty("http-jsonrpc", String.valueOf(listeningPort));
+    properties.setProperty("http-port", String.valueOf(listeningPort));
 
     LOG.info(
         "Writing eth2signer.ports file: {}, with contents: {}",

@@ -16,6 +16,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 
+import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -30,16 +32,15 @@ import org.apache.logging.log4j.Logger;
 public class Signer {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final String PROCESS_NAME = "Eth2Signer";
 
-  private final Eth2SignerProcessRunner runner;
+  private final Eth2SignerRunner runner;
   private final String hostname;
   private final String urlFormatting;
   private final Vertx vertx;
   private HttpClient httpClient;
 
   public Signer(final SignerConfiguration signerConfig) {
-    this.runner = new Eth2SignerProcessRunner(signerConfig);
+    this.runner = Eth2SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
     urlFormatting = "http://%s:%s";
     vertx = Vertx.vertx();
@@ -47,14 +48,16 @@ public class Signer {
 
   public void start() {
     LOG.info("Starting Eth2Signer");
-    runner.start(PROCESS_NAME);
-    final String httpJsonRpcUrl = getUrl();
-    LOG.info("Http requests being submitted to : {} ", httpJsonRpcUrl);
+    runner.start();
+    final String httpUrl = getUrl();
+    LOG.info("Http requests being submitted to : {} ", httpUrl);
 
-    HttpClientOptions options = new HttpClientOptions();
-    options.setDefaultHost(this.hostname);
+    final HttpClientOptions options = new HttpClientOptions();
+    options.setDefaultHost(hostname);
     options.setDefaultPort(runner.httpJsonRpcPort());
-    httpClient = vertx.createHttpClient();
+    httpClient = vertx.createHttpClient(options);
+
+    awaitStartupCompletion();
   }
 
   public void shutdown() {
@@ -64,7 +67,7 @@ public class Signer {
   }
 
   public boolean isRunning() {
-    return runner.isRunning(PROCESS_NAME);
+    return runner.isRunning();
   }
 
   public boolean isListening() {
@@ -75,8 +78,9 @@ public class Signer {
             response -> {
               if (response.statusCode() == HttpResponseStatus.OK.code()) {
                 response.bodyHandler(body -> responseBodyFuture.complete(body.toString(UTF_8)));
+              } else {
+                responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
               }
-              responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
             });
     request.setChunked(false);
     request.end();
