@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package tech.pegasys.eth2signer.dsl.signer;
+package tech.pegasys.eth2signer.dsl.signer.runner;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
+import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 
 public class Eth2SignerProcessRunner extends Eth2SignerRunner {
 

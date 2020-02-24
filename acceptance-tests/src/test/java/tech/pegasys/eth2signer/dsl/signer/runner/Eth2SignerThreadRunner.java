@@ -12,12 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package tech.pegasys.eth2signer.dsl.signer;
+package tech.pegasys.eth2signer.dsl.signer.runner;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import tech.pegasys.eth2signer.Eth2SignerApp;
+import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 
 public class Eth2SignerThreadRunner extends Eth2SignerRunner {
 
@@ -34,7 +35,7 @@ public class Eth2SignerThreadRunner extends Eth2SignerRunner {
   }
 
   @Override
-  public void shutdown() {
+  public void shutdownExecutor() {
     executor.shutdownNow();
   }
 

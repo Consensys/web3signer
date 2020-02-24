@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package tech.pegasys.eth2signer.dsl.signer;
+package tech.pegasys.eth2signer.dsl.signer.runner;
 
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
@@ -29,6 +29,7 @@ import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
+import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 
 public abstract class Eth2SignerRunner {
 
@@ -40,7 +41,15 @@ public abstract class Eth2SignerRunner {
   private final Properties portsProperties;
 
   private static final String PORTS_FILENAME = "eth2signer.ports";
-  private static final String HTTP_JSON_RPC_KEY = "http-port";
+  private static final String HTTP_PORT_KEY = "http-port";
+
+  public static Eth2SignerRunner createRunner(final SignerConfiguration signerConfig) {
+    if(Boolean.getBoolean("acctests.runEth2SignerAsProcess")) {
+      return new Eth2SignerProcessRunner(signerConfig);
+    } else {
+      return new Eth2SignerThreadRunner(signerConfig);
+    }
+  }
 
 
   public Eth2SignerRunner(final SignerConfiguration signerConfig) {
@@ -145,7 +154,7 @@ public abstract class Eth2SignerRunner {
   }
 
   public int httpJsonRpcPort() {
-    return 0;
+    return Integer.valueOf(portsProperties.getProperty(HTTP_PORT_KEY));
   }
 
 }

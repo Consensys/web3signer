@@ -32,11 +32,11 @@ import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;
 
 public class Signer {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final String PROCESS_NAME = "Eth2Signer";
 
   private final Eth2SignerRunner runner;
   private final String hostname;
@@ -45,13 +45,7 @@ public class Signer {
   private HttpClient httpClient;
 
   public Signer(final SignerConfiguration signerConfig) {
-
-    if(Boolean.getBoolean("acctests.runEth2SignerAsProcess")) {
-      this.runner = new Eth2SignerProcessRunner(signerConfig);
-    } else {
-      this.runner = new Eth2SignerThreadRunner(signerConfig);
-    }
-
+    this.runner = Eth2SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
     urlFormatting = "http://%s:%s";
     vertx = Vertx.vertx();
@@ -79,7 +73,7 @@ public class Signer {
   }
 
   public boolean isRunning() {
-    return runner.isRunning(PROCESS_NAME);
+    return runner.isRunning();
   }
 
   public boolean isListening() {
