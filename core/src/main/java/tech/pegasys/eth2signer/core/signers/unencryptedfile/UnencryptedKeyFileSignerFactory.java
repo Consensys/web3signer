@@ -20,8 +20,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class UnencryptedKeyFileSignerFactory {
 
-  public static ArtifactSigner createSigner(final Bytes keyFilePath) {
-    final KeyPair keys = new KeyPair(SecretKey.fromBytes(keyFilePath));
+  public static ArtifactSigner createSigner(final Bytes privKeyBytes) {
+    final KeyPair keys = new KeyPair(SecretKey.fromBytes(privKeyBytes));
 
     return new ArtifactSigner(keys);
   }

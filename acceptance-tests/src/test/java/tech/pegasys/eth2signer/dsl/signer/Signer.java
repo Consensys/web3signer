@@ -18,6 +18,7 @@ import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 
 import tech.pegasys.eth2signer.core.http.SigningRequestBody;
 import tech.pegasys.eth2signer.crypto.PublicKey;
+import tech.pegasys.eth2signer.dsl.HttpResponse;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -31,7 +32,6 @@ import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.eth2signer.dsl.HttpResponse;
 
 public class Signer {
 
@@ -113,8 +113,10 @@ public class Signer {
         httpClient.post(
             "/signer/block",
             response -> {
-              response.bodyHandler(body -> responseBodyFuture
-                  .complete(new HttpResponse(response.statusCode(), body.toString(UTF_8))));
+              response.bodyHandler(
+                  body ->
+                      responseBodyFuture.complete(
+                          new HttpResponse(response.statusCode(), body.toString(UTF_8))));
             });
 
     request.end(httpBody);

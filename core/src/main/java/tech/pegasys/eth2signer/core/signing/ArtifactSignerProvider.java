@@ -15,7 +15,7 @@ package tech.pegasys.eth2signer.core.signing;
 import java.util.Optional;
 import java.util.Set;
 
-public interface ArtefactSignerProvider {
+public interface ArtifactSignerProvider {
 
   Optional<ArtifactSigner> getSigner(final String pubKey);
 

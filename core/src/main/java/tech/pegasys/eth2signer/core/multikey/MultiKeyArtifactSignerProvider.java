@@ -15,8 +15,8 @@ package tech.pegasys.eth2signer.core.multikey;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 import tech.pegasys.eth2signer.core.signers.unencryptedfile.UnencryptedKeyFileSignerFactory;
-import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -26,13 +26,13 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class MultiKeyArtefactSignerProvider implements ArtefactSignerProvider, MultiSignerFactory {
+public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider, MultiSignerFactory {
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final SigningMetadataTomlConfigLoader signingMetadataTomlConfigLoader;
 
-  public MultiKeyArtefactSignerProvider(
+  public MultiKeyArtifactSignerProvider(
       final SigningMetadataTomlConfigLoader signingMetadataTomlConfigLoader) {
     this.signingMetadataTomlConfigLoader = signingMetadataTomlConfigLoader;
   }

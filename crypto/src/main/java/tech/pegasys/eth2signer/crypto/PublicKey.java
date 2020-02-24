@@ -37,6 +37,7 @@ public final class PublicKey {
   /**
    * Generates a random, valid public key given entropy
    *
+   * @param entropy The seed for the random calculation
    * @return PublicKey The public key, not null
    */
   public static PublicKey random(int entropy) {

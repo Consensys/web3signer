@@ -15,7 +15,8 @@ package tech.pegasys.eth2signer.dsl.signer;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.collect.Lists;
+import tech.pegasys.eth2signer.Eth2SignerApp;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,12 +36,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import tech.pegasys.eth2signer.Eth2SignerApp;
 
 public class Eth2SignerProcessRunner {
 
@@ -109,7 +110,7 @@ public class Eth2SignerProcessRunner {
     final String loggingLevel = "DEBUG";
 
     final List<String> params = new ArrayList<>();
-    //params.add(executableLocation());
+    // params.add(executableLocation());
     params.add("--logging");
     params.add(loggingLevel);
     params.add("--http-listen-host");
@@ -129,12 +130,10 @@ public class Eth2SignerProcessRunner {
 
     boolean useThread = false;
     String[] paramsAsArray = params.toArray(new String[params.size()]);
-    if(useThread) {
-      final Thread thread =
-          new Thread(() -> Eth2SignerApp.main(paramsAsArray));
+    if (useThread) {
+      final Thread thread = new Thread(() -> Eth2SignerApp.main(paramsAsArray));
       thread.start();
-    }
-    else {
+    } else {
       final List<String> paramsWithCmd = Lists.asList(executableLocation(), paramsAsArray);
       final ProcessBuilder processBuilder =
           new ProcessBuilder(paramsWithCmd)

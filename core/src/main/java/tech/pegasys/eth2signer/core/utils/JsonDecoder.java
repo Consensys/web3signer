@@ -12,12 +12,13 @@
  */
 package tech.pegasys.eth2signer.core.utils;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.ByteBufInputStream;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.DecodeException;
-import java.io.IOException;
-import java.io.InputStream;
 
 public class JsonDecoder {
 

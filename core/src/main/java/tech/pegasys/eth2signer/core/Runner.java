@@ -12,13 +12,12 @@
  */
 package tech.pegasys.eth2signer.core;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
-import tech.pegasys.eth2signer.core.multikey.MultiKeyArtefactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.MultiKeyArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SigningMetadataTomlConfigLoader;
-import tech.pegasys.eth2signer.core.signing.ArtefactSignerProvider;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.utils.JsonDecoder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -26,6 +25,8 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -38,7 +39,6 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import tech.pegasys.eth2signer.core.utils.JsonDecoder;
 
 public class Runner implements Runnable {
 
@@ -84,8 +84,7 @@ public class Runner implements Runnable {
 
     final SigningMetadataTomlConfigLoader configLoader =
         new SigningMetadataTomlConfigLoader(config.getKeyConfigPath());
-    final ArtefactSignerProvider signerProvider = new MultiKeyArtefactSignerProvider(configLoader);
-
+    final ArtifactSignerProvider signerProvider = new MultiKeyArtifactSignerProvider(configLoader);
 
     final SigningRequestHandler signingHandler =
         new SigningRequestHandler(signerProvider, createJsonDecoder());
