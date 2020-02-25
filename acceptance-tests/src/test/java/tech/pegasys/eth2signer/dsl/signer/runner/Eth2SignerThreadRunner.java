@@ -29,7 +29,7 @@ public class Eth2SignerThreadRunner extends Eth2SignerRunner {
 
   @Override
   protected void startExecutor(List<String> params) {
-    final String[] paramsAsArray = params.toArray(new String[params.size()]);
+    final String[] paramsAsArray = params.toArray(new String[0]);
     executor.submit(() -> Eth2SignerApp.main(paramsAsArray));
   }
 

@@ -46,8 +46,10 @@ public abstract class Eth2SignerRunner {
 
   public static Eth2SignerRunner createRunner(final SignerConfiguration signerConfig) {
     if (Boolean.getBoolean("acctests.runEth2SignerAsProcess")) {
+      LOG.info("Eth2Signer running as a process.");
       return new Eth2SignerProcessRunner(signerConfig);
     } else {
+      LOG.info("Eth2Signer running in a thread.");
       return new Eth2SignerThreadRunner(signerConfig);
     }
   }

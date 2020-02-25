@@ -35,14 +35,13 @@ public class Signer {
 
   private final Eth2SignerRunner runner;
   private final String hostname;
-  private final String urlFormatting;
+  private final String urlFormatting = "http://%s:%s";
   private final Vertx vertx;
   private HttpClient httpClient;
 
   public Signer(final SignerConfiguration signerConfig) {
     this.runner = Eth2SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
-    urlFormatting = "http://%s:%s";
     vertx = Vertx.vertx();
   }
 

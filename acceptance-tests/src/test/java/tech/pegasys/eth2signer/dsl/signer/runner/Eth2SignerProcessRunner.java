@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.List;
 import java.util.StringJoiner;
@@ -50,7 +51,7 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
   protected void startExecutor(final List<String> params) {
     final StringJoiner javaOpts = new StringJoiner(" ");
 
-    final String[] paramsAsArray = params.toArray(new String[params.size()]);
+    final String[] paramsAsArray = params.toArray(new String[0]);
     final List<String> paramsWithCmd = Lists.asList(executableLocation(), paramsAsArray);
 
     final ProcessBuilder processBuilder =
@@ -66,10 +67,10 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
 
     try {
       process = processBuilder.start();
-      outputProcessorExecutor.submit(() -> printOutput());
+      outputProcessorExecutor.submit(this::printOutput);
     } catch (final IOException e) {
       LOG.error("Error starting EthSigner process", e);
-      throw new RuntimeException("Failed to start the Ethsigner process");
+      throw new UncheckedIOException("Failed to start the Ethsigner process", e);
     }
   }
 
