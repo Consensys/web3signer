@@ -100,7 +100,7 @@ public class Signer {
     return "OK".equals(body);
   }
 
-  public HttpResponse signData(final PublicKey publicKey, final Bytes message, final Bytes domain)
+  public HttpResponse signData(final String signingEndpoint, final PublicKey publicKey, final Bytes message, final Bytes domain)
       throws ExecutionException, InterruptedException {
     final SigningRequestBody requestBody =
         new SigningRequestBody(publicKey.toString(), message.toHexString(), domain.toHexString());
@@ -109,7 +109,7 @@ public class Signer {
     final CompletableFuture<HttpResponse> responseBodyFuture = new CompletableFuture<>();
     final HttpClientRequest request =
         httpClient.post(
-            "/signer/block",
+            "/signer/" + signingEndpoint,
             response ->
                 response.bodyHandler(
                     body ->
