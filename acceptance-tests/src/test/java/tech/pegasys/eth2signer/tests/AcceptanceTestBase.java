@@ -12,15 +12,25 @@
  */
 package tech.pegasys.eth2signer.tests;
 
-import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.eth2signer.dsl.signer.Signer;
+import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 
-public class UpcheckAcceptanceTest extends AcceptanceTestBase {
+public class AcceptanceTestBase {
 
-  @Test
-  public void upcheckOnCorrectPortRespondsWithOK() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    startSigner(builder.build());
+  protected Signer signer;
+
+  void startSigner(final SignerConfiguration config) {
+    signer = new Signer(config);
+    signer.start();
+  }
+
+  @AfterEach
+  void cleanup() {
+    if (signer != null) {
+      signer.shutdown();
+      signer = null;
+    }
   }
 }

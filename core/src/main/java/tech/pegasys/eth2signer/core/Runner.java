@@ -151,7 +151,7 @@ public class Runner implements Runnable {
     }
   }
 
-  public static JsonDecoder createJsonDecoder() {
+  private JsonDecoder createJsonDecoder() {
     // Force Transaction Deserialization to fail if missing expected properties
     final ObjectMapper jsonObjectMapper = new ObjectMapper();
     jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES, true);

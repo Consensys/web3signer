@@ -22,6 +22,7 @@ import java.util.Optional;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.DecodeException;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class SigningRequestHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
-  final ArtifactSignerProvider signerProvider;
+  private final ArtifactSignerProvider signerProvider;
   private final JsonDecoder jsonDecoder;
 
   public SigningRequestHandler(
@@ -48,8 +49,17 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
   private void generateResponseFromBody(
       final HttpServerResponse response, final Buffer requestBody) {
     LOG.trace("Body received {}", requestBody.toString());
-    final SigningRequestBody signingRequest =
-        jsonDecoder.decodeValue(requestBody, SigningRequestBody.class);
+
+    final SigningRequestBody signingRequest;
+    try {
+      signingRequest = jsonDecoder.decodeValue(requestBody, SigningRequestBody.class);
+    } catch (final DecodeException e) {
+      response
+          .setStatusCode(400)
+          .setChunked(false)
+          .end("Request body illegally formatted for signing operation.");
+      return;
+    }
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(signingRequest.publicKey());
 
     if (signer.isPresent()) {
@@ -59,9 +69,10 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
       response.end(signature.toString());
     } else {
       LOG.error("Unable to find an appropriate signer for request: {}", signingRequest.publicKey());
-      response.setStatusCode(404);
-      response.setChunked(false);
-      response.end("No key exists for requested signing operation.");
+      response
+          .setStatusCode(404)
+          .setChunked(false)
+          .end("No key exists for requested signing operation.");
     }
   }
 }

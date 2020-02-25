@@ -19,7 +19,6 @@ import tech.pegasys.eth2signer.crypto.KeyPair;
 import tech.pegasys.eth2signer.crypto.PublicKey;
 import tech.pegasys.eth2signer.crypto.SecretKey;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
-import tech.pegasys.eth2signer.dsl.signer.Signer;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.TomlHelpers;
 
@@ -30,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-public class UnencryptedTomlKeyLoadAndSignAcceptanceTest {
+public class UnencryptedTomlKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
   private final TomlHelpers tomlHelpers = new TomlHelpers();
 
@@ -48,36 +47,35 @@ public class UnencryptedTomlKeyLoadAndSignAcceptanceTest {
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
-    final Signer signer = new Signer(builder.build());
-    try {
-      signer.start();
+    startSigner(builder.build());
 
-      final String expectedSignature =
-          "0x810A4B8E878A1AD0B30F3EAE7ED35E17450E82FDDE6AAA8B500EB5A59A78E3B07684F72B014F92EBED64BD7FFEF680A00A63B84CA92A6299265A0C2339547F0432C3DEE612665C4FEE5D4D93B42D84F2E963700842F60DAE7E5B641F5BB01E64";
+    final String expectedSignature =
+        "0x810A4B8E878A1AD0B30F3EAE7ED35E17450E82FDDE6AAA8B500EB5A59A78E3B07684F72B014F92EBED64BD7FFEF680A00A63B84CA92A6299265A0C2339547F0432C3DEE612665C4FEE5D4D93B42D84F2E963700842F60DAE7E5B641F5BB01E64";
 
-      final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
-      final Bytes domain = Bytes.ofUnsignedLong(42L);
-      final HttpResponse response = signer.signData(keyPair.publicKey(), message, domain);
-      assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-      assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature);
-    } finally {
-      signer.shutdown();
-    }
+    final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
+    final Bytes domain = Bytes.ofUnsignedLong(42L);
+    final HttpResponse response = signer.signData(keyPair.publicKey(), message, domain);
+    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
+    assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature);
   }
 
   @Test
   public void receiveA404IfRequestedKeyDoesNotExist() throws Exception {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    final Signer signer = new Signer(builder.build());
-    signer.start();
+    startSigner(builder.build());
 
-    try {
-      final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
-      final Bytes domain = Bytes.ofUnsignedLong(42L);
-      final HttpResponse response = signer.signData(PublicKey.random(), message, domain);
-      assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.NOT_FOUND.code());
-    } finally {
-      signer.shutdown();
-    }
+    final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
+    final Bytes domain = Bytes.ofUnsignedLong(42L);
+    final HttpResponse response = signer.signData(PublicKey.random(), message, domain);
+    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.NOT_FOUND.code());
+  }
+
+  @Test
+  public void receiveA400IfJsonBodyIsMalformed() throws Exception {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    startSigner(builder.build());
+
+    final HttpResponse response = signer.postRawRequest("/signer/block", "invalid Body");
+    assertThat(response.getStatusCode()).isEqualTo(400);
   }
 }

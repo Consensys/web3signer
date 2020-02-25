@@ -110,14 +110,30 @@ public class Signer {
     final HttpClientRequest request =
         httpClient.post(
             "/signer/block",
-            response -> {
-              response.bodyHandler(
-                  body ->
-                      responseBodyFuture.complete(
-                          new HttpResponse(response.statusCode(), body.toString(UTF_8))));
-            });
+            response ->
+                response.bodyHandler(
+                    body ->
+                        responseBodyFuture.complete(
+                            new HttpResponse(response.statusCode(), body.toString(UTF_8)))));
 
     request.end(httpBody);
+
+    return responseBodyFuture.get();
+  }
+
+  public HttpResponse postRawRequest(final String endpoint, final String requestBody)
+      throws ExecutionException, InterruptedException {
+    final CompletableFuture<HttpResponse> responseBodyFuture = new CompletableFuture<>();
+    final HttpClientRequest request =
+        httpClient.post(
+            endpoint,
+            response ->
+                response.bodyHandler(
+                    body ->
+                        responseBodyFuture.complete(
+                            new HttpResponse(response.statusCode(), body.toString(UTF_8)))));
+
+    request.end(requestBody);
 
     return responseBodyFuture.get();
   }
