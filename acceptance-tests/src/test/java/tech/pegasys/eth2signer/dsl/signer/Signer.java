@@ -101,10 +101,7 @@ public class Signer {
   }
 
   public HttpResponse signData(
-      final String endpoint,
-      final PublicKey publicKey,
-      final Bytes message,
-      final Bytes domain)
+      final String endpoint, final PublicKey publicKey, final Bytes message, final Bytes domain)
       throws ExecutionException, InterruptedException {
     final SigningRequestBody requestBody =
         new SigningRequestBody(publicKey.toString(), message.toHexString(), domain.toHexString());

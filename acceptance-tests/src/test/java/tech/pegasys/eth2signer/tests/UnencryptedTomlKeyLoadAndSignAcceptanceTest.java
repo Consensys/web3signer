@@ -44,7 +44,8 @@ public class UnencryptedTomlKeyLoadAndSignAcceptanceTest extends AcceptanceTestB
 
   @ParameterizedTest
   @ValueSource(strings = {"/signer/block", "/signer/attestation"})
-  public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint) throws Exception {
+  public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint)
+      throws Exception {
     final String tomlKeyFilename = keyPair.publicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(tomlKeyFilename + ".toml");
     tomlHelpers.createUnencryptedTomlFileAt(keyConfigFile, privateKeyString);
