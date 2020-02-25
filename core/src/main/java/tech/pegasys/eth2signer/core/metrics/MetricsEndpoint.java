@@ -12,18 +12,12 @@
  */
 package tech.pegasys.eth2signer.core.metrics;
 
-import static java.util.stream.Collectors.toSet;
-
 import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
-import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
 import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
@@ -33,17 +27,16 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 public class MetricsEndpoint {
   private final Optional<MetricsService> metricsService;
   private final MetricsSystem metricsSystem;
-  private static final Map<String, MetricCategory> SUPPORTED_CATEGORIES;
 
-  static {
-    final ImmutableMap.Builder<String, MetricCategory> builder = ImmutableMap.builder();
-    addCategories(builder, StandardMetricCategory.class);
-    addCategories(builder, Eth2SignerMetricCategory.class);
-    SUPPORTED_CATEGORIES = builder.build();
-  }
-
-  public MetricsEndpoint(final MetricsConfig eth2SignerMetricsConfig, final Vertx vertx) {
-    final MetricsConfiguration metricsConfig = createMetricsConfiguration(eth2SignerMetricsConfig);
+  public MetricsEndpoint(
+      final Boolean metricsEnabled,
+      final Integer metricsPort,
+      final String metricsNetworkInterface,
+      final Set<MetricCategory> metricCategories,
+      final Vertx vertx) {
+    final MetricsConfiguration metricsConfig =
+        createMetricsConfiguration(
+            metricsEnabled, metricsPort, metricsNetworkInterface, metricCategories);
     metricsSystem = PrometheusMetricsSystem.init(metricsConfig);
     if (metricsConfig.isEnabled()) {
       metricsService = Optional.of(MetricsService.create(vertx, metricsConfig, metricsSystem));
@@ -64,20 +57,17 @@ public class MetricsEndpoint {
     return metricsSystem;
   }
 
-  private MetricsConfiguration createMetricsConfiguration(final MetricsConfig eth2SignerMetricsConfig) {
+  private MetricsConfiguration createMetricsConfiguration(
+      final Boolean metricsEnabled,
+      final Integer metricsPort,
+      final String metricsNetworkInterface,
+      final Set<MetricCategory> metricCategories) {
     return MetricsConfiguration.builder()
-        .enabled(eth2SignerMetricsConfig.isEnabled())
-        .port(eth2SignerMetricsConfig.getPort())
-        .host(eth2SignerMetricsConfig.getNetworkInterface())
-        .metricCategories(eth2SignerMetricsConfig.getCategories())
+        .enabled(metricsEnabled)
+        .port(metricsPort)
+        .host(metricsNetworkInterface)
+        .metricCategories(metricCategories)
         .build();
-  }
-
-  private Set<MetricCategory> getEnabledMetricCategories(final Set<MetricCategory> metricsCategories) {
-    return metricsCategories.stream()
-        .map(SUPPORTED_CATEGORIES::get)
-        .filter(Objects::nonNull)
-        .collect(toSet());
   }
 
   private static <T extends Enum<T> & MetricCategory> void addCategories(

@@ -12,11 +12,11 @@
  */
 package tech.pegasys.eth2signer.core.metrics;
 
-import com.google.common.collect.ImmutableSet;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 

@@ -16,18 +16,18 @@ import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY
 import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
 import static tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
-import java.util.Set;
-import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import tech.pegasys.eth2signer.core.Config;
 import tech.pegasys.eth2signer.core.Runner;
 
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.util.Set;
 
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
