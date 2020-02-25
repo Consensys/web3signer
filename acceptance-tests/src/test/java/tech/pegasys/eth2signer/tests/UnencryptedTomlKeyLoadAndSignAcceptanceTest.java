@@ -15,8 +15,6 @@ package tech.pegasys.eth2signer.tests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import tech.pegasys.eth2signer.crypto.KeyPair;
 import tech.pegasys.eth2signer.crypto.PublicKey;
 import tech.pegasys.eth2signer.crypto.SecretKey;
@@ -30,6 +28,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class UnencryptedTomlKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
@@ -43,9 +43,8 @@ public class UnencryptedTomlKeyLoadAndSignAcceptanceTest extends AcceptanceTestB
   @TempDir Path testDirectory;
 
   @ParameterizedTest
-  @ValueSource(strings = { "block", "attestation" })
-  public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactType)
-      throws Exception {
+  @ValueSource(strings = {"/signer/block", "/signer/attestation"})
+  public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint) throws Exception {
     final String tomlKeyFilename = keyPair.publicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(tomlKeyFilename + ".toml");
     tomlHelpers.createUnencryptedTomlFileAt(keyConfigFile, privateKeyString);
@@ -59,7 +58,8 @@ public class UnencryptedTomlKeyLoadAndSignAcceptanceTest extends AcceptanceTestB
 
     final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
     final Bytes domain = Bytes.ofUnsignedLong(42L);
-    final HttpResponse response = signer.signData(artifactType, keyPair.publicKey(), message, domain);
+    final HttpResponse response =
+        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), message, domain);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature);
   }
