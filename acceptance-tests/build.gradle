@@ -18,6 +18,8 @@ dependencies {
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testRuntimeOnly 'org.bouncycastle:bcpkix-jdk15on'
 
+  testImplementation project(':app')
+  testImplementation project(':core')
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'io.vertx:vertx-core'
   testImplementation 'io.vertx:vertx-web'
