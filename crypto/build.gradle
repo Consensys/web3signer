@@ -1,6 +1,6 @@
 
 jar {
-  archiveBaseName = 'eth2signer-core'
+  archiveBaseName = 'eth2signer-crypto'
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -13,22 +13,14 @@ jar {
 
 dependencies {
 
-
-  implementation project(':crypto')
-
-  implementation 'info.picocli:picocli'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
 
-  implementation 'org.apache.tuweni:tuweni-toml'
-  implementation 'org.apache.tuweni:tuweni-net'
-
-  implementation 'io.vertx:vertx-core'
-  implementation 'io.vertx:vertx-web'
-
-  implementation 'org.hyperledger.besu.internal:metrics-core'
-  implementation 'org.hyperledger.besu:plugin-api'
+  api 'org.bouncycastle:bcprov-jdk15on'
+  implementation 'org.apache.tuweni:tuweni-crypto'
+  implementation 'org.miracl.milagro.amcl:milagro-crypto-java'
+  implementation 'org.apache.tuweni:tuweni-bytes'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 
@@ -37,8 +29,4 @@ dependencies {
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-}
-
-artifacts {
-  testSupportArtifacts testSupportJar
 }
