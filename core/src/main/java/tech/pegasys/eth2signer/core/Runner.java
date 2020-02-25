@@ -13,6 +13,11 @@
 package tech.pegasys.eth2signer.core;
 
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
+import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
+import tech.pegasys.eth2signer.core.multikey.MultiKeyArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.SigningMetadataTomlConfigLoader;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.utils.JsonDecoder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -20,6 +25,8 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -38,6 +45,7 @@ public class Runner implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
   private static final String TEXT = HttpHeaderValues.TEXT_PLAIN.toString() + "; charset=utf-8";
+  private static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
   private final Config config;
 
   public Runner(final Config config) {
@@ -65,13 +73,28 @@ public class Runner implements Runnable {
 
   private Handler<HttpServerRequest> createRouter(final Vertx vertx) {
     final Router router = Router.router(vertx);
+    final LogErrorHandler errorHandler = new LogErrorHandler();
     router
         .route(HttpMethod.GET, "/upcheck")
         .produces(TEXT)
         .handler(BodyHandler.create())
         .handler(ResponseContentTypeHandler.create())
-        .failureHandler(new LogErrorHandler())
+        .failureHandler(errorHandler)
         .handler(routingContext -> routingContext.response().end("OK"));
+
+    final SigningMetadataTomlConfigLoader configLoader =
+        new SigningMetadataTomlConfigLoader(config.getKeyConfigPath());
+    final ArtifactSignerProvider signerProvider = new MultiKeyArtifactSignerProvider(configLoader);
+
+    final SigningRequestHandler signingHandler =
+        new SigningRequestHandler(signerProvider, createJsonDecoder());
+
+    router
+        .routeWithRegex(HttpMethod.POST, "/signer/" + "(attestation|block)")
+        .produces(JSON)
+        .handler(ResponseContentTypeHandler.create())
+        .failureHandler(errorHandler)
+        .handler(signingHandler);
 
     return router;
   }
@@ -126,5 +149,14 @@ public class Runner implements Runnable {
     } catch (final Exception e) {
       LOG.warn("Error writing ports file", e);
     }
+  }
+
+  private JsonDecoder createJsonDecoder() {
+    // Force Transaction Deserialization to fail if missing expected properties
+    final ObjectMapper jsonObjectMapper = new ObjectMapper();
+    jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES, true);
+    jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, true);
+
+    return new JsonDecoder(jsonObjectMapper);
   }
 }
