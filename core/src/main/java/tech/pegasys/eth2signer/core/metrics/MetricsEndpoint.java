@@ -12,11 +12,9 @@
  */
 package tech.pegasys.eth2signer.core.metrics;
 
-import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableMap;
 import io.vertx.core.Vertx;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsService;
@@ -68,10 +66,5 @@ public class MetricsEndpoint {
         .host(metricsNetworkInterface)
         .metricCategories(metricCategories)
         .build();
-  }
-
-  private static <T extends Enum<T> & MetricCategory> void addCategories(
-      ImmutableMap.Builder<String, MetricCategory> builder, Class<T> categoryEnum) {
-    EnumSet.allOf(categoryEnum).forEach(category -> builder.put(category.name(), category));
   }
 }
