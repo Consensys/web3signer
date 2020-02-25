@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.core;
 
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
+import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.multikey.MultiKeyArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SigningMetadataTomlConfigLoader;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -56,16 +57,25 @@ public class Runner implements Runnable {
   public void run() {
 
     final Vertx vertx = Vertx.vertx();
+    final MetricsEndpoint metricsEndpoint =
+        new MetricsEndpoint(
+            config.isMetricsEnabled(),
+            config.getMetricsPort(),
+            config.getMetricsNetworkInterface(),
+            config.getMetricCategories(),
+            vertx);
     try {
       final Handler<HttpServerRequest> requestHandler = createRouter(vertx);
       final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
+      metricsEndpoint.start();
       persistPortInformation(httpServer.actualPort());
     } catch (final ExecutionException | InterruptedException e) {
       vertx.close();
       throw new RuntimeException("Failed to create Http Server", e.getCause());
     } catch (final Throwable t) {
+      metricsEndpoint.stop();
       vertx.close();
       throw t;
     }
