@@ -19,6 +19,7 @@ import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 import tech.pegasys.eth2signer.core.http.SigningRequestBody;
 import tech.pegasys.eth2signer.crypto.PublicKey;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
+import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -32,7 +33,6 @@ import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;
 
 public class Signer {
 
@@ -40,21 +40,19 @@ public class Signer {
 
   private final Eth2SignerRunner runner;
   private final String hostname;
-  private final String urlFormatting;
+  private final String urlFormatting = "http://%s:%s";
   private final Vertx vertx;
   private HttpClient httpClient;
 
   public Signer(final SignerConfiguration signerConfig) {
     this.runner = Eth2SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
-    urlFormatting = "http://%s:%s";
     vertx = Vertx.vertx();
   }
 
   public void start() {
     LOG.info("Starting Eth2Signer");
     runner.start();
-
     final String httpUrl = getUrl();
     LOG.info("Http requests being submitted to : {} ", httpUrl);
 

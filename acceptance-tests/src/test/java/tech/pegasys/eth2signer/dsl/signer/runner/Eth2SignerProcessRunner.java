@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright 2020 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,28 +9,29 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.eth2signer.dsl.signer.runner;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import com.google.common.collect.Lists;
+import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 
 public class Eth2SignerProcessRunner extends Eth2SignerRunner {
 
@@ -50,7 +51,7 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
   protected void startExecutor(final List<String> params) {
     final StringJoiner javaOpts = new StringJoiner(" ");
 
-    final String[] paramsAsArray = params.toArray(new String[params.size()]);
+    final String[] paramsAsArray = params.toArray(new String[0]);
     final List<String> paramsWithCmd = Lists.asList(executableLocation(), paramsAsArray);
 
     final ProcessBuilder processBuilder =
@@ -66,10 +67,10 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
 
     try {
       process = processBuilder.start();
-      outputProcessorExecutor.submit(() -> printOutput());
+      outputProcessorExecutor.submit(this::printOutput);
     } catch (final IOException e) {
       LOG.error("Error starting EthSigner process", e);
-      throw new RuntimeException("Failed to start the Ethsigner process");
+      throw new UncheckedIOException("Failed to start the Ethsigner process", e);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright 2020 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,13 +9,13 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.eth2signer.dsl.signer.runner;
 
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -26,16 +26,17 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 
 public abstract class Eth2SignerRunner {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final static int UNASSIGNED_PORT = 0;
   private final SignerConfiguration signerConfig;
   private final Path dataPath;
   private final Properties portsProperties;
@@ -44,19 +45,20 @@ public abstract class Eth2SignerRunner {
   private static final String HTTP_PORT_KEY = "http-port";
 
   public static Eth2SignerRunner createRunner(final SignerConfiguration signerConfig) {
-    if(Boolean.getBoolean("acctests.runEth2SignerAsProcess")) {
+    if (Boolean.getBoolean("acctests.runEth2SignerAsProcess")) {
+      LOG.info("Eth2Signer running as a process.");
       return new Eth2SignerProcessRunner(signerConfig);
     } else {
+      LOG.info("Eth2Signer running in a thread.");
       return new Eth2SignerThreadRunner(signerConfig);
     }
   }
-
 
   public Eth2SignerRunner(final SignerConfiguration signerConfig) {
     this.signerConfig = signerConfig;
     this.portsProperties = new Properties();
 
-    if (isDynamicPortAllocation()) {
+    if (signerConfig.isDynamicPortAllocation()) {
       try {
         this.dataPath = Files.createTempDirectory("acceptance-test");
       } catch (final IOException e) {
@@ -73,10 +75,9 @@ public abstract class Eth2SignerRunner {
 
     startExecutor(params);
 
-    if (isDynamicPortAllocation()) {
+    if (signerConfig.isDynamicPortAllocation()) {
       loadPortsFile();
     }
-
   }
 
   protected abstract void startExecutor(final List<String> params);
@@ -84,9 +85,8 @@ public abstract class Eth2SignerRunner {
   public void shutdown() {
     try {
       shutdownExecutor();
-    }
-    finally {
-      if (isDynamicPortAllocation()) {
+    } finally {
+      if (signerConfig.isDynamicPortAllocation()) {
         try {
           MoreFiles.deleteRecursively(dataPath, RecursiveDeleteOption.ALLOW_INSECURE);
         } catch (final IOException e) {
@@ -112,7 +112,7 @@ public abstract class Eth2SignerRunner {
     params.add(String.valueOf(signerConfig.httpPort()));
     params.add("--key-store-path");
     params.add(signerConfig.getKeyStorePath().toString());
-    if (isDynamicPortAllocation()) {
+    if (signerConfig.isDynamicPortAllocation()) {
       params.add("--data-path");
       params.add(dataPath.toAbsolutePath().toString());
     }
@@ -149,12 +149,14 @@ public abstract class Eth2SignerRunner {
             });
   }
 
-  public boolean isDynamicPortAllocation() {
-    return signerConfig.httpPort() == UNASSIGNED_PORT;
-  }
-
   public int httpJsonRpcPort() {
-    return Integer.valueOf(portsProperties.getProperty(HTTP_PORT_KEY));
+    if (signerConfig.isDynamicPortAllocation()) {
+      final String value = portsProperties.getProperty(HTTP_PORT_KEY);
+      LOG.info("{}: {}", HTTP_PORT_KEY, value);
+      assertThat(value).isNotEmpty();
+      return Integer.parseInt(value);
+    } else {
+      return signerConfig.httpPort();
+    }
   }
-
 }
