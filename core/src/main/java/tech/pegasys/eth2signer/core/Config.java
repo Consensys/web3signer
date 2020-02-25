@@ -13,8 +13,9 @@
 package tech.pegasys.eth2signer.core;
 
 import java.nio.file.Path;
-
+import java.util.Set;
 import org.apache.logging.log4j.Level;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 public interface Config {
 
@@ -27,4 +28,13 @@ public interface Config {
   Path getDataPath();
 
   Path getKeyConfigPath();
+
+  Boolean isMetricsEnabled();
+
+  Integer getMetricsPort();
+
+  String getMetricsNetworkInterface();
+
+  Set<MetricCategory> getMetricCategories();
+
 }

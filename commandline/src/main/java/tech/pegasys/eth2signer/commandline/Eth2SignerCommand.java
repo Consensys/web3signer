@@ -12,6 +12,12 @@
  */
 package tech.pegasys.eth2signer.commandline;
 
+import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP;
+import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
+import static tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
+
+import java.util.Set;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import tech.pegasys.eth2signer.core.Config;
 import tech.pegasys.eth2signer.core.Runner;
 
@@ -72,16 +78,45 @@ public class Eth2SignerCommand implements Config, Runnable {
   @Option(
       names = {"--http-listen-host"},
       description = "Host for HTTP to listen on (default: ${DEFAULT-VALUE})",
-      paramLabel = DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP,
+      paramLabel = MANDATORY_HOST_FORMAT_HELP,
       arity = "1")
   private String httpListenHost = InetAddress.getLoopbackAddress().getHostAddress();
 
   @Option(
       names = {"--http-listen-port"},
       description = "Port for HTTP to listen on (default: ${DEFAULT-VALUE})",
-      paramLabel = DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP,
+      paramLabel = MANDATORY_PORT_FORMAT_HELP,
       arity = "1")
   private final Integer httpListenPort = 9000;
+
+  @Option(
+      names = {"--metrics-enabled"},
+      description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
+  private final Boolean metricsEnabled = false;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @Option(
+      names = {"--metrics-host"},
+      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String metricsHost = InetAddress.getLoopbackAddress().getHostAddress();
+
+  @Option(
+      names = {"--metrics-port"},
+      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      description = "Port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer metricsPort = 9001;
+
+  @Option(
+      names = {"--metrics-category", "--metrics-categories"},
+      paramLabel = "<category name>",
+      split = ",",
+      arity = "1..*",
+      description =
+          "Comma separated list of categories to track metrics for (default: ${DEFAULT-VALUE})")
+  private final Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
 
   @Override
   public Level getLogLevel() {
@@ -106,6 +141,26 @@ public class Eth2SignerCommand implements Config, Runnable {
   @Override
   public Path getKeyConfigPath() {
     return keyStorePath;
+  }
+
+  @Override
+  public Boolean isMetricsEnabled() {
+    return metricsEnabled;
+  }
+
+  @Override
+  public Integer getMetricsPort() {
+    return metricsPort;
+  }
+
+  @Override
+  public String getMetricsNetworkInterface() {
+    return metricsHost;
+  }
+
+  @Override
+  public Set<MetricCategory> getMetricCategories() {
+    return metricCategories;
   }
 
   @Override

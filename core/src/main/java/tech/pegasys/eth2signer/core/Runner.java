@@ -32,6 +32,8 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import tech.pegasys.eth2signer.core.metrics.MetricsConfig;
+import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 
 public class Runner implements Runnable {
 
@@ -52,6 +54,10 @@ public class Runner implements Runnable {
       final Handler<HttpServerRequest> requestHandler = createRouter(vertx);
       final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
+
+      final MetricsConfig metricsConfig = new MetricsConfig(config.isMetricsEnabled(), config.getMetricsPort(), config.getMetricsNetworkInterface(), config.getMetricCategories());
+      final MetricsEndpoint metricsEndpoint = new MetricsEndpoint(metricsConfig, vertx);
+      metricsEndpoint.start();
 
       persistPortInformation(httpServer.actualPort());
     } catch (final ExecutionException | InterruptedException e) {
