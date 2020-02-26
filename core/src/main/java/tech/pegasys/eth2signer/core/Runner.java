@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.core;
 
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
+import tech.pegasys.eth2signer.core.http.ResponseTimeMetricsHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.multikey.MultiKeyArtifactSignerProvider;
@@ -40,6 +41,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Runner implements Runnable {
 
@@ -65,7 +67,8 @@ public class Runner implements Runnable {
             config.getMetricCategories(),
             vertx);
     try {
-      final Handler<HttpServerRequest> requestHandler = createRouter(vertx);
+      final Handler<HttpServerRequest> requestHandler =
+          createRouter(vertx, metricsEndpoint.getMetricsSystem());
       final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
@@ -81,12 +84,18 @@ public class Runner implements Runnable {
     }
   }
 
-  private Handler<HttpServerRequest> createRouter(final Vertx vertx) {
+  private Handler<HttpServerRequest> createRouter(
+      final Vertx vertx, final MetricsSystem metricsSystem) {
     final Router router = Router.router(vertx);
     final LogErrorHandler errorHandler = new LogErrorHandler();
+
+    final ResponseTimeMetricsHandler responseTimeHandler =
+        new ResponseTimeMetricsHandler(metricsSystem);
+
     router
         .route(HttpMethod.GET, "/upcheck")
         .produces(TEXT)
+        .handler(responseTimeHandler)
         .handler(BodyHandler.create())
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler)
@@ -102,6 +111,7 @@ public class Runner implements Runnable {
     router
         .routeWithRegex(HttpMethod.POST, "/signer/" + "(attestation|block)")
         .produces(JSON)
+        .handler(responseTimeHandler)
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler)
         .handler(signingHandler);

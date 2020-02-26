@@ -21,7 +21,7 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 public enum Eth2SignerMetricCategory implements MetricCategory {
-  SIGNER("signer");
+  HTTP("http");
 
   private final String name;
 

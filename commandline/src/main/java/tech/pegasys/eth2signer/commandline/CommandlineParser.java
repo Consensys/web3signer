@@ -12,9 +12,14 @@
  */
 package tech.pegasys.eth2signer.commandline;
 
+import tech.pegasys.eth2signer.commandline.convertor.MetricCategoryConverter;
+import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
+
 import java.io.PrintWriter;
 
 import org.apache.logging.log4j.Level;
+import org.hyperledger.besu.metrics.StandardMetricCategory;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import picocli.CommandLine;
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.ParameterException;
@@ -24,6 +29,7 @@ public class CommandlineParser {
   private final Eth2SignerCommand baseCommand;
   private final PrintWriter outputWriter;
   private final PrintWriter errorWriter;
+  private final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
 
   public CommandlineParser(
       final Eth2SignerCommand baseCommand,
@@ -44,7 +50,15 @@ public class CommandlineParser {
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);
     commandLine.setParameterExceptionHandler(this::handleParseException);
 
+    registerConverters(commandLine);
+
     return commandLine.execute(args);
+  }
+
+  private void registerConverters(final CommandLine commandLine) {
+    metricCategoryConverter.addCategories(Eth2SignerMetricCategory.class);
+    metricCategoryConverter.addCategories(StandardMetricCategory.class);
+    commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
   }
 
   private int handleParseException(final ParameterException ex, final String[] args) {
