@@ -30,23 +30,23 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider, M
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final SigningMetadataTomlConfigLoader signingMetadataTomlConfigLoader;
+  private final SigningMetadataConfigLoader signingMetadataConfigLoader;
 
   public MultiKeyArtifactSignerProvider(
-      final SigningMetadataTomlConfigLoader signingMetadataTomlConfigLoader) {
-    this.signingMetadataTomlConfigLoader = signingMetadataTomlConfigLoader;
+      final SigningMetadataConfigLoader signingMetadataConfigLoader) {
+    this.signingMetadataConfigLoader = signingMetadataConfigLoader;
   }
 
   @Override
   public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
-    return signingMetadataTomlConfigLoader
+    return signingMetadataConfigLoader
         .loadMetadataForAddress(signerIdentifier)
         .map(metadataFile -> metadataFile.createSigner(this));
   }
 
   @Override
   public Set<String> availableSigners() {
-    return signingMetadataTomlConfigLoader.loadAvailableSigningMetadataTomlConfigs().stream()
+    return signingMetadataConfigLoader.loadAvailableSigningMetadataConfigs().stream()
         .map(metadataFile -> metadataFile.createSigner(this))
         .filter(Objects::nonNull)
         .map(ArtifactSigner::getIdentifier)

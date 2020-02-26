@@ -17,6 +17,8 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 public abstract class SigningMetadataFile {
 
+  private static final String FILE_EXTENSION = ".yaml";
+  private static final String FILE_EXTENSION_REGEX = "\\.yaml";
   protected String baseFilename;
 
   public SigningMetadataFile(final String filename) {
@@ -28,10 +30,10 @@ public abstract class SigningMetadataFile {
   }
 
   private String getFilenameWithoutExtension(final String filename) {
-    if (filename.endsWith(".toml")) {
-      return filename.replaceAll("\\.toml", "");
+    if (filename.endsWith(FILE_EXTENSION)) {
+      return filename.replaceAll(FILE_EXTENSION_REGEX, "");
     } else {
-      throw new IllegalArgumentException("Invalid TOML config filename extension: " + filename);
+      throw new IllegalArgumentException("Invalid config filename extension: " + filename);
     }
   }
 

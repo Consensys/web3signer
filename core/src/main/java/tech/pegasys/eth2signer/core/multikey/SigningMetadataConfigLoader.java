@@ -23,38 +23,40 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.toml.TomlInvalidTypeException;
-import org.apache.tuweni.toml.TomlParseResult;
-import org.apache.tuweni.toml.TomlTable;
 
-public class SigningMetadataTomlConfigLoader {
+public class SigningMetadataConfigLoader {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String CONFIG_FILE_EXTENSION = ".toml";
+  private static final String CONFIG_FILE_EXTENSION = ".yaml";
   private static final String GLOB_CONFIG_MATCHER = "**" + CONFIG_FILE_EXTENSION;
 
-  private final Path tomlConfigsDirectory;
+  private final Path configsDirectory;
 
-  public SigningMetadataTomlConfigLoader(final Path rootDirectory) {
-    this.tomlConfigsDirectory = rootDirectory;
+  public SigningMetadataConfigLoader(final Path rootDirectory) {
+    this.configsDirectory = rootDirectory;
   }
 
   Optional<SigningMetadataFile> loadMetadataForAddress(final String address) {
     final List<SigningMetadataFile> matchingMetadata =
-        loadAvailableSigningMetadataTomlConfigs().stream()
+        loadAvailableSigningMetadataConfigs().stream()
             .filter(
-                toml -> toml.getBaseFilename().toLowerCase().endsWith(normalizeAddress(address)))
+                configFile ->
+                    configFile.getBaseFilename().toLowerCase().endsWith(normalizeAddress(address)))
             .collect(Collectors.toList());
 
     if (matchingMetadata.size() > 1) {
-      LOG.error("Found multiple signing metadata TOML file matches for address " + address);
+      LOG.error("Found multiple signing metadata file matches for address " + address);
       return Optional.empty();
     } else if (matchingMetadata.isEmpty()) {
       return Optional.empty();
@@ -63,17 +65,17 @@ public class SigningMetadataTomlConfigLoader {
     }
   }
 
-  Collection<SigningMetadataFile> loadAvailableSigningMetadataTomlConfigs() {
+  Collection<SigningMetadataFile> loadAvailableSigningMetadataConfigs() {
     final Collection<SigningMetadataFile> metadataConfigs = new HashSet<>();
 
     try (final DirectoryStream<Path> directoryStream =
-        Files.newDirectoryStream(tomlConfigsDirectory, GLOB_CONFIG_MATCHER)) {
+        Files.newDirectoryStream(configsDirectory, GLOB_CONFIG_MATCHER)) {
       for (final Path file : directoryStream) {
         getMetadataInfo(file).ifPresent(metadataConfigs::add);
       }
       return metadataConfigs;
     } catch (final IOException e) {
-      LOG.warn("Error searching for signing metadata TOML files", e);
+      LOG.warn("Error searching for signing metadata files", e);
       return Collections.emptySet();
     }
   }
@@ -81,57 +83,33 @@ public class SigningMetadataTomlConfigLoader {
   private Optional<SigningMetadataFile> getMetadataInfo(final Path file) {
     final String filename = file.getFileName().toString();
 
+    final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+
     try {
-      final TomlParseResult result =
-          TomlConfigFileParser.loadConfigurationFromFile(file.toAbsolutePath().toString());
-
-      final Optional<TomlTableAdapter> signingTable =
-          getSigningTableFrom(file.getFileName().toString(), result);
-      if (signingTable.isEmpty()) {
-        return Optional.empty();
-      }
-
-      final String type = signingTable.get().getString("type");
-      if (SignerType.fromString(type).equals(SignerType.RAW_BLS12_KEY)) {
-        return getUnencryptedKeyFromToml(file.getFileName().toString(), result);
+      final Map<String, String> metaDataInfo =
+          yamlMapper.readValue(file.toFile(), new TypeReference<>() {});
+      final String type = metaDataInfo.get("type");
+      if (SignerType.fromString(type).equals(SignerType.FILE_RAW)) {
+        return getUnencryptedKeyFromMetadata(file.getFileName().toString(), metaDataInfo);
       } else {
         LOG.error("Unknown signing type in metadata: " + type);
         return Optional.empty();
       }
-    } catch (final IllegalArgumentException | TomlInvalidTypeException e) {
+    } catch (final IllegalArgumentException e) {
       final String errorMsg = String.format("%s failed to decode: %s", filename, e.getMessage());
       LOG.error(errorMsg);
       return Optional.empty();
     } catch (final Exception e) {
-      LOG.error("Could not load TOML file " + file, e);
+      LOG.error("Could not load metadata file " + file, e);
       return Optional.empty();
     }
   }
 
-  private Optional<SigningMetadataFile> getUnencryptedKeyFromToml(
-      final String filename, final TomlParseResult result) {
-    final Optional<TomlTableAdapter> signingTable = getSigningTableFrom(filename, result);
-    if (signingTable.isEmpty()) {
-      return Optional.empty();
-    }
-
-    final TomlTableAdapter table = signingTable.get();
-
+  private Optional<SigningMetadataFile> getUnencryptedKeyFromMetadata(
+      final String filename, Map<String, String> metaDataInfo) {
     return Optional.of(
         new UnencryptedKeyMetadataFile(
-            filename, Bytes.fromHexString(table.getString("signing-key"))));
-  }
-
-  private Optional<TomlTableAdapter> getSigningTableFrom(
-      final String filename, final TomlParseResult result) {
-    final TomlTable signingTable = result.getTable("signing");
-    if (signingTable == null) {
-      LOG.error(
-          filename
-              + " is a badly formed EthSigner metadata file - \"signing\" heading is missing.");
-      return Optional.empty();
-    }
-    return Optional.of(new TomlTableAdapter(signingTable));
+            filename, Bytes.fromHexString(metaDataInfo.get("privateKey"))));
   }
 
   private String normalizeAddress(final String address) {

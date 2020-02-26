@@ -13,7 +13,7 @@
 package tech.pegasys.eth2signer.core.multikey;
 
 public enum SignerType {
-  RAW_BLS12_KEY("raw-bls12-key"),
+  FILE_RAW("file-raw"),
   UNKNOWN_TYPE_SIGNER("unknown");
 
   private final String type;
