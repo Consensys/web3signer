@@ -29,7 +29,6 @@ public class CommandlineParser {
   private final Eth2SignerCommand baseCommand;
   private final PrintWriter outputWriter;
   private final PrintWriter errorWriter;
-  private final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
 
   public CommandlineParser(
       final Eth2SignerCommand baseCommand,
@@ -56,6 +55,7 @@ public class CommandlineParser {
   }
 
   private void registerConverters(final CommandLine commandLine) {
+    final MetricCategoryConverter metricCategoryConverter = new MetricCategoryConverter();
     metricCategoryConverter.addCategories(Eth2SignerMetricCategory.class);
     metricCategoryConverter.addCategories(StandardMetricCategory.class);
     commandLine.registerConverter(MetricCategory.class, metricCategoryConverter);
