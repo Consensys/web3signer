@@ -13,9 +13,9 @@
 package tech.pegasys.eth2signer.core;
 
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
-import tech.pegasys.eth2signer.core.http.ResponseTimeMetricsHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
+import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.MultiKeyArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SigningMetadataTomlConfigLoader;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -32,10 +32,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
@@ -57,22 +59,30 @@ public class Runner implements Runnable {
 
   @Override
   public void run() {
-
-    final Vertx vertx = Vertx.vertx();
     final MetricsEndpoint metricsEndpoint =
         new MetricsEndpoint(
             config.isMetricsEnabled(),
             config.getMetricsPort(),
             config.getMetricsNetworkInterface(),
-            config.getMetricCategories(),
-            vertx);
+            config.getMetricCategories());
+
+    final VertxOptions vertxOptions =
+        new VertxOptions()
+            .setMetricsOptions(
+                new MetricsOptions()
+                    .setEnabled(true)
+                    .setFactory(
+                        new VertxMetricsAdapterFactory(metricsEndpoint.getMetricsSystem())));
+    final Vertx vertx = Vertx.vertx(vertxOptions);
+
     try {
+      metricsEndpoint.start(vertx);
+
       final Handler<HttpServerRequest> requestHandler =
           createRouter(vertx, metricsEndpoint.getMetricsSystem());
       final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
-      metricsEndpoint.start();
       persistPortInformation(httpServer.actualPort());
     } catch (final ExecutionException | InterruptedException e) {
       vertx.close();
@@ -89,13 +99,9 @@ public class Runner implements Runnable {
     final Router router = Router.router(vertx);
     final LogErrorHandler errorHandler = new LogErrorHandler();
 
-    final ResponseTimeMetricsHandler responseTimeHandler =
-        new ResponseTimeMetricsHandler(metricsSystem);
-
     router
         .route(HttpMethod.GET, "/upcheck")
         .produces(TEXT)
-        .handler(responseTimeHandler)
         .handler(BodyHandler.create())
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler)
@@ -111,7 +117,6 @@ public class Runner implements Runnable {
     router
         .routeWithRegex(HttpMethod.POST, "/signer/" + "(attestation|block)")
         .produces(JSON)
-        .handler(responseTimeHandler)
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler)
         .handler(signingHandler);

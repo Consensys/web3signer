@@ -23,27 +23,28 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 public class MetricsEndpoint {
-  private final Optional<MetricsService> metricsService;
   private final MetricsSystem metricsSystem;
+  private final MetricsConfiguration metricsConfig;
+  private Optional<MetricsService> metricsService = Optional.empty();
 
   public MetricsEndpoint(
       final Boolean metricsEnabled,
       final Integer metricsPort,
       final String metricsNetworkInterface,
-      final Set<MetricCategory> metricCategories,
-      final Vertx vertx) {
+      final Set<MetricCategory> metricCategories) {
     final MetricsConfiguration metricsConfig =
         createMetricsConfiguration(
             metricsEnabled, metricsPort, metricsNetworkInterface, metricCategories);
-    metricsSystem = PrometheusMetricsSystem.init(metricsConfig);
+    this.metricsSystem = PrometheusMetricsSystem.init(metricsConfig);
+    this.metricsConfig = metricsConfig;
+  }
+
+  public void start(final Vertx vertx) {
     if (metricsConfig.isEnabled()) {
       metricsService = Optional.of(MetricsService.create(vertx, metricsConfig, metricsSystem));
     } else {
       metricsService = Optional.empty();
     }
-  }
-
-  public void start() {
     metricsService.ifPresent(MetricsService::start);
   }
 
