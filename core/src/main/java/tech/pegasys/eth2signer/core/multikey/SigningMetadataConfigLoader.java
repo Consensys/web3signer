@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.MetadataFileBody;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 
@@ -27,7 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.logging.log4j.LogManager;
@@ -40,8 +41,13 @@ public class SigningMetadataConfigLoader {
 
   private static final String CONFIG_FILE_EXTENSION = ".yaml";
   private static final String GLOB_CONFIG_MATCHER = "**" + CONFIG_FILE_EXTENSION;
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
 
   private final Path configsDirectory;
+
+  {
+    OBJECT_MAPPER.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+  }
 
   public SigningMetadataConfigLoader(final Path rootDirectory) {
     this.configsDirectory = rootDirectory;
@@ -83,16 +89,13 @@ public class SigningMetadataConfigLoader {
   private Optional<SigningMetadataFile> getMetadataInfo(final Path file) {
     final String filename = file.getFileName().toString();
 
-    final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
-
     try {
-      final Map<String, String> metaDataInfo =
-          yamlMapper.readValue(file.toFile(), new TypeReference<>() {});
-      final String type = metaDataInfo.get("type");
-      if (SignerType.fromString(type).equals(SignerType.FILE_RAW)) {
+      final MetadataFileBody metaDataInfo =
+          OBJECT_MAPPER.readValue(file.toFile(), MetadataFileBody.class);
+      if (metaDataInfo.getType().equals(SignerType.FILE_RAW)) {
         return getUnencryptedKeyFromMetadata(file.getFileName().toString(), metaDataInfo);
       } else {
-        LOG.error("Unknown signing type in metadata: " + type);
+        LOG.error("Unknown signing type in metadata: " + metaDataInfo.getType());
         return Optional.empty();
       }
     } catch (final IllegalArgumentException e) {
@@ -106,10 +109,10 @@ public class SigningMetadataConfigLoader {
   }
 
   private Optional<SigningMetadataFile> getUnencryptedKeyFromMetadata(
-      final String filename, Map<String, String> metaDataInfo) {
-    return Optional.of(
-        new UnencryptedKeyMetadataFile(
-            filename, Bytes.fromHexString(metaDataInfo.get("privateKey"))));
+      final String filename, MetadataFileBody metaDataInfo) {
+    final Map<String, String> params = metaDataInfo.getParams();
+    final Bytes privateKey = Bytes.fromHexString(params.get("privateKey"));
+    return Optional.of(new UnencryptedKeyMetadataFile(filename, privateKey));
   }
 
   private String normalizeAddress(final String address) {
