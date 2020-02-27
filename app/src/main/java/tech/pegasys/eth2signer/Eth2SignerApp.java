@@ -27,7 +27,7 @@ public class Eth2SignerApp {
   private static final Logger LOG = LogManager.getLogger();
 
   public static void main(final String... args) {
-    LOG.info("Eth2Signer has started with args" + String.join(",", args));
+    LOG.info("Eth2Signer has started with args " + String.join(",", args));
 
     final Eth2SignerCommand command = new Eth2SignerCommand();
     final PrintWriter outputWriter = new PrintWriter(System.out, true, UTF_8);

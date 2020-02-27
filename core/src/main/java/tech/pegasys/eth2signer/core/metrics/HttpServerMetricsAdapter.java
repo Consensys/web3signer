@@ -20,16 +20,16 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
-final class HttpMetricsAdapter implements HttpServerMetrics<TimingContext, Object, Object> {
+final class HttpServerMetricsAdapter implements HttpServerMetrics<TimingContext, Object, Object> {
 
   private final LabelledMetric<OperationTimer> requestDurationTimer;
 
-  public HttpMetricsAdapter(final MetricsSystem metricsSystem) {
+  public HttpServerMetricsAdapter(final MetricsSystem metricsSystem) {
     requestDurationTimer =
         metricsSystem.createLabelledTimer(
             Eth2SignerMetricCategory.HTTP,
-            "request_time",
-            "Time taken to process a http request",
+            "server_request_time",
+            "Time taken to process a server http request",
             "uri",
             "method");
   }

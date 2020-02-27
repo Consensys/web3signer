@@ -12,8 +12,10 @@
  */
 package tech.pegasys.eth2signer.core.metrics;
 
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.net.SocketAddress;
+import io.vertx.core.spi.metrics.HttpClientMetrics;
 import io.vertx.core.spi.metrics.HttpServerMetrics;
 import io.vertx.core.spi.metrics.VertxMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -27,8 +29,13 @@ public class VertxMetricsAdapter implements VertxMetrics {
   }
 
   @Override
+  public HttpClientMetrics<?, ?, ?, ?, ?> createHttpClientMetrics(final HttpClientOptions options) {
+    return new HttpClientMetricsAdapter(metricsSystem);
+  }
+
+  @Override
   public HttpServerMetrics<?, ?, ?> createHttpServerMetrics(
       final HttpServerOptions options, final SocketAddress localAddress) {
-    return new HttpMetricsAdapter(metricsSystem);
+    return new HttpServerMetricsAdapter(metricsSystem);
   }
 }

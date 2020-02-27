@@ -80,13 +80,10 @@ public class Runner implements Runnable {
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
       persistPortInformation(httpServer.actualPort());
-    } catch (final ExecutionException | InterruptedException e) {
+    } catch (final Throwable e) {
       vertx.close();
-      throw new RuntimeException("Failed to create Http Server", e.getCause());
-    } catch (final Throwable t) {
       metricsEndpoint.stop();
-      vertx.close();
-      throw t;
+      LOG.error("Failed to create Http Server", e);
     }
   }
 
