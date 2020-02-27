@@ -65,13 +65,11 @@ public class Runner implements Runnable {
             config.getMetricsNetworkInterface(),
             config.getMetricCategories());
 
-    final VertxOptions vertxOptions =
-        new VertxOptions()
-            .setMetricsOptions(
-                new MetricsOptions()
-                    .setEnabled(true)
-                    .setFactory(
-                        new VertxMetricsAdapterFactory(metricsEndpoint.getMetricsSystem())));
+    final MetricsOptions metricsOptions =
+        new MetricsOptions()
+            .setEnabled(true)
+            .setFactory(new VertxMetricsAdapterFactory(metricsEndpoint.getMetricsSystem()));
+    final VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
     final Vertx vertx = Vertx.vertx(vertxOptions);
 
     try {
