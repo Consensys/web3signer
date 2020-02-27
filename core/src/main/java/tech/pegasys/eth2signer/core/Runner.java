@@ -43,7 +43,6 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Runner implements Runnable {
 
@@ -78,8 +77,7 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final Handler<HttpServerRequest> requestHandler =
-          createRouter(vertx, metricsEndpoint.getMetricsSystem());
+      final Handler<HttpServerRequest> requestHandler = createRouter(vertx);
       final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
@@ -94,8 +92,7 @@ public class Runner implements Runnable {
     }
   }
 
-  private Handler<HttpServerRequest> createRouter(
-      final Vertx vertx, final MetricsSystem metricsSystem) {
+  private Handler<HttpServerRequest> createRouter(final Vertx vertx) {
     final Router router = Router.router(vertx);
     final LogErrorHandler errorHandler = new LogErrorHandler();
 
