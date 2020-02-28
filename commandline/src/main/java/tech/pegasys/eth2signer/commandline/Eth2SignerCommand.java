@@ -16,8 +16,10 @@ import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY
 import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
 import static tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
+import tech.pegasys.eth2signer.commandline.convertor.MetricCategoryConverter;
 import tech.pegasys.eth2signer.core.Config;
 import tech.pegasys.eth2signer.core.Runner;
+import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 
 import java.net.InetAddress;
 import java.nio.file.Path;
@@ -27,6 +29,7 @@ import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
@@ -115,7 +118,8 @@ public class Eth2SignerCommand implements Config, Runnable {
       split = ",",
       arity = "1..*",
       description =
-          "Comma separated list of categories to track metrics for (default: ${DEFAULT-VALUE})")
+          "Comma separated list of categories to track metrics for (default: ${DEFAULT-VALUE}),",
+      converter = Eth2SignerMetricCategoryConverter.class)
   private final Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
 
   @Override
@@ -179,5 +183,13 @@ public class Eth2SignerCommand implements Config, Runnable {
     LOG.debug("Commandline has been parsed with: " + toString());
     final Runner runner = new Runner(this);
     runner.run();
+  }
+
+  public static class Eth2SignerMetricCategoryConverter extends MetricCategoryConverter {
+
+    public Eth2SignerMetricCategoryConverter() {
+      addCategories(Eth2SignerMetricCategory.class);
+      addCategories(StandardMetricCategory.class);
+    }
   }
 }
