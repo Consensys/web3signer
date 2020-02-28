@@ -21,8 +21,9 @@ public class UnencryptedKeyMetadataFile extends SigningMetadataFile {
 
   final Bytes privateKeyBytes;
 
-  public UnencryptedKeyMetadataFile(final String filename, final Bytes privateKeyBytes) {
-    super(filename);
+  public UnencryptedKeyMetadataFile(
+      final String filename, final String fileExtension, final Bytes privateKeyBytes) {
+    super(filename, fileExtension);
     this.privateKeyBytes = privateKeyBytes;
   }
 

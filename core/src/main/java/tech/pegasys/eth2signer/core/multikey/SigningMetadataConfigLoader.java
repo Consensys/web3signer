@@ -12,9 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.MetadataFileBody;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
-import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFileProvider;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -24,33 +23,26 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 
 public class SigningMetadataConfigLoader {
-
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String CONFIG_FILE_EXTENSION = ".yaml";
-  private static final String GLOB_CONFIG_MATCHER = "**" + CONFIG_FILE_EXTENSION;
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
-
   private final Path configsDirectory;
+  private SigningMetadataFileProvider metadataFileProvider;
+  private String fileExtension;
 
-  {
-    OBJECT_MAPPER.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
-  }
-
-  public SigningMetadataConfigLoader(final Path rootDirectory) {
+  public SigningMetadataConfigLoader(
+      final Path rootDirectory,
+      final String fileExtension,
+      final SigningMetadataFileProvider metadataFileProvider) {
     this.configsDirectory = rootDirectory;
+    this.metadataFileProvider = metadataFileProvider;
+    this.fileExtension = fileExtension;
   }
 
   Optional<SigningMetadataFile> loadMetadataForAddress(final String address) {
@@ -75,44 +67,15 @@ public class SigningMetadataConfigLoader {
     final Collection<SigningMetadataFile> metadataConfigs = new HashSet<>();
 
     try (final DirectoryStream<Path> directoryStream =
-        Files.newDirectoryStream(configsDirectory, GLOB_CONFIG_MATCHER)) {
+        Files.newDirectoryStream(configsDirectory, "**." + fileExtension)) {
       for (final Path file : directoryStream) {
-        getMetadataInfo(file).ifPresent(metadataConfigs::add);
+        metadataFileProvider.getMetadataInfo(file).ifPresent(metadataConfigs::add);
       }
       return metadataConfigs;
     } catch (final IOException e) {
       LOG.warn("Error searching for signing metadata files", e);
       return Collections.emptySet();
     }
-  }
-
-  private Optional<SigningMetadataFile> getMetadataInfo(final Path file) {
-    final String filename = file.getFileName().toString();
-
-    try {
-      final MetadataFileBody metaDataInfo =
-          OBJECT_MAPPER.readValue(file.toFile(), MetadataFileBody.class);
-      if (metaDataInfo.getType().equals(SignerType.FILE_RAW)) {
-        return getUnencryptedKeyFromMetadata(file.getFileName().toString(), metaDataInfo);
-      } else {
-        LOG.error("Unknown signing type in metadata: " + metaDataInfo.getType());
-        return Optional.empty();
-      }
-    } catch (final IllegalArgumentException e) {
-      final String errorMsg = String.format("%s failed to decode: %s", filename, e.getMessage());
-      LOG.error(errorMsg);
-      return Optional.empty();
-    } catch (final Exception e) {
-      LOG.error("Could not load metadata file " + file, e);
-      return Optional.empty();
-    }
-  }
-
-  private Optional<SigningMetadataFile> getUnencryptedKeyFromMetadata(
-      final String filename, MetadataFileBody metaDataInfo) {
-    final Map<String, String> params = metaDataInfo.getParams();
-    final Bytes privateKey = Bytes.fromHexString(params.get("privateKey"));
-    return Optional.of(new UnencryptedKeyMetadataFile(filename, privateKey));
   }
 
   private String normalizeAddress(final String address) {

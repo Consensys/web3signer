@@ -12,10 +12,13 @@
  */
 package tech.pegasys.eth2signer.core;
 
+import static tech.pegasys.eth2signer.core.multikey.metadata.YamlSigningMetadataFileProvider.YAML_FILE_EXTENSION;
+
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
 import tech.pegasys.eth2signer.core.multikey.MultiKeyArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SigningMetadataConfigLoader;
+import tech.pegasys.eth2signer.core.multikey.metadata.YamlSigningMetadataFileProvider;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.utils.JsonDecoder;
 
@@ -83,7 +86,8 @@ public class Runner implements Runnable {
         .handler(routingContext -> routingContext.response().end("OK"));
 
     final SigningMetadataConfigLoader configLoader =
-        new SigningMetadataConfigLoader(config.getKeyConfigPath());
+        new SigningMetadataConfigLoader(
+            config.getKeyConfigPath(), YAML_FILE_EXTENSION, new YamlSigningMetadataFileProvider());
     final ArtifactSignerProvider signerProvider = new MultiKeyArtifactSignerProvider(configLoader);
 
     final SigningRequestHandler signingHandler =

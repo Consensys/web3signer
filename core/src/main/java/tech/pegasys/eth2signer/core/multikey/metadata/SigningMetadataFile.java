@@ -17,21 +17,19 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 public abstract class SigningMetadataFile {
 
-  private static final String FILE_EXTENSION = ".yaml";
-  private static final String FILE_EXTENSION_REGEX = "\\.yaml";
   protected String baseFilename;
 
-  public SigningMetadataFile(final String filename) {
-    this.baseFilename = getFilenameWithoutExtension(filename);
+  public SigningMetadataFile(final String filename, final String fileExtension) {
+    this.baseFilename = getFilenameWithoutExtension(filename, fileExtension);
   }
 
   public String getBaseFilename() {
     return baseFilename;
   }
 
-  private String getFilenameWithoutExtension(final String filename) {
-    if (filename.endsWith(FILE_EXTENSION)) {
-      return filename.replaceAll(FILE_EXTENSION_REGEX, "");
+  private String getFilenameWithoutExtension(final String filename, final String fileExtension) {
+    if (filename.endsWith(fileExtension)) {
+      return filename.replaceAll("\\." + fileExtension, "");
     } else {
       throw new IllegalArgumentException("Invalid config filename extension: " + filename);
     }
