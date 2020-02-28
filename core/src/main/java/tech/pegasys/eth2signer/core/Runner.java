@@ -14,6 +14,8 @@ package tech.pegasys.eth2signer.core;
 
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
+import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
+import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.MultiKeyArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SigningMetadataTomlConfigLoader;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -30,10 +32,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
@@ -54,26 +58,39 @@ public class Runner implements Runnable {
 
   @Override
   public void run() {
+    final MetricsEndpoint metricsEndpoint =
+        new MetricsEndpoint(
+            config.isMetricsEnabled(),
+            config.getMetricsPort(),
+            config.getMetricsNetworkInterface(),
+            config.getMetricCategories());
 
-    final Vertx vertx = Vertx.vertx();
+    final MetricsOptions metricsOptions =
+        new MetricsOptions()
+            .setEnabled(true)
+            .setFactory(new VertxMetricsAdapterFactory(metricsEndpoint.getMetricsSystem()));
+    final VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
+    final Vertx vertx = Vertx.vertx(vertxOptions);
+
     try {
+      metricsEndpoint.start(vertx);
+
       final Handler<HttpServerRequest> requestHandler = createRouter(vertx);
       final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
       persistPortInformation(httpServer.actualPort());
-    } catch (final ExecutionException | InterruptedException e) {
+    } catch (final Throwable e) {
       vertx.close();
-      throw new RuntimeException("Failed to create Http Server", e.getCause());
-    } catch (final Throwable t) {
-      vertx.close();
-      throw t;
+      metricsEndpoint.stop();
+      LOG.error("Failed to create Http Server", e);
     }
   }
 
   private Handler<HttpServerRequest> createRouter(final Vertx vertx) {
     final Router router = Router.router(vertx);
     final LogErrorHandler errorHandler = new LogErrorHandler();
+
     router
         .route(HttpMethod.GET, "/upcheck")
         .produces(TEXT)

@@ -63,5 +63,8 @@ dependencyManagement {
     dependency 'org.mockito:mockito-junit-jupiter:3.2.4'
 
     dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
+
+    dependency 'org.hyperledger.besu.internal:metrics-core:1.4.0'
+    dependency 'org.hyperledger.besu:plugin-api:1.4.0'
   }
 }
