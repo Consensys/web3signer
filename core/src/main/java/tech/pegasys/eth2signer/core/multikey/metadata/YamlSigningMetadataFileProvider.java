@@ -34,6 +34,7 @@ public class YamlSigningMetadataFileProvider implements SigningMetadataFileProvi
     OBJECT_MAPPER.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
   }
 
+  @Override
   public Optional<SigningMetadataFile> getMetadataInfo(final Path file) {
     final String filename = file.getFileName().toString();
 
