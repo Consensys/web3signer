@@ -31,6 +31,7 @@ dependencies {
   testImplementation 'org.apache.logging.log4j:log4j-api'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
+  testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
 }
 
 test.enabled = false
