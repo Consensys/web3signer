@@ -30,7 +30,7 @@ public class YamlSigningMetadataFileProvider implements SigningMetadataFileProvi
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   public static final String YAML_FILE_EXTENSION = "yaml";
 
-  {
+  static {
     OBJECT_MAPPER.enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
   }
 
