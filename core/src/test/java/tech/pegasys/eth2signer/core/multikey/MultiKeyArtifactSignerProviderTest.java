@@ -10,18 +10,8 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.signers.unencryptedfile;
+package tech.pegasys.eth2signer.core.multikey;
 
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.crypto.KeyPair;
-import tech.pegasys.eth2signer.crypto.SecretKey;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.apache.tuweni.bytes.Bytes;
-
-public class UnencryptedKeyFileSignerFactory {
-
-  public static ArtifactSigner createSigner(final Bytes privateKey) {
-    final KeyPair keys = new KeyPair(SecretKey.fromBytes(privateKey));
-    return new ArtifactSigner(keys);
-  }
-}
+class MultiKeyArtifactSignerProviderTest {}
