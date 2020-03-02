@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class MultiKeyArtifactSignerProviderTest {
@@ -37,11 +38,16 @@ class MultiKeyArtifactSignerProviderTest {
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
   private static final String PRIVATE_KEY =
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-  private SigningMetadataFile metadataFile =
-      new UnencryptedKeyMetadataFile(
-          PUBLIC_KEY + CONFIG_FILE_EXTENSION,
-          YAML_FILE_EXTENSION,
-          Bytes.fromHexString(PRIVATE_KEY));
+  private SigningMetadataFile metadataFile;
+
+  @BeforeEach
+  void setup() {
+    metadataFile =
+        new UnencryptedKeyMetadataFile(
+            PUBLIC_KEY + CONFIG_FILE_EXTENSION,
+            YAML_FILE_EXTENSION,
+            Bytes.fromHexString(PRIVATE_KEY));
+  }
 
   @Test
   void getSignerForAvailableMetadataReturnsSigner() {
