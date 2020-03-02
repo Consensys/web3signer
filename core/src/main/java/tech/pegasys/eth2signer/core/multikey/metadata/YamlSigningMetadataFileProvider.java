@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,31 +37,35 @@ public class YamlSigningMetadataFileProvider implements SigningMetadataFileProvi
 
   @Override
   public Optional<SigningMetadataFile> getMetadataInfo(final Path file) {
-    final String filename = file.getFileName().toString();
-
     try {
       final MetadataFileBody metaDataInfo =
           OBJECT_MAPPER.readValue(file.toFile(), MetadataFileBody.class);
-      if (metaDataInfo.getType().equals(SignerType.FILE_RAW)) {
+      final SignerType type = metaDataInfo.getType();
+      if (SignerType.FILE_RAW.equals(type)) {
         return getUnencryptedKeyFromMetadata(file.getFileName().toString(), metaDataInfo);
+      } else if (type == null) {
+        LOG.error("No signing type in metadata");
       } else {
-        LOG.error("Unknown signing type in metadata: " + metaDataInfo.getType());
-        return Optional.empty();
+        LOG.error("Unknown signing type in metadata: " + type);
       }
-    } catch (final IllegalArgumentException e) {
-      final String errorMsg = String.format("%s failed to decode: %s", filename, e.getMessage());
-      LOG.error(errorMsg);
-      return Optional.empty();
+    } catch (final InvalidFormatException e) {
+      LOG.error("Invalid metadata file " + file, e);
     } catch (final Exception e) {
       LOG.error("Could not load metadata file " + file, e);
-      return Optional.empty();
     }
+    return Optional.empty();
   }
 
   private Optional<SigningMetadataFile> getUnencryptedKeyFromMetadata(
       final String filename, MetadataFileBody metaDataInfo) {
     final Map<String, String> params = metaDataInfo.getParams();
-    final Bytes privateKey = Bytes.fromHexString(params.get("privateKey"));
-    return Optional.of(new UnencryptedKeyMetadataFile(filename, YAML_FILE_EXTENSION, privateKey));
+    final String privateKey = params.get("privateKey");
+    if (privateKey == null) {
+      LOG.error("No private key specified");
+      return Optional.empty();
+    }
+    final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
+    return Optional.of(
+        new UnencryptedKeyMetadataFile(filename, YAML_FILE_EXTENSION, privateKeyBytes));
   }
 }
