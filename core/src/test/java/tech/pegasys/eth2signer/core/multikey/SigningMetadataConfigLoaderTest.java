@@ -24,14 +24,18 @@ import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.PREFIX_L
 import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.PREFIX_LOWERCASE_DUPLICATE_FILENAME_2;
 import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.PREFIX_MIXEDCASE_ADDRESS;
 import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.PREFIX_MIXEDCASE_FILENAME;
-import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.SUFFIX_ADDRESS;
 import static tech.pegasys.eth2signer.core.multikey.metadata.YamlSigningMetadataFileProvider.YAML_FILE_EXTENSION;
+
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFileProvider;
+import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,9 +43,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFileProvider;
-import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 
 @ExtendWith(MockitoExtension.class)
 class SigningMetadataConfigLoaderTest {
@@ -120,14 +121,6 @@ class SigningMetadataConfigLoaderTest {
   }
 
   @Test
-  void loadKeyPasswordNotEndingWithAddressReturnsEmpty() {
-    final Optional<SigningMetadataFile> loadedMetadataFile =
-        loader.loadMetadataForAddress(SUFFIX_ADDRESS);
-
-    assertThat(loadedMetadataFile).isEmpty();
-  }
-
-  @Test
   void loadAvailableConfigsReturnsAllValidMetadataFilesInDirectory() throws IOException {
     createFile(LOWERCASE_ADDRESS + CONFIG_FILE_EXTENSION);
     final SigningMetadataFile metadataFile1 =
@@ -178,5 +171,4 @@ class SigningMetadataConfigLoaderTest {
     final File file = configsDirectory.resolve(filename).toFile();
     file.createNewFile();
   }
-
 }

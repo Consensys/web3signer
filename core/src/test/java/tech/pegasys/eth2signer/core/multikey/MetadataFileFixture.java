@@ -28,5 +28,4 @@ public class MetadataFileFixture {
       "duplicate_foo_" + PREFIX_LOWERCASE_DUPLICATE_ADDRESS + CONFIG_FILE_EXTENSION;
   public static String PREFIX_LOWERCASE_DUPLICATE_FILENAME_2 =
       "duplicate_bar_" + PREFIX_LOWERCASE_DUPLICATE_ADDRESS + CONFIG_FILE_EXTENSION;
-
 }
