@@ -12,13 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import static org.junit.jupiter.api.Assertions.fail;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import com.google.common.io.Resources;
-
 public class MetadataFileFixture {
 
   public static final String CONFIG_FILE_EXTENSION = ".yaml";
@@ -36,21 +29,4 @@ public class MetadataFileFixture {
   public static String PREFIX_LOWERCASE_DUPLICATE_FILENAME_2 =
       "duplicate_bar_" + PREFIX_LOWERCASE_DUPLICATE_ADDRESS + CONFIG_FILE_EXTENSION;
 
-  static void copyMetadataFileToDirectory(
-      final Path configsDirectory, final String metadataFilename) {
-    final Path newMetadataFile = configsDirectory.resolve(metadataFilename);
-
-    try {
-      Files.copy(
-          Path.of(Resources.getResource("metadata-configs").toURI()).resolve(metadataFilename),
-          newMetadataFile);
-    } catch (Exception e) {
-      fail(
-          "Error copying metadata files configDirectory="
-              + configsDirectory
-              + " metadataFilename="
-              + metadataFilename,
-          e);
-    }
-  }
 }

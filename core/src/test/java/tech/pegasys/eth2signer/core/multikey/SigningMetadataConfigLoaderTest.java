@@ -25,17 +25,13 @@ import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.PREFIX_L
 import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.PREFIX_MIXEDCASE_ADDRESS;
 import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.PREFIX_MIXEDCASE_FILENAME;
 import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.SUFFIX_ADDRESS;
-import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.copyMetadataFileToDirectory;
 import static tech.pegasys.eth2signer.core.multikey.metadata.YamlSigningMetadataFileProvider.YAML_FILE_EXTENSION;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFileProvider;
-import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
-
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +39,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFileProvider;
+import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 
 @ExtendWith(MockitoExtension.class)
 class SigningMetadataConfigLoaderTest {
@@ -61,9 +60,9 @@ class SigningMetadataConfigLoaderTest {
   }
 
   @Test
-  void loadMetadataFileMatchingAddress() {
+  void loadMetadataFileMatchingAddress() throws IOException {
     final String metadataFilename = LOWERCASE_ADDRESS + CONFIG_FILE_EXTENSION;
-    copyMetadataFileToDirectory(configsDirectory, metadataFilename);
+    createFile(LOWERCASE_ADDRESS + CONFIG_FILE_EXTENSION);
     when(signingMetadataFileProvider.getMetadataInfo(any()))
         .thenReturn(Optional.of(unencryptedMetadata(metadataFilename)));
 
@@ -75,8 +74,8 @@ class SigningMetadataConfigLoaderTest {
   }
 
   @Test
-  void loadMetadataFileWithMixedCaseFilename() {
-    copyMetadataFileToDirectory(configsDirectory, PREFIX_MIXEDCASE_FILENAME);
+  void loadMetadataFileWithMixedCaseFilename() throws IOException {
+    createFile(PREFIX_MIXEDCASE_FILENAME);
     when(signingMetadataFileProvider.getMetadataInfo(any()))
         .thenReturn(Optional.of(unencryptedMetadata(PREFIX_MIXEDCASE_FILENAME)));
 
@@ -88,9 +87,9 @@ class SigningMetadataConfigLoaderTest {
   }
 
   @Test
-  void loadMetadataFileWithHexPrefixReturnsFile() {
+  void loadMetadataFileWithHexPrefixReturnsFile() throws IOException {
     final String metadataFilename = LOWERCASE_ADDRESS + CONFIG_FILE_EXTENSION;
-    copyMetadataFileToDirectory(configsDirectory, metadataFilename);
+    createFile(metadataFilename);
     when(signingMetadataFileProvider.getMetadataInfo(any()))
         .thenReturn(Optional.of(unencryptedMetadata(metadataFilename)));
 
@@ -102,9 +101,9 @@ class SigningMetadataConfigLoaderTest {
   }
 
   @Test
-  void multipleMatchesForSameAddressReturnsEmpty() {
-    copyMetadataFileToDirectory(configsDirectory, PREFIX_LOWERCASE_DUPLICATE_FILENAME_2);
-    copyMetadataFileToDirectory(configsDirectory, PREFIX_LOWERCASE_DUPLICATE_FILENAME_1);
+  void multipleMatchesForSameAddressReturnsEmpty() throws IOException {
+    createFile(PREFIX_LOWERCASE_DUPLICATE_FILENAME_1);
+    createFile(PREFIX_LOWERCASE_DUPLICATE_FILENAME_2);
 
     when(signingMetadataFileProvider.getMetadataInfo(
             pathEndsWith(PREFIX_LOWERCASE_DUPLICATE_FILENAME_1)))
@@ -129,27 +128,27 @@ class SigningMetadataConfigLoaderTest {
   }
 
   @Test
-  void loadAvailableConfigsReturnsAllValidMetadataFilesInDirectory() {
-    copyMetadataFileToDirectory(configsDirectory, LOWERCASE_ADDRESS + CONFIG_FILE_EXTENSION);
+  void loadAvailableConfigsReturnsAllValidMetadataFilesInDirectory() throws IOException {
+    createFile(LOWERCASE_ADDRESS + CONFIG_FILE_EXTENSION);
     final SigningMetadataFile metadataFile1 =
         unencryptedMetadata(LOWERCASE_ADDRESS + CONFIG_FILE_EXTENSION);
     when(signingMetadataFileProvider.getMetadataInfo(
             pathEndsWith(LOWERCASE_ADDRESS + CONFIG_FILE_EXTENSION)))
         .thenReturn(Optional.of(metadataFile1));
 
-    copyMetadataFileToDirectory(configsDirectory, PREFIX_MIXEDCASE_FILENAME);
+    createFile(PREFIX_MIXEDCASE_FILENAME);
     final SigningMetadataFile metadataFile2 = unencryptedMetadata(PREFIX_MIXEDCASE_FILENAME);
     when(signingMetadataFileProvider.getMetadataInfo(pathEndsWith(PREFIX_MIXEDCASE_FILENAME)))
         .thenReturn(Optional.of(metadataFile2));
 
-    copyMetadataFileToDirectory(configsDirectory, PREFIX_LOWERCASE_DUPLICATE_FILENAME_2);
+    createFile(PREFIX_LOWERCASE_DUPLICATE_FILENAME_2);
     final SigningMetadataFile metadataFile3 =
         unencryptedMetadata(PREFIX_LOWERCASE_DUPLICATE_FILENAME_2);
     when(signingMetadataFileProvider.getMetadataInfo(
             pathEndsWith(PREFIX_LOWERCASE_DUPLICATE_FILENAME_2)))
         .thenReturn(Optional.of(metadataFile3));
 
-    copyMetadataFileToDirectory(configsDirectory, PREFIX_LOWERCASE_DUPLICATE_FILENAME_1);
+    createFile(PREFIX_LOWERCASE_DUPLICATE_FILENAME_1);
     final SigningMetadataFile metadataFile4 =
         unencryptedMetadata(PREFIX_LOWERCASE_DUPLICATE_FILENAME_1);
     when(signingMetadataFileProvider.getMetadataInfo(
@@ -173,4 +172,11 @@ class SigningMetadataConfigLoaderTest {
   private SigningMetadataFile unencryptedMetadata(final String filename) {
     return new UnencryptedKeyMetadataFile(filename, YAML_FILE_EXTENSION, Bytes.EMPTY);
   }
+
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  private void createFile(final String filename) throws IOException {
+    final File file = configsDirectory.resolve(filename).toFile();
+    file.createNewFile();
+  }
+
 }
