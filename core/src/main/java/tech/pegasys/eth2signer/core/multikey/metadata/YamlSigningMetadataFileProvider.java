@@ -36,22 +36,22 @@ public class YamlSigningMetadataFileProvider implements SigningMetadataFileProvi
   }
 
   @Override
-  public Optional<SigningMetadataFile> getMetadataInfo(final Path file) {
+  public Optional<SigningMetadataFile> getMetadataInfo(final Path metadataPath) {
     try {
       final MetadataFileBody metaDataInfo =
-          OBJECT_MAPPER.readValue(file.toFile(), MetadataFileBody.class);
+          OBJECT_MAPPER.readValue(metadataPath.toFile(), MetadataFileBody.class);
       final SignerType type = metaDataInfo.getType();
       if (SignerType.FILE_RAW.equals(type)) {
-        return getUnencryptedKeyFromMetadata(file, metaDataInfo);
+        return getUnencryptedKeyFromMetadata(metadataPath, metaDataInfo);
       } else if (type == null) {
         LOG.error("No signing type in metadata");
       } else {
         LOG.error("Unknown signing type in metadata: " + type);
       }
     } catch (final InvalidFormatException e) {
-      LOG.error("Invalid metadata file " + file, e);
+      LOG.error("Invalid metadata file " + metadataPath, e);
     } catch (final Exception e) {
-      LOG.error("Could not load metadata file " + file, e);
+      LOG.error("Could not load metadata file " + metadataPath, e);
     }
     return Optional.empty();
   }
