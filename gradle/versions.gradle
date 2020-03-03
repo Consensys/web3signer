@@ -26,6 +26,7 @@ dependencyManagement {
     dependency 'com.google.guava:guava:28.2-jre'
 
     dependency 'commons-cli:commons-cli:1.4'
+    dependency 'commons-io:commons-io:2.6'
 
     dependency 'info.picocli:picocli:4.2.0'
 

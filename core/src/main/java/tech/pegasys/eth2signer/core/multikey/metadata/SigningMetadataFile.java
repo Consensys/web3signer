@@ -15,24 +15,20 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 import tech.pegasys.eth2signer.core.multikey.MultiSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
+import java.nio.file.Path;
+
+import org.apache.commons.io.FilenameUtils;
+
 public abstract class SigningMetadataFile {
 
   protected String baseFilename;
 
-  public SigningMetadataFile(final String filename, final String fileExtension) {
-    this.baseFilename = getFilenameWithoutExtension(filename, fileExtension);
+  public SigningMetadataFile(final Path filename) {
+    this.baseFilename = FilenameUtils.getBaseName(filename.getFileName().toString());
   }
 
   public String getBaseFilename() {
     return baseFilename;
-  }
-
-  private String getFilenameWithoutExtension(final String filename, final String fileExtension) {
-    if (filename.endsWith(fileExtension)) {
-      return filename.replaceAll("\\." + fileExtension, "");
-    } else {
-      throw new IllegalArgumentException("Invalid config filename extension: " + filename);
-    }
   }
 
   public abstract ArtifactSigner createSigner(final MultiSignerFactory factory);

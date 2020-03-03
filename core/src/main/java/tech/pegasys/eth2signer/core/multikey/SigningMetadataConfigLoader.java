@@ -45,16 +45,19 @@ public class SigningMetadataConfigLoader {
     this.fileExtension = fileExtension;
   }
 
-  Optional<SigningMetadataFile> loadMetadataForAddress(final String address) {
+  Optional<SigningMetadataFile> loadMetadataFileForAddress(final String signerIdentifier) {
     final List<SigningMetadataFile> matchingMetadata =
         loadAvailableSigningMetadataConfigs().stream()
             .filter(
                 configFile ->
-                    configFile.getBaseFilename().toLowerCase().endsWith(normalizeAddress(address)))
+                    configFile
+                        .getBaseFilename()
+                        .toLowerCase()
+                        .endsWith(normalizeAddress(signerIdentifier)))
             .collect(Collectors.toList());
 
     if (matchingMetadata.size() > 1) {
-      LOG.error("Found multiple signing metadata file matches for address " + address);
+      LOG.error("Found multiple signing metadata file matches for address " + signerIdentifier);
       return Optional.empty();
     } else if (matchingMetadata.isEmpty()) {
       return Optional.empty();

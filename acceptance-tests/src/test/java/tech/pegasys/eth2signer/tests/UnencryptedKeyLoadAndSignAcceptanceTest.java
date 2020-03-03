@@ -31,7 +31,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class UnencryptedTomlKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
+public class UnencryptedKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
   private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 

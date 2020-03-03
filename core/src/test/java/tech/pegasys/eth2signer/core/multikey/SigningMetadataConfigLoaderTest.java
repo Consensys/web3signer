@@ -68,7 +68,7 @@ class SigningMetadataConfigLoaderTest {
         .thenReturn(Optional.of(unencryptedMetadata(metadataFilename)));
 
     final Optional<SigningMetadataFile> loadedMetadataFile =
-        loader.loadMetadataForAddress(LOWERCASE_ADDRESS);
+        loader.loadMetadataFileForAddress(LOWERCASE_ADDRESS);
 
     assertThat(loadedMetadataFile).isNotEmpty();
     verify(signingMetadataFileProvider).getMetadataInfo(pathEndsWith(metadataFilename));
@@ -81,7 +81,7 @@ class SigningMetadataConfigLoaderTest {
         .thenReturn(Optional.of(unencryptedMetadata(PREFIX_MIXEDCASE_FILENAME)));
 
     final Optional<SigningMetadataFile> loadedMetadataFile =
-        loader.loadMetadataForAddress(PREFIX_MIXEDCASE_ADDRESS);
+        loader.loadMetadataFileForAddress(PREFIX_MIXEDCASE_ADDRESS);
 
     assertThat(loadedMetadataFile).isNotEmpty();
     verify(signingMetadataFileProvider).getMetadataInfo(pathEndsWith(PREFIX_MIXEDCASE_FILENAME));
@@ -95,7 +95,7 @@ class SigningMetadataConfigLoaderTest {
         .thenReturn(Optional.of(unencryptedMetadata(metadataFilename)));
 
     final Optional<SigningMetadataFile> loadedMetadataFile =
-        loader.loadMetadataForAddress("0x" + LOWERCASE_ADDRESS);
+        loader.loadMetadataFileForAddress("0x" + LOWERCASE_ADDRESS);
 
     assertThat(loadedMetadataFile).isNotEmpty();
     verify(signingMetadataFileProvider).getMetadataInfo(pathEndsWith(metadataFilename));
@@ -115,7 +115,7 @@ class SigningMetadataConfigLoaderTest {
         .thenReturn(Optional.of(unencryptedMetadata(PREFIX_LOWERCASE_DUPLICATE_FILENAME_2)));
 
     final Optional<SigningMetadataFile> loadedMetadataFile =
-        loader.loadMetadataForAddress(PREFIX_LOWERCASE_DUPLICATE_ADDRESS);
+        loader.loadMetadataFileForAddress(PREFIX_LOWERCASE_DUPLICATE_ADDRESS);
 
     assertThat(loadedMetadataFile).isEmpty();
   }
@@ -163,7 +163,7 @@ class SigningMetadataConfigLoaderTest {
   }
 
   private SigningMetadataFile unencryptedMetadata(final String filename) {
-    return new UnencryptedKeyMetadataFile(filename, YAML_FILE_EXTENSION, Bytes.EMPTY);
+    return new UnencryptedKeyMetadataFile(Path.of(filename), Bytes.EMPTY);
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")

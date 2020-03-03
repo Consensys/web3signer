@@ -16,12 +16,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.CONFIG_FILE_EXTENSION;
-import static tech.pegasys.eth2signer.core.multikey.metadata.YamlSigningMetadataFileProvider.YAML_FILE_EXTENSION;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
 import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -44,14 +44,12 @@ class MultiKeyArtifactSignerProviderTest {
   void setup() {
     metadataFile =
         new UnencryptedKeyMetadataFile(
-            PUBLIC_KEY + CONFIG_FILE_EXTENSION,
-            YAML_FILE_EXTENSION,
-            Bytes.fromHexString(PRIVATE_KEY));
+            Path.of(PUBLIC_KEY + CONFIG_FILE_EXTENSION), Bytes.fromHexString(PRIVATE_KEY));
   }
 
   @Test
   void getSignerForAvailableMetadataReturnsSigner() {
-    when(loader.loadMetadataForAddress(PUBLIC_KEY)).thenReturn(Optional.of(metadataFile));
+    when(loader.loadMetadataFileForAddress(PUBLIC_KEY)).thenReturn(Optional.of(metadataFile));
 
     final Optional<ArtifactSigner> signer = signerFactory.getSigner(PUBLIC_KEY);
     assertThat(signer).isNotEmpty();
@@ -69,8 +67,7 @@ class MultiKeyArtifactSignerProviderTest {
   void signerIsLoadedSuccessfullyWhenAddressHasCaseMismatchToFilename() {
     final UnencryptedKeyMetadataFile capitalisedMetadata =
         new UnencryptedKeyMetadataFile(
-            PUBLIC_KEY.toUpperCase() + CONFIG_FILE_EXTENSION,
-            YAML_FILE_EXTENSION,
+            Path.of(PUBLIC_KEY.toUpperCase() + CONFIG_FILE_EXTENSION),
             Bytes.fromHexString(PRIVATE_KEY));
 
     final ArtifactSigner signer = signerFactory.createSigner(capitalisedMetadata);

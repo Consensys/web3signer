@@ -15,15 +15,16 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 import tech.pegasys.eth2signer.core.multikey.MultiSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
+import java.nio.file.Path;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class UnencryptedKeyMetadataFile extends SigningMetadataFile {
 
   final Bytes privateKeyBytes;
 
-  public UnencryptedKeyMetadataFile(
-      final String filename, final String fileExtension, final Bytes privateKeyBytes) {
-    super(filename, fileExtension);
+  public UnencryptedKeyMetadataFile(final Path filename, final Bytes privateKeyBytes) {
+    super(filename);
     this.privateKeyBytes = privateKeyBytes;
   }
 

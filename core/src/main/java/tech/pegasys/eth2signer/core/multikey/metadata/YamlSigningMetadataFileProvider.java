@@ -42,7 +42,7 @@ public class YamlSigningMetadataFileProvider implements SigningMetadataFileProvi
           OBJECT_MAPPER.readValue(file.toFile(), MetadataFileBody.class);
       final SignerType type = metaDataInfo.getType();
       if (SignerType.FILE_RAW.equals(type)) {
-        return getUnencryptedKeyFromMetadata(file.getFileName().toString(), metaDataInfo);
+        return getUnencryptedKeyFromMetadata(file, metaDataInfo);
       } else if (type == null) {
         LOG.error("No signing type in metadata");
       } else {
@@ -57,7 +57,7 @@ public class YamlSigningMetadataFileProvider implements SigningMetadataFileProvi
   }
 
   private Optional<SigningMetadataFile> getUnencryptedKeyFromMetadata(
-      final String filename, MetadataFileBody metaDataInfo) {
+      final Path filename, MetadataFileBody metaDataInfo) {
     final Map<String, String> params = metaDataInfo.getParams();
     final String privateKey = params.get("privateKey");
     if (privateKey == null) {
@@ -65,7 +65,6 @@ public class YamlSigningMetadataFileProvider implements SigningMetadataFileProvi
       return Optional.empty();
     }
     final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
-    return Optional.of(
-        new UnencryptedKeyMetadataFile(filename, YAML_FILE_EXTENSION, privateKeyBytes));
+    return Optional.of(new UnencryptedKeyMetadataFile(filename, privateKeyBytes));
   }
 }

@@ -40,7 +40,7 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider, M
   @Override
   public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
     return signingMetadataConfigLoader
-        .loadMetadataForAddress(signerIdentifier)
+        .loadMetadataFileForAddress(signerIdentifier)
         .map(metadataFile -> metadataFile.createSigner(this));
   }
 
