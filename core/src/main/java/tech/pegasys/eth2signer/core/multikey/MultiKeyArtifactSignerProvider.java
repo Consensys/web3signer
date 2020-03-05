@@ -34,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 
 public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
 
+  private static final Logger LOG = LogManager.getLogger();
   private final Path configsDirectory;
   private SignerParser signerParser;
 
@@ -41,8 +42,6 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
     this.configsDirectory = rootDirectory;
     this.signerParser = signerParser;
   }
-
-  private static final Logger LOG = LogManager.getLogger();
 
   @Override
   public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
@@ -98,7 +97,7 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
     try (final DirectoryStream<Path> directoryStream =
         Files.newDirectoryStream(configsDirectory, filter)) {
       for (final Path file : directoryStream) {
-        signerParser.parse(file).ifPresent(signers::add);
+        signers.add(signerParser.parse(file));
       }
       return signers;
     } catch (final IOException e) {

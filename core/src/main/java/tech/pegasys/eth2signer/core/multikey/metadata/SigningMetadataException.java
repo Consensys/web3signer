@@ -12,11 +12,9 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+public class SigningMetadataException extends RuntimeException {
 
-import java.nio.file.Path;
-
-public interface SignerParser {
-
-  ArtifactSigner parse(final Path file) throws SigningMetadataException;
+  public SigningMetadataException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
@@ -28,7 +29,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -59,42 +59,41 @@ class YamlSignerParserTest {
   }
 
   @Test
-  void metaDataInfoWithNonExistingFileReturnsEmpty() {
-    final Optional<ArtifactSigner> metadataInfo =
-        signerParser.parse(configDir.resolve("does_not_exist"));
-
-    assertThat(metadataInfo).isEmpty();
+  void metaDataInfoWithNonExistingFileFails() {
+    assertThatThrownBy(() -> signerParser.parse(configDir.resolve("does_not_exist")))
+        .isInstanceOf(SigningMetadataException.class)
+        .hasMessageStartingWith("Signing metadata file not found");
   }
 
   @Test
-  void metaDataInfoWithUnknownTypeReturnsEmpty() throws IOException {
+  void metaDataInfoWithUnknownTypeFails() throws IOException {
     final Path filename = configDir.resolve("unknownType");
     YAML_OBJECT_MAPPER.writeValue(
         filename.toFile(), Map.of("type", SignerType.UNKNOWN_TYPE_SIGNER.name()));
 
-    final Optional<ArtifactSigner> metadataInfo = signerParser.parse(filename);
-
-    assertThat(metadataInfo).isEmpty();
+    assertThatThrownBy(() -> signerParser.parse(filename))
+        .isInstanceOf(SigningMetadataException.class)
+        .hasMessageStartingWith("Invalid signing metadata file");
   }
 
   @Test
-  void metaDataInfoWithMissingTypeReturnsEmpty() throws IOException {
+  void metaDataInfoWithMissingTypeFails() throws IOException {
     final Path filename = configDir.resolve("empty");
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), Map.of());
 
-    final Optional<ArtifactSigner> metadataInfo = signerParser.parse(filename);
-
-    assertThat(metadataInfo).isEmpty();
+    assertThatThrownBy(() -> signerParser.parse(filename))
+        .isInstanceOf(SigningMetadataException.class)
+        .hasMessageStartingWith("Invalid signing metadata file");
   }
 
   @Test
-  void unencryptedMetaDataInfoWithMissingPrivateKeyReturnsEmpty() throws IOException {
+  void unencryptedMetaDataInfoWithMissingPrivateKeyFails() throws IOException {
     final Path filename = configDir.resolve("unencryptedNoKey." + YAML_FILE_EXTENSION);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), Map.of("type", SignerType.FILE_RAW.name()));
 
-    final Optional<ArtifactSigner> metadataInfo = signerParser.parse(filename);
-
-    assertThat(metadataInfo).isEmpty();
+    assertThatThrownBy(() -> signerParser.parse(filename))
+        .isInstanceOf(SigningMetadataException.class)
+        .hasMessageStartingWith("Invalid signing metadata file");
   }
 
   @Test
@@ -109,10 +108,9 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final Optional<ArtifactSigner> result = signerParser.parse(filename);
+    final ArtifactSigner result = signerParser.parse(filename);
 
-    assertThat(result).isNotEmpty();
-    assertThat(result.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    assertThat(result.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
     verify(artifactSignerFactory)
         .createSigner(argThat(metaData -> metaData.getPrivateKey().equals(PRIVATE_KEY)));
   }

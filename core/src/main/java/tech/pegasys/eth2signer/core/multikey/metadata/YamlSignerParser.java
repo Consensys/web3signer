@@ -17,7 +17,6 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -43,19 +42,18 @@ public class YamlSignerParser implements SignerParser {
   }
 
   @Override
-  public Optional<ArtifactSigner> parse(final Path metadataPath) {
+  public ArtifactSigner parse(final Path metadataPath) {
     try {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
-      final ArtifactSigner signer = metaDataInfo.createSigner(artifactSignerFactory);
-      return Optional.of(signer);
+      return metaDataInfo.createSigner(artifactSignerFactory);
     } catch (final JsonParseException | JsonMappingException e) {
-      LOG.error("Invalid signing metadata file: " + e.getMessage(), e);
+      throw new SigningMetadataException("Invalid signing metadata file: " + e.getMessage(), e);
     } catch (final FileNotFoundException e) {
-      LOG.error("Signing metadata file not found: " + metadataPath, e);
+      throw new SigningMetadataException("Signing metadata file not found: " + metadataPath, e);
     } catch (final IOException e) {
-      LOG.error("Unexpected IO error while reading signing metadata file: " + e.getMessage());
+      throw new SigningMetadataException(
+          "Unexpected IO error while reading signing metadata file: " + e.getMessage(), e);
     }
-    return Optional.empty();
   }
 }
