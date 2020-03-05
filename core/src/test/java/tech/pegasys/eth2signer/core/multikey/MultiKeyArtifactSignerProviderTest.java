@@ -59,7 +59,7 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   @Test
-  void getSignerForAvailableMetadataReturnsSigner() throws IOException {
+  void signerReturnedForValidMetadataFile() throws IOException {
     final String filename = PUBLIC_KEY;
     createFile(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
@@ -71,7 +71,7 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   @Test
-  void signerIsLoadedSuccessfullyWhenAddressHasCaseMismatchToFilename() throws IOException {
+  void signerReturnedWhenAddressHasCaseMismatchToFilename() throws IOException {
     final String filename = PUBLIC_KEY.toUpperCase();
     createFile(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
@@ -83,7 +83,7 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   @Test
-  void getSignerWithHexPrefixReturnsFile() throws IOException {
+  void signerReturnedWhenHasHexPrefix() throws IOException {
     final String metadataFilename = PUBLIC_KEY;
     createFile(metadataFilename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
@@ -95,7 +95,7 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   @Test
-  void getSignerForFailedParserReturnsEmptySigner() throws IOException {
+  void failedParserReturnsEmptySigner() throws IOException {
     createFile(PUBLIC_KEY);
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
 
@@ -104,7 +104,7 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   @Test
-  void getSignerForNonExistentDirectoryReturnsEmptySigner() throws IOException {
+  void failedWithDirectoryErrorReturnEmptySigner() throws IOException {
     MultiKeyArtifactSignerProvider signerProvider =
         new MultiKeyArtifactSignerProvider(configsDirectory.resolve("idontexist"), signerParser);
     createFile(PUBLIC_KEY);
@@ -129,15 +129,7 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   @Test
-  void getAddresses() throws IOException {
-    createFile(PUBLIC_KEY + ".yaml");
-    when(signerParser.parse(any())).thenReturn(artifactSigner);
-
-    assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY);
-  }
-
-  @Test
-  void getsSignerForIdentifierWithPrefix() throws IOException {
+  void signerReturnedForMetadataFileWithPrefix() throws IOException {
     final String filename = "someprefix" + PUBLIC_KEY;
     createFile(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
@@ -149,7 +141,15 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   @Test
-  void loadAvailableConfigsReturnsAllValidMetadataFilesInDirectory() throws IOException {
+  void signerIdentifiersReturnedForMetadataFile() throws IOException {
+    createFile(PUBLIC_KEY + ".yaml");
+    when(signerParser.parse(any())).thenReturn(artifactSigner);
+
+    assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY);
+  }
+
+  @Test
+  void signerIdentifiersReturnedForAllValidMetadataFilesInDirectory() throws IOException {
     final String privateKey1 =
         "0x0000000000000000000000000000000065d5d1dd92ed6b75ab662afdaeb4109948c05cffcdd299f62e58e3fb5edceb67";
     final String publicKey1 =
