@@ -20,7 +20,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.eth2signer.core.multikey.metadata.YamlSignerParser.YAML_FILE_EXTENSION;
 
-import tech.pegasys.eth2signer.core.multikey.SignerType;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.crypto.KeyPair;
 import tech.pegasys.eth2signer.crypto.SecretKey;
@@ -68,8 +67,7 @@ class YamlSignerParserTest {
   @Test
   void metaDataInfoWithUnknownTypeFails() throws IOException {
     final Path filename = configDir.resolve("unknownType");
-    YAML_OBJECT_MAPPER.writeValue(
-        filename.toFile(), Map.of("type", SignerType.UNKNOWN_TYPE_SIGNER.name()));
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), Map.of("type", "unknown"));
 
     assertThatThrownBy(() -> signerParser.parse(filename))
         .isInstanceOf(SigningMetadataException.class)
@@ -89,7 +87,7 @@ class YamlSignerParserTest {
   @Test
   void unencryptedMetaDataInfoWithMissingPrivateKeyFails() throws IOException {
     final Path filename = configDir.resolve("unencryptedNoKey." + YAML_FILE_EXTENSION);
-    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), Map.of("type", SignerType.FILE_RAW.name()));
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), Map.of("type", "file-raw"));
 
     assertThatThrownBy(() -> signerParser.parse(filename))
         .isInstanceOf(SigningMetadataException.class)
@@ -104,7 +102,7 @@ class YamlSignerParserTest {
 
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
-    unencryptedKeyMetadataFile.put("type", "FILE_RAW");
+    unencryptedKeyMetadataFile.put("type", "file-raw");
     unencryptedKeyMetadataFile.put("privateKey", PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 

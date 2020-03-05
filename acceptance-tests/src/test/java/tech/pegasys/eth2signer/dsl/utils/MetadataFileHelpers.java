@@ -14,8 +14,6 @@ package tech.pegasys.eth2signer.dsl.utils;
 
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
-import tech.pegasys.eth2signer.core.multikey.SignerType;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -29,7 +27,7 @@ public class MetadataFileHelpers {
 
   public void createUnencryptedYamlFileAt(final Path metadataFilePath, final String keyContent) {
     final Map<String, String> signingMetadata = new HashMap<>();
-    signingMetadata.put("type", SignerType.FILE_RAW.name());
+    signingMetadata.put("type", "file-raw");
     signingMetadata.put("privateKey", keyContent);
     createYamlFile(metadataFilePath, signingMetadata);
   }

@@ -23,11 +23,8 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class YamlSignerParser implements SignerParser {
-  private static final Logger LOG = LogManager.getLogger();
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   public static final String YAML_FILE_EXTENSION = "yaml";
 
