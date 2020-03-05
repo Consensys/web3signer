@@ -97,10 +97,14 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
     try (final DirectoryStream<Path> directoryStream =
         Files.newDirectoryStream(configsDirectory, filter)) {
       for (final Path file : directoryStream) {
-        signers.add(signerParser.parse(file));
+        try {
+          signers.add(signerParser.parse(file));
+        } catch (Exception e) {
+          LOG.error("Error parsing signing metadata file {}", file, e);
+        }
       }
       return signers;
-    } catch (final IOException e) {
+    } catch (final IOException | SecurityException e) {
       LOG.warn("Error searching for signing metadata files", e);
       return Collections.emptySet();
     }

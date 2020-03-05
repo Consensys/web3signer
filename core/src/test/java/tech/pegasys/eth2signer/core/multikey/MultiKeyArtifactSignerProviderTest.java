@@ -20,6 +20,7 @@ import static org.mockito.Mockito.when;
 import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.CONFIG_FILE_EXTENSION;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.SignerParser;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.crypto.KeyPair;
 import tech.pegasys.eth2signer.crypto.SecretKey;
@@ -93,8 +94,26 @@ class MultiKeyArtifactSignerProviderTest {
     verify(signerParser).parse(pathEndsWith(metadataFilename));
   }
 
-  // TODO loads files with prefix
-  // TODO test error handling
+  @Test
+  void getSignerForFailedParserReturnsEmptySigner() throws IOException {
+    final String metadataFilename = PUBLIC_KEY + CONFIG_FILE_EXTENSION;
+    createFile(metadataFilename);
+    when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
+
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    assertThat(signer).isEmpty();
+  }
+
+  @Test
+  void getSignerForNonExistentDirectoryReturnsEmptySigner() throws IOException {
+    MultiKeyArtifactSignerProvider signerProvider =
+        new MultiKeyArtifactSignerProvider(configsDirectory.resolve("idontexist"), signerParser);
+    final String metadataFilename = PUBLIC_KEY + CONFIG_FILE_EXTENSION;
+    createFile(metadataFilename);
+
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    assertThat(signer).isEmpty();
+  }
 
   @Test
   void multipleMatchesForSameAddressReturnsEmpty() throws IOException {
@@ -117,6 +136,18 @@ class MultiKeyArtifactSignerProviderTest {
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
     assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY);
+  }
+
+  @Test
+  void getsSignerForIdentifierWithPrefix() throws IOException {
+    final String filename = "someprefix" + PUBLIC_KEY + ".yaml";
+    createFile(filename);
+    when(signerParser.parse(any())).thenReturn(artifactSigner);
+
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    assertThat(signer).isNotEmpty();
+    assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    verify(signerParser).parse(pathEndsWith(filename));
   }
 
   @Test
