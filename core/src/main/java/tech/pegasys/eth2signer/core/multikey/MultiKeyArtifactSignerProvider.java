@@ -46,29 +46,33 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
   @Override
   public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
     final String normalisedIdentifier = normaliseIdentifier(signerIdentifier);
-    final Optional<ArtifactSigner> artifactSigner =
-        loadSignerForAddress(normalisedIdentifier)
-            .filter(
-                signer ->
-                    normaliseIdentifier(signer.getIdentifier())
-                        .equalsIgnoreCase(normalisedIdentifier));
-    if (artifactSigner.isEmpty()) {
-      LOG.error(
-          "Found signing metadata file does not match the signer identifier {}", signerIdentifier);
+    final Optional<ArtifactSignerWithFileName> signer = loadSignerForAddress(normalisedIdentifier);
+    if (signer.isEmpty()) {
+      LOG.error("No matching metadata file found for the identifier {}", signerIdentifier);
+      return Optional.empty();
     }
-    return artifactSigner;
+    final ArtifactSignerWithFileName signerWithFileName = signer.get();
+    if (!signerMatchesIdentifier(signerWithFileName, signerIdentifier)) {
+      LOG.error(
+          "Signing metadata file {} does not correspond to the specified signer identifier {}",
+          signerWithFileName.getPath().getFileName(),
+          signerWithFileName.getSigner().getIdentifier());
+      return Optional.empty();
+    }
+    return signer.map(ArtifactSignerWithFileName::getSigner);
   }
 
   @Override
   public Set<String> availableIdentifiers() {
     return loadAvailableSigners().stream()
         .filter(Objects::nonNull)
+        .map(ArtifactSignerWithFileName::getSigner)
         .map(ArtifactSigner::getIdentifier)
         .collect(Collectors.toSet());
   }
 
-  private Optional<ArtifactSigner> loadSignerForAddress(final String signerIdentifier) {
-    final Collection<ArtifactSigner> matchingSigners =
+  private Optional<ArtifactSignerWithFileName> loadSignerForAddress(final String signerIdentifier) {
+    final Collection<ArtifactSignerWithFileName> matchingSigners =
         findSigners(
             entry ->
                 FilenameUtils.getBaseName(entry.getFileName().toString())
@@ -84,21 +88,21 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
     }
   }
 
-  private Collection<ArtifactSigner> loadAvailableSigners() {
+  private Collection<ArtifactSignerWithFileName> loadAvailableSigners() {
     return findSigners((entry) -> true);
   }
 
-  // TODO return tuple with the found fileName for use in error messages?
-
-  private Collection<ArtifactSigner> findSigners(
+  private Collection<ArtifactSignerWithFileName> findSigners(
       final DirectoryStream.Filter<? super Path> filter) {
-    final Collection<ArtifactSigner> signers = new HashSet<>();
+    final Collection<ArtifactSignerWithFileName> signers = new HashSet<>();
 
     try (final DirectoryStream<Path> directoryStream =
         Files.newDirectoryStream(configsDirectory, filter)) {
       for (final Path file : directoryStream) {
         try {
-          signers.add(signerParser.parse(file));
+          final ArtifactSignerWithFileName artifactSignerWithFileName =
+              new ArtifactSignerWithFileName(file, signerParser.parse(file));
+          signers.add(artifactSignerWithFileName);
         } catch (Exception e) {
           LOG.error("Error parsing signing metadata file {}", file, e);
         }
@@ -110,7 +114,31 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
     }
   }
 
+  private boolean signerMatchesIdentifier(
+      final ArtifactSignerWithFileName signerWithFileName, final String signerIdentifier) {
+    final String identifier = signerWithFileName.getSigner().getIdentifier();
+    return normaliseIdentifier(identifier).equalsIgnoreCase(normaliseIdentifier(signerIdentifier));
+  }
+
   private String normaliseIdentifier(final String signerIdentifier) {
     return signerIdentifier.startsWith("0x") ? signerIdentifier.substring(2) : signerIdentifier;
+  }
+
+  private static class ArtifactSignerWithFileName {
+    private final Path path;
+    private final ArtifactSigner signer;
+
+    public ArtifactSignerWithFileName(final Path path, final ArtifactSigner signer) {
+      this.path = path;
+      this.signer = signer;
+    }
+
+    public Path getPath() {
+      return path;
+    }
+
+    public ArtifactSigner getSigner() {
+      return signer;
+    }
   }
 }
