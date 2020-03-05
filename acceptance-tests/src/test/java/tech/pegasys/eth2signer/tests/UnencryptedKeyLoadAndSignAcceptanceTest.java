@@ -46,8 +46,8 @@ public class UnencryptedKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase 
   @ValueSource(strings = {"/signer/block", "/signer/attestation"})
   public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint)
       throws Exception {
-    final String metadataKeyFilename = keyPair.publicKey().toString().substring(2);
-    final Path keyConfigFile = testDirectory.resolve(metadataKeyFilename + ".yaml");
+    final String configFilename = keyPair.publicKey().toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKeyString);
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
