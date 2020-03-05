@@ -17,7 +17,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.CONFIG_FILE_EXTENSION;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.SignerParser;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
@@ -44,6 +43,7 @@ class MultiKeyArtifactSignerProviderTest {
   @TempDir Path configsDirectory;
   @Mock private SignerParser signerParser;
 
+  private static final String FILE_EXTENSION = ".yaml";
   private static final String PUBLIC_KEY =
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
   private static final String PRIVATE_KEY =
@@ -60,7 +60,7 @@ class MultiKeyArtifactSignerProviderTest {
 
   @Test
   void getSignerForAvailableMetadataReturnsSigner() throws IOException {
-    final String filename = PUBLIC_KEY + ".yaml";
+    final String filename = PUBLIC_KEY;
     createFile(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
@@ -72,7 +72,7 @@ class MultiKeyArtifactSignerProviderTest {
 
   @Test
   void signerIsLoadedSuccessfullyWhenAddressHasCaseMismatchToFilename() throws IOException {
-    final String filename = PUBLIC_KEY.toUpperCase() + ".yaml";
+    final String filename = PUBLIC_KEY.toUpperCase();
     createFile(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
@@ -84,7 +84,7 @@ class MultiKeyArtifactSignerProviderTest {
 
   @Test
   void getSignerWithHexPrefixReturnsFile() throws IOException {
-    final String metadataFilename = PUBLIC_KEY + CONFIG_FILE_EXTENSION;
+    final String metadataFilename = PUBLIC_KEY;
     createFile(metadataFilename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
@@ -96,8 +96,7 @@ class MultiKeyArtifactSignerProviderTest {
 
   @Test
   void getSignerForFailedParserReturnsEmptySigner() throws IOException {
-    final String metadataFilename = PUBLIC_KEY + CONFIG_FILE_EXTENSION;
-    createFile(metadataFilename);
+    createFile(PUBLIC_KEY);
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
@@ -108,8 +107,7 @@ class MultiKeyArtifactSignerProviderTest {
   void getSignerForNonExistentDirectoryReturnsEmptySigner() throws IOException {
     MultiKeyArtifactSignerProvider signerProvider =
         new MultiKeyArtifactSignerProvider(configsDirectory.resolve("idontexist"), signerParser);
-    final String metadataFilename = PUBLIC_KEY + CONFIG_FILE_EXTENSION;
-    createFile(metadataFilename);
+    createFile(PUBLIC_KEY);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
@@ -117,8 +115,8 @@ class MultiKeyArtifactSignerProviderTest {
 
   @Test
   void multipleMatchesForSameAddressReturnsEmpty() throws IOException {
-    final String filename1 = "1_" + PUBLIC_KEY + ".yaml";
-    final String filename2 = "2_" + PUBLIC_KEY + ".yaml";
+    final String filename1 = "1_" + PUBLIC_KEY;
+    final String filename2 = "2_" + PUBLIC_KEY;
     createFile(filename1);
     createFile(filename2);
 
@@ -140,7 +138,7 @@ class MultiKeyArtifactSignerProviderTest {
 
   @Test
   void getsSignerForIdentifierWithPrefix() throws IOException {
-    final String filename = "someprefix" + PUBLIC_KEY + ".yaml";
+    final String filename = "someprefix" + PUBLIC_KEY;
     createFile(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
@@ -156,25 +154,25 @@ class MultiKeyArtifactSignerProviderTest {
         "0x0000000000000000000000000000000065d5d1dd92ed6b75ab662afdaeb4109948c05cffcdd299f62e58e3fb5edceb67";
     final String publicKey1 =
         "0x889477480fbcf2c7d32fafe50c60fc716545543a5660130e84041e6f6fce5fa471ef1e7c0cdd4380b83b8d33893e6f11";
-    final String filename1 = publicKey1 + ".yaml";
-    createFile(filename1);
-    when(signerParser.parse(pathEndsWith(filename1))).thenReturn(createArtifactSigner(privateKey1));
+    createFile(publicKey1);
+    when(signerParser.parse(pathEndsWith(publicKey1)))
+        .thenReturn(createArtifactSigner(privateKey1));
 
     final String privateKey2 =
         "0x00000000000000000000000000000000430d79925d1bc810d2bd033178fdea98c59f29edd40e80cc7f13e92fcb05a86e";
     final String publicKey2 =
         "0xa7c5f1c815571d02df8ebc9b083e1a7fb4b360970cc40ebb325f3d2360dd1f9723825ea0c6fa9e398cd233ef0868a8cc";
-    final String filename2 = publicKey2 + ".yaml";
-    createFile(publicKey2 + ".yaml");
-    when(signerParser.parse(pathEndsWith(filename2))).thenReturn(createArtifactSigner(privateKey2));
+    createFile(publicKey2);
+    when(signerParser.parse(pathEndsWith(publicKey2)))
+        .thenReturn(createArtifactSigner(privateKey2));
 
     final String privateKey3 =
         "0x0000000000000000000000000000000062e4325a71315d5bb757458b560dc1957118c12466978c772c31bad86a7e3a5e";
     final String publicKey3 =
         "0xb458bf0b2e1d3797b2f95a0f80f715b18881f74d114c824f54452893fbe6368b32de3066e472dbeb1a43181416159606";
-    final String filename3 = publicKey3 + ".yaml";
-    createFile(filename3);
-    when(signerParser.parse(pathEndsWith(filename3))).thenReturn(createArtifactSigner(privateKey3));
+    createFile(publicKey3);
+    when(signerParser.parse(pathEndsWith(publicKey3)))
+        .thenReturn(createArtifactSigner(privateKey3));
 
     final Collection<String> identifiers = signerProvider.availableIdentifiers();
 
@@ -183,12 +181,12 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   private Path pathEndsWith(final String endsWith) {
-    return argThat((Path path) -> path != null && path.endsWith(endsWith));
+    return argThat((Path path) -> path != null && path.endsWith(endsWith + FILE_EXTENSION));
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   private void createFile(final String filename) throws IOException {
-    final File file = configsDirectory.resolve(filename).toFile();
+    final File file = configsDirectory.resolve(filename + FILE_EXTENSION).toFile();
     file.createNewFile();
   }
 
