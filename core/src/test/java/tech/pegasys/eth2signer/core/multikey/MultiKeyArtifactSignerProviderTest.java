@@ -13,67 +13,159 @@
 package tech.pegasys.eth2signer.core.multikey;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static tech.pegasys.eth2signer.core.multikey.MetadataFileFixture.CONFIG_FILE_EXTENSION;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
-import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
+import tech.pegasys.eth2signer.core.multikey.metadata.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.crypto.KeyPair;
+import tech.pegasys.eth2signer.crypto.SecretKey;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class MultiKeyArtifactSignerProviderTest {
+  @TempDir Path configsDirectory;
+  @Mock private SignerParser signerParser;
 
-  private SigningMetadataConfigLoader loader = mock(SigningMetadataConfigLoader.class);
-  private MultiKeyArtifactSignerProvider signerFactory = new MultiKeyArtifactSignerProvider(loader);
   private static final String PUBLIC_KEY =
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
   private static final String PRIVATE_KEY =
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-  private SigningMetadataFile metadataFile;
+
+  private ArtifactSigner artifactSigner;
+  private MultiKeyArtifactSignerProvider signerProvider;
 
   @BeforeEach
   void setup() {
-    metadataFile =
-        new UnencryptedKeyMetadataFile(
-            Path.of(PUBLIC_KEY + CONFIG_FILE_EXTENSION), Bytes.fromHexString(PRIVATE_KEY));
+    signerProvider = new MultiKeyArtifactSignerProvider(configsDirectory, signerParser);
+    artifactSigner = createArtifactSigner(PRIVATE_KEY);
   }
 
   @Test
-  void getSignerForAvailableMetadataReturnsSigner() {
-    when(loader.loadMetadataFileForAddress(PUBLIC_KEY)).thenReturn(Optional.of(metadataFile));
+  void getSignerForAvailableMetadataReturnsSigner() throws IOException {
+    final String filename = PUBLIC_KEY + ".yaml";
+    createFile(filename);
+    when(signerParser.parse(any())).thenReturn(Optional.of(artifactSigner));
 
-    final Optional<ArtifactSigner> signer = signerFactory.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isNotEmpty();
     assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    verify(signerParser).parse(pathEndsWith(filename));
   }
 
   @Test
-  void getAddresses() {
-    final Collection<SigningMetadataFile> files = Collections.singleton(metadataFile);
-    when(loader.loadAvailableSigningMetadataConfigs()).thenReturn(files);
-    assertThat(signerFactory.availableSigners()).containsExactly("0x" + PUBLIC_KEY);
+  void signerIsLoadedSuccessfullyWhenAddressHasCaseMismatchToFilename() throws IOException {
+    final String filename = PUBLIC_KEY.toUpperCase() + ".yaml";
+    createFile(filename);
+    when(signerParser.parse(any())).thenReturn(Optional.of(artifactSigner));
+
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    assertThat(signer).isNotEmpty();
+    assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    verify(signerParser).parse(pathEndsWith(filename));
   }
 
   @Test
-  void signerIsLoadedSuccessfullyWhenAddressHasCaseMismatchToFilename() {
-    final UnencryptedKeyMetadataFile capitalisedMetadata =
-        new UnencryptedKeyMetadataFile(
-            Path.of(PUBLIC_KEY.toUpperCase() + CONFIG_FILE_EXTENSION),
-            Bytes.fromHexString(PRIVATE_KEY));
+  void getSignerWithHexPrefixReturnsFile() throws IOException {
+    final String metadataFilename = PUBLIC_KEY + CONFIG_FILE_EXTENSION;
+    createFile(metadataFilename);
+    when(signerParser.parse(any())).thenReturn(Optional.of(artifactSigner));
 
-    final ArtifactSigner signer = signerFactory.createSigner(capitalisedMetadata);
-    assertThat(signer).isNotNull();
-    assertThat(capitalisedMetadata.getBaseFilename())
-        .isNotEqualTo(signer.getIdentifier().substring(2));
-    assertThat(signer.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY);
+
+    assertThat(signer).isNotEmpty();
+    verify(signerParser).parse(pathEndsWith(metadataFilename));
+  }
+
+  // TODO loads files with prefix
+
+  @Test
+  void multipleMatchesForSameAddressReturnsEmpty() throws IOException {
+    final String filename1 = "1_" + PUBLIC_KEY + ".yaml";
+    final String filename2 = "2_" + PUBLIC_KEY + ".yaml";
+    createFile(filename1);
+    createFile(filename2);
+
+    when(signerParser.parse(pathEndsWith(filename1)))
+        .thenReturn(Optional.of(createArtifactSigner(PRIVATE_KEY)));
+    when(signerParser.parse(pathEndsWith(filename2)))
+        .thenReturn(Optional.of(createArtifactSigner(PRIVATE_KEY)));
+
+    final Optional<ArtifactSigner> loadedMetadataFile = signerProvider.getSigner(PUBLIC_KEY);
+
+    assertThat(loadedMetadataFile).isEmpty();
+  }
+
+  @Test
+  void getAddresses() throws IOException {
+    createFile(PUBLIC_KEY + ".yaml");
+    when(signerParser.parse(any())).thenReturn(Optional.of(artifactSigner));
+
+    assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY);
+  }
+
+  @Test
+  void loadAvailableConfigsReturnsAllValidMetadataFilesInDirectory() throws IOException {
+    final String privateKey1 =
+        "0x0000000000000000000000000000000065d5d1dd92ed6b75ab662afdaeb4109948c05cffcdd299f62e58e3fb5edceb67";
+    final String publicKey1 =
+        "0x889477480fbcf2c7d32fafe50c60fc716545543a5660130e84041e6f6fce5fa471ef1e7c0cdd4380b83b8d33893e6f11";
+    final String filename1 = publicKey1 + ".yaml";
+    createFile(filename1);
+    when(signerParser.parse(pathEndsWith(filename1)))
+        .thenReturn(Optional.of(createArtifactSigner(privateKey1)));
+
+    final String privateKey2 =
+        "0x00000000000000000000000000000000430d79925d1bc810d2bd033178fdea98c59f29edd40e80cc7f13e92fcb05a86e";
+    final String publicKey2 =
+        "0xa7c5f1c815571d02df8ebc9b083e1a7fb4b360970cc40ebb325f3d2360dd1f9723825ea0c6fa9e398cd233ef0868a8cc";
+    final String filename2 = publicKey2 + ".yaml";
+    createFile(publicKey2 + ".yaml");
+    when(signerParser.parse(pathEndsWith(filename2)))
+        .thenReturn(Optional.of(createArtifactSigner(privateKey2)));
+
+    final String privateKey3 =
+        "0x0000000000000000000000000000000062e4325a71315d5bb757458b560dc1957118c12466978c772c31bad86a7e3a5e";
+    final String publicKey3 =
+        "0xb458bf0b2e1d3797b2f95a0f80f715b18881f74d114c824f54452893fbe6368b32de3066e472dbeb1a43181416159606";
+    final String filename3 = publicKey3 + ".yaml";
+    createFile(filename3);
+    when(signerParser.parse(pathEndsWith(filename3)))
+        .thenReturn(Optional.of(createArtifactSigner(privateKey3)));
+
+    final Collection<String> identifiers = signerProvider.availableIdentifiers();
+
+    assertThat(identifiers).hasSize(3);
+    assertThat(identifiers).containsOnly(publicKey1, publicKey2, publicKey3);
+  }
+
+  private Path pathEndsWith(final String endsWith) {
+    return argThat((Path path) -> path != null && path.endsWith(endsWith));
+  }
+
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  private void createFile(final String filename) throws IOException {
+    final File file = configsDirectory.resolve(filename).toFile();
+    file.createNewFile();
+  }
+
+  private ArtifactSigner createArtifactSigner(final String privateKey) {
+    return new ArtifactSigner(new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(privateKey))));
   }
 }

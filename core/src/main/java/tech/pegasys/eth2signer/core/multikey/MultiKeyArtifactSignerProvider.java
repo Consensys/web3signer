@@ -12,72 +12,102 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataFile;
-import tech.pegasys.eth2signer.core.multikey.metadata.UnencryptedKeyMetadataFile;
-import tech.pegasys.eth2signer.core.signers.unencryptedfile.UnencryptedKeyFileSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider, MultiSignerFactory {
+public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
+
+  private final Path configsDirectory;
+  private SignerParser signerParser;
+
+  public MultiKeyArtifactSignerProvider(final Path rootDirectory, final SignerParser signerParser) {
+    this.configsDirectory = rootDirectory;
+    this.signerParser = signerParser;
+  }
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final SigningMetadataConfigLoader signingMetadataConfigLoader;
-
-  public MultiKeyArtifactSignerProvider(
-      final SigningMetadataConfigLoader signingMetadataConfigLoader) {
-    this.signingMetadataConfigLoader = signingMetadataConfigLoader;
-  }
-
   @Override
   public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
-    return signingMetadataConfigLoader
-        .loadMetadataFileForAddress(signerIdentifier)
-        .map(metadataFile -> metadataFile.createSigner(this));
+    final String normalisedIdentifier = normaliseIdentifier(signerIdentifier);
+    final Optional<ArtifactSigner> artifactSigner =
+        loadSignerForAddress(normalisedIdentifier)
+            .filter(
+                signer ->
+                    normaliseIdentifier(signer.getIdentifier())
+                        .equalsIgnoreCase(normalisedIdentifier));
+    if (artifactSigner.isEmpty()) {
+      LOG.error(
+          "Found signing metadata file does not match the signer identifier {}", signerIdentifier);
+    }
+    return artifactSigner;
   }
 
   @Override
-  public Set<String> availableSigners() {
-    return signingMetadataConfigLoader.loadAvailableSigningMetadataConfigs().stream()
-        .map(metadataFile -> metadataFile.createSigner(this))
+  public Set<String> availableIdentifiers() {
+    return loadAvailableSigners().stream()
         .filter(Objects::nonNull)
         .map(ArtifactSigner::getIdentifier)
         .collect(Collectors.toSet());
   }
 
-  @Override
-  public ArtifactSigner createSigner(final UnencryptedKeyMetadataFile metadataFile) {
-    final ArtifactSigner signer;
-    signer = UnencryptedKeyFileSignerFactory.createSigner(metadataFile.getPrivateKeyBytes());
-
-    if (filenameMatchesSigningAddress(signer, metadataFile)) {
-      LOG.info("Loaded signer for address {}", signer.getIdentifier());
-      return signer;
+  private Optional<ArtifactSigner> loadSignerForAddress(final String signerIdentifier) {
+    final Collection<ArtifactSigner> matchingSigners =
+        findSigners(
+            entry ->
+                FilenameUtils.getBaseName(entry.getFileName().toString())
+                    .toLowerCase()
+                    .endsWith(signerIdentifier.toLowerCase()));
+    if (matchingSigners.size() > 1) {
+      LOG.error("Found multiple signing metadata file matches for address " + signerIdentifier);
+      return Optional.empty();
+    } else if (matchingSigners.isEmpty()) {
+      return Optional.empty();
+    } else {
+      return Optional.of(matchingSigners.iterator().next());
     }
-
-    return null;
   }
 
-  private boolean filenameMatchesSigningAddress(
-      final ArtifactSigner signer, final SigningMetadataFile metadataFile) {
+  private Collection<ArtifactSigner> loadAvailableSigners() {
+    return findSigners((entry) -> true);
+  }
 
-    // strip leading 0x from the address.
-    final String signerAddress = signer.getIdentifier().substring(2).toLowerCase();
-    if (!metadataFile.getBaseFilename().toLowerCase().endsWith(signerAddress)) {
-      LOG.error(
-          String.format(
-              "Signer's Ethereum Address (%s) does not align with metadata filename (%s)",
-              signerAddress, metadataFile.getBaseFilename()));
-      return false;
+  // TODO return tuple with the found fileName for use in error messages?
+
+  private Collection<ArtifactSigner> findSigners(
+      final DirectoryStream.Filter<? super Path> filter) {
+    final Collection<ArtifactSigner> signers = new HashSet<>();
+
+    try (final DirectoryStream<Path> directoryStream =
+        Files.newDirectoryStream(configsDirectory, filter)) {
+      for (final Path file : directoryStream) {
+        signerParser.parse(file).ifPresent(signers::add);
+      }
+      return signers;
+    } catch (final IOException e) {
+      LOG.warn("Error searching for signing metadata files", e);
+      return Collections.emptySet();
     }
-    return true;
+  }
+
+  private String normaliseIdentifier(final String signerIdentifier) {
+    return signerIdentifier.startsWith("0x") ? signerIdentifier.substring(2) : signerIdentifier;
   }
 }

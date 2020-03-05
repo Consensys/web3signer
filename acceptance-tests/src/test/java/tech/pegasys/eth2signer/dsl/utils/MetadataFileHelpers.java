@@ -15,10 +15,11 @@ package tech.pegasys.eth2signer.dsl.utils;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
 import tech.pegasys.eth2signer.core.multikey.SignerType;
-import tech.pegasys.eth2signer.core.multikey.metadata.MetadataFileBody;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -27,14 +28,15 @@ public class MetadataFileHelpers {
   final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
 
   public void createUnencryptedYamlFileAt(final Path metadataFilePath, final String keyContent) {
-    final MetadataFileBody metadataFileBody = new MetadataFileBody(SignerType.FILE_RAW);
-    metadataFileBody.setParam("privateKey", keyContent);
-    createYamlFile(metadataFilePath, metadataFileBody);
+    final Map<String, String> signingMetadata = new HashMap<>();
+    signingMetadata.put("type", SignerType.FILE_RAW.name());
+    signingMetadata.put("privateKey", keyContent);
+    createYamlFile(metadataFilePath, signingMetadata);
   }
 
-  private void createYamlFile(final Path filePath, final MetadataFileBody metadataFileBody) {
+  private void createYamlFile(final Path filePath, final Map<String, String> signingMetadata) {
     try {
-      YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), metadataFileBody);
+      YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), signingMetadata);
     } catch (final IOException e) {
       fail("Unable to create metadata file.");
     }

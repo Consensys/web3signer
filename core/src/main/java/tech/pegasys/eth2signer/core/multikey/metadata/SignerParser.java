@@ -10,18 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.signers.unencryptedfile;
+package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.crypto.KeyPair;
-import tech.pegasys.eth2signer.crypto.SecretKey;
 
-import org.apache.tuweni.bytes.Bytes;
+import java.nio.file.Path;
+import java.util.Optional;
 
-public class UnencryptedKeyFileSignerFactory {
+public interface SignerParser {
 
-  public static ArtifactSigner createSigner(final Bytes privateKey) {
-    final KeyPair keys = new KeyPair(SecretKey.fromBytes(privateKey));
-    return new ArtifactSigner(keys);
-  }
+  Optional<ArtifactSigner> parse(final Path file);
 }

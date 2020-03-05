@@ -19,5 +19,5 @@ public interface ArtifactSignerProvider {
 
   Optional<ArtifactSigner> getSigner(final String pubKey);
 
-  Set<String> availableSigners();
+  Set<String> availableIdentifiers();
 }

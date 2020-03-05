@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright 2020 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,24 +12,28 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.eth2signer.core.multikey.MultiSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
-import java.nio.file.Path;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import org.apache.commons.io.FilenameUtils;
+public class FileRawSigningMetadata implements SigningMetadata {
 
-public abstract class SigningMetadataFile {
+  private final String privateKey;
 
-  protected String baseFilename;
-
-  public SigningMetadataFile(final Path filename) {
-    this.baseFilename = FilenameUtils.getBaseName(filename.getFileName().toString());
+  @JsonCreator
+  public FileRawSigningMetadata(
+      @JsonProperty(value = "privateKey", required = true) final String privateKey) {
+    this.privateKey = privateKey;
   }
 
-  public String getBaseFilename() {
-    return baseFilename;
+  @JsonProperty(value = "privateKey")
+  public String getPrivateKey() {
+    return privateKey;
   }
 
-  public abstract ArtifactSigner createSigner(final MultiSignerFactory factory);
+  @Override
+  public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
+    return factory.createSigner(this);
+  }
 }

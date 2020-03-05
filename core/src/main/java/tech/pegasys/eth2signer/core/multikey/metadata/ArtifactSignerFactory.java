@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,28 +12,17 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.eth2signer.core.multikey.MultiSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-
-import java.nio.file.Path;
+import tech.pegasys.eth2signer.crypto.KeyPair;
+import tech.pegasys.eth2signer.crypto.SecretKey;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class UnencryptedKeyMetadataFile extends SigningMetadataFile {
+public class ArtifactSignerFactory {
 
-  final Bytes privateKeyBytes;
-
-  public UnencryptedKeyMetadataFile(final Path filename, final Bytes privateKeyBytes) {
-    super(filename);
-    this.privateKeyBytes = privateKeyBytes;
-  }
-
-  public Bytes getPrivateKeyBytes() {
-    return privateKeyBytes;
-  }
-
-  @Override
-  public ArtifactSigner createSigner(final MultiSignerFactory factory) {
-    return factory.createSigner(this);
+  public ArtifactSigner createSigner(final FileRawSigningMetadata metadataFile) {
+    final Bytes privateKey = Bytes.fromHexString(metadataFile.getPrivateKey());
+    final KeyPair keys = new KeyPair(SecretKey.fromBytes(privateKey));
+    return new ArtifactSigner(keys);
   }
 }
