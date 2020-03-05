@@ -71,7 +71,7 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   @Test
-  void signerReturnedWhenAddressHasCaseMismatchToFilename() throws IOException {
+  void signerReturnedWhenIdentifierHasCaseMismatchToFilename() throws IOException {
     final String filename = PUBLIC_KEY.toUpperCase();
     createFile(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
@@ -114,7 +114,7 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   @Test
-  void multipleMatchesForSameAddressReturnsEmpty() throws IOException {
+  void multipleMatchesForSameIdentifierReturnsEmpty() throws IOException {
     final String filename1 = "1_" + PUBLIC_KEY;
     final String filename2 = "2_" + PUBLIC_KEY;
     createFile(filename1);

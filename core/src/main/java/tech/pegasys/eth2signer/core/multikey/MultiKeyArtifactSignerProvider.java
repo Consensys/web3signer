@@ -18,6 +18,7 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
+import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -46,7 +47,8 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
   @Override
   public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
     final String normalisedIdentifier = normaliseIdentifier(signerIdentifier);
-    final Optional<ArtifactSignerWithFileName> signer = loadSignerForAddress(normalisedIdentifier);
+    final Optional<ArtifactSignerWithFileName> signer =
+        loadSignerForIdentifier(normalisedIdentifier);
     if (signer.isEmpty()) {
       LOG.error("No matching metadata file found for the identifier {}", signerIdentifier);
       return Optional.empty();
@@ -71,15 +73,13 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
         .collect(Collectors.toSet());
   }
 
-  private Optional<ArtifactSignerWithFileName> loadSignerForAddress(final String signerIdentifier) {
-    final Collection<ArtifactSignerWithFileName> matchingSigners =
-        findSigners(
-            entry ->
-                FilenameUtils.getBaseName(entry.getFileName().toString())
-                    .toLowerCase()
-                    .endsWith(signerIdentifier.toLowerCase()));
+  private Optional<ArtifactSignerWithFileName> loadSignerForIdentifier(
+      final String signerIdentifier) {
+    final Filter<Path> pathFilter = signerIdentifierFilenameFilter(signerIdentifier);
+    final Collection<ArtifactSignerWithFileName> matchingSigners = findSigners(pathFilter);
     if (matchingSigners.size() > 1) {
-      LOG.error("Found multiple signing metadata file matches for address " + signerIdentifier);
+      LOG.error(
+          "Found multiple signing metadata file matches for signer identifier " + signerIdentifier);
       return Optional.empty();
     } else if (matchingSigners.isEmpty()) {
       return Optional.empty();
@@ -112,6 +112,13 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
       LOG.warn("Error searching for signing metadata files", e);
       return Collections.emptySet();
     }
+  }
+
+  private Filter<Path> signerIdentifierFilenameFilter(final String signerIdentifier) {
+    return entry ->
+        FilenameUtils.getBaseName(entry.getFileName().toString())
+            .toLowerCase()
+            .endsWith(signerIdentifier.toLowerCase());
   }
 
   private boolean signerMatchesIdentifier(
