@@ -18,5 +18,5 @@ import java.nio.file.Path;
 
 public interface SignerParser {
 
-  ArtifactSigner parse(final Path file) throws SigningMetadataException;
+  ArtifactSigner parse(Path file) throws SigningMetadataException;
 }

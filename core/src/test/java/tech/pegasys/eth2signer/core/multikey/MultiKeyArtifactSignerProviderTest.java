@@ -95,6 +95,18 @@ class MultiKeyArtifactSignerProviderTest {
   }
 
   @Test
+  void signerReturnedWhenHasUpperCaseHexPrefix() throws IOException {
+    final String metadataFilename = PUBLIC_KEY;
+    createFile(metadataFilename);
+    when(signerParser.parse(any())).thenReturn(artifactSigner);
+
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY);
+
+    assertThat(signer).isNotEmpty();
+    verify(signerParser).parse(pathEndsWith(metadataFilename));
+  }
+
+  @Test
   void failedParserReturnsEmptySigner() throws IOException {
     createFile(PUBLIC_KEY);
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);

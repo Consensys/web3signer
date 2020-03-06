@@ -37,7 +37,7 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Path configsDirectory;
-  private SignerParser signerParser;
+  private final SignerParser signerParser;
 
   public MultiKeyArtifactSignerProvider(final Path rootDirectory, final SignerParser signerParser) {
     this.configsDirectory = rootDirectory;
@@ -128,7 +128,9 @@ public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   private String normaliseIdentifier(final String signerIdentifier) {
-    return signerIdentifier.startsWith("0x") ? signerIdentifier.substring(2) : signerIdentifier;
+    return signerIdentifier.toLowerCase().startsWith("0x")
+        ? signerIdentifier.substring(2)
+        : signerIdentifier;
   }
 
   private static class ArtifactSignerWithFileName {

@@ -23,5 +23,5 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 @JsonSubTypes({@Type(value = FileRawSigningMetadata.class, name = "file-raw")})
 public interface SigningMetadata {
 
-  ArtifactSigner createSigner(final ArtifactSignerFactory factory);
+  ArtifactSigner createSigner(ArtifactSignerFactory factory);
 }
