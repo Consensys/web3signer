@@ -33,13 +33,14 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class MultiKeyArtifactSignerProvider implements ArtifactSignerProvider {
+public class DirectoryArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Path configsDirectory;
   private final SignerParser signerParser;
 
-  public MultiKeyArtifactSignerProvider(final Path rootDirectory, final SignerParser signerParser) {
+  public DirectoryArtifactSignerProvider(
+      final Path rootDirectory, final SignerParser signerParser) {
     this.configsDirectory = rootDirectory;
     this.signerParser = signerParser;
   }
