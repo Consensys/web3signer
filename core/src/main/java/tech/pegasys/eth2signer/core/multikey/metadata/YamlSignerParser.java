@@ -27,18 +27,14 @@ public class YamlSignerParser implements SignerParser {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   public static final String YAML_FILE_EXTENSION = "yaml";
 
-  private ArtifactSignerFactory artifactSignerFactory;
-
-  public YamlSignerParser(final ArtifactSignerFactory artifactSignerFactory) {
-    this.artifactSignerFactory = artifactSignerFactory;
-  }
+  public YamlSignerParser() {}
 
   @Override
   public ArtifactSigner parse(final Path metadataPath) {
     try {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
-      return metaDataInfo.createSigner(artifactSignerFactory);
+      return metaDataInfo.createSigner();
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file: " + e.getMessage(), e);
     } catch (final FileNotFoundException e) {

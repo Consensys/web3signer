@@ -20,7 +20,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class ArtifactSignerFactory {
 
-  public ArtifactSigner createSigner(final FileRawSigningMetadata metadataFile) {
+  public static ArtifactSigner createSigner(final FileRawSigningMetadata metadataFile) {
     final Bytes privateKey = Bytes.fromHexString(metadataFile.getPrivateKey());
     final KeyPair keys = new KeyPair(SecretKey.fromBytes(privateKey));
     return new ArtifactSigner(keys);

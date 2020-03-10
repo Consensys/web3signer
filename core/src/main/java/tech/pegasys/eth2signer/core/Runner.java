@@ -102,8 +102,7 @@ public class Runner implements Runnable {
 
     final ArtifactSignerFactory artifactSignerFactory = new ArtifactSignerFactory();
     final ArtifactSignerProvider signerProvider =
-        new MultiKeyArtifactSignerProvider(
-            config.getKeyConfigPath(), new YamlSignerParser(artifactSignerFactory));
+        new MultiKeyArtifactSignerProvider(config.getKeyConfigPath(), new YamlSignerParser());
 
     final SigningRequestHandler signingHandler =
         new SigningRequestHandler(signerProvider, createJsonDecoder());

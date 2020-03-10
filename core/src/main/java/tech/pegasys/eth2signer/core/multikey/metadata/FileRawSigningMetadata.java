@@ -33,7 +33,7 @@ public class FileRawSigningMetadata implements SigningMetadata {
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
-    return factory.createSigner(this);
+  public ArtifactSigner createSigner() {
+    return ArtifactSignerFactory.createSigner(this);
   }
 }
