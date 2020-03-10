@@ -14,7 +14,6 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static tech.pegasys.eth2signer.core.multikey.metadata.YamlSignerParser.YAML_FILE_EXTENSION;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
@@ -77,7 +76,7 @@ class YamlSignerParserTest {
 
   @Test
   void unencryptedMetaDataInfoWithMissingPrivateKeyFails() throws IOException {
-    final Path filename = configDir.resolve("unencryptedNoKey." + YAML_FILE_EXTENSION);
+    final Path filename = configDir.resolve("unencryptedNoKey");
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), Map.of("type", "file-raw"));
 
     assertThatThrownBy(() -> signerParser.parse(filename))
@@ -87,7 +86,7 @@ class YamlSignerParserTest {
 
   @Test
   void unencryptedMetaDataInfoWithPrivateKeyReturnsMetadata() throws IOException {
-    final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
+    final Path filename = configDir.resolve("unencrypted");
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
     unencryptedKeyMetadataFile.put("type", "file-raw");
     unencryptedKeyMetadataFile.put("privateKey", PRIVATE_KEY);

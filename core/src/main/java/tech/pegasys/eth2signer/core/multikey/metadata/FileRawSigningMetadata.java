@@ -13,9 +13,12 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.crypto.KeyPair;
+import tech.pegasys.eth2signer.crypto.SecretKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 public class FileRawSigningMetadata implements SigningMetadata {
 
@@ -27,13 +30,10 @@ public class FileRawSigningMetadata implements SigningMetadata {
     this.privateKey = privateKey;
   }
 
-  @JsonProperty(value = "privateKey")
-  public String getPrivateKey() {
-    return privateKey;
-  }
-
   @Override
   public ArtifactSigner createSigner() {
-    return ArtifactSignerFactory.createSigner(this);
+    final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
+    final KeyPair keys = new KeyPair(SecretKey.fromBytes(privateKeyBytes));
+    return new ArtifactSigner(keys);
   }
 }
