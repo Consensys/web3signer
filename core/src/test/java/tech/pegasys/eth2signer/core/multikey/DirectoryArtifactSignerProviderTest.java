@@ -226,7 +226,7 @@ class DirectoryArtifactSignerProviderTest {
   }
 
   private Path pathEndsWith(final String endsWith) {
-    return argThat((Path path) -> path != null && path.endsWith(endsWith));
+    return argThat((Path path) -> path != null && path.endsWith(endsWith + "." + FILE_EXTENSION));
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
