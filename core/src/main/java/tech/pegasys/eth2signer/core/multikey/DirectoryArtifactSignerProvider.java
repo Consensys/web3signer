@@ -37,13 +37,11 @@ public class DirectoryArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Path configsDirectory;
-  private final String fileExtension;
   private final SignerParser signerParser;
 
   public DirectoryArtifactSignerProvider(
-      final Path rootDirectory, final String fileExtension, final SignerParser signerParser) {
+      final Path rootDirectory, final SignerParser signerParser) {
     this.configsDirectory = rootDirectory;
-    this.fileExtension = fileExtension;
     this.signerParser = signerParser;
   }
 
@@ -92,7 +90,7 @@ public class DirectoryArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   private Collection<ArtifactSignerWithFileName> loadAvailableSigners() {
-    return findSigners(this::matchesFileExtension);
+    return findSigners((entry) -> true);
   }
 
   private Collection<ArtifactSignerWithFileName> findSigners(
@@ -103,9 +101,8 @@ public class DirectoryArtifactSignerProvider implements ArtifactSignerProvider {
         Files.newDirectoryStream(configsDirectory, filter)) {
       for (final Path file : directoryStream) {
         try {
-          final ArtifactSigner artifactSigner = signerParser.parse(file);
           final ArtifactSignerWithFileName artifactSignerWithFileName =
-              new ArtifactSignerWithFileName(file, artifactSigner);
+              new ArtifactSignerWithFileName(file, signerParser.parse(file));
           signers.add(artifactSignerWithFileName);
         } catch (Exception e) {
           LOG.error("Error parsing signing metadata file {}", file, e);
@@ -119,16 +116,10 @@ public class DirectoryArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   private Filter<Path> signerIdentifierFilenameFilter(final String signerIdentifier) {
-    return entry -> {
-      final String baseName = FilenameUtils.getBaseName(entry.toString());
-      return matchesFileExtension(entry)
-          && baseName.toLowerCase().endsWith(signerIdentifier.toLowerCase());
-    };
-  }
-
-  private boolean matchesFileExtension(final Path filename) {
-    final String extension = FilenameUtils.getExtension(filename.toString());
-    return extension.toLowerCase().endsWith(fileExtension.toLowerCase());
+    return entry ->
+        FilenameUtils.getBaseName(entry.getFileName().toString())
+            .toLowerCase()
+            .endsWith(signerIdentifier.toLowerCase());
   }
 
   private boolean signerMatchesIdentifier(
