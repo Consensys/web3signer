@@ -39,7 +39,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DirectoryArtifactSignerProviderTest {
+class DirectoryBackedArtifactSignerProviderTest {
   @TempDir Path configsDirectory;
   @Mock private SignerParser signerParser;
 
@@ -50,11 +50,11 @@ class DirectoryArtifactSignerProviderTest {
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   private ArtifactSigner artifactSigner;
-  private DirectoryArtifactSignerProvider signerProvider;
+  private DirectoryBackedArtifactSignerProvider signerProvider;
 
   @BeforeEach
   void setup() {
-    signerProvider = new DirectoryArtifactSignerProvider(configsDirectory, signerParser);
+    signerProvider = new DirectoryBackedArtifactSignerProvider(configsDirectory, signerParser);
     artifactSigner = createArtifactSigner(PRIVATE_KEY);
   }
 
@@ -117,8 +117,9 @@ class DirectoryArtifactSignerProviderTest {
 
   @Test
   void failedWithDirectoryErrorReturnEmptySigner() throws IOException {
-    DirectoryArtifactSignerProvider signerProvider =
-        new DirectoryArtifactSignerProvider(configsDirectory.resolve("idontexist"), signerParser);
+    DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory.resolve("idontexist"), signerParser);
     createFile(PUBLIC_KEY);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);

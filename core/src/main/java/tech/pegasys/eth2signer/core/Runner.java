@@ -16,7 +16,7 @@ import tech.pegasys.eth2signer.core.http.LogErrorHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
-import tech.pegasys.eth2signer.core.multikey.DirectoryArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.utils.JsonDecoder;
@@ -100,7 +100,8 @@ public class Runner implements Runnable {
         .handler(routingContext -> routingContext.response().end("OK"));
 
     final ArtifactSignerProvider signerProvider =
-        new DirectoryArtifactSignerProvider(config.getKeyConfigPath(), new YamlSignerParser());
+        new DirectoryBackedArtifactSignerProvider(
+            config.getKeyConfigPath(), new YamlSignerParser());
 
     final SigningRequestHandler signingHandler =
         new SigningRequestHandler(signerProvider, createJsonDecoder());
