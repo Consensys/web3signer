@@ -49,19 +49,18 @@ class DirectoryBackedArtifactSignerProviderTest {
   private static final String PRIVATE_KEY =
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
-  private ArtifactSigner artifactSigner;
+  private ArtifactSigner artifactSigner = createArtifactSigner(PRIVATE_KEY);
   private DirectoryBackedArtifactSignerProvider signerProvider;
 
   @BeforeEach
   void setup() {
     signerProvider = new DirectoryBackedArtifactSignerProvider(configsDirectory, signerParser);
-    artifactSigner = createArtifactSigner(PRIVATE_KEY);
   }
 
   @Test
   void signerReturnedForValidMetadataFile() throws IOException {
     final String filename = PUBLIC_KEY;
-    createFile(filename);
+    createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
@@ -73,7 +72,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   @Test
   void signerReturnedWhenIdentifierHasCaseMismatchToFilename() throws IOException {
     final String filename = PUBLIC_KEY.toUpperCase();
-    createFile(filename);
+    createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
@@ -85,7 +84,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   @Test
   void signerReturnedWhenHasHexPrefix() throws IOException {
     final String metadataFilename = PUBLIC_KEY;
-    createFile(metadataFilename);
+    createFileInConfigsDirectory(metadataFilename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY);
@@ -97,7 +96,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   @Test
   void signerReturnedWhenHasUpperCaseHexPrefix() throws IOException {
     final String metadataFilename = PUBLIC_KEY;
-    createFile(metadataFilename);
+    createFileInConfigsDirectory(metadataFilename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY);
@@ -108,7 +107,7 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void failedParserReturnsEmptySigner() throws IOException {
-    createFile(PUBLIC_KEY);
+    createFileInConfigsDirectory(PUBLIC_KEY);
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
@@ -120,7 +119,7 @@ class DirectoryBackedArtifactSignerProviderTest {
     DirectoryBackedArtifactSignerProvider signerProvider =
         new DirectoryBackedArtifactSignerProvider(
             configsDirectory.resolve("idontexist"), signerParser);
-    createFile(PUBLIC_KEY);
+    createFileInConfigsDirectory(PUBLIC_KEY);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
@@ -130,8 +129,8 @@ class DirectoryBackedArtifactSignerProviderTest {
   void multipleMatchesForSameIdentifierReturnsEmpty() throws IOException {
     final String filename1 = "1_" + PUBLIC_KEY;
     final String filename2 = "2_" + PUBLIC_KEY;
-    createFile(filename1);
-    createFile(filename2);
+    createFileInConfigsDirectory(filename1);
+    createFileInConfigsDirectory(filename2);
 
     when(signerParser.parse(pathEndsWith(filename1))).thenReturn(createArtifactSigner(PRIVATE_KEY));
     when(signerParser.parse(pathEndsWith(filename2))).thenReturn(createArtifactSigner(PRIVATE_KEY));
@@ -144,7 +143,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   @Test
   void signerReturnedForMetadataFileWithPrefix() throws IOException {
     final String filename = "someprefix" + PUBLIC_KEY;
-    createFile(filename);
+    createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
@@ -155,7 +154,7 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void signerIdentifiersReturnedForMetadataFile() throws IOException {
-    createFile(PUBLIC_KEY + ".yaml");
+    createFileInConfigsDirectory(PUBLIC_KEY + ".yaml");
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
     assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY);
@@ -167,7 +166,7 @@ class DirectoryBackedArtifactSignerProviderTest {
         "0x0000000000000000000000000000000065d5d1dd92ed6b75ab662afdaeb4109948c05cffcdd299f62e58e3fb5edceb67";
     final String publicKey1 =
         "0x889477480fbcf2c7d32fafe50c60fc716545543a5660130e84041e6f6fce5fa471ef1e7c0cdd4380b83b8d33893e6f11";
-    createFile(publicKey1);
+    createFileInConfigsDirectory(publicKey1);
     when(signerParser.parse(pathEndsWith(publicKey1)))
         .thenReturn(createArtifactSigner(privateKey1));
 
@@ -175,7 +174,7 @@ class DirectoryBackedArtifactSignerProviderTest {
         "0x00000000000000000000000000000000430d79925d1bc810d2bd033178fdea98c59f29edd40e80cc7f13e92fcb05a86e";
     final String publicKey2 =
         "0xa7c5f1c815571d02df8ebc9b083e1a7fb4b360970cc40ebb325f3d2360dd1f9723825ea0c6fa9e398cd233ef0868a8cc";
-    createFile(publicKey2);
+    createFileInConfigsDirectory(publicKey2);
     when(signerParser.parse(pathEndsWith(publicKey2)))
         .thenReturn(createArtifactSigner(privateKey2));
 
@@ -183,7 +182,7 @@ class DirectoryBackedArtifactSignerProviderTest {
         "0x0000000000000000000000000000000062e4325a71315d5bb757458b560dc1957118c12466978c772c31bad86a7e3a5e";
     final String publicKey3 =
         "0xb458bf0b2e1d3797b2f95a0f80f715b18881f74d114c824f54452893fbe6368b32de3066e472dbeb1a43181416159606";
-    createFile(publicKey3);
+    createFileInConfigsDirectory(publicKey3);
     when(signerParser.parse(pathEndsWith(publicKey3)))
         .thenReturn(createArtifactSigner(privateKey3));
 
@@ -198,7 +197,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
-  private void createFile(final String filename) throws IOException {
+  private void createFileInConfigsDirectory(final String filename) throws IOException {
     final File file = configsDirectory.resolve(filename + FILE_EXTENSION).toFile();
     file.createNewFile();
   }

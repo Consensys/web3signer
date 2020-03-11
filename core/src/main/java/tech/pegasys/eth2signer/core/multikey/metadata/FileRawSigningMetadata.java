@@ -30,15 +30,10 @@ public class FileRawSigningMetadata implements SigningMetadata {
     this.privateKey = privateKey;
   }
 
-  @JsonProperty(value = "privateKey")
-  public String getPrivateKey() {
-    return privateKey;
-  }
-
   @Override
   public ArtifactSigner createSigner() {
-    final Bytes privateKey1 = Bytes.fromHexString(getPrivateKey());
-    final KeyPair keys = new KeyPair(SecretKey.fromBytes(privateKey1));
+    final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
+    final KeyPair keys = new KeyPair(SecretKey.fromBytes(privateKeyBytes));
     return new ArtifactSigner(keys);
   }
 }
