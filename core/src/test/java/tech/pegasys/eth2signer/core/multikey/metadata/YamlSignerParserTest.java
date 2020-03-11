@@ -86,11 +86,37 @@ class YamlSignerParserTest {
   }
 
   @Test
+  void unencryptedMetaDataInfoWithInvalidHexEncodingForPrivateKeyFails() throws IOException {
+    final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
+    final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
+    unencryptedKeyMetadataFile.put("type", "file-raw");
+    unencryptedKeyMetadataFile.put("privateKey", "NO_HEX_VALUE");
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
+
+    assertThatThrownBy(() -> signerParser.parse(filename))
+        .isInstanceOf(SigningMetadataException.class)
+        .hasMessageStartingWith("Invalid signing metadata file");
+  }
+
+  @Test
   void unencryptedMetaDataInfoWithPrivateKeyReturnsMetadata() throws IOException {
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
     unencryptedKeyMetadataFile.put("type", "file-raw");
     unencryptedKeyMetadataFile.put("privateKey", PRIVATE_KEY);
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
+
+    final ArtifactSigner result = signerParser.parse(filename);
+
+    assertThat(result.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+  }
+
+  @Test
+  void unencryptedMetaDataInfoWith0xPrefixPrivateKeyReturnsMetadata() throws IOException {
+    final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
+    final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
+    unencryptedKeyMetadataFile.put("type", "file-raw");
+    unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
     final ArtifactSigner result = signerParser.parse(filename);

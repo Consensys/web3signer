@@ -22,18 +22,17 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class FileRawSigningMetadata implements SigningMetadata {
 
-  private final String privateKey;
+  private final Bytes privateKey;
 
   @JsonCreator
   public FileRawSigningMetadata(
       @JsonProperty(value = "privateKey", required = true) final String privateKey) {
-    this.privateKey = privateKey;
+    this.privateKey = Bytes.fromHexString(privateKey);
   }
 
   @Override
   public ArtifactSigner createSigner() {
-    final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
-    final KeyPair keys = new KeyPair(SecretKey.fromBytes(privateKeyBytes));
+    final KeyPair keys = new KeyPair(SecretKey.fromBytes(privateKey));
     return new ArtifactSigner(keys);
   }
 }
