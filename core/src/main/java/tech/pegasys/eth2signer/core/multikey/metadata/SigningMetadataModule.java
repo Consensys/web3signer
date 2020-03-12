@@ -30,7 +30,7 @@ public class SigningMetadataModule extends SimpleModule {
   private static class PrivateKeyDeserializer extends JsonDeserializer<SecretKey> {
 
     @Override
-    public SecretKey deserialize(JsonParser p, DeserializationContext ctxt) {
+    public SecretKey deserialize(final JsonParser p, final DeserializationContext ctxt) {
       try {
         final Bytes privateKeyBytes = Bytes.fromHexString(p.getValueAsString());
         return SecretKey.fromBytes(privateKeyBytes);

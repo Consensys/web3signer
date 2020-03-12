@@ -51,7 +51,7 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
     final Optional<ArtifactSignerWithFileName> signer =
         loadSignerForIdentifier(normalisedIdentifier);
     if (signer.isEmpty()) {
-      LOG.error("No matching metadata file found for the identifier {}", signerIdentifier);
+      LOG.error("No valid matching metadata file found for the identifier {}", signerIdentifier);
       return Optional.empty();
     }
     final ArtifactSignerWithFileName signerWithFileName = signer.get();
