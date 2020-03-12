@@ -105,12 +105,13 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
               new ArtifactSignerWithFileName(file, signerParser.parse(file));
           signers.add(artifactSignerWithFileName);
         } catch (Exception e) {
-          LOG.error("Error parsing signing metadata file {}", file, e);
+          LOG.error(
+              "Error parsing signing metadata file {}: {}", file.getFileName(), e.getMessage());
         }
       }
       return signers;
     } catch (final IOException | SecurityException e) {
-      LOG.warn("Error searching for signing metadata files", e);
+      LOG.warn("Error searching for signing metadata files: {}", e.getMessage());
       return Collections.emptySet();
     }
   }

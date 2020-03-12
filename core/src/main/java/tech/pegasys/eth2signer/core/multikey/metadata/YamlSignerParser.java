@@ -24,10 +24,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 public class YamlSignerParser implements SignerParser {
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper(new YAMLFactory()).registerModule(new SigningMetadataModule());
   public static final String YAML_FILE_EXTENSION = "yaml";
-
-  public YamlSignerParser() {}
 
   @Override
   public ArtifactSigner parse(final Path metadataPath) {
@@ -36,7 +35,8 @@ public class YamlSignerParser implements SignerParser {
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
       return metaDataInfo.createSigner();
     } catch (final JsonParseException | JsonMappingException e) {
-      throw new SigningMetadataException("Invalid signing metadata file: " + e.getMessage(), e);
+      throw new SigningMetadataException(
+          "Invalid signing metadata file format: " + e.getMessage(), e);
     } catch (final FileNotFoundException e) {
       throw new SigningMetadataException("Signing metadata file not found: " + metadataPath, e);
     } catch (final IOException e) {
