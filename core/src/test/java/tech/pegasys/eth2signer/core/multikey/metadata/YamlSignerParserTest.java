@@ -82,7 +82,8 @@ class YamlSignerParserTest {
 
     assertThatThrownBy(() -> signerParser.parse(filename))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessageStartingWith("Invalid signing metadata file");
+        .hasMessageStartingWith(
+            "Invalid signing metadata file format: Missing required creator property 'privateKey'");
   }
 
   @Test
@@ -95,7 +96,8 @@ class YamlSignerParserTest {
 
     assertThatThrownBy(() -> signerParser.parse(filename))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessageStartingWith("Invalid signing metadata file");
+        .hasMessageStartingWith(
+            "Invalid signing metadata file format: Invalid hex value for private key");
   }
 
   @Test
