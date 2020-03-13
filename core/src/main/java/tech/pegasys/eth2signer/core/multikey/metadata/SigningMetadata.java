@@ -10,19 +10,18 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.signers.unencryptedfile;
+package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.crypto.KeyPair;
-import tech.pegasys.eth2signer.crypto.SecretKey;
 
-import org.apache.tuweni.bytes.Bytes;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
-public class UnencryptedKeyFileSignerFactory {
+@JsonTypeInfo(use = Id.NAME, property = "type")
+@JsonSubTypes({@Type(value = FileRawSigningMetadata.class, name = "file-raw")})
+public interface SigningMetadata {
 
-  public static ArtifactSigner createSigner(final Bytes privKeyBytes) {
-    final KeyPair keys = new KeyPair(SecretKey.fromBytes(privKeyBytes));
-
-    return new ArtifactSigner(keys);
-  }
+  ArtifactSigner createSigner();
 }

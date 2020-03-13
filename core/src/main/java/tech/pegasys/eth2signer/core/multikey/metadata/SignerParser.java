@@ -12,26 +12,11 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.eth2signer.core.multikey.MultiSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
-import org.apache.tuweni.bytes.Bytes;
+import java.nio.file.Path;
 
-public class UnencryptedKeyMetadataFile extends SigningMetadataFile {
+public interface SignerParser {
 
-  final Bytes privateKeyBytes;
-
-  public UnencryptedKeyMetadataFile(final String filename, final Bytes privateKeyBytes) {
-    super(filename);
-    this.privateKeyBytes = privateKeyBytes;
-  }
-
-  public Bytes getPrivateKeyBytes() {
-    return privateKeyBytes;
-  }
-
-  @Override
-  public ArtifactSigner createSigner(final MultiSignerFactory factory) {
-    return factory.createSigner(this);
-  }
+  ArtifactSigner parse(Path file) throws SigningMetadataException;
 }

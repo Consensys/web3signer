@@ -20,7 +20,7 @@ import tech.pegasys.eth2signer.crypto.PublicKey;
 import tech.pegasys.eth2signer.crypto.SecretKey;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.eth2signer.dsl.utils.TomlHelpers;
+import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 
 import java.nio.file.Path;
 
@@ -31,9 +31,9 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class UnencryptedTomlKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
+public class UnencryptedKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
-  private final TomlHelpers tomlHelpers = new TomlHelpers();
+  private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
   private final String privateKeyString =
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
@@ -46,9 +46,9 @@ public class UnencryptedTomlKeyLoadAndSignAcceptanceTest extends AcceptanceTestB
   @ValueSource(strings = {"/signer/block", "/signer/attestation"})
   public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint)
       throws Exception {
-    final String tomlKeyFilename = keyPair.publicKey().toString().substring(2);
-    final Path keyConfigFile = testDirectory.resolve(tomlKeyFilename + ".toml");
-    tomlHelpers.createUnencryptedTomlFileAt(keyConfigFile, privateKeyString);
+    final String configFilename = keyPair.publicKey().toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKeyString);
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);

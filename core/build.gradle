@@ -20,9 +20,11 @@ dependencies {
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
+  implementation 'commons-io:commons-io'
 
-  implementation 'org.apache.tuweni:tuweni-toml'
-  implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'org.apache.tuweni:tuweni-bytes'
+
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
 
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'

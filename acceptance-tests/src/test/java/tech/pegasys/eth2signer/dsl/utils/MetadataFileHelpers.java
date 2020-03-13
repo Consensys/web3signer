@@ -15,26 +15,28 @@ package tech.pegasys.eth2signer.dsl.utils;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
-public class TomlHelpers {
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-  public void createUnencryptedTomlFileAt(final Path tomlPath, final String keyContent) {
-    final String toml =
-        new TomlStringBuilder("signing")
-            .withQuotedString("type", "raw-bls12-key")
-            .withQuotedString("signing-key", keyContent)
-            .build();
+public class MetadataFileHelpers {
+  final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
 
-    createTomlFile(tomlPath, toml);
+  public void createUnencryptedYamlFileAt(final Path metadataFilePath, final String keyContent) {
+    final Map<String, String> signingMetadata = new HashMap<>();
+    signingMetadata.put("type", "file-raw");
+    signingMetadata.put("privateKey", keyContent);
+    createYamlFile(metadataFilePath, signingMetadata);
   }
 
-  private void createTomlFile(final Path tomlPath, final String toml) {
+  private void createYamlFile(final Path filePath, final Map<String, String> signingMetadata) {
     try {
-      Files.writeString(tomlPath, toml);
+      YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), signingMetadata);
     } catch (final IOException e) {
-      fail("Unable to create TOML file.");
+      fail("Unable to create metadata file.");
     }
   }
 }
