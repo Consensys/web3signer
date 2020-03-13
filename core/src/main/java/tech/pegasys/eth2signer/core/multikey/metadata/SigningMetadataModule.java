@@ -14,9 +14,14 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.crypto.SecretKey;
 
+import java.io.IOException;
+
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -25,6 +30,7 @@ public class SigningMetadataModule extends SimpleModule {
   public SigningMetadataModule() {
     super("SigningMetadata");
     addDeserializer(SecretKey.class, new PrivateKeyDeserializer());
+    addSerializer(SecretKey.class, new PrivateKeySerializer());
   }
 
   private static class PrivateKeyDeserializer extends JsonDeserializer<SecretKey> {
@@ -37,6 +43,16 @@ public class SigningMetadataModule extends SimpleModule {
       } catch (Exception e) {
         throw new SigningMetadataException("Invalid hex value for private key", e);
       }
+    }
+  }
+
+  private static class PrivateKeySerializer extends JsonSerializer<SecretKey> {
+
+    @Override
+    public void serialize(
+        final SecretKey value, final JsonGenerator gen, final SerializerProvider serializers)
+        throws IOException {
+      gen.writeString(value.toBytes().toString());
     }
   }
 }
