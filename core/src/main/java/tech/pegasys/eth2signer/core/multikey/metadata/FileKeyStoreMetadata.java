@@ -13,25 +13,33 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.crypto.SecretKey;
+
+import java.nio.file.Path;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class FileRawSigningMetadata implements SigningMetadata {
+public class FileKeyStoreMetadata implements SigningMetadata {
 
-  private final SecretKey privateKey;
+  private final Path keystoreFile;
+  private final Path keystorePasswordFile;
 
-  public FileRawSigningMetadata(
-      @JsonProperty(value = "privateKey", required = true) SecretKey privateKey) {
-    this.privateKey = privateKey;
+  public FileKeyStoreMetadata(
+      @JsonProperty(value = "keystoreFile", required = true) final Path keystoreFile,
+      @JsonProperty(value = "keystorePasswordFile", required = true) Path keystorePasswordFile) {
+    this.keystoreFile = keystoreFile;
+    this.keystorePasswordFile = keystorePasswordFile;
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
-    return factory.create(this);
+  public ArtifactSigner createSigner(final ArtifactSignerFactory artifactSignerFactory) {
+    return artifactSignerFactory.create(this);
   }
 
-  public SecretKey getPrivateKey() {
-    return privateKey;
+  public Path getKeystoreFile() {
+    return keystoreFile;
+  }
+
+  public Path getKeystorePasswordFile() {
+    return keystorePasswordFile;
   }
 }

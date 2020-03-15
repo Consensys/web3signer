@@ -32,6 +32,8 @@ dependencies {
   implementation 'org.hyperledger.besu.internal:metrics-core'
   implementation 'org.hyperledger.besu:plugin-api'
 
+  implementation 'tech.pegasys.signers.internal:bls-keystore'
+
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api'

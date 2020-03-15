@@ -14,8 +14,8 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static tech.pegasys.eth2signer.core.multikey.metadata.YamlSignerParser.YAML_FILE_EXTENSION;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.io.IOException;
@@ -25,6 +25,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +34,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class YamlSignerParserTest {
+
+  private static final String YAML_FILE_EXTENSION = "yaml";
   private static ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   private static final String PRIVATE_KEY =
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
@@ -45,7 +48,7 @@ class YamlSignerParserTest {
 
   @BeforeEach
   public void setup() {
-    signerParser = new YamlSignerParser();
+    signerParser = new YamlSignerParser(Path.of("."), new NoOpMetricsSystem());
   }
 
   @Test
