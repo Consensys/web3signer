@@ -101,7 +101,7 @@ public class Runner implements Runnable {
 
     final ArtifactSignerProvider signerProvider =
         new DirectoryBackedArtifactSignerProvider(
-            config.getKeyConfigPath(), new YamlSignerParser());
+            config.getKeyConfigPath(), "yaml", new YamlSignerParser());
 
     final SigningRequestHandler signingHandler =
         new SigningRequestHandler(signerProvider, createJsonDecoder());
