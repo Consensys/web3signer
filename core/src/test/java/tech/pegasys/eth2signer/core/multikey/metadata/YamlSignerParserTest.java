@@ -14,7 +14,6 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static tech.pegasys.eth2signer.core.multikey.metadata.YamlSignerParser.YAML_FILE_EXTENSION;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
@@ -42,6 +41,7 @@ class YamlSignerParserTest {
   @TempDir Path configDir;
 
   private YamlSignerParser signerParser;
+  private String YAML_FILE_EXTENSION = "yaml";
 
   @BeforeEach
   public void setup() {
