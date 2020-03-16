@@ -45,6 +45,7 @@ class YamlSignerParserTest {
   @TempDir Path configDir;
 
   private YamlSignerParser signerParser;
+  private String YAML_FILE_EXTENSION = "yaml";
 
   @BeforeEach
   public void setup() {

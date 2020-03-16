@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
@@ -43,7 +44,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   @TempDir Path configsDirectory;
   @Mock private SignerParser signerParser;
 
-  private static final String FILE_EXTENSION = ".yaml";
+  private static final String FILE_EXTENSION = "yaml";
   private static final String PUBLIC_KEY =
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
   private static final String PRIVATE_KEY =
@@ -54,7 +55,8 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @BeforeEach
   void setup() {
-    signerProvider = new DirectoryBackedArtifactSignerProvider(configsDirectory, signerParser);
+    signerProvider =
+        new DirectoryBackedArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser);
   }
 
   @Test
@@ -106,6 +108,34 @@ class DirectoryBackedArtifactSignerProviderTest {
   }
 
   @Test
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  void signerReturnedWhenFileExtensionIsUpperCase() throws IOException {
+    final String metadataFilename = PUBLIC_KEY + ".YAML";
+    final File file = configsDirectory.resolve(metadataFilename).toFile();
+    file.createNewFile();
+    when(signerParser.parse(any())).thenReturn(artifactSigner);
+
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY);
+
+    assertThat(signer).isNotEmpty();
+    assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    verify(signerParser)
+        .parse(argThat((Path path) -> path != null && path.endsWith(metadataFilename)));
+  }
+
+  @Test
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  void wrongFileExtensionReturnsEmptySigner() throws IOException {
+    final String metadataFilename = PUBLIC_KEY + ".nothing";
+    final File file = configsDirectory.resolve(metadataFilename).toFile();
+    file.createNewFile();
+
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    assertThat(signer).isEmpty();
+    verifyNoMoreInteractions(signerParser);
+  }
+
+  @Test
   void failedParserReturnsEmptySigner() throws IOException {
     createFileInConfigsDirectory(PUBLIC_KEY);
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
@@ -116,9 +146,9 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void failedWithDirectoryErrorReturnEmptySigner() throws IOException {
-    DirectoryBackedArtifactSignerProvider signerProvider =
+    final DirectoryBackedArtifactSignerProvider signerProvider =
         new DirectoryBackedArtifactSignerProvider(
-            configsDirectory.resolve("idontexist"), signerParser);
+            configsDirectory.resolve("idontexist"), FILE_EXTENSION, signerParser);
     createFileInConfigsDirectory(PUBLIC_KEY);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
@@ -193,12 +223,12 @@ class DirectoryBackedArtifactSignerProviderTest {
   }
 
   private Path pathEndsWith(final String endsWith) {
-    return argThat((Path path) -> path != null && path.endsWith(endsWith + FILE_EXTENSION));
+    return argThat((Path path) -> path != null && path.endsWith(endsWith + "." + FILE_EXTENSION));
   }
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   private void createFileInConfigsDirectory(final String filename) throws IOException {
-    final File file = configsDirectory.resolve(filename + FILE_EXTENSION).toFile();
+    final File file = configsDirectory.resolve(filename + "." + FILE_EXTENSION).toFile();
     file.createNewFile();
   }
 
