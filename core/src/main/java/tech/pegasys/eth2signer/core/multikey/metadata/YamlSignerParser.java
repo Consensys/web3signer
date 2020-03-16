@@ -26,7 +26,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 public class YamlSignerParser implements SignerParser {
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper(new YAMLFactory()).registerModule(new SigningMetadataModule());
-  public static final String YAML_FILE_EXTENSION = "yaml";
 
   @Override
   public ArtifactSigner parse(final Path metadataPath) {
