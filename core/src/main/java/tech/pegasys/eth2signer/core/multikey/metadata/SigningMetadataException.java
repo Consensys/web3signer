@@ -17,4 +17,8 @@ public class SigningMetadataException extends RuntimeException {
   public SigningMetadataException(final String message, final Throwable cause) {
     super(message, cause);
   }
+
+  public SigningMetadataException(final String message) {
+    super(message);
+  }
 }

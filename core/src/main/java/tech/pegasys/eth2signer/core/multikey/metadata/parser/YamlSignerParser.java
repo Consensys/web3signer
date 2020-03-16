@@ -25,15 +25,14 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class YamlSignerParser implements SignerParser {
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper(new YAMLFactory()).registerModule(new SigningMetadataModule());
   final ArtifactSignerFactory artifactSignerFactory;
 
-  public YamlSignerParser(final Path configDirectory, final MetricsSystem metricsSystem) {
-    artifactSignerFactory = new ArtifactSignerFactory(configDirectory, metricsSystem);
+  public YamlSignerParser(final ArtifactSignerFactory artifactSignerFactory) {
+    this.artifactSignerFactory = artifactSignerFactory;
   }
 
   @Override
