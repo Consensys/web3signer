@@ -26,7 +26,6 @@ import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 
 import com.google.common.io.Files;
@@ -46,20 +45,19 @@ public class ArtifactSignerFactory {
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
             Eth2SignerMetricCategory.SIGNING,
-            "private_key_time",
+            "private_key_retrieval_time",
             "Time taken to retrieve private key",
             "signer");
   }
 
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
-    try (TimingContext timingContext = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
+    try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
       return new ArtifactSigner(new KeyPair(fileRawSigningMetadata.getPrivateKey()));
     }
   }
 
   public ArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
-    try (TimingContext timingContext =
-        privateKeyRetrievalTimer.labels("file-keystore").startTimer()) {
+    try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-keystore").startTimer()) {
       return createKeystoreArtifact(fileKeyStoreMetadata);
     }
   }
@@ -75,7 +73,7 @@ public class ArtifactSignerFactory {
       final KeyPair keyPair = new KeyPair(SecretKey.fromBytes(privateKey));
       return new ArtifactSigner(keyPair);
     } catch (final KeyStoreValidationException e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
+      throw new SigningMetadataException(e.getMessage(), e);
     }
   }
 
@@ -84,25 +82,21 @@ public class ArtifactSignerFactory {
     try {
       password = Files.asCharSource(passwordFile.toFile(), UTF_8).readFirstLine();
       if (password == null || password.isBlank()) {
-        throw new IllegalArgumentException("Keystore password cannot be empty: " + passwordFile);
+        throw new SigningMetadataException("Keystore password cannot be empty: " + passwordFile);
       }
     } catch (final FileNotFoundException e) {
-      throw new IllegalArgumentException("Keystore password file not found: " + passwordFile, e);
+      throw new SigningMetadataException("Keystore password file not found: " + passwordFile, e);
     } catch (final IOException e) {
       final String errorMessage =
           format(
               "Unexpected IO error while reading keystore password file [%s]: %s",
               passwordFile, e.getMessage());
-      throw new UncheckedIOException(errorMessage, e);
+      throw new SigningMetadataException(errorMessage, e);
     }
     return password;
   }
 
   private Path makeRelativePathAbsolute(final Path path) {
-    if (path.isAbsolute()) {
-      return path;
-    }
-
-    return configsDirectory.resolve(path);
+    return path.isAbsolute() ? path : configsDirectory.resolve(path);
   }
 }
