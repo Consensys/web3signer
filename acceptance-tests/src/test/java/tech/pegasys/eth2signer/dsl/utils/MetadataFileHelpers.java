@@ -13,7 +13,6 @@
 package tech.pegasys.eth2signer.dsl.utils;
 
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
-import static tech.pegasys.artemis.util.crypto.SecureRandomProvider.createSecureRandom;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
 import tech.pegasys.eth2signer.crypto.KeyPair;
@@ -31,6 +30,7 @@ import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -83,15 +83,15 @@ public class MetadataFileHelpers {
       final String password,
       final Bytes privateKey,
       final KdfFunction kdfFunctionType) {
-    final Bytes32 iv = Bytes32.random(createSecureRandom());
+    final Bytes32 salt = Bytes32.random(new SecureRandom());
 
     final KdfParam kdfParam =
         kdfFunctionType == KdfFunction.SCRYPT
-            ? new SCryptParam(32, iv)
-            : new Pbkdf2Param(32, 262144, HMAC_SHA256, iv);
+            ? new SCryptParam(32, salt)
+            : new Pbkdf2Param(32, 262144, HMAC_SHA256, salt);
 
     final Cipher cipher =
-        new Cipher(CipherFunction.AES_128_CTR, Bytes.random(16, createSecureRandom()));
+        new Cipher(CipherFunction.AES_128_CTR, Bytes.random(16, new SecureRandom()));
     final KeyStoreData keyStoreData = KeyStore.encrypt(privateKey, password, "", kdfParam, cipher);
     try {
       KeyStoreLoader.saveToFile(keyStoreFilePath, keyStoreData);

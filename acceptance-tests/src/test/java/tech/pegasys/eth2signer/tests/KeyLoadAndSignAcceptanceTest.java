@@ -113,6 +113,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     assertThat(response.getStatusCode()).isEqualTo(400);
   }
 
+  @SuppressWarnings("UnusedMethod")
   private static Stream<Arguments> keystoreValues() {
     return Stream.of(
         Arguments.arguments("/signer/block", KdfFunction.SCRYPT),
