@@ -30,17 +30,18 @@ import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class MetadataFileHelpers {
-  final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final Bytes SALT =
+      Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");
+  private static final Bytes IV = Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789");
 
   public void createUnencryptedYamlFileAt(final Path metadataFilePath, final String keyContent) {
     final Map<String, String> signingMetadata = new HashMap<>();
@@ -83,15 +84,11 @@ public class MetadataFileHelpers {
       final String password,
       final Bytes privateKey,
       final KdfFunction kdfFunctionType) {
-    final Bytes32 salt = Bytes32.random(new SecureRandom());
-
     final KdfParam kdfParam =
         kdfFunctionType == KdfFunction.SCRYPT
-            ? new SCryptParam(32, salt)
-            : new Pbkdf2Param(32, 262144, HMAC_SHA256, salt);
-
-    final Cipher cipher =
-        new Cipher(CipherFunction.AES_128_CTR, Bytes.random(16, new SecureRandom()));
+            ? new SCryptParam(32, SALT)
+            : new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
+    final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
     final KeyStoreData keyStoreData = KeyStore.encrypt(privateKey, password, "", kdfParam, cipher);
     try {
       KeyStoreLoader.saveToFile(keyStoreFilePath, keyStoreData);
