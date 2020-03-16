@@ -78,12 +78,12 @@ public class ArtifactSignerFactory {
   }
 
   private String loadPassword(final Path passwordFile) {
-    final String password;
     try {
-      password = Files.asCharSource(passwordFile.toFile(), UTF_8).readFirstLine();
+      final String password = Files.asCharSource(passwordFile.toFile(), UTF_8).readFirstLine();
       if (password == null || password.isBlank()) {
         throw new SigningMetadataException("Keystore password cannot be empty: " + passwordFile);
       }
+      return password;
     } catch (final FileNotFoundException e) {
       throw new SigningMetadataException("Keystore password file not found: " + passwordFile, e);
     } catch (final IOException e) {
@@ -93,7 +93,6 @@ public class ArtifactSignerFactory {
               passwordFile, e.getMessage());
       throw new SigningMetadataException(errorMessage, e);
     }
-    return password;
   }
 
   private Path makeRelativePathAbsolute(final Path path) {
