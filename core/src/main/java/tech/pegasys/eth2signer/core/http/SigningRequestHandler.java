@@ -12,10 +12,10 @@
  */
 package tech.pegasys.eth2signer.core.http;
 
+import tech.pegasys.artemis.util.mikuli.Signature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.utils.JsonDecoder;
-import tech.pegasys.eth2signer.crypto.Signature;
 
 import java.util.Optional;
 

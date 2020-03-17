@@ -12,8 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
+import tech.pegasys.artemis.util.mikuli.SecretKey;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.eth2signer.crypto.SecretKey;
 
 import java.io.IOException;
 

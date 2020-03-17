@@ -12,27 +12,25 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import tech.pegasys.eth2signer.crypto.BLS12381;
-import tech.pegasys.eth2signer.crypto.KeyPair;
-import tech.pegasys.eth2signer.crypto.Signature;
-import tech.pegasys.eth2signer.crypto.SignatureAndPublicKey;
+import tech.pegasys.artemis.util.mikuli.BLS12381;
+import tech.pegasys.artemis.util.mikuli.KeyPair;
+import tech.pegasys.artemis.util.mikuli.Signature;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class ArtifactSigner {
 
-  private final KeyPair key;
+  private final KeyPair keyPair;
 
-  public ArtifactSigner(final KeyPair key) {
-    this.key = key;
+  public ArtifactSigner(final KeyPair keyPair) {
+    this.keyPair = keyPair;
   }
 
   public String getIdentifier() {
-    return key.publicKey().toString();
+    return keyPair.publicKey().toString();
   }
 
   public Signature sign(final Bytes message, final Bytes domain) {
-    final SignatureAndPublicKey signatureResult = BLS12381.sign(key, message, domain);
-    return signatureResult.signature();
+    return BLS12381.sign(keyPair.secretKey(), message);
   }
 }
