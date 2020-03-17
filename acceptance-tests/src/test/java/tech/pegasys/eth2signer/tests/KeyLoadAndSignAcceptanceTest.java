@@ -21,23 +21,31 @@ import tech.pegasys.eth2signer.crypto.SecretKey;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class UnencryptedKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
+public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
+
+  private static final Bytes MESSAGE = Bytes.wrap("Hello, world!".getBytes(UTF_8));
+  private static final Bytes DOMAIN = Bytes.ofUnsignedLong(42L);
+  private static final String PRIVATE_KEY =
+      "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
+  private static final String EXPECTED_SIGNATURE =
+      "0x810A4B8E878A1AD0B30F3EAE7ED35E17450E82FDDE6AAA8B500EB5A59A78E3B07684F72B014F92EBED64BD7FFEF680A00A63B84CA92A6299265A0C2339547F0432C3DEE612665C4FEE5D4D93B42D84F2E963700842F60DAE7E5B641F5BB01E64";
 
   private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-
-  private final String privateKeyString =
-      "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-  private final SecretKey key = SecretKey.fromBytes(Bytes.fromHexString(privateKeyString));
+  private final SecretKey key = SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
   private final KeyPair keyPair = new KeyPair(key);
 
   @TempDir Path testDirectory;
@@ -48,7 +56,26 @@ public class UnencryptedKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase 
       throws Exception {
     final String configFilename = keyPair.publicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKeyString);
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
+
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory);
+    startSigner(builder.build());
+
+    final HttpResponse response =
+        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), MESSAGE, DOMAIN);
+    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
+    assertThat(response.getBody()).isEqualToIgnoringCase(EXPECTED_SIGNATURE);
+  }
+
+  @ParameterizedTest
+  @MethodSource("keystoreValues")
+  public void signDataWithKeyLoadedFromKeyStoreFile(
+      final String artifactSigningEndpoint, KdfFunction kdfFunction) throws Exception {
+    final String configFilename = keyPair.publicKey().toString().substring(2);
+
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, PRIVATE_KEY, kdfFunction);
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
@@ -57,10 +84,8 @@ public class UnencryptedKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase 
     final String expectedSignature =
         "0x810A4B8E878A1AD0B30F3EAE7ED35E17450E82FDDE6AAA8B500EB5A59A78E3B07684F72B014F92EBED64BD7FFEF680A00A63B84CA92A6299265A0C2339547F0432C3DEE612665C4FEE5D4D93B42D84F2E963700842F60DAE7E5B641F5BB01E64";
 
-    final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
-    final Bytes domain = Bytes.ofUnsignedLong(42L);
     final HttpResponse response =
-        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), message, domain);
+        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), MESSAGE, DOMAIN);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature);
   }
@@ -70,9 +95,7 @@ public class UnencryptedKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
 
-    final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
-    final Bytes domain = Bytes.ofUnsignedLong(42L);
-    final HttpResponse response = signer.signData("block", PublicKey.random(), message, domain);
+    final HttpResponse response = signer.signData("block", PublicKey.random(), MESSAGE, DOMAIN);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.NOT_FOUND.code());
   }
 
@@ -83,5 +106,14 @@ public class UnencryptedKeyLoadAndSignAcceptanceTest extends AcceptanceTestBase 
 
     final HttpResponse response = signer.postRawRequest("/signer/block", "invalid Body");
     assertThat(response.getStatusCode()).isEqualTo(400);
+  }
+
+  @SuppressWarnings("UnusedMethod")
+  private static Stream<Arguments> keystoreValues() {
+    return Stream.of(
+        Arguments.arguments("/signer/block", KdfFunction.SCRYPT),
+        Arguments.arguments("/signer/attestation", KdfFunction.SCRYPT),
+        Arguments.arguments("/signer/block", KdfFunction.PBKDF2),
+        Arguments.arguments("/signer/attestation", KdfFunction.PBKDF2));
   }
 }

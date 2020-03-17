@@ -10,8 +10,11 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.multikey.metadata;
+package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.io.FileNotFoundException;
@@ -26,13 +29,18 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 public class YamlSignerParser implements SignerParser {
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper(new YAMLFactory()).registerModule(new SigningMetadataModule());
+  final ArtifactSignerFactory artifactSignerFactory;
+
+  public YamlSignerParser(final ArtifactSignerFactory artifactSignerFactory) {
+    this.artifactSignerFactory = artifactSignerFactory;
+  }
 
   @Override
   public ArtifactSigner parse(final Path metadataPath) {
     try {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
-      return metaDataInfo.createSigner();
+      return metaDataInfo.createSigner(artifactSignerFactory);
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException(
           "Invalid signing metadata file format: " + e.getMessage(), e);

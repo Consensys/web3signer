@@ -14,8 +14,15 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.crypto.KeyPair;
+import tech.pegasys.eth2signer.crypto.SecretKey;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,28 +31,30 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class YamlSignerParserTest {
+
+  private static final String YAML_FILE_EXTENSION = "yaml";
   private static ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   private static final String PRIVATE_KEY =
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-  private static final String PUBLIC_KEY =
-      "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
 
   @TempDir Path configDir;
+  @Mock private ArtifactSignerFactory artifactSignerFactory;
 
   private YamlSignerParser signerParser;
-  private String YAML_FILE_EXTENSION = "yaml";
 
   @BeforeEach
   public void setup() {
-    signerParser = new YamlSignerParser();
+    signerParser = new YamlSignerParser(artifactSignerFactory);
   }
 
   @Test
@@ -102,6 +111,11 @@ class YamlSignerParserTest {
 
   @Test
   void unencryptedMetaDataInfoWithPrivateKeyReturnsMetadata() throws IOException {
+    final ArtifactSigner artifactSigner =
+        new ArtifactSigner(new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
+    when(artifactSignerFactory.create(any(FileRawSigningMetadata.class)))
+        .thenReturn(artifactSigner);
+
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
     unencryptedKeyMetadataFile.put("type", "file-raw");
@@ -110,11 +124,17 @@ class YamlSignerParserTest {
 
     final ArtifactSigner result = signerParser.parse(filename);
 
-    assertThat(result.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    assertThat(result).isEqualTo(artifactSigner);
+    verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
   }
 
   @Test
   void unencryptedMetaDataInfoWith0xPrefixPrivateKeyReturnsMetadata() throws IOException {
+    final ArtifactSigner artifactSigner =
+        new ArtifactSigner(new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
+    when(artifactSignerFactory.create(any(FileRawSigningMetadata.class)))
+        .thenReturn(artifactSigner);
+
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
     unencryptedKeyMetadataFile.put("type", "file-raw");
@@ -123,6 +143,85 @@ class YamlSignerParserTest {
 
     final ArtifactSigner result = signerParser.parse(filename);
 
-    assertThat(result.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    assertThat(result).isEqualTo(artifactSigner);
+    verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
+  }
+
+  @Test
+  void keyStoreMetaDataInfoWithMissingAllFilesFails() throws IOException {
+    final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), Map.of("type", "file-keystore"));
+
+    assertThatThrownBy(() -> signerParser.parse(filename))
+        .isInstanceOf(SigningMetadataException.class)
+        .hasMessageStartingWith(
+            "Invalid signing metadata file format: Missing required creator property 'keystoreFile'");
+  }
+
+  @Test
+  void keyStoreMetaDataInfoWithMissingKeystoreFilesFails() throws IOException {
+    final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
+    final Path passwordFile = configDir.resolve("keystore.password");
+
+    final Map<String, String> keystoreMetadataFile = new HashMap<>();
+    keystoreMetadataFile.put("type", "file-keystore");
+    keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), keystoreMetadataFile);
+
+    assertThatThrownBy(() -> signerParser.parse(filename))
+        .isInstanceOf(SigningMetadataException.class)
+        .hasMessageStartingWith(
+            "Invalid signing metadata file format: Missing required creator property 'keystoreFile'");
+  }
+
+  @Test
+  void keyStoreMetaDataInfoWithMissingPasswordFilesFails() throws IOException {
+    final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
+    final Path keystoreFile = configDir.resolve("keystore.json");
+
+    final Map<String, String> keystoreMetadataFile = new HashMap<>();
+    keystoreMetadataFile.put("type", "file-keystore");
+    keystoreMetadataFile.put("keystoreFile", keystoreFile.toString());
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), keystoreMetadataFile);
+
+    assertThatThrownBy(() -> signerParser.parse(filename))
+        .isInstanceOf(SigningMetadataException.class)
+        .hasMessageStartingWith(
+            "Invalid signing metadata file format: Missing required creator property 'keystorePasswordFile'");
+  }
+
+  @Test
+  void keyStoreMetaDataInfoReturnsMetadata() throws IOException {
+    final ArtifactSigner artifactSigner =
+        new ArtifactSigner(new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
+    when(artifactSignerFactory.create(any(FileKeyStoreMetadata.class))).thenReturn(artifactSigner);
+
+    final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
+    final Path keystoreFile = configDir.resolve("keystore.json");
+    final Path passwordFile = configDir.resolve("keystore.password");
+
+    final Map<String, String> keystoreMetadataFile = new HashMap<>();
+    keystoreMetadataFile.put("type", "file-keystore");
+    keystoreMetadataFile.put("keystoreFile", keystoreFile.toString());
+    keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), keystoreMetadataFile);
+
+    final ArtifactSigner result = signerParser.parse(filename);
+    assertThat(result).isEqualTo(artifactSigner);
+    verify(artifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
+  }
+
+  private FileKeyStoreMetadata hasKeystoreAndPasswordFile(
+      final Path keystoreFile, final Path passwordFile) {
+    return argThat(
+        (FileKeyStoreMetadata m) ->
+            m.getKeystoreFile().equals(keystoreFile)
+                && m.getKeystorePasswordFile().equals(passwordFile));
+  }
+
+  private FileRawSigningMetadata hasPrivateKey(final String privateKey) {
+    final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
+    return argThat(
+        (FileRawSigningMetadata m) -> m.getPrivateKey().toBytes().equals(privateKeyBytes));
   }
 }

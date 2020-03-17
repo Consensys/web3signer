@@ -70,5 +70,7 @@ dependencyManagement {
 
     dependency 'org.hyperledger.besu.internal:metrics-core:1.4.0'
     dependency 'org.hyperledger.besu:plugin-api:1.4.0'
+
+    dependency 'tech.pegasys.signers.internal:bls-keystore:0.0.1-SNAPSHOT'
   }
 }

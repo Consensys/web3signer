@@ -17,7 +17,8 @@ import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.multikey.metadata.YamlSignerParser;
+import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.utils.JsonDecoder;
 
@@ -43,6 +44,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Runner implements Runnable {
 
@@ -65,17 +67,18 @@ public class Runner implements Runnable {
             config.getMetricsNetworkInterface(),
             config.getMetricCategories());
 
+    final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
     final MetricsOptions metricsOptions =
         new MetricsOptions()
             .setEnabled(true)
-            .setFactory(new VertxMetricsAdapterFactory(metricsEndpoint.getMetricsSystem()));
+            .setFactory(new VertxMetricsAdapterFactory(metricsSystem));
     final VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
     final Vertx vertx = Vertx.vertx(vertxOptions);
 
     try {
       metricsEndpoint.start(vertx);
 
-      final Handler<HttpServerRequest> requestHandler = createRouter(vertx);
+      final Handler<HttpServerRequest> requestHandler = createRouter(vertx, metricsSystem);
       final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
@@ -87,7 +90,8 @@ public class Runner implements Runnable {
     }
   }
 
-  private Handler<HttpServerRequest> createRouter(final Vertx vertx) {
+  private Handler<HttpServerRequest> createRouter(
+      final Vertx vertx, final MetricsSystem metricsSystem) {
     final Router router = Router.router(vertx);
     final LogErrorHandler errorHandler = new LogErrorHandler();
 
@@ -99,9 +103,11 @@ public class Runner implements Runnable {
         .failureHandler(errorHandler)
         .handler(routingContext -> routingContext.response().end("OK"));
 
+    final ArtifactSignerFactory artifactSignerFactory =
+        new ArtifactSignerFactory(config.getKeyConfigPath(), metricsSystem);
     final ArtifactSignerProvider signerProvider =
         new DirectoryBackedArtifactSignerProvider(
-            config.getKeyConfigPath(), "yaml", new YamlSignerParser());
+            config.getKeyConfigPath(), "yaml", new YamlSignerParser(artifactSignerFactory));
 
     final SigningRequestHandler signingHandler =
         new SigningRequestHandler(signerProvider, createJsonDecoder());
