@@ -12,10 +12,10 @@
  */
 package tech.pegasys.eth2signer.core.http;
 
+import tech.pegasys.artemis.util.mikuli.Signature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.utils.JsonDecoder;
-import tech.pegasys.eth2signer.crypto.Signature;
 
 import java.util.Optional;
 
@@ -54,6 +54,7 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
     try {
       signingRequest = jsonDecoder.decodeValue(requestBody, SigningRequestBody.class);
     } catch (final DecodeException e) {
+      LOG.error("Invalid signing request format: {}", e.getMessage());
       response
           .setStatusCode(400)
           .setChunked(false)
@@ -63,9 +64,8 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(signingRequest.publicKey());
 
     if (signer.isPresent()) {
-      final Bytes dataToSign = signingRequest.message();
-      final Bytes domain = signingRequest.domain();
-      final Signature signature = signer.get().sign(dataToSign, domain);
+      final Bytes dataToSign = signingRequest.signingRoot();
+      final Signature signature = signer.get().sign(dataToSign);
       response.end(signature.toString());
     } else {
       LOG.error("Unable to find an appropriate signer for request: {}", signingRequest.publicKey());

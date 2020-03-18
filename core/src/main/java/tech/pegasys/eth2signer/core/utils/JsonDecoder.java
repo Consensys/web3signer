@@ -32,7 +32,7 @@ public class JsonDecoder {
     try {
       return mapper.readValue((InputStream) new ByteBufInputStream(buf.getByteBuf()), clazz);
     } catch (IOException e) {
-      throw new DecodeException("Failed to decode:" + e.getMessage(), e);
+      throw new DecodeException("Failed to decode: " + e.getMessage(), e);
     }
   }
 }

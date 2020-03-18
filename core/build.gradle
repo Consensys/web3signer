@@ -13,9 +13,6 @@ jar {
 
 dependencies {
 
-
-  implementation project(':crypto')
-
   implementation 'info.picocli:picocli'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
@@ -33,6 +30,8 @@ dependencies {
   implementation 'org.hyperledger.besu:plugin-api'
 
   implementation 'tech.pegasys.signers.internal:bls-keystore'
+
+  implementation 'tech.pegasys.teku.internal:util'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 

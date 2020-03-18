@@ -15,10 +15,10 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import tech.pegasys.artemis.util.mikuli.KeyPair;
+import tech.pegasys.artemis.util.mikuli.SecretKey;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.crypto.KeyPair;
-import tech.pegasys.eth2signer.crypto.SecretKey;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
