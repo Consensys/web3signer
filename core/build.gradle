@@ -24,6 +24,8 @@ dependencies {
 
   implementation 'org.apache.tuweni:tuweni-bytes'
 
+  implementation 'tech.pegasys.signers.internal:keystorage-hashicorp'
+
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
 
   implementation 'io.vertx:vertx-core'

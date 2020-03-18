@@ -13,11 +13,14 @@
 package tech.pegasys.eth2signer.tests;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.concurrent.ExecutionException;
 import tech.pegasys.eth2signer.crypto.KeyPair;
 import tech.pegasys.eth2signer.crypto.PublicKey;
 import tech.pegasys.eth2signer.crypto.SecretKey;
+import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
@@ -34,6 +37,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import tech.pegasys.signers.hashicorp.dsl.DockerClientFactory;
+import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 
 public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
@@ -47,6 +52,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
   private final SecretKey key = SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
   private final KeyPair keyPair = new KeyPair(key);
+  final String configFilename = keyPair.publicKey().toString().substring(2);
 
   @TempDir Path testDirectory;
 
@@ -54,7 +60,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   @ValueSource(strings = {"/signer/block", "/signer/attestation"})
   public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint)
       throws Exception {
-    final String configFilename = keyPair.publicKey().toString().substring(2);
+
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
 
@@ -72,8 +78,6 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   @MethodSource("keystoreValues")
   public void signDataWithKeyLoadedFromKeyStoreFile(
       final String artifactSigningEndpoint, KdfFunction kdfFunction) throws Exception {
-    final String configFilename = keyPair.publicKey().toString().substring(2);
-
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, PRIVATE_KEY, kdfFunction);
 
@@ -106,6 +110,32 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
     final HttpResponse response = signer.postRawRequest("/signer/block", "invalid Body");
     assertThat(response.getStatusCode()).isEqualTo(400);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"/signer/block", "/signer/attestation"})
+  public void ableToSignUsingHashicorp(final String artifactSigningEndpoint)
+      throws ExecutionException, InterruptedException {
+    final DockerClientFactory dockerClientFactory = new DockerClientFactory();
+    final HashicorpNode hashicorpNode = HashicorpNode.createAndStartHashicorp(dockerClientFactory.create(), true);
+
+    final String secretPath = "acceptanceTestSecretPath";
+    final String secretName = "secretName";
+
+    hashicorpNode.addSecretsToVault(singletonMap(secretName, PRIVATE_KEY), secretPath);
+
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createHashicorpYamlFileAt(keyConfigFile,
+        new HashicorpSigningParams(hashicorpNode, secretPath, secretName));
+
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory);
+    startSigner(builder.build());
+
+    final HttpResponse response =
+        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), MESSAGE, DOMAIN);
+    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
+    assertThat(response.getBody()).isEqualToIgnoringCase(EXPECTED_SIGNATURE);
   }
 
   @SuppressWarnings("UnusedMethod")

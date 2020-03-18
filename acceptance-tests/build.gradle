@@ -23,6 +23,7 @@ dependencies {
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
+  testImplementation 'com.github.docker-java:docker-java'
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'io.vertx:vertx-core'
@@ -33,6 +34,8 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   testImplementation 'tech.pegasys.signers.internal:bls-keystore'
+
+  testImplementation(group: 'tech.pegasys.signers.internal', name: 'keystorage-hashicorp', classifier: 'test-fixtures')
 }
 
 test.enabled = false

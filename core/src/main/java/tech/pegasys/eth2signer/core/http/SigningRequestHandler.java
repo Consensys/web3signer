@@ -43,36 +43,42 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext context) {
     LOG.info("Received a request.");
-    context.request().bodyHandler(body -> generateResponseFromBody(context.response(), body));
+    generateResponseFromBody(context.response(), context.getBody());
   }
 
   private void generateResponseFromBody(
       final HttpServerResponse response, final Buffer requestBody) {
-    LOG.trace("Body received {}", requestBody.toString());
-
-    final SigningRequestBody signingRequest;
+    LOG.info("Body received {}", requestBody.toString());
     try {
-      signingRequest = jsonDecoder.decodeValue(requestBody, SigningRequestBody.class);
-    } catch (final DecodeException e) {
-      response
-          .setStatusCode(400)
-          .setChunked(false)
-          .end("Request body illegally formatted for signing operation.");
-      return;
-    }
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(signingRequest.publicKey());
 
-    if (signer.isPresent()) {
-      final Bytes dataToSign = signingRequest.message();
-      final Bytes domain = signingRequest.domain();
-      final Signature signature = signer.get().sign(dataToSign, domain);
-      response.end(signature.toString());
-    } else {
-      LOG.error("Unable to find an appropriate signer for request: {}", signingRequest.publicKey());
-      response
-          .setStatusCode(404)
-          .setChunked(false)
-          .end("No key exists for requested signing operation.");
+      final SigningRequestBody signingRequest;
+      try {
+        signingRequest = jsonDecoder.decodeValue(requestBody, SigningRequestBody.class);
+      } catch (final DecodeException e) {
+        response
+            .setStatusCode(400)
+            .setChunked(false)
+            .end("Request body illegally formatted for signing operation.");
+        return;
+      }
+      final Optional<ArtifactSigner> signer = signerProvider.getSigner(signingRequest.publicKey());
+
+      if (signer.isPresent()) {
+        final Bytes dataToSign = signingRequest.message();
+        final Bytes domain = signingRequest.domain();
+        final Signature signature = signer.get().sign(dataToSign, domain);
+        response.end(signature.toString());
+      } else {
+        LOG.error("Unable to find an appropriate signer for request: {}",
+            signingRequest.publicKey());
+        response
+            .setStatusCode(404)
+            .setChunked(false)
+            .end("No key exists for requested signing operation.");
+      }
+    } catch (final Exception e)  {
+      LOG.error("OOPS!", e);
     }
+
   }
 }

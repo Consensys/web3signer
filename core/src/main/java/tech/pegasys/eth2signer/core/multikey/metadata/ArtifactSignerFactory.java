@@ -15,6 +15,8 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.crypto.KeyPair;
@@ -23,10 +25,18 @@ import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
+import tech.pegasys.signers.hashicorp.HashicorpConnection;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.signers.hashicorp.TrustStoreType;
+import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
+import tech.pegasys.signers.hashicorp.config.HashicorpKeyConfig;
+import tech.pegasys.signers.hashicorp.config.KeyDefinition;
+import tech.pegasys.signers.hashicorp.config.TlsOptions;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import com.google.common.io.Files;
 import org.apache.tuweni.bytes.Bytes;
@@ -37,10 +47,16 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext
 
 public class ArtifactSignerFactory {
 
-  private final LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
-  private Path configsDirectory;
+  private static final Logger LOG = LogManager.getLogger();
 
-  public ArtifactSignerFactory(final Path configsDirectory, final MetricsSystem metricsSystem) {
+  private final LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
+  private final Path configsDirectory;
+  private final HashicorpConnectionFactory connectionFactory;
+
+  public ArtifactSignerFactory(
+      final Path configsDirectory,
+      final MetricsSystem metricsSystem,
+      final HashicorpConnectionFactory connectionFactory) {
     this.configsDirectory = configsDirectory;
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
@@ -48,6 +64,7 @@ public class ArtifactSignerFactory {
             "private_key_retrieval_time",
             "Time taken to retrieve private key",
             "signer");
+    this.connectionFactory = connectionFactory;
   }
 
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
@@ -59,6 +76,36 @@ public class ArtifactSignerFactory {
   public ArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-keystore").startTimer()) {
       return createKeystoreArtifact(fileKeyStoreMetadata);
+    }
+  }
+
+  public ArtifactSigner create(final HashicorpSigningMetadata metadata) {
+    TlsOptions tlsOptions = null;
+    if (metadata.getTlsEnabled()) {
+      final Path knownServerFile = metadata.getTlsKnownServerFile();
+      if (knownServerFile == null) {
+        tlsOptions = new TlsOptions(Optional.empty(), null, null); // use CA Auth
+      } else {
+        tlsOptions = new TlsOptions(Optional.of(TrustStoreType.WHITELIST), knownServerFile, null);
+      }
+    }
+
+    final HashicorpConnection connection = connectionFactory.create(new ConnectionParameters(
+        metadata.getServerHost(),
+        Optional.ofNullable(metadata.getServerPort()),
+        Optional.ofNullable(tlsOptions),
+        Optional.ofNullable(metadata.getTimeout())));
+
+    try {
+      final String secret = connection.fetchKey(new KeyDefinition(
+          metadata.getKeyPath(),
+          Optional.ofNullable(metadata.getKeyName()),
+          metadata.getToken()));
+      final KeyPair keyPair = new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(secret)));
+      return new ArtifactSigner(keyPair);
+    } catch(Exception e) {
+      LOG.error("SERIOUSLY BROKEN", e);
+      throw e;
     }
   }
 

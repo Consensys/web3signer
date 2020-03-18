@@ -46,7 +46,7 @@ class ArtifactSignerFactoryTest {
     Files.copy(Path.of(Resources.getResource(KEYSTORE_FILE).getPath()), keystoreFile);
     Files.copy(Path.of(Resources.getResource(PASSWORD_FILE).getPath()), passwordFile);
 
-    artifactSignerFactory = new ArtifactSignerFactory(configDir, new NoOpMetricsSystem());
+    artifactSignerFactory = new ArtifactSignerFactory(configDir, new NoOpMetricsSystem(), null);
   }
 
   @Test

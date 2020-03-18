@@ -21,7 +21,7 @@ public class SignerConfigurationBuilder {
   private int httpRpcPort = 0;
   private Path keyStoreDirectory = Path.of("./");
 
-  public SignerConfigurationBuilder withHttpRpcPort(final int port) {
+  public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
     return this;
   }

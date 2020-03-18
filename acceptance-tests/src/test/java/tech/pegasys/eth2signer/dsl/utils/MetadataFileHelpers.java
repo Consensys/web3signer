@@ -15,8 +15,18 @@ package tech.pegasys.eth2signer.dsl.utils;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.eth2signer.crypto.KeyPair;
 import tech.pegasys.eth2signer.crypto.SecretKey;
+import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.model.Cipher;
@@ -26,18 +36,11 @@ import tech.pegasys.signers.bls.keystore.model.KdfParam;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.signers.bls.keystore.model.SCryptParam;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.signers.hashicorp.config.TlsOptions;
+import tech.pegasys.signers.hashicorp.dsl.certificates.CertificateHelpers;
 
 public class MetadataFileHelpers {
+
   private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   private static final Bytes SALT =
       Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");
@@ -69,6 +72,37 @@ public class MetadataFileHelpers {
     signingMetadata.put("keystoreFile", keystoreFile.toString());
     signingMetadata.put("keystorePasswordFile", passwordFile.toString());
     createYamlFile(metadataFilePath, signingMetadata);
+  }
+
+  public void createHashicorpYamlFileAt(
+      final Path metadataFilePath, final HashicorpSigningParams node) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+
+      final boolean tlsEnabled = node.getServerCertificate().isPresent();
+
+      signingMetadata.put("type", "hashicorp");
+      signingMetadata.put("serverHost", node.getHost());
+      signingMetadata.put("serverPort", Integer.toString(node.getPort()));
+      signingMetadata.put("timeout", "10000");
+      signingMetadata.put("tlsEnabled", Boolean.toString(tlsEnabled));
+      if (tlsEnabled) {
+        final Path parentDir = metadataFilePath.getParent();
+        final Path knownServerPath = CertificateHelpers
+            .createFingerprintFile(parentDir, node.getServerCertificate().get(), Optional
+                .of(node.getPort()));
+
+        signingMetadata.put("tlsKnownServersPath", knownServerPath.toString());
+      }
+      signingMetadata.put("keyPath", node.getSecretHttpPath());
+      signingMetadata.put("keyName", node.getSecretName());
+      signingMetadata.put("token", node.getVaultToken());
+
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch(final Exception e) {
+      throw new RuntimeException("Unable to construct hashicorp yaml file", e);
+    }
+
   }
 
   private void createPasswordFile(final Path passwordFilePath, final String password) {
