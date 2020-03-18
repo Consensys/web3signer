@@ -15,9 +15,11 @@ package tech.pegasys.eth2signer.tests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.artemis.util.mikuli.BLS12381;
 import tech.pegasys.artemis.util.mikuli.KeyPair;
 import tech.pegasys.artemis.util.mikuli.PublicKey;
 import tech.pegasys.artemis.util.mikuli.SecretKey;
+import tech.pegasys.artemis.util.mikuli.Signature;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
@@ -43,12 +45,11 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   private static final Bytes SIGNING_ROOT = Bytes.wrap("Hello, world!".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-  private static final String EXPECTED_SIGNATURE =
-      "0x8d4e94e4862aa772500bad94ce9b4abcfd735aa1bb7a8751537cf3ec78eee516262c223a195bae97128047c13b3e250800b8b9a8283598674c3206bf26102d042392559e4425085c548b4f77bcdee66a6a52d7e8832c020a9626733f50634f95";
 
   private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
   private final SecretKey key = SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
   private final KeyPair keyPair = new KeyPair(key);
+  private final Signature expectedSignature = BLS12381.sign(keyPair.secretKey(), SIGNING_ROOT);
 
   @TempDir Path testDirectory;
 
@@ -67,7 +68,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     final HttpResponse response =
         signer.signData(artifactSigningEndpoint, keyPair.publicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(response.getBody()).isEqualToIgnoringCase(EXPECTED_SIGNATURE);
+    assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
   }
 
   @ParameterizedTest
@@ -86,7 +87,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     final HttpResponse response =
         signer.signData(artifactSigningEndpoint, keyPair.publicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(response.getBody()).isEqualToIgnoringCase(EXPECTED_SIGNATURE);
+    assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
   }
 
   @Test
@@ -108,7 +109,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void signsDataContainingUnknownFields() throws Exception {
+  public void unusedFieldsInRequestDoesNotAffectSigning() throws Exception {
     final String configFilename = keyPair.publicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
