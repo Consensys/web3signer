@@ -24,9 +24,12 @@ import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.json.Json;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -50,7 +53,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   @TempDir Path testDirectory;
 
   @ParameterizedTest
-  @ValueSource(strings = {"/signer/block", "/signer/attestation"})
+  @ValueSource(strings = {"/signer/block", "/signer/attestation", "/signer/randao_reveal"})
   public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint)
       throws Exception {
     final String configFilename = keyPair.publicKey().toString().substring(2);
@@ -104,12 +107,35 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     assertThat(response.getStatusCode()).isEqualTo(400);
   }
 
+  @Test
+  public void signsDataContainingUnknownFields() throws Exception {
+    final String configFilename = keyPair.publicKey().toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
+
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory);
+    startSigner(builder.build());
+
+    final Map<String, String> requestBody = new HashMap<>();
+    requestBody.put("publicKey", keyPair.publicKey().toString());
+    requestBody.put("signingRoot", SIGNING_ROOT.toString());
+    requestBody.put("unknownField", "someValue");
+
+    final String httpBody = Json.encode(requestBody);
+
+    final HttpResponse response = signer.postRawRequest("/signer/block", httpBody);
+    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
+  }
+
   @SuppressWarnings("UnusedMethod")
   private static Stream<Arguments> keystoreValues() {
     return Stream.of(
         Arguments.arguments("/signer/block", KdfFunction.SCRYPT),
         Arguments.arguments("/signer/attestation", KdfFunction.SCRYPT),
+        Arguments.arguments("/signer/randao_reveal", KdfFunction.SCRYPT),
         Arguments.arguments("/signer/block", KdfFunction.PBKDF2),
-        Arguments.arguments("/signer/attestation", KdfFunction.PBKDF2));
+        Arguments.arguments("/signer/attestation", KdfFunction.PBKDF2),
+        Arguments.arguments("/signer/randao_reveal", KdfFunction.PBKDF2));
   }
 }
