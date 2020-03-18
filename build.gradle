@@ -116,6 +116,7 @@ allprojects {
     jcenter()
     mavenCentral()
     maven { url "https://hyperledger-org.bintray.com/besu-repo/" }
+    maven { url  "https://consensys.bintray.com/pegasys-repo" }
   }
 
   dependencies { errorprone("com.google.errorprone:error_prone_core") }
