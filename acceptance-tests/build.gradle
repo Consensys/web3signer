@@ -15,7 +15,6 @@ dependencies {
 
   testImplementation project(":app")
   testImplementation project(":core")
-  testImplementation project(":crypto")
 
   testImplementation 'org.apache.tuweni:tuweni-bytes'
 
@@ -33,6 +32,7 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   testImplementation 'tech.pegasys.signers.internal:bls-keystore'
+  testImplementation 'tech.pegasys.teku.internal:util'
 }
 
 test.enabled = false

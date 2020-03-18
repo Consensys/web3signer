@@ -30,7 +30,7 @@ public class ArtifactSigner {
     return keyPair.publicKey().toString();
   }
 
-  public Signature sign(final Bytes message, final Bytes domain) {
+  public Signature sign(final Bytes message) {
     return BLS12381.sign(keyPair.secretKey(), message);
   }
 }

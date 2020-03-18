@@ -15,9 +15,9 @@ package tech.pegasys.eth2signer.tests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.eth2signer.crypto.KeyPair;
-import tech.pegasys.eth2signer.crypto.PublicKey;
-import tech.pegasys.eth2signer.crypto.SecretKey;
+import tech.pegasys.artemis.util.mikuli.KeyPair;
+import tech.pegasys.artemis.util.mikuli.PublicKey;
+import tech.pegasys.artemis.util.mikuli.SecretKey;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
@@ -37,12 +37,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
-  private static final Bytes MESSAGE = Bytes.wrap("Hello, world!".getBytes(UTF_8));
-  private static final Bytes DOMAIN = Bytes.ofUnsignedLong(42L);
+  private static final Bytes SIGNING_ROOT = Bytes.wrap("Hello, world!".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
   private static final String EXPECTED_SIGNATURE =
-      "0x810A4B8E878A1AD0B30F3EAE7ED35E17450E82FDDE6AAA8B500EB5A59A78E3B07684F72B014F92EBED64BD7FFEF680A00A63B84CA92A6299265A0C2339547F0432C3DEE612665C4FEE5D4D93B42D84F2E963700842F60DAE7E5B641F5BB01E64";
+      "0x8d4e94e4862aa772500bad94ce9b4abcfd735aa1bb7a8751537cf3ec78eee516262c223a195bae97128047c13b3e250800b8b9a8283598674c3206bf26102d042392559e4425085c548b4f77bcdee66a6a52d7e8832c020a9626733f50634f95";
 
   private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
   private final SecretKey key = SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
@@ -63,7 +62,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     startSigner(builder.build());
 
     final HttpResponse response =
-        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), MESSAGE, DOMAIN);
+        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(response.getBody()).isEqualToIgnoringCase(EXPECTED_SIGNATURE);
   }
@@ -81,13 +80,10 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final String expectedSignature =
-        "0x810A4B8E878A1AD0B30F3EAE7ED35E17450E82FDDE6AAA8B500EB5A59A78E3B07684F72B014F92EBED64BD7FFEF680A00A63B84CA92A6299265A0C2339547F0432C3DEE612665C4FEE5D4D93B42D84F2E963700842F60DAE7E5B641F5BB01E64";
-
     final HttpResponse response =
-        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), MESSAGE, DOMAIN);
+        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature);
+    assertThat(response.getBody()).isEqualToIgnoringCase(EXPECTED_SIGNATURE);
   }
 
   @Test
@@ -95,7 +91,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
 
-    final HttpResponse response = signer.signData("block", PublicKey.random(), MESSAGE, DOMAIN);
+    final HttpResponse response = signer.signData("block", PublicKey.random(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.NOT_FOUND.code());
   }
 
