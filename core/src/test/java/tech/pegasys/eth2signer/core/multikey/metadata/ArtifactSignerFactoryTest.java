@@ -16,13 +16,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.google.common.io.Resources;
+import io.vertx.core.Vertx;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -39,6 +42,8 @@ class ArtifactSignerFactoryTest {
   private Path passwordFile;
   private ArtifactSignerFactory artifactSignerFactory;
 
+  final Vertx vertx = Vertx.vertx();
+
   @BeforeEach
   void setup() throws IOException {
     keystoreFile = configDir.resolve(KEYSTORE_FILE);
@@ -46,7 +51,14 @@ class ArtifactSignerFactoryTest {
     Files.copy(Path.of(Resources.getResource(KEYSTORE_FILE).getPath()), keystoreFile);
     Files.copy(Path.of(Resources.getResource(PASSWORD_FILE).getPath()), passwordFile);
 
-    artifactSignerFactory = new ArtifactSignerFactory(configDir, new NoOpMetricsSystem(), null);
+    artifactSignerFactory =
+        new ArtifactSignerFactory(
+            configDir, new NoOpMetricsSystem(), new HashicorpConnectionFactory(vertx));
+  }
+
+  @AfterEach
+  void cleanup() {
+    vertx.close();
   }
 
   @Test
@@ -120,5 +132,21 @@ class ArtifactSignerFactoryTest {
     assertThatThrownBy(() -> artifactSignerFactory.create(fileKeyStoreMetadata))
         .isInstanceOf(SigningMetadataException.class)
         .hasMessage("Keystore password file not found: " + nonExistentPassword);
+  }
+
+  @Test
+  void malformedKnownServersFileShowsSuitableError() throws IOException {
+
+    final Path malformedknownServers = configDir.resolve("malformedKnownServers");
+    Files.writeString(malformedknownServers, "Illegal Known Servers.");
+
+    final HashicorpSigningMetadata metaData =
+        new HashicorpSigningMetadata("localhost", "keyPath", "keyName", "token");
+    metaData.setTlsEnabled(true);
+    metaData.setTlsKnownServersPath(malformedknownServers);
+
+    assertThatThrownBy(() -> artifactSignerFactory.create(metaData))
+        .isInstanceOf(SigningMetadataException.class)
+        .hasMessage("Failed to fetch secret from hashicorp vault");
   }
 }

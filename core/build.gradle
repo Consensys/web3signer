@@ -1,4 +1,7 @@
 
+apply plugin: 'java-library'
+apply plugin: 'java-test-fixtures'
+
 jar {
   archiveBaseName = 'eth2signer-core'
   manifest {

@@ -16,6 +16,7 @@ import net.ltgt.gradle.errorprone.CheckSeverity
 import java.text.SimpleDateFormat
 
 plugins {
+  id 'java-test-fixtures'
   id 'com.diffplug.gradle.spotless' version '3.27.1'
   id 'com.jfrog.bintray' version '1.8.4'
   id 'com.github.ben-manes.versions' version '0.27.0'

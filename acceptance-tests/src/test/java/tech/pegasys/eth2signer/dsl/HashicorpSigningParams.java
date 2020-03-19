@@ -12,9 +12,10 @@
  */
 package tech.pegasys.eth2signer.dsl;
 
-import java.util.Optional;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.signers.hashicorp.dsl.certificates.SelfSignedCertificate;
+
+import java.util.Optional;
 
 public class HashicorpSigningParams {
 
@@ -28,7 +29,6 @@ public class HashicorpSigningParams {
     this.secretPath = secretPath;
     this.secretName = secretName;
   }
-
 
   public int getPort() {
     return hashicorpNode.getPort();

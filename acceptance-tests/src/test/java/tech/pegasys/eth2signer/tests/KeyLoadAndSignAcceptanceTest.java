@@ -16,7 +16,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.concurrent.ExecutionException;
 import tech.pegasys.eth2signer.crypto.KeyPair;
 import tech.pegasys.eth2signer.crypto.PublicKey;
 import tech.pegasys.eth2signer.crypto.SecretKey;
@@ -25,8 +24,11 @@ import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
+import tech.pegasys.signers.hashicorp.dsl.DockerClientFactory;
+import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 
 import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -37,8 +39,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import tech.pegasys.signers.hashicorp.dsl.DockerClientFactory;
-import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 
 public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
@@ -117,7 +117,8 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   public void ableToSignUsingHashicorp(final String artifactSigningEndpoint)
       throws ExecutionException, InterruptedException {
     final DockerClientFactory dockerClientFactory = new DockerClientFactory();
-    final HashicorpNode hashicorpNode = HashicorpNode.createAndStartHashicorp(dockerClientFactory.create(), true);
+    final HashicorpNode hashicorpNode =
+        HashicorpNode.createAndStartHashicorp(dockerClientFactory.create(), true);
 
     final String secretPath = "acceptanceTestSecretPath";
     final String secretName = "secretName";
@@ -125,8 +126,8 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     hashicorpNode.addSecretsToVault(singletonMap(secretName, PRIVATE_KEY), secretPath);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createHashicorpYamlFileAt(keyConfigFile,
-        new HashicorpSigningParams(hashicorpNode, secretPath, secretName));
+    metadataFileHelpers.createHashicorpYamlFileAt(
+        keyConfigFile, new HashicorpSigningParams(hashicorpNode, secretPath, secretName));
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);

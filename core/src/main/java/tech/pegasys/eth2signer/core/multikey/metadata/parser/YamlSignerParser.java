@@ -42,13 +42,14 @@ public class YamlSignerParser implements SignerParser {
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
       return metaDataInfo.createSigner(artifactSignerFactory);
     } catch (final JsonParseException | JsonMappingException e) {
-      throw new SigningMetadataException(
-          "Invalid signing metadata file format: " + e.getMessage(), e);
+      throw new SigningMetadataException("Invalid signing metadata file format", e);
     } catch (final FileNotFoundException e) {
-      throw new SigningMetadataException("Signing metadata file not found: " + metadataPath, e);
+      throw new SigningMetadataException("File not found", e);
     } catch (final IOException e) {
       throw new SigningMetadataException(
-          "Unexpected IO error while reading signing metadata file: " + e.getMessage(), e);
+          "Unexpected IO error while reading signing metadata file", e);
+    } catch (final Exception e) {
+      throw new SigningMetadataException("Unknonwn failure", e);
     }
   }
 }

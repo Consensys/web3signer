@@ -69,16 +69,15 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
         final Signature signature = signer.get().sign(dataToSign, domain);
         response.end(signature.toString());
       } else {
-        LOG.error("Unable to find an appropriate signer for request: {}",
-            signingRequest.publicKey());
+        LOG.error(
+            "Unable to find an appropriate signer for request: {}", signingRequest.publicKey());
         response
             .setStatusCode(404)
             .setChunked(false)
             .end("No key exists for requested signing operation.");
       }
-    } catch (final Exception e)  {
+    } catch (final Exception e) {
       LOG.error("OOPS!", e);
     }
-
   }
 }

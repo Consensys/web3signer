@@ -122,7 +122,6 @@ public class Runner implements Runnable {
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler);
 
-
     return router;
   }
 
