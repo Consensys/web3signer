@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import tech.pegasys.signers.hashicorp.HashicorpException;
 
 public class YamlSignerParser implements SignerParser {
   private static final ObjectMapper OBJECT_MAPPER =
@@ -48,6 +49,8 @@ public class YamlSignerParser implements SignerParser {
     } catch (final IOException e) {
       throw new SigningMetadataException(
           "Unexpected IO error while reading signing metadata file", e);
+    } catch (final SigningMetadataException e) {
+      throw e;
     } catch (final Exception e) {
       throw new SigningMetadataException("Unknonwn failure", e);
     }

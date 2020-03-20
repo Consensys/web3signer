@@ -22,12 +22,15 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 
 public class HashicorpSigningMetadata implements SigningMetadata {
 
-  private String serverHost;
+  private final String serverHost;
+  private final String token;
+  private final String keyPath;
+
+  // Optional Fields (will be populated if need be).
   private Integer serverPort;
   private Long timeout;
-  private final String token;
-  private String keyPath;
   private String keyName;
+
   private Boolean tlsEnabled = false;
   private Path tlsKnownServerFile = null;
 
@@ -35,12 +38,10 @@ public class HashicorpSigningMetadata implements SigningMetadata {
   public HashicorpSigningMetadata(
       @JsonProperty(value = "serverHost", required = true) final String serverHost,
       @JsonProperty(value = "keyPath", required = true) final String keyPath,
-      @JsonProperty(value = "keyName", required = true) final String keyName,
       @JsonProperty(value = "token", required = true) final String token) {
     this.serverHost = serverHost;
     this.token = token;
     this.keyPath = keyPath;
-    this.keyName = keyName;
   }
 
   @JsonSetter("serverPort")
@@ -57,6 +58,9 @@ public class HashicorpSigningMetadata implements SigningMetadata {
   public void setTlsEnabled(final Boolean value) {
     this.tlsEnabled = value;
   }
+
+  @JsonSetter("keyName")
+  public void setKeyName(final String value) { this.keyName = value; }
 
   @JsonSetter("tlsKnownServersPath")
   public void setTlsKnownServersPath(final Path value) {

@@ -141,7 +141,7 @@ class ArtifactSignerFactoryTest {
     Files.writeString(malformedknownServers, "Illegal Known Servers.");
 
     final HashicorpSigningMetadata metaData =
-        new HashicorpSigningMetadata("localhost", "keyPath", "keyName", "token");
+        new HashicorpSigningMetadata("localhost", "keyPath", "token");
     metaData.setTlsEnabled(true);
     metaData.setTlsKnownServersPath(malformedknownServers);
 
