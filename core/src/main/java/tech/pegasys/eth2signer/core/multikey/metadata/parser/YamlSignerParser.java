@@ -25,7 +25,6 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import tech.pegasys.signers.hashicorp.HashicorpException;
 
 public class YamlSignerParser implements SignerParser {
   private static final ObjectMapper OBJECT_MAPPER =

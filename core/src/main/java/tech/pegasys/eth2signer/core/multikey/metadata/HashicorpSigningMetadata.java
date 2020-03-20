@@ -60,7 +60,9 @@ public class HashicorpSigningMetadata implements SigningMetadata {
   }
 
   @JsonSetter("keyName")
-  public void setKeyName(final String value) { this.keyName = value; }
+  public void setKeyName(final String value) {
+    this.keyName = value;
+  }
 
   @JsonSetter("tlsKnownServersPath")
   public void setTlsKnownServersPath(final Path value) {

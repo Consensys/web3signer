@@ -12,11 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import java.util.List;
-import org.apache.commons.lang.exception.ExceptionUtils;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -35,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright 2020 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -9,36 +9,11 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.eth2signer.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.vertx.core.Vertx;
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.Logger;
-import org.apache.logging.log4j.core.appender.WriterAppender;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
@@ -47,10 +22,30 @@ import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.vertx.core.Vertx;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
-  @TempDir
-  Path configsDirectory;
+  @TempDir Path configsDirectory;
   private SignerParser signerParser;
   private static final String FILE_EXTENSION = "yaml";
   private static ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
@@ -73,8 +68,9 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     vertx = Vertx.vertx();
     hashicorpConnectionFactory = new HashicorpConnectionFactory(vertx);
 
-    artifactSignerFactory = new ArtifactSignerFactory(configsDirectory, new NoOpMetricsSystem(),
-        hashicorpConnectionFactory);
+    artifactSignerFactory =
+        new ArtifactSignerFactory(
+            configsDirectory, new NoOpMetricsSystem(), hashicorpConnectionFactory);
     signerParser = new YamlSignerParser(artifactSignerFactory);
     signerProvider =
         new DirectoryBackedArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser);
@@ -110,9 +106,11 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     assertThat(signer).isEmpty();
 
     assertThat(logAppender.getLogMessagesReceived().size()).isNotZero();
-    final List<String> errorMsgs = logAppender.getLogMessagesReceived().stream()
-        .filter(logEvent -> logEvent.getLevel() == Level.ERROR)
-        .map(logEvent -> logEvent.getMessage().getFormattedMessage()).collect(Collectors.toList());
+    final List<String> errorMsgs =
+        logAppender.getLogMessagesReceived().stream()
+            .filter(logEvent -> logEvent.getLevel() == Level.ERROR)
+            .map(logEvent -> logEvent.getMessage().getFormattedMessage())
+            .collect(Collectors.toList());
     assertThat(errorMsgs.size()).isEqualTo(2);
     assertThat(errorMsgs.get(0))
         .contains("Error parsing signing metadata file " + filename.getFileName());
@@ -160,6 +158,4 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
   }
-
-
 }

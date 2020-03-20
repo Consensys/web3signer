@@ -131,7 +131,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
   }
 
-@ParameterizedTest
+  @ParameterizedTest
   @ValueSource(strings = {"/signer/block", "/signer/attestation"})
   public void ableToSignUsingHashicorp(final String artifactSigningEndpoint)
       throws ExecutionException, InterruptedException {
