@@ -81,6 +81,13 @@ public class ArtifactSignerFactory {
       if (knownServerFile == null) {
         tlsOptions = new TlsOptions(Optional.empty(), null, null); // use CA Auth
       } else {
+        final Path configRelativeKnownServerPath = makeRelativePathAbsolute(knownServerFile);
+        if (!configRelativeKnownServerPath.toFile().exists()) {
+          throw new SigningMetadataException(
+              String
+                  .format("Known servers file (%s) does not exist.",
+                      configRelativeKnownServerPath));
+        }
         tlsOptions = new TlsOptions(Optional.of(TrustStoreType.WHITELIST), knownServerFile, null);
       }
     }

@@ -222,6 +222,11 @@ class DirectoryBackedArtifactSignerProviderTest {
     assertThat(identifiers).containsOnly(publicKey1, publicKey2, publicKey3);
   }
 
+  @Test
+  void errorMessageFromExceptionStackShowsRootCause() {
+
+  }
+
   private Path pathEndsWith(final String endsWith) {
     return argThat((Path path) -> path != null && path.endsWith(endsWith + "." + FILE_EXTENSION));
   }
