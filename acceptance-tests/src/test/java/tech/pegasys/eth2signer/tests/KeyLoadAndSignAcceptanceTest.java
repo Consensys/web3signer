@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.artemis.util.mikuli.BLS12381;
 import tech.pegasys.artemis.util.mikuli.KeyPair;
-import tech.pegasys.artemis.util.mikuli.PublicKey;
 import tech.pegasys.artemis.util.mikuli.SecretKey;
 import tech.pegasys.artemis.util.mikuli.Signature;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
@@ -95,7 +94,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
 
-    final HttpResponse response = signer.signData("block", PublicKey.random(), SIGNING_ROOT);
+    final HttpResponse response = signer.signData("block", keyPair.publicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.NOT_FOUND.code());
   }
 

@@ -73,6 +73,6 @@ dependencyManagement {
 
     dependency 'tech.pegasys.signers.internal:bls-keystore:0.0.1-SNAPSHOT'
 
-    dependency 'tech.pegasys.teku.internal:util:0.8.2-SNAPSHOT'
+    dependency 'tech.pegasys.teku.internal:bls:0.8.2-SNAPSHOT'
   }
 }
