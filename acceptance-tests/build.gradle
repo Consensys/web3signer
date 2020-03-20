@@ -32,7 +32,7 @@ dependencies {
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   testImplementation 'tech.pegasys.signers.internal:bls-keystore'
-  testImplementation 'tech.pegasys.teku.internal:util'
+  testImplementation 'tech.pegasys.teku.internal:bls'
 }
 
 test.enabled = false
