@@ -14,22 +14,33 @@
  */
 package tech.pegasys.eth2signer.core;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.vertx.core.Vertx;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.appender.WriterAppender;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -47,6 +58,8 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
   private HashicorpConnectionFactory hashicorpConnectionFactory;
   private Vertx vertx;
   private TrackingLogAppender logAppender = new TrackingLogAppender();
+  private final Logger logger =
+      (Logger) LogManager.getLogger(DirectoryBackedArtifactSignerProvider.class);
 
   private static final String PUBLIC_KEY =
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
@@ -64,10 +77,18 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     signerProvider =
         new DirectoryBackedArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser);
 
+    logger.addAppender(logAppender);
+    logAppender.start();
+  }
+
+  @AfterEach
+  void cleanup() {
+    vertx.close();
+    logAppender.stop();
   }
 
   @Test
-  void logMessagesContainFullTracking() throws IOException {
+  void invalidHashicorpFingerprintFileShowsUsefulErrorLog() throws IOException {
 
     final Path filename = configsDirectory.resolve(PUBLIC_KEY + "." + FILE_EXTENSION);
 
@@ -84,6 +105,38 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), signingMetadata);
 
     signerProvider.getSigner(PUBLIC_KEY);
+
+    assertThat(logAppender.getLogMessagesReceived().size()).isNotZero();
+    final List<String> errorMsgs = logAppender.getLogMessagesReceived().stream()
+        .filter(logEvent -> logEvent.getLevel() == Level.ERROR)
+        .map(logEvent -> logEvent.getMessage().getFormattedMessage()).collect(Collectors.toList());
+    assertThat(errorMsgs.size()).isEqualTo(2);
+    assertThat(errorMsgs.get(0)).contains("Error parsing signing metadata file " + filename.getFileName());
+    assertThat(errorMsgs.get(0)).contains("Invalid fingerprint");
+    assertThat(errorMsgs.get(1)).contains("No valid matching metadata file found for the identifier " + PUBLIC_KEY);
+  }
+
+  @Test
+  void missingHashicorpFingerprintFileWhichCannotBeCreatedShowsUsefulErrorLog() throws IOException {
+    final Path filename = configsDirectory.resolve(PUBLIC_KEY + "." + FILE_EXTENSION);
+
+    final Path missingFingerprintFile = configsDirectory.resolve("missingFingerprintFile");
+
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+      signingMetadata.put("type", "hashicorp");
+      signingMetadata.put("serverHost", "localhost");
+      signingMetadata.put("keyPath", "/v1/secret/data/secretPath");
+      signingMetadata.put("token", "accessToken");
+      signingMetadata.put("tlsEnabled", "true");
+      signingMetadata.put("tlsKnownServersPath", missingFingerprintFile.toString());
+      YAML_OBJECT_MAPPER.writeValue(filename.toFile(), signingMetadata);
+
+      configsDirectory.toFile().setWritable(false);
+      signerProvider.getSigner(PUBLIC_KEY);
+    } finally {
+      configsDirectory.toFile().setWritable(true);
+    }
   }
 
 

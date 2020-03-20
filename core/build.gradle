@@ -50,8 +50,9 @@ dependencies {
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
+  integrationTestImplementation 'org.apache.logging.log4j:log4j-core'
+  integrationTestImplementation 'org.apache.logging.log4j:log4j'
   integrationTestImplementation sourceSets.testFixtures.output
-
 
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'

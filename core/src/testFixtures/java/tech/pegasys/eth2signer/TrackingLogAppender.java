@@ -30,7 +30,7 @@ public class TrackingLogAppender extends AbstractAppender
 
   @Override
   public void append(final LogEvent event) {
-    logMessagesReceived.add(event);
+    logMessagesReceived.add(event.toImmutable());
   }
 
   public List<LogEvent> getLogMessagesReceived() {
