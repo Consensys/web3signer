@@ -19,6 +19,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
+import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
@@ -41,8 +44,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DirectoryBackedArtifactSignerProviderTest {
-  @TempDir Path configsDirectory;
-  @Mock private SignerParser signerParser;
+
+  @TempDir
+  Path configsDirectory;
+  @Mock
+  private SignerParser signerParser;
 
   private static final String FILE_EXTENSION = "yaml";
   private static final String PUBLIC_KEY =
@@ -223,7 +229,26 @@ class DirectoryBackedArtifactSignerProviderTest {
   }
 
   @Test
-  void errorMessageFromExceptionStackShowsRootCause() {
+  void errorMessageFromExceptionStackShowsRootCause() throws IOException {
+    final RuntimeException rootCause = new RuntimeException("Root cause failure.");
+    final RuntimeException intermediateException = new RuntimeException("Intermediate wrapped rethrow", rootCause);
+    final RuntimeException topMostException = new RuntimeException("Abstract Failure", intermediateException);
+
+    when(signerParser.parse(any())).thenThrow(topMostException);
+
+    final TrackingLogAppender logAppender = new TrackingLogAppender();
+    final Logger logger = (Logger)LogManager.getLogger(DirectoryBackedArtifactSignerProvider.class);
+    logger.addAppender(logAppender);
+    logAppender.start();
+    try {
+      final String filename = PUBLIC_KEY;
+      createFileInConfigsDirectory(filename);
+      signerProvider.getSigner(PUBLIC_KEY);
+
+      assertThat(logAppender.getLogMessagesReceived().get(0).getMessage().getFormattedMessage()).contains(rootCause.getMessage());
+    } finally {
+      logAppender.stop();
+    }
 
   }
 
