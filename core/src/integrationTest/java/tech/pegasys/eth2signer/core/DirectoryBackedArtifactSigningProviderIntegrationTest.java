@@ -60,8 +60,6 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
   private static final String PUBLIC_KEY =
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
-  private static final String PRIVATE_KEY =
-      "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   @BeforeEach
   void setup() {
@@ -75,13 +73,14 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     signerProvider =
         new DirectoryBackedArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser);
 
-    logger.addAppender(logAppender);
     logAppender.start();
+    logger.addAppender(logAppender);
   }
 
   @AfterEach
   void cleanup() {
     vertx.close();
+    logger.removeAppender(logAppender);
     logAppender.stop();
   }
 
@@ -108,7 +107,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     assertThat(logAppender.getLogMessagesReceived().size()).isNotZero();
     final List<String> errorMsgs =
         logAppender.getLogMessagesReceived().stream()
-            .filter(logEvent -> logEvent.getLevel() == Level.ERROR)
+            .filter(logEvent -> logEvent.getLevel().equals(Level.ERROR))
             .map(logEvent -> logEvent.getMessage().getFormattedMessage())
             .collect(Collectors.toList());
     assertThat(errorMsgs.size()).isEqualTo(2);

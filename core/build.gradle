@@ -47,6 +47,7 @@ dependencies {
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
+  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'

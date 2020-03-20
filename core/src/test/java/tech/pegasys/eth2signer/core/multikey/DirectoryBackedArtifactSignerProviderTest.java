@@ -19,8 +19,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Logger;
 import tech.pegasys.artemis.util.mikuli.KeyPair;
 import tech.pegasys.artemis.util.mikuli.SecretKey;
 import tech.pegasys.eth2signer.TrackingLogAppender;
@@ -34,6 +32,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -238,8 +238,9 @@ class DirectoryBackedArtifactSignerProviderTest {
     final TrackingLogAppender logAppender = new TrackingLogAppender();
     final Logger logger =
         (Logger) LogManager.getLogger(DirectoryBackedArtifactSignerProvider.class);
-    logger.addAppender(logAppender);
     logAppender.start();
+    logger.addAppender(logAppender);
+
     try {
       final String filename = PUBLIC_KEY;
       createFileInConfigsDirectory(filename);
@@ -248,6 +249,7 @@ class DirectoryBackedArtifactSignerProviderTest {
       assertThat(logAppender.getLogMessagesReceived().get(0).getMessage().getFormattedMessage())
           .contains(rootCause.getMessage());
     } finally {
+      logger.removeAppender(logAppender);
       logAppender.stop();
     }
   }
