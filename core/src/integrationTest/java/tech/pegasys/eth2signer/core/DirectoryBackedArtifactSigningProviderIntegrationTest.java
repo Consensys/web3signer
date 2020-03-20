@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -43,6 +44,7 @@ import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvid
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 public class DirectoryBackedArtifactSigningProviderIntegrationTest {
@@ -104,16 +106,19 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     signingMetadata.put("tlsKnownServersPath", malformedknownServers.toString());
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), signingMetadata);
 
-    signerProvider.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    assertThat(signer).isEmpty();
 
     assertThat(logAppender.getLogMessagesReceived().size()).isNotZero();
     final List<String> errorMsgs = logAppender.getLogMessagesReceived().stream()
         .filter(logEvent -> logEvent.getLevel() == Level.ERROR)
         .map(logEvent -> logEvent.getMessage().getFormattedMessage()).collect(Collectors.toList());
     assertThat(errorMsgs.size()).isEqualTo(2);
-    assertThat(errorMsgs.get(0)).contains("Error parsing signing metadata file " + filename.getFileName());
+    assertThat(errorMsgs.get(0))
+        .contains("Error parsing signing metadata file " + filename.getFileName());
     assertThat(errorMsgs.get(0)).contains("Invalid fingerprint");
-    assertThat(errorMsgs.get(1)).contains("No valid matching metadata file found for the identifier " + PUBLIC_KEY);
+    assertThat(errorMsgs.get(1))
+        .contains("No valid matching metadata file found for the identifier " + PUBLIC_KEY);
   }
 
   @Test
@@ -133,10 +138,27 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
       YAML_OBJECT_MAPPER.writeValue(filename.toFile(), signingMetadata);
 
       configsDirectory.toFile().setWritable(false);
-      signerProvider.getSigner(PUBLIC_KEY);
+      final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+      assertThat(signer).isEmpty();
+
     } finally {
       configsDirectory.toFile().setWritable(true);
     }
+  }
+
+  @Test
+  void hashicorpVaultNotRunningProducesErrorMessageIndicatingFailure() throws IOException {
+    final Path filename = configsDirectory.resolve(PUBLIC_KEY + "." + FILE_EXTENSION);
+    final Map<String, String> signingMetadata = new HashMap<>();
+    signingMetadata.put("type", "hashicorp");
+    signingMetadata.put("serverHost", "localhost");
+    signingMetadata.put("keyPath", "/v1/secret/data/secretPath");
+    signingMetadata.put("token", "accessToken");
+    signingMetadata.put("tlsEnabled", "false");
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), signingMetadata);
+
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    assertThat(signer).isEmpty();
   }
 
 
