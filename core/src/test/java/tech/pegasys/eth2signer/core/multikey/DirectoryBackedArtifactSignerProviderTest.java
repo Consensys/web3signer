@@ -19,14 +19,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Logger;
-import tech.pegasys.eth2signer.TrackingLogAppender;
+import tech.pegasys.artemis.util.mikuli.KeyPair;
+import tech.pegasys.artemis.util.mikuli.SecretKey;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.crypto.KeyPair;
-import tech.pegasys.eth2signer.crypto.SecretKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,11 +41,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DirectoryBackedArtifactSignerProviderTest {
-
-  @TempDir
-  Path configsDirectory;
-  @Mock
-  private SignerParser signerParser;
+  @TempDir Path configsDirectory;
+  @Mock private SignerParser signerParser;
 
   private static final String FILE_EXTENSION = "yaml";
   private static final String PUBLIC_KEY =

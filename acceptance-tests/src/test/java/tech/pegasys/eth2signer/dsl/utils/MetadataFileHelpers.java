@@ -15,9 +15,8 @@ package tech.pegasys.eth2signer.dsl.utils;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
-import tech.pegasys.eth2signer.crypto.KeyPair;
-import tech.pegasys.eth2signer.crypto.SecretKey;
-import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
+import tech.pegasys.artemis.util.mikuli.KeyPair;
+import tech.pegasys.artemis.util.mikuli.SecretKey;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.model.Cipher;
@@ -34,14 +33,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.tuweni.bytes.Bytes;
 
 public class MetadataFileHelpers {
-
   private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   private static final Bytes SALT =
       Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");

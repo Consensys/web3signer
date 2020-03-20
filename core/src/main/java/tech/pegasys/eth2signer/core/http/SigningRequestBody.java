@@ -14,27 +14,22 @@ package tech.pegasys.eth2signer.core.http;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class SigningRequestBody {
 
-  private final Bytes domain;
   private final String publicKey;
-  private final Bytes message;
+  private final Bytes signingRoot;
 
   @JsonCreator
   public SigningRequestBody(
       @JsonProperty("publicKey") final String publicKey,
-      @JsonProperty("message") final String message,
-      @JsonProperty("domain") final String domain) {
+      @JsonProperty("signingRoot") final String signingRoot) {
     this.publicKey = publicKey;
-    this.message = Bytes.fromHexString(message);
-    this.domain = Bytes.fromHexString(domain);
-  }
-
-  public Bytes domain() {
-    return domain;
+    this.signingRoot = Bytes.fromHexString(signingRoot);
   }
 
   @JsonGetter("publicKey")
@@ -42,17 +37,12 @@ public class SigningRequestBody {
     return publicKey;
   }
 
-  public Bytes message() {
-    return message;
+  public Bytes signingRoot() {
+    return signingRoot;
   }
 
-  @JsonGetter("domain")
-  public String getDomain() {
-    return domain.toHexString();
-  }
-
-  @JsonGetter("message")
-  public String getMessage() {
-    return message.toHexString();
+  @JsonGetter("signingRoot")
+  public String getSigningRoot() {
+    return signingRoot.toHexString();
   }
 }

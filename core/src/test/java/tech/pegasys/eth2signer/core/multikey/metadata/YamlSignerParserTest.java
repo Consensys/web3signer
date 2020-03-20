@@ -19,10 +19,10 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.artemis.util.mikuli.KeyPair;
+import tech.pegasys.artemis.util.mikuli.SecretKey;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.crypto.KeyPair;
-import tech.pegasys.eth2signer.crypto.SecretKey;
 
 import java.io.IOException;
 import java.nio.file.Path;

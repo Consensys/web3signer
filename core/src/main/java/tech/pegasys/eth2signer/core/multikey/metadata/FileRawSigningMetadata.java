@@ -12,8 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
+import tech.pegasys.artemis.util.mikuli.SecretKey;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.crypto.SecretKey;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

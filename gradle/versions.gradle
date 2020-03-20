@@ -74,6 +74,8 @@ dependencyManagement {
     dependency 'org.hyperledger.besu:plugin-api:1.4.0'
 
     dependency 'tech.pegasys.signers.internal:bls-keystore:0.0.1-SNAPSHOT'
+
+    dependency 'tech.pegasys.teku.internal:bls:0.8.2-SNAPSHOT'
     dependency 'tech.pegasys.signers.internal:keystorage-hashicorp:0.0.1-SNAPSHOT'
   }
 }
