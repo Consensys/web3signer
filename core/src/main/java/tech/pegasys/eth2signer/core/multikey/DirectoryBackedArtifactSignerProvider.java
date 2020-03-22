@@ -144,6 +144,7 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   private static class ArtifactSignerWithFileName {
+
     private final Path path;
     private final ArtifactSigner signer;
 
@@ -162,15 +163,8 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   private void renderException(final Throwable t, final String filename) {
-    LOG.error("Error parsing signing metadata file {}: {}", filename, getRootCauseMessage(t));
+    LOG.error("Error parsing signing metadata file {}: {}", filename,
+        ExceptionUtils.getRootCauseMessage(t));
     LOG.debug(ExceptionUtils.getStackTrace(t));
-  }
-
-  private String getRootCauseMessage(final Throwable t) {
-    Throwable walker = t;
-    while (walker.getCause() != null) {
-      walker = walker.getCause();
-    }
-    return walker.getMessage();
   }
 }

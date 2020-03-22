@@ -42,10 +42,11 @@ class ArtifactSignerFactoryTest {
   private Path passwordFile;
   private ArtifactSignerFactory artifactSignerFactory;
 
-  final Vertx vertx = Vertx.vertx();
+  private Vertx vertx;
 
   @BeforeEach
   void setup() throws IOException {
+    vertx = Vertx.vertx();
     keystoreFile = configDir.resolve(KEYSTORE_FILE);
     passwordFile = configDir.resolve(PASSWORD_FILE);
     Files.copy(Path.of(Resources.getResource(KEYSTORE_FILE).getPath()), keystoreFile);

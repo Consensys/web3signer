@@ -134,7 +134,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"/signer/block"}) // , "/signer/attestation"})
+  @ValueSource(strings = {"/signer/block", "/signer/attestation", "/signer/randao_reveal"})
   public void ableToSignUsingHashicorp(final String artifactSigningEndpoint)
       throws ExecutionException, InterruptedException {
     final String configFilename = keyPair.publicKey().toString().substring(2);

@@ -86,9 +86,6 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
   @Test
   void invalidHashicorpFingerprintFileShowsUsefulErrorLog() throws IOException {
-
-    final Path filename = configsDirectory.resolve(PUBLIC_KEY + "." + FILE_EXTENSION);
-
     final Path malformedknownServers = configsDirectory.resolve("malformedKnownServers");
     Files.writeString(malformedknownServers, "Illegal Known Servers.");
 
@@ -99,17 +96,13 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     signingMetadata.put("token", "accessToken");
     signingMetadata.put("tlsEnabled", "true");
     signingMetadata.put("tlsKnownServersPath", malformedknownServers.toString());
-    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), signingMetadata);
+
+    final Path filename = createFileWithContent(signingMetadata);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
-    assertThat(logAppender.getLogMessagesReceived().size()).isNotZero();
-    final List<String> errorMsgs =
-        logAppender.getLogMessagesReceived().stream()
-            .filter(logEvent -> logEvent.getLevel().equals(Level.ERROR))
-            .map(logEvent -> logEvent.getMessage().getFormattedMessage())
-            .collect(Collectors.toList());
+    final List<String> errorMsgs = getErrorMessagesFromLogs();
     assertThat(errorMsgs.size()).isEqualTo(2);
     assertThat(errorMsgs.get(0))
         .contains("Error parsing signing metadata file " + filename.getFileName());
@@ -120,8 +113,6 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
   @Test
   void missingHashicorpFingerprintFileWhichCannotBeCreatedShowsUsefulErrorLog() throws IOException {
-    final Path filename = configsDirectory.resolve(PUBLIC_KEY + "." + FILE_EXTENSION);
-
     final Path missingFingerprintFile = configsDirectory.resolve("missingFingerprintFile");
 
     try {
@@ -132,11 +123,18 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
       signingMetadata.put("token", "accessToken");
       signingMetadata.put("tlsEnabled", "true");
       signingMetadata.put("tlsKnownServersPath", missingFingerprintFile.toString());
-      YAML_OBJECT_MAPPER.writeValue(filename.toFile(), signingMetadata);
+
+      final Path filename = createFileWithContent(signingMetadata);
 
       configsDirectory.toFile().setWritable(false);
       final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
       assertThat(signer).isEmpty();
+
+      final List<String> errorMsgs = getErrorMessagesFromLogs();
+      assertThat(errorMsgs.get(0))
+          .contains("Error parsing signing metadata file " + filename.getFileName());
+      assertThat(errorMsgs.get(0)).contains("Known servers file");
+      assertThat(errorMsgs.get(0)).contains("does not exist");
 
     } finally {
       configsDirectory.toFile().setWritable(true);
@@ -145,16 +143,57 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
   @Test
   void hashicorpVaultNotRunningProducesErrorMessageIndicatingFailure() throws IOException {
-    final Path filename = configsDirectory.resolve(PUBLIC_KEY + "." + FILE_EXTENSION);
     final Map<String, String> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "hashicorp");
     signingMetadata.put("serverHost", "localhost");
     signingMetadata.put("keyPath", "/v1/secret/data/secretPath");
     signingMetadata.put("token", "accessToken");
     signingMetadata.put("tlsEnabled", "false");
-    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), signingMetadata);
+
+    final Path filename = createFileWithContent(signingMetadata);
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
+
+    final List<String> errorMsgs = getErrorMessagesFromLogs();
+
+    assertThat(errorMsgs.get(0))
+        .contains("Error parsing signing metadata file " + filename.getFileName());
+    assertThat(errorMsgs.get(0)).contains("Connection refused");
   }
+
+  @Test
+  void missingRequiredParameterShowsErrorMessageIndicatingItIsMissing() throws IOException {
+    final Map<String, String> signingMetadata = new HashMap<>();
+    signingMetadata.put("type", "hashicorp");
+    signingMetadata.put("serverHost", "localhost");
+    signingMetadata.put("keyPath", "/v1/secret/data/secretPath");
+    signingMetadata.put("tlsEnabled", "false");
+
+    final Path filename = createFileWithContent(signingMetadata);
+
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    assertThat(signer).isEmpty();
+
+    final List<String> errorMsgs = getErrorMessagesFromLogs();
+    assertThat(errorMsgs.get(0))
+        .contains("Error parsing signing metadata file " + filename.getFileName());
+    assertThat(errorMsgs.get(0)).contains("Missing required creator property 'token'");
+
+  }
+
+  private Path createFileWithContent(final Map<String, String> fileData) throws IOException {
+    final Path filename = configsDirectory.resolve(PUBLIC_KEY + "." + FILE_EXTENSION);
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), fileData);
+
+    return filename;
+  }
+
+  private List<String> getErrorMessagesFromLogs() {
+    return logAppender.getLogMessagesReceived().stream()
+        .filter(logEvent -> logEvent.getLevel().equals(Level.ERROR))
+        .map(logEvent -> logEvent.getMessage().getFormattedMessage())
+        .collect(Collectors.toList());
+  }
+
 }
