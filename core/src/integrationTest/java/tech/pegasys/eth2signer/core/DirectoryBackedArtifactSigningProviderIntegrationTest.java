@@ -179,7 +179,6 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     assertThat(errorMsgs.get(0))
         .contains("Error parsing signing metadata file " + filename.getFileName());
     assertThat(errorMsgs.get(0)).contains("Missing required creator property 'token'");
-
   }
 
   private Path createFileWithContent(final Map<String, String> fileData) throws IOException {
@@ -195,5 +194,4 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
         .map(logEvent -> logEvent.getMessage().getFormattedMessage())
         .collect(Collectors.toList());
   }
-
 }
