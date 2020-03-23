@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
+import tech.pegasys.artemis.util.bls.BLSSecretKey;
 import tech.pegasys.artemis.util.mikuli.SecretKey;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
@@ -19,10 +20,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class FileRawSigningMetadata implements SigningMetadata {
 
-  private final SecretKey privateKey;
+  private final BLSSecretKey privateKey;
 
   public FileRawSigningMetadata(
-      @JsonProperty(value = "privateKey", required = true) SecretKey privateKey) {
+      @JsonProperty(value = "privateKey", required = true) BLSSecretKey privateKey) {
     this.privateKey = privateKey;
   }
 
@@ -31,7 +32,7 @@ public class FileRawSigningMetadata implements SigningMetadata {
     return factory.create(this);
   }
 
-  public SecretKey getPrivateKey() {
+  public BLSSecretKey getSecretKey() {
     return privateKey;
   }
 }
