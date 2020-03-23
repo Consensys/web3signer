@@ -37,6 +37,7 @@ import java.util.stream.Stream;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.json.Json;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -56,6 +57,9 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   private final Signature expectedSignature = BLS12381.sign(keyPair.secretKey(), SIGNING_ROOT);
 
   @TempDir Path testDirectory;
+
+  @AfterEach
+  void clearnup() {}
 
   @ParameterizedTest
   @ValueSource(strings = {"/signer/block", "/signer/attestation", "/signer/randao_reveal"})
@@ -141,24 +145,27 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     final DockerClientFactory dockerClientFactory = new DockerClientFactory();
     final HashicorpNode hashicorpNode =
         HashicorpNode.createAndStartHashicorp(dockerClientFactory.create(), true);
+    try {
+      final String secretPath = "acceptanceTestSecretPath";
+      final String secretName = "secretName";
 
-    final String secretPath = "acceptanceTestSecretPath";
-    final String secretName = "secretName";
+      hashicorpNode.addSecretsToVault(singletonMap(secretName, PRIVATE_KEY), secretPath);
 
-    hashicorpNode.addSecretsToVault(singletonMap(secretName, PRIVATE_KEY), secretPath);
+      final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+      metadataFileHelpers.createHashicorpYamlFileAt(
+          keyConfigFile, new HashicorpSigningParams(hashicorpNode, secretPath, secretName));
 
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createHashicorpYamlFileAt(
-        keyConfigFile, new HashicorpSigningParams(hashicorpNode, secretPath, secretName));
+      final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+      builder.withKeyStoreDirectory(testDirectory);
+      startSigner(builder.build());
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
-
-    final HttpResponse response =
-        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), SIGNING_ROOT);
-    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
+      final HttpResponse response =
+          signer.signData(artifactSigningEndpoint, keyPair.publicKey(), SIGNING_ROOT);
+      assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
+      assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
+    } finally {
+      hashicorpNode.shutdown();
+    }
   }
 
   @SuppressWarnings("UnusedMethod")
