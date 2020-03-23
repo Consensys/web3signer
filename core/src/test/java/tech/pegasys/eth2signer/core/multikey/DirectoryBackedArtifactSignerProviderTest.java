@@ -19,11 +19,18 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.artemis.util.bls.BLSKeyPair;
+import tech.pegasys.artemis.util.bls.BLSSecretKey;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
+import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,19 +38,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import tech.pegasys.artemis.util.bls.BLSKeyPair;
-import tech.pegasys.artemis.util.bls.BLSSecretKey;
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 @ExtendWith(MockitoExtension.class)
 class DirectoryBackedArtifactSignerProviderTest {
 
-  @TempDir
-  Path configsDirectory;
-  @Mock
-  private SignerParser signerParser;
+  @TempDir Path configsDirectory;
+  @Mock private SignerParser signerParser;
 
   private static final String FILE_EXTENSION = "yaml";
   private static final String PUBLIC_KEY =

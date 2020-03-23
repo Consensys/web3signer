@@ -12,19 +12,21 @@
  */
 package tech.pegasys.eth2signer.core.http;
 
+import tech.pegasys.artemis.util.bls.BLSSignature;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.utils.JsonDecoder;
+
+import java.util.Optional;
+
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.ext.web.RoutingContext;
-import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.artemis.util.bls.BLSSignature;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.utils.JsonDecoder;
 
 public class SigningRequestHandler implements Handler<RoutingContext> {
 

@@ -47,10 +47,8 @@ class YamlSignerParserTest {
   private static final String PRIVATE_KEY =
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
-  @TempDir
-  Path configDir;
-  @Mock
-  private ArtifactSignerFactory artifactSignerFactory;
+  @TempDir Path configDir;
+  @Mock private ArtifactSignerFactory artifactSignerFactory;
 
   private YamlSignerParser signerParser;
 
@@ -227,6 +225,7 @@ class YamlSignerParserTest {
   private FileRawSigningMetadata hasPrivateKey(final String privateKey) {
     final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
     return argThat(
-        (FileRawSigningMetadata m) -> m.getSecretKey().getSecretKey().equals(privateKeyBytes));
+        (FileRawSigningMetadata m) ->
+            m.getSecretKey().getSecretKey().toBytes().equals(privateKeyBytes));
   }
 }

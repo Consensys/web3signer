@@ -12,10 +12,11 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.artemis.util.bls.BLS;
 import tech.pegasys.artemis.util.bls.BLSKeyPair;
 import tech.pegasys.artemis.util.bls.BLSSignature;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class ArtifactSigner {
 

@@ -15,19 +15,6 @@ package tech.pegasys.eth2signer.tests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.json.Json;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Stream;
-import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import tech.pegasys.artemis.util.bls.BLS;
 import tech.pegasys.artemis.util.bls.BLSKeyPair;
 import tech.pegasys.artemis.util.bls.BLSSecretKey;
@@ -36,6 +23,21 @@ import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
+
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.json.Json;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
@@ -82,7 +84,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     startSigner(builder.build());
 
     final HttpResponse response =
-        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), SIGNING_ROOT);
+        signer.signData(artifactSigningEndpoint, keyPair.getPublicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
   }
@@ -92,7 +94,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
 
-    final HttpResponse response = signer.signData("block", keyPair.publicKey(), SIGNING_ROOT);
+    final HttpResponse response = signer.signData("block", keyPair.getPublicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.NOT_FOUND.code());
   }
 
