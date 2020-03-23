@@ -15,22 +15,12 @@ package tech.pegasys.eth2signer.tests;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.artemis.util.mikuli.BLS12381;
-import tech.pegasys.artemis.util.mikuli.KeyPair;
-import tech.pegasys.artemis.util.mikuli.SecretKey;
-import tech.pegasys.artemis.util.mikuli.Signature;
-import tech.pegasys.eth2signer.dsl.HttpResponse;
-import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
-import tech.pegasys.signers.bls.keystore.model.KdfFunction;
-
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.json.Json;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
-
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.json.Json;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -38,6 +28,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import tech.pegasys.artemis.util.bls.BLS;
+import tech.pegasys.artemis.util.bls.BLSKeyPair;
+import tech.pegasys.artemis.util.bls.BLSSecretKey;
+import tech.pegasys.artemis.util.bls.BLSSignature;
+import tech.pegasys.eth2signer.dsl.HttpResponse;
+import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 
 public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
@@ -46,9 +44,9 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
       "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  private final SecretKey key = SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
-  private final KeyPair keyPair = new KeyPair(key);
-  private final Signature expectedSignature = BLS12381.sign(keyPair.secretKey(), SIGNING_ROOT);
+  private final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
+  private final BLSKeyPair keyPair = new BLSKeyPair(key);
+  private final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), SIGNING_ROOT);
 
   @TempDir Path testDirectory;
 
@@ -56,7 +54,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   @ValueSource(strings = {"/signer/block", "/signer/attestation", "/signer/randao_reveal"})
   public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint)
       throws Exception {
-    final String configFilename = keyPair.publicKey().toString().substring(2);
+    final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
 
@@ -65,7 +63,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     startSigner(builder.build());
 
     final HttpResponse response =
-        signer.signData(artifactSigningEndpoint, keyPair.publicKey(), SIGNING_ROOT);
+        signer.signData(artifactSigningEndpoint, keyPair.getPublicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
   }
@@ -74,7 +72,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   @MethodSource("keystoreValues")
   public void signDataWithKeyLoadedFromKeyStoreFile(
       final String artifactSigningEndpoint, KdfFunction kdfFunction) throws Exception {
-    final String configFilename = keyPair.publicKey().toString().substring(2);
+    final String configFilename = keyPair.getPublicKey().toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, PRIVATE_KEY, kdfFunction);
@@ -109,7 +107,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void unusedFieldsInRequestDoesNotAffectSigning() throws Exception {
-    final String configFilename = keyPair.publicKey().toString().substring(2);
+    final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
 
@@ -118,7 +116,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     startSigner(builder.build());
 
     final Map<String, String> requestBody = new HashMap<>();
-    requestBody.put("publicKey", keyPair.publicKey().toString());
+    requestBody.put("publicKey", keyPair.getPublicKey().toString());
     requestBody.put("signingRoot", SIGNING_ROOT.toString());
     requestBody.put("unknownField", "someValue");
 

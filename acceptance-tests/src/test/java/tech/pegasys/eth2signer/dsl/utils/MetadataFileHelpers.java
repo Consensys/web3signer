@@ -15,8 +15,16 @@ package tech.pegasys.eth2signer.dsl.utils;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
-import tech.pegasys.artemis.util.mikuli.KeyPair;
-import tech.pegasys.artemis.util.mikuli.SecretKey;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.artemis.util.bls.BLSKeyPair;
+import tech.pegasys.artemis.util.bls.BLSSecretKey;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.model.Cipher;
@@ -26,16 +34,6 @@ import tech.pegasys.signers.bls.keystore.model.KdfParam;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.signers.bls.keystore.model.SCryptParam;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.apache.tuweni.bytes.Bytes;
 
 public class MetadataFileHelpers {
   private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
@@ -53,15 +51,15 @@ public class MetadataFileHelpers {
   public void createKeyStoreYamlFileAt(
       final Path metadataFilePath, final String privateKey, final KdfFunction kdfFunctionType) {
     final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
-    final KeyPair keyPair = new KeyPair(SecretKey.fromBytes(privateKeyBytes));
+    final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKeyBytes));
 
     final String password = "password";
     final Path passwordFile =
-        metadataFilePath.getParent().resolve(keyPair.publicKey().toString() + ".password");
+        metadataFilePath.getParent().resolve(keyPair.getPublicKey().toString() + ".password");
     createPasswordFile(passwordFile, password);
 
     final Path keystoreFile =
-        metadataFilePath.getParent().resolve(keyPair.publicKey().toString() + ".json");
+        metadataFilePath.getParent().resolve(keyPair.getPublicKey().toString() + ".json");
     createKeyStoreFile(keystoreFile, password, privateKeyBytes, kdfFunctionType);
 
     final Map<String, String> signingMetadata = new HashMap<>();
