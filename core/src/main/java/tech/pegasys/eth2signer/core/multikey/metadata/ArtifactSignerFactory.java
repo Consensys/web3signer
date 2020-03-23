@@ -15,8 +15,8 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import tech.pegasys.artemis.util.mikuli.KeyPair;
-import tech.pegasys.artemis.util.mikuli.SecretKey;
+import tech.pegasys.artemis.util.bls.BLSKeyPair;
+import tech.pegasys.artemis.util.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.signers.bls.keystore.KeyStore;
@@ -64,7 +64,7 @@ public class ArtifactSignerFactory {
 
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
-      return new ArtifactSigner(new KeyPair(fileRawSigningMetadata.getPrivateKey()));
+      return new ArtifactSigner(new BLSKeyPair(fileRawSigningMetadata.getSecretKey()));
     }
   }
 
@@ -105,7 +105,8 @@ public class ArtifactSignerFactory {
                   metadata.getKeyPath(),
                   Optional.ofNullable(metadata.getKeyName()),
                   metadata.getToken()));
-      final KeyPair keyPair = new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(secret)));
+      final BLSKeyPair keyPair =
+          new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(secret)));
       return new ArtifactSigner(keyPair);
     } catch (Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
@@ -120,7 +121,7 @@ public class ArtifactSignerFactory {
       final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
       final String password = loadPassword(keystorePasswordFile);
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-      final KeyPair keyPair = new KeyPair(SecretKey.fromBytes(privateKey));
+      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
       return new ArtifactSigner(keyPair);
     } catch (final KeyStoreValidationException e) {
       throw new SigningMetadataException(e.getMessage(), e);

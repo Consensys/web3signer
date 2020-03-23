@@ -16,7 +16,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 
-import tech.pegasys.artemis.util.mikuli.PublicKey;
+import tech.pegasys.artemis.util.bls.BLSPublicKey;
 import tech.pegasys.eth2signer.core.http.SigningRequestBody;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;
@@ -101,7 +101,7 @@ public class Signer {
   }
 
   public HttpResponse signData(
-      final String endpoint, final PublicKey publicKey, final Bytes signingRoot)
+      final String endpoint, final BLSPublicKey publicKey, final Bytes signingRoot)
       throws ExecutionException, InterruptedException {
     final SigningRequestBody requestBody =
         new SigningRequestBody(publicKey.toString(), signingRoot.toHexString());

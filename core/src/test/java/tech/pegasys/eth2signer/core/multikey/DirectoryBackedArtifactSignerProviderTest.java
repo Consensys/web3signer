@@ -19,8 +19,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.artemis.util.mikuli.KeyPair;
-import tech.pegasys.artemis.util.mikuli.SecretKey;
+import tech.pegasys.artemis.util.bls.BLSKeyPair;
+import tech.pegasys.artemis.util.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
@@ -44,6 +44,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class DirectoryBackedArtifactSignerProviderTest {
+
   @TempDir Path configsDirectory;
   @Mock private SignerParser signerParser;
 
@@ -265,6 +266,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   }
 
   private ArtifactSigner createArtifactSigner(final String privateKey) {
-    return new ArtifactSigner(new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(privateKey))));
+    return new ArtifactSigner(
+        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey))));
   }
 }

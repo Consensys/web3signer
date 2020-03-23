@@ -19,8 +19,8 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.artemis.util.mikuli.KeyPair;
-import tech.pegasys.artemis.util.mikuli.SecretKey;
+import tech.pegasys.artemis.util.bls.BLSKeyPair;
+import tech.pegasys.artemis.util.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
@@ -110,7 +110,8 @@ class YamlSignerParserTest {
   @Test
   void unencryptedMetaDataInfoWithPrivateKeyReturnsMetadata() throws IOException {
     final ArtifactSigner artifactSigner =
-        new ArtifactSigner(new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
+        new ArtifactSigner(
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
     when(artifactSignerFactory.create(any(FileRawSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
@@ -129,7 +130,8 @@ class YamlSignerParserTest {
   @Test
   void unencryptedMetaDataInfoWith0xPrefixPrivateKeyReturnsMetadata() throws IOException {
     final ArtifactSigner artifactSigner =
-        new ArtifactSigner(new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
+        new ArtifactSigner(
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
     when(artifactSignerFactory.create(any(FileRawSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
@@ -188,7 +190,8 @@ class YamlSignerParserTest {
   @Test
   void keyStoreMetaDataInfoReturnsMetadata() throws IOException {
     final ArtifactSigner artifactSigner =
-        new ArtifactSigner(new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
+        new ArtifactSigner(
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
     when(artifactSignerFactory.create(any(FileKeyStoreMetadata.class))).thenReturn(artifactSigner);
 
     final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
@@ -217,6 +220,7 @@ class YamlSignerParserTest {
   private FileRawSigningMetadata hasPrivateKey(final String privateKey) {
     final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
     return argThat(
-        (FileRawSigningMetadata m) -> m.getPrivateKey().toBytes().equals(privateKeyBytes));
+        (FileRawSigningMetadata m) ->
+            m.getSecretKey().getSecretKey().toBytes().equals(privateKeyBytes));
   }
 }

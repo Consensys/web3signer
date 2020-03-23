@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.http;
 
-import tech.pegasys.artemis.util.mikuli.Signature;
+import tech.pegasys.artemis.util.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.utils.JsonDecoder;
@@ -65,7 +65,7 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
 
     if (signer.isPresent()) {
       final Bytes dataToSign = signingRequest.signingRoot();
-      final Signature signature = signer.get().sign(dataToSign);
+      final BLSSignature signature = signer.get().sign(dataToSign);
       response.end(signature.toString());
     } else {
       LOG.error("Unable to find an appropriate signer for request: {}", signingRequest.publicKey());

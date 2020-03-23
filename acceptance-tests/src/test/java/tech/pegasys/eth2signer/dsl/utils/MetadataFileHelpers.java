@@ -15,8 +15,8 @@ package tech.pegasys.eth2signer.dsl.utils;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
-import tech.pegasys.artemis.util.mikuli.KeyPair;
-import tech.pegasys.artemis.util.mikuli.SecretKey;
+import tech.pegasys.artemis.util.bls.BLSKeyPair;
+import tech.pegasys.artemis.util.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
@@ -56,15 +56,15 @@ public class MetadataFileHelpers {
   public void createKeyStoreYamlFileAt(
       final Path metadataFilePath, final String privateKey, final KdfFunction kdfFunctionType) {
     final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
-    final KeyPair keyPair = new KeyPair(SecretKey.fromBytes(privateKeyBytes));
+    final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKeyBytes));
 
     final String password = "password";
     final Path passwordFile =
-        metadataFilePath.getParent().resolve(keyPair.publicKey().toString() + ".password");
+        metadataFilePath.getParent().resolve(keyPair.getPublicKey().toString() + ".password");
     createPasswordFile(passwordFile, password);
 
     final Path keystoreFile =
-        metadataFilePath.getParent().resolve(keyPair.publicKey().toString() + ".json");
+        metadataFilePath.getParent().resolve(keyPair.getPublicKey().toString() + ".json");
     createKeyStoreFile(keystoreFile, password, privateKeyBytes, kdfFunctionType);
 
     final Map<String, String> signingMetadata = new HashMap<>();
