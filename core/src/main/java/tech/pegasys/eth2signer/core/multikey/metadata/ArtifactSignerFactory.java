@@ -105,7 +105,8 @@ public class ArtifactSignerFactory {
                   metadata.getKeyPath(),
                   Optional.ofNullable(metadata.getKeyName()),
                   metadata.getToken()));
-      final KeyPair keyPair = new KeyPair(SecretKey.fromBytes(Bytes.fromHexString(secret)));
+      final BLSKeyPair keyPair =
+          new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(secret)));
       return new ArtifactSigner(keyPair);
     } catch (Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);

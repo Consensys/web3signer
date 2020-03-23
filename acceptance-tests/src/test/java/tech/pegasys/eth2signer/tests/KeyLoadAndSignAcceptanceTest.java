@@ -16,10 +16,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.artemis.util.mikuli.BLS12381;
-import tech.pegasys.artemis.util.mikuli.KeyPair;
-import tech.pegasys.artemis.util.mikuli.SecretKey;
-import tech.pegasys.artemis.util.mikuli.Signature;
+import tech.pegasys.artemis.util.bls.BLS;
+import tech.pegasys.artemis.util.bls.BLSKeyPair;
+import tech.pegasys.artemis.util.bls.BLSSecretKey;
+import tech.pegasys.artemis.util.bls.BLSSignature;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
@@ -156,7 +156,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
       startSigner(builder.build());
 
       final HttpResponse response =
-          signer.signData(artifactSigningEndpoint, keyPair.publicKey(), SIGNING_ROOT);
+          signer.signData(artifactSigningEndpoint, keyPair.getPublicKey(), SIGNING_ROOT);
       assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
       assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
     } finally {
