@@ -61,7 +61,7 @@ class YamlSignerParserTest {
   void metaDataInfoWithNonExistingFileFails() {
     assertThatThrownBy(() -> signerParser.parse(configDir.resolve("does_not_exist")))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessageStartingWith("Signing metadata file not found");
+        .hasMessageStartingWith("File not found");
   }
 
   @Test
@@ -91,8 +91,7 @@ class YamlSignerParserTest {
 
     assertThatThrownBy(() -> signerParser.parse(filename))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessageStartingWith(
-            "Invalid signing metadata file format: Missing required creator property 'privateKey'");
+        .hasMessageStartingWith("Invalid signing metadata file format");
   }
 
   @Test
@@ -105,8 +104,7 @@ class YamlSignerParserTest {
 
     assertThatThrownBy(() -> signerParser.parse(filename))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessageStartingWith(
-            "Invalid signing metadata file format: Invalid hex value for private key");
+        .hasMessageStartingWith("Invalid signing metadata file format");
   }
 
   @Test
@@ -156,8 +154,7 @@ class YamlSignerParserTest {
 
     assertThatThrownBy(() -> signerParser.parse(filename))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessageStartingWith(
-            "Invalid signing metadata file format: Missing required creator property 'keystoreFile'");
+        .hasMessageStartingWith("Invalid signing metadata file format");
   }
 
   @Test
@@ -172,8 +169,7 @@ class YamlSignerParserTest {
 
     assertThatThrownBy(() -> signerParser.parse(filename))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessageStartingWith(
-            "Invalid signing metadata file format: Missing required creator property 'keystoreFile'");
+        .hasMessageStartingWith("Invalid signing metadata file format");
   }
 
   @Test
@@ -188,8 +184,7 @@ class YamlSignerParserTest {
 
     assertThatThrownBy(() -> signerParser.parse(filename))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessageStartingWith(
-            "Invalid signing metadata file format: Missing required creator property 'keystorePasswordFile'");
+        .hasMessageStartingWith("Invalid signing metadata file format");
   }
 
   @Test

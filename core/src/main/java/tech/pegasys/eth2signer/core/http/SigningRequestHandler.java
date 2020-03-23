@@ -43,7 +43,7 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext context) {
     LOG.debug("Received a request for {}", context.normalisedPath());
-    context.request().bodyHandler(body -> generateResponseFromBody(context.response(), body));
+    generateResponseFromBody(context.response(), context.getBody());
   }
 
   private void generateResponseFromBody(

@@ -22,7 +22,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 @JsonTypeInfo(use = Id.NAME, property = "type")
 @JsonSubTypes({
   @Type(value = FileRawSigningMetadata.class, name = "file-raw"),
-  @Type(value = FileKeyStoreMetadata.class, name = "file-keystore")
+  @Type(value = FileKeyStoreMetadata.class, name = "file-keystore"),
+  @Type(value = HashicorpSigningMetadata.class, name = "hashicorp")
 })
 public interface SigningMetadata {
 

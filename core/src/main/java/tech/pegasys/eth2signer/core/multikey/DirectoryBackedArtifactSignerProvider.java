@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -107,8 +108,7 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
               new ArtifactSignerWithFileName(file, signerParser.parse(file));
           signers.add(artifactSignerWithFileName);
         } catch (Exception e) {
-          LOG.error(
-              "Error parsing signing metadata file {}: {}", file.getFileName(), e.getMessage());
+          renderException(e, file.getFileName().toString());
         }
       }
       return signers;
@@ -144,6 +144,7 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   private static class ArtifactSignerWithFileName {
+
     private final Path path;
     private final ArtifactSigner signer;
 
@@ -159,5 +160,13 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
     public ArtifactSigner getSigner() {
       return signer;
     }
+  }
+
+  private void renderException(final Throwable t, final String filename) {
+    LOG.error(
+        "Error parsing signing metadata file {}: {}",
+        filename,
+        ExceptionUtils.getRootCauseMessage(t));
+    LOG.debug(ExceptionUtils.getStackTrace(t));
   }
 }

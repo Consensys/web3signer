@@ -21,6 +21,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.utils.JsonDecoder;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -104,7 +105,8 @@ public class Runner implements Runnable {
         .handler(routingContext -> routingContext.response().end("OK"));
 
     final ArtifactSignerFactory artifactSignerFactory =
-        new ArtifactSignerFactory(config.getKeyConfigPath(), metricsSystem);
+        new ArtifactSignerFactory(
+            config.getKeyConfigPath(), metricsSystem, new HashicorpConnectionFactory(vertx));
     final ArtifactSignerProvider signerProvider =
         new DirectoryBackedArtifactSignerProvider(
             config.getKeyConfigPath(), "yaml", new YamlSignerParser(artifactSignerFactory));
@@ -115,9 +117,10 @@ public class Runner implements Runnable {
     router
         .routeWithRegex(HttpMethod.POST, "/signer/" + "(attestation|block|randao_reveal)")
         .produces(JSON)
+        .handler(BodyHandler.create())
+        .blockingHandler(signingHandler)
         .handler(ResponseContentTypeHandler.create())
-        .failureHandler(errorHandler)
-        .handler(signingHandler);
+        .failureHandler(errorHandler);
 
     return router;
   }
