@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.artemis.util.mikuli.KeyPair;
 import tech.pegasys.artemis.util.mikuli.SecretKey;
+import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
@@ -31,6 +32,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -220,6 +223,35 @@ class DirectoryBackedArtifactSignerProviderTest {
 
     assertThat(identifiers).hasSize(3);
     assertThat(identifiers).containsOnly(publicKey1, publicKey2, publicKey3);
+  }
+
+  @Test
+  void errorMessageFromExceptionStackShowsRootCause() throws IOException {
+    final RuntimeException rootCause = new RuntimeException("Root cause failure.");
+    final RuntimeException intermediateException =
+        new RuntimeException("Intermediate wrapped rethrow", rootCause);
+    final RuntimeException topMostException =
+        new RuntimeException("Abstract Failure", intermediateException);
+
+    when(signerParser.parse(any())).thenThrow(topMostException);
+
+    final TrackingLogAppender logAppender = new TrackingLogAppender();
+    final Logger logger =
+        (Logger) LogManager.getLogger(DirectoryBackedArtifactSignerProvider.class);
+    logAppender.start();
+    logger.addAppender(logAppender);
+
+    try {
+      final String filename = PUBLIC_KEY;
+      createFileInConfigsDirectory(filename);
+      signerProvider.getSigner(PUBLIC_KEY);
+
+      assertThat(logAppender.getLogMessagesReceived().get(0).getMessage().getFormattedMessage())
+          .contains(rootCause.getMessage());
+    } finally {
+      logger.removeAppender(logAppender);
+      logAppender.stop();
+    }
   }
 
   private Path pathEndsWith(final String endsWith) {

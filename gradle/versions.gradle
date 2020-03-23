@@ -27,6 +27,7 @@ dependencyManagement {
 
     dependency 'commons-cli:commons-cli:1.4'
     dependency 'commons-io:commons-io:2.6'
+    dependency 'commons-lang:commons-lang:2.6'
 
     dependency 'info.picocli:picocli:4.2.0'
 
@@ -39,6 +40,7 @@ dependencyManagement {
     dependency 'javax.activation:activation:1.1.1'
 
     dependency 'org.apache.logging.log4j:log4j-api:2.13.0'
+    dependency 'org.apache.logging.log4j:log4j:2.13.0'
     dependency 'org.apache.logging.log4j:log4j-core:2.13.0'
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.0'
 
@@ -74,5 +76,6 @@ dependencyManagement {
     dependency 'tech.pegasys.signers.internal:bls-keystore:0.0.1-SNAPSHOT'
 
     dependency 'tech.pegasys.teku.internal:bls:0.8.2-SNAPSHOT'
+    dependency 'tech.pegasys.signers.internal:keystorage-hashicorp:0.0.1-SNAPSHOT'
   }
 }

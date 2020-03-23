@@ -1,4 +1,7 @@
 
+apply plugin: 'java-library'
+apply plugin: 'java-test-fixtures'
+
 jar {
   archiveBaseName = 'eth2signer-core'
   manifest {
@@ -18,8 +21,11 @@ dependencies {
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'commons-io:commons-io'
+  implementation 'commons-lang:commons-lang'
 
   implementation 'org.apache.tuweni:tuweni-bytes'
+
+  implementation 'tech.pegasys.signers.internal:keystorage-hashicorp'
 
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
 
@@ -40,6 +46,17 @@ dependencies {
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+
+  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
+  integrationTestImplementation 'org.assertj:assertj-core'
+  integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
+  integrationTestImplementation 'org.apache.logging.log4j:log4j-core'
+  integrationTestImplementation 'org.apache.logging.log4j:log4j'
+  integrationTestImplementation sourceSets.testFixtures.output
+
+  testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
+  testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
 }
 
 artifacts {
