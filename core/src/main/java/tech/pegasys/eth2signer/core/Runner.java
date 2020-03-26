@@ -120,7 +120,7 @@ public class Runner implements Runnable {
         new SigningRequestHandler(signerProvider, createJsonDecoder());
 
     router
-        .routeWithRegex(HttpMethod.POST, "/signer/" + "(attestation|block|randao_reveal)")
+        .routeWithRegex(HttpMethod.POST, "/signer/" + "(attestation|block|randao_reveal)/(.*)")
         .produces(JSON)
         .handler(BodyHandler.create())
         .blockingHandler(signingHandler)

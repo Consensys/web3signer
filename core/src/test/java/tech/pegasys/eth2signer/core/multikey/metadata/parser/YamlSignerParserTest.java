@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.multikey.metadata;
+package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -21,7 +21,10 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.artemis.util.bls.BLSKeyPair;
 import tech.pegasys.artemis.util.bls.BLSSecretKey;
-import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.io.IOException;

@@ -43,11 +43,12 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext context) {
     LOG.debug("Received a request for {}", context.normalisedPath());
-    generateResponseFromBody(context.response(), context.getBody());
+    final String publicKey = context.pathParam("param1");
+    generateResponseFromBody(context.response(), context.getBody(), publicKey);
   }
 
   private void generateResponseFromBody(
-      final HttpServerResponse response, final Buffer requestBody) {
+      final HttpServerResponse response, final Buffer requestBody, final String publicKey) {
     LOG.trace("Body received {}", requestBody.toString());
 
     final SigningRequestBody signingRequest;
@@ -61,14 +62,14 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
           .end("Request body illegally formatted for signing operation.");
       return;
     }
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(signingRequest.publicKey());
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(publicKey);
 
     if (signer.isPresent()) {
       final Bytes dataToSign = signingRequest.signingRoot();
       final BLSSignature signature = signer.get().sign(dataToSign);
       response.end(signature.toString());
     } else {
-      LOG.error("Unable to find an appropriate signer for request: {}", signingRequest.publicKey());
+      LOG.error("Unable to find an appropriate signer for request: {}", publicKey);
       response
           .setStatusCode(404)
           .setChunked(false)

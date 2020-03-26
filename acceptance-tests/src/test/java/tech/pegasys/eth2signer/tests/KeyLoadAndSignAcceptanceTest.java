@@ -108,7 +108,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
 
-    final HttpResponse response = signer.postRawRequest("/signer/block", "invalid Body");
+    final HttpResponse response = signer.postRawRequest("/signer/block/", "invalid Body");
     assertThat(response.getStatusCode()).isEqualTo(400);
   }
 
@@ -129,7 +129,8 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
     final String httpBody = Json.encode(requestBody);
 
-    final HttpResponse response = signer.postRawRequest("/signer/block", httpBody);
+    final String endpoint = "/signer/block/" + keyPair.getPublicKey().toString();
+    final HttpResponse response = signer.postRawRequest(endpoint, httpBody);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
   }
 
