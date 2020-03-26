@@ -52,7 +52,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   private static final String PUBLIC_KEY =
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
   private static final String PRIVATE_KEY =
-      "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
+      "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   private ArtifactSigner artifactSigner = createArtifactSigner(PRIVATE_KEY);
   private DirectoryBackedArtifactSignerProvider signerProvider;
@@ -196,24 +196,21 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void signerIdentifiersReturnedForAllValidMetadataFilesInDirectory() throws IOException {
-    final String privateKey1 =
-        "0x0000000000000000000000000000000065d5d1dd92ed6b75ab662afdaeb4109948c05cffcdd299f62e58e3fb5edceb67";
+    final String privateKey1 = "0x65d5d1dd92ed6b75ab662afdaeb4109948c05cffcdd299f62e58e3fb5edceb67";
     final String publicKey1 =
         "0x889477480fbcf2c7d32fafe50c60fc716545543a5660130e84041e6f6fce5fa471ef1e7c0cdd4380b83b8d33893e6f11";
     createFileInConfigsDirectory(publicKey1);
     when(signerParser.parse(pathEndsWith(publicKey1)))
         .thenReturn(createArtifactSigner(privateKey1));
 
-    final String privateKey2 =
-        "0x00000000000000000000000000000000430d79925d1bc810d2bd033178fdea98c59f29edd40e80cc7f13e92fcb05a86e";
+    final String privateKey2 = "0x430d79925d1bc810d2bd033178fdea98c59f29edd40e80cc7f13e92fcb05a86e";
     final String publicKey2 =
         "0xa7c5f1c815571d02df8ebc9b083e1a7fb4b360970cc40ebb325f3d2360dd1f9723825ea0c6fa9e398cd233ef0868a8cc";
     createFileInConfigsDirectory(publicKey2);
     when(signerParser.parse(pathEndsWith(publicKey2)))
         .thenReturn(createArtifactSigner(privateKey2));
 
-    final String privateKey3 =
-        "0x0000000000000000000000000000000062e4325a71315d5bb757458b560dc1957118c12466978c772c31bad86a7e3a5e";
+    final String privateKey3 = "0x62e4325a71315d5bb757458b560dc1957118c12466978c772c31bad86a7e3a5e";
     final String publicKey3 =
         "0xb458bf0b2e1d3797b2f95a0f80f715b18881f74d114c824f54452893fbe6368b32de3066e472dbeb1a43181416159606";
     createFileInConfigsDirectory(publicKey3);
@@ -243,8 +240,7 @@ class DirectoryBackedArtifactSignerProviderTest {
     logger.addAppender(logAppender);
 
     try {
-      final String filename = PUBLIC_KEY;
-      createFileInConfigsDirectory(filename);
+      createFileInConfigsDirectory(PUBLIC_KEY);
       signerProvider.getSigner(PUBLIC_KEY);
 
       assertThat(logAppender.getLogMessagesReceived().get(0).getMessage().getFormattedMessage())
