@@ -32,6 +32,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +46,7 @@ class YamlSignerParserTest {
   private static final String YAML_FILE_EXTENSION = "yaml";
   private static ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   private static final String PRIVATE_KEY =
-      "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
+      "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   @TempDir Path configDir;
   @Mock private ArtifactSignerFactory artifactSignerFactory;
@@ -191,7 +192,8 @@ class YamlSignerParserTest {
   void keyStoreMetaDataInfoReturnsMetadata() throws IOException {
     final ArtifactSigner artifactSigner =
         new ArtifactSigner(
-            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
+            new BLSKeyPair(
+                BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
     when(artifactSignerFactory.create(any(FileKeyStoreMetadata.class))).thenReturn(artifactSigner);
 
     final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
@@ -218,9 +220,7 @@ class YamlSignerParserTest {
   }
 
   private FileRawSigningMetadata hasPrivateKey(final String privateKey) {
-    final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
-    return argThat(
-        (FileRawSigningMetadata m) ->
-            m.getSecretKey().getSecretKey().toBytes().equals(privateKeyBytes));
+    final BLSSecretKey blsSecretKey = BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey));
+    return argThat((FileRawSigningMetadata m) -> m.getSecretKey().equals(blsSecretKey));
   }
 }

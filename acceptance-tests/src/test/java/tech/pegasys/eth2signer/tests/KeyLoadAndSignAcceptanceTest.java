@@ -48,7 +48,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
   private static final Bytes SIGNING_ROOT = Bytes.wrap("Hello, world!".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
-      "000000000000000000000000000000003ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
+      "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
   private final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
