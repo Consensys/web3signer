@@ -30,6 +30,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class SigningRequestHandler implements Handler<RoutingContext> {
 
+  public static final String SIGNER_PATH_REGEX =
+      "/signer/(?<signerType>attestation|block|randao_reveal)/(?<publicKey>.*)";
   private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
   private final JsonDecoder jsonDecoder;
@@ -43,7 +45,7 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext context) {
     LOG.debug("Received a request for {}", context.normalisedPath());
-    final String publicKey = context.pathParam("param1");
+    final String publicKey = context.pathParam("publicKey");
     generateResponseFromBody(context.response(), context.getBody(), publicKey);
   }
 
