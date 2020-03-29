@@ -21,7 +21,6 @@ import java.util.Optional;
 
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
@@ -45,37 +44,31 @@ public class SigningRequestHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext context) {
     LOG.debug("Received a request for {}", context.normalisedPath());
-    final String publicKey = context.pathParam("publicKey");
-    generateResponseFromBody(context.response(), context.getBody(), publicKey);
+    final String publicKey = getPublicKey(context);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(publicKey);
+    if (signer.isEmpty()) {
+      LOG.error("Unable to find an appropriate signer for request: {}", publicKey);
+      context.fail(404);
+    } else {
+      try {
+        final Bytes dataToSign = getDataToSign(context);
+        final BLSSignature signature = signer.get().sign(dataToSign);
+        context.response().end(signature.toString());
+      } catch (final DecodeException e) {
+        LOG.error("Invalid signing request format: {}", e.getMessage());
+        context.fail(400);
+      }
+    }
   }
 
-  private void generateResponseFromBody(
-      final HttpServerResponse response, final Buffer requestBody, final String publicKey) {
-    LOG.trace("Body received {}", requestBody.toString());
+  private String getPublicKey(final RoutingContext context) {
+    return context.pathParam("publicKey");
+  }
 
-    final SigningRequestBody signingRequest;
-    try {
-      signingRequest = jsonDecoder.decodeValue(requestBody, SigningRequestBody.class);
-    } catch (final DecodeException e) {
-      LOG.error("Invalid signing request format: {}", e.getMessage());
-      response
-          .setStatusCode(400)
-          .setChunked(false)
-          .end("Request body illegally formatted for signing operation.");
-      return;
-    }
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(publicKey);
-
-    if (signer.isPresent()) {
-      final Bytes dataToSign = signingRequest.signingRoot();
-      final BLSSignature signature = signer.get().sign(dataToSign);
-      response.end(signature.toString());
-    } else {
-      LOG.error("Unable to find an appropriate signer for request: {}", publicKey);
-      response
-          .setStatusCode(404)
-          .setChunked(false)
-          .end("No key exists for requested signing operation.");
-    }
+  private Bytes getDataToSign(final RoutingContext context) {
+    final Buffer body = context.getBody();
+    final SigningRequestBody signingRequest =
+        jsonDecoder.decodeValue(body, SigningRequestBody.class);
+    return signingRequest.signingRoot();
   }
 }
