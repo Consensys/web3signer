@@ -105,10 +105,16 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void receiveA400IfJsonBodyIsMalformed() throws Exception {
+    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
+
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final HttpResponse response = signer.postRawRequest("/signer/block", "invalid Body");
+    final String endpoint = "/signer/block/" + keyPair.getPublicKey().toString();
+    final HttpResponse response = signer.postRawRequest(endpoint, "invalid Body");
     assertThat(response.getStatusCode()).isEqualTo(400);
   }
 
@@ -129,7 +135,8 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
     final String httpBody = Json.encode(requestBody);
 
-    final HttpResponse response = signer.postRawRequest("/signer/block", httpBody);
+    final String endpoint = "/signer/block/" + keyPair.getPublicKey().toString();
+    final HttpResponse response = signer.postRawRequest(endpoint, httpBody);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
   }
 

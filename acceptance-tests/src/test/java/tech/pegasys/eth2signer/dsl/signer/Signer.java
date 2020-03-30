@@ -103,14 +103,14 @@ public class Signer {
   public HttpResponse signData(
       final String endpoint, final BLSPublicKey publicKey, final Bytes signingRoot)
       throws ExecutionException, InterruptedException {
-    final SigningRequestBody requestBody =
-        new SigningRequestBody(publicKey.toString(), signingRoot.toHexString());
+    final String url = endpoint + "/" + publicKey;
+    final SigningRequestBody requestBody = new SigningRequestBody(signingRoot.toHexString());
     final String httpBody = Json.encode(requestBody);
 
     final CompletableFuture<HttpResponse> responseBodyFuture = new CompletableFuture<>();
     final HttpClientRequest request =
         httpClient.post(
-            endpoint,
+            url,
             response ->
                 response.bodyHandler(
                     body ->
