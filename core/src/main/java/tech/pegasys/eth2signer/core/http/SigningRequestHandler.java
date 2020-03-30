@@ -30,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class SigningRequestHandler implements Handler<RoutingContext> {
 
   public static final String SIGNER_PATH_REGEX =
-      "/signer/(?<signerType>attestation|block|randao_reveal)/(?<publicKey>.*)";
+      "/signer/(?<signerType>attestation|block|randao_reveal|aggregation_slot)/(?<publicKey>.*)";
   private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
   private final JsonDecoder jsonDecoder;
