@@ -58,7 +58,13 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   @TempDir Path testDirectory;
 
   @ParameterizedTest
-  @ValueSource(strings = {"/signer/block", "/signer/attestation", "/signer/randao_reveal"})
+  @ValueSource(
+      strings = {
+        "/signer/block",
+        "/signer/attestation",
+        "/signer/randao_reveal",
+        "/signer/aggregation_slot"
+      })
   public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint)
       throws Exception {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
@@ -141,7 +147,13 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"/signer/block", "/signer/attestation", "/signer/randao_reveal"})
+  @ValueSource(
+      strings = {
+        "/signer/block",
+        "/signer/attestation",
+        "/signer/randao_reveal",
+        "/signer/aggregation_slot"
+      })
   public void ableToSignUsingHashicorp(final String artifactSigningEndpoint)
       throws ExecutionException, InterruptedException {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
@@ -177,8 +189,10 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         Arguments.arguments("/signer/block", KdfFunction.SCRYPT),
         Arguments.arguments("/signer/attestation", KdfFunction.SCRYPT),
         Arguments.arguments("/signer/randao_reveal", KdfFunction.SCRYPT),
+        Arguments.arguments("/signer/aggregation_slot", KdfFunction.SCRYPT),
         Arguments.arguments("/signer/block", KdfFunction.PBKDF2),
         Arguments.arguments("/signer/attestation", KdfFunction.PBKDF2),
-        Arguments.arguments("/signer/randao_reveal", KdfFunction.PBKDF2));
+        Arguments.arguments("/signer/randao_reveal", KdfFunction.PBKDF2),
+        Arguments.arguments("/signer/aggregation_slot", KdfFunction.PBKDF2));
   }
 }
