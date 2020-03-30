@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.core.multikey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -188,39 +189,31 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void signerIdentifiersReturnedForMetadataFile() throws IOException {
-    createFileInConfigsDirectory(PUBLIC_KEY + ".yaml");
-    when(signerParser.parse(any())).thenReturn(artifactSigner);
+    createFileInConfigsDirectory(PUBLIC_KEY);
 
     assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY);
+    verify(signerParser, never()).parse(any());
   }
 
   @Test
   void signerIdentifiersReturnedForAllValidMetadataFilesInDirectory() throws IOException {
-    final String privateKey1 = "0x65d5d1dd92ed6b75ab662afdaeb4109948c05cffcdd299f62e58e3fb5edceb67";
     final String publicKey1 =
         "0x889477480fbcf2c7d32fafe50c60fc716545543a5660130e84041e6f6fce5fa471ef1e7c0cdd4380b83b8d33893e6f11";
     createFileInConfigsDirectory(publicKey1);
-    when(signerParser.parse(pathEndsWith(publicKey1)))
-        .thenReturn(createArtifactSigner(privateKey1));
 
-    final String privateKey2 = "0x430d79925d1bc810d2bd033178fdea98c59f29edd40e80cc7f13e92fcb05a86e";
     final String publicKey2 =
         "0xa7c5f1c815571d02df8ebc9b083e1a7fb4b360970cc40ebb325f3d2360dd1f9723825ea0c6fa9e398cd233ef0868a8cc";
     createFileInConfigsDirectory(publicKey2);
-    when(signerParser.parse(pathEndsWith(publicKey2)))
-        .thenReturn(createArtifactSigner(privateKey2));
 
-    final String privateKey3 = "0x62e4325a71315d5bb757458b560dc1957118c12466978c772c31bad86a7e3a5e";
     final String publicKey3 =
         "0xb458bf0b2e1d3797b2f95a0f80f715b18881f74d114c824f54452893fbe6368b32de3066e472dbeb1a43181416159606";
     createFileInConfigsDirectory(publicKey3);
-    when(signerParser.parse(pathEndsWith(publicKey3)))
-        .thenReturn(createArtifactSigner(privateKey3));
 
     final Collection<String> identifiers = signerProvider.availableIdentifiers();
 
     assertThat(identifiers).hasSize(3);
     assertThat(identifiers).containsOnly(publicKey1, publicKey2, publicKey3);
+    verify(signerParser, never()).parse(any());
   }
 
   @Test

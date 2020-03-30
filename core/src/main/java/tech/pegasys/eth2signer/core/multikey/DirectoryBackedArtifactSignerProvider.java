@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
@@ -70,17 +71,20 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
 
   @Override
   public Set<String> availableIdentifiers() {
-    return loadAvailableSigners().stream()
+    final Function<Path, String> getSignerIdentifier =
+        file -> FilenameUtils.getBaseName(file.toString());
+    return findSigners(this::matchesFileExtension, getSignerIdentifier).stream()
         .filter(Objects::nonNull)
-        .map(ArtifactSignerWithFileName::getSigner)
-        .map(ArtifactSigner::getIdentifier)
+        .map(identifier -> "0x" + normaliseIdentifier(identifier))
         .collect(Collectors.toSet());
   }
 
   private Optional<ArtifactSignerWithFileName> loadSignerForIdentifier(
       final String signerIdentifier) {
     final Filter<Path> pathFilter = signerIdentifierFilenameFilter(signerIdentifier);
-    final Collection<ArtifactSignerWithFileName> matchingSigners = findSigners(pathFilter);
+    final Collection<ArtifactSignerWithFileName> matchingSigners =
+        findSigners(
+            pathFilter, file -> new ArtifactSignerWithFileName(file, signerParser.parse(file)));
     if (matchingSigners.size() > 1) {
       LOG.error(
           "Found multiple signing metadata file matches for signer identifier " + signerIdentifier);
@@ -92,21 +96,15 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
     }
   }
 
-  private Collection<ArtifactSignerWithFileName> loadAvailableSigners() {
-    return findSigners(this::matchesFileExtension);
-  }
-
-  private Collection<ArtifactSignerWithFileName> findSigners(
-      final DirectoryStream.Filter<? super Path> filter) {
-    final Collection<ArtifactSignerWithFileName> signers = new HashSet<>();
+  private <T> Collection<T> findSigners(
+      final DirectoryStream.Filter<? super Path> filter, final Function<Path, T> mapper) {
+    final Collection<T> signers = new HashSet<>();
 
     try (final DirectoryStream<Path> directoryStream =
         Files.newDirectoryStream(configsDirectory, filter)) {
       for (final Path file : directoryStream) {
         try {
-          final ArtifactSignerWithFileName artifactSignerWithFileName =
-              new ArtifactSignerWithFileName(file, signerParser.parse(file));
-          signers.add(artifactSignerWithFileName);
+          signers.add(mapper.apply(file));
         } catch (Exception e) {
           renderException(e, file.getFileName().toString());
         }
