@@ -31,7 +31,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
+import com.google.common.cache.LoadingCache;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -251,6 +253,24 @@ class DirectoryBackedArtifactSignerProviderTest {
     }
   }
 
+  @Test
+  void cachesLoadedSigner() throws IOException, ExecutionException {
+    createFileInConfigsDirectory(PUBLIC_KEY);
+    when(signerParser.parse(any())).thenReturn(artifactSigner);
+    final String identifier = "0x" + PUBLIC_KEY;
+
+    assertThat(signerProvider.getArtifactSignerCache().size()).isEqualTo(0);
+
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    assertThat(signer).isNotEmpty();
+    assertThat(signer.get().getIdentifier()).isEqualTo(identifier);
+
+    final LoadingCache<String, ArtifactSigner> cache = signerProvider.getArtifactSignerCache();
+    assertThat(cache.size()).isEqualTo(1);
+    assertThat(cache.get(PUBLIC_KEY).getIdentifier()).isEqualTo(identifier);
+  }
+
+  @Test
   private Path pathEndsWith(final String endsWith) {
     return argThat((Path path) -> path != null && path.endsWith(endsWith + "." + FILE_EXTENSION));
   }
