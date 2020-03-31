@@ -12,8 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import static java.util.stream.Collectors.toMap;
-
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -26,15 +24,14 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Functions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -88,17 +85,12 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
 
   @Override
   public Set<String> availableIdentifiers() {
-    return loadAvailableSigners().stream()
+    final Function<Path, String> getSignerIdentifier =
+        file -> FilenameUtils.getBaseName(file.toString());
+    return findSigners(this::matchesFileExtension, getSignerIdentifier).stream()
         .filter(Objects::nonNull)
-        .map(ArtifactSigner::getIdentifier)
+        .map(identifier -> "0x" + normaliseIdentifier(identifier))
         .collect(Collectors.toSet());
-  }
-
-  public void cacheAllSigners() {
-    final Map<String, ArtifactSigner> signersByIdentifier =
-        loadAvailableSigners().stream()
-            .collect(toMap(ArtifactSigner::getIdentifier, Functions.identity()));
-    artifactSignerCache.putAll(signersByIdentifier);
   }
 
   @VisibleForTesting
@@ -108,7 +100,7 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
 
   private Optional<ArtifactSigner> loadSignerForIdentifier(final String signerIdentifier) {
     final Filter<Path> pathFilter = signerIdentifierFilenameFilter(signerIdentifier);
-    final Collection<ArtifactSigner> matchingSigners = findSigners(pathFilter);
+    final Collection<ArtifactSigner> matchingSigners = findSigners(pathFilter, signerParser::parse);
     if (matchingSigners.size() > 1) {
       LOG.error(
           "Found multiple signing metadata file matches for signer identifier " + signerIdentifier);
@@ -120,20 +112,15 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
     }
   }
 
-  private Collection<ArtifactSigner> loadAvailableSigners() {
-    return findSigners(this::matchesFileExtension);
-  }
-
-  private Collection<ArtifactSigner> findSigners(
-      final DirectoryStream.Filter<? super Path> filter) {
-    final Collection<ArtifactSigner> signers = new HashSet<>();
+  private <T> Collection<T> findSigners(
+      final DirectoryStream.Filter<? super Path> filter, final Function<Path, T> mapper) {
+    final Collection<T> signers = new HashSet<>();
 
     try (final DirectoryStream<Path> directoryStream =
         Files.newDirectoryStream(configsDirectory, filter)) {
       for (final Path file : directoryStream) {
         try {
-          final ArtifactSigner artifactSigner = signerParser.parse(file);
-          signers.add(artifactSigner);
+          signers.add(mapper.apply(file));
         } catch (Exception e) {
           renderException(e, file.getFileName().toString());
         }
