@@ -12,7 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import java.util.concurrent.ExecutionException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -44,20 +43,22 @@ import org.apache.logging.log4j.Logger;
 public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final int MAXIMUM_SIZE = 1000;
   private final Path configsDirectory;
   private final String fileExtension;
   private final SignerParser signerParser;
   private final LoadingCache<String, ArtifactSigner> artifactSignerCache;
 
   public DirectoryBackedArtifactSignerProvider(
-      final Path rootDirectory, final String fileExtension, final SignerParser signerParser) {
+      final Path rootDirectory,
+      final String fileExtension,
+      final SignerParser signerParser,
+      final long maxSize) {
     this.configsDirectory = rootDirectory;
     this.fileExtension = fileExtension;
     this.signerParser = signerParser;
     this.artifactSignerCache =
         CacheBuilder.newBuilder()
-            .maximumSize(MAXIMUM_SIZE)
+            .maximumSize(maxSize)
             .build(CacheLoader.from((i) -> loadSignerForIdentifier(i).orElseThrow()));
   }
 
@@ -95,11 +96,15 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   public void cacheAllSigners() {
-    try {
-      artifactSignerCache.getAll(availableIdentifiers());
-    } catch (ExecutionException e) {
-      LOG.error("Error loading cache with signers", e);
-    }
+    availableIdentifiers()
+        .forEach(
+            identifier -> {
+              final String normaliseIdentifier = normaliseIdentifier(identifier);
+              final Optional<ArtifactSigner> loadedSigner =
+                  loadSignerForIdentifier(normaliseIdentifier);
+              // no need to log if signer couldn't be found this is done by loadSignerForIdentifier
+              loadedSigner.ifPresent(signer -> artifactSignerCache.put(identifier, signer));
+            });
   }
 
   @VisibleForTesting

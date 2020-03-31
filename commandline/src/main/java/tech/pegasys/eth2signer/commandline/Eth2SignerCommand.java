@@ -71,6 +71,13 @@ public class Eth2SignerCommand implements Config, Runnable {
   private Path keyStorePath = Path.of("./");
 
   @Option(
+      names = {"--key-cache-limit"},
+      description =
+          "The maximum number of keys that will be cached in memory (default: ${DEFAULT-VALUE})",
+      paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP)
+  private Long keyCacheLimit = 1000L;
+
+  @Option(
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description =
@@ -165,6 +172,11 @@ public class Eth2SignerCommand implements Config, Runnable {
   @Override
   public Set<MetricCategory> getMetricCategories() {
     return metricCategories;
+  }
+
+  @Override
+  public Long getKeyCacheLimit() {
+    return keyCacheLimit;
   }
 
   @Override
