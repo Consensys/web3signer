@@ -86,7 +86,9 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final Handler<HttpServerRequest> requestHandler = createRouter(vertx, metricsSystem);
+      final SigningRequestHandler signingHandler = createSigningHandler(metricsSystem, vertx);
+
+      final Handler<HttpServerRequest> requestHandler = createRouter(vertx, signingHandler);
       final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
@@ -98,8 +100,24 @@ public class Runner implements Runnable {
     }
   }
 
+  private SigningRequestHandler createSigningHandler(final MetricsSystem metricsSystem,
+      final Vertx vertx) {
+    final ArtifactSignerFactory artifactSignerFactory =
+        new ArtifactSignerFactory(
+            config.getKeyConfigPath(), metricsSystem, new HashicorpConnectionFactory(vertx));
+    final DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            config.getKeyConfigPath(), "yaml", new YamlSignerParser(artifactSignerFactory));
+
+    final SigningRequestHandler signingHandler =
+        new SigningRequestHandler(signerProvider, createJsonDecoder());
+    signerProvider.cacheAllSigners();
+
+    return signingHandler;
+  }
+
   private Handler<HttpServerRequest> createRouter(
-      final Vertx vertx, final MetricsSystem metricsSystem) {
+      final Vertx vertx, final SigningRequestHandler signingHandler) {
     final Router router = Router.router(vertx);
     final LogErrorHandler errorHandler = new LogErrorHandler();
 
@@ -110,16 +128,6 @@ public class Runner implements Runnable {
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler)
         .handler(routingContext -> routingContext.response().end("OK"));
-
-    final ArtifactSignerFactory artifactSignerFactory =
-        new ArtifactSignerFactory(
-            config.getKeyConfigPath(), metricsSystem, new HashicorpConnectionFactory(vertx));
-    final ArtifactSignerProvider signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
-            config.getKeyConfigPath(), "yaml", new YamlSignerParser(artifactSignerFactory));
-
-    final SigningRequestHandler signingHandler =
-        new SigningRequestHandler(signerProvider, createJsonDecoder());
 
     router
         .routeWithRegex(HttpMethod.POST, SIGNER_PATH_REGEX)

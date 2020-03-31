@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
+import java.util.concurrent.ExecutionException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -91,6 +92,14 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
         .filter(Objects::nonNull)
         .map(identifier -> "0x" + normaliseIdentifier(identifier))
         .collect(Collectors.toSet());
+  }
+
+  public void cacheAllSigners() {
+    try {
+      artifactSignerCache.getAll(availableIdentifiers());
+    } catch (ExecutionException e) {
+      LOG.error("Error loading cache with signers", e);
+    }
   }
 
   @VisibleForTesting
