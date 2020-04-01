@@ -37,4 +37,6 @@ public interface Config {
   String getMetricsNetworkInterface();
 
   Set<MetricCategory> getMetricCategories();
+
+  Long getKeyCacheLimit();
 }

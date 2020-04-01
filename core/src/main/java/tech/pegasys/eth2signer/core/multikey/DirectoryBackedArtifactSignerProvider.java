@@ -24,11 +24,18 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -40,47 +47,79 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   private final Path configsDirectory;
   private final String fileExtension;
   private final SignerParser signerParser;
+  private final LoadingCache<String, ArtifactSigner> artifactSignerCache;
 
   public DirectoryBackedArtifactSignerProvider(
-      final Path rootDirectory, final String fileExtension, final SignerParser signerParser) {
+      final Path rootDirectory,
+      final String fileExtension,
+      final SignerParser signerParser,
+      final long maxSize) {
     this.configsDirectory = rootDirectory;
     this.fileExtension = fileExtension;
     this.signerParser = signerParser;
+    this.artifactSignerCache =
+        CacheBuilder.newBuilder()
+            .maximumSize(maxSize)
+            .build(CacheLoader.from((i) -> loadSignerForIdentifier(i).orElseThrow()));
   }
 
   @Override
   public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
     final String normalisedIdentifier = normaliseIdentifier(signerIdentifier);
-    final Optional<ArtifactSignerWithFileName> signer =
-        loadSignerForIdentifier(normalisedIdentifier);
-    if (signer.isEmpty()) {
-      LOG.error("No valid matching metadata file found for the identifier {}", signerIdentifier);
+    final ArtifactSigner signer;
+    try {
+      signer = artifactSignerCache.get(normalisedIdentifier);
+    } catch (UncheckedExecutionException e) {
+      if (e.getCause() instanceof NoSuchElementException) {
+        LOG.error("No valid matching metadata file found for the identifier {}", signerIdentifier);
+      } else {
+        LOG.error("Error loading for signer for identifier {}", signerIdentifier);
+      }
+      return Optional.empty();
+    } catch (Exception e) {
+      LOG.error("Error loading for signer for identifier {}", signerIdentifier);
       return Optional.empty();
     }
-    final ArtifactSignerWithFileName signerWithFileName = signer.get();
-    if (!signerMatchesIdentifier(signerWithFileName, signerIdentifier)) {
+
+    if (!signerMatchesIdentifier(signer, signerIdentifier)) {
       LOG.error(
-          "Signing metadata file {} does not correspond to the specified signer identifier {}",
-          signerWithFileName.getPath().getFileName(),
-          signerWithFileName.getSigner().getIdentifier());
+          "Signing metadata config does not correspond to the specified signer identifier {}",
+          signer.getIdentifier());
       return Optional.empty();
     }
-    return signer.map(ArtifactSignerWithFileName::getSigner);
+    return Optional.of(signer);
   }
 
   @Override
   public Set<String> availableIdentifiers() {
-    return loadAvailableSigners().stream()
+    final Function<Path, String> getSignerIdentifier =
+        file -> FilenameUtils.getBaseName(file.toString());
+    return findSigners(this::matchesFileExtension, getSignerIdentifier).stream()
         .filter(Objects::nonNull)
-        .map(ArtifactSignerWithFileName::getSigner)
-        .map(ArtifactSigner::getIdentifier)
+        .map(identifier -> "0x" + normaliseIdentifier(identifier))
         .collect(Collectors.toSet());
   }
 
-  private Optional<ArtifactSignerWithFileName> loadSignerForIdentifier(
-      final String signerIdentifier) {
+  public void cacheAllSigners() {
+    availableIdentifiers()
+        .forEach(
+            identifier -> {
+              final String normaliseIdentifier = normaliseIdentifier(identifier);
+              final Optional<ArtifactSigner> loadedSigner =
+                  loadSignerForIdentifier(normaliseIdentifier);
+              // no need to log if signer couldn't be found this is done by loadSignerForIdentifier
+              loadedSigner.ifPresent(signer -> artifactSignerCache.put(identifier, signer));
+            });
+  }
+
+  @VisibleForTesting
+  protected LoadingCache<String, ArtifactSigner> getArtifactSignerCache() {
+    return artifactSignerCache;
+  }
+
+  private Optional<ArtifactSigner> loadSignerForIdentifier(final String signerIdentifier) {
     final Filter<Path> pathFilter = signerIdentifierFilenameFilter(signerIdentifier);
-    final Collection<ArtifactSignerWithFileName> matchingSigners = findSigners(pathFilter);
+    final Collection<ArtifactSigner> matchingSigners = findSigners(pathFilter, signerParser::parse);
     if (matchingSigners.size() > 1) {
       LOG.error(
           "Found multiple signing metadata file matches for signer identifier " + signerIdentifier);
@@ -92,21 +131,15 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
     }
   }
 
-  private Collection<ArtifactSignerWithFileName> loadAvailableSigners() {
-    return findSigners(this::matchesFileExtension);
-  }
-
-  private Collection<ArtifactSignerWithFileName> findSigners(
-      final DirectoryStream.Filter<? super Path> filter) {
-    final Collection<ArtifactSignerWithFileName> signers = new HashSet<>();
+  private <T> Collection<T> findSigners(
+      final DirectoryStream.Filter<? super Path> filter, final Function<Path, T> mapper) {
+    final Collection<T> signers = new HashSet<>();
 
     try (final DirectoryStream<Path> directoryStream =
         Files.newDirectoryStream(configsDirectory, filter)) {
       for (final Path file : directoryStream) {
         try {
-          final ArtifactSignerWithFileName artifactSignerWithFileName =
-              new ArtifactSignerWithFileName(file, signerParser.parse(file));
-          signers.add(artifactSignerWithFileName);
+          signers.add(mapper.apply(file));
         } catch (Exception e) {
           renderException(e, file.getFileName().toString());
         }
@@ -132,8 +165,8 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   private boolean signerMatchesIdentifier(
-      final ArtifactSignerWithFileName signerWithFileName, final String signerIdentifier) {
-    final String identifier = signerWithFileName.getSigner().getIdentifier();
+      final ArtifactSigner signer, final String signerIdentifier) {
+    final String identifier = signer.getIdentifier();
     return normaliseIdentifier(identifier).equalsIgnoreCase(normaliseIdentifier(signerIdentifier));
   }
 
@@ -141,25 +174,6 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
     return signerIdentifier.toLowerCase().startsWith("0x")
         ? signerIdentifier.substring(2)
         : signerIdentifier;
-  }
-
-  private static class ArtifactSignerWithFileName {
-
-    private final Path path;
-    private final ArtifactSigner signer;
-
-    public ArtifactSignerWithFileName(final Path path, final ArtifactSigner signer) {
-      this.path = path;
-      this.signer = signer;
-    }
-
-    public Path getPath() {
-      return path;
-    }
-
-    public ArtifactSigner getSigner() {
-      return signer;
-    }
   }
 
   private void renderException(final Throwable t, final String filename) {

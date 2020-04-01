@@ -46,13 +46,10 @@ import org.junit.jupiter.api.io.TempDir;
 public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
   @TempDir Path configsDirectory;
-  private SignerParser signerParser;
   private static final String FILE_EXTENSION = "yaml";
   private static ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
 
   private DirectoryBackedArtifactSignerProvider signerProvider;
-  private ArtifactSignerFactory artifactSignerFactory;
-  private HashicorpConnectionFactory hashicorpConnectionFactory;
   private Vertx vertx;
   private TrackingLogAppender logAppender = new TrackingLogAppender();
   private final Logger logger =
@@ -64,14 +61,16 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
   @BeforeEach
   void setup() {
     vertx = Vertx.vertx();
-    hashicorpConnectionFactory = new HashicorpConnectionFactory(vertx);
+    final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory(vertx);
 
-    artifactSignerFactory =
+    final ArtifactSignerFactory artifactSignerFactory =
         new ArtifactSignerFactory(
             configsDirectory, new NoOpMetricsSystem(), hashicorpConnectionFactory);
-    signerParser = new YamlSignerParser(artifactSignerFactory);
+    final SignerParser signerParser = new YamlSignerParser(artifactSignerFactory);
     signerProvider =
-        new DirectoryBackedArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser);
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 0);
 
     logAppender.start();
     logger.addAppender(logAppender);
