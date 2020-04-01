@@ -31,9 +31,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.TypeConversionException;
 
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
 @Command(
@@ -74,7 +76,8 @@ public class Eth2SignerCommand implements Config, Runnable {
       names = {"--key-cache-limit"},
       description =
           "The maximum number of keys that will be cached in memory (default: ${DEFAULT-VALUE})",
-      paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP)
+      paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP,
+      converter = CacheLimitConverter.class)
   private Long keyCacheLimit = 1000L;
 
   @Option(
@@ -202,6 +205,22 @@ public class Eth2SignerCommand implements Config, Runnable {
     public Eth2SignerMetricCategoryConverter() {
       addCategories(Eth2SignerMetricCategory.class);
       addCategories(StandardMetricCategory.class);
+    }
+  }
+
+  public static class CacheLimitConverter implements CommandLine.ITypeConverter<Long> {
+
+    @Override
+    public Long convert(final String value) {
+      try {
+        final long longValue = Long.parseLong(value);
+        if (longValue < 0) {
+          throw new TypeConversionException("Cache size must be a positive value");
+        }
+        return longValue;
+      } catch (final NumberFormatException e) {
+        throw new TypeConversionException("Cache size is not a valid number");
+      }
     }
   }
 }
