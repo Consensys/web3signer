@@ -22,6 +22,8 @@ import tech.pegasys.eth2signer.commandline.Eth2SignerCommand;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import org.apache.logging.log4j.Level;
@@ -35,6 +37,7 @@ class CommandlineParserTest {
   private final StringWriter commandError = new StringWriter();
   private final PrintWriter outputWriter = new PrintWriter(commandOutput, true);
   private final PrintWriter errorWriter = new PrintWriter(commandError, true);
+  private final Map<String, String> environmentMap = Collections.emptyMap();
 
   private Eth2SignerCommand config = new MockEth2SignerCommand();
   private CommandlineParser parser;
@@ -42,7 +45,7 @@ class CommandlineParserTest {
 
   @BeforeEach
   void setup() {
-    parser = new CommandlineParser(config, outputWriter, errorWriter);
+    parser = new CommandlineParser(config, outputWriter, errorWriter, environmentMap);
 
     final CommandLine commandLine = new CommandLine(new Eth2SignerCommand());
     defaultUsageText = commandLine.getUsageMessage();

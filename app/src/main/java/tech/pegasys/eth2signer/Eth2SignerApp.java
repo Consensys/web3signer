@@ -33,7 +33,7 @@ public class Eth2SignerApp {
     final PrintWriter outputWriter = new PrintWriter(System.out, true, UTF_8);
     final PrintWriter errorWriter = new PrintWriter(System.err, true, UTF_8);
     final CommandlineParser cmdLineParser =
-        new CommandlineParser(command, outputWriter, errorWriter);
+        new CommandlineParser(command, outputWriter, errorWriter, System.getenv());
     final int result = cmdLineParser.parseCommandLine(args);
 
     if (result != 0) {
