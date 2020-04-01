@@ -72,7 +72,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   void setup() {
     signerProvider =
         new DirectoryBackedArtifactSignerProvider(
-            configsDirectory, FILE_EXTENSION, signerParser, 5);
+            configsDirectory, FILE_EXTENSION, signerParser, 0);
   }
 
   @Test
@@ -258,7 +258,10 @@ class DirectoryBackedArtifactSignerProviderTest {
   }
 
   @Test
-  void signerLoadedIntoCacheForValidMetadataFile() throws IOException, ExecutionException {
+  void signerLoadedIntoCacheForValidMetadataFile() throws IOException {
+    DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 1);
     createFileInConfigsDirectory(PUBLIC_KEY1);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
     final String identifier = "0x" + PUBLIC_KEY1;
@@ -296,6 +299,9 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void signerCacheIsUsedIfAlreadyInCache() {
+    DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 1);
     final String identifier = "0x" + PUBLIC_KEY1;
     final LoadingCache<String, ArtifactSigner> artifactSignerCache =
         signerProvider.getArtifactSignerCache();
@@ -344,6 +350,9 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void cacheAllSignersPopulatesCacheForAllIdentifiers() throws IOException {
+    DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 3);
     createFileInConfigsDirectory(PUBLIC_KEY1);
     createFileInConfigsDirectory(PUBLIC_KEY2);
     createFileInConfigsDirectory(PUBLIC_KEY3);
