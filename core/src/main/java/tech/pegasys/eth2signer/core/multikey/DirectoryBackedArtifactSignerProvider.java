@@ -35,6 +35,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -68,8 +69,12 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
     final ArtifactSigner signer;
     try {
       signer = artifactSignerCache.get(normalisedIdentifier);
-    } catch (NoSuchElementException e) {
-      LOG.error("No valid matching metadata file found for the identifier {}", signerIdentifier);
+    } catch (UncheckedExecutionException e) {
+      if (e.getCause() instanceof NoSuchElementException) {
+        LOG.error("No valid matching metadata file found for the identifier {}", signerIdentifier);
+      } else {
+        LOG.error("Error loading for signer for identifier {}", signerIdentifier);
+      }
       return Optional.empty();
     } catch (Exception e) {
       LOG.error("Error loading for signer for identifier {}", signerIdentifier);
