@@ -65,7 +65,7 @@ public class Eth2SignerCommand implements Config, Runnable {
   @CommandLine.Option(
       names = {CONFIG_FILE_OPTION_NAME},
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      description = "TOML config file (default: none)")
+      description = "Config file in yaml format (default: none)")
   private final File configFile = null;
 
   @Option(
