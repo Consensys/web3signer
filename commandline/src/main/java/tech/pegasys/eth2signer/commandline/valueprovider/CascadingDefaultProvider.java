@@ -10,31 +10,27 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.commandline;
-
-import static java.util.Arrays.asList;
-
-import java.util.List;
+package tech.pegasys.eth2signer.commandline.valueprovider;
 
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;
 
 public class CascadingDefaultProvider implements IDefaultValueProvider {
+  private final IDefaultValueProvider defaultValueProvider1;
+  private final IDefaultValueProvider defaultValueProvider2;
 
-  private final List<IDefaultValueProvider> defaultValueProviders;
-
-  public CascadingDefaultProvider(final IDefaultValueProvider... defaultValueProviders) {
-    this.defaultValueProviders = asList(defaultValueProviders);
+  public CascadingDefaultProvider(
+      final IDefaultValueProvider defaultValueProvider1,
+      final IDefaultValueProvider defaultValueProvider2) {
+    this.defaultValueProvider1 = defaultValueProvider1;
+    this.defaultValueProvider2 = defaultValueProvider2;
   }
 
   @Override
   public String defaultValue(final ArgSpec argSpec) throws Exception {
-    for (final IDefaultValueProvider provider : defaultValueProviders) {
-      final String defaultValue = provider.defaultValue(argSpec);
-      if (defaultValue != null) {
-        return defaultValue;
-      }
-    }
-    return null;
+    final String defaultValueFromProvider1 = defaultValueProvider1.defaultValue(argSpec);
+    return defaultValueFromProvider1 == null
+        ? defaultValueProvider2.defaultValue(argSpec)
+        : defaultValueFromProvider1;
   }
 }

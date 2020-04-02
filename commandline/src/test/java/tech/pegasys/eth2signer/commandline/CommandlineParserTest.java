@@ -10,20 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer;
+package tech.pegasys.eth2signer.commandline;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.CmdlineHelpers.removeFieldFrom;
 import static tech.pegasys.eth2signer.CmdlineHelpers.validBaseCommandOptions;
 
-import tech.pegasys.eth2signer.commandline.CommandlineParser;
-import tech.pegasys.eth2signer.commandline.Eth2SignerCommand;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.Collections;
-import java.util.Map;
 import java.util.function.Supplier;
 
 import org.apache.logging.log4j.Level;
@@ -32,23 +28,24 @@ import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
 class CommandlineParserTest {
+  private static final String defaultUsageText =
+      new CommandLine(new Eth2SignerCommand()).getUsageMessage();
 
-  private final StringWriter commandOutput = new StringWriter();
-  private final StringWriter commandError = new StringWriter();
-  private final PrintWriter outputWriter = new PrintWriter(commandOutput, true);
-  private final PrintWriter errorWriter = new PrintWriter(commandError, true);
-  private final Map<String, String> environmentMap = Collections.emptyMap();
-
-  private Eth2SignerCommand config = new MockEth2SignerCommand();
+  private StringWriter commandOutput;
+  private StringWriter commandError;
+  private PrintWriter outputWriter;
+  private PrintWriter errorWriter;
+  private Eth2SignerCommand config;
   private CommandlineParser parser;
-  private String defaultUsageText;
 
   @BeforeEach
   void setup() {
-    parser = new CommandlineParser(config, outputWriter, errorWriter, environmentMap);
-
-    final CommandLine commandLine = new CommandLine(new Eth2SignerCommand());
-    defaultUsageText = commandLine.getUsageMessage();
+    commandOutput = new StringWriter();
+    commandError = new StringWriter();
+    outputWriter = new PrintWriter(commandOutput, true);
+    errorWriter = new PrintWriter(commandError, true);
+    config = new MockEth2SignerCommand();
+    parser = new CommandlineParser(config, outputWriter, errorWriter, Collections.emptyMap());
   }
 
   @Test

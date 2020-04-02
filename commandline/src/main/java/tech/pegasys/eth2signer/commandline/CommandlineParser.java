@@ -12,7 +12,9 @@
  */
 package tech.pegasys.eth2signer.commandline;
 
-import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
+import tech.pegasys.eth2signer.commandline.valueprovider.CascadingDefaultProvider;
+import tech.pegasys.eth2signer.commandline.valueprovider.EnvironmentVariableDefaultProvider;
+import tech.pegasys.eth2signer.commandline.valueprovider.YamlConfigFileDefaultProvider;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -44,6 +46,19 @@ public class CommandlineParser {
   }
 
   public int parseCommandLine(final String... args) {
+    // first pass to obtain config file if specified
+    ConfigFileCommand configFileCommand = new ConfigFileCommand();
+    final CommandLine configFileCommandLine = new CommandLine(configFileCommand);
+    configFileCommandLine.parseArgs(args);
+    if (configFileCommandLine.isUsageHelpRequested()) {
+      new CommandLine(baseCommand).usage(outputWriter);
+      return 0;
+    } else if (configFileCommandLine.isVersionHelpRequested()) {
+      new CommandLine(baseCommand).printVersionHelp(outputWriter);
+      return 0;
+    }
+
+    // final pass
     final CommandLine commandLine = new CommandLine(baseCommand);
     commandLine.setCaseInsensitiveEnumValuesAllowed(true);
     commandLine.registerConverter(Level.class, Level::valueOf);
@@ -52,7 +67,7 @@ public class CommandlineParser {
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);
     commandLine.setParameterExceptionHandler(this::handleParseException);
     commandLine.setDefaultValueProvider(
-        defaultValueProvider(commandLine, configFile(commandLine, args)));
+        defaultValueProvider(commandLine, Optional.ofNullable(configFileCommand.configPath)));
     return commandLine.execute(args);
   }
 
@@ -63,23 +78,11 @@ public class CommandlineParser {
       defaultValueProvider =
           new CascadingDefaultProvider(
               new EnvironmentVariableDefaultProvider(environment),
-              new TomlConfigFileDefaultProvider(commandLine, configFile.get()));
+              new YamlConfigFileDefaultProvider(commandLine, configFile.get()));
     } else {
       defaultValueProvider = new EnvironmentVariableDefaultProvider(environment);
     }
     return defaultValueProvider;
-  }
-
-  private Optional<File> configFile(final CommandLine commandLine, final String... args) {
-    // do a first pass with parseArg to obtain the config file
-    try {
-      final CommandLine.ParseResult parseResult = commandLine.parseArgs(args);
-      File configFile = parseResult.matchedOptionValue(CONFIG_FILE_OPTION_NAME, null);
-      return Optional.ofNullable(configFile);
-    } catch (final Exception e) {
-      // ignore it as we are only interested in successful parsing to obtain config file name
-      return Optional.empty();
-    }
   }
 
   private int handleParseException(final ParameterException ex, final String[] args) {

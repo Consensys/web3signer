@@ -10,12 +10,21 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer;
+package tech.pegasys.eth2signer.commandline;
 
-import tech.pegasys.eth2signer.commandline.Eth2SignerCommand;
+import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 
-public class MockEth2SignerCommand extends Eth2SignerCommand {
+import java.io.File;
+import java.util.List;
 
-  @Override
-  public void run() {}
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Unmatched;
+
+@Command(mixinStandardHelpOptions = true)
+class ConfigFileCommand {
+  @Option(names = CONFIG_FILE_OPTION_NAME, description = "...")
+  File configPath = null;
+
+  @Unmatched List<String> unmatched;
 }
