@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.commandline.valueprovider;
 
+import static java.lang.System.lineSeparator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static tech.pegasys.eth2signer.CmdlineHelpers.removeFieldFrom;
@@ -54,7 +55,9 @@ class YamlConfigFileDefaultProviderTest {
   @Test
   void unknownOptionsInConfigFileThrowsExceptionDuringParsing(@TempDir final Path tempDir)
       throws IOException {
-    final String extraYamlOptions = CmdlineHelpers.validBaseYamlOptions() + "extra-option: True\n";
+    final String extraYamlOptions =
+        CmdlineHelpers.validBaseYamlOptions()
+            + String.join(lineSeparator(), "extra-option: True", "extra-option2: False");
     final File configFile =
         Files.writeString(tempDir.resolve("config.yaml"), extraYamlOptions).toFile();
     final Eth2SignerCommand eth2SignerCommand = new Eth2SignerCommand();
@@ -65,13 +68,14 @@ class YamlConfigFileDefaultProviderTest {
     final String[] args = CmdlineHelpers.validBaseCommandOptions().split(" ");
     assertThatExceptionOfType(CommandLine.ParameterException.class)
         .isThrownBy(() -> commandLine.parseArgs(args))
-        .withMessage("Unknown option in yaml configuration file: extra-option");
+        .withMessage("Unknown options in yaml configuration file: extra-option, extra-option2");
   }
 
   @Test
   void invalidYamlConfigFileThrowsExceptionDuringParsing(@TempDir final Path tempDir)
       throws IOException {
-    final String extraYamlOptions = CmdlineHelpers.validBaseYamlOptions() + "extra-option= True\n";
+    final String extraYamlOptions =
+        CmdlineHelpers.validBaseYamlOptions() + String.join(lineSeparator(), "extra-option= True");
     final File configFile =
         Files.writeString(tempDir.resolve("config.yaml"), extraYamlOptions).toFile();
     final Eth2SignerCommand eth2SignerCommand = new Eth2SignerCommand();

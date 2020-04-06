@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.yaml.snakeyaml.Yaml;
@@ -86,12 +87,11 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
     final Set<String> unknownOptionsList =
         result.keySet().stream()
             .filter(option -> !commandSpec.optionsMap().containsKey("--" + option))
-            .collect(Collectors.toSet());
+            .collect(Collectors.toCollection(TreeSet::new));
 
     if (!unknownOptionsList.isEmpty()) {
       final String options = unknownOptionsList.size() > 1 ? "options" : "option";
-      final String csvUnknownOptions =
-          unknownOptionsList.stream().collect(Collectors.joining(", "));
+      final String csvUnknownOptions = String.join(", ", unknownOptionsList);
       throw new ParameterException(
           commandLine,
           String.format("Unknown %s in yaml configuration file: %s", options, csvUnknownOptions));
