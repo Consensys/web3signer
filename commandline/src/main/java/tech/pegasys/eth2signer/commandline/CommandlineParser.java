@@ -12,19 +12,24 @@
  */
 package tech.pegasys.eth2signer.commandline;
 
+import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
+
 import tech.pegasys.eth2signer.commandline.valueprovider.CascadingDefaultProvider;
 import tech.pegasys.eth2signer.commandline.valueprovider.EnvironmentVariableDefaultProvider;
 import tech.pegasys.eth2signer.commandline.valueprovider.YamlConfigFileDefaultProvider;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.apache.logging.log4j.Level;
 import picocli.CommandLine;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.IDefaultValueProvider;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 
 public class CommandlineParser {
@@ -33,6 +38,17 @@ public class CommandlineParser {
   private final PrintWriter outputWriter;
   private final PrintWriter errorWriter;
   private final Map<String, String> environment;
+
+  // Allows to obtain config file by PicoCLI using two pass approach.
+  @Command(mixinStandardHelpOptions = true)
+  static class ConfigFileCommand {
+    @Option(names = CONFIG_FILE_OPTION_NAME, description = "...")
+    File configPath = null;
+
+    @SuppressWarnings("UnusedVariable")
+    @CommandLine.Unmatched
+    List<String> unmatched;
+  }
 
   public CommandlineParser(
       final Eth2SignerCommand baseCommand,
