@@ -51,11 +51,9 @@ public class CommandlineParser {
     final CommandLine configFileCommandLine = new CommandLine(configFileCommand);
     configFileCommandLine.parseArgs(args);
     if (configFileCommandLine.isUsageHelpRequested()) {
-      new CommandLine(baseCommand).usage(outputWriter);
-      return 0;
+      return executeCommandUsage();
     } else if (configFileCommandLine.isVersionHelpRequested()) {
-      new CommandLine(baseCommand).printVersionHelp(outputWriter);
-      return 0;
+      return executeCommandVersion();
     }
 
     // final pass
@@ -69,6 +67,18 @@ public class CommandlineParser {
     commandLine.setDefaultValueProvider(
         defaultValueProvider(commandLine, Optional.ofNullable(configFileCommand.configPath)));
     return commandLine.execute(args);
+  }
+
+  private int executeCommandVersion() {
+    final CommandLine baseCommandLine = new CommandLine(baseCommand);
+    baseCommandLine.printVersionHelp(outputWriter);
+    return baseCommandLine.getCommandSpec().exitCodeOnVersionHelp();
+  }
+
+  private int executeCommandUsage() {
+    final CommandLine baseCommandLine = new CommandLine(baseCommand);
+    baseCommandLine.usage(outputWriter);
+    return baseCommandLine.getCommandSpec().exitCodeOnUsageHelp();
   }
 
   private IDefaultValueProvider defaultValueProvider(
