@@ -36,8 +36,15 @@ import picocli.CommandLine.ParameterException;
 /** Yaml Configuration which is specifically written for Eth2SignerCommand. */
 public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
 
+  private static final String FILE_NOT_FOUND_ERROR_MSG =
+      "Unable to read yaml configuration. File not found: ";
+  private static final String IO_ERROR_MSG_FMT =
+      "Unexpected IO error while reading yaml configuration file [%s]: %s";
+  private static final String INVALID_YAML_MSG_FMT =
+      "Unable to read yaml configuration. Invalid yaml file [%s]: %s";
   private final CommandLine commandLine;
   private final File configFile;
+  // this will be initialized on fist call of defaultValue by PicoCLI parseArgs
   private Map<String, Object> result;
 
   public YamlConfigFileDefaultProvider(final CommandLine commandLine, final File configFile) {
@@ -47,43 +54,29 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
 
   @Override
   public String defaultValue(final ArgSpec argSpec) {
-    loadConfigurationFromFile();
+    if (result == null) {
+      result = loadConfigurationFromFile();
+      checkConfigurationValidity(result == null || result.isEmpty());
+      checkUnknownOptions(result);
+    }
 
     // only options can be used in config because a name is needed for the key
     // so we skip default for positional params
     return argSpec.isOption() ? getConfigurationValue(((OptionSpec) argSpec)) : null;
   }
 
-  private void loadConfigurationFromFile() {
-    if (result != null) {
-      return;
-    }
-
+  private Map<String, Object> loadConfigurationFromFile() {
     try {
       final String configYaml = Files.readString(configFile.toPath());
-      final Map<String, Object> result = new Yaml().load(configYaml);
-      checkConfigurationValidity(result == null || result.isEmpty());
-      checkUnknownOptions(result);
-      this.result = result;
+      return new Yaml().load(configYaml);
     } catch (final FileNotFoundException | NoSuchFileException e) {
-      throw new ParameterException(
-          commandLine, "Unable to read yaml configuration. File not found: " + configFile, e);
+      throw new ParameterException(commandLine, FILE_NOT_FOUND_ERROR_MSG + configFile, e);
     } catch (final IOException e) {
       throw new ParameterException(
-          commandLine,
-          "Unexpected IO error while reading yaml configuration file ["
-              + configFile
-              + "]: "
-              + e.getMessage(),
-          e);
+          commandLine, String.format(IO_ERROR_MSG_FMT, configFile, e.getMessage()), e);
     } catch (final ScannerException e) {
       throw new ParameterException(
-          commandLine,
-          "Unable to read yaml configuration. Invalid yaml file ["
-              + configFile
-              + "]: "
-              + e.getMessage(),
-          e);
+          commandLine, String.format(INVALID_YAML_MSG_FMT, configFile, e.getMessage()), e);
     }
   }
 
