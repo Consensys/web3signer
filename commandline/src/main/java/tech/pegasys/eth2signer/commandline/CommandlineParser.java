@@ -51,7 +51,7 @@ public class CommandlineParser {
     final CommandLine configFileCommandLine = new CommandLine(configFileCommand);
     configFileCommandLine.parseArgs(args);
     if (configFileCommandLine.isUsageHelpRequested()) {
-      return executeCommandUsage();
+      return executeCommandUsageHelp();
     } else if (configFileCommandLine.isVersionHelpRequested()) {
       return executeCommandVersion();
     }
@@ -75,7 +75,7 @@ public class CommandlineParser {
     return baseCommandLine.getCommandSpec().exitCodeOnVersionHelp();
   }
 
-  private int executeCommandUsage() {
+  private int executeCommandUsageHelp() {
     final CommandLine baseCommandLine = new CommandLine(baseCommand);
     baseCommandLine.usage(outputWriter);
     return baseCommandLine.getCommandSpec().exitCodeOnUsageHelp();
