@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer;
 
+import java.util.Map;
+
 public class CmdlineHelpers {
 
   public static String validBaseCommandOptions() {
@@ -19,6 +21,25 @@ public class CmdlineHelpers {
         + "--http-listen-host=localhost "
         + "--key-store-path=./keys "
         + "--logging=INFO ";
+  }
+
+  public static String validBaseYamlOptions() {
+    return "http-listen-port: 6001\n"
+        + "http-listen-host: \"localhost\"\n"
+        + "key-store-path: \"./keys_yaml\"\n"
+        + "logging: \"INFO\"\n";
+  }
+
+  public static Map<String, String> validBaseEnvironmentVariableOptions() {
+    return Map.of(
+        "ETH2SIGNER_HTTP_LISTEN_PORT",
+        "7001",
+        "ETH2SIGNER_HTTP_LISTEN_HOST",
+        "localhost",
+        "ETH2SIGNER_KEY_STORE_PATH",
+        "./keys_env",
+        "ETH2SIGNER_LOGGING",
+        "INFO");
   }
 
   public static String removeFieldFrom(final String input, final String... fieldNames) {

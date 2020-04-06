@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.commandline;
 
+import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
+import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP;
 import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
 import static tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
@@ -21,6 +23,7 @@ import tech.pegasys.eth2signer.core.Config;
 import tech.pegasys.eth2signer.core.Runner;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.Set;
@@ -57,6 +60,13 @@ import picocli.CommandLine.TypeConversionException;
 public class Eth2SignerCommand implements Config, Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
+
+  @SuppressWarnings("UnusedVariable")
+  @CommandLine.Option(
+      names = {CONFIG_FILE_OPTION_NAME},
+      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      description = "Config file in yaml format (default: none)")
+  private final File configFile = null;
 
   @Option(
       names = {"--data-path"},

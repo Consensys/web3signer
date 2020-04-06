@@ -12,30 +12,69 @@
  */
 package tech.pegasys.eth2signer.commandline;
 
+import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
+
+import tech.pegasys.eth2signer.commandline.valueprovider.CascadingDefaultProvider;
+import tech.pegasys.eth2signer.commandline.valueprovider.EnvironmentVariableDefaultProvider;
+import tech.pegasys.eth2signer.commandline.valueprovider.YamlConfigFileDefaultProvider;
+
+import java.io.File;
 import java.io.PrintWriter;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.apache.logging.log4j.Level;
 import picocli.CommandLine;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Ansi;
+import picocli.CommandLine.IDefaultValueProvider;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Unmatched;
 
 public class CommandlineParser {
 
   private final Eth2SignerCommand baseCommand;
   private final PrintWriter outputWriter;
   private final PrintWriter errorWriter;
+  private final Map<String, String> environment;
+
+  // Allows to obtain config file by PicoCLI using two pass approach.
+  @Command(mixinStandardHelpOptions = true)
+  static class ConfigFileCommand {
+    @Option(names = CONFIG_FILE_OPTION_NAME, description = "...")
+    File configPath = null;
+
+    @SuppressWarnings("UnusedVariable")
+    @Unmatched
+    List<String> unmatched;
+  }
 
   public CommandlineParser(
       final Eth2SignerCommand baseCommand,
       final PrintWriter outputWriter,
-      final PrintWriter errorWriter) {
+      final PrintWriter errorWriter,
+      final Map<String, String> environment) {
     this.baseCommand = baseCommand;
     this.outputWriter = outputWriter;
     this.errorWriter = errorWriter;
+    this.environment = environment;
   }
 
   public int parseCommandLine(final String... args) {
+    // first pass to obtain config file if specified
+    final ConfigFileCommand configFileCommand = new ConfigFileCommand();
+    final CommandLine configFileCommandLine = new CommandLine(configFileCommand);
+    configFileCommandLine.parseArgs(args);
+    if (configFileCommandLine.isUsageHelpRequested()) {
+      return executeCommandUsageHelp();
+    } else if (configFileCommandLine.isVersionHelpRequested()) {
+      return executeCommandVersion();
+    }
+    final Optional<File> configFile = Optional.ofNullable(configFileCommand.configPath);
 
+    // final pass
     final CommandLine commandLine = new CommandLine(baseCommand);
     commandLine.setCaseInsensitiveEnumValuesAllowed(true);
     commandLine.registerConverter(Level.class, Level::valueOf);
@@ -43,8 +82,31 @@ public class CommandlineParser {
     commandLine.setErr(errorWriter);
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);
     commandLine.setParameterExceptionHandler(this::handleParseException);
-
+    commandLine.setDefaultValueProvider(defaultValueProvider(commandLine, configFile));
     return commandLine.execute(args);
+  }
+
+  private int executeCommandVersion() {
+    final CommandLine baseCommandLine = new CommandLine(baseCommand);
+    baseCommandLine.printVersionHelp(outputWriter);
+    return baseCommandLine.getCommandSpec().exitCodeOnVersionHelp();
+  }
+
+  private int executeCommandUsageHelp() {
+    final CommandLine baseCommandLine = new CommandLine(baseCommand);
+    baseCommandLine.usage(outputWriter);
+    return baseCommandLine.getCommandSpec().exitCodeOnUsageHelp();
+  }
+
+  private IDefaultValueProvider defaultValueProvider(
+      final CommandLine commandLine, final Optional<File> configFile) {
+    if (configFile.isEmpty()) {
+      return new EnvironmentVariableDefaultProvider(environment);
+    }
+
+    return new CascadingDefaultProvider(
+        new EnvironmentVariableDefaultProvider(environment),
+        new YamlConfigFileDefaultProvider(commandLine, configFile.get()));
   }
 
   private int handleParseException(final ParameterException ex, final String[] args) {

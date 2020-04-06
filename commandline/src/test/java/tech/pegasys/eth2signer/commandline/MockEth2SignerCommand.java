@@ -10,9 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer;
-
-import tech.pegasys.eth2signer.commandline.Eth2SignerCommand;
+package tech.pegasys.eth2signer.commandline;
 
 public class MockEth2SignerCommand extends Eth2SignerCommand {
 
