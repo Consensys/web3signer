@@ -47,7 +47,7 @@ public class CommandlineParser {
 
   public int parseCommandLine(final String... args) {
     // first pass to obtain config file if specified
-    ConfigFileCommand configFileCommand = new ConfigFileCommand();
+    final ConfigFileCommand configFileCommand = new ConfigFileCommand();
     final CommandLine configFileCommandLine = new CommandLine(configFileCommand);
     configFileCommandLine.parseArgs(args);
     if (configFileCommandLine.isUsageHelpRequested()) {
