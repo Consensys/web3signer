@@ -12,25 +12,27 @@
  */
 package tech.pegasys.eth2signer.commandline.valueprovider;
 
+import java.util.Arrays;
+import java.util.List;
+
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;
 
 public class CascadingDefaultProvider implements IDefaultValueProvider {
-  private final IDefaultValueProvider defaultValueProvider1;
-  private final IDefaultValueProvider defaultValueProvider2;
+  private final List<IDefaultValueProvider> defaultValueProviders;
 
-  public CascadingDefaultProvider(
-      final IDefaultValueProvider defaultValueProvider1,
-      final IDefaultValueProvider defaultValueProvider2) {
-    this.defaultValueProvider1 = defaultValueProvider1;
-    this.defaultValueProvider2 = defaultValueProvider2;
+  public CascadingDefaultProvider(final IDefaultValueProvider... defaultValueProviders) {
+    this.defaultValueProviders = Arrays.asList(defaultValueProviders);
   }
 
   @Override
   public String defaultValue(final ArgSpec argSpec) throws Exception {
-    final String defaultValueFromProvider1 = defaultValueProvider1.defaultValue(argSpec);
-    return defaultValueFromProvider1 == null
-        ? defaultValueProvider2.defaultValue(argSpec)
-        : defaultValueFromProvider1;
+    for (final IDefaultValueProvider defaultValueProvider : defaultValueProviders) {
+      final String defaultValue = defaultValueProvider.defaultValue(argSpec);
+      if (defaultValue != null) {
+        return defaultValue;
+      }
+    }
+    return null;
   }
 }

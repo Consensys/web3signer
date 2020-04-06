@@ -31,6 +31,7 @@ import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Unmatched;
 
 public class CommandlineParser {
 
@@ -46,7 +47,7 @@ public class CommandlineParser {
     File configPath = null;
 
     @SuppressWarnings("UnusedVariable")
-    @CommandLine.Unmatched
+    @Unmatched
     List<String> unmatched;
   }
 
@@ -71,6 +72,7 @@ public class CommandlineParser {
     } else if (configFileCommandLine.isVersionHelpRequested()) {
       return executeCommandVersion();
     }
+    final Optional<File> configFile = Optional.ofNullable(configFileCommand.configPath);
 
     // final pass
     final CommandLine commandLine = new CommandLine(baseCommand);
@@ -80,8 +82,7 @@ public class CommandlineParser {
     commandLine.setErr(errorWriter);
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);
     commandLine.setParameterExceptionHandler(this::handleParseException);
-    commandLine.setDefaultValueProvider(
-        defaultValueProvider(commandLine, Optional.ofNullable(configFileCommand.configPath)));
+    commandLine.setDefaultValueProvider(defaultValueProvider(commandLine, configFile));
     return commandLine.execute(args);
   }
 
@@ -99,16 +100,13 @@ public class CommandlineParser {
 
   private IDefaultValueProvider defaultValueProvider(
       final CommandLine commandLine, final Optional<File> configFile) {
-    final IDefaultValueProvider defaultValueProvider;
-    if (configFile.isPresent()) {
-      defaultValueProvider =
-          new CascadingDefaultProvider(
-              new EnvironmentVariableDefaultProvider(environment),
-              new YamlConfigFileDefaultProvider(commandLine, configFile.get()));
-    } else {
-      defaultValueProvider = new EnvironmentVariableDefaultProvider(environment);
+    if (configFile.isEmpty()) {
+      return new EnvironmentVariableDefaultProvider(environment);
     }
-    return defaultValueProvider;
+
+    return new CascadingDefaultProvider(
+        new EnvironmentVariableDefaultProvider(environment),
+        new YamlConfigFileDefaultProvider(commandLine, configFile.get()));
   }
 
   private int handleParseException(final ParameterException ex, final String[] args) {
