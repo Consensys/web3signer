@@ -15,18 +15,22 @@ package tech.pegasys.eth2signer.commandline.valueprovider;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.scanner.ScannerException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.apache.commons.lang.ArrayUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;
@@ -37,12 +41,6 @@ import picocli.CommandLine.ParameterException;
 /** Yaml Configuration which is specifically written for Eth2SignerCommand. */
 public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
 
-  private static final String FILE_NOT_FOUND_ERROR_MSG =
-      "Unable to read yaml configuration. File not found: ";
-  private static final String IO_ERROR_MSG_FMT =
-      "Unexpected IO error while reading yaml configuration file [%s]: %s";
-  private static final String INVALID_YAML_MSG_FMT =
-      "Unable to read yaml configuration. Invalid yaml file [%s]: %s";
   private final CommandLine commandLine;
   private final File configFile;
   // this will be initialized on fist call of defaultValue by PicoCLI parseArgs
@@ -67,18 +65,38 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private Map<String, Object> loadConfigurationFromFile() {
+    final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
+
     try {
-      final String configYaml = Files.readString(configFile.toPath());
-      return new Yaml().load(configYaml);
+      return objectMapper.readValue(configFile, new TypeReference<>() {});
     } catch (final FileNotFoundException | NoSuchFileException e) {
-      throw new ParameterException(commandLine, FILE_NOT_FOUND_ERROR_MSG + configFile, e);
+      throwParameterException(
+          e, "Unable to read yaml configuration. File not found: " + configFile);
+    } catch (final JsonMappingException e) {
+      throwParameterException(e, "Unexpected yaml content, expecting block mappings.");
+    } catch (final JsonParseException e) {
+      throwParameterException(
+          e,
+          "Unable to read yaml configuration. Invalid yaml file [%s]: %s",
+          configFile,
+          e.getMessage());
     } catch (final IOException e) {
-      throw new ParameterException(
-          commandLine, String.format(IO_ERROR_MSG_FMT, configFile, e.getMessage()), e);
-    } catch (final ScannerException e) {
-      throw new ParameterException(
-          commandLine, String.format(INVALID_YAML_MSG_FMT, configFile, e.getMessage()), e);
+      throwParameterException(
+          e,
+          "Unexpected IO error while reading yaml configuration file [%s]: %s",
+          configFile,
+          e.getMessage());
     }
+    return Collections.emptyMap(); // unreachable
+  }
+
+  @SuppressWarnings("AnnotateFormatMethod")
+  private void throwParameterException(
+      final Throwable cause, final String message, Object... messageArgs) {
+    throw new ParameterException(
+        commandLine,
+        ArrayUtils.isEmpty(messageArgs) ? message : String.format(message, messageArgs),
+        cause);
   }
 
   private void checkUnknownOptions(final Map<String, Object> result) {
@@ -106,15 +124,18 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getConfigurationValue(final OptionSpec optionSpec) {
-    final Optional<Object> optionalValue =
-        getKeyName(optionSpec).map(result::get).filter(Objects::nonNull);
+    final Optional<Object> optionalValue = getKeyName(optionSpec).map(result::get);
     if (optionalValue.isEmpty()) {
       return null;
     }
 
-    // this may need to be updated in future if we use a complex type such as List in
-    // Eth2SignerCommand
-    return String.valueOf(optionalValue.get());
+    final Object value = optionalValue.get();
+
+    if (optionSpec.isMultiValue() && value instanceof Collection) {
+      return ((Collection<?>) value).stream().map(String::valueOf).collect(Collectors.joining(","));
+    }
+
+    return String.valueOf(value);
   }
 
   private Optional<String> getKeyName(final OptionSpec spec) {

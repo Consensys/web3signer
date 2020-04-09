@@ -16,7 +16,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 
-import tech.pegasys.artemis.util.bls.BLSPublicKey;
+import tech.pegasys.artemis.bls.BLSPublicKey;
 import tech.pegasys.eth2signer.core.http.SigningRequestBody;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;

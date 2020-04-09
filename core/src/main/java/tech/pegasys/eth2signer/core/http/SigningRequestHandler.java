@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.http;
 
-import tech.pegasys.artemis.util.bls.BLSSignature;
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.utils.JsonDecoder;
