@@ -73,7 +73,7 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
       throwParameterException(
           e, "Unable to read yaml configuration. File not found: " + configFile);
     } catch (final JsonMappingException e) {
-      throwParameterException(e, "Unexpected yaml content, expecting block mappings.");
+      throwParameterException(e, "Unexpected yaml content");
     } catch (final JsonParseException e) {
       throwParameterException(
           e,
