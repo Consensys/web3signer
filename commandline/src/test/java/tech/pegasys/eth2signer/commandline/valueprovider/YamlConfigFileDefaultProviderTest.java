@@ -104,7 +104,7 @@ class YamlConfigFileDefaultProviderTest {
     final String[] args = CmdlineHelpers.validBaseCommandOptions().split(" ");
     assertThatExceptionOfType(CommandLine.ParameterException.class)
         .isThrownBy(() -> commandLine.parseArgs(args))
-        .withMessage("Empty yaml configuration file: %s", configFile);
+        .withMessage("Unexpected yaml content");
   }
 
   @Test

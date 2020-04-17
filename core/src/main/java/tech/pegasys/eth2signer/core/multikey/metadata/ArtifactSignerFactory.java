@@ -15,8 +15,8 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import tech.pegasys.artemis.util.bls.BLSKeyPair;
-import tech.pegasys.artemis.util.bls.BLSSecretKey;
+import tech.pegasys.artemis.bls.BLSKeyPair;
+import tech.pegasys.artemis.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.signers.bls.keystore.KeyStore;

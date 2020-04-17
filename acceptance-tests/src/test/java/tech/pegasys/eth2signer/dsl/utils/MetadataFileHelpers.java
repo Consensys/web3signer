@@ -15,8 +15,7 @@ package tech.pegasys.eth2signer.dsl.utils;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
-import tech.pegasys.artemis.util.bls.BLSKeyPair;
-import tech.pegasys.artemis.util.bls.BLSSecretKey;
+import tech.pegasys.artemis.bls.BLSKeyPair;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
@@ -54,9 +53,8 @@ public class MetadataFileHelpers {
   }
 
   public void createKeyStoreYamlFileAt(
-      final Path metadataFilePath, final String privateKey, final KdfFunction kdfFunctionType) {
-    final Bytes privateKeyBytes = Bytes.fromHexString(privateKey);
-    final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKeyBytes));
+      final Path metadataFilePath, final BLSKeyPair keyPair, final KdfFunction kdfFunctionType) {
+    final Bytes privateKeyBytes = keyPair.getSecretKey().getSecretKey().toBytes();
 
     final String password = "password";
     final Path passwordFile =
@@ -65,7 +63,12 @@ public class MetadataFileHelpers {
 
     final Path keystoreFile =
         metadataFilePath.getParent().resolve(keyPair.getPublicKey().toString() + ".json");
-    createKeyStoreFile(keystoreFile, password, privateKeyBytes, kdfFunctionType);
+    createKeyStoreFile(
+        keystoreFile,
+        password,
+        privateKeyBytes,
+        keyPair.getPublicKey().toBytesCompressed(),
+        kdfFunctionType);
 
     final Map<String, String> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "file-keystore");
@@ -116,13 +119,15 @@ public class MetadataFileHelpers {
       final Path keyStoreFilePath,
       final String password,
       final Bytes privateKey,
+      final Bytes publicKey,
       final KdfFunction kdfFunctionType) {
     final KdfParam kdfParam =
         kdfFunctionType == KdfFunction.SCRYPT
             ? new SCryptParam(32, SALT)
             : new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
-    final KeyStoreData keyStoreData = KeyStore.encrypt(privateKey, password, "", kdfParam, cipher);
+    final KeyStoreData keyStoreData =
+        KeyStore.encrypt(privateKey, publicKey, password, "", kdfParam, cipher);
     try {
       KeyStoreLoader.saveToFile(keyStoreFilePath, keyStoreData);
     } catch (IOException e) {

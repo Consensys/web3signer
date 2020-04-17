@@ -19,8 +19,8 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.artemis.util.bls.BLSKeyPair;
-import tech.pegasys.artemis.util.bls.BLSSecretKey;
+import tech.pegasys.artemis.bls.BLSKeyPair;
+import tech.pegasys.artemis.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
