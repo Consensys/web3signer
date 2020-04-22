@@ -66,7 +66,8 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         "/signer/block",
         "/signer/attestation",
         "/signer/randao_reveal",
-        "/signer/aggregation_slot"
+        "/signer/aggregation_slot",
+        "/signer/aggregate_and_proof"
       })
   public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint)
       throws Exception {
@@ -155,7 +156,8 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         "/signer/block",
         "/signer/attestation",
         "/signer/randao_reveal",
-        "/signer/aggregation_slot"
+        "/signer/aggregation_slot",
+        "/signer/aggregate_and_proof"
       })
   public void ableToSignUsingHashicorp(final String artifactSigningEndpoint)
       throws ExecutionException, InterruptedException {
@@ -193,9 +195,11 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         Arguments.arguments("/signer/attestation", KdfFunction.SCRYPT),
         Arguments.arguments("/signer/randao_reveal", KdfFunction.SCRYPT),
         Arguments.arguments("/signer/aggregation_slot", KdfFunction.SCRYPT),
+        Arguments.arguments("/signer/aggregate_and_proof", KdfFunction.SCRYPT),
         Arguments.arguments("/signer/block", KdfFunction.PBKDF2),
         Arguments.arguments("/signer/attestation", KdfFunction.PBKDF2),
         Arguments.arguments("/signer/randao_reveal", KdfFunction.PBKDF2),
-        Arguments.arguments("/signer/aggregation_slot", KdfFunction.PBKDF2));
+        Arguments.arguments("/signer/aggregation_slot", KdfFunction.PBKDF2),
+        Arguments.arguments("/signer/aggregate_and_proof", KdfFunction.PBKDF2));
   }
 }
