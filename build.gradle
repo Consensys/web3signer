@@ -375,7 +375,13 @@ applicationDefaultJvmArgs = [
   "-Dvertx.disableFileCPResolving=true",
   // We shutdown log4j ourselves, as otherwise his shutdown hook runs before our own and whatever
   // happens during shutdown is not logged.
-  "-Dlog4j.shutdownHookEnabled=false"
+  "-Dlog4j.shutdownHookEnabled=false",
+  // netty specific module warnings
+  "-Dio.netty.tryReflectionSetAccessible=true",
+  "--add-exports",
+  "java.base/jdk.internal.misc=ALL-UNNAMED",
+  "--add-opens",
+  "java.base/java.nio=ALL-UNNAMED"
 ]
 
 run {
