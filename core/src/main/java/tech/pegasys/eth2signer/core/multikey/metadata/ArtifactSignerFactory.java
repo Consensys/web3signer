@@ -74,7 +74,28 @@ public class ArtifactSignerFactory {
     }
   }
 
-  public ArtifactSigner create(final HashicorpSigningMetadata metadata) {
+  public ArtifactSigner create(final HashicorpSigningMetadata hashicorpMetadata) {
+    try (TimingContext ignored = privateKeyRetrievalTimer.labels("hashicorp").startTimer()) {
+      return createHashicorpArtifact(hashicorpMetadata);
+    }
+  }
+
+  private ArtifactSigner createKeystoreArtifact(final FileKeyStoreMetadata fileKeyStoreMetadata) {
+    final Path keystoreFile = makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystoreFile());
+    final Path keystorePasswordFile =
+        makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystorePasswordFile());
+    try {
+      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
+      final String password = loadPassword(keystorePasswordFile);
+      final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
+      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
+      return new ArtifactSigner(keyPair);
+    } catch (final KeyStoreValidationException e) {
+      throw new SigningMetadataException(e.getMessage(), e);
+    }
+  }
+
+  private ArtifactSigner createHashicorpArtifact(final HashicorpSigningMetadata metadata) {
     TlsOptions tlsOptions = null;
     if (metadata.getTlsEnabled()) {
       final Path knownServerFile = metadata.getTlsKnownServerFile();
@@ -110,21 +131,6 @@ public class ArtifactSignerFactory {
       return new ArtifactSigner(keyPair);
     } catch (Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
-    }
-  }
-
-  private ArtifactSigner createKeystoreArtifact(final FileKeyStoreMetadata fileKeyStoreMetadata) {
-    final Path keystoreFile = makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystoreFile());
-    final Path keystorePasswordFile =
-        makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystorePasswordFile());
-    try {
-      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
-      final String password = loadPassword(keystorePasswordFile);
-      final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
-      return new ArtifactSigner(keyPair);
-    } catch (final KeyStoreValidationException e) {
-      throw new SigningMetadataException(e.getMessage(), e);
     }
   }
 
