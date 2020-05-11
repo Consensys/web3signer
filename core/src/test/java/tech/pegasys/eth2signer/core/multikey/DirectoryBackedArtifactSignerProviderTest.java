@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import com.google.common.cache.LoadingCache;
 import org.apache.logging.log4j.LogManager;
@@ -348,7 +349,8 @@ class DirectoryBackedArtifactSignerProviderTest {
   }
 
   @Test
-  void cacheAllSignersPopulatesCacheForAllIdentifiers() throws IOException {
+  void cacheAllSignersPopulatesCacheForAllIdentifiers()
+      throws IOException, ExecutionException, InterruptedException {
     DirectoryBackedArtifactSignerProvider signerProvider =
         new DirectoryBackedArtifactSignerProvider(
             configsDirectory, FILE_EXTENSION, signerParser, 3);
@@ -364,8 +366,10 @@ class DirectoryBackedArtifactSignerProviderTest {
 
     assertThat(signerProvider.getArtifactSignerCache().size()).isEqualTo(0);
 
-    signerProvider.cacheAllSigners();
+    signerProvider.cacheAllSigners().get();
     assertThat(signerProvider.getArtifactSignerCache().size()).isEqualTo(3);
+    assertThat(signerProvider.getArtifactSignerCache().asMap())
+        .containsKeys(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3);
     assertThat(signerProvider.getArtifactSignerCache().asMap())
         .containsValues(signer1, signer2, signer3);
   }

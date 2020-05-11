@@ -28,6 +28,8 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -44,6 +46,7 @@ import org.apache.logging.log4j.Logger;
 public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final int SIGNER_CACHING_PARALLELISM = 4;
   private final Path configsDirectory;
   private final String fileExtension;
   private final SignerParser signerParser;
@@ -100,16 +103,18 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
         .collect(Collectors.toSet());
   }
 
-  public void cacheAllSigners() {
-    availableIdentifiers()
-        .forEach(
-            identifier -> {
-              final String normaliseIdentifier = normaliseIdentifier(identifier);
-              final Optional<ArtifactSigner> loadedSigner =
-                  loadSignerForIdentifier(normaliseIdentifier);
-              // no need to log if signer couldn't be found this is done by loadSignerForIdentifier
-              loadedSigner.ifPresent(signer -> artifactSignerCache.put(identifier, signer));
-            });
+  public ForkJoinTask<?> cacheAllSigners() {
+    final Set<String> availableIdentifiers = availableIdentifiers();
+    final ForkJoinPool artifactSignerThreadPool = new ForkJoinPool(SIGNER_CACHING_PARALLELISM);
+    return artifactSignerThreadPool.submit(
+        () -> availableIdentifiers.parallelStream().forEach(this::cacheSigner));
+  }
+
+  private void cacheSigner(final String identifier) {
+    final String normaliseIdentifier = normaliseIdentifier(identifier);
+    final Optional<ArtifactSigner> loadedSigner = loadSignerForIdentifier(normaliseIdentifier);
+    // no need to log if signer couldn't be found this is done by loadSignerForIdentifier
+    loadedSigner.ifPresent(signer -> artifactSignerCache.put(normaliseIdentifier, signer));
   }
 
   @VisibleForTesting
