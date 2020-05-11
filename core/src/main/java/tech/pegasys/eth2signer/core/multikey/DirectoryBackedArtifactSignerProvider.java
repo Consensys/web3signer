@@ -46,7 +46,6 @@ import org.apache.logging.log4j.Logger;
 public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final int SIGNER_CACHING_PARALLELISM = 4;
   private final Path configsDirectory;
   private final String fileExtension;
   private final SignerParser signerParser;
@@ -105,9 +104,8 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
 
   public ForkJoinTask<?> cacheAllSigners() {
     final Set<String> availableIdentifiers = availableIdentifiers();
-    final ForkJoinPool artifactSignerThreadPool = new ForkJoinPool(SIGNER_CACHING_PARALLELISM);
-    return artifactSignerThreadPool.submit(
-        () -> availableIdentifiers.parallelStream().forEach(this::cacheSigner));
+    return ForkJoinPool.commonPool()
+        .submit(() -> availableIdentifiers.parallelStream().forEach(this::cacheSigner));
   }
 
   private void cacheSigner(final String identifier) {
