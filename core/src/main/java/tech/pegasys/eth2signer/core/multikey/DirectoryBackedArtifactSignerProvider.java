@@ -28,8 +28,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -102,10 +100,11 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
         .collect(Collectors.toSet());
   }
 
-  public ForkJoinTask<?> cacheAllSigners() {
+  public void cacheAllSigners() {
     final Set<String> availableIdentifiers = availableIdentifiers();
-    return ForkJoinPool.commonPool()
-        .submit(() -> availableIdentifiers.parallelStream().forEach(this::cacheSigner));
+    LOG.info("Loading {} signers", availableIdentifiers.size());
+    availableIdentifiers.parallelStream().forEach(this::cacheSigner);
+    LOG.info("Loading signers complete");
   }
 
   private void cacheSigner(final String identifier) {

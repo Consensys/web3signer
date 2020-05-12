@@ -366,7 +366,7 @@ class DirectoryBackedArtifactSignerProviderTest {
 
     assertThat(signerProvider.getArtifactSignerCache().size()).isEqualTo(0);
 
-    signerProvider.cacheAllSigners().get();
+    signerProvider.cacheAllSigners();
     assertThat(signerProvider.getArtifactSignerCache().size()).isEqualTo(3);
     assertThat(signerProvider.getArtifactSignerCache().asMap())
         .containsKeys(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3);
