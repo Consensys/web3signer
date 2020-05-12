@@ -350,7 +350,7 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void cacheAllSignersPopulatesCacheForAllIdentifiers()
-      throws IOException, ExecutionException, InterruptedException {
+      throws IOException {
     DirectoryBackedArtifactSignerProvider signerProvider =
         new DirectoryBackedArtifactSignerProvider(
             configsDirectory, FILE_EXTENSION, signerParser, 3);
