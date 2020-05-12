@@ -101,15 +101,17 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   public void cacheAllSigners() {
-    availableIdentifiers()
-        .forEach(
-            identifier -> {
-              final String normaliseIdentifier = normaliseIdentifier(identifier);
-              final Optional<ArtifactSigner> loadedSigner =
-                  loadSignerForIdentifier(normaliseIdentifier);
-              // no need to log if signer couldn't be found this is done by loadSignerForIdentifier
-              loadedSigner.ifPresent(signer -> artifactSignerCache.put(identifier, signer));
-            });
+    final Set<String> availableIdentifiers = availableIdentifiers();
+    LOG.info("Loading {} signers", availableIdentifiers.size());
+    availableIdentifiers.parallelStream().forEach(this::cacheSigner);
+    LOG.info("Loading signers complete");
+  }
+
+  private void cacheSigner(final String identifier) {
+    final String normaliseIdentifier = normaliseIdentifier(identifier);
+    final Optional<ArtifactSigner> loadedSigner = loadSignerForIdentifier(normaliseIdentifier);
+    // no need to log if signer couldn't be found this is done by loadSignerForIdentifier
+    loadedSigner.ifPresent(signer -> artifactSignerCache.put(normaliseIdentifier, signer));
   }
 
   @VisibleForTesting
