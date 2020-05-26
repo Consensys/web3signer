@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.core;
 import static tech.pegasys.eth2signer.core.http.SigningRequestHandler.SIGNER_PATH_REGEX;
 
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
+import tech.pegasys.eth2signer.core.http.PublicKeyRequestHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
@@ -85,9 +86,21 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final SigningRequestHandler signingHandler = createSigningHandler(metricsSystem, vertx);
+      final DirectoryBackedArtifactSignerProvider signerProvider =
+          createSignerProvider(metricsSystem, vertx);
+      signerProvider.cacheAllSigners();
 
-      final Handler<HttpServerRequest> requestHandler = createRouter(vertx, signingHandler);
+      final ObjectMapper objectMapper = createObjectMapper();
+
+      final JsonDecoder jsonDecoder = new JsonDecoder(objectMapper);
+      final SigningRequestHandler signingHandler =
+          new SigningRequestHandler(signerProvider, jsonDecoder);
+
+      final PublicKeyRequestHandler publicKeyHandler =
+          new PublicKeyRequestHandler(signerProvider, objectMapper);
+
+      final Handler<HttpServerRequest> requestHandler =
+          createRouter(vertx, signingHandler, publicKeyHandler);
       final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
@@ -99,27 +112,22 @@ public class Runner implements Runnable {
     }
   }
 
-  private SigningRequestHandler createSigningHandler(
+  private DirectoryBackedArtifactSignerProvider createSignerProvider(
       final MetricsSystem metricsSystem, final Vertx vertx) {
     final ArtifactSignerFactory artifactSignerFactory =
         new ArtifactSignerFactory(
             config.getKeyConfigPath(), metricsSystem, new HashicorpConnectionFactory(vertx));
-    final DirectoryBackedArtifactSignerProvider signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(artifactSignerFactory),
-            config.getKeyCacheLimit());
-
-    final SigningRequestHandler signingHandler =
-        new SigningRequestHandler(signerProvider, createJsonDecoder());
-    signerProvider.cacheAllSigners();
-
-    return signingHandler;
+    return new DirectoryBackedArtifactSignerProvider(
+        config.getKeyConfigPath(),
+        "yaml",
+        new YamlSignerParser(artifactSignerFactory),
+        config.getKeyCacheLimit());
   }
 
   private Handler<HttpServerRequest> createRouter(
-      final Vertx vertx, final SigningRequestHandler signingHandler) {
+      final Vertx vertx,
+      final SigningRequestHandler signingHandler,
+      final PublicKeyRequestHandler publicKeyHandler) {
     final Router router = Router.router(vertx);
     final LogErrorHandler errorHandler = new LogErrorHandler();
 
@@ -136,6 +144,14 @@ public class Runner implements Runnable {
         .produces(JSON)
         .handler(BodyHandler.create())
         .blockingHandler(signingHandler)
+        .handler(ResponseContentTypeHandler.create())
+        .failureHandler(errorHandler);
+
+    router
+        .route(HttpMethod.GET, "/signer/publicKeys")
+        .produces(JSON)
+        .handler(BodyHandler.create())
+        .blockingHandler(publicKeyHandler)
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler);
 
@@ -194,12 +210,11 @@ public class Runner implements Runnable {
     }
   }
 
-  private JsonDecoder createJsonDecoder() {
+  private ObjectMapper createObjectMapper() {
     // Force Transaction Deserialization to fail if missing expected properties
     final ObjectMapper jsonObjectMapper = new ObjectMapper();
     jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES, true);
     jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, true);
-
-    return new JsonDecoder(jsonObjectMapper);
+    return jsonObjectMapper;
   }
 }

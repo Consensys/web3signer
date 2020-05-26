@@ -139,6 +139,23 @@ public class Signer {
     return responseBodyFuture.get();
   }
 
+  public HttpResponse getRawRequest(final String endpoint)
+      throws ExecutionException, InterruptedException {
+    final CompletableFuture<HttpResponse> responseBodyFuture = new CompletableFuture<>();
+    final HttpClientRequest request =
+        httpClient.get(
+            endpoint,
+            response ->
+                response.bodyHandler(
+                    body ->
+                        responseBodyFuture.complete(
+                            new HttpResponse(response.statusCode(), body.toString(UTF_8)))));
+
+    request.end();
+
+    return responseBodyFuture.get();
+  }
+
   public void awaitStartupCompletion() {
     LOG.info("Waiting for Signer to become responsive...");
     final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 30;
