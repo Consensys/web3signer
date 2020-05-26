@@ -27,14 +27,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class BlsSigningRequestHandler implements Handler<RoutingContext> {
+public class SigningRequestHandler implements Handler<RoutingContext> {
 
   public static final String SIGNER_PATH_REGEX = "/signer/(?<publicKey>.*)";
   private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
   private final JsonDecoder jsonDecoder;
 
-  public BlsSigningRequestHandler(
+  public SigningRequestHandler(
       final ArtifactSignerProvider signerProvider, final JsonDecoder jsonDecoder) {
     this.signerProvider = signerProvider;
     this.jsonDecoder = jsonDecoder;

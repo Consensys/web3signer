@@ -12,10 +12,10 @@
  */
 package tech.pegasys.eth2signer.core;
 
-import static tech.pegasys.eth2signer.core.http.BlsSigningRequestHandler.SIGNER_PATH_REGEX;
+import static tech.pegasys.eth2signer.core.http.SigningRequestHandler.SIGNER_PATH_REGEX;
 
-import tech.pegasys.eth2signer.core.http.BlsSigningRequestHandler;
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
+import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
@@ -85,7 +85,7 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final BlsSigningRequestHandler signingHandler = createSigningHandler(metricsSystem, vertx);
+      final SigningRequestHandler signingHandler = createSigningHandler(metricsSystem, vertx);
 
       final Handler<HttpServerRequest> requestHandler = createRouter(vertx, signingHandler);
       final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
@@ -99,7 +99,7 @@ public class Runner implements Runnable {
     }
   }
 
-  private BlsSigningRequestHandler createSigningHandler(
+  private SigningRequestHandler createSigningHandler(
       final MetricsSystem metricsSystem, final Vertx vertx) {
     final ArtifactSignerFactory artifactSignerFactory =
         new ArtifactSignerFactory(
@@ -111,15 +111,15 @@ public class Runner implements Runnable {
             new YamlSignerParser(artifactSignerFactory),
             config.getKeyCacheLimit());
 
-    final BlsSigningRequestHandler signingHandler =
-        new BlsSigningRequestHandler(signerProvider, createJsonDecoder());
+    final SigningRequestHandler signingHandler =
+        new SigningRequestHandler(signerProvider, createJsonDecoder());
     signerProvider.cacheAllSigners();
 
     return signingHandler;
   }
 
   private Handler<HttpServerRequest> createRouter(
-      final Vertx vertx, final BlsSigningRequestHandler signingHandler) {
+      final Vertx vertx, final SigningRequestHandler signingHandler) {
     final Router router = Router.router(vertx);
     final LogErrorHandler errorHandler = new LogErrorHandler();
 
