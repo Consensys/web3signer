@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class SigningRequestHandler implements Handler<RoutingContext> {
 
-  public static final String SIGNER_PATH_REGEX = "/signer/(?<publicKey>.*)";
+  public static final String SIGNER_PATH_REGEX = "/signer/sign/(?<publicKey>.*)";
   private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
   private final JsonDecoder jsonDecoder;

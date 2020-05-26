@@ -54,6 +54,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final BLSSignature expectedSignature =
       BLS.sign(keyPair.getSecretKey(), SIGNING_ROOT);
+  private static final String SIGN_ENDPOINT = "/signer/sign";
 
   @TempDir Path testDirectory;
 
@@ -67,7 +68,8 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final HttpResponse response = signer.signData("/signer/", keyPair.getPublicKey(), SIGNING_ROOT);
+    final HttpResponse response =
+        signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
   }
@@ -84,7 +86,8 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final HttpResponse response = signer.signData("/signer", keyPair.getPublicKey(), SIGNING_ROOT);
+    final HttpResponse response =
+        signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
   }
@@ -94,7 +97,8 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
 
-    final HttpResponse response = signer.signData("block", keyPair.getPublicKey(), SIGNING_ROOT);
+    final HttpResponse response =
+        signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.NOT_FOUND.code());
   }
 
@@ -108,7 +112,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final String endpoint = "/signer/" + keyPair.getPublicKey().toString();
+    final String endpoint = SIGN_ENDPOINT + "/" + keyPair.getPublicKey().toString();
     final HttpResponse response = signer.postRawRequest(endpoint, "invalid Body");
     assertThat(response.getStatusCode()).isEqualTo(400);
   }
@@ -130,7 +134,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
     final String httpBody = Json.encode(requestBody);
 
-    final String endpoint = "/signer/" + keyPair.getPublicKey().toString();
+    final String endpoint = SIGN_ENDPOINT + "/" + keyPair.getPublicKey().toString();
     final HttpResponse response = signer.postRawRequest(endpoint, httpBody);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
   }
@@ -156,7 +160,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
       startSigner(builder.build());
 
       final HttpResponse response =
-          signer.signData("/signer/", keyPair.getPublicKey(), SIGNING_ROOT);
+          signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
       assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
       assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
     } finally {
