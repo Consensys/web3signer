@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import com.google.common.cache.LoadingCache;
 import org.apache.logging.log4j.LogManager;
@@ -64,7 +65,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   private static final String PRIVATE_KEY3 =
       "315ed405fafe339603932eebe8dbfd650ce5dafa561f6928664c75db85f97857";
 
-  private ArtifactSigner artifactSigner = createArtifactSigner(PRIVATE_KEY1);
+  private final ArtifactSigner artifactSigner = createArtifactSigner(PRIVATE_KEY1);
   private DirectoryBackedArtifactSignerProvider signerProvider;
 
   @BeforeEach
@@ -202,30 +203,52 @@ class DirectoryBackedArtifactSignerProviderTest {
   @Test
   void signerIdentifiersReturnedForMetadataFile() throws IOException {
     createFileInConfigsDirectory(PUBLIC_KEY1);
+    when(signerParser.parse(any())).thenReturn(artifactSigner);
 
     assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY1);
+  }
+
+  @Test
+  void signerIdentifiersNotReturnedInvalidMetadataFile() throws IOException {
+    createFileInConfigsDirectory(PUBLIC_KEY1);
+    createFileInConfigsDirectory(PUBLIC_KEY2);
+    assertThat(signerProvider.availableIdentifiers()).isEmpty();
+  }
+
+  @Test
+  void signIdentifiersUsesCache() throws IOException {
+    final DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 1);
+    final LoadingCache<String, ArtifactSigner> artifactSignerCache =
+        signerProvider.getArtifactSignerCache();
+    artifactSignerCache.put(PUBLIC_KEY1, artifactSigner);
+    createFileInConfigsDirectory(PUBLIC_KEY1);
+
+    final Set<String> identifiers = signerProvider.availableIdentifiers();
+    assertThat(identifiers).containsExactly("0x" + PUBLIC_KEY1);
     verify(signerParser, never()).parse(any());
   }
 
   @Test
   void signerIdentifiersReturnedForAllValidMetadataFilesInDirectory() throws IOException {
-    final String publicKey1 =
-        "0x889477480fbcf2c7d32fafe50c60fc716545543a5660130e84041e6f6fce5fa471ef1e7c0cdd4380b83b8d33893e6f11";
-    createFileInConfigsDirectory(publicKey1);
+    createFileInConfigsDirectory(PUBLIC_KEY1);
+    when(signerParser.parse(pathEndsWith(PUBLIC_KEY1)))
+        .thenReturn(createArtifactSigner(PRIVATE_KEY1));
 
-    final String publicKey2 =
-        "0xa7c5f1c815571d02df8ebc9b083e1a7fb4b360970cc40ebb325f3d2360dd1f9723825ea0c6fa9e398cd233ef0868a8cc";
-    createFileInConfigsDirectory(publicKey2);
+    createFileInConfigsDirectory(PUBLIC_KEY2);
+    when(signerParser.parse(pathEndsWith(PUBLIC_KEY2)))
+        .thenReturn(createArtifactSigner(PRIVATE_KEY2));
 
-    final String publicKey3 =
-        "0xb458bf0b2e1d3797b2f95a0f80f715b18881f74d114c824f54452893fbe6368b32de3066e472dbeb1a43181416159606";
-    createFileInConfigsDirectory(publicKey3);
+    createFileInConfigsDirectory(PUBLIC_KEY3);
+    when(signerParser.parse(pathEndsWith(PUBLIC_KEY3)))
+        .thenReturn(createArtifactSigner(PRIVATE_KEY3));
 
     final Collection<String> identifiers = signerProvider.availableIdentifiers();
 
     assertThat(identifiers).hasSize(3);
-    assertThat(identifiers).containsOnly(publicKey1, publicKey2, publicKey3);
-    verify(signerParser, never()).parse(any());
+    assertThat(identifiers)
+        .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
   }
 
   @Test
@@ -298,7 +321,7 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void signerCacheIsUsedIfAlreadyInCache() {
-    DirectoryBackedArtifactSignerProvider signerProvider =
+    final DirectoryBackedArtifactSignerProvider signerProvider =
         new DirectoryBackedArtifactSignerProvider(
             configsDirectory, FILE_EXTENSION, signerParser, 1);
     final String identifier = "0x" + PUBLIC_KEY1;

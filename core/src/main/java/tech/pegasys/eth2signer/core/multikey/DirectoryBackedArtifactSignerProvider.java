@@ -92,6 +92,15 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
 
   @Override
   public Set<String> availableIdentifiers() {
+    return allIdentifiers()
+        .parallelStream()
+        .map(this::getSigner)
+        .flatMap(Optional::stream)
+        .map(ArtifactSigner::getIdentifier)
+        .collect(Collectors.toSet());
+  }
+
+  private Set<String> allIdentifiers() {
     final Function<Path, String> getSignerIdentifier =
         file -> FilenameUtils.getBaseName(file.toString());
     return findSigners(this::matchesFileExtension, getSignerIdentifier).stream()
@@ -101,9 +110,9 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   public void cacheAllSigners() {
-    final Set<String> availableIdentifiers = availableIdentifiers();
-    LOG.info("Loading {} signers", availableIdentifiers.size());
-    availableIdentifiers.parallelStream().forEach(this::cacheSigner);
+    final Set<String> identifiers = allIdentifiers();
+    LOG.info("Loading {} signers", identifiers.size());
+    identifiers.parallelStream().forEach(this::cacheSigner);
     LOG.info("Loading signers complete");
   }
 

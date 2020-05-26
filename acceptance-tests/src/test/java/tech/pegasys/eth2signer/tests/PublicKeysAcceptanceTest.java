@@ -49,11 +49,11 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
 
     final HttpResponse response = signer.getRawRequest("/signer/publicKeys");
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(response.getBody()).isEqualToIgnoringCase("[]");
+    assertThat(publicKeysFromResponse(response)).isEmpty();
   }
 
   @Test
-  public void invalidKeysReturnsPublicKeyResponse() throws Exception {
+  public void invalidKeysReturnsEmptyPublicKeyResponse() throws Exception {
     testDirectory.resolve("a.yaml").toFile().createNewFile();
     testDirectory.resolve("b.yaml").toFile().createNewFile();
 
@@ -63,14 +63,33 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
 
     final HttpResponse response = signer.getRawRequest("/signer/publicKeys");
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-
-    final List<String> keys =
-        new ObjectMapper().readValue(response.getBody(), new TypeReference<>() {});
-    assertThat(keys).containsExactlyInAnyOrder("0xa", "0xb");
+    assertThat(publicKeysFromResponse(response)).isEmpty();
   }
 
   @Test
-  public void loadedKeysReturnPublicKeyResponse() throws Exception {
+  public void onlyValidKeysAreReturnedInPublicKeyResponse() throws Exception {
+    final BLSKeyPair keyPair1 =
+        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY_1)));
+    final Path keyConfigFile1 = configFileName(keyPair1.getPublicKey());
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile1, PRIVATE_KEY_1);
+
+    final BLSKeyPair keyPair2 =
+        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY_2)));
+    final Path keyConfigFile2 = configFileName(keyPair2.getPublicKey());
+    keyConfigFile2.toFile().createNewFile();
+
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory);
+    startSigner(builder.build());
+
+    final HttpResponse response = signer.getRawRequest("/signer/publicKeys");
+    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
+    assertThat(publicKeysFromResponse(response))
+        .containsExactlyInAnyOrder(keyPair1.getPublicKey().toString());
+  }
+
+  @Test
+  public void allLoadedKeysAreReturnedPublicKeyResponse() throws Exception {
     final BLSKeyPair keyPair1 =
         new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY_1)));
     final Path keyConfigFile1 = configFileName(keyPair1.getPublicKey());
@@ -88,15 +107,17 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
 
     final HttpResponse response = signer.getRawRequest("/signer/publicKeys");
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-
-    final List<String> keys =
-        new ObjectMapper().readValue(response.getBody(), new TypeReference<>() {});
-    assertThat(keys)
+    assertThat(publicKeysFromResponse(response))
         .containsExactlyInAnyOrder(keyPair1.getPublicKey().toString(), publicKey2.toString());
   }
 
   private Path configFileName(final BLSPublicKey publicKey2) {
     final String configFilename2 = publicKey2.toString().substring(2);
     return testDirectory.resolve(configFilename2 + ".yaml");
+  }
+
+  private List<String> publicKeysFromResponse(final HttpResponse response)
+      throws com.fasterxml.jackson.core.JsonProcessingException {
+    return new ObjectMapper().readValue(response.getBody(), new TypeReference<>() {});
   }
 }
