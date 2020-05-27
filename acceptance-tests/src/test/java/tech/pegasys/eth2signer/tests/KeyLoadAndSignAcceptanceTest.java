@@ -33,7 +33,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.json.Json;
@@ -41,9 +40,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
 public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
@@ -57,20 +54,12 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final BLSSignature expectedSignature =
       BLS.sign(keyPair.getSecretKey(), SIGNING_ROOT);
+  private static final String SIGN_ENDPOINT = "/signer/sign";
 
   @TempDir Path testDirectory;
 
-  @ParameterizedTest
-  @ValueSource(
-      strings = {
-        "/signer/block",
-        "/signer/attestation",
-        "/signer/randao_reveal",
-        "/signer/aggregation_slot",
-        "/signer/aggregate_and_proof"
-      })
-  public void signDataWithKeyLoadedFromUnencryptedFile(final String artifactSigningEndpoint)
-      throws Exception {
+  @Test
+  public void signDataWithKeyLoadedFromUnencryptedFile() throws Exception {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -80,15 +69,14 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     startSigner(builder.build());
 
     final HttpResponse response =
-        signer.signData(artifactSigningEndpoint, keyPair.getPublicKey(), SIGNING_ROOT);
+        signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
   }
 
   @ParameterizedTest
-  @MethodSource("keystoreValues")
-  public void signDataWithKeyLoadedFromKeyStoreFile(
-      final String artifactSigningEndpoint, KdfFunction kdfFunction) throws Exception {
+  @EnumSource(KdfFunction.class)
+  public void signDataWithKeyLoadedFromKeyStoreFile(KdfFunction kdfFunction) throws Exception {
     final String configFilename = publicKey.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
@@ -99,7 +87,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     startSigner(builder.build());
 
     final HttpResponse response =
-        signer.signData(artifactSigningEndpoint, keyPair.getPublicKey(), SIGNING_ROOT);
+        signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
   }
@@ -109,7 +97,8 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
 
-    final HttpResponse response = signer.signData("block", keyPair.getPublicKey(), SIGNING_ROOT);
+    final HttpResponse response =
+        signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.NOT_FOUND.code());
   }
 
@@ -123,7 +112,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final String endpoint = "/signer/block/" + keyPair.getPublicKey().toString();
+    final String endpoint = SIGN_ENDPOINT + "/" + keyPair.getPublicKey().toString();
     final HttpResponse response = signer.postRawRequest(endpoint, "invalid Body");
     assertThat(response.getStatusCode()).isEqualTo(400);
   }
@@ -145,22 +134,13 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
     final String httpBody = Json.encode(requestBody);
 
-    final String endpoint = "/signer/block/" + keyPair.getPublicKey().toString();
+    final String endpoint = SIGN_ENDPOINT + "/" + keyPair.getPublicKey().toString();
     final HttpResponse response = signer.postRawRequest(endpoint, httpBody);
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
   }
 
-  @ParameterizedTest
-  @ValueSource(
-      strings = {
-        "/signer/block",
-        "/signer/attestation",
-        "/signer/randao_reveal",
-        "/signer/aggregation_slot",
-        "/signer/aggregate_and_proof"
-      })
-  public void ableToSignUsingHashicorp(final String artifactSigningEndpoint)
-      throws ExecutionException, InterruptedException {
+  @Test
+  public void ableToSignUsingHashicorp() throws ExecutionException, InterruptedException {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final DockerClientFactory dockerClientFactory = new DockerClientFactory();
     final HashicorpNode hashicorpNode =
@@ -180,26 +160,11 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
       startSigner(builder.build());
 
       final HttpResponse response =
-          signer.signData(artifactSigningEndpoint, keyPair.getPublicKey(), SIGNING_ROOT);
+          signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
       assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
       assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
     } finally {
       hashicorpNode.shutdown();
     }
-  }
-
-  @SuppressWarnings("UnusedMethod")
-  private static Stream<Arguments> keystoreValues() {
-    return Stream.of(
-        Arguments.arguments("/signer/block", KdfFunction.SCRYPT),
-        Arguments.arguments("/signer/attestation", KdfFunction.SCRYPT),
-        Arguments.arguments("/signer/randao_reveal", KdfFunction.SCRYPT),
-        Arguments.arguments("/signer/aggregation_slot", KdfFunction.SCRYPT),
-        Arguments.arguments("/signer/aggregate_and_proof", KdfFunction.SCRYPT),
-        Arguments.arguments("/signer/block", KdfFunction.PBKDF2),
-        Arguments.arguments("/signer/attestation", KdfFunction.PBKDF2),
-        Arguments.arguments("/signer/randao_reveal", KdfFunction.PBKDF2),
-        Arguments.arguments("/signer/aggregation_slot", KdfFunction.PBKDF2),
-        Arguments.arguments("/signer/aggregate_and_proof", KdfFunction.PBKDF2));
   }
 }
