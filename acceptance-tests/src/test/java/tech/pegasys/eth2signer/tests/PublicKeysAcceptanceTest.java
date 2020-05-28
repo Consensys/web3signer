@@ -20,8 +20,8 @@ import tech.pegasys.artemis.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
-import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -54,8 +54,8 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void invalidKeysReturnsEmptyPublicKeyResponse() throws Exception {
-    testDirectory.resolve("a.yaml").toFile().createNewFile();
-    testDirectory.resolve("b.yaml").toFile().createNewFile();
+    createInvalidKeyFile(PRIVATE_KEY_1);
+    createInvalidKeyFile(PRIVATE_KEY_2);
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
@@ -68,15 +68,8 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void onlyValidKeysAreReturnedInPublicKeyResponse() throws Exception {
-    final BLSKeyPair keyPair1 =
-        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY_1)));
-    final Path keyConfigFile1 = configFileName(keyPair1.getPublicKey());
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile1, PRIVATE_KEY_1);
-
-    final BLSKeyPair keyPair2 =
-        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY_2)));
-    final Path keyConfigFile2 = configFileName(keyPair2.getPublicKey());
-    keyConfigFile2.toFile().createNewFile();
+    final BLSKeyPair key1 = createKey(PRIVATE_KEY_1);
+    createInvalidKeyFile(PRIVATE_KEY_2);
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
@@ -85,21 +78,13 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
     final HttpResponse response = signer.getRawRequest("/signer/publicKeys");
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(publicKeysFromResponse(response))
-        .containsExactlyInAnyOrder(keyPair1.getPublicKey().toString());
+        .containsExactlyInAnyOrder(key1.getPublicKey().toString());
   }
 
   @Test
   public void allLoadedKeysAreReturnedPublicKeyResponse() throws Exception {
-    final BLSKeyPair keyPair1 =
-        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY_1)));
-    final Path keyConfigFile1 = configFileName(keyPair1.getPublicKey());
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile1, PRIVATE_KEY_1);
-
-    final BLSKeyPair keyPair2 =
-        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY_2)));
-    final BLSPublicKey publicKey2 = keyPair2.getPublicKey();
-    final Path keyConfigFile2 = configFileName(publicKey2);
-    metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile2, keyPair2, KdfFunction.PBKDF2);
+    final BLSKeyPair key1 = createKey(PRIVATE_KEY_1);
+    final BLSKeyPair key2 = createKey(PRIVATE_KEY_2);
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
@@ -108,7 +93,22 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
     final HttpResponse response = signer.getRawRequest("/signer/publicKeys");
     assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
     assertThat(publicKeysFromResponse(response))
-        .containsExactlyInAnyOrder(keyPair1.getPublicKey().toString(), publicKey2.toString());
+        .containsExactlyInAnyOrder(key1.getPublicKey().toString(), key2.getPublicKey().toString());
+  }
+
+  private BLSKeyPair createKey(final String privateKey) {
+    final BLSKeyPair keyPair =
+        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey)));
+    final Path keyConfigFile = configFileName(keyPair.getPublicKey());
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKey);
+    return keyPair;
+  }
+
+  private void createInvalidKeyFile(final String privateKey) throws IOException {
+    final BLSKeyPair keyPair =
+        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey)));
+    final Path keyConfigFile = configFileName(keyPair.getPublicKey());
+    keyConfigFile.toFile().createNewFile();
   }
 
   private Path configFileName(final BLSPublicKey publicKey2) {
