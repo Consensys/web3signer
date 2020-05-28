@@ -99,9 +99,13 @@ public class Runner implements Runnable {
       final PublicKeyRequestHandler publicKeyHandler =
           new PublicKeyRequestHandler(signerProvider, objectMapper);
 
-      final Handler<HttpServerRequest> requestHandler =
-          createRouter(vertx, signingHandler, publicKeyHandler);
-      final HttpServer httpServer = createServerAndWait(vertx, requestHandler);
+      final Router router = Router.router(vertx);
+      final LogErrorHandler errorHandler = new LogErrorHandler();
+      registerUpCheckRoute(router, errorHandler);
+      registerSignerRoute(signingHandler, router, errorHandler);
+      registerPublicKeysRoute(publicKeyHandler, router, errorHandler);
+
+      final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
       persistPortInformation(httpServer.actualPort());
@@ -124,13 +128,7 @@ public class Runner implements Runnable {
         config.getKeyCacheLimit());
   }
 
-  private Handler<HttpServerRequest> createRouter(
-      final Vertx vertx,
-      final SigningRequestHandler signingHandler,
-      final PublicKeyRequestHandler publicKeyHandler) {
-    final Router router = Router.router(vertx);
-    final LogErrorHandler errorHandler = new LogErrorHandler();
-
+  private void registerUpCheckRoute(final Router router, final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.GET, "/upcheck")
         .produces(TEXT)
@@ -138,7 +136,12 @@ public class Runner implements Runnable {
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler)
         .handler(routingContext -> routingContext.response().end("OK"));
+  }
 
+  private void registerSignerRoute(
+      final SigningRequestHandler signingHandler,
+      final Router router,
+      final LogErrorHandler errorHandler) {
     router
         .routeWithRegex(HttpMethod.POST, SIGNER_PATH_REGEX)
         .produces(JSON)
@@ -146,7 +149,12 @@ public class Runner implements Runnable {
         .blockingHandler(signingHandler)
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler);
+  }
 
+  private void registerPublicKeysRoute(
+      final PublicKeyRequestHandler publicKeyHandler,
+      final Router router,
+      final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.GET, "/signer/publicKeys")
         .produces(JSON)
@@ -154,8 +162,6 @@ public class Runner implements Runnable {
         .blockingHandler(publicKeyHandler)
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler);
-
-    return router;
   }
 
   private HttpServer createServerAndWait(
