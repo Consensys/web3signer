@@ -12,10 +12,12 @@
  */
 package tech.pegasys.eth2signer.core;
 
+import static tech.pegasys.eth2signer.core.http.Secp256k1SigningHandler.SECP256k1_API_PATH;
 import static tech.pegasys.eth2signer.core.http.SigningRequestHandler.SIGNER_PATH_REGEX;
 
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
 import tech.pegasys.eth2signer.core.http.PublicKeyRequestHandler;
+import tech.pegasys.eth2signer.core.http.Secp256k1SigningHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
@@ -24,6 +26,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.utils.JsonDecoder;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.signers.secp256k1.multikey.MultiKeyTransactionSignerProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,6 +46,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
@@ -99,11 +103,16 @@ public class Runner implements Runnable {
       final PublicKeyRequestHandler publicKeyHandler =
           new PublicKeyRequestHandler(signerProvider, objectMapper);
 
+      final Secp256k1SigningHandler secp256k1SigningHandler =
+          new Secp256k1SigningHandler(
+              MultiKeyTransactionSignerProvider.create(config.getKeyConfigPath()), jsonDecoder);
+
       final Router router = Router.router(vertx);
       final LogErrorHandler errorHandler = new LogErrorHandler();
       registerUpCheckRoute(router, errorHandler);
       registerSignerRoute(signingHandler, router, errorHandler);
       registerPublicKeysRoute(publicKeyHandler, router, errorHandler);
+      registerSecp256k1SignerRout(secp256k1SigningHandler, router, errorHandler);
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -128,6 +137,20 @@ public class Runner implements Runnable {
         config.getKeyCacheLimit());
   }
 
+  private void registerSecp256k1SignerRout(
+      final Handler<RoutingContext> handler,
+      final Router router,
+      final LogErrorHandler errorHandler) {
+
+    router
+        .routeWithRegex(HttpMethod.POST, SECP256k1_API_PATH)
+        .produces(JSON)
+        .handler(BodyHandler.create())
+        .blockingHandler(handler)
+        .handler(ResponseContentTypeHandler.create())
+        .failureHandler(errorHandler);
+  }
+
   private void registerUpCheckRoute(final Router router, final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.GET, "/upcheck")
@@ -139,7 +162,7 @@ public class Runner implements Runnable {
   }
 
   private void registerSignerRoute(
-      final SigningRequestHandler signingHandler,
+      final Handler<RoutingContext> signingHandler,
       final Router router,
       final LogErrorHandler errorHandler) {
     router
@@ -152,7 +175,7 @@ public class Runner implements Runnable {
   }
 
   private void registerPublicKeysRoute(
-      final PublicKeyRequestHandler publicKeyHandler,
+      final Handler<RoutingContext> publicKeyHandler,
       final Router router,
       final LogErrorHandler errorHandler) {
     router

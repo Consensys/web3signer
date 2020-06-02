@@ -25,7 +25,7 @@ dependencies {
 
   implementation 'org.apache.tuweni:tuweni-bytes'
 
-  implementation 'tech.pegasys.signers.internal:keystorage-hashicorp'
+
 
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
 
@@ -38,6 +38,14 @@ dependencies {
   implementation 'tech.pegasys.signers.internal:bls-keystore'
 
   implementation 'tech.pegasys.teku.internal:bls'
+
+  implementation 'tech.pegasys.signers.internal:keystorage-hashicorp'
+  implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
+  implementation 'tech.pegasys.signers.internal:signing-secp256k1-azure'
+  implementation 'tech.pegasys.signers.internal:signing-secp256k1-common'
+  implementation 'tech.pegasys.signers.internal:signing-secp256k1-file-based'
+  implementation 'tech.pegasys.signers.internal:signing-secp256k1-hashicorp'
+  implementation 'tech.pegasys.signers.internal:signing-secp256k1-multikey'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 

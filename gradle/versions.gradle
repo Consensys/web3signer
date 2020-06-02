@@ -77,5 +77,14 @@ dependencyManagement {
 
     dependency 'tech.pegasys.teku.internal:bls:0.8.2-SNAPSHOT'
     dependency 'tech.pegasys.signers.internal:keystorage-hashicorp:1.0.0'
+
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.2-SNAPSHOT') {
+      entry 'signing-secp256k1-api'
+      entry 'signing-secp256k1-azure'
+      entry 'signing-secp256k1-common'
+      entry 'signing-secp256k1-file-based'
+      entry 'signing-secp256k1-hashicorp'
+      entry 'signing-secp256k1-multikey'
+    }
   }
 }
