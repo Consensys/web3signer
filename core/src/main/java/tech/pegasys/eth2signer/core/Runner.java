@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.core;
 
 import static tech.pegasys.eth2signer.core.http.SigningRequestHandler.SIGNER_PATH_REGEX;
 
+import io.vertx.ext.web.handler.StaticHandler;
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
 import tech.pegasys.eth2signer.core.http.PublicKeyRequestHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
@@ -104,6 +105,7 @@ public class Runner implements Runnable {
       registerUpCheckRoute(router, errorHandler);
       registerSignerRoute(signingHandler, router, errorHandler);
       registerPublicKeysRoute(publicKeyHandler, router, errorHandler);
+      registerStaticRoute(router);
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -162,6 +164,12 @@ public class Runner implements Runnable {
         .blockingHandler(publicKeyHandler)
         .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler);
+  }
+
+  private void registerStaticRoute(final Router router) {
+    router
+            .route("/static/*")
+            .handler(StaticHandler.create());
   }
 
   private HttpServer createServerAndWait(
