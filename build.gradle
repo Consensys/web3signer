@@ -409,6 +409,7 @@ dependencies {
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
+def swaggerUIDist = "${project.rootDir}/core/src/main/resources/webroot"
 distributions {
   main {
     contents {
@@ -416,11 +417,20 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
+      from(swaggerUIDist) {into "./bin/webroot"}
     }
   }
 }
 
-installDist { dependsOn checkLicenses }
+installDist {
+  dependsOn checkLicenses
+  doLast {
+    copy {
+      from swaggerUIDist
+      into "${destinationDir}/bin/webroot"
+    }
+  }
+}
 
 distTar {
   dependsOn checkLicenses

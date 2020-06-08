@@ -14,7 +14,6 @@ package tech.pegasys.eth2signer.core;
 
 import static tech.pegasys.eth2signer.core.http.SigningRequestHandler.SIGNER_PATH_REGEX;
 
-import io.vertx.ext.web.handler.StaticHandler;
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
 import tech.pegasys.eth2signer.core.http.PublicKeyRequestHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
@@ -46,6 +45,7 @@ import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
+import io.vertx.ext.web.handler.StaticHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -167,9 +167,8 @@ public class Runner implements Runnable {
   }
 
   private void registerStaticRoute(final Router router) {
-    router
-            .route("/static/*")
-            .handler(StaticHandler.create());
+    router.route("/*").handler(StaticHandler.create());
+    LOG.info("Registered static route /");
   }
 
   private HttpServer createServerAndWait(
