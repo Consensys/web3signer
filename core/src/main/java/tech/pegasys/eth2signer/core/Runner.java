@@ -146,7 +146,7 @@ public class Runner implements Runnable {
       final LogErrorHandler errorHandler) {
     router
         .routeWithRegex(HttpMethod.POST, SIGNER_PATH_REGEX)
-        .produces(JSON)
+        .produces(TEXT)
         .handler(BodyHandler.create())
         .blockingHandler(signingHandler)
         .handler(ResponseContentTypeHandler.create())
@@ -168,7 +168,6 @@ public class Runner implements Runnable {
 
   private void registerStaticRoute(final Router router) {
     router.route("/openapi/*").handler(StaticHandler.create("openapi"));
-    LOG.info("Registered static route /openapi");
   }
 
   private HttpServer createServerAndWait(
