@@ -167,8 +167,8 @@ public class Runner implements Runnable {
   }
 
   private void registerStaticRoute(final Router router) {
-    router.route("/*").handler(StaticHandler.create());
-    LOG.info("Registered static route /");
+    router.route("/openapi/*").handler(StaticHandler.create("openapi"));
+    LOG.info("Registered static route /openapi");
   }
 
   private HttpServer createServerAndWait(
