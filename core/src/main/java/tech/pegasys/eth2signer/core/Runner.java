@@ -27,13 +27,16 @@ import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.handler.codec.http.HttpHeaderValues;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -54,8 +57,14 @@ public class Runner implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String TEXT = HttpHeaderValues.TEXT_PLAIN.toString() + "; charset=utf-8";
-  private static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
+  private static final String CONTENT_TYPE_TEXT = "text/plain; charset=utf-8";
+  private static final String CONTENT_TYPE_TEXT_HTML = "text/html; charset=utf-8";
+  private static final String CONTENT_TYPE_JSON = "application/json";
+  private static final String CONTENT_TYPE_YAML = "text/x-yaml";
+
+  private static final URL OPENAPI_INDEX_URL = Resources.getResource("openapi/index.html");
+  private static final URL OPENAPI_SPEC_URL = Resources.getResource("openapi/eth2signer.yaml");
+
   private final Config config;
 
   public Runner(final Config config) {
@@ -104,6 +113,7 @@ public class Runner implements Runnable {
       registerUpCheckRoute(router, errorHandler);
       registerSignerRoute(signingHandler, router, errorHandler);
       registerPublicKeysRoute(publicKeyHandler, router, errorHandler);
+      registerOpenApiSpecRoute(router);
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -131,9 +141,9 @@ public class Runner implements Runnable {
   private void registerUpCheckRoute(final Router router, final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.GET, "/upcheck")
-        .produces(TEXT)
-        .handler(BodyHandler.create())
+        .produces(CONTENT_TYPE_TEXT)
         .handler(ResponseContentTypeHandler.create())
+        .handler(BodyHandler.create())
         .failureHandler(errorHandler)
         .handler(routingContext -> routingContext.response().end("OK"));
   }
@@ -144,10 +154,10 @@ public class Runner implements Runnable {
       final LogErrorHandler errorHandler) {
     router
         .routeWithRegex(HttpMethod.POST, SIGNER_PATH_REGEX)
-        .produces(JSON)
+        .produces(CONTENT_TYPE_TEXT)
+        .handler(ResponseContentTypeHandler.create())
         .handler(BodyHandler.create())
         .blockingHandler(signingHandler)
-        .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler);
   }
 
@@ -157,11 +167,28 @@ public class Runner implements Runnable {
       final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.GET, "/signer/publicKeys")
-        .produces(JSON)
+        .produces(CONTENT_TYPE_JSON)
+        .handler(ResponseContentTypeHandler.create())
         .handler(BodyHandler.create())
         .blockingHandler(publicKeyHandler)
-        .handler(ResponseContentTypeHandler.create())
         .failureHandler(errorHandler);
+  }
+
+  private void registerOpenApiSpecRoute(final Router router) throws IOException {
+    final String indexHtml = Resources.toString(OPENAPI_INDEX_URL, Charsets.UTF_8);
+    final String openApiSpecYaml = Resources.toString(OPENAPI_SPEC_URL, Charsets.UTF_8);
+
+    router
+        .route(HttpMethod.GET, "/openapi/eth2signer.yaml")
+        .produces(CONTENT_TYPE_YAML)
+        .handler(ResponseContentTypeHandler.create())
+        .handler(routingContext -> routingContext.response().end(openApiSpecYaml));
+
+    router
+        .route(HttpMethod.GET, "/openapi/*")
+        .produces(CONTENT_TYPE_TEXT_HTML)
+        .handler(ResponseContentTypeHandler.create())
+        .handler(routingContext -> routingContext.response().end(indexHtml));
   }
 
   private HttpServer createServerAndWait(
