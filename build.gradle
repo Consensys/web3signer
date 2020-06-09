@@ -409,9 +409,9 @@ dependencies {
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
-
-def openApiWebRootSrc = "${project.rootDir}/core/src/main/resources/openapi"
-def openApiWebRootDest = "bin/openapi" //control where to load static OpenApi UI from
+// because we have disabled VertX classpath scanning in distribution, we are manually copying openapi webroot in bin folder
+def openApiWebRootSrc = "${project(':core').buildDir}/resources/main/openapi"
+def openApiWebRootDest = "bin/openapi"
 
 distributions {
   main {
@@ -428,6 +428,7 @@ distributions {
 installDist {
   dependsOn checkLicenses
   doLast {
+    println openApiWebRootSrc
     copy {
       from openApiWebRootSrc
       into "${destinationDir}/${openApiWebRootDest}"

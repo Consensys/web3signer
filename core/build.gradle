@@ -62,3 +62,11 @@ dependencies {
 artifacts {
   testSupportArtifacts testSupportJar
 }
+
+processResources {
+  filesMatching('openapi/eth2signer.yaml') {
+    filter {
+      it.replace('@VERSION@', "${project.version}")
+    }
+  }
+}
