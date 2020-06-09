@@ -409,10 +409,6 @@ dependencies {
   errorprone 'com.google.errorprone:error_prone_core'
 }
 
-// because we have disabled VertX classpath scanning in distribution, we are manually copying openapi webroot in bin folder
-def openApiWebRootSrc = "${project(':core').buildDir}/resources/main/openapi"
-def openApiWebRootDest = "bin/openapi"
-
 distributions {
   main {
     contents {
@@ -420,21 +416,11 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
-      from(openApiWebRootSrc) {into "./${openApiWebRootDest}"}
     }
   }
 }
 
-installDist {
-  dependsOn checkLicenses
-  doLast {
-    println openApiWebRootSrc
-    copy {
-      from openApiWebRootSrc
-      into "${destinationDir}/${openApiWebRootDest}"
-    }
-  }
-}
+installDist { dependsOn checkLicenses }
 
 distTar {
   dependsOn checkLicenses
