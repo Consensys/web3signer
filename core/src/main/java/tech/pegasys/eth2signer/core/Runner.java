@@ -57,9 +57,10 @@ public class Runner implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String TEXT = "text/plain; charset=utf-8";
-  private static final String TEXT_HTML = "text/html; charset=utf-8";
-  private static final String JSON = "application/json";
+  private static final String CONTENT_TYPE_TEXT = "text/plain; charset=utf-8";
+  private static final String CONTENT_TYPE_TEXT_HTML = "text/html; charset=utf-8";
+  private static final String CONTENT_TYPE_JSON = "application/json";
+  private static final String CONTENT_TYPE_YAML = "text/x-yaml";
 
   private static final URL OPENAPI_INDEX_URL = Resources.getResource("openapi/index.html");
   private static final URL OPENAPI_SPEC_URL = Resources.getResource("openapi/eth2signer.yaml");
@@ -140,7 +141,7 @@ public class Runner implements Runnable {
   private void registerUpCheckRoute(final Router router, final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.GET, "/upcheck")
-        .produces(TEXT)
+        .produces(CONTENT_TYPE_TEXT)
         .handler(ResponseContentTypeHandler.create())
         .handler(BodyHandler.create())
         .failureHandler(errorHandler)
@@ -153,7 +154,7 @@ public class Runner implements Runnable {
       final LogErrorHandler errorHandler) {
     router
         .routeWithRegex(HttpMethod.POST, SIGNER_PATH_REGEX)
-        .produces(TEXT)
+        .produces(CONTENT_TYPE_TEXT)
         .handler(ResponseContentTypeHandler.create())
         .handler(BodyHandler.create())
         .blockingHandler(signingHandler)
@@ -166,7 +167,7 @@ public class Runner implements Runnable {
       final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.GET, "/signer/publicKeys")
-        .produces(JSON)
+        .produces(CONTENT_TYPE_JSON)
         .handler(ResponseContentTypeHandler.create())
         .handler(BodyHandler.create())
         .blockingHandler(publicKeyHandler)
@@ -178,25 +179,16 @@ public class Runner implements Runnable {
     final String openApiSpecYaml = Resources.toString(OPENAPI_SPEC_URL, Charsets.UTF_8);
 
     router
-        .route(HttpMethod.GET, "/openapi")
-        .produces(TEXT_HTML)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(routingContext -> routingContext.response().end(indexHtml));
-    router
-        .route(HttpMethod.GET, "/openapi/")
-        .produces(TEXT_HTML)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(routingContext -> routingContext.response().end(indexHtml));
-    router
-        .route(HttpMethod.GET, "/openapi/index.html")
-        .produces(TEXT_HTML)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(routingContext -> routingContext.response().end(indexHtml));
-    router
         .route(HttpMethod.GET, "/openapi/eth2signer.yaml")
-        .produces(TEXT_HTML)
+        .produces(CONTENT_TYPE_YAML)
         .handler(ResponseContentTypeHandler.create())
         .handler(routingContext -> routingContext.response().end(openApiSpecYaml));
+
+    router
+        .route(HttpMethod.GET, "/openapi/*")
+        .produces(CONTENT_TYPE_TEXT_HTML)
+        .handler(ResponseContentTypeHandler.create())
+        .handler(routingContext -> routingContext.response().end(indexHtml));
   }
 
   private HttpServer createServerAndWait(
