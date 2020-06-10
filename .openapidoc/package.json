@@ -1,0 +1,16 @@
+{
+  "name": "openapidoc",
+  "version": "1.0.0",
+  "description": "gh-pages dist",
+  "main": "index.js",
+  "dependencies": {
+    "follow-redirects": "^1.11.0",
+    "js-yaml": "^3.14.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "PegaSys",
+  "license": "Apache-2.0"
+}
