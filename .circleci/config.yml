@@ -202,9 +202,10 @@ jobs:
           at: ~/project
       - run:
           name: Build Folder
+          working_directory: .openapidoc 
           command: |
-            ls ./
-            ls ./core/build/resources/main/openapi
+            npm install
+            node index.js
 
 workflows:
   version: 2
