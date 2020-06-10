@@ -32,6 +32,10 @@ executors:
       JAVA_TOOL_OPTIONS: -Xmx4096m
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2 -Xmx4096m
 
+  executor_node:
+    docker:
+      - image: circleci/node:14-buster
+
 commands:
   prepare:
     description: "Prepare"
@@ -189,7 +193,19 @@ jobs:
             docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
       - notify
-      
+
+  publishOpenApiSpec:
+    executor: executor_node
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Build Folder
+          command: |
+            ls ./
+            ls ./core/build/resources/main/openapi
+
 workflows:
   version: 2
   default:
@@ -201,6 +217,10 @@ workflows:
       - buildDocker:
           requires:
             - build
+      - publishOpenApiSpec:
+          requires:
+            - build
+            - acceptanceTests
       - publish:
           filters:
             branches:
