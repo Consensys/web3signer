@@ -1,8 +1,10 @@
 const fs = require("fs");
 const yaml = require("js-yaml");
 const { https } = require("follow-redirects");
-const ghpages = require('gh-pages');
+const ghpages = require("gh-pages");
 
+const repo = "git@github.com:PegaSysEng/eth2signer.git";
+const branch = "gh-pages-test";
 const spec = "../core/build/resources/main/openapi/eth2signer.yaml";
 const versionsFileUrl =
   "https://github.com/PegaSysEng/eth2signer/raw/gh-pages/versions.json";
@@ -95,30 +97,32 @@ async function run() {
   copySpecToDist(specVersion);
   await downloadAndUpdateVersionsFile(specVersion);
 
-
-  await ghpages.publish('./dist', {
+  await ghpages.publish(
+    "./dist",
+    {
       add: true,
-      branch: 'gh-pages-test',
-      repo: 'git@github.com:PegaSysEng/eth2signer2.git',
+      branch: branch,
+      repo: repo,
       user: {
-          name: 'CircleCI Build',
-          email: 'ci-build@consensys.net'  
+        name: "CircleCI Build",
+        email: "ci-build@consensys.net",
       },
-      message: `OpenAPI Publish ${specVersion}`
-
-  }, err => {
+      message: `OpenAPI Publish ${specVersion}`,
+    },
+    (err) => {
       if (err) {
         console.log("OpenAPI spec publish failed");
-        console.log("Error in ghpages: " + err)
-        process.exit(1)
+        console.log("Error in gh-pages: " + err);
+        process.exit(1);
       }
-  }).catch(error => console.log("caught!!!"))
+    }
+  );
 
-  console.log("Done")
+  console.log("Done");
 }
 
 run().catch((error) => {
   console.log("OpenAPI spec publish failed");
   console.log(error.message);
-  process.exit(1)
+  process.exit(1);
 });
