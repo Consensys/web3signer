@@ -107,7 +107,7 @@ async function run() {
         name: "CircleCI Build",
         email: "ci-build@consensys.net",
       },
-      message: `OpenAPI Publish ${specVersion}`,
+      message: `[skip ci] OpenAPI Publish ${specVersion}`,
     },
     (err) => {
       if (err) {
