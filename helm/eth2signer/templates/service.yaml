@@ -1,0 +1,28 @@
+{{- if .Values.service.enabled }}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ template "eth2signer.name" . }}
+    chart: {{ template "eth2signer.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+      protocol: TCP
+      name: http
+    - port: {{ .Values.service.metricsPort }}
+      targetPort: {{ .Values.service.metricsPort }}
+      protocol: TCP
+      name: metrics
+  selector:
+    app: {{ template "eth2signer.name" . }}
+    release: {{ .Release.Name }}
+
+{{- end}}
