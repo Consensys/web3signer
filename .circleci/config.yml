@@ -198,6 +198,9 @@ jobs:
     executor: executor_node
     steps:
       - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "59:ad:fd:64:71:eb:81:01:6a:d7:1a:c9:0c:19:39:af"
       - attach_workspace:
           at: ~/project
       - run:

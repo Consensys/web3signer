@@ -1,6 +1,7 @@
 const fs = require("fs");
 const yaml = require("js-yaml");
 const { https } = require("follow-redirects");
+const ghpages = require('gh-pages');
 
 const spec = "../core/build/resources/main/openapi/eth2signer.yaml";
 const versionsFileUrl =
