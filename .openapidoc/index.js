@@ -94,9 +94,31 @@ async function run() {
 
   copySpecToDist(specVersion);
   await downloadAndUpdateVersionsFile(specVersion);
+
+
+  await ghpages.publish('./dist', {
+      add: true,
+      branch: 'gh-pages-test',
+      repo: 'git@github.com:PegaSysEng/eth2signer2.git',
+      user: {
+          name: 'CircleCI Build',
+          email: 'ci-build@consensys.net'  
+      },
+      message: `OpenAPI Publish ${specVersion}`
+
+  }, err => {
+      if (err) {
+        console.log("OpenAPI spec publish failed");
+        console.log("Error in ghpages: " + err)
+        process.exit(1)
+      }
+  }).catch(error => console.log("caught!!!"))
+
+  console.log("Done")
 }
 
 run().catch((error) => {
   console.log("OpenAPI spec publish failed");
   console.log(error.message);
+  process.exit(1)
 });
