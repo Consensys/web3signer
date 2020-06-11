@@ -222,6 +222,11 @@ workflows:
           requires:
             - build
       - publishOpenApiSpec:
+          filters:
+            branches:
+              only:
+                - master
+                - /^release-.*/
           requires:
             - build
             - acceptanceTests

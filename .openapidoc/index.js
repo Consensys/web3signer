@@ -4,7 +4,7 @@ const { https } = require("follow-redirects");
 const ghpages = require("gh-pages");
 
 const repo = "git@github.com:PegaSysEng/eth2signer.git";
-const branch = "gh-pages-test";
+const branch = "gh-pages";
 const spec = "../core/build/resources/main/openapi/eth2signer.yaml";
 const versionsFileUrl =
   "https://github.com/PegaSysEng/eth2signer/raw/gh-pages/versions.json";
