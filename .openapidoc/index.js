@@ -3,125 +3,140 @@ const yaml = require("js-yaml");
 const fetch = require("node-fetch");
 const ghpages = require("gh-pages");
 
-// constants
-const distDir = "./dist";
-const repo = "git@github.com:PegaSysEng/eth2signer.git";
-const branch = "gh-pages";
-const spec = "../core/build/resources/main/openapi/eth2signer.yaml";
-const versionsFileName = "versions.json";
-const versionsFileUrl = `https://github.com/PegaSysEng/eth2signer/raw/${branch}/${versionsFileName}`;
-const versionsFile = `${distDir}/${versionsFileName}`;
-
-/**
- * Re-create dist dir
- */
-function prepareDistDir() {
-  fs.rmdirSync(distDir, { recursive: true });
-  fs.mkdirSync(distDir, { recursive: true });
-}
-
-/**
- * Parse OpenApi yaml and return spec version.
- */
-function calculateVersionFromSpec() {
-  let data = yaml.safeLoad(fs.readFileSync(spec, "utf8"));
-  return data.info.version;
-}
-
-/**
- * Determine if its a release version from spec version. It contains -dev- as a result from our gradle build
- * @param specVersion
- */
-function isReleaseVersion(specVersion) {
-  return !specVersion.includes("-dev-");
-}
-
-/**
- * update versions.json
- * @param specVersion
- * @param versionsJson
- */
-async function updateVersionJson(specVersion, versionsJson) {
-  versionsJson[specVersion] = { spec: specVersion, source: specVersion };
-  versionsJson["stable"] = { spec: specVersion, source: specVersion };
-  fs.writeFileSync(versionsFile, JSON.stringify(versionsJson, null, 1));
-}
-
-/**
- * Fetch versions.json
- */
-async function fetchVersions() {
-  console.log("Fetching " + versionsFileUrl);
-  const versionJsonResponse = await fetch(versionsFileUrl);
-  if (versionJsonResponse.ok) {
-    return versionJsonResponse.json();
-  } else {
-    throw new Error(
-      "Versions.json fetch Status: " + versionJsonResponse.statusText
-    );
-  }
-}
-
-/**
- * Publish dist folder to gh-pages branch
- * @param specVersion
- */
-async function publishToGHPages(specVersion) {
-  return new Promise((resolve, reject) => {
-    ghpages.publish(
-      distDir,
-      {
-        add: true,
-        branch: branch,
-        repo: repo,
-        user: {
-          name: "CircleCI Build",
-          email: "ci-build@consensys.net",
-        },
-        message: `[skip ci] OpenAPI Publish ${specVersion}`,
-      },
-      (err) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(true);
-      }
-    );
-  });
-}
-
-function copySpecFileToDist(specVersion) {
-  fs.copyFileSync(spec, `${distDir}/eth2signer-${specVersion}.yaml`);
-}
+const config = new (function () {
+  this.repo = "git@github.com:PegaSysEng/eth2signer.git";
+  this.branch = "gh-pages";
+  this.specPath = "../core/build/resources/main/openapi/eth2signer.yaml";
+  this.specVersion = "";
+  this.versionsFileName = "versions.json";
+  this.versionsFileUrl = `https://github.com/PegaSysEng/eth2signer/raw/${this.branch}/${this.versionsFileName}`;
+  this.distDir = "./dist";
+  this.versionsFileDist = `${this.distDir}/${this.versionsFileName}`;
+})();
 
 /**
  * Main function to prepare and publish openapi spec to gh-pages branch
  */
 async function main() {
   prepareDistDir();
-  const specVersion = calculateVersionFromSpec();
+  calculateVersionFromSpec();
+  copySpecFileToDist();
+  await updateVersionJson();
+  cleanGhPagesCache();
+  await publishToGHPages();
+}
 
-  copySpecFileToDist("latest");
+/**
+ * Re-create dist dir
+ */
+function prepareDistDir() {
+  fs.rmdirSync(config.distDir, { recursive: true });
+  fs.mkdirSync(config.distDir, { recursive: true });
+}
 
-  if (isReleaseVersion(specVersion)) {
-    copySpecFileToDist(specVersion);
-    let versionsJson = await fetchVersions();
-    await updateVersionJson(specVersion, versionsJson);
-    console.log("Release versions updated");
+/**
+ * Parse OpenApi yaml and update config spec version.
+ */
+function calculateVersionFromSpec() {
+  const data = yaml.safeLoad(fs.readFileSync(config.specPath, "utf8"));
+  config.specVersion = data.info.version;
+}
+
+/**
+ * Determine if its a release version from spec version. It contains -dev- as a result from our gradle build
+ */
+function isReleaseVersion() {
+  return !config.specVersion.includes("-dev-");
+}
+
+/**
+ * Fetch versions.json
+ */
+async function fetchVersions() {
+  const response = await fetch(config.versionsFileUrl);
+  if (response.ok) {
+    return response.json();
   } else {
-    console.log("Not a release version, bypassing updating versions.json");
+    throw new Error("Versions.json fetch Status: " + response.statusText);
+  }
+}
+
+/**
+ * update versions.json
+ * @param versionsJson
+ */
+async function updateVersionJson() {
+  if (!isReleaseVersion()) {
+    return;
   }
 
-  await publishToGHPages(specVersion);
+  const versionsJson = await fetchVersions();
+
+  versionsJson[config.specVersion] = {
+    spec: config.specVersion,
+    source: config.specVersion,
+  };
+  versionsJson["stable"] = {
+    spec: config.specVersion,
+    source: config.specVersion,
+  };
+  fs.writeFileSync(
+    config.versionsFileDist,
+    JSON.stringify(versionsJson, null, 1)
+  );
+}
+
+function ghPagesConfig() {
+  return {
+    add: true,
+    branch: config.branch,
+    repo: config.repo,
+    user: {
+      name: "CircleCI Build",
+      email: "ci-build@consensys.net",
+    },
+    message: `[skip ci] OpenAPI Publish ${config.specVersion}`,
+  };
+}
+
+function cleanGhPagesCache() {
+  ghpages.clean();
+}
+
+/**
+ * Publish dist folder to gh-pages branch
+ */
+async function publishToGHPages() {
+  return new Promise((resolve, reject) => {
+    ghpages.publish(config.distDir, ghPagesConfig(), (err) => {
+      if (err) {
+        reject(err);
+      }
+      resolve();
+    });
+  });
+}
+
+function copySpecFileToDist() {
+  fs.copyFileSync(config.specPath, `${config.distDir}/eth2signer-latest.yaml`);
+  if (isReleaseVersion()) {
+    fs.copyFileSync(
+      config.specPath,
+      `${config.distDir}/eth2signer-${config.specVersion}.yaml`
+    );
+  }
 }
 
 // start execution of main method
 main()
-  .then((result) => {
-    console.log(`OpenAPI specs published to ${branch} successfully.`);
+  .then(() => {
+    process.stdout.write(
+      `OpenAPI specs ${config.specVersion} published to ${config.branch}.\n`
+    );
   })
-  .catch((error) => {
-    console.log(`OpenAPI spec publish failed to ${branch}`);
-    console.log(error.message);
-    process.exit(1);
+  .catch((err) => {
+    process.stderr.write(
+      `OpenAPI spec ${config.specVersion} failed to publish to ${config.branch}: ${err.message}\n`,
+      () => process.exit(1)
+    );
   });
