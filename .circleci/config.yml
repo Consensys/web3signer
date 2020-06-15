@@ -198,9 +198,6 @@ jobs:
     executor: executor_node
     steps:
       - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "8c:7f:3d:66:05:d9:12:a2:af:58:59:bf:97:c1:c7:84"
       - attach_workspace:
           at: ~/project
       - restore_cache:
@@ -230,14 +227,8 @@ workflows:
           requires:
             - build
       - publishOpenApiSpec:
-          filters:
-            branches:
-              only:
-                - master
-                - /^release-.*/
           requires:
             - build
-            - acceptanceTests
       - publish:
           filters:
             branches:
