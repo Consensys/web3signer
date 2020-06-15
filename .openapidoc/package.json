@@ -1,8 +1,15 @@
 {
   "name": "openapidoc",
   "version": "1.0.0",
-  "description": "gh-pages dist",
-  "main": "index.js",
+  "description": "Prepare Eth2Signer OpenAPI spec to be pusged to gh-pages branch",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/PegaSysEng/eth2signer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PegaSysEng/eth2signer/issues"
+  },
+  "main": "./index.js",
   "dependencies": {
     "gh-pages": "^3.0.0",
     "js-yaml": "^3.14.0",
@@ -13,11 +20,12 @@
     "husky": "^4.2.5"
   },
   "scripts": {
+    "lint": "eslint index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm test"
+      "pre-commit": "npm run lint"
     }
   },
   "author": "PegaSys",
