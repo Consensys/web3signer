@@ -5,7 +5,7 @@ const ghpages = require("gh-pages");
 
 const config = new (function () {
   this.repo = "git@github.com:PegaSysEng/eth2signer.git";
-  this.branch = "gh-pages";
+  this.branch = "gh-pages-test";
   this.specPath = "../core/build/resources/main/openapi/eth2signer.yaml";
   this.specVersion = "";
   this.versionsFileName = "versions.json";
@@ -92,8 +92,8 @@ function ghPagesConfig() {
     branch: config.branch,
     repo: config.repo,
     user: {
-      name: "CircleCI Build",
-      email: "ci-build@consensys.net",
+      name: process.env["CIRCLE_USERNAME"] ? process.env["CIRCLE_USERNAME"] :  "CircleCI Build",
+      email: process.env["CIRCLE_USERNAME"] ? `${process.env["CIRCLE_USERNAME"]}@users.noreply.github.com` : "ci-build@consensys.net",
     },
     message: `[skip ci] OpenAPI Publish ${config.specVersion}`,
   };
@@ -131,12 +131,12 @@ function copySpecFileToDist() {
 main()
   .then(() => {
     process.stdout.write(
-      `OpenAPI specs ${config.specVersion} published to ${config.branch}.\n`
+      `OpenAPI specs [${config.specVersion}] published to [${config.branch}] using user [${ghPagesConfig().user.name}].\n`
     );
   })
   .catch((err) => {
     process.stderr.write(
-      `OpenAPI spec ${config.specVersion} failed to publish to ${config.branch}: ${err.message}\n`,
+      `OpenAPI spec [${config.specVersion}] failed to publish to [${config.branch}] using user [${ghPagesConfig().user.name}]: ${err.message}\n`,
       () => process.exit(1)
     );
   });
