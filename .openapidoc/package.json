@@ -4,9 +4,9 @@
   "description": "gh-pages dist",
   "main": "index.js",
   "dependencies": {
-    "follow-redirects": "^1.11.0",
     "gh-pages": "^3.0.0",
-    "js-yaml": "^3.14.0"
+    "js-yaml": "^3.14.0",
+    "node-fetch": "^2.6.0"
   },
   "devDependencies": {},
   "scripts": {

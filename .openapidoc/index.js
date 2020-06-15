@@ -1,55 +1,23 @@
 const fs = require("fs");
 const yaml = require("js-yaml");
-const { https } = require("follow-redirects");
+const fetch = require("node-fetch");
 const ghpages = require("gh-pages");
 
 // constants
+const distDir = "./dist";
 const repo = "git@github.com:PegaSysEng/eth2signer.git";
 const branch = "gh-pages";
 const spec = "../core/build/resources/main/openapi/eth2signer.yaml";
-const versionsFileUrl =
-  "https://github.com/PegaSysEng/eth2signer/raw/gh-pages/versions.json";
-const distDir = "./dist";
-const versionsFile = distDir + "/versions.json";
+const versionsFileName = "versions.json";
+const versionsFileUrl = `https://github.com/PegaSysEng/eth2signer/raw/${branch}/${versionsFileName}`;
+const versionsFile = `${distDir}/${versionsFileName}`;
 
 /**
- * Downloads the given source URL and return it as a string
- * @param source
+ * Re-create dist dir
  */
-async function downloadAsString(source) {
-  return new Promise((resolve, reject) => {
-    let output = "";
-    return https
-      .get(source, (response) => {
-        const { statusCode, headers } = response;
-        if (statusCode >= 400)
-          return reject(
-            new Error(
-              `Failed to download file "${source}". Status: ${statusCode}`
-            )
-          );
-
-        response.on("data", (chunk) => (output += chunk));
-        response.on("end", () => resolve(output));
-      })
-      .on("error", (err) => {
-        return reject(err);
-      });
-  });
-}
-
-/**
- * Make distDir if it doesn't exist recursively
- */
-function ensureDistDir() {
-  fs.mkdirSync(distDir, { recursive: true });
-}
-
-/**
- * Clean and remove existing distDir
- */
-function cleanDistDir() {
+function prepareDistDir() {
   fs.rmdirSync(distDir, { recursive: true });
+  fs.mkdirSync(distDir, { recursive: true });
 }
 
 /**
@@ -69,53 +37,29 @@ function isReleaseVersion(specVersion) {
 }
 
 /**
- * Copy spec yaml to dist as as eth2signer-latest.yaml and optionally as eth2signer-specVer.yaml
+ * update versions.json
  * @param specVersion
+ * @param versionsJson
  */
-function copySpecToDist(specVersion) {
-  fs.copyFileSync(spec, `${distDir}/eth2signer-latest.yaml`);
+async function updateVersionJson(specVersion, versionsJson) {
+  versionsJson[specVersion] = { spec: specVersion, source: specVersion };
+  versionsJson["stable"] = { spec: specVersion, source: specVersion };
+  fs.writeFileSync(versionsFile, JSON.stringify(versionsJson, null, 1));
+}
 
-  if (isReleaseVersion(specVersion)) {
-    fs.copyFileSync(spec, `${distDir}/eth2signer-${specVersion}.yaml`);
+/**
+ * Fetch versions.json
+ */
+async function fetchVersions() {
+  console.log("Fetching " + versionsFileUrl);
+  const versionJsonResponse = await fetch(versionsFileUrl);
+  if (versionJsonResponse.ok) {
+    return versionJsonResponse.json();
+  } else {
+    throw new Error(
+      "Versions.json fetch Status: " + versionJsonResponse.statusText
+    );
   }
-}
-
-/**
- * Parse and update versions.json
- * @param specVersion
- * @param versionJsonString
- */
-function updateVersionJson(specVersion, versionJsonString) {
-  var versions = JSON.parse(versionJsonString);
-  versions[specVersion] = { spec: specVersion, source: specVersion };
-  versions["stable"] = { spec: specVersion, source: specVersion };
-  fs.writeFileSync(versionsFile, JSON.stringify(versions, null, 1));
-}
-
-/**
- * Download versions.json for release version from gh-pages and then pass result to updateVersionJson
- * @param specVersion
- */
-async function downloadAndUpdateVersionsFile(specVersion) {
-  return new Promise((resolve, reject) => {
-    if (!isReleaseVersion(specVersion)) {
-      console.log("Not a release version, bypassing updating versions.json");
-      return resolve(false);
-    }
-
-    return downloadAsString(versionsFileUrl)
-      .then((value) => {
-        try {
-          updateVersionJson(specVersion, value);
-          return resolve(true);
-        } catch (err) {
-          return reject(err);
-        }
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
 }
 
 /**
@@ -146,22 +90,38 @@ async function publishToGHPages(specVersion) {
   });
 }
 
-async function run() {
-  cleanDistDir();
-  ensureDistDir();
-
-  let specVersion = calculateVersionFromSpec();
-  console.log("Spec Version: " + specVersion);
-
-  copySpecToDist(specVersion);
-  await downloadAndUpdateVersionsFile(specVersion);
-  await publishToGHPages(specVersion);
-
-  console.log("OpenAPI specs published to gh-pages successfully.");
+function copySpecFileToDist(specVersion) {
+  fs.copyFileSync(spec, `${distDir}/eth2signer-${specVersion}.yaml`);
 }
 
-run().catch((error) => {
-  console.log("OpenAPI spec publish failed");
-  console.log(error.message);
-  process.exit(1);
-});
+/**
+ * Main function to prepare and publish openapi spec to gh-pages branch
+ */
+async function main() {
+  prepareDistDir();
+  const specVersion = calculateVersionFromSpec();
+
+  copySpecFileToDist("latest");
+
+  if (isReleaseVersion(specVersion)) {
+    copySpecFileToDist(specVersion);
+    let versionsJson = await fetchVersions();
+    await updateVersionJson(specVersion, versionsJson);
+    console.log("Release versions updated");
+  } else {
+    console.log("Not a release version, bypassing updating versions.json");
+  }
+
+  await publishToGHPages(specVersion);
+}
+
+// start execution of main method
+main()
+  .then((result) => {
+    console.log(`OpenAPI specs published to ${branch} successfully.`);
+  })
+  .catch((error) => {
+    console.log(`OpenAPI spec publish failed to ${branch}`);
+    console.log(error.message);
+    process.exit(1);
+  });
