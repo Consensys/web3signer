@@ -203,12 +203,20 @@ jobs:
             - "8c:7f:3d:66:05:d9:12:a2:af:58:59:bf:97:c1:c7:84"
       - attach_workspace:
           at: ~/project
+      - restore_cache:
+          keys:
+            - node-cache-{{ checksum "./.openapidoc/package-lock.json" }}
+            - node-cache-
       - run:
           name: Build Folder
           working_directory: .openapidoc 
           command: |
-            npm install
+            npm ci
             node index.js
+      - save_cache:
+          paths:
+            - ~/.npm
+          key: node-cache-{{ checksum "./.openapidoc/package-lock.json" }}
 
 workflows:
   version: 2
