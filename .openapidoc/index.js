@@ -5,7 +5,7 @@ const ghpages = require("gh-pages");
 
 const config = new (function () {
   this.repo = "git@github.com:PegaSysEng/eth2signer.git";
-  this.branch = "gh-pages-test";
+  this.branch = "gh-pages";
   this.specPath = "../core/build/resources/main/openapi/eth2signer.yaml";
   this.specVersion = "";
   this.versionsFileName = "versions.json";
