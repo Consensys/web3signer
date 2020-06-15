@@ -16,17 +16,11 @@
     "node-fetch": "^2.6.0"
   },
   "devDependencies": {
-    "eslint": "^7.2.0",
-    "husky": "^4.2.5"
+    "eslint": "^7.2.0"
   },
   "scripts": {
     "lint": "eslint index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npm run lint"
-    }
   },
   "author": "PegaSys",
   "license": "Apache-2.0"
