@@ -11,6 +11,8 @@
  * specific language governing permissions and limitations under the License.
  */
 
+
+import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
 
 import java.text.SimpleDateFormat
@@ -551,6 +553,7 @@ def buildTime() {
 
 // Takes the version, and if -SNAPSHOT is part of it replaces SNAPSHOT
 // with the git commit version.
+@Memoized
 def calculateVersion() {
   String version = rootProject.version
   if (version.endsWith("-SNAPSHOT")) {

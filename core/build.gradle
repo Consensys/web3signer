@@ -66,7 +66,7 @@ artifacts {
 processResources {
   filesMatching('openapi/eth2signer.yaml') {
     filter {
-      it.replace('@VERSION@', "${project.version}")
+      it.replace('@VERSION@', calculateVersion())
     }
   }
 }
