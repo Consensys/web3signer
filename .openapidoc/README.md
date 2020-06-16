@@ -44,4 +44,17 @@ for it. For example after adding spec version `0.0.2`, the `versions.json` would
 * Save updated `versions.json` to `dist` folder.
 * Push the `dist` folder to `gh-pages` branch. The script is using [gh-pages](https://www.npmjs.com/package/gh-pages) 
 npm module to automate this step.
+
+## Environment variables
+Following environment variables can be used to override defaults
+* `OA_GIT_URL`            (default: `git@github.com:PegaSysEng/eth2signer.git`)
+* `OA_GH_PAGES_BRANCH`    (default: `gh-pages`)
+* `OA_GIT_USERNAME`       (Required if standard git config for user is missing (such as in CircleCI). default: `CircleCI Build`)
+* `OA_GIT_EMAIL`          (Required if standard git config for email is missing (such as in CircleCI). default: `ci-build@consensys.net`)
+
+Following should only be overridden if changing the project
+* `OA_SPEC_PATH`          (default: `../core/build/resources/main/openapi/eth2signer.yaml`)
+* `OA_VERSIONS_FILE_NAME` (default: `versions.json`)
+* `OA_DIST_DIR`           (default: `./dist`)
+* 
  

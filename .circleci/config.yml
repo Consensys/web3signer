@@ -212,7 +212,7 @@ jobs:
           working_directory: .openapidoc 
           command: |
             npm ci
-            node index.js
+            OA_GIT_USERNAME=$CIRCLE_USERNAME OA_GIT_EMAIL="${CIRCLE_USERNAME}@users.noreply.github.com" OA_GIT_URL=$CIRCLE_REPOSITORY_URL OA_GH_PAGES_BRANCH="gh-pages" node index.js
       - save_cache:
           paths:
             - ~/.npm

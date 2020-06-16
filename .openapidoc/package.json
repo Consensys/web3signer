@@ -9,9 +9,10 @@
   "bugs": {
     "url": "https://github.com/PegaSysEng/eth2signer/issues"
   },
-  "main": "./index.js",
+  "main": "./publish.js",
   "dependencies": {
     "gh-pages": "^3.0.0",
+    "git-url-parse": "^11.1.2",
     "js-yaml": "^3.14.0",
     "node-fetch": "^2.6.0"
   },
@@ -19,7 +20,7 @@
     "eslint": "^7.2.0"
   },
   "scripts": {
-    "lint": "eslint index.js",
+    "lint": "eslint publish.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "PegaSys",
