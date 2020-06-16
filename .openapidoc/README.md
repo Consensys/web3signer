@@ -49,8 +49,8 @@ npm module to automate this step.
 Following environment variables can be used to override defaults
 * `OA_GIT_URL`            (default: `git@github.com:PegaSysEng/eth2signer.git`)
 * `OA_GH_PAGES_BRANCH`    (default: `gh-pages`)
-* `OA_GIT_USERNAME`       (Required if standard git config for user is missing (such as in CircleCI). default: `CircleCI Build`)
-* `OA_GIT_EMAIL`          (Required if standard git config for email is missing (such as in CircleCI). default: `ci-build@consensys.net`)
+* `OA_GIT_USERNAME`       (default: `CircleCI Build`)
+* `OA_GIT_EMAIL`          (default: `ci-build@consensys.net`)
 
 Following should only be overridden if changing the project
 * `OA_SPEC_PATH`          (default: `../core/build/resources/main/openapi/eth2signer.yaml`)
