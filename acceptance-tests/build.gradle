@@ -35,6 +35,7 @@ dependencies {
   testImplementation 'tech.pegasys.signers.internal:bls-keystore'
   testImplementation 'tech.pegasys.teku.internal:bls'
   testImplementation(group: 'tech.pegasys.signers.internal', name: 'keystorage-hashicorp', classifier: 'test-fixtures')
+  testImplementation 'com.atlassian.oai:swagger-request-validator-restassured'
 }
 
 test.enabled = false

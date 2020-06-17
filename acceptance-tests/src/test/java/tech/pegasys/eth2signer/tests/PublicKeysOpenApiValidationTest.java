@@ -12,27 +12,26 @@
  */
 package tech.pegasys.eth2signer.tests;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
 
 import tech.pegasys.artemis.bls.BLSKeyPair;
 import tech.pegasys.artemis.bls.BLSPublicKey;
 import tech.pegasys.artemis.bls.BLSSecretKey;
-import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
+public class PublicKeysOpenApiValidationTest extends AcceptanceTestBase {
+  private static final String SIGNER_PUBLIC_KEYS_PATH = "/signer/publicKeys";
 
   private static final String PRIVATE_KEY_1 =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
@@ -44,12 +43,18 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
   @TempDir Path testDirectory;
 
   @Test
-  public void noLoadedKeysReturnsEmptyPublicKeyResponse() throws Exception {
+  public void noLoadedKeysReturnsEmptyPublicKeyResponse() {
     startSigner(new SignerConfigurationBuilder().build());
 
-    final HttpResponse response = signer.getRawRequest("/signer/publicKeys");
-    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(publicKeysFromResponse(response)).isEmpty();
+    given()
+        .baseUri(signer.getUrl())
+        .filter(getOpenApiValidationFilter())
+        .when()
+        .get(SIGNER_PUBLIC_KEYS_PATH)
+        .then()
+        .assertThat()
+        .statusCode(200)
+        .body("", empty());
   }
 
   @Test
@@ -61,9 +66,15 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final HttpResponse response = signer.getRawRequest("/signer/publicKeys");
-    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(publicKeysFromResponse(response)).isEmpty();
+    given()
+        .baseUri(signer.getUrl())
+        .filter(getOpenApiValidationFilter())
+        .when()
+        .get("/signer/publicKeys")
+        .then()
+        .assertThat()
+        .statusCode(200)
+        .body("", empty());
   }
 
   @Test
@@ -75,14 +86,19 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final HttpResponse response = signer.getRawRequest("/signer/publicKeys");
-    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(publicKeysFromResponse(response))
-        .containsExactlyInAnyOrder(key1.getPublicKey().toString());
+    given()
+        .baseUri(signer.getUrl())
+        .filter(getOpenApiValidationFilter())
+        .when()
+        .get("/signer/publicKeys")
+        .then()
+        .assertThat()
+        .statusCode(200)
+        .body("", contains(key1.getPublicKey().toString()));
   }
 
   @Test
-  public void allLoadedKeysAreReturnedPublicKeyResponse() throws Exception {
+  public void allLoadedKeysAreReturnedPublicKeyResponse() {
     final BLSKeyPair key1 = createKey(PRIVATE_KEY_1);
     final BLSKeyPair key2 = createKey(PRIVATE_KEY_2);
 
@@ -90,10 +106,16 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final HttpResponse response = signer.getRawRequest("/signer/publicKeys");
-    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(publicKeysFromResponse(response))
-        .containsExactlyInAnyOrder(key1.getPublicKey().toString(), key2.getPublicKey().toString());
+    given()
+        .baseUri(signer.getUrl())
+        .filter(getOpenApiValidationFilter())
+        .when()
+        .get("/signer/publicKeys")
+        .then()
+        .assertThat()
+        .statusCode(200)
+        .body(
+            "", containsInAnyOrder(key1.getPublicKey().toString(), key2.getPublicKey().toString()));
   }
 
   private BLSKeyPair createKey(final String privateKey) {
@@ -114,10 +136,5 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
   private Path configFileName(final BLSPublicKey publicKey2) {
     final String configFilename2 = publicKey2.toString().substring(2);
     return testDirectory.resolve(configFilename2 + ".yaml");
-  }
-
-  private List<String> publicKeysFromResponse(final HttpResponse response)
-      throws com.fasterxml.jackson.core.JsonProcessingException {
-    return new ObjectMapper().readValue(response.getBody(), new TypeReference<>() {});
   }
 }
