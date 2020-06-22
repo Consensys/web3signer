@@ -30,7 +30,6 @@ import tech.pegasys.signers.hashicorp.dsl.DockerClientFactory;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 
 import java.nio.file.Path;
-import java.util.concurrent.ExecutionException;
 
 import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonObject;
@@ -40,7 +39,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-public class KeyLoadAndSignOpenApiValidationTest extends AcceptanceTestBase {
+public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
   private static final Bytes SIGNING_ROOT = Bytes.wrap("Hello, world!".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
@@ -57,7 +56,7 @@ public class KeyLoadAndSignOpenApiValidationTest extends AcceptanceTestBase {
   @TempDir Path testDirectory;
 
   @Test
-  public void signDataWithKeyLoadedFromUnencryptedFile() throws Exception {
+  public void signDataWithKeyLoadedFromUnencryptedFile() {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -82,7 +81,7 @@ public class KeyLoadAndSignOpenApiValidationTest extends AcceptanceTestBase {
 
   @ParameterizedTest
   @EnumSource(KdfFunction.class)
-  public void signDataWithKeyLoadedFromKeyStoreFile(KdfFunction kdfFunction) throws Exception {
+  public void signDataWithKeyLoadedFromKeyStoreFile(KdfFunction kdfFunction) {
     final String configFilename = publicKey.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
@@ -107,7 +106,7 @@ public class KeyLoadAndSignOpenApiValidationTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void receiveA404IfRequestedKeyDoesNotExist() throws Exception {
+  public void receiveA404IfRequestedKeyDoesNotExist() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
 
@@ -125,7 +124,7 @@ public class KeyLoadAndSignOpenApiValidationTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void receiveA400IfJsonBodyIsMalformed() throws Exception {
+  public void receiveA400IfJsonBodyIsMalformed() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -148,7 +147,7 @@ public class KeyLoadAndSignOpenApiValidationTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void unusedFieldsInRequestDoesNotAffectSigning() throws Exception {
+  public void unusedFieldsInRequestDoesNotAffectSigning() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -176,7 +175,7 @@ public class KeyLoadAndSignOpenApiValidationTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void ableToSignUsingHashicorp() throws ExecutionException, InterruptedException {
+  public void ableToSignUsingHashicorp() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final DockerClientFactory dockerClientFactory = new DockerClientFactory();
     final HashicorpNode hashicorpNode =

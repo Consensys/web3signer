@@ -26,11 +26,12 @@ import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import io.restassured.response.ValidatableResponse;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-public class PublicKeysOpenApiValidationTest extends AcceptanceTestBase {
+public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
   private static final String SIGNER_PUBLIC_KEYS_PATH = "/signer/publicKeys";
 
   private static final String PRIVATE_KEY_1 =
@@ -46,15 +47,7 @@ public class PublicKeysOpenApiValidationTest extends AcceptanceTestBase {
   public void noLoadedKeysReturnsEmptyPublicKeyResponse() {
     startSigner(new SignerConfigurationBuilder().build());
 
-    given()
-        .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
-        .when()
-        .get(SIGNER_PUBLIC_KEYS_PATH)
-        .then()
-        .assertThat()
-        .statusCode(200)
-        .body("", empty());
+    whenGetSignerPublicKeysPathThenAssertThat().body("", empty());
   }
 
   @Test
@@ -66,15 +59,7 @@ public class PublicKeysOpenApiValidationTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    given()
-        .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
-        .when()
-        .get("/signer/publicKeys")
-        .then()
-        .assertThat()
-        .statusCode(200)
-        .body("", empty());
+    whenGetSignerPublicKeysPathThenAssertThat().body("", empty());
   }
 
   @Test
@@ -86,15 +71,7 @@ public class PublicKeysOpenApiValidationTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    given()
-        .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
-        .when()
-        .get("/signer/publicKeys")
-        .then()
-        .assertThat()
-        .statusCode(200)
-        .body("", contains(key1.getPublicKey().toString()));
+    whenGetSignerPublicKeysPathThenAssertThat().body("", contains(key1.getPublicKey().toString()));
   }
 
   @Test
@@ -106,16 +83,20 @@ public class PublicKeysOpenApiValidationTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    given()
+    whenGetSignerPublicKeysPathThenAssertThat()
+        .body(
+            "", containsInAnyOrder(key1.getPublicKey().toString(), key2.getPublicKey().toString()));
+  }
+
+  private ValidatableResponse whenGetSignerPublicKeysPathThenAssertThat() {
+    return given()
         .baseUri(signer.getUrl())
         .filter(getOpenApiValidationFilter())
         .when()
-        .get("/signer/publicKeys")
+        .get(SIGNER_PUBLIC_KEYS_PATH)
         .then()
         .assertThat()
-        .statusCode(200)
-        .body(
-            "", containsInAnyOrder(key1.getPublicKey().toString(), key2.getPublicKey().toString()));
+        .statusCode(200);
   }
 
   private BLSKeyPair createKey(final String privateKey) {

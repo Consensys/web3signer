@@ -19,9 +19,9 @@ import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 
 import org.junit.jupiter.api.Test;
 
-public class UpcheckOpenApiValidationTest extends AcceptanceTestBase {
+public class UpcheckAcceptanceTest extends AcceptanceTestBase {
   @Test
-  void testGetUpcheck() {
+  void upcheckOnCorrectPortRespondsWithOK() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
 
