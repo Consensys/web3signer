@@ -124,7 +124,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void receiveA400IfJsonBodyIsMalformed() {
+  public void receiveA400IfSigningRootIsMissingFromJsonBody() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -139,6 +139,29 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
         .body("{\"invalid\": \"json body\"}")
+        .when()
+        .post(SIGN_ENDPOINT)
+        .then()
+        .assertThat()
+        .statusCode(400);
+  }
+
+  @Test
+  public void receiveA400IfJsonBodyIsMalformed() {
+    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
+
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory);
+    startSigner(builder.build());
+
+    // without OpenAPI validation filter
+    given()
+        .baseUri(signer.getUrl())
+        .contentType(ContentType.JSON)
+        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .body("not a json body")
         .when()
         .post(SIGN_ENDPOINT)
         .then()
