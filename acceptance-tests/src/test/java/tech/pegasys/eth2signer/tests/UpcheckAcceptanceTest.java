@@ -12,15 +12,27 @@
  */
 package tech.pegasys.eth2signer.tests;
 
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
+
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 
 import org.junit.jupiter.api.Test;
 
 public class UpcheckAcceptanceTest extends AcceptanceTestBase {
-
   @Test
-  public void upcheckOnCorrectPortRespondsWithOK() {
+  void upcheckOnCorrectPortRespondsWithOK() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
+
+    given()
+        .baseUri(signer.getUrl())
+        .filter(getOpenApiValidationFilter())
+        .when()
+        .get("/upcheck")
+        .then()
+        .assertThat()
+        .statusCode(200)
+        .body(equalToIgnoringCase("OK"));
   }
 }
