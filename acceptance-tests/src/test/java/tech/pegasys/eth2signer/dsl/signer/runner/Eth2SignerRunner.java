@@ -117,7 +117,7 @@ public abstract class Eth2SignerRunner {
       params.add("--metrics-enabled");
       params.add("--metrics-port");
       params.add(Integer.toString(signerConfig.getMetricsPort()));
-      if (signerConfig.getMetricsHostAllowList() != null) {
+      if (!signerConfig.getMetricsHostAllowList().isEmpty()) {
         params.add("--metrics-host-allowlist");
         final String allowList = String.join(",", signerConfig.getMetricsHostAllowList());
         params.add(allowList);

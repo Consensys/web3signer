@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.dsl.signer;
 
+import static java.util.Collections.emptyList;
+
 import java.nio.file.Path;
 import java.util.List;
 
@@ -23,7 +25,7 @@ public class SignerConfigurationBuilder {
   private int metricsPort = 0;
   private Path keyStoreDirectory = Path.of("./");
   private boolean metricsEnabled;
-  private List<String> metricsAllowHostList;
+  private List<String> metricsAllowHostList = emptyList();
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
