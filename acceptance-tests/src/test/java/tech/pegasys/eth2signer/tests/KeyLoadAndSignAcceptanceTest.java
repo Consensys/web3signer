@@ -12,9 +12,10 @@
  */
 package tech.pegasys.eth2signer.tests;
 
+import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 import tech.pegasys.artemis.bls.BLS;
 import tech.pegasys.artemis.bls.BLSKeyPair;
@@ -22,7 +23,6 @@ import tech.pegasys.artemis.bls.BLSPublicKey;
 import tech.pegasys.artemis.bls.BLSSecretKey;
 import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
-import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
@@ -30,12 +30,9 @@ import tech.pegasys.signers.hashicorp.dsl.DockerClientFactory;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.json.Json;
+import io.restassured.http.ContentType;
+import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -54,12 +51,12 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final BLSSignature expectedSignature =
       BLS.sign(keyPair.getSecretKey(), SIGNING_ROOT);
-  private static final String SIGN_ENDPOINT = "/signer/sign";
+  private static final String SIGN_ENDPOINT = "/signer/sign/{publicKey}";
 
   @TempDir Path testDirectory;
 
   @Test
-  public void signDataWithKeyLoadedFromUnencryptedFile() throws Exception {
+  public void signDataWithKeyLoadedFromUnencryptedFile() {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -68,15 +65,23 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final HttpResponse response =
-        signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
-    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
+    given()
+        .baseUri(signer.getUrl())
+        .filter(getOpenApiValidationFilter())
+        .contentType(ContentType.JSON)
+        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .body(new JsonObject().put("signingRoot", SIGNING_ROOT.toHexString()).toString())
+        .when()
+        .post(SIGN_ENDPOINT)
+        .then()
+        .assertThat()
+        .statusCode(200)
+        .body(equalToIgnoringCase(expectedSignature.toString()));
   }
 
   @ParameterizedTest
   @EnumSource(KdfFunction.class)
-  public void signDataWithKeyLoadedFromKeyStoreFile(KdfFunction kdfFunction) throws Exception {
+  public void signDataWithKeyLoadedFromKeyStoreFile(KdfFunction kdfFunction) {
     final String configFilename = publicKey.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
@@ -86,24 +91,40 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final HttpResponse response =
-        signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
-    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-    assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
+    given()
+        .baseUri(signer.getUrl())
+        .filter(getOpenApiValidationFilter())
+        .contentType(ContentType.JSON)
+        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .body(new JsonObject().put("signingRoot", SIGNING_ROOT.toHexString()).toString())
+        .when()
+        .post(SIGN_ENDPOINT)
+        .then()
+        .assertThat()
+        .statusCode(200)
+        .body(equalToIgnoringCase(expectedSignature.toString()));
   }
 
   @Test
-  public void receiveA404IfRequestedKeyDoesNotExist() throws Exception {
+  public void receiveA404IfRequestedKeyDoesNotExist() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     startSigner(builder.build());
 
-    final HttpResponse response =
-        signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
-    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.NOT_FOUND.code());
+    given()
+        .baseUri(signer.getUrl())
+        .filter(getOpenApiValidationFilter())
+        .contentType(ContentType.JSON)
+        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .body(new JsonObject().put("signingRoot", SIGNING_ROOT.toHexString()).toString())
+        .when()
+        .post(SIGN_ENDPOINT)
+        .then()
+        .assertThat()
+        .statusCode(404);
   }
 
   @Test
-  public void receiveA400IfJsonBodyIsMalformed() throws Exception {
+  public void receiveA400IfSigningRootIsMissingFromJsonBody() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -112,13 +133,21 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final String endpoint = SIGN_ENDPOINT + "/" + keyPair.getPublicKey().toString();
-    final HttpResponse response = signer.postRawRequest(endpoint, "invalid Body");
-    assertThat(response.getStatusCode()).isEqualTo(400);
+    // without OpenAPI validation filter
+    given()
+        .baseUri(signer.getUrl())
+        .contentType(ContentType.JSON)
+        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .body("{\"invalid\": \"json body\"}")
+        .when()
+        .post(SIGN_ENDPOINT)
+        .then()
+        .assertThat()
+        .statusCode(400);
   }
 
   @Test
-  public void unusedFieldsInRequestDoesNotAffectSigning() throws Exception {
+  public void receiveA400IfJsonBodyIsMalformed() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -127,20 +156,49 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    final Map<String, String> requestBody = new HashMap<>();
-    requestBody.put("publicKey", keyPair.getPublicKey().toString());
-    requestBody.put("signingRoot", SIGNING_ROOT.toString());
-    requestBody.put("unknownField", "someValue");
-
-    final String httpBody = Json.encode(requestBody);
-
-    final String endpoint = SIGN_ENDPOINT + "/" + keyPair.getPublicKey().toString();
-    final HttpResponse response = signer.postRawRequest(endpoint, httpBody);
-    assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
+    // without OpenAPI validation filter
+    given()
+        .baseUri(signer.getUrl())
+        .contentType(ContentType.JSON)
+        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .body("not a json body")
+        .when()
+        .post(SIGN_ENDPOINT)
+        .then()
+        .assertThat()
+        .statusCode(400);
   }
 
   @Test
-  public void ableToSignUsingHashicorp() throws ExecutionException, InterruptedException {
+  public void unusedFieldsInRequestDoesNotAffectSigning() {
+    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
+
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory);
+    startSigner(builder.build());
+
+    given()
+        .baseUri(signer.getUrl())
+        .filter(getOpenApiValidationFilter())
+        .contentType(ContentType.JSON)
+        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .body(
+            new JsonObject()
+                .put("signingRoot", SIGNING_ROOT.toHexString())
+                .put("unknownField", "someValue")
+                .toString())
+        .when()
+        .post(SIGN_ENDPOINT)
+        .then()
+        .assertThat()
+        .statusCode(200)
+        .body(equalToIgnoringCase(expectedSignature.toString()));
+  }
+
+  @Test
+  public void ableToSignUsingHashicorp() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final DockerClientFactory dockerClientFactory = new DockerClientFactory();
     final HashicorpNode hashicorpNode =
@@ -159,10 +217,22 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
       builder.withKeyStoreDirectory(testDirectory);
       startSigner(builder.build());
 
-      final HttpResponse response =
-          signer.signData(SIGN_ENDPOINT, keyPair.getPublicKey(), SIGNING_ROOT);
-      assertThat(response.getStatusCode()).isEqualTo(HttpResponseStatus.OK.code());
-      assertThat(response.getBody()).isEqualToIgnoringCase(expectedSignature.toString());
+      given()
+          .baseUri(signer.getUrl())
+          .filter(getOpenApiValidationFilter())
+          .contentType(ContentType.JSON)
+          .pathParam("publicKey", keyPair.getPublicKey().toString())
+          .body(
+              new JsonObject()
+                  .put("signingRoot", SIGNING_ROOT.toHexString())
+                  .put("unknownField", "someValue")
+                  .toString())
+          .when()
+          .post(SIGN_ENDPOINT)
+          .then()
+          .assertThat()
+          .statusCode(200)
+          .body(equalToIgnoringCase(expectedSignature.toString()));
     } finally {
       hashicorpNode.shutdown();
     }

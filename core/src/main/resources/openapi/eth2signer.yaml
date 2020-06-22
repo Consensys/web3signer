@@ -24,7 +24,8 @@ paths:
         in: 'path'
         required: true
         description: 'Public Key for which data to sign'
-        type: 'string'
+        schema:
+          type: 'string'
       requestBody:
         required: true
         content:
@@ -34,6 +35,10 @@ paths:
               properties:
                 signingRoot:
                   type: string
+              required:
+                - signingRoot
+              additionalProperties:
+                type: string
               example:
                 signingRoot: '0x48656c6c6f2c20776f726c6421'
       responses:
