@@ -13,13 +13,17 @@
 package tech.pegasys.eth2signer.dsl.signer;
 
 import java.nio.file.Path;
+import java.util.List;
 
 public class SignerConfigurationBuilder {
 
   private static final String LOCALHOST = "127.0.0.1";
 
   private int httpRpcPort = 0;
+  private int metricsPort = 0;
   private Path keyStoreDirectory = Path.of("./");
+  private boolean metricsEnabled;
+  private List<String> metricsAllowHostList;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -31,7 +35,28 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withMetricsPort(final int port) {
+    metricsPort = port;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withMetricsAllowHostList(final List<String> allowHostList) {
+    this.metricsAllowHostList = allowHostList;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withMetricsEnabled(final boolean metricsEnabled) {
+    this.metricsEnabled = metricsEnabled;
+    return this;
+  }
+
   public SignerConfiguration build() {
-    return new SignerConfiguration(LOCALHOST, httpRpcPort, keyStoreDirectory);
+    return new SignerConfiguration(
+        LOCALHOST,
+        httpRpcPort,
+        keyStoreDirectory,
+        metricsPort,
+        metricsAllowHostList,
+        metricsEnabled);
   }
 }

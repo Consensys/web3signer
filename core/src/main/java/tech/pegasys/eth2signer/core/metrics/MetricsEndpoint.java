@@ -58,6 +58,10 @@ public class MetricsEndpoint {
     metricsService.ifPresent(MetricsService::stop);
   }
 
+  public Optional<Integer> getPort() {
+    return metricsService.flatMap(MetricsService::getPort);
+  }
+
   public MetricsSystem getMetricsSystem() {
     return metricsSystem;
   }

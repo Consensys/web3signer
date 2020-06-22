@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.dsl.signer;
 
 import java.nio.file.Path;
+import java.util.List;
 
 public class SignerConfiguration {
 
@@ -21,12 +22,23 @@ public class SignerConfiguration {
   private final String hostname;
   private final int httpRpcPort;
   private final Path keyStorePath;
+  private final List<String> metricsHostAllowList;
+  private final boolean metricsEnabled;
+  private final int metricsPort;
 
   public SignerConfiguration(
-      final String hostname, final int httpRpcPort, final Path keyStorePath) {
+      final String hostname,
+      final int httpRpcPort,
+      final Path keyStorePath,
+      final int metricsPort,
+      final List<String> metricsHostAllowList,
+      final boolean metricsEnabled) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
     this.keyStorePath = keyStorePath;
+    this.metricsPort = metricsPort;
+    this.metricsHostAllowList = metricsHostAllowList;
+    this.metricsEnabled = metricsEnabled;
   }
 
   public String hostname() {
@@ -41,7 +53,23 @@ public class SignerConfiguration {
     return keyStorePath;
   }
 
-  public boolean isDynamicPortAllocation() {
+  public boolean isHttpDynamicPortAllocation() {
     return httpRpcPort == UNASSIGNED_PORT;
+  }
+
+  public boolean isMetricsEnabled() {
+    return metricsEnabled;
+  }
+
+  public int getMetricsPort() {
+    return metricsPort;
+  }
+
+  public boolean isMetricsDynamicPortAllocation() {
+    return metricsPort == UNASSIGNED_PORT;
+  }
+
+  public List<String> getMetricsHostAllowList() {
+    return metricsHostAllowList;
   }
 }
