@@ -82,7 +82,8 @@ public class Runner implements Runnable {
             config.isMetricsEnabled(),
             config.getMetricsPort(),
             config.getMetricsNetworkInterface(),
-            config.getMetricCategories());
+            config.getMetricCategories(),
+            config.getMetricsHostAllowList());
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
     final MetricsOptions metricsOptions =
