@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.core;
 
 import static tech.pegasys.eth2signer.core.http.SigningRequestHandler.SIGNER_PATH_REGEX;
 
+import tech.pegasys.eth2signer.core.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.http.LogErrorHandler;
 import tech.pegasys.eth2signer.core.http.PublicKeyRequestHandler;
 import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
@@ -112,6 +113,7 @@ public class Runner implements Runnable {
 
       final Router router = Router.router(vertx);
       final LogErrorHandler errorHandler = new LogErrorHandler();
+      registerCheckAllowListHostHeader(router);
       registerUpCheckRoute(router, errorHandler);
       registerSignerRoute(signingHandler, router, errorHandler);
       registerPublicKeysRoute(publicKeyHandler, router, errorHandler);
@@ -138,6 +140,10 @@ public class Runner implements Runnable {
         "yaml",
         new YamlSignerParser(artifactSignerFactory),
         config.getKeyCacheLimit());
+  }
+
+  private void registerCheckAllowListHostHeader(final Router router) {
+    router.route().handler(new HostAllowListHandler(config.getHttpHostAllowList()));
   }
 
   private void registerUpCheckRoute(final Router router, final LogErrorHandler errorHandler) {
