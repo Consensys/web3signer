@@ -43,7 +43,7 @@ class AllowListHostsPropertyTest {
   }
 
   @Test
-  void WildcardCannotBeCombinedWithOtherHostnames() {
+  void wildcardCannotBeCombinedWithOtherHostnames() {
     assertThatThrownBy(() -> allowListHostsProperty.addAll(singletonList("*, foo")))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Values '*' or 'all' can't be used with other hostnames");
