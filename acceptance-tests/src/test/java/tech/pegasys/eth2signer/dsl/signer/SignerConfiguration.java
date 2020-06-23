@@ -21,6 +21,7 @@ public class SignerConfiguration {
 
   private final String hostname;
   private final int httpRpcPort;
+  private final List<String> httpHostAllowList;
   private final Path keyStorePath;
   private final List<String> metricsHostAllowList;
   private final boolean metricsEnabled;
@@ -29,12 +30,14 @@ public class SignerConfiguration {
   public SignerConfiguration(
       final String hostname,
       final int httpRpcPort,
+      final List<String> httpHostAllowList,
       final Path keyStorePath,
       final int metricsPort,
       final List<String> metricsHostAllowList,
       final boolean metricsEnabled) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
+    this.httpHostAllowList = httpHostAllowList;
     this.keyStorePath = keyStorePath;
     this.metricsPort = metricsPort;
     this.metricsHostAllowList = metricsHostAllowList;
@@ -47,6 +50,10 @@ public class SignerConfiguration {
 
   public int httpPort() {
     return httpRpcPort;
+  }
+
+  public List<String> getHttpHostAllowList() {
+    return httpHostAllowList;
   }
 
   public Path getKeyStorePath() {

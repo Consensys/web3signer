@@ -111,6 +111,11 @@ public abstract class Eth2SignerRunner {
     params.add(signerConfig.hostname());
     params.add("--http-listen-port");
     params.add(String.valueOf(signerConfig.httpPort()));
+    if (!signerConfig.getHttpHostAllowList().isEmpty()) {
+      params.add("--http-host-allowlist");
+      final String allowList = String.join(",", signerConfig.getHttpHostAllowList());
+      params.add(allowList);
+    }
     params.add("--key-store-path");
     params.add(signerConfig.getKeyStorePath().toString());
     if (signerConfig.isMetricsEnabled()) {
