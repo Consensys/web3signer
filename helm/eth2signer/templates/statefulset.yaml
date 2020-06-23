@@ -51,6 +51,7 @@ spec:
           - --metrics-enabled
           - --metrics-port={{ .Values.service.metricsPort }}
           - --metrics-host=0.0.0.0
+          - --metrics-host-allowlist={{ .Values.service.metricsHostAllowList }}
           {{- end }}
         {{- with .Values.args }}
           {{- toYaml . | nindent 10 }}
