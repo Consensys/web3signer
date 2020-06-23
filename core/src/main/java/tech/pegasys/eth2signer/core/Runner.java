@@ -12,17 +12,15 @@
  */
 package tech.pegasys.eth2signer.core;
 
-import static tech.pegasys.eth2signer.core.http.SigningRequestHandler.SIGNER_PATH_REGEX;
-
-import tech.pegasys.eth2signer.core.http.LogErrorHandler;
-import tech.pegasys.eth2signer.core.http.PublicKeyRequestHandler;
-import tech.pegasys.eth2signer.core.http.SigningRequestHandler;
+import tech.pegasys.eth2signer.core.http.handlers.GetPublicKeysHandler;
+import tech.pegasys.eth2signer.core.http.handlers.LogErrorHandler;
+import tech.pegasys.eth2signer.core.http.handlers.SignForPublicKeyHandler;
+import tech.pegasys.eth2signer.core.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
-import tech.pegasys.eth2signer.core.utils.JsonDecoder;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 import java.io.File;
@@ -33,8 +31,6 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.Handler;
@@ -46,7 +42,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,13 +53,16 @@ public class Runner implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String CONTENT_TYPE_TEXT = "text/plain; charset=utf-8";
   private static final String CONTENT_TYPE_TEXT_HTML = "text/html; charset=utf-8";
-  private static final String CONTENT_TYPE_JSON = "application/json";
   private static final String CONTENT_TYPE_YAML = "text/x-yaml";
 
-  private static final URL OPENAPI_INDEX_URL = Resources.getResource("openapi/index.html");
-  private static final URL OPENAPI_SPEC_URL = Resources.getResource("openapi/eth2signer.yaml");
+  public static final String OPENAPI_INDEX_RESOURCE = "openapi/index.html";
+  public static final String OPENAPI_SPEC_RESOURCE = "openapi/eth2signer.yaml";
+
+  // operationId as defined in eth2signer.yaml
+  private static final String UPCHECK_OPERATION_ID = "upcheck";
+  private static final String GET_PUBLIC_KEYS_OPERATION_ID = "getPublicKeys";
+  private static final String SIGN_FOR_PUBLIC_KEY_OPERATION_ID = "signForPublicKey";
 
   private final Config config;
 
@@ -99,21 +98,8 @@ public class Runner implements Runnable {
           createSignerProvider(metricsSystem, vertx);
       signerProvider.cacheAllSigners();
 
-      final ObjectMapper objectMapper = createObjectMapper();
-
-      final JsonDecoder jsonDecoder = new JsonDecoder(objectMapper);
-      final SigningRequestHandler signingHandler =
-          new SigningRequestHandler(signerProvider, jsonDecoder);
-
-      final PublicKeyRequestHandler publicKeyHandler =
-          new PublicKeyRequestHandler(signerProvider, objectMapper);
-
-      final Router router = Router.router(vertx);
-      final LogErrorHandler errorHandler = new LogErrorHandler();
-      registerUpCheckRoute(router, errorHandler);
-      registerSignerRoute(signingHandler, router, errorHandler);
-      registerPublicKeysRoute(publicKeyHandler, router, errorHandler);
-      registerOpenApiSpecRoute(router);
+      final Router router = setupOpenApi3SpecRouter(vertx, signerProvider);
+      registerOpenApiSpecRoute(router); // serve static openapi spec
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -124,6 +110,45 @@ public class Runner implements Runnable {
       metricsEndpoint.stop();
       LOG.error("Failed to create Http Server", e);
     }
+  }
+
+  private Router setupOpenApi3SpecRouter(
+      final Vertx vertx, final DirectoryBackedArtifactSignerProvider signerProvider)
+      throws InterruptedException, ExecutionException {
+    final LogErrorHandler errorHandler = new LogErrorHandler();
+    final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
+
+    openAPI3RouterFactory.addHandlerByOperationId(UPCHECK_OPERATION_ID, new UpcheckHandler());
+    openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK_OPERATION_ID, errorHandler);
+
+    openAPI3RouterFactory.addHandlerByOperationId(
+        GET_PUBLIC_KEYS_OPERATION_ID, new GetPublicKeysHandler(signerProvider));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(
+        GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
+
+    openAPI3RouterFactory.addHandlerByOperationId(
+        SIGN_FOR_PUBLIC_KEY_OPERATION_ID, new SignForPublicKeyHandler(signerProvider));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(
+        SIGN_FOR_PUBLIC_KEY_OPERATION_ID, errorHandler);
+
+    return openAPI3RouterFactory.getRouter();
+  }
+
+  private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)
+      throws InterruptedException, ExecutionException {
+    final CompletableFuture<OpenAPI3RouterFactory> completableFuture = new CompletableFuture<>();
+    OpenAPI3RouterFactory.create(
+        vertx,
+        OPENAPI_SPEC_RESOURCE,
+        ar -> {
+          if (ar.succeeded()) {
+            completableFuture.complete(ar.result());
+          } else {
+            completableFuture.completeExceptionally(ar.cause());
+          }
+        });
+
+    return completableFuture.get();
   }
 
   private DirectoryBackedArtifactSignerProvider createSignerProvider(
@@ -138,45 +163,11 @@ public class Runner implements Runnable {
         config.getKeyCacheLimit());
   }
 
-  private void registerUpCheckRoute(final Router router, final LogErrorHandler errorHandler) {
-    router
-        .route(HttpMethod.GET, "/upcheck")
-        .produces(CONTENT_TYPE_TEXT)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(BodyHandler.create())
-        .failureHandler(errorHandler)
-        .handler(routingContext -> routingContext.response().end("OK"));
-  }
-
-  private void registerSignerRoute(
-      final SigningRequestHandler signingHandler,
-      final Router router,
-      final LogErrorHandler errorHandler) {
-    router
-        .routeWithRegex(HttpMethod.POST, SIGNER_PATH_REGEX)
-        .produces(CONTENT_TYPE_TEXT)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(BodyHandler.create())
-        .blockingHandler(signingHandler)
-        .failureHandler(errorHandler);
-  }
-
-  private void registerPublicKeysRoute(
-      final PublicKeyRequestHandler publicKeyHandler,
-      final Router router,
-      final LogErrorHandler errorHandler) {
-    router
-        .route(HttpMethod.GET, "/signer/publicKeys")
-        .produces(CONTENT_TYPE_JSON)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(BodyHandler.create())
-        .blockingHandler(publicKeyHandler)
-        .failureHandler(errorHandler);
-  }
-
   private void registerOpenApiSpecRoute(final Router router) throws IOException {
-    final String indexHtml = Resources.toString(OPENAPI_INDEX_URL, Charsets.UTF_8);
-    final String openApiSpecYaml = Resources.toString(OPENAPI_SPEC_URL, Charsets.UTF_8);
+    final URL indexResourceUrl = Resources.getResource(OPENAPI_INDEX_RESOURCE);
+    final URL openApiSpecUrl = Resources.getResource(OPENAPI_SPEC_RESOURCE);
+    final String indexHtml = Resources.toString(indexResourceUrl, Charsets.UTF_8);
+    final String openApiSpecYaml = Resources.toString(openApiSpecUrl, Charsets.UTF_8);
 
     router
         .route(HttpMethod.GET, "/openapi/eth2signer.yaml")
@@ -241,13 +232,5 @@ public class Runner implements Runnable {
     } catch (final Exception e) {
       LOG.warn("Error writing ports file", e);
     }
-  }
-
-  private ObjectMapper createObjectMapper() {
-    // Force Transaction Deserialization to fail if missing expected properties
-    final ObjectMapper jsonObjectMapper = new ObjectMapper();
-    jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES, true);
-    jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, true);
-    return jsonObjectMapper;
   }
 }
