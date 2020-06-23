@@ -209,11 +209,18 @@ public class Eth2SignerCommand implements Config, Runnable {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
+        .add("configFile", configFile)
+        .add("dataPath", dataPath)
+        .add("keyStorePath", keyStorePath)
+        .add("keyCacheLimit", keyCacheLimit)
         .add("logLevel", logLevel)
         .add("httpListenHost", httpListenHost)
         .add("httpListenPort", httpListenPort)
-        .add("dataPath", dataPath)
-        .add("keystorePath", keyStorePath)
+        .add("metricsEnabled", metricsEnabled)
+        .add("metricsHost", metricsHost)
+        .add("metricsPort", metricsPort)
+        .add("metricCategories", metricCategories)
+        .add("metricsHostAllowList", metricsHostAllowList)
         .toString();
   }
 
