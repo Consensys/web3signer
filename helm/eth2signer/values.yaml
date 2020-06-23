@@ -18,6 +18,7 @@ service:
   port: 9000
   metrics: false
   metricsPort: 9001
+  metricsHostAllowList: "localhost, 127.0.0.1"
 
 serviceMonitor:
   enabled: false
