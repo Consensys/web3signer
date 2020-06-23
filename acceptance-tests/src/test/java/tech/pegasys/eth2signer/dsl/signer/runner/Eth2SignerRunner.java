@@ -43,6 +43,7 @@ public abstract class Eth2SignerRunner {
 
   private static final String PORTS_FILENAME = "eth2signer.ports";
   private static final String HTTP_PORT_KEY = "http-port";
+  private static final String METRICS_PORT_KEY = "metrics-port";
 
   public static Eth2SignerRunner createRunner(final SignerConfiguration signerConfig) {
     if (Boolean.getBoolean("acctests.runEth2SignerAsProcess")) {
@@ -58,7 +59,7 @@ public abstract class Eth2SignerRunner {
     this.signerConfig = signerConfig;
     this.portsProperties = new Properties();
 
-    if (signerConfig.isDynamicPortAllocation()) {
+    if (signerConfig.isHttpDynamicPortAllocation()) {
       try {
         this.dataPath = Files.createTempDirectory("acceptance-test");
       } catch (final IOException e) {
@@ -75,7 +76,7 @@ public abstract class Eth2SignerRunner {
 
     startExecutor(params);
 
-    if (signerConfig.isDynamicPortAllocation()) {
+    if (signerConfig.isHttpDynamicPortAllocation()) {
       loadPortsFile();
     }
   }
@@ -86,7 +87,7 @@ public abstract class Eth2SignerRunner {
     try {
       shutdownExecutor();
     } finally {
-      if (signerConfig.isDynamicPortAllocation()) {
+      if (signerConfig.isHttpDynamicPortAllocation()) {
         try {
           MoreFiles.deleteRecursively(dataPath, RecursiveDeleteOption.ALLOW_INSECURE);
         } catch (final IOException e) {
@@ -112,7 +113,17 @@ public abstract class Eth2SignerRunner {
     params.add(String.valueOf(signerConfig.httpPort()));
     params.add("--key-store-path");
     params.add(signerConfig.getKeyStorePath().toString());
-    if (signerConfig.isDynamicPortAllocation()) {
+    if (signerConfig.isMetricsEnabled()) {
+      params.add("--metrics-enabled");
+      params.add("--metrics-port");
+      params.add(Integer.toString(signerConfig.getMetricsPort()));
+      if (!signerConfig.getMetricsHostAllowList().isEmpty()) {
+        params.add("--metrics-host-allowlist");
+        final String allowList = String.join(",", signerConfig.getMetricsHostAllowList());
+        params.add(allowList);
+      }
+    }
+    if (signerConfig.isHttpDynamicPortAllocation()) {
       params.add("--data-path");
       params.add(dataPath.toAbsolutePath().toString());
     }
@@ -149,14 +160,25 @@ public abstract class Eth2SignerRunner {
             });
   }
 
-  public int httpJsonRpcPort() {
-    if (signerConfig.isDynamicPortAllocation()) {
+  public int httpPort() {
+    if (signerConfig.isHttpDynamicPortAllocation()) {
       final String value = portsProperties.getProperty(HTTP_PORT_KEY);
       LOG.info("{}: {}", HTTP_PORT_KEY, value);
       assertThat(value).isNotEmpty();
       return Integer.parseInt(value);
     } else {
       return signerConfig.httpPort();
+    }
+  }
+
+  public int metricsPort() {
+    if (signerConfig.isMetricsDynamicPortAllocation()) {
+      final String value = portsProperties.getProperty(METRICS_PORT_KEY);
+      LOG.info("{}: {}", METRICS_PORT_KEY, value);
+      assertThat(value).isNotEmpty();
+      return Integer.parseInt(value);
+    } else {
+      return signerConfig.getMetricsPort();
     }
   }
 }

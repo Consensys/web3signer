@@ -68,6 +68,10 @@ public class Signer {
   }
 
   public String getUrl() {
-    return String.format(urlFormatting, hostname, runner.httpJsonRpcPort());
+    return String.format(urlFormatting, hostname, runner.httpPort());
+  }
+
+  public String getMetricsUrl() {
+    return String.format(urlFormatting, hostname, runner.metricsPort());
   }
 }
