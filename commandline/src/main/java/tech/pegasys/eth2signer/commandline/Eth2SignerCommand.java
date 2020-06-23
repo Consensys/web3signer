@@ -26,6 +26,7 @@ import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import java.io.File;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import com.google.common.base.MoreObjects;
@@ -142,6 +143,14 @@ public class Eth2SignerCommand implements Config, Runnable {
       converter = Eth2SignerMetricCategoryConverter.class)
   private final Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
 
+  @Option(
+      names = {"--metrics-host-allowlist"},
+      paramLabel = "<hostname>[,<hostname>...]... or * or all",
+      description =
+          "Comma separated list of hostnames to allow for metrics access, or * to accept any host (default: ${DEFAULT-VALUE})",
+      defaultValue = "localhost,127.0.0.1")
+  private final AllowListHostsProperty metricsHostAllowList = new AllowListHostsProperty();
+
   @Override
   public Level getLogLevel() {
     return logLevel;
@@ -188,6 +197,11 @@ public class Eth2SignerCommand implements Config, Runnable {
   }
 
   @Override
+  public List<String> getMetricsHostAllowList() {
+    return metricsHostAllowList;
+  }
+
+  @Override
   public Long getKeyCacheLimit() {
     return keyCacheLimit;
   }
@@ -195,11 +209,18 @@ public class Eth2SignerCommand implements Config, Runnable {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
+        .add("configFile", configFile)
+        .add("dataPath", dataPath)
+        .add("keyStorePath", keyStorePath)
+        .add("keyCacheLimit", keyCacheLimit)
         .add("logLevel", logLevel)
         .add("httpListenHost", httpListenHost)
         .add("httpListenPort", httpListenPort)
-        .add("dataPath", dataPath)
-        .add("keystorePath", keyStorePath)
+        .add("metricsEnabled", metricsEnabled)
+        .add("metricsHost", metricsHost)
+        .add("metricsPort", metricsPort)
+        .add("metricCategories", metricCategories)
+        .add("metricsHostAllowList", metricsHostAllowList)
         .toString();
   }
 

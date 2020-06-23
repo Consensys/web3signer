@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.core;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.Level;
@@ -37,6 +38,8 @@ public interface Config {
   String getMetricsNetworkInterface();
 
   Set<MetricCategory> getMetricCategories();
+
+  List<String> getMetricsHostAllowList();
 
   Long getKeyCacheLimit();
 }

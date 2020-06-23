@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -82,7 +83,8 @@ public class Runner implements Runnable {
             config.isMetricsEnabled(),
             config.getMetricsPort(),
             config.getMetricsNetworkInterface(),
-            config.getMetricCategories());
+            config.getMetricCategories(),
+            config.getMetricsHostAllowList());
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
     final MetricsOptions metricsOptions =
@@ -118,7 +120,7 @@ public class Runner implements Runnable {
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
-      persistPortInformation(httpServer.actualPort());
+      persistPortInformation(httpServer.actualPort(), metricsEndpoint.getPort());
     } catch (final Throwable e) {
       vertx.close();
       metricsEndpoint.stop();
@@ -218,7 +220,7 @@ public class Runner implements Runnable {
     return httpServer;
   }
 
-  private void persistPortInformation(final int listeningPort) {
+  private void persistPortInformation(final int httpPort, final Optional<Integer> metricsPort) {
     if (config.getDataPath() == null) {
       return;
     }
@@ -227,7 +229,8 @@ public class Runner implements Runnable {
     portsFile.deleteOnExit();
 
     final Properties properties = new Properties();
-    properties.setProperty("http-port", String.valueOf(listeningPort));
+    properties.setProperty("http-port", String.valueOf(httpPort));
+    metricsPort.ifPresent(port -> properties.setProperty("metrics-port", String.valueOf(port)));
 
     LOG.info(
         "Writing eth2signer.ports file: {}, with contents: {}",
