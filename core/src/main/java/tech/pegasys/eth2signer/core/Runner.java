@@ -100,7 +100,7 @@ public class Runner implements Runnable {
           createSignerProvider(metricsSystem, vertx);
       signerProvider.cacheAllSigners();
 
-      final Router router = setupOpenApi3OperationsRouter(vertx, signerProvider);
+      final Router router = createOpenApiRouter(vertx, signerProvider);
       registerOpenApiSpecRoute(router); // serve static openapi spec
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
@@ -114,7 +114,7 @@ public class Runner implements Runnable {
     }
   }
 
-  private Router setupOpenApi3OperationsRouter(
+  private Router createOpenApiRouter(
       final Vertx vertx, final DirectoryBackedArtifactSignerProvider signerProvider)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
