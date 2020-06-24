@@ -45,6 +45,7 @@ spec:
         args:
           - --http-listen-port={{ .Values.service.port }}
           - --http-listen-host=0.0.0.0
+          - --http-host-allowlist={{ .Values.service.hostAllowList }}
           - --key-store-path=/data
           - --logging=ALL
           {{- if .Values.service.metrics }}
