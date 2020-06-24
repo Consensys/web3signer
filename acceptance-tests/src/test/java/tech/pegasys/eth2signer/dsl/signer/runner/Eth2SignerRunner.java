@@ -113,8 +113,7 @@ public abstract class Eth2SignerRunner {
     params.add(String.valueOf(signerConfig.httpPort()));
     if (!signerConfig.getHttpHostAllowList().isEmpty()) {
       params.add("--http-host-allowlist");
-      final String allowList = String.join(",", signerConfig.getHttpHostAllowList());
-      params.add(allowList);
+      params.add(createAllowList(signerConfig.getHttpHostAllowList()));
     }
     params.add("--key-store-path");
     params.add(signerConfig.getKeyStorePath().toString());
@@ -124,8 +123,7 @@ public abstract class Eth2SignerRunner {
       params.add(Integer.toString(signerConfig.getMetricsPort()));
       if (!signerConfig.getMetricsHostAllowList().isEmpty()) {
         params.add("--metrics-host-allowlist");
-        final String allowList = String.join(",", signerConfig.getMetricsHostAllowList());
-        params.add(allowList);
+        params.add(createAllowList(signerConfig.getMetricsHostAllowList()));
       }
     }
     if (signerConfig.isHttpDynamicPortAllocation()) {
@@ -134,6 +132,10 @@ public abstract class Eth2SignerRunner {
     }
 
     return params;
+  }
+
+  private String createAllowList(final List<String> httpHostAllowList) {
+    return String.join(",", httpHostAllowList);
   }
 
   private void loadPortsFile() {
