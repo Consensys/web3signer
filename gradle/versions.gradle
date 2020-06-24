@@ -31,11 +31,14 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.2.0'
 
-    dependency 'io.vertx:vertx-codegen:3.8.2'
-    dependency 'io.vertx:vertx-core:3.8.2'
-    dependency 'io.vertx:vertx-unit:3.8.2'
-    dependency 'io.vertx:vertx-web-client:3.8.2'
-    dependency 'io.vertx:vertx-web:3.8.2'
+    dependencySet(group: 'io.vertx', version: '3.9.1') {
+      entry 'vertx-codegen'
+      entry 'vertx-core'
+      entry 'vertx-unit'
+      entry 'vertx-web-client'
+      entry 'vertx-web'
+      entry 'vertx-web-api-contract'
+    }
 
     dependency 'javax.activation:activation:1.1.1'
 

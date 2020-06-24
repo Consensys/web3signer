@@ -35,6 +35,7 @@ paths:
               properties:
                 signingRoot:
                   type: string
+                  nullable: false
               required:
                 - signingRoot
               additionalProperties:
