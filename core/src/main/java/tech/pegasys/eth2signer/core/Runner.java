@@ -101,8 +101,10 @@ public class Runner implements Runnable {
           createSignerProvider(metricsSystem, vertx);
       signerProvider.cacheAllSigners();
 
-      final Router router = createOpenApiRouter(vertx, signerProvider);
-      registerCheckAllowListHostHeader(router);
+      final OpenAPI3RouterFactory openApiRouterFactory =
+          createOpenApiRouterFactory(vertx, signerProvider);
+      registerHttpHostAllowListHandler(openApiRouterFactory);
+      final Router router = openApiRouterFactory.getRouter();
       registerOpenApiSpecRoute(router); // serve static openapi spec
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
@@ -116,7 +118,11 @@ public class Runner implements Runnable {
     }
   }
 
-  private Router createOpenApiRouter(
+  private void registerHttpHostAllowListHandler(final OpenAPI3RouterFactory openApiRouterFactory) {
+    openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
+  }
+
+  private OpenAPI3RouterFactory createOpenApiRouterFactory(
       final Vertx vertx, final DirectoryBackedArtifactSignerProvider signerProvider)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
@@ -135,7 +141,7 @@ public class Runner implements Runnable {
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_PUBLIC_KEY_OPERATION_ID, errorHandler);
 
-    return openAPI3RouterFactory.getRouter();
+    return openAPI3RouterFactory;
   }
 
   private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)
@@ -165,10 +171,6 @@ public class Runner implements Runnable {
         "yaml",
         new YamlSignerParser(artifactSignerFactory),
         config.getKeyCacheLimit());
-  }
-
-  private void registerCheckAllowListHostHeader(final Router router) {
-    router.route().handler(new HostAllowListHandler(config.getHttpHostAllowList()));
   }
 
   private void registerOpenApiSpecRoute(final Router router) throws IOException {
