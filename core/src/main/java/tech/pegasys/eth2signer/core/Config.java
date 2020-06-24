@@ -27,6 +27,8 @@ public interface Config {
 
   Integer getHttpListenPort();
 
+  List<String> getHttpHostAllowList();
+
   Path getDataPath();
 
   Path getKeyConfigPath();

@@ -114,6 +114,14 @@ public class Eth2SignerCommand implements Config, Runnable {
   private final Integer httpListenPort = 9000;
 
   @Option(
+      names = {"--http-host-allowlist"},
+      paramLabel = "<hostname>[,<hostname>...]... or * or all",
+      description =
+          "Comma separated list of hostnames to allow for http access, or * to accept any host (default: ${DEFAULT-VALUE})",
+      defaultValue = "localhost,127.0.0.1")
+  private final AllowListHostsProperty httpHostAllowList = new AllowListHostsProperty();
+
+  @Option(
       names = {"--metrics-enabled"},
       description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
   private final Boolean metricsEnabled = false;
@@ -167,6 +175,11 @@ public class Eth2SignerCommand implements Config, Runnable {
   }
 
   @Override
+  public AllowListHostsProperty getHttpHostAllowList() {
+    return httpHostAllowList;
+  }
+
+  @Override
   public Path getDataPath() {
     return dataPath;
   }
@@ -216,6 +229,7 @@ public class Eth2SignerCommand implements Config, Runnable {
         .add("logLevel", logLevel)
         .add("httpListenHost", httpListenHost)
         .add("httpListenPort", httpListenPort)
+        .add("httpHostAllowList", httpHostAllowList)
         .add("metricsEnabled", metricsEnabled)
         .add("metricsHost", metricsHost)
         .add("metricsPort", metricsPort)

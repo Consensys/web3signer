@@ -25,10 +25,16 @@ public class SignerConfigurationBuilder {
   private int metricsPort = 0;
   private Path keyStoreDirectory = Path.of("./");
   private boolean metricsEnabled;
-  private List<String> metricsAllowHostList = emptyList();
+  private List<String> metricsHostAllowList = emptyList();
+  private List<String> httpHostAllowList = emptyList();
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withHttpAllowHostList(final List<String> allowHostList) {
+    this.httpHostAllowList = allowHostList;
     return this;
   }
 
@@ -42,8 +48,8 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withMetricsAllowHostList(final List<String> allowHostList) {
-    this.metricsAllowHostList = allowHostList;
+  public SignerConfigurationBuilder withMetricsHostAllowList(final List<String> allowHostList) {
+    this.metricsHostAllowList = allowHostList;
     return this;
   }
 
@@ -56,9 +62,10 @@ public class SignerConfigurationBuilder {
     return new SignerConfiguration(
         LOCALHOST,
         httpRpcPort,
+        httpHostAllowList,
         keyStoreDirectory,
         metricsPort,
-        metricsAllowHostList,
+        metricsHostAllowList,
         metricsEnabled);
   }
 }

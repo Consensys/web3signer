@@ -22,61 +22,57 @@ import java.util.Collections;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
-public class MetricsAcceptanceTest extends AcceptanceTestBase {
-
-  private static final String METRICS_ENDPOINT = "/metrics";
+public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
+  private static final String PUBLIC_KEYS_ENDPOINT = "/signer/publicKeys";
 
   @Test
-  void metricsWithDefaultAllowHostsRespondsWithOkResponse() {
-    final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMetricsEnabled(true).build();
+  void httpEndpointWithDefaultAllowHostsRespondsWithOkResponse() {
+    final SignerConfiguration signerConfiguration = new SignerConfigurationBuilder().build();
     startSigner(signerConfiguration);
 
     given()
-        .baseUri(signer.getMetricsUrl())
+        .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
         .when()
-        .get(METRICS_ENDPOINT)
+        .get(PUBLIC_KEYS_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(200);
   }
 
   @Test
-  void metricsForAllowedHostRespondsWithOkResponse() {
+  void httpEndpointForAllowedHostRespondsWithOkResponse() {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
-            .withMetricsAllowHostList(Collections.singletonList("foo"))
-            .withMetricsEnabled(true)
+            .withHttpAllowHostList(Collections.singletonList("127.0.0.1, foo"))
             .build();
     startSigner(signerConfiguration);
 
     given()
-        .baseUri(signer.getMetricsUrl())
+        .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
         .when()
-        .header("host", "foo")
-        .get(METRICS_ENDPOINT)
+        .header("Host", "foo")
+        .get(PUBLIC_KEYS_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(200);
   }
 
   @Test
-  void metricsForNonAllowedHostRespondsWithForbiddenResponse() {
+  void httpEndpointForNonAllowedHostRespondsWithForbiddenResponse() {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
-            .withMetricsAllowHostList(Collections.singletonList("foo"))
-            .withMetricsEnabled(true)
+            .withHttpAllowHostList(Collections.singletonList("127.0.0.1"))
             .build();
     startSigner(signerConfiguration);
 
     given()
-        .baseUri(signer.getMetricsUrl())
+        .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
         .when()
-        .header("host", "bar")
-        .get(METRICS_ENDPOINT)
+        .header("Host", "bar")
+        .get(PUBLIC_KEYS_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(403);
