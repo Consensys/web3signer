@@ -16,6 +16,7 @@ service:
   type: ClusterIP
   # clusterIP: None
   port: 9000
+  hostAllowList: "localhost, 127.0.0.1"
   metrics: false
   metricsPort: 9001
   metricsHostAllowList: "localhost, 127.0.0.1"
