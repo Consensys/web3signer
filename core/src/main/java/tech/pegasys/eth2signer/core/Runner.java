@@ -65,6 +65,7 @@ public class Runner implements Runnable {
   private static final String UPCHECK_OPERATION_ID = "upcheck";
   private static final String GET_PUBLIC_KEYS_OPERATION_ID = "getPublicKeys";
   private static final String SIGN_FOR_PUBLIC_KEY_OPERATION_ID = "signForPublicKey";
+  private static final String SWAGGER_ENDPOINT = "/swagger-ui";
 
   private final Config config;
 
@@ -180,13 +181,13 @@ public class Runner implements Runnable {
     final String openApiSpecYaml = Resources.toString(openApiSpecUrl, Charsets.UTF_8);
 
     router
-        .route(HttpMethod.GET, "/openapi/eth2signer.yaml")
+        .route(HttpMethod.GET, SWAGGER_ENDPOINT + "/eth2signer.yaml")
         .produces(CONTENT_TYPE_YAML)
         .handler(ResponseContentTypeHandler.create())
         .handler(routingContext -> routingContext.response().end(openApiSpecYaml));
 
     router
-        .route(HttpMethod.GET, "/openapi/*")
+        .route(HttpMethod.GET, SWAGGER_ENDPOINT + "/*")
         .produces(CONTENT_TYPE_TEXT_HTML)
         .handler(ResponseContentTypeHandler.create())
         .handler(routingContext -> routingContext.response().end(indexHtml));
