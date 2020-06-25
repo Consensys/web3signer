@@ -8,8 +8,8 @@ Eth2Signer issues are tracked in GitHub.
 
 See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching and creating issues.
 
-## Specs
-* [OpenAPI Specs](core/src/resources/openapi/eth2signer.yaml)
+## API
+* [API Documentation](https://pegasyseng.github.io/eth2signer/)
 
 ## Users
 * [User documentation](https://docs.eth2signer.pegasys.tech/)
