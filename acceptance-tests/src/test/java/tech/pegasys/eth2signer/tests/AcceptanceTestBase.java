@@ -28,7 +28,7 @@ public class AcceptanceTestBase {
   }
 
   protected OpenApiValidationFilter getOpenApiValidationFilter() {
-    final String swaggerUrl = signer.getUrl() + "/openapi/eth2signer.yaml";
+    final String swaggerUrl = signer.getUrl() + "/swagger-ui/eth2signer.yaml";
     return new OpenApiValidationFilter(swaggerUrl);
   }
 
