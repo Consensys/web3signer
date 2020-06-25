@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core;
 
+import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.eth2signer.core.http.handlers.LogErrorHandler;
