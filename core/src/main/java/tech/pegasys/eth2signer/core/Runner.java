@@ -187,7 +187,7 @@ public class Runner implements Runnable {
         .handler(routingContext -> routingContext.response().end(openApiSpecYaml));
 
     router
-        .route(HttpMethod.GET, SWAGGER_ENDPOINT + "/*")
+        .routeWithRegex(HttpMethod.GET, SWAGGER_ENDPOINT + "|" + SWAGGER_ENDPOINT + "/*")
         .produces(CONTENT_TYPE_TEXT_HTML)
         .handler(ResponseContentTypeHandler.create())
         .handler(routingContext -> routingContext.response().end(indexHtml));

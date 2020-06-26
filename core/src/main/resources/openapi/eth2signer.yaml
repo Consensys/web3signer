@@ -35,13 +35,13 @@ paths:
               properties:
                 signingRoot:
                   type: string
-                  nullable: false
               required:
                 - signingRoot
               additionalProperties:
                 type: string
-              example:
-                signingRoot: '0x48656c6c6f2c20776f726c6421'
+            example:
+              signingRoot: 0x48656c6c6f2c20776f726c6421
+
       responses:
         '200':
           description: 'hex encoded string of signature'
@@ -49,7 +49,7 @@ paths:
             text/plain; charset=utf-8:
               schema:
                 type: string
-                example: '0xb3baa751d0a9132cfe93e4e3d5ff9075111100e3789dca219ade5a24d27e19d16b3353149da1833e9b691bb38634e8dc04469be7032132906c927d7e1a49b414730612877bc6b2810c8f202daf793d1ab0d6b5cb21d52f9e52e883859887a5d9'
+              example: '0xb3baa751d0a9132cfe93e4e3d5ff9075111100e3789dca219ade5a24d27e19d16b3353149da1833e9b691bb38634e8dc04469be7032132906c927d7e1a49b414730612877bc6b2810c8f202daf793d1ab0d6b5cb21d52f9e52e883859887a5d9'
         '404':
           description: 'Public Key not found'
         '400':
@@ -89,7 +89,7 @@ paths:
             text/plain; charset=utf-8:
               schema:
                 type: string
-                example: 'OK'
+              example: 'OK'
         '500':
           description: 'Internal Eth2Signer server error'
 
