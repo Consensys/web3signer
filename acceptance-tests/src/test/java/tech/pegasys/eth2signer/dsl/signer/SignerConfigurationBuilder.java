@@ -14,8 +14,12 @@ package tech.pegasys.eth2signer.dsl.signer;
 
 import static java.util.Collections.emptyList;
 
+import tech.pegasys.eth2signer.core.config.TlsOptions;
+import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
+
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 public class SignerConfigurationBuilder {
 
@@ -27,6 +31,8 @@ public class SignerConfigurationBuilder {
   private boolean metricsEnabled;
   private List<String> metricsHostAllowList = emptyList();
   private List<String> httpHostAllowList = emptyList();
+  private TlsOptions serverTlsOptions;
+  private TlsCertificateDefinition overriddenCaTrustStore;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -58,6 +64,15 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withServerTlsOptions(final TlsOptions serverTlsOptions) {
+    this.serverTlsOptions = serverTlsOptions;
+    return this;
+  }
+
+  public void withOverriddenCA(final TlsCertificateDefinition keystore) {
+    this.overriddenCaTrustStore = keystore;
+  }
+
   public SignerConfiguration build() {
     return new SignerConfiguration(
         LOCALHOST,
@@ -66,6 +81,8 @@ public class SignerConfigurationBuilder {
         keyStoreDirectory,
         metricsPort,
         metricsHostAllowList,
-        metricsEnabled);
+        metricsEnabled,
+        Optional.ofNullable(serverTlsOptions),
+        Optional.ofNullable(overriddenCaTrustStore));
   }
 }

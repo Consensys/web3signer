@@ -14,6 +14,8 @@ package tech.pegasys.eth2signer.dsl.signer.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
+import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 
 import java.io.File;
@@ -22,11 +24,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import com.google.common.collect.Lists;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
@@ -131,6 +135,33 @@ public abstract class Eth2SignerRunner {
       params.add(dataPath.toAbsolutePath().toString());
     }
 
+    params.addAll(createServerTlsArgs());
+
+    return params;
+  }
+
+  private Collection<? extends String> createServerTlsArgs() {
+    final List<String> params = Lists.newArrayList();
+
+    if (signerConfig.getServerTlsOptions().isPresent()) {
+      final TlsOptions serverTlsOptions = signerConfig.getServerTlsOptions().get();
+      params.add("--tls-keystore-file");
+      params.add(serverTlsOptions.getKeyStoreFile().toString());
+      params.add("--tls-keystore-password-file");
+      params.add(serverTlsOptions.getKeyStorePasswordFile().toString());
+      if (serverTlsOptions.getClientAuthConstraints().isEmpty()) {
+        params.add("--tls-allow-any-client");
+      } else {
+        final ClientAuthConstraints constraints = serverTlsOptions.getClientAuthConstraints().get();
+        if (constraints.getKnownClientsFile().isPresent()) {
+          params.add("--tls-known-clients-file");
+          params.add(constraints.getKnownClientsFile().get().toString());
+        }
+        if (constraints.isCaAuthorizedClientAllowed()) {
+          params.add("--tls-allow-ca-clients");
+        }
+      }
+    }
     return params;
   }
 

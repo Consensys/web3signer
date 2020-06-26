@@ -23,8 +23,9 @@ public class AcceptanceTestBase {
   protected Signer signer;
 
   protected void startSigner(final SignerConfiguration config) {
-    signer = new Signer(config);
+    signer = new Signer(config, null);
     signer.start();
+    signer.awaitStartupCompletion();
   }
 
   protected OpenApiValidationFilter getOpenApiValidationFilter() {

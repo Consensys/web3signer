@@ -12,8 +12,12 @@
  */
 package tech.pegasys.eth2signer.dsl.signer;
 
+import tech.pegasys.eth2signer.core.config.TlsOptions;
+import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
+
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 public class SignerConfiguration {
 
@@ -25,6 +29,8 @@ public class SignerConfiguration {
   private final Path keyStorePath;
   private final List<String> metricsHostAllowList;
   private final boolean metricsEnabled;
+  private Optional<TlsOptions> serverTlsOptions;
+  private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
 
   public SignerConfiguration(
@@ -34,7 +40,9 @@ public class SignerConfiguration {
       final Path keyStorePath,
       final int metricsPort,
       final List<String> metricsHostAllowList,
-      final boolean metricsEnabled) {
+      final boolean metricsEnabled,
+      final Optional<TlsOptions> serverTlsOptions,
+      final Optional<TlsCertificateDefinition> overriddenCaTrustStore) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
     this.httpHostAllowList = httpHostAllowList;
@@ -42,6 +50,8 @@ public class SignerConfiguration {
     this.metricsPort = metricsPort;
     this.metricsHostAllowList = metricsHostAllowList;
     this.metricsEnabled = metricsEnabled;
+    this.serverTlsOptions = serverTlsOptions;
+    this.overriddenCaTrustStore = overriddenCaTrustStore;
   }
 
   public String hostname() {
@@ -72,11 +82,19 @@ public class SignerConfiguration {
     return metricsPort;
   }
 
-  public boolean isMetricsDynamicPortAllocation() {
-    return metricsPort == UNASSIGNED_PORT;
-  }
-
   public List<String> getMetricsHostAllowList() {
     return metricsHostAllowList;
+  }
+
+  public Optional<TlsOptions> getServerTlsOptions() {
+    return serverTlsOptions;
+  }
+
+  public Optional<TlsCertificateDefinition> getOverriddenCaTrustStore() {
+    return overriddenCaTrustStore;
+  }
+
+  public boolean isMetricsDynamicPortAllocation() {
+    return metricsPort == UNASSIGNED_PORT;
   }
 }

@@ -14,10 +14,15 @@ package tech.pegasys.eth2signer.dsl.signer;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.eth2signer.dsl.tls.TlsClientHelper.createRequestSpecification;
 import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 
 import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;
+import tech.pegasys.eth2signer.dsl.tls.ClientTlsConfig;
 
+import java.util.Optional;
+
+import io.restassured.specification.RequestSpecification;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,12 +33,16 @@ public class Signer {
 
   private final Eth2SignerRunner runner;
   private final String hostname;
-  private final String urlFormatting = "http://%s:%s";
   private final Vertx vertx;
+  private final String urlFormatting;
+  private final Optional<ClientTlsConfig> clientTlsConfig;
 
-  public Signer(final SignerConfiguration signerConfig) {
+  public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
     this.runner = Eth2SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
+    this.urlFormatting =
+        signerConfig.getServerTlsOptions().isPresent() ? "https://%s:%s" : "http://%s:%s";
+    this.clientTlsConfig = Optional.ofNullable(clientTlsConfig);
     vertx = Vertx.vertx();
   }
 
@@ -42,8 +51,6 @@ public class Signer {
     runner.start();
     final String httpUrl = getUrl();
     LOG.info("Http requests being submitted to : {} ", httpUrl);
-
-    awaitStartupCompletion();
   }
 
   public void shutdown() {
@@ -57,7 +64,11 @@ public class Signer {
   }
 
   public int getUpcheckStatus() {
-    return given().baseUri(getUrl()).when().get("/upcheck").then().extract().statusCode();
+    return getSpec().baseUri(getUrl()).when().get("/upcheck").then().extract().statusCode();
+  }
+
+  public RequestSpecification getSpec() {
+    return given().spec(createRequestSpecification(clientTlsConfig)).baseUri(getUrl());
   }
 
   public void awaitStartupCompletion() {
