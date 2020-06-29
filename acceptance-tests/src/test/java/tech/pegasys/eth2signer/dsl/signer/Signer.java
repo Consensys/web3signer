@@ -64,10 +64,10 @@ public class Signer {
   }
 
   public int getUpcheckStatus() {
-    return getSpec().baseUri(getUrl()).when().get("/upcheck").then().extract().statusCode();
+    return requestSpec().baseUri(getUrl()).when().get("/upcheck").then().extract().statusCode();
   }
 
-  public RequestSpecification getSpec() {
+  public RequestSpecification requestSpec() {
     return given().spec(createRequestSpecification(clientTlsConfig)).baseUri(getUrl());
   }
 

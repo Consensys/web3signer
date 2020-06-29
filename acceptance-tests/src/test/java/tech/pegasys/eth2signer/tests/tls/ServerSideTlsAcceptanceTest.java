@@ -145,7 +145,7 @@ class ServerSideTlsAcceptanceTest {
     signer.awaitStartupCompletion();
 
     signer
-        .getSpec()
+        .requestSpec()
         .when()
         .get("/upcheck")
         .then()
