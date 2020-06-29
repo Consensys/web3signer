@@ -28,7 +28,7 @@ import tech.pegasys.eth2signer.tests.tls.support.BasicClientAuthConstraints;
 
 import java.nio.file.Path;
 import java.util.Optional;
-import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLException;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -110,6 +110,6 @@ public class ServerSideTlsCaClientAcceptanceTest {
                 .statusCode(200)
                 .body(equalToIgnoringCase("OK"));
 
-    assertThatThrownBy(request::run).isInstanceOf(SSLHandshakeException.class);
+    assertThatThrownBy(request::run).isInstanceOf(SSLException.class);
   }
 }
