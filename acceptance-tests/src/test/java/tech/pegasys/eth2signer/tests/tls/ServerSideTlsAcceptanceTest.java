@@ -92,7 +92,7 @@ class ServerSideTlsAcceptanceTest {
     }
   }
 
-  private Signer createTlsEthSigner(
+  private Signer createTlsSigner(
       final TlsCertificateDefinition serverPresentedCerts,
       final TlsCertificateDefinition clientExpectedCert,
       final TlsCertificateDefinition clientCertInServerWhitelist,
@@ -140,7 +140,7 @@ class ServerSideTlsAcceptanceTest {
 
   @Test
   void ableToConnectWhenClientExpectsSameCertificateAsThatPresented() {
-    signer = createTlsEthSigner(cert1, cert1, null, null, 0);
+    signer = createTlsSigner(cert1, cert1, null, null, 0);
     signer.start();
     signer.awaitStartupCompletion();
 
@@ -158,7 +158,7 @@ class ServerSideTlsAcceptanceTest {
   void nonTlsClientsCannotConnectToTlsEnabledEthSigner() {
     // The ethSigner object (and in-built requester are already TLS enabled, so need to make a new
     // http client which does not have TLS enabled
-    signer = createTlsEthSigner(cert1, cert1, null, null, 0);
+    signer = createTlsSigner(cert1, cert1, null, null, 0);
     signer.start();
     signer.awaitStartupCompletion();
 
@@ -181,7 +181,7 @@ class ServerSideTlsAcceptanceTest {
     // arbitrary listen-port to prevent waiting for portfile (during Start) to be created.
     final TlsCertificateDefinition missingPasswordCert =
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", null);
-    signer = createTlsEthSigner(missingPasswordCert, cert1, null, null, 9000);
+    signer = createTlsSigner(missingPasswordCert, cert1, null, null, 9000);
     signer.start();
     waitFor(() -> assertThat(signer.isRunning()).isFalse());
   }
@@ -191,14 +191,14 @@ class ServerSideTlsAcceptanceTest {
     // arbitrary listen-port to prevent waiting for portfile (during Start) to be created.
     final TlsCertificateDefinition wrongPasswordCert =
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", "wrongPassword");
-    signer = createTlsEthSigner(wrongPasswordCert, cert1, null, null, 9000);
+    signer = createTlsSigner(wrongPasswordCert, cert1, null, null, 9000);
     signer.start();
     waitFor(() -> assertThat(signer.isRunning()).isFalse());
   }
 
   @Test
   void clientCannotConnectIfExpectedServerCertDoesntMatchServerSuppliedCert() {
-    signer = createTlsEthSigner(cert1, cert1, null, null, 0);
+    signer = createTlsSigner(cert1, cert1, null, null, 0);
     signer.start();
     signer.awaitStartupCompletion();
 
@@ -238,7 +238,7 @@ class ServerSideTlsAcceptanceTest {
 
   @Test
   void clientMissingFromWhiteListCannotConnectToEthSigner() {
-    signer = createTlsEthSigner(cert1, cert1, cert1, cert1, 0);
+    signer = createTlsSigner(cert1, cert1, cert1, cert1, 0);
     signer.start();
     signer.awaitStartupCompletion();
 
