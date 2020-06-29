@@ -26,7 +26,6 @@ import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -34,40 +33,8 @@ import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
 
 public class CertificateHelpers {
-
-  public static KeyManager[] createKeyManagers(final TlsCertificateDefinition certToPresent)
-      throws KeyStoreException, NoSuchAlgorithmException, CertificateException,
-          UnrecoverableKeyException {
-    if (certToPresent == null) {
-      return null;
-    }
-
-    final String password = certToPresent.getPassword();
-
-    final KeyStore clientCertStore = loadP12KeyStore(certToPresent.getPkcs12File(), password);
-
-    final KeyManagerFactory kmf = KeyManagerFactory.getInstance("PKIX");
-    kmf.init(clientCertStore, password.toCharArray());
-    return kmf.getKeyManagers();
-  }
-
-  public static TrustManagerFactory createTrustManagerFactory(
-      final TlsCertificateDefinition serverCert)
-      throws KeyStoreException, NoSuchAlgorithmException, CertificateException {
-
-    final KeyStore trustStore =
-        loadP12KeyStore(serverCert.getPkcs12File(), serverCert.getPassword());
-    final TrustManagerFactory trustManagerFactory =
-        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-    trustManagerFactory.init(trustStore);
-
-    return trustManagerFactory;
-  }
 
   public static KeyStore loadP12KeyStore(final File pkcsFile, final String password)
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException {
