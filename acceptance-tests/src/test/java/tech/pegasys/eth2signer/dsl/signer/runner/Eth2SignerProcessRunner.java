@@ -70,8 +70,10 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
     if (Boolean.getBoolean("debugSubProcess")) {
       javaOpts.add("-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
     }
-    addTrustStoreOptions(javaOpts);
     processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
+
+    final String trustStoreOptions = createTrustStoreOptions();
+    javaOpts.add(trustStoreOptions);
 
     try {
       process = processBuilder.start();
@@ -82,7 +84,8 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
     }
   }
 
-  private void addTrustStoreOptions(final StringJoiner javaOpts) {
+  private String createTrustStoreOptions() {
+    final StringJoiner javaOpts = new StringJoiner(" ");
     if (getSignerConfig().getOverriddenCaTrustStore().isPresent()) {
       final TlsCertificateDefinition caTrustStore =
           getSignerConfig().getOverriddenCaTrustStore().get();
@@ -91,6 +94,7 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
           "-Djavax.net.ssl.trustStore=" + overriddenCaTrustStorePath.toAbsolutePath().toString());
       javaOpts.add("-Djavax.net.ssl.trustStorePassword=" + caTrustStore.getPassword());
     }
+    return javaOpts.toString();
   }
 
   private String executableLocation() {

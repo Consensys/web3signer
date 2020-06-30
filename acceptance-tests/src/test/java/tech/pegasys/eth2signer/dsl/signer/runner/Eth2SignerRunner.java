@@ -208,9 +208,9 @@ public abstract class Eth2SignerRunner {
 
   private Path createTempDirectory(final String prefix) {
     try {
-      final Path certificateDirectory = Files.createTempDirectory(prefix);
-      FileUtils.forceDeleteOnExit(certificateDirectory.toFile());
-      return certificateDirectory;
+      final Path tempDirectory = Files.createTempDirectory(prefix);
+      FileUtils.forceDeleteOnExit(tempDirectory.toFile());
+      return tempDirectory;
     } catch (IOException e) {
       throw new RuntimeException("Unable to create temporary directory", e);
     }
@@ -221,7 +221,7 @@ public abstract class Eth2SignerRunner {
     return createJksTrustStore(certificateDirectory, caTrustStore);
   }
 
-  public SignerConfiguration getSignerConfig() {
+  protected SignerConfiguration getSignerConfig() {
     return signerConfig;
   }
 }
