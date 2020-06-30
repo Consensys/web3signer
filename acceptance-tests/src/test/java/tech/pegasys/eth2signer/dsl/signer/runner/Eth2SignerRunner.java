@@ -31,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
@@ -86,11 +88,11 @@ public abstract class Eth2SignerRunner {
       shutdownExecutor();
     } finally {
       if (signerConfig.isHttpDynamicPortAllocation()) {
-        //        try {
-        //          MoreFiles.deleteRecursively(dataPath, RecursiveDeleteOption.ALLOW_INSECURE);
-        //        } catch (final IOException e) {
-        //          LOG.info("Failed to clean up temporary file: {}", dataPath, e);
-        //        }
+        try {
+          MoreFiles.deleteRecursively(dataPath, RecursiveDeleteOption.ALLOW_INSECURE);
+        } catch (final IOException e) {
+          LOG.info("Failed to clean up temporary file: {}", dataPath, e);
+        }
       }
     }
   }
