@@ -13,10 +13,12 @@
 package tech.pegasys.eth2signer.dsl.signer.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.eth2signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
 
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
+import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,8 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
@@ -63,11 +64,10 @@ public abstract class Eth2SignerRunner {
     this.signerConfig = signerConfig;
     this.portsProperties = new Properties();
 
-    try {
-      this.dataPath = Files.createTempDirectory("acceptance-test");
-    } catch (final IOException e) {
-      throw new RuntimeException(
-          "Failed to create the temporary directory to store the eth2signer.ports file");
+    if (signerConfig.isHttpDynamicPortAllocation()) {
+      this.dataPath = createTempDirectory("acceptance-test");
+    } else {
+      dataPath = null;
     }
   }
 
@@ -84,17 +84,7 @@ public abstract class Eth2SignerRunner {
   protected abstract void startExecutor(final List<String> params);
 
   public void shutdown() {
-    try {
-      shutdownExecutor();
-    } finally {
-      if (signerConfig.isHttpDynamicPortAllocation()) {
-        try {
-          MoreFiles.deleteRecursively(dataPath, RecursiveDeleteOption.ALLOW_INSECURE);
-        } catch (final IOException e) {
-          LOG.info("Failed to clean up temporary file: {}", dataPath, e);
-        }
-      }
-    }
+    shutdownExecutor();
   }
 
   protected abstract void shutdownExecutor();
@@ -216,8 +206,19 @@ public abstract class Eth2SignerRunner {
     }
   }
 
-  public Path getDataPath() {
-    return dataPath;
+  private Path createTempDirectory(final String prefix) {
+    try {
+      final Path certificateDirectory = Files.createTempDirectory(prefix);
+      FileUtils.forceDeleteOnExit(certificateDirectory.toFile());
+      return certificateDirectory;
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to create temporary directory", e);
+    }
+  }
+
+  public Path createJksCertFile(final TlsCertificateDefinition caTrustStore) {
+    final Path certificateDirectory = createTempDirectory("acceptance-test-jks-cert");
+    return createJksTrustStore(certificateDirectory, caTrustStore);
   }
 
   public SignerConfiguration getSignerConfig() {

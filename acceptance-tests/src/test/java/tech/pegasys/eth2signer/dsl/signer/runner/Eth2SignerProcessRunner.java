@@ -13,7 +13,6 @@
 package tech.pegasys.eth2signer.dsl.signer.runner;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static tech.pegasys.eth2signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
@@ -87,7 +86,7 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
     if (getSignerConfig().getOverriddenCaTrustStore().isPresent()) {
       final TlsCertificateDefinition caTrustStore =
           getSignerConfig().getOverriddenCaTrustStore().get();
-      final Path overriddenCaTrustStorePath = createJksTrustStore(getDataPath(), caTrustStore);
+      final Path overriddenCaTrustStorePath = createJksCertFile(caTrustStore);
       javaOpts.add(
           "-Djavax.net.ssl.trustStore=" + overriddenCaTrustStorePath.toAbsolutePath().toString());
       javaOpts.add("-Djavax.net.ssl.trustStorePassword=" + caTrustStore.getPassword());

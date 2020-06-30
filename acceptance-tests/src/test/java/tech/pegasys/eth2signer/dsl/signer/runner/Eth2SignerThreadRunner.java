@@ -12,8 +12,6 @@
  */
 package tech.pegasys.eth2signer.dsl.signer.runner;
 
-import static tech.pegasys.eth2signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
-
 import tech.pegasys.eth2signer.Eth2SignerApp;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
@@ -24,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Eth2SignerThreadRunner extends Eth2SignerRunner {
+
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
   public Eth2SignerThreadRunner(final SignerConfiguration signerConfig) {
@@ -35,7 +34,7 @@ public class Eth2SignerThreadRunner extends Eth2SignerRunner {
     if (getSignerConfig().getOverriddenCaTrustStore().isPresent()) {
       final TlsCertificateDefinition caTrustStore =
           getSignerConfig().getOverriddenCaTrustStore().get();
-      final Path overriddenCaTrustStorePath = createJksTrustStore(getDataPath(), caTrustStore);
+      final Path overriddenCaTrustStorePath = createJksCertFile(caTrustStore);
       System.setProperty(
           "javax.net.ssl.trustStore", overriddenCaTrustStorePath.toAbsolutePath().toString());
       System.setProperty("javax.net.ssl.trustStorePassword", caTrustStore.getPassword());
