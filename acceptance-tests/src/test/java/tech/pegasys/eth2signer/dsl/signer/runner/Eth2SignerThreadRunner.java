@@ -18,46 +18,27 @@ import tech.pegasys.eth2signer.Eth2SignerApp;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Eth2SignerThreadRunner extends Eth2SignerRunner {
-
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
-  private final Path dataPath;
-  private final Optional<TlsCertificateDefinition> overriddenCaTrustStore;
 
   public Eth2SignerThreadRunner(final SignerConfiguration signerConfig) {
     super(signerConfig);
-    overriddenCaTrustStore = signerConfig.getOverriddenCaTrustStore();
-
-    if (signerConfig.isMetricsDynamicPortAllocation()) {
-      try {
-        this.dataPath = Files.createTempDirectory("acceptance-test");
-      } catch (final IOException e) {
-        throw new RuntimeException(
-            "Failed to create the temporary directory to store the ethsigner.ports file");
-      }
-    } else {
-      dataPath = null;
-    }
   }
 
   @Override
   protected void startExecutor(List<String> params) {
-    if (overriddenCaTrustStore.isPresent()) {
-      final TlsCertificateDefinition tlsCertificateDefinition = overriddenCaTrustStore.get();
-      final Path overriddenCaTrustStorePath =
-          createJksTrustStore(dataPath, tlsCertificateDefinition);
+    if (getSignerConfig().getOverriddenCaTrustStore().isPresent()) {
+      final TlsCertificateDefinition caTrustStore =
+          getSignerConfig().getOverriddenCaTrustStore().get();
+      final Path overriddenCaTrustStorePath = createJksTrustStore(getDataPath(), caTrustStore);
       System.setProperty(
           "javax.net.ssl.trustStore", overriddenCaTrustStorePath.toAbsolutePath().toString());
-      System.setProperty(
-          "javax.net.ssl.trustStorePassword", tlsCertificateDefinition.getPassword());
+      System.setProperty("javax.net.ssl.trustStorePassword", caTrustStore.getPassword());
     }
 
     final String[] paramsAsArray = params.toArray(new String[0]);

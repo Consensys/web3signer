@@ -63,15 +63,11 @@ public abstract class Eth2SignerRunner {
     this.signerConfig = signerConfig;
     this.portsProperties = new Properties();
 
-    if (signerConfig.isHttpDynamicPortAllocation()) {
-      try {
-        this.dataPath = Files.createTempDirectory("acceptance-test");
-      } catch (final IOException e) {
-        throw new RuntimeException(
-            "Failed to create the temporary directory to store the eth2signer.ports file");
-      }
-    } else {
-      dataPath = null;
+    try {
+      this.dataPath = Files.createTempDirectory("acceptance-test");
+    } catch (final IOException e) {
+      throw new RuntimeException(
+          "Failed to create the temporary directory to store the eth2signer.ports file");
     }
   }
 
@@ -218,5 +214,13 @@ public abstract class Eth2SignerRunner {
     } else {
       return signerConfig.getMetricsPort();
     }
+  }
+
+  public Path getDataPath() {
+    return dataPath;
+  }
+
+  public SignerConfiguration getSignerConfig() {
+    return signerConfig;
   }
 }

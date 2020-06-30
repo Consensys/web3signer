@@ -26,6 +26,8 @@ public class TlsClientHelper {
       final Optional<ClientTlsConfig> clientTlsConfiguration) {
     if (clientTlsConfiguration.isPresent()) {
       final ClientTlsConfig clientTlsConfig = clientTlsConfiguration.get();
+
+      // non-existent keystore needs to be represented by an empty string
       final String keyStoreFilePath =
           clientTlsConfig.getClientCertificateToPresent() == null
               ? ""
@@ -35,19 +37,10 @@ public class TlsClientHelper {
               ? ""
               : clientTlsConfig.getClientCertificateToPresent().getPassword();
 
-      final String trustStoreFilePath =
-          clientTlsConfig.getExpectedTlsServerCert() == null
-              ? ""
-              : clientTlsConfig.getExpectedTlsServerCert().getPkcs12File().getAbsolutePath();
-      final String trustStorePassword =
-          clientTlsConfig.getExpectedTlsServerCert() == null
-              ? ""
-              : clientTlsConfig.getExpectedTlsServerCert().getPassword();
-
       final AuthenticationScheme pkcs12 =
           RestAssured.certificate(
-              trustStoreFilePath,
-              trustStorePassword,
+              clientTlsConfig.getExpectedTlsServerCert().getPkcs12File().getAbsolutePath(),
+              clientTlsConfig.getExpectedTlsServerCert().getPassword(),
               keyStoreFilePath,
               keyStorePassword,
               CertificateAuthSettings.certAuthSettings().keyStoreType("pkcs12"));

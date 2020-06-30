@@ -24,10 +24,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.lang.ProcessBuilder.Redirect;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,25 +43,11 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
       LogManager.getLogger("tech.pegasys.eth2signer.SubProcessLog");
 
   private final ExecutorService outputProcessorExecutor = Executors.newCachedThreadPool();
-  private final Path dataPath;
-  private final Optional<TlsCertificateDefinition> overriddenCaTrustStore;
 
   private Process process;
 
   public Eth2SignerProcessRunner(final SignerConfiguration signerConfig) {
     super(signerConfig);
-    overriddenCaTrustStore = signerConfig.getOverriddenCaTrustStore();
-
-    if (signerConfig.isMetricsDynamicPortAllocation()) {
-      try {
-        this.dataPath = Files.createTempDirectory("acceptance-test");
-      } catch (final IOException e) {
-        throw new RuntimeException(
-            "Failed to create the temporary directory to store the ethsigner.ports file");
-      }
-    } else {
-      dataPath = null;
-    }
   }
 
   @Override
@@ -79,15 +63,6 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
 
-    if (overriddenCaTrustStore.isPresent()) {
-      final TlsCertificateDefinition tlsCertificateDefinition = overriddenCaTrustStore.get();
-      final Path overriddenCaTrustStorePath =
-          createJksTrustStore(dataPath, tlsCertificateDefinition);
-      javaOpts.add(
-          "-Djavax.net.ssl.trustStore=" + overriddenCaTrustStorePath.toAbsolutePath().toString());
-      javaOpts.add("-Djavax.net.ssl.trustStorePassword=" + tlsCertificateDefinition.getPassword());
-    }
-
     if (Boolean.getBoolean("debugSubProcess")) {
       javaOpts.add("-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
     }
@@ -96,6 +71,7 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
     if (Boolean.getBoolean("debugSubProcess")) {
       javaOpts.add("-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
     }
+    addTrustStoreOptions(javaOpts);
     processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
 
     try {
@@ -104,6 +80,17 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
     } catch (final IOException e) {
       LOG.error("Error starting EthSigner process", e);
       throw new UncheckedIOException("Failed to start the Ethsigner process", e);
+    }
+  }
+
+  private void addTrustStoreOptions(final StringJoiner javaOpts) {
+    if (getSignerConfig().getOverriddenCaTrustStore().isPresent()) {
+      final TlsCertificateDefinition caTrustStore =
+          getSignerConfig().getOverriddenCaTrustStore().get();
+      final Path overriddenCaTrustStorePath = createJksTrustStore(getDataPath(), caTrustStore);
+      javaOpts.add(
+          "-Djavax.net.ssl.trustStore=" + overriddenCaTrustStorePath.toAbsolutePath().toString());
+      javaOpts.add("-Djavax.net.ssl.trustStorePassword=" + caTrustStore.getPassword());
     }
   }
 
