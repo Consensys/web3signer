@@ -16,6 +16,8 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import tech.pegasys.eth2signer.commandline.config.AllowListHostsProperty;
+
 import org.junit.jupiter.api.Test;
 
 class AllowListHostsPropertyTest {

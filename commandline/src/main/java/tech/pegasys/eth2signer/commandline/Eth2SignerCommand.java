@@ -18,15 +18,19 @@ import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY
 import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
 import static tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
+import tech.pegasys.eth2signer.commandline.config.AllowListHostsProperty;
+import tech.pegasys.eth2signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.eth2signer.commandline.convertor.MetricCategoryConverter;
-import tech.pegasys.eth2signer.core.Config;
 import tech.pegasys.eth2signer.core.Runner;
+import tech.pegasys.eth2signer.core.config.Config;
+import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 
 import java.io.File;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.common.base.MoreObjects;
@@ -36,6 +40,7 @@ import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
@@ -159,6 +164,9 @@ public class Eth2SignerCommand implements Config, Runnable {
       defaultValue = "localhost,127.0.0.1")
   private final AllowListHostsProperty metricsHostAllowList = new AllowListHostsProperty();
 
+  @ArgGroup(exclusive = false)
+  private PicoCliTlsServerOptions picoCliTlsServerOptions;
+
   @Override
   public Level getLogLevel() {
     return logLevel;
@@ -220,6 +228,11 @@ public class Eth2SignerCommand implements Config, Runnable {
   }
 
   @Override
+  public Optional<TlsOptions> getTlsOptions() {
+    return Optional.ofNullable(picoCliTlsServerOptions);
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -235,6 +248,7 @@ public class Eth2SignerCommand implements Config, Runnable {
         .add("metricsPort", metricsPort)
         .add("metricCategories", metricCategories)
         .add("metricsHostAllowList", metricsHostAllowList)
+        .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .toString();
   }
 

@@ -12,36 +12,27 @@
  */
 package tech.pegasys.eth2signer.core;
 
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Set;
+public class InitializationException extends RuntimeException {
 
-import org.apache.logging.log4j.Level;
-import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
+  public InitializationException() {}
 
-public interface Config {
+  public InitializationException(final String message) {
+    super(message);
+  }
 
-  Level getLogLevel();
+  public InitializationException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 
-  String getHttpListenHost();
+  public InitializationException(final Throwable cause) {
+    super(cause);
+  }
 
-  Integer getHttpListenPort();
-
-  List<String> getHttpHostAllowList();
-
-  Path getDataPath();
-
-  Path getKeyConfigPath();
-
-  Boolean isMetricsEnabled();
-
-  Integer getMetricsPort();
-
-  String getMetricsNetworkInterface();
-
-  Set<MetricCategory> getMetricCategories();
-
-  List<String> getMetricsHostAllowList();
-
-  Long getKeyCacheLimit();
+  public InitializationException(
+      final String message,
+      final Throwable cause,
+      final boolean enableSuppression,
+      final boolean writableStackTrace) {
+    super(message, cause, enableSuppression, writableStackTrace);
+  }
 }

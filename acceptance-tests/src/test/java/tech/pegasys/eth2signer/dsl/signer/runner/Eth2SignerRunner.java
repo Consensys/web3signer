@@ -13,8 +13,12 @@
 package tech.pegasys.eth2signer.dsl.signer.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.eth2signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
 
+import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
+import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
+import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,13 +26,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
+import com.google.common.collect.Lists;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
@@ -60,12 +65,7 @@ public abstract class Eth2SignerRunner {
     this.portsProperties = new Properties();
 
     if (signerConfig.isHttpDynamicPortAllocation()) {
-      try {
-        this.dataPath = Files.createTempDirectory("acceptance-test");
-      } catch (final IOException e) {
-        throw new RuntimeException(
-            "Failed to create the temporary directory to store the eth2signer.ports file");
-      }
+      this.dataPath = createTempDirectory("acceptance-test");
     } else {
       dataPath = null;
     }
@@ -84,17 +84,7 @@ public abstract class Eth2SignerRunner {
   protected abstract void startExecutor(final List<String> params);
 
   public void shutdown() {
-    try {
-      shutdownExecutor();
-    } finally {
-      if (signerConfig.isHttpDynamicPortAllocation()) {
-        try {
-          MoreFiles.deleteRecursively(dataPath, RecursiveDeleteOption.ALLOW_INSECURE);
-        } catch (final IOException e) {
-          LOG.info("Failed to clean up temporary file: {}", dataPath, e);
-        }
-      }
-    }
+    shutdownExecutor();
   }
 
   protected abstract void shutdownExecutor();
@@ -131,6 +121,33 @@ public abstract class Eth2SignerRunner {
       params.add(dataPath.toAbsolutePath().toString());
     }
 
+    params.addAll(createServerTlsArgs());
+
+    return params;
+  }
+
+  private Collection<? extends String> createServerTlsArgs() {
+    final List<String> params = Lists.newArrayList();
+
+    if (signerConfig.getServerTlsOptions().isPresent()) {
+      final TlsOptions serverTlsOptions = signerConfig.getServerTlsOptions().get();
+      params.add("--tls-keystore-file");
+      params.add(serverTlsOptions.getKeyStoreFile().toString());
+      params.add("--tls-keystore-password-file");
+      params.add(serverTlsOptions.getKeyStorePasswordFile().toString());
+      if (serverTlsOptions.getClientAuthConstraints().isEmpty()) {
+        params.add("--tls-allow-any-client");
+      } else {
+        final ClientAuthConstraints constraints = serverTlsOptions.getClientAuthConstraints().get();
+        if (constraints.getKnownClientsFile().isPresent()) {
+          params.add("--tls-known-clients-file");
+          params.add(constraints.getKnownClientsFile().get().toString());
+        }
+        if (constraints.isCaAuthorizedClientAllowed()) {
+          params.add("--tls-allow-ca-clients");
+        }
+      }
+    }
     return params;
   }
 
@@ -187,5 +204,24 @@ public abstract class Eth2SignerRunner {
     } else {
       return signerConfig.getMetricsPort();
     }
+  }
+
+  private Path createTempDirectory(final String prefix) {
+    try {
+      final Path tempDirectory = Files.createTempDirectory(prefix);
+      FileUtils.forceDeleteOnExit(tempDirectory.toFile());
+      return tempDirectory;
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to create temporary directory", e);
+    }
+  }
+
+  public Path createJksCertFile(final TlsCertificateDefinition caTrustStore) {
+    final Path certificateDirectory = createTempDirectory("acceptance-test-jks-cert");
+    return createJksTrustStore(certificateDirectory, caTrustStore);
+  }
+
+  protected SignerConfiguration getSignerConfig() {
+    return signerConfig;
   }
 }

@@ -12,6 +12,9 @@
  */
 package tech.pegasys.eth2signer.core;
 
+import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
+import tech.pegasys.eth2signer.core.config.Config;
+import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.eth2signer.core.http.handlers.LogErrorHandler;
@@ -22,12 +25,15 @@ import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -38,17 +44,20 @@ import com.google.common.io.Resources;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Runner implements Runnable {
@@ -202,8 +211,8 @@ public class Runner implements Runnable {
             .setHost(config.getHttpListenHost())
             .setReuseAddress(true)
             .setReusePort(true);
-
-    final HttpServer httpServer = vertx.createHttpServer(serverOptions);
+    final HttpServerOptions tlsServerOptions = applyConfigTlsSettingsTo(serverOptions);
+    final HttpServer httpServer = vertx.createHttpServer(tlsServerOptions);
     final CompletableFuture<Void> serverRunningFuture = new CompletableFuture<>();
     httpServer
         .requestHandler(requestHandler)
@@ -218,6 +227,67 @@ public class Runner implements Runnable {
     serverRunningFuture.get();
 
     return httpServer;
+  }
+
+  private HttpServerOptions applyConfigTlsSettingsTo(final HttpServerOptions input) {
+
+    if (config.getTlsOptions().isEmpty()) {
+      return input;
+    }
+
+    HttpServerOptions result = new HttpServerOptions(input);
+    result.setSsl(true);
+    final TlsOptions tlsConfig = config.getTlsOptions().get();
+
+    result = applyTlsKeyStore(result, tlsConfig);
+
+    if (tlsConfig.getClientAuthConstraints().isPresent()) {
+      result = applyClientAuthentication(result, tlsConfig.getClientAuthConstraints().get());
+    }
+
+    return result;
+  }
+
+  private static HttpServerOptions applyTlsKeyStore(
+      final HttpServerOptions input, final TlsOptions tlsConfig) {
+    final HttpServerOptions result = new HttpServerOptions(input);
+
+    try {
+      final String keyStorePathname =
+          tlsConfig.getKeyStoreFile().toPath().toAbsolutePath().toString();
+      final String password =
+          FileUtil.readFirstLineFromFile(tlsConfig.getKeyStorePasswordFile().toPath());
+      result.setPfxKeyCertOptions(new PfxOptions().setPath(keyStorePathname).setPassword(password));
+      return result;
+    } catch (final NoSuchFileException e) {
+      throw new InitializationException(
+          "Requested file " + e.getMessage() + " does not exist at specified location.", e);
+    } catch (final AccessDeniedException e) {
+      throw new InitializationException(
+          "Current user does not have permissions to access " + e.getMessage(), e);
+    } catch (final IOException e) {
+      throw new InitializationException("Failed to load TLS files " + e.getMessage(), e);
+    }
+  }
+
+  private static HttpServerOptions applyClientAuthentication(
+      final HttpServerOptions input, final ClientAuthConstraints constraints) {
+    final HttpServerOptions result = new HttpServerOptions(input);
+
+    result.setClientAuth(ClientAuth.REQUIRED);
+    try {
+      constraints
+          .getKnownClientsFile()
+          .ifPresent(
+              whitelistFile ->
+                  result.setTrustOptions(
+                      VertxTrustOptions.whitelistClients(
+                          whitelistFile.toPath(), constraints.isCaAuthorizedClientAllowed())));
+    } catch (final IllegalArgumentException e) {
+      throw new InitializationException("Illegally formatted client fingerprint file.");
+    }
+
+    return result;
   }
 
   private void persistPortInformation(final int httpPort, final Optional<Integer> metricsPort) {

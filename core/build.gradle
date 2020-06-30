@@ -24,6 +24,7 @@ dependencies {
   implementation 'commons-lang:commons-lang'
 
   implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-net'
 
   implementation 'tech.pegasys.signers.internal:keystorage-hashicorp'
 
@@ -31,6 +32,7 @@ dependencies {
 
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
+  implementation 'io.vertx:vertx-web-client'
   implementation 'io.vertx:vertx-web-api-contract'
 
   implementation 'org.hyperledger.besu.internal:metrics-core'
