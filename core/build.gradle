@@ -49,6 +49,7 @@ dependencies {
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'

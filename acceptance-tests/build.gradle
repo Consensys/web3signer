@@ -21,6 +21,7 @@ dependencies {
   testRuntimeOnly 'javax.activation:activation'
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testRuntimeOnly 'org.bouncycastle:bcpkix-jdk15on'
 
   testImplementation 'com.github.docker-java:docker-java'
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
@@ -44,6 +45,9 @@ task acceptanceTest(type: Test) {
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Eth2Signer acceptance tests.'
   group = 'verification'
+
+  setSystemProperties(test.getSystemProperties())
+  systemProperty 'acctests.runEth2SignerAsProcess', 'true'
 
   useJUnitPlatform()
   // toggle to show standard out and standard error of the test JVM(s) on the console
