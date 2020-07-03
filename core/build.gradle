@@ -43,6 +43,7 @@ dependencies {
   implementation 'tech.pegasys.teku.internal:bls'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
+  runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.assertj:assertj-core'

@@ -45,6 +45,8 @@ task acceptanceTest(type: Test) {
   description = 'Runs Eth2Signer acceptance tests.'
   group = 'verification'
 
+  systemProperty 'acctests.runEth2SignerAsProcess', 'true'
+
   useJUnitPlatform()
   // toggle to show standard out and standard error of the test JVM(s) on the console
   testLogging.showStandardStreams = false

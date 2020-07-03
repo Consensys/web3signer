@@ -65,15 +65,9 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
     if (Boolean.getBoolean("debugSubProcess")) {
       javaOpts.add("-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
     }
-    processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
 
-    if (Boolean.getBoolean("debugSubProcess")) {
-      javaOpts.add("-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
-    }
+    javaOpts.add(createTrustStoreOptions());
     processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
-
-    final String trustStoreOptions = createTrustStoreOptions();
-    javaOpts.add(trustStoreOptions);
 
     try {
       process = processBuilder.start();
