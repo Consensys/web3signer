@@ -46,7 +46,6 @@ task acceptanceTest(type: Test) {
   description = 'Runs Eth2Signer acceptance tests.'
   group = 'verification'
 
-  setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runEth2SignerAsProcess', 'true'
 
   useJUnitPlatform()
