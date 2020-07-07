@@ -12,11 +12,25 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
+import tech.pegasys.signers.secp256k1.api.TransactionSigner;
+
 import org.apache.tuweni.bytes.Bytes;
 
-public interface ArtifactSigner {
+public class SecpArtifactSigner implements ArtifactSigner {
 
-  String getIdentifier();
+  private final TransactionSigner transactionSigner;
 
-  ArtifactSignature sign(final Bytes message);
+  public SecpArtifactSigner(final TransactionSigner transactionSigner) {
+    this.transactionSigner = transactionSigner;
+  }
+
+  @Override
+  public String getIdentifier() {
+    return transactionSigner.getAddress();
+  }
+
+  @Override
+  public ArtifactSignature sign(final Bytes message) {
+    return new SecpArtifactSignature(transactionSigner.sign(message.toArray()));
+  }
 }

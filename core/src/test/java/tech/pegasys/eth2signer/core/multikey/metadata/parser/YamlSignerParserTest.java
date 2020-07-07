@@ -25,7 +25,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -113,11 +113,11 @@ class YamlSignerParserTest {
 
   @Test
   void unencryptedMetaDataInfoWithPrivateKeyReturnsMetadata() throws IOException {
-    final ArtifactSigner artifactSigner =
-        new ArtifactSigner(
+    final BlsArtifactSigner blsArtifactSigner =
+        new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
     when(artifactSignerFactory.create(any(FileRawSigningMetadata.class)))
-        .thenReturn(artifactSigner);
+        .thenReturn(blsArtifactSigner);
 
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
@@ -125,19 +125,19 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
+    final BlsArtifactSigner result = signerParser.parse(filename);
 
-    assertThat(result).isEqualTo(artifactSigner);
+    assertThat(result).isEqualTo(blsArtifactSigner);
     verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
   }
 
   @Test
   void unencryptedMetaDataInfoWith0xPrefixPrivateKeyReturnsMetadata() throws IOException {
-    final ArtifactSigner artifactSigner =
-        new ArtifactSigner(
+    final BlsArtifactSigner blsArtifactSigner =
+        new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
     when(artifactSignerFactory.create(any(FileRawSigningMetadata.class)))
-        .thenReturn(artifactSigner);
+        .thenReturn(blsArtifactSigner);
 
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
@@ -145,9 +145,9 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
+    final BlsArtifactSigner result = signerParser.parse(filename);
 
-    assertThat(result).isEqualTo(artifactSigner);
+    assertThat(result).isEqualTo(blsArtifactSigner);
     verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
   }
 
@@ -193,11 +193,12 @@ class YamlSignerParserTest {
 
   @Test
   void keyStoreMetaDataInfoReturnsMetadata() throws IOException {
-    final ArtifactSigner artifactSigner =
-        new ArtifactSigner(
+    final BlsArtifactSigner blsArtifactSigner =
+        new BlsArtifactSigner(
             new BLSKeyPair(
                 BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
-    when(artifactSignerFactory.create(any(FileKeyStoreMetadata.class))).thenReturn(artifactSigner);
+    when(artifactSignerFactory.create(any(FileKeyStoreMetadata.class)))
+        .thenReturn(blsArtifactSigner);
 
     final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
     final Path keystoreFile = configDir.resolve("keystore.json");
@@ -209,8 +210,8 @@ class YamlSignerParserTest {
     keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), keystoreMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
-    assertThat(result).isEqualTo(artifactSigner);
+    final BlsArtifactSigner result = signerParser.parse(filename);
+    assertThat(result).isEqualTo(blsArtifactSigner);
     verify(artifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
   }
 

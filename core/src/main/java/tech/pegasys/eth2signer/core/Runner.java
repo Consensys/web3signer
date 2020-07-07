@@ -22,11 +22,15 @@ import tech.pegasys.eth2signer.core.http.handlers.SignForPublicKeyHandler;
 import tech.pegasys.eth2signer.core.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
-import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.BlsArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.MultiCurveArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.SecpArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.signers.secp256k1.multikey.MultiKeyTransactionSignerProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,6 +38,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -107,9 +112,15 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final DirectoryBackedArtifactSignerProvider signerProvider =
-          createSignerProvider(metricsSystem, vertx);
-      signerProvider.cacheAllSigners();
+      final BlsArtifactSignerProvider blsSignerProvider =
+          createBlsSignerProvider(metricsSystem, vertx);
+      blsSignerProvider.cacheAllSigners();
+      final SecpArtifactSignerProvider secpArtifactSignerProvider =
+          new SecpArtifactSignerProvider(
+              MultiKeyTransactionSignerProvider.create(config.getDataPath()));
+      final MultiCurveArtifactSignerProvider signerProvider =
+          new MultiCurveArtifactSignerProvider(
+              List.of(blsSignerProvider, secpArtifactSignerProvider));
 
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(vertx, signerProvider);
@@ -133,7 +144,7 @@ public class Runner implements Runnable {
   }
 
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
-      final Vertx vertx, final DirectoryBackedArtifactSignerProvider signerProvider)
+      final Vertx vertx, final ArtifactSignerProvider signerProvider)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
@@ -171,12 +182,12 @@ public class Runner implements Runnable {
     return completableFuture.get();
   }
 
-  private DirectoryBackedArtifactSignerProvider createSignerProvider(
+  private BlsArtifactSignerProvider createBlsSignerProvider(
       final MetricsSystem metricsSystem, final Vertx vertx) {
     final ArtifactSignerFactory artifactSignerFactory =
         new ArtifactSignerFactory(
             config.getKeyConfigPath(), metricsSystem, new HashicorpConnectionFactory(vertx));
-    return new DirectoryBackedArtifactSignerProvider(
+    return new BlsArtifactSignerProvider(
         config.getKeyConfigPath(),
         "yaml",
         new YamlSignerParser(artifactSignerFactory),

@@ -12,8 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.http.handlers;
 
-import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.http.models.SigningRequestBody;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
@@ -48,8 +48,8 @@ public class SignForPublicKeyHandler implements Handler<RoutingContext> {
     }
 
     final Bytes dataToSign = getDataToSign(params);
-    final BLSSignature signature = signer.get().sign(dataToSign);
-    routingContext.response().end(signature.toString());
+    final ArtifactSignature signature = signer.get().sign(dataToSign);
+    routingContext.response().end(signature.toHexString());
   }
 
   private Bytes getDataToSign(final RequestParameters params) {

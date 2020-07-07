@@ -70,7 +70,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("signingRoot", SIGNING_ROOT.toHexString()).toString())
+        .body(new JsonObject().put("data", SIGNING_ROOT.toHexString()).toString())
         .when()
         .post(SIGN_ENDPOINT)
         .then()
@@ -96,7 +96,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("signingRoot", SIGNING_ROOT.toHexString()).toString())
+        .body(new JsonObject().put("data", SIGNING_ROOT.toHexString()).toString())
         .when()
         .post(SIGN_ENDPOINT)
         .then()
@@ -115,7 +115,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("signingRoot", SIGNING_ROOT.toHexString()).toString())
+        .body(new JsonObject().put("data", SIGNING_ROOT.toHexString()).toString())
         .when()
         .post(SIGN_ENDPOINT)
         .then()
@@ -138,7 +138,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("signingRoot", (String) null).toString())
+        .body(new JsonObject().put("data", (String) null).toString())
         .when()
         .post(SIGN_ENDPOINT)
         .then()
@@ -147,7 +147,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void receiveA400IfSigningRootIsMissingFromJsonBody() {
+  public void receiveA400IfDataIsMissingFromJsonBody() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -209,7 +209,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .pathParam("publicKey", keyPair.getPublicKey().toString())
         .body(
             new JsonObject()
-                .put("signingRoot", SIGNING_ROOT.toHexString())
+                .put("data", SIGNING_ROOT.toHexString())
                 .put("unknownField", "someValue")
                 .toString())
         .when()
@@ -247,7 +247,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
           .pathParam("publicKey", keyPair.getPublicKey().toString())
           .body(
               new JsonObject()
-                  .put("signingRoot", SIGNING_ROOT.toHexString())
+                  .put("data", SIGNING_ROOT.toHexString())
                   .put("unknownField", "someValue")
                   .toString())
           .when()

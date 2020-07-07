@@ -12,11 +12,18 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.artemis.bls.BLSSignature;
 
-public interface ArtifactSigner {
+public class BlsArtifactSignature implements ArtifactSignature {
 
-  String getIdentifier();
+  private final BLSSignature blsSignature;
 
-  ArtifactSignature sign(final Bytes message);
+  public BlsArtifactSignature(final BLSSignature blsSignature) {
+    this.blsSignature = blsSignature;
+  }
+
+  @Override
+  public String toHexString() {
+    return blsSignature.getSignature().toString();
+  }
 }
