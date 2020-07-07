@@ -12,6 +12,9 @@
  */
 package tech.pegasys.eth2signer.core.http.handlers;
 
+import static com.google.common.net.MediaType.JSON_UTF_8;
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
 import io.vertx.core.Handler;
@@ -29,6 +32,6 @@ public class GetPublicKeysHandler implements Handler<RoutingContext> {
   public void handle(final RoutingContext context) {
     final JsonArray jsonArray = new JsonArray();
     signerProvider.availableIdentifiers().forEach(jsonArray::add);
-    context.response().end(jsonArray.encode());
+    context.response().putHeader(CONTENT_TYPE, JSON_UTF_8.toString()).end(jsonArray.encode());
   }
 }

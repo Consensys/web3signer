@@ -26,6 +26,7 @@ import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -88,15 +89,35 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
             "", containsInAnyOrder(key1.getPublicKey().toString(), key2.getPublicKey().toString()));
   }
 
+  @Test
+  public void allLoadedKeysAreReturnedPublicKeyResponseWithEmptyAccept() {
+    final BLSKeyPair key1 = createKey(PRIVATE_KEY_1);
+    final BLSKeyPair key2 = createKey(PRIVATE_KEY_2);
+
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory);
+    startSigner(builder.build());
+
+    // without openapi filter
+    given()
+        .baseUri(signer.getUrl())
+        .accept("")
+        .get(SIGNER_PUBLIC_KEYS_PATH)
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body(
+            "", containsInAnyOrder(key1.getPublicKey().toString(), key2.getPublicKey().toString()));
+  }
+
   private ValidatableResponse whenGetSignerPublicKeysPathThenAssertThat() {
     return given()
         .baseUri(signer.getUrl())
         .filter(getOpenApiValidationFilter())
-        .when()
         .get(SIGNER_PUBLIC_KEYS_PATH)
         .then()
-        .assertThat()
-        .statusCode(200);
+        .statusCode(200)
+        .contentType(ContentType.JSON);
   }
 
   private BLSKeyPair createKey(final String privateKey) {

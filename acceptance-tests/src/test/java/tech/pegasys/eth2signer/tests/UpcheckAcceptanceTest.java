@@ -17,6 +17,7 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 
+import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
 public class UpcheckAcceptanceTest extends AcceptanceTestBase {
@@ -28,11 +29,10 @@ public class UpcheckAcceptanceTest extends AcceptanceTestBase {
     given()
         .baseUri(signer.getUrl())
         .filter(getOpenApiValidationFilter())
-        .when()
         .get("/upcheck")
         .then()
-        .assertThat()
         .statusCode(200)
+        .contentType(ContentType.TEXT)
         .body(equalToIgnoringCase("OK"));
   }
 }
