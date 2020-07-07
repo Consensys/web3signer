@@ -17,6 +17,7 @@ import static tech.pegasys.eth2signer.commandline.DefaultCommandValues.CONFIG_FI
 import tech.pegasys.eth2signer.commandline.valueprovider.CascadingDefaultProvider;
 import tech.pegasys.eth2signer.commandline.valueprovider.EnvironmentVariableDefaultProvider;
 import tech.pegasys.eth2signer.commandline.valueprovider.YamlConfigFileDefaultProvider;
+import tech.pegasys.eth2signer.core.InitializationException;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -128,6 +129,10 @@ public class CommandlineParser {
       final Exception ex,
       final CommandLine commandLine,
       final CommandLine.ParseResult parseResult) {
+    if (ex instanceof InitializationException) {
+      errorWriter.println("Failed to initialize Eth2Signer");
+      errorWriter.println("Cause: " + ex.getMessage());
+    }
     commandLine.usage(outputWriter);
     return commandLine.getCommandSpec().exitCodeOnExecutionException();
   }

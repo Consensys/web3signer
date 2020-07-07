@@ -12,7 +12,12 @@
  */
 package tech.pegasys.eth2signer.dsl.signer;
 
+import tech.pegasys.eth2signer.core.config.TlsOptions;
+import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
+
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 
 public class SignerConfiguration {
 
@@ -20,13 +25,33 @@ public class SignerConfiguration {
 
   private final String hostname;
   private final int httpRpcPort;
+  private final List<String> httpHostAllowList;
   private final Path keyStorePath;
+  private final List<String> metricsHostAllowList;
+  private final boolean metricsEnabled;
+  private Optional<TlsOptions> serverTlsOptions;
+  private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
+  private final int metricsPort;
 
   public SignerConfiguration(
-      final String hostname, final int httpRpcPort, final Path keyStorePath) {
+      final String hostname,
+      final int httpRpcPort,
+      final List<String> httpHostAllowList,
+      final Path keyStorePath,
+      final int metricsPort,
+      final List<String> metricsHostAllowList,
+      final boolean metricsEnabled,
+      final Optional<TlsOptions> serverTlsOptions,
+      final Optional<TlsCertificateDefinition> overriddenCaTrustStore) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
+    this.httpHostAllowList = httpHostAllowList;
     this.keyStorePath = keyStorePath;
+    this.metricsPort = metricsPort;
+    this.metricsHostAllowList = metricsHostAllowList;
+    this.metricsEnabled = metricsEnabled;
+    this.serverTlsOptions = serverTlsOptions;
+    this.overriddenCaTrustStore = overriddenCaTrustStore;
   }
 
   public String hostname() {
@@ -37,11 +62,39 @@ public class SignerConfiguration {
     return httpRpcPort;
   }
 
+  public List<String> getHttpHostAllowList() {
+    return httpHostAllowList;
+  }
+
   public Path getKeyStorePath() {
     return keyStorePath;
   }
 
-  public boolean isDynamicPortAllocation() {
+  public boolean isHttpDynamicPortAllocation() {
     return httpRpcPort == UNASSIGNED_PORT;
+  }
+
+  public boolean isMetricsEnabled() {
+    return metricsEnabled;
+  }
+
+  public int getMetricsPort() {
+    return metricsPort;
+  }
+
+  public List<String> getMetricsHostAllowList() {
+    return metricsHostAllowList;
+  }
+
+  public Optional<TlsOptions> getServerTlsOptions() {
+    return serverTlsOptions;
+  }
+
+  public Optional<TlsCertificateDefinition> getOverriddenCaTrustStore() {
+    return overriddenCaTrustStore;
+  }
+
+  public boolean isMetricsDynamicPortAllocation() {
+    return metricsPort == UNASSIGNED_PORT;
   }
 }

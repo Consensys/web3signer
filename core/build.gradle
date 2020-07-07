@@ -24,6 +24,7 @@ dependencies {
   implementation 'commons-lang:commons-lang'
 
   implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-net'
 
 
 
@@ -31,6 +32,8 @@ dependencies {
 
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
+  implementation 'io.vertx:vertx-web-client'
+  implementation 'io.vertx:vertx-web-api-contract'
 
   implementation 'org.hyperledger.besu.internal:metrics-core'
   implementation 'org.hyperledger.besu:plugin-api'
@@ -48,6 +51,7 @@ dependencies {
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-multikey'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
+  runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.assertj:assertj-core'
@@ -69,4 +73,12 @@ dependencies {
 
 artifacts {
   testSupportArtifacts testSupportJar
+}
+
+processResources {
+  filesMatching('openapi/eth2signer.yaml') {
+    filter {
+      it.replace('@VERSION@', calculateVersion())
+    }
+  }
 }

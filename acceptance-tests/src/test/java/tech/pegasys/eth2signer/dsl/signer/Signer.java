@@ -12,27 +12,20 @@
  */
 package tech.pegasys.eth2signer.dsl.signer;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.eth2signer.dsl.tls.TlsClientHelper.createRequestSpecification;
 import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 
-import tech.pegasys.artemis.bls.BLSPublicKey;
-import tech.pegasys.eth2signer.core.http.SigningRequestBody;
-import tech.pegasys.eth2signer.dsl.HttpResponse;
 import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;
+import tech.pegasys.eth2signer.dsl.tls.ClientTlsConfig;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.Optional;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
+import io.restassured.specification.RequestSpecification;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.http.HttpClientRequest;
-import io.vertx.core.json.Json;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 
 public class Signer {
 
@@ -40,13 +33,16 @@ public class Signer {
 
   private final Eth2SignerRunner runner;
   private final String hostname;
-  private final String urlFormatting = "http://%s:%s";
   private final Vertx vertx;
-  private HttpClient httpClient;
+  private final String urlFormatting;
+  private final Optional<ClientTlsConfig> clientTlsConfig;
 
-  public Signer(final SignerConfiguration signerConfig) {
+  public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
     this.runner = Eth2SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
+    this.urlFormatting =
+        signerConfig.getServerTlsOptions().isPresent() ? "https://%s:%s" : "http://%s:%s";
+    this.clientTlsConfig = Optional.ofNullable(clientTlsConfig);
     vertx = Vertx.vertx();
   }
 
@@ -55,13 +51,6 @@ public class Signer {
     runner.start();
     final String httpUrl = getUrl();
     LOG.info("Http requests being submitted to : {} ", httpUrl);
-
-    final HttpClientOptions options = new HttpClientOptions();
-    options.setDefaultHost(hostname);
-    options.setDefaultPort(runner.httpJsonRpcPort());
-    httpClient = vertx.createHttpClient(options);
-
-    awaitStartupCompletion();
   }
 
   public void shutdown() {
@@ -74,96 +63,26 @@ public class Signer {
     return runner.isRunning();
   }
 
-  public boolean isListening() {
-    final CompletableFuture<String> responseBodyFuture = new CompletableFuture<>();
-    final HttpClientRequest request =
-        httpClient.get(
-            "/upcheck",
-            response -> {
-              if (response.statusCode() == HttpResponseStatus.OK.code()) {
-                response.bodyHandler(body -> responseBodyFuture.complete(body.toString(UTF_8)));
-              } else {
-                responseBodyFuture.completeExceptionally(new RuntimeException("Illegal response"));
-              }
-            });
-    request.setChunked(false);
-    request.end();
-
-    final String body;
-    try {
-      body = responseBodyFuture.get();
-    } catch (final ExecutionException e) {
-      throw (RuntimeException) e.getCause();
-    } catch (final InterruptedException e) {
-      throw new RuntimeException("Thread was interrupted waiting for Eth2Signer response.");
-    }
-    return "OK".equals(body);
+  public int getUpcheckStatus() {
+    return requestSpec().baseUri(getUrl()).when().get("/upcheck").then().extract().statusCode();
   }
 
-  public HttpResponse signData(
-      final String endpoint, final BLSPublicKey publicKey, final Bytes signingRoot)
-      throws ExecutionException, InterruptedException {
-    final String url = endpoint + "/" + publicKey;
-    final SigningRequestBody requestBody = new SigningRequestBody(signingRoot.toHexString());
-    final String httpBody = Json.encode(requestBody);
-
-    final CompletableFuture<HttpResponse> responseBodyFuture = new CompletableFuture<>();
-    final HttpClientRequest request =
-        httpClient.post(
-            url,
-            response ->
-                response.bodyHandler(
-                    body ->
-                        responseBodyFuture.complete(
-                            new HttpResponse(response.statusCode(), body.toString(UTF_8)))));
-
-    request.end(httpBody);
-
-    return responseBodyFuture.get();
-  }
-
-  public HttpResponse postRawRequest(final String endpoint, final String requestBody)
-      throws ExecutionException, InterruptedException {
-    final CompletableFuture<HttpResponse> responseBodyFuture = new CompletableFuture<>();
-    final HttpClientRequest request =
-        httpClient.post(
-            endpoint,
-            response ->
-                response.bodyHandler(
-                    body ->
-                        responseBodyFuture.complete(
-                            new HttpResponse(response.statusCode(), body.toString(UTF_8)))));
-
-    request.end(requestBody);
-
-    return responseBodyFuture.get();
-  }
-
-  public HttpResponse getRawRequest(final String endpoint)
-      throws ExecutionException, InterruptedException {
-    final CompletableFuture<HttpResponse> responseBodyFuture = new CompletableFuture<>();
-    final HttpClientRequest request =
-        httpClient.get(
-            endpoint,
-            response ->
-                response.bodyHandler(
-                    body ->
-                        responseBodyFuture.complete(
-                            new HttpResponse(response.statusCode(), body.toString(UTF_8)))));
-
-    request.end();
-
-    return responseBodyFuture.get();
+  public RequestSpecification requestSpec() {
+    return given().spec(createRequestSpecification(clientTlsConfig)).baseUri(getUrl());
   }
 
   public void awaitStartupCompletion() {
     LOG.info("Waiting for Signer to become responsive...");
     final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 30;
-    waitFor(secondsToWait, () -> assertThat(isListening()).isTrue());
+    waitFor(secondsToWait, () -> assertThat(getUpcheckStatus()).isEqualTo(200));
     LOG.info("Signer is now responsive");
   }
 
   public String getUrl() {
-    return String.format(urlFormatting, hostname, runner.httpJsonRpcPort());
+    return String.format(urlFormatting, hostname, runner.httpPort());
+  }
+
+  public String getMetricsUrl() {
+    return String.format(urlFormatting, hostname, runner.metricsPort());
   }
 }

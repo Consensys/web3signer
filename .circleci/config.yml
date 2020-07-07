@@ -32,6 +32,10 @@ executors:
       JAVA_TOOL_OPTIONS: -Xmx4096m
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2 -Xmx4096m
 
+  executor_node:
+    docker:
+      - image: circleci/node:14-buster
+
 commands:
   prepare:
     description: "Prepare"
@@ -62,6 +66,25 @@ commands:
       - store_test_results:
           path: build/test-results
 
+  capture_test_reports:
+    description: "Capture test reports"
+    steps:
+      - run:
+          name: Gather test results
+          when: always
+          command: |
+            FILES=`find . -name reports`
+            for FILE in $FILES
+            do
+              MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/reports@\1@'`
+              TARGET="build/test-reports/$MODULE"
+              mkdir -p "$TARGET"
+              cp -rf ${FILE}/*/* "$TARGET"
+            done
+      - store_artifacts:
+          path: build/test-reports
+          destination: test-reports
+
   notify:
     description: "Notify Slack"
     steps:
@@ -90,6 +113,7 @@ jobs:
             ./gradlew --no-daemon --parallel integrationTest --info
       - notify      
       - capture_test_results
+      - capture_test_reports
       - save_cache:
           name: Caching gradle dependencies
           key: deps-{{ checksum "build.gradle" }}-{{ .Branch }}-{{ .Revision }}
@@ -120,6 +144,7 @@ jobs:
             ./gradlew --no-daemon --parallel acceptanceTest
       - notify            
       - capture_test_results
+      - capture_test_reports
 
   buildDocker:
     executor: executor_med
@@ -168,7 +193,31 @@ jobs:
             docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
       - notify
-      
+
+  publishOpenApiSpec:
+    executor: executor_node
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "8c:7f:3d:66:05:d9:12:a2:af:58:59:bf:97:c1:c7:84"
+      - attach_workspace:
+          at: ~/project
+      - restore_cache:
+          keys:
+            - node-cache-{{ checksum "./.openapidoc/package-lock.json" }}
+            - node-cache-
+      - run:
+          name: Build Folder
+          working_directory: .openapidoc 
+          command: |
+            npm ci
+            OA_GIT_USERNAME=$CIRCLE_USERNAME OA_GIT_EMAIL="${CIRCLE_USERNAME}@users.noreply.github.com" OA_GIT_URL=$CIRCLE_REPOSITORY_URL OA_GH_PAGES_BRANCH="gh-pages" node publish.js
+      - save_cache:
+          paths:
+            - ~/.npm
+          key: node-cache-{{ checksum "./.openapidoc/package-lock.json" }}
+
 workflows:
   version: 2
   default:
@@ -180,6 +229,15 @@ workflows:
       - buildDocker:
           requires:
             - build
+      - publishOpenApiSpec:
+          filters:
+            branches:
+              only:
+                - master
+                - /^release-.*/
+          requires:
+            - build
+            - acceptanceTests
       - publish:
           filters:
             branches:

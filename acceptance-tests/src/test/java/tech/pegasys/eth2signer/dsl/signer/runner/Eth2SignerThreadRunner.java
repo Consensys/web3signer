@@ -14,14 +14,16 @@ package tech.pegasys.eth2signer.dsl.signer.runner;
 
 import tech.pegasys.eth2signer.Eth2SignerApp;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
+import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Eth2SignerThreadRunner extends Eth2SignerRunner {
 
-  private ExecutorService executor = Executors.newSingleThreadExecutor();
+  private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
   public Eth2SignerThreadRunner(final SignerConfiguration signerConfig) {
     super(signerConfig);
@@ -29,6 +31,15 @@ public class Eth2SignerThreadRunner extends Eth2SignerRunner {
 
   @Override
   protected void startExecutor(List<String> params) {
+    if (getSignerConfig().getOverriddenCaTrustStore().isPresent()) {
+      final TlsCertificateDefinition caTrustStore =
+          getSignerConfig().getOverriddenCaTrustStore().get();
+      final Path overriddenCaTrustStorePath = createJksCertFile(caTrustStore);
+      System.setProperty(
+          "javax.net.ssl.trustStore", overriddenCaTrustStorePath.toAbsolutePath().toString());
+      System.setProperty("javax.net.ssl.trustStorePassword", caTrustStore.getPassword());
+    }
+
     final String[] paramsAsArray = params.toArray(new String[0]);
     executor.submit(() -> Eth2SignerApp.main(paramsAsArray));
   }

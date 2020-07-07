@@ -1,0 +1,28 @@
+{
+  "name": "openapidoc",
+  "version": "1.0.0",
+  "description": "Prepare Eth2Signer OpenAPI spec to be pusged to gh-pages branch",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/PegaSysEng/eth2signer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PegaSysEng/eth2signer/issues"
+  },
+  "main": "./publish.js",
+  "dependencies": {
+    "gh-pages": "^3.0.0",
+    "git-url-parse": "^11.1.2",
+    "js-yaml": "^3.14.0",
+    "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.2.0"
+  },
+  "scripts": {
+    "lint": "eslint publish.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "PegaSys",
+  "license": "Apache-2.0"
+}

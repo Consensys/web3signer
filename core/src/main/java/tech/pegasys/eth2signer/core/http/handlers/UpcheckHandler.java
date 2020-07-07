@@ -10,23 +10,15 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.dsl;
+package tech.pegasys.eth2signer.core.http.handlers;
 
-public class HttpResponse {
+import io.vertx.core.Handler;
+import io.vertx.ext.web.RoutingContext;
 
-  final int statusCode;
-  final String body;
+public class UpcheckHandler implements Handler<RoutingContext> {
 
-  public HttpResponse(int statusCode, String body) {
-    this.statusCode = statusCode;
-    this.body = body;
-  }
-
-  public int getStatusCode() {
-    return statusCode;
-  }
-
-  public String getBody() {
-    return body;
+  @Override
+  public void handle(RoutingContext routingContext) {
+    routingContext.response().end("OK");
   }
 }

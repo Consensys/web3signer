@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.metrics;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -31,10 +32,15 @@ public class MetricsEndpoint {
       final Boolean metricsEnabled,
       final Integer metricsPort,
       final String metricsNetworkInterface,
-      final Set<MetricCategory> metricCategories) {
+      final Set<MetricCategory> metricCategories,
+      final List<String> metricsHostAllowList) {
     final MetricsConfiguration metricsConfig =
         createMetricsConfiguration(
-            metricsEnabled, metricsPort, metricsNetworkInterface, metricCategories);
+            metricsEnabled,
+            metricsPort,
+            metricsNetworkInterface,
+            metricCategories,
+            metricsHostAllowList);
     this.metricsSystem = PrometheusMetricsSystem.init(metricsConfig);
     this.metricsConfig = metricsConfig;
   }
@@ -52,6 +58,10 @@ public class MetricsEndpoint {
     metricsService.ifPresent(MetricsService::stop);
   }
 
+  public Optional<Integer> getPort() {
+    return metricsService.flatMap(MetricsService::getPort);
+  }
+
   public MetricsSystem getMetricsSystem() {
     return metricsSystem;
   }
@@ -60,12 +70,14 @@ public class MetricsEndpoint {
       final Boolean metricsEnabled,
       final Integer metricsPort,
       final String metricsNetworkInterface,
-      final Set<MetricCategory> metricCategories) {
+      final Set<MetricCategory> metricCategories,
+      final List<String> metricsHostAllowList) {
     return MetricsConfiguration.builder()
         .enabled(metricsEnabled)
         .port(metricsPort)
         .host(metricsNetworkInterface)
         .metricCategories(metricCategories)
+        .hostsWhitelist(metricsHostAllowList)
         .build();
   }
 }

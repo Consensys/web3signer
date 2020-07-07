@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.dsl.signer.runner;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
+import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
@@ -63,6 +65,8 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
     if (Boolean.getBoolean("debugSubProcess")) {
       javaOpts.add("-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
     }
+
+    javaOpts.add(createTrustStoreOptions());
     processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
 
     try {
@@ -72,6 +76,19 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
       LOG.error("Error starting EthSigner process", e);
       throw new UncheckedIOException("Failed to start the Ethsigner process", e);
     }
+  }
+
+  private String createTrustStoreOptions() {
+    final StringJoiner javaOpts = new StringJoiner(" ");
+    if (getSignerConfig().getOverriddenCaTrustStore().isPresent()) {
+      final TlsCertificateDefinition caTrustStore =
+          getSignerConfig().getOverriddenCaTrustStore().get();
+      final Path overriddenCaTrustStorePath = createJksCertFile(caTrustStore);
+      javaOpts.add(
+          "-Djavax.net.ssl.trustStore=" + overriddenCaTrustStorePath.toAbsolutePath().toString());
+      javaOpts.add("-Djavax.net.ssl.trustStorePassword=" + caTrustStore.getPassword());
+    }
+    return javaOpts.toString();
   }
 
   private String executableLocation() {

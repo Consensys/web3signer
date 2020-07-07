@@ -15,19 +15,26 @@ package tech.pegasys.eth2signer.tests;
 import tech.pegasys.eth2signer.dsl.signer.Signer;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 
+import com.atlassian.oai.validator.restassured.OpenApiValidationFilter;
 import org.junit.jupiter.api.AfterEach;
 
 public class AcceptanceTestBase {
 
   protected Signer signer;
 
-  void startSigner(final SignerConfiguration config) {
-    signer = new Signer(config);
+  protected void startSigner(final SignerConfiguration config) {
+    signer = new Signer(config, null);
     signer.start();
+    signer.awaitStartupCompletion();
+  }
+
+  protected OpenApiValidationFilter getOpenApiValidationFilter() {
+    final String swaggerUrl = signer.getUrl() + "/swagger-ui/eth2signer.yaml";
+    return new OpenApiValidationFilter(swaggerUrl);
   }
 
   @AfterEach
-  void cleanup() {
+  protected void cleanup() {
     if (signer != null) {
       signer.shutdown();
       signer = null;

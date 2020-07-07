@@ -88,10 +88,8 @@ class CommandlineParserTest {
   }
 
   @Test
-  void misspeltCommandLineOptionDisplaysErrorMessage() {
-    final int result =
-        parser.parseCommandLine(
-            "--downstream-http-port=8500", "--chain-id=1", "--nonExistentOption=9");
+  void unknownCommandLineOptionDisplaysErrorMessage() {
+    final int result = parser.parseCommandLine("--nonExistentOption=9");
     assertThat(result).isNotZero();
     assertThat(commandOutput.toString()).containsOnlyOnce(defaultUsageText);
   }

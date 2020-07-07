@@ -12,17 +12,35 @@
  */
 package tech.pegasys.eth2signer.dsl.signer;
 
+import static java.util.Collections.emptyList;
+
+import tech.pegasys.eth2signer.core.config.TlsOptions;
+import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
+
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 
 public class SignerConfigurationBuilder {
 
   private static final String LOCALHOST = "127.0.0.1";
 
   private int httpRpcPort = 0;
+  private int metricsPort = 0;
   private Path keyStoreDirectory = Path.of("./");
+  private boolean metricsEnabled;
+  private List<String> metricsHostAllowList = emptyList();
+  private List<String> httpHostAllowList = emptyList();
+  private TlsOptions serverTlsOptions;
+  private TlsCertificateDefinition overriddenCaTrustStore;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withHttpAllowHostList(final List<String> allowHostList) {
+    this.httpHostAllowList = allowHostList;
     return this;
   }
 
@@ -31,7 +49,40 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withMetricsPort(final int port) {
+    metricsPort = port;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withMetricsHostAllowList(final List<String> allowHostList) {
+    this.metricsHostAllowList = allowHostList;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withMetricsEnabled(final boolean metricsEnabled) {
+    this.metricsEnabled = metricsEnabled;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withServerTlsOptions(final TlsOptions serverTlsOptions) {
+    this.serverTlsOptions = serverTlsOptions;
+    return this;
+  }
+
+  public void withOverriddenCA(final TlsCertificateDefinition keystore) {
+    this.overriddenCaTrustStore = keystore;
+  }
+
   public SignerConfiguration build() {
-    return new SignerConfiguration(LOCALHOST, httpRpcPort, keyStoreDirectory);
+    return new SignerConfiguration(
+        LOCALHOST,
+        httpRpcPort,
+        httpHostAllowList,
+        keyStoreDirectory,
+        metricsPort,
+        metricsHostAllowList,
+        metricsEnabled,
+        Optional.ofNullable(serverTlsOptions),
+        Optional.ofNullable(overriddenCaTrustStore));
   }
 }

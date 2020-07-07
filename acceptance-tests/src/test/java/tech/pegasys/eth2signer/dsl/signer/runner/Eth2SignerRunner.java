@@ -13,8 +13,12 @@
 package tech.pegasys.eth2signer.dsl.signer.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.eth2signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
 
+import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
+import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
+import tech.pegasys.eth2signer.dsl.tls.TlsCertificateDefinition;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,13 +26,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
+import com.google.common.collect.Lists;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
@@ -43,6 +48,7 @@ public abstract class Eth2SignerRunner {
 
   private static final String PORTS_FILENAME = "eth2signer.ports";
   private static final String HTTP_PORT_KEY = "http-port";
+  private static final String METRICS_PORT_KEY = "metrics-port";
 
   public static Eth2SignerRunner createRunner(final SignerConfiguration signerConfig) {
     if (Boolean.getBoolean("acctests.runEth2SignerAsProcess")) {
@@ -58,13 +64,8 @@ public abstract class Eth2SignerRunner {
     this.signerConfig = signerConfig;
     this.portsProperties = new Properties();
 
-    if (signerConfig.isDynamicPortAllocation()) {
-      try {
-        this.dataPath = Files.createTempDirectory("acceptance-test");
-      } catch (final IOException e) {
-        throw new RuntimeException(
-            "Failed to create the temporary directory to store the eth2signer.ports file");
-      }
+    if (signerConfig.isHttpDynamicPortAllocation()) {
+      this.dataPath = createTempDirectory("acceptance-test");
     } else {
       dataPath = null;
     }
@@ -75,7 +76,7 @@ public abstract class Eth2SignerRunner {
 
     startExecutor(params);
 
-    if (signerConfig.isDynamicPortAllocation()) {
+    if (signerConfig.isHttpDynamicPortAllocation()) {
       loadPortsFile();
     }
   }
@@ -83,17 +84,7 @@ public abstract class Eth2SignerRunner {
   protected abstract void startExecutor(final List<String> params);
 
   public void shutdown() {
-    try {
-      shutdownExecutor();
-    } finally {
-      if (signerConfig.isDynamicPortAllocation()) {
-        try {
-          MoreFiles.deleteRecursively(dataPath, RecursiveDeleteOption.ALLOW_INSECURE);
-        } catch (final IOException e) {
-          LOG.info("Failed to clean up temporary file: {}", dataPath, e);
-        }
-      }
-    }
+    shutdownExecutor();
   }
 
   protected abstract void shutdownExecutor();
@@ -110,14 +101,58 @@ public abstract class Eth2SignerRunner {
     params.add(signerConfig.hostname());
     params.add("--http-listen-port");
     params.add(String.valueOf(signerConfig.httpPort()));
+    if (!signerConfig.getHttpHostAllowList().isEmpty()) {
+      params.add("--http-host-allowlist");
+      params.add(createAllowList(signerConfig.getHttpHostAllowList()));
+    }
     params.add("--key-store-path");
     params.add(signerConfig.getKeyStorePath().toString());
-    if (signerConfig.isDynamicPortAllocation()) {
+    if (signerConfig.isMetricsEnabled()) {
+      params.add("--metrics-enabled");
+      params.add("--metrics-port");
+      params.add(Integer.toString(signerConfig.getMetricsPort()));
+      if (!signerConfig.getMetricsHostAllowList().isEmpty()) {
+        params.add("--metrics-host-allowlist");
+        params.add(createAllowList(signerConfig.getMetricsHostAllowList()));
+      }
+    }
+    if (signerConfig.isHttpDynamicPortAllocation()) {
       params.add("--data-path");
       params.add(dataPath.toAbsolutePath().toString());
     }
 
+    params.addAll(createServerTlsArgs());
+
     return params;
+  }
+
+  private Collection<? extends String> createServerTlsArgs() {
+    final List<String> params = Lists.newArrayList();
+
+    if (signerConfig.getServerTlsOptions().isPresent()) {
+      final TlsOptions serverTlsOptions = signerConfig.getServerTlsOptions().get();
+      params.add("--tls-keystore-file");
+      params.add(serverTlsOptions.getKeyStoreFile().toString());
+      params.add("--tls-keystore-password-file");
+      params.add(serverTlsOptions.getKeyStorePasswordFile().toString());
+      if (serverTlsOptions.getClientAuthConstraints().isEmpty()) {
+        params.add("--tls-allow-any-client");
+      } else {
+        final ClientAuthConstraints constraints = serverTlsOptions.getClientAuthConstraints().get();
+        if (constraints.getKnownClientsFile().isPresent()) {
+          params.add("--tls-known-clients-file");
+          params.add(constraints.getKnownClientsFile().get().toString());
+        }
+        if (constraints.isCaAuthorizedClientAllowed()) {
+          params.add("--tls-allow-ca-clients");
+        }
+      }
+    }
+    return params;
+  }
+
+  private String createAllowList(final List<String> httpHostAllowList) {
+    return String.join(",", httpHostAllowList);
   }
 
   private void loadPortsFile() {
@@ -149,8 +184,8 @@ public abstract class Eth2SignerRunner {
             });
   }
 
-  public int httpJsonRpcPort() {
-    if (signerConfig.isDynamicPortAllocation()) {
+  public int httpPort() {
+    if (signerConfig.isHttpDynamicPortAllocation()) {
       final String value = portsProperties.getProperty(HTTP_PORT_KEY);
       LOG.info("{}: {}", HTTP_PORT_KEY, value);
       assertThat(value).isNotEmpty();
@@ -158,5 +193,35 @@ public abstract class Eth2SignerRunner {
     } else {
       return signerConfig.httpPort();
     }
+  }
+
+  public int metricsPort() {
+    if (signerConfig.isMetricsDynamicPortAllocation()) {
+      final String value = portsProperties.getProperty(METRICS_PORT_KEY);
+      LOG.info("{}: {}", METRICS_PORT_KEY, value);
+      assertThat(value).isNotEmpty();
+      return Integer.parseInt(value);
+    } else {
+      return signerConfig.getMetricsPort();
+    }
+  }
+
+  private Path createTempDirectory(final String prefix) {
+    try {
+      final Path tempDirectory = Files.createTempDirectory(prefix);
+      FileUtils.forceDeleteOnExit(tempDirectory.toFile());
+      return tempDirectory;
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to create temporary directory", e);
+    }
+  }
+
+  public Path createJksCertFile(final TlsCertificateDefinition caTrustStore) {
+    final Path certificateDirectory = createTempDirectory("acceptance-test-jks-cert");
+    return createJksTrustStore(certificateDirectory, caTrustStore);
+  }
+
+  protected SignerConfiguration getSignerConfig() {
+    return signerConfig;
   }
 }
