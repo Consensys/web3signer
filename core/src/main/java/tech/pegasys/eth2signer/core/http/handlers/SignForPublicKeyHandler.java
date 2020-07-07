@@ -12,6 +12,9 @@
  */
 package tech.pegasys.eth2signer.core.http.handlers;
 
+import static com.google.common.net.MediaType.PLAIN_TEXT_UTF_8;
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+
 import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.http.models.SigningRequestBody;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
@@ -49,7 +52,10 @@ public class SignForPublicKeyHandler implements Handler<RoutingContext> {
 
     final Bytes dataToSign = getDataToSign(params);
     final BLSSignature signature = signer.get().sign(dataToSign);
-    routingContext.response().end(signature.toString());
+    routingContext
+        .response()
+        .putHeader(CONTENT_TYPE, PLAIN_TEXT_UTF_8.toString())
+        .end(signature.toString());
   }
 
   private Bytes getDataToSign(final RequestParameters params) {
