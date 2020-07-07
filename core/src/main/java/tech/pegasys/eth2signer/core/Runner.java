@@ -148,6 +148,9 @@ public class Runner implements Runnable {
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
+    openAPI3RouterFactory
+        .getOptions()
+        .setMountResponseContentTypeHandler(false); // manually set content-type
 
     openAPI3RouterFactory.addHandlerByOperationId(UPCHECK_OPERATION_ID, new UpcheckHandler());
     openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK_OPERATION_ID, errorHandler);

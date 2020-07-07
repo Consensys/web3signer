@@ -71,11 +71,10 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
         .body(new JsonObject().put("data", SIGNING_ROOT.toHexString()).toString())
-        .when()
         .post(SIGN_ENDPOINT)
         .then()
-        .assertThat()
         .statusCode(200)
+        .contentType(ContentType.TEXT)
         .body(equalToIgnoringCase(expectedSignature.toString()));
   }
 
@@ -97,11 +96,10 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
         .body(new JsonObject().put("data", SIGNING_ROOT.toHexString()).toString())
-        .when()
         .post(SIGN_ENDPOINT)
         .then()
-        .assertThat()
         .statusCode(200)
+        .contentType(ContentType.TEXT)
         .body(equalToIgnoringCase(expectedSignature.toString()));
   }
 

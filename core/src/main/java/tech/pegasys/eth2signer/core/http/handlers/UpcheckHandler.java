@@ -12,6 +12,9 @@
  */
 package tech.pegasys.eth2signer.core.http.handlers;
 
+import static com.google.common.net.MediaType.PLAIN_TEXT_UTF_8;
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
@@ -19,6 +22,6 @@ public class UpcheckHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(RoutingContext routingContext) {
-    routingContext.response().end("OK");
+    routingContext.response().putHeader(CONTENT_TYPE, PLAIN_TEXT_UTF_8.toString()).end("OK");
   }
 }
