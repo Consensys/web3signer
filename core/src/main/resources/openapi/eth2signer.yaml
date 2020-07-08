@@ -33,14 +33,14 @@ paths:
             schema:
               type: object
               properties:
-                signingRoot:
+                data:
                   type: string
               required:
-                - signingRoot
+                - data
               additionalProperties:
                 type: string
             example:
-              signingRoot: 0x48656c6c6f2c20776f726c6421
+              data: 0x48656c6c6f2c20776f726c6421
 
       responses:
         '200':
