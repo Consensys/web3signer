@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.nio.file.Path;
 
@@ -102,7 +102,7 @@ public class HashicorpSigningMetadata implements SigningMetadata {
   }
 
   @Override
-  public BlsArtifactSigner createSigner(final ArtifactSignerFactory factory) {
+  public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
     return factory.create(this);
   }
 }
