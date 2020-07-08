@@ -109,7 +109,7 @@ public class Runner implements Runnable {
       metricsEndpoint.start(vertx);
 
       final DirectoryBackedArtifactSignerProvider signerProvider =
-          createBlsSignerProvider(metricsSystem, vertx);
+          createSignerProvider(metricsSystem, vertx);
       signerProvider.cacheAllSigners();
 
       final OpenAPI3RouterFactory openApiRouterFactory =
@@ -175,7 +175,7 @@ public class Runner implements Runnable {
     return completableFuture.get();
   }
 
-  private DirectoryBackedArtifactSignerProvider createBlsSignerProvider(
+  private DirectoryBackedArtifactSignerProvider createSignerProvider(
       final MetricsSystem metricsSystem, final Vertx vertx) {
     final ArtifactSignerFactory artifactSignerFactory =
         new ArtifactSignerFactory(
