@@ -19,7 +19,7 @@ import tech.pegasys.eth2signer.core.multikey.BlsArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 import java.io.IOException;
@@ -96,7 +96,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
 
-    final Optional<BlsArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
     final List<String> errorMsgs = getErrorMessagesFromLogs();
@@ -124,7 +124,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
       final Path filename = createFileWithContent(signingMetadata);
 
       configsDirectory.toFile().setWritable(false);
-      final Optional<BlsArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+      final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
       assertThat(signer).isEmpty();
 
       final List<String> errorMsgs = getErrorMessagesFromLogs();
@@ -149,7 +149,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
 
-    final Optional<BlsArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
     final List<String> errorMsgs = getErrorMessagesFromLogs();
@@ -169,7 +169,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
 
-    final Optional<BlsArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
     final List<String> errorMsgs = getErrorMessagesFromLogs();
