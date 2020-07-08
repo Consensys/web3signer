@@ -15,7 +15,6 @@ package tech.pegasys.eth2signer.core.multikey;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -42,15 +41,15 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class BlsArtifactSignerProvider implements ArtifactSignerProvider {
+public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Path configsDirectory;
   private final String fileExtension;
   private final SignerParser signerParser;
-  private final LoadingCache<String, BlsArtifactSigner> artifactSignerCache;
+  private final LoadingCache<String, ArtifactSigner> artifactSignerCache;
 
-  public BlsArtifactSignerProvider(
+  public DirectoryBackedArtifactSignerProvider(
       final Path rootDirectory,
       final String fileExtension,
       final SignerParser signerParser,
@@ -67,7 +66,7 @@ public class BlsArtifactSignerProvider implements ArtifactSignerProvider {
   @Override
   public Optional<ArtifactSigner> getSigner(final String identifier) {
     final String normalisedIdentifier = normaliseIdentifier(identifier);
-    final BlsArtifactSigner signer;
+    final ArtifactSigner signer;
     try {
       signer = artifactSignerCache.get(normalisedIdentifier);
     } catch (UncheckedExecutionException e) {
@@ -119,20 +118,19 @@ public class BlsArtifactSignerProvider implements ArtifactSignerProvider {
 
   private void cacheSigner(final String identifier) {
     final String normaliseIdentifier = normaliseIdentifier(identifier);
-    final Optional<BlsArtifactSigner> loadedSigner = loadSignerForIdentifier(normaliseIdentifier);
+    final Optional<ArtifactSigner> loadedSigner = loadSignerForIdentifier(normaliseIdentifier);
     // no need to log if signer couldn't be found this is done by loadSignerForIdentifier
     loadedSigner.ifPresent(signer -> artifactSignerCache.put(normaliseIdentifier, signer));
   }
 
   @VisibleForTesting
-  protected LoadingCache<String, BlsArtifactSigner> getArtifactSignerCache() {
+  protected LoadingCache<String, ArtifactSigner> getArtifactSignerCache() {
     return artifactSignerCache;
   }
 
-  private Optional<BlsArtifactSigner> loadSignerForIdentifier(final String signerIdentifier) {
+  private Optional<ArtifactSigner> loadSignerForIdentifier(final String signerIdentifier) {
     final Filter<Path> pathFilter = signerIdentifierFilenameFilter(signerIdentifier);
-    final Collection<BlsArtifactSigner> matchingSigners =
-        findSigners(pathFilter, signerParser::parse);
+    final Collection<ArtifactSigner> matchingSigners = findSigners(pathFilter, signerParser::parse);
     if (matchingSigners.size() > 1) {
       LOG.error(
           "Found multiple signing metadata file matches for signer identifier " + signerIdentifier);
@@ -178,7 +176,7 @@ public class BlsArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   private boolean signerMatchesIdentifier(
-      final BlsArtifactSigner signer, final String signerIdentifier) {
+      final ArtifactSigner signer, final String signerIdentifier) {
     final String identifier = signer.getIdentifier();
     return normaliseIdentifier(identifier).equalsIgnoreCase(normaliseIdentifier(signerIdentifier));
   }

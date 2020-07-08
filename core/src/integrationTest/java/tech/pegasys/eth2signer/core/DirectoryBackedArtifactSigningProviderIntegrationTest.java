@@ -15,7 +15,7 @@ package tech.pegasys.eth2signer.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.eth2signer.TrackingLogAppender;
-import tech.pegasys.eth2signer.core.multikey.BlsArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
@@ -49,10 +49,11 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
   private static final String FILE_EXTENSION = "yaml";
   private static ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
 
-  private BlsArtifactSignerProvider signerProvider;
+  private DirectoryBackedArtifactSignerProvider signerProvider;
   private Vertx vertx;
   private TrackingLogAppender logAppender = new TrackingLogAppender();
-  private final Logger logger = (Logger) LogManager.getLogger(BlsArtifactSignerProvider.class);
+  private final Logger logger =
+      (Logger) LogManager.getLogger(DirectoryBackedArtifactSignerProvider.class);
 
   private static final String PUBLIC_KEY =
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
@@ -68,7 +69,8 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
             configsDirectory, new NoOpMetricsSystem(), hashicorpConnectionFactory);
     final SignerParser signerParser = new YamlSignerParser(artifactSignerFactory);
     signerProvider =
-        new BlsArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser, 0);
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 0);
 
     logAppender.start();
     logger.addAppender(logAppender);

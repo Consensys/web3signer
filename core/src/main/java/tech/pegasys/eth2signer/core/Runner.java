@@ -22,7 +22,7 @@ import tech.pegasys.eth2signer.core.http.handlers.SignForPublicKeyHandler;
 import tech.pegasys.eth2signer.core.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
-import tech.pegasys.eth2signer.core.multikey.BlsArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -108,7 +108,7 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final BlsArtifactSignerProvider signerProvider =
+      final DirectoryBackedArtifactSignerProvider signerProvider =
           createBlsSignerProvider(metricsSystem, vertx);
       signerProvider.cacheAllSigners();
 
@@ -175,12 +175,12 @@ public class Runner implements Runnable {
     return completableFuture.get();
   }
 
-  private BlsArtifactSignerProvider createBlsSignerProvider(
+  private DirectoryBackedArtifactSignerProvider createBlsSignerProvider(
       final MetricsSystem metricsSystem, final Vertx vertx) {
     final ArtifactSignerFactory artifactSignerFactory =
         new ArtifactSignerFactory(
             config.getKeyConfigPath(), metricsSystem, new HashicorpConnectionFactory(vertx));
-    return new BlsArtifactSignerProvider(
+    return new DirectoryBackedArtifactSignerProvider(
         config.getKeyConfigPath(),
         "yaml",
         new YamlSignerParser(artifactSignerFactory),

@@ -13,11 +13,11 @@
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.nio.file.Path;
 
 public interface SignerParser {
 
-  BlsArtifactSigner parse(Path file) throws SigningMetadataException;
+  ArtifactSigner parse(Path file) throws SigningMetadataException;
 }

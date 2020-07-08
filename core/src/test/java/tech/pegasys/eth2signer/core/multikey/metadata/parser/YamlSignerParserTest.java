@@ -25,6 +25,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 
 import java.io.IOException;
@@ -125,7 +126,7 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final BlsArtifactSigner result = signerParser.parse(filename);
+    final ArtifactSigner result = signerParser.parse(filename);
 
     assertThat(result).isEqualTo(blsArtifactSigner);
     verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
@@ -145,7 +146,7 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final BlsArtifactSigner result = signerParser.parse(filename);
+    final ArtifactSigner result = signerParser.parse(filename);
 
     assertThat(result).isEqualTo(blsArtifactSigner);
     verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
@@ -210,7 +211,7 @@ class YamlSignerParserTest {
     keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), keystoreMetadataFile);
 
-    final BlsArtifactSigner result = signerParser.parse(filename);
+    final ArtifactSigner result = signerParser.parse(filename);
     assertThat(result).isEqualTo(blsArtifactSigner);
     verify(artifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
   }

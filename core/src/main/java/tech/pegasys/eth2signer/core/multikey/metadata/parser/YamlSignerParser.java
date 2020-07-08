@@ -15,7 +15,7 @@ package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class YamlSignerParser implements SignerParser {
   }
 
   @Override
-  public BlsArtifactSigner parse(final Path metadataPath) {
+  public ArtifactSigner parse(final Path metadataPath) {
     try {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);

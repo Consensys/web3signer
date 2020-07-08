@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -27,5 +27,5 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 })
 public interface SigningMetadata {
 
-  BlsArtifactSigner createSigner(ArtifactSignerFactory factory);
+  ArtifactSigner createSigner(ArtifactSignerFactory factory);
 }

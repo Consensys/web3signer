@@ -47,7 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class BlsArtifactSignerProviderTest {
+class DirectoryBackedArtifactSignerProviderTest {
 
   @TempDir Path configsDirectory;
   @Mock private SignerParser signerParser;
@@ -67,12 +67,13 @@ class BlsArtifactSignerProviderTest {
       "315ed405fafe339603932eebe8dbfd650ce5dafa561f6928664c75db85f97857";
 
   private final BlsArtifactSigner blsArtifactSigner = createArtifactSigner(PRIVATE_KEY1);
-  private BlsArtifactSignerProvider signerProvider;
+  private DirectoryBackedArtifactSignerProvider signerProvider;
 
   @BeforeEach
   void setup() {
     signerProvider =
-        new BlsArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser, 0);
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 0);
   }
 
   @Test
@@ -162,8 +163,8 @@ class BlsArtifactSignerProviderTest {
 
   @Test
   void failedWithDirectoryErrorReturnEmptySigner() throws IOException {
-    final BlsArtifactSignerProvider signerProvider =
-        new BlsArtifactSignerProvider(
+    final DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
             configsDirectory.resolve("idontexist"), FILE_EXTENSION, signerParser, 5);
     createFileInConfigsDirectory(PUBLIC_KEY1);
 
@@ -217,9 +218,10 @@ class BlsArtifactSignerProviderTest {
 
   @Test
   void signIdentifiersUsesCache() throws IOException {
-    final BlsArtifactSignerProvider signerProvider =
-        new BlsArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser, 1);
-    final LoadingCache<String, BlsArtifactSigner> artifactSignerCache =
+    final DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 1);
+    final LoadingCache<String, ArtifactSigner> artifactSignerCache =
         signerProvider.getArtifactSignerCache();
     artifactSignerCache.put(PUBLIC_KEY1, blsArtifactSigner);
     createFileInConfigsDirectory(PUBLIC_KEY1);
@@ -261,7 +263,8 @@ class BlsArtifactSignerProviderTest {
     when(signerParser.parse(any())).thenThrow(topMostException);
 
     final TrackingLogAppender logAppender = new TrackingLogAppender();
-    final Logger logger = (Logger) LogManager.getLogger(BlsArtifactSignerProvider.class);
+    final Logger logger =
+        (Logger) LogManager.getLogger(DirectoryBackedArtifactSignerProvider.class);
     logAppender.start();
     logger.addAppender(logAppender);
 
@@ -279,8 +282,9 @@ class BlsArtifactSignerProviderTest {
 
   @Test
   void signerLoadedIntoCacheForValidMetadataFile() throws IOException {
-    BlsArtifactSignerProvider signerProvider =
-        new BlsArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser, 1);
+    DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 1);
     createFileInConfigsDirectory(PUBLIC_KEY1);
     when(signerParser.parse(any())).thenReturn(blsArtifactSigner);
     final String identifier = "0x" + PUBLIC_KEY1;
@@ -291,7 +295,7 @@ class BlsArtifactSignerProviderTest {
     assertThat(signer).isNotEmpty();
     assertThat(signer.get().getIdentifier()).isEqualTo(identifier);
 
-    final LoadingCache<String, BlsArtifactSigner> cache = signerProvider.getArtifactSignerCache();
+    final LoadingCache<String, ArtifactSigner> cache = signerProvider.getArtifactSignerCache();
     assertThat(cache.size()).isEqualTo(1);
     assertThat(cache.getIfPresent(PUBLIC_KEY1).getIdentifier()).isEqualTo(identifier);
 
@@ -318,10 +322,11 @@ class BlsArtifactSignerProviderTest {
 
   @Test
   void signerCacheIsUsedIfAlreadyInCache() {
-    final BlsArtifactSignerProvider signerProvider =
-        new BlsArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser, 1);
+    final DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 1);
     final String identifier = "0x" + PUBLIC_KEY1;
-    final LoadingCache<String, BlsArtifactSigner> artifactSignerCache =
+    final LoadingCache<String, ArtifactSigner> artifactSignerCache =
         signerProvider.getArtifactSignerCache();
     artifactSignerCache.put(PUBLIC_KEY1, blsArtifactSigner);
 
@@ -339,9 +344,10 @@ class BlsArtifactSignerProviderTest {
     createFileInConfigsDirectory(PUBLIC_KEY2);
     createFileInConfigsDirectory(PUBLIC_KEY3);
 
-    final BlsArtifactSignerProvider signerProvider =
-        new BlsArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser, 2);
-    final LoadingCache<String, BlsArtifactSigner> signerCache =
+    final DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 2);
+    final LoadingCache<String, ArtifactSigner> signerCache =
         signerProvider.getArtifactSignerCache();
 
     when(signerParser.parse(pathEndsWith(PUBLIC_KEY1)))
@@ -368,8 +374,9 @@ class BlsArtifactSignerProviderTest {
 
   @Test
   void cacheAllSignersPopulatesCacheForAllIdentifiers() throws IOException {
-    BlsArtifactSignerProvider signerProvider =
-        new BlsArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser, 3);
+    DirectoryBackedArtifactSignerProvider signerProvider =
+        new DirectoryBackedArtifactSignerProvider(
+            configsDirectory, FILE_EXTENSION, signerParser, 3);
     createFileInConfigsDirectory(PUBLIC_KEY1);
     createFileInConfigsDirectory(PUBLIC_KEY2);
     createFileInConfigsDirectory(PUBLIC_KEY3);
