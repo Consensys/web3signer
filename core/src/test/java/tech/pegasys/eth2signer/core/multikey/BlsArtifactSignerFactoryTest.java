@@ -19,7 +19,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 import java.io.IOException;
@@ -34,7 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-class ArtifactSignerFactoryTest {
+class BlsArtifactSignerFactoryTest {
 
   private static final String PUBLIC_KEY =
       "95e57532ede3c1dd879061153f9cfdcdefa9dc5fb9c954a6677bc6641b8d26e39f70b660bbaa732c47277c0096e11400";
@@ -70,24 +70,24 @@ class ArtifactSignerFactoryTest {
   void createsArtifactSignerFromKeyStoreUsingRelativePaths() {
     final Path relativeKeystorePath = Path.of(KEYSTORE_FILE);
     final Path relativePasswordPath = Path.of(PASSWORD_FILE);
-    final ArtifactSigner artifactSigner =
+    final BlsArtifactSigner blsArtifactSigner =
         artifactSignerFactory.create(
             new FileKeyStoreMetadata(relativeKeystorePath, relativePasswordPath));
 
     assertThat(relativeKeystorePath).isRelative();
     assertThat(relativePasswordPath).isRelative();
-    assertThat(artifactSigner.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    assertThat(blsArtifactSigner.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
   }
 
   @Test
   void createsArtifactSignerFromKeyStoreUsingAbsolutePaths() {
 
-    final ArtifactSigner artifactSigner =
+    final BlsArtifactSigner blsArtifactSigner =
         artifactSignerFactory.create(new FileKeyStoreMetadata(keystoreFile, passwordFile));
 
     assertThat(keystoreFile).isAbsolute();
     assertThat(passwordFile).isAbsolute();
-    assertThat(artifactSigner.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    assertThat(blsArtifactSigner.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
   }
 
   @Test

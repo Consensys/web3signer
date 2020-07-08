@@ -18,7 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import tech.pegasys.artemis.bls.BLSKeyPair;
 import tech.pegasys.artemis.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
@@ -62,25 +62,26 @@ public class ArtifactSignerFactory {
     this.connectionFactory = connectionFactory;
   }
 
-  public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
+  public BlsArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
-      return new ArtifactSigner(new BLSKeyPair(fileRawSigningMetadata.getSecretKey()));
+      return new BlsArtifactSigner(new BLSKeyPair(fileRawSigningMetadata.getSecretKey()));
     }
   }
 
-  public ArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
+  public BlsArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-keystore").startTimer()) {
       return createKeystoreArtifact(fileKeyStoreMetadata);
     }
   }
 
-  public ArtifactSigner create(final HashicorpSigningMetadata hashicorpMetadata) {
+  public BlsArtifactSigner create(final HashicorpSigningMetadata hashicorpMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("hashicorp").startTimer()) {
       return createHashicorpArtifact(hashicorpMetadata);
     }
   }
 
-  private ArtifactSigner createKeystoreArtifact(final FileKeyStoreMetadata fileKeyStoreMetadata) {
+  private BlsArtifactSigner createKeystoreArtifact(
+      final FileKeyStoreMetadata fileKeyStoreMetadata) {
     final Path keystoreFile = makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystoreFile());
     final Path keystorePasswordFile =
         makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystorePasswordFile());
@@ -89,13 +90,13 @@ public class ArtifactSignerFactory {
       final String password = loadPassword(keystorePasswordFile);
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
-      return new ArtifactSigner(keyPair);
+      return new BlsArtifactSigner(keyPair);
     } catch (final KeyStoreValidationException e) {
       throw new SigningMetadataException(e.getMessage(), e);
     }
   }
 
-  private ArtifactSigner createHashicorpArtifact(final HashicorpSigningMetadata metadata) {
+  private BlsArtifactSigner createHashicorpArtifact(final HashicorpSigningMetadata metadata) {
     TlsOptions tlsOptions = null;
     if (metadata.getTlsEnabled()) {
       final Path knownServerFile = metadata.getTlsKnownServerFile();
@@ -128,7 +129,7 @@ public class ArtifactSignerFactory {
                   metadata.getToken()));
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(secret)));
-      return new ArtifactSigner(keyPair);
+      return new BlsArtifactSigner(keyPair);
     } catch (Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
     }
