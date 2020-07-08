@@ -47,7 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class BlsBlsArtifactSignerProviderTest {
+class BlsArtifactSignerProviderTest {
 
   @TempDir Path configsDirectory;
   @Mock private SignerParser signerParser;
