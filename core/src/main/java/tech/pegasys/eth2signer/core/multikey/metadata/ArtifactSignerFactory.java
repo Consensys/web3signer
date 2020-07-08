@@ -18,6 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import tech.pegasys.artemis.bls.BLSKeyPair;
 import tech.pegasys.artemis.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
@@ -62,26 +63,25 @@ public class ArtifactSignerFactory {
     this.connectionFactory = connectionFactory;
   }
 
-  public BlsArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
+  public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
       return new BlsArtifactSigner(new BLSKeyPair(fileRawSigningMetadata.getSecretKey()));
     }
   }
 
-  public BlsArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
+  public ArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-keystore").startTimer()) {
       return createKeystoreArtifact(fileKeyStoreMetadata);
     }
   }
 
-  public BlsArtifactSigner create(final HashicorpSigningMetadata hashicorpMetadata) {
+  public ArtifactSigner create(final HashicorpSigningMetadata hashicorpMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("hashicorp").startTimer()) {
       return createHashicorpArtifact(hashicorpMetadata);
     }
   }
 
-  private BlsArtifactSigner createKeystoreArtifact(
-      final FileKeyStoreMetadata fileKeyStoreMetadata) {
+  private ArtifactSigner createKeystoreArtifact(final FileKeyStoreMetadata fileKeyStoreMetadata) {
     final Path keystoreFile = makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystoreFile());
     final Path keystorePasswordFile =
         makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystorePasswordFile());
@@ -96,7 +96,7 @@ public class ArtifactSignerFactory {
     }
   }
 
-  private BlsArtifactSigner createHashicorpArtifact(final HashicorpSigningMetadata metadata) {
+  private ArtifactSigner createHashicorpArtifact(final HashicorpSigningMetadata metadata) {
     TlsOptions tlsOptions = null;
     if (metadata.getTlsEnabled()) {
       final Path knownServerFile = metadata.getTlsKnownServerFile();

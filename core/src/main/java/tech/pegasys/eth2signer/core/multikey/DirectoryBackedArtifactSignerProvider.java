@@ -64,24 +64,24 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   @Override
-  public Optional<ArtifactSigner> getSigner(final String identifier) {
-    final String normalisedIdentifier = normaliseIdentifier(identifier);
+  public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
+    final String normalisedIdentifier = normaliseIdentifier(signerIdentifier);
     final ArtifactSigner signer;
     try {
       signer = artifactSignerCache.get(normalisedIdentifier);
     } catch (UncheckedExecutionException e) {
       if (e.getCause() instanceof NoSuchElementException) {
-        LOG.error("No valid matching metadata file found for the identifier {}", identifier);
+        LOG.error("No valid matching metadata file found for the identifier {}", signerIdentifier);
       } else {
-        LOG.error("Error loading for signer for identifier {}", identifier);
+        LOG.error("Error loading for signer for identifier {}", signerIdentifier);
       }
       return Optional.empty();
     } catch (Exception e) {
-      LOG.error("Error loading for signer for identifier {}", identifier);
+      LOG.error("Error loading for signer for identifier {}", signerIdentifier);
       return Optional.empty();
     }
 
-    if (!signerMatchesIdentifier(signer, identifier)) {
+    if (!signerMatchesIdentifier(signer, signerIdentifier)) {
       LOG.error(
           "Signing metadata config does not correspond to the specified signer identifier {}",
           signer.getIdentifier());
