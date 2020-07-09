@@ -12,26 +12,21 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.artemis.bls.BLS;
-import tech.pegasys.artemis.bls.BLSKeyPair;
 import tech.pegasys.artemis.bls.BLSSignature;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 class BlsArtifactSignatureTest {
+  private static final String SIGNATURE =
+      "0x932603f10c7efd5320596aece2750b6f0fbc982b818f3a571b3a8522eec08d85362deffd27a79210b0d2a64a431afaf60ed4fe882224b70fa4cf9e6af2b08caf1fbb9c9498bf4dee157e261e8ec74755b740a1cb60cd83becf8201d81d2f7cff";
 
   @Test
   void hexEncodedSignatureIsReturned() {
-    final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
-    final BLSKeyPair keyPair = BLSKeyPair.random(4);
-    final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), message);
-
-    final BlsArtifactSignature blsArtifactSignature = new BlsArtifactSignature(expectedSignature);
-    assertThat(blsArtifactSignature.toHexString())
-        .isEqualTo(expectedSignature.getSignature().toString());
+    final BLSSignature blsSignature = BLSSignature.fromBytes(Bytes.fromHexString(SIGNATURE));
+    final BlsArtifactSignature blsArtifactSignature = new BlsArtifactSignature(blsSignature);
+    assertThat(blsArtifactSignature.toHexString()).isEqualTo(SIGNATURE);
   }
 }
