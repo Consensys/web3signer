@@ -70,24 +70,23 @@ class ArtifactSignerFactoryTest {
   void createsArtifactSignerFromKeyStoreUsingRelativePaths() {
     final Path relativeKeystorePath = Path.of(KEYSTORE_FILE);
     final Path relativePasswordPath = Path.of(PASSWORD_FILE);
-    final ArtifactSigner blsArtifactSigner =
+    final ArtifactSigner artifactSigner =
         artifactSignerFactory.create(
             new FileKeyStoreMetadata(relativeKeystorePath, relativePasswordPath));
 
     assertThat(relativeKeystorePath).isRelative();
     assertThat(relativePasswordPath).isRelative();
-    assertThat(blsArtifactSigner.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    assertThat(artifactSigner.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
   }
 
   @Test
   void createsArtifactSignerFromKeyStoreUsingAbsolutePaths() {
-
-    final ArtifactSigner blsArtifactSigner =
+    final ArtifactSigner artifactSigner =
         artifactSignerFactory.create(new FileKeyStoreMetadata(keystoreFile, passwordFile));
 
     assertThat(keystoreFile).isAbsolute();
     assertThat(passwordFile).isAbsolute();
-    assertThat(blsArtifactSigner.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    assertThat(artifactSigner.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
   }
 
   @Test

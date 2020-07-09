@@ -48,7 +48,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class YamlSignerParserTest {
 
   private static final String YAML_FILE_EXTENSION = "yaml";
-  private static ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
@@ -114,11 +114,11 @@ class YamlSignerParserTest {
 
   @Test
   void unencryptedMetaDataInfoWithPrivateKeyReturnsMetadata() throws IOException {
-    final BlsArtifactSigner blsArtifactSigner =
+    final BlsArtifactSigner artifactSigner =
         new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
     when(artifactSignerFactory.create(any(FileRawSigningMetadata.class)))
-        .thenReturn(blsArtifactSigner);
+        .thenReturn(artifactSigner);
 
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
@@ -128,17 +128,17 @@ class YamlSignerParserTest {
 
     final ArtifactSigner result = signerParser.parse(filename);
 
-    assertThat(result).isEqualTo(blsArtifactSigner);
+    assertThat(result).isEqualTo(artifactSigner);
     verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
   }
 
   @Test
   void unencryptedMetaDataInfoWith0xPrefixPrivateKeyReturnsMetadata() throws IOException {
-    final BlsArtifactSigner blsArtifactSigner =
+    final BlsArtifactSigner artifactSigner =
         new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
     when(artifactSignerFactory.create(any(FileRawSigningMetadata.class)))
-        .thenReturn(blsArtifactSigner);
+        .thenReturn(artifactSigner);
 
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
@@ -148,7 +148,7 @@ class YamlSignerParserTest {
 
     final ArtifactSigner result = signerParser.parse(filename);
 
-    assertThat(result).isEqualTo(blsArtifactSigner);
+    assertThat(result).isEqualTo(artifactSigner);
     verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
   }
 
@@ -194,12 +194,11 @@ class YamlSignerParserTest {
 
   @Test
   void keyStoreMetaDataInfoReturnsMetadata() throws IOException {
-    final BlsArtifactSigner blsArtifactSigner =
+    final BlsArtifactSigner artifactSigner =
         new BlsArtifactSigner(
             new BLSKeyPair(
                 BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
-    when(artifactSignerFactory.create(any(FileKeyStoreMetadata.class)))
-        .thenReturn(blsArtifactSigner);
+    when(artifactSignerFactory.create(any(FileKeyStoreMetadata.class))).thenReturn(artifactSigner);
 
     final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
     final Path keystoreFile = configDir.resolve("keystore.json");
@@ -212,7 +211,7 @@ class YamlSignerParserTest {
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), keystoreMetadataFile);
 
     final ArtifactSigner result = signerParser.parse(filename);
-    assertThat(result).isEqualTo(blsArtifactSigner);
+    assertThat(result).isEqualTo(artifactSigner);
     verify(artifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
   }
 
