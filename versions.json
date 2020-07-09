@@ -1,4 +1,14 @@
 {
-    "latest":{"spec":"latest","source":"master"},
-    "stable":{"spec":"latest","source":"master"}
+ "latest": {
+  "spec": "latest",
+  "source": "master"
+ },
+ "stable": {
+  "spec": "0.1.0",
+  "source": "0.1.0"
+ },
+ "0.1.0": {
+  "spec": "0.1.0",
+  "source": "0.1.0"
+ }
 }
