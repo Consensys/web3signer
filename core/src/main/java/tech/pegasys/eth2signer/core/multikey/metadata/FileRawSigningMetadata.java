@@ -12,10 +12,10 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.artemis.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import tech.pegasys.teku.bls.BLSSecretKey;
 
 public class FileRawSigningMetadata implements SigningMetadata {
 

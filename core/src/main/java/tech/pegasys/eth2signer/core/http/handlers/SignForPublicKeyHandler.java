@@ -15,7 +15,6 @@ package tech.pegasys.eth2signer.core.http.handlers;
 import static com.google.common.net.MediaType.PLAIN_TEXT_UTF_8;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
-import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.http.models.SigningRequestBody;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -30,6 +29,7 @@ import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.teku.bls.BLSSignature;
 
 public class SignForPublicKeyHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();

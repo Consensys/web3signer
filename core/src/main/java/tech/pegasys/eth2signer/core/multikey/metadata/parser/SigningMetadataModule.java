@@ -12,7 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
-import tech.pegasys.artemis.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 
 import java.io.IOException;
@@ -25,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.teku.bls.BLSSecretKey;
 
 public class SigningMetadataModule extends SimpleModule {
 
