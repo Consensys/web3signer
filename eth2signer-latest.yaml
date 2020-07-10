@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Eth2Signer'
   description: 'Sign Eth2 Artifacts'
-  version: '0.1.1-dev-776a0ed7'
+  version: '0.1.1-dev-09abda29'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -33,14 +33,14 @@ paths:
             schema:
               type: object
               properties:
-                signingRoot:
+                data:
                   type: string
               required:
-                - signingRoot
+                - data
               additionalProperties:
                 type: string
             example:
-              signingRoot: 0x48656c6c6f2c20776f726c6421
+              data: 0x48656c6c6f2c20776f726c6421
 
       responses:
         '200':
