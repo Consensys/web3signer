@@ -15,7 +15,6 @@ package tech.pegasys.eth2signer.dsl.utils;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
-import tech.pegasys.artemis.bls.BLSKeyPair;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
@@ -27,6 +26,7 @@ import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import tech.pegasys.signers.hashicorp.dsl.certificates.CertificateHelpers;
+import tech.pegasys.teku.bls.BLSKeyPair;
 
 import java.io.IOException;
 import java.nio.file.Files;

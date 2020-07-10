@@ -13,9 +13,9 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.teku.bls.BLSSecretKey;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import tech.pegasys.teku.bls.BLSSecretKey;
 
 public class FileRawSigningMetadata implements SigningMetadata {
 
