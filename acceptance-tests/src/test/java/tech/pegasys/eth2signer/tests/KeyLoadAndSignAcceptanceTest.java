@@ -41,7 +41,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
-  private static final Bytes SIGNING_ROOT = Bytes.wrap("Hello, world!".getBytes(UTF_8));
+  private static final Bytes DATA = Bytes.wrap("Hello, world!".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
@@ -49,8 +49,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   private static final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
-  private static final BLSSignature expectedSignature =
-      BLS.sign(keyPair.getSecretKey(), SIGNING_ROOT);
+  private static final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), DATA);
   private static final String SIGN_ENDPOINT = "/signer/sign/{publicKey}";
 
   @TempDir Path testDirectory;
@@ -70,7 +69,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("signingRoot", SIGNING_ROOT.toHexString()).toString())
+        .body(new JsonObject().put("data", DATA.toHexString()).toString())
         .post(SIGN_ENDPOINT)
         .then()
         .statusCode(200)
@@ -95,7 +94,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("signingRoot", SIGNING_ROOT.toHexString()).toString())
+        .body(new JsonObject().put("data", DATA.toHexString()).toString())
         .post(SIGN_ENDPOINT)
         .then()
         .statusCode(200)
@@ -113,7 +112,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("signingRoot", SIGNING_ROOT.toHexString()).toString())
+        .body(new JsonObject().put("data", DATA.toHexString()).toString())
         .when()
         .post(SIGN_ENDPOINT)
         .then()
@@ -122,7 +121,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void receiveA400IfSigningRootIsNull() {
+  public void receiveA400IfDataIsNull() {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -136,7 +135,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
         .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("signingRoot", (String) null).toString())
+        .body(new JsonObject().put("data", (String) null).toString())
         .when()
         .post(SIGN_ENDPOINT)
         .then()
@@ -145,7 +144,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  public void receiveA400IfSigningRootIsMissingFromJsonBody() {
+  public void receiveA400IfDataIsMissingFromJsonBody() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -207,7 +206,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .pathParam("publicKey", keyPair.getPublicKey().toString())
         .body(
             new JsonObject()
-                .put("signingRoot", SIGNING_ROOT.toHexString())
+                .put("data", DATA.toHexString())
                 .put("unknownField", "someValue")
                 .toString())
         .when()
@@ -245,7 +244,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
           .pathParam("publicKey", keyPair.getPublicKey().toString())
           .body(
               new JsonObject()
-                  .put("signingRoot", SIGNING_ROOT.toHexString())
+                  .put("data", DATA.toHexString())
                   .put("unknownField", "someValue")
                   .toString())
           .when()

@@ -62,6 +62,6 @@ public class SignForPublicKeyHandler implements Handler<RoutingContext> {
     final RequestParameter body = params.body();
     final JsonObject jsonObject = body.getJsonObject();
     final SigningRequestBody signingRequestBody = jsonObject.mapTo(SigningRequestBody.class);
-    return signingRequestBody.signingRoot();
+    return signingRequestBody.data();
   }
 }
