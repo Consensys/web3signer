@@ -17,17 +17,17 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
-import tech.pegasys.artemis.bls.BLS;
-import tech.pegasys.artemis.bls.BLSKeyPair;
-import tech.pegasys.artemis.bls.BLSPublicKey;
-import tech.pegasys.artemis.bls.BLSSecretKey;
-import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 import tech.pegasys.signers.hashicorp.dsl.DockerClientFactory;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
+import tech.pegasys.teku.bls.BLS;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSPublicKey;
+import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.teku.bls.BLSSignature;
 
 import java.nio.file.Path;
 

@@ -15,8 +15,6 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import tech.pegasys.artemis.bls.BLSKeyPair;
-import tech.pegasys.artemis.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.signers.bls.keystore.KeyStore;
@@ -29,6 +27,8 @@ import tech.pegasys.signers.hashicorp.TrustStoreType;
 import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

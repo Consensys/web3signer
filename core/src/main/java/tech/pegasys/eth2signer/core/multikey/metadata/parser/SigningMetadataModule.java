@@ -12,8 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
-import tech.pegasys.artemis.bls.BLSSecretKey;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
+import tech.pegasys.teku.bls.BLSSecretKey;
 
 import java.io.IOException;
 
