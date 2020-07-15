@@ -15,9 +15,9 @@ package tech.pegasys.eth2signer.core.signing;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.artemis.bls.BLS;
-import tech.pegasys.artemis.bls.BLSKeyPair;
-import tech.pegasys.artemis.bls.BLSSignature;
+import tech.pegasys.teku.bls.BLS;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSignature;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;

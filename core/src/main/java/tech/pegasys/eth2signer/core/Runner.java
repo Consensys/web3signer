@@ -12,7 +12,6 @@
  */
 package tech.pegasys.eth2signer.core;
 
-import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
@@ -30,6 +29,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.teku.bls.BLSSignature;
 
 import java.io.File;
 import java.io.FileOutputStream;

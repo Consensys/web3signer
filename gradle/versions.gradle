@@ -78,7 +78,7 @@ dependencyManagement {
 
     dependency 'tech.pegasys.signers.internal:bls-keystore:1.0.0'
 
-    dependency 'tech.pegasys.teku.internal:bls:0.8.2-SNAPSHOT'
+    dependency 'tech.pegasys.teku.internal:bls:0.12.1-SNAPSHOT'
     dependency 'tech.pegasys.signers.internal:keystorage-hashicorp:1.0.0'
 
     dependency 'com.atlassian.oai:swagger-request-validator-restassured:2.10.0'

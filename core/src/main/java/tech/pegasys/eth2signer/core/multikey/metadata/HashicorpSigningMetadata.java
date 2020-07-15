@@ -12,8 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.teku.bls.BLSSignature;
 
 import java.nio.file.Path;
 

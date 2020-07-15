@@ -12,9 +12,9 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import tech.pegasys.artemis.bls.BLS;
-import tech.pegasys.artemis.bls.BLSKeyPair;
-import tech.pegasys.artemis.bls.BLSSignature;
+import tech.pegasys.teku.bls.BLS;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSignature;
 
 import org.apache.tuweni.bytes.Bytes;
 

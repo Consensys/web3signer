@@ -15,10 +15,10 @@ package tech.pegasys.eth2signer.core.http.handlers;
 import static com.google.common.net.MediaType.PLAIN_TEXT_UTF_8;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
-import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.http.models.SigningRequestBody;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.teku.bls.BLSSignature;
 
 import java.util.Optional;
 
@@ -69,6 +69,6 @@ public class SignForPublicKeyHandler implements Handler<RoutingContext> {
     final RequestParameter body = params.body();
     final JsonObject jsonObject = body.getJsonObject();
     final SigningRequestBody signingRequestBody = jsonObject.mapTo(SigningRequestBody.class);
-    return signingRequestBody.signingRoot();
+    return signingRequestBody.data();
   }
 }

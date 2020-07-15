@@ -14,7 +14,6 @@ package tech.pegasys.eth2signer.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
@@ -23,6 +22,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.teku.bls.BLSSignature;
 
 import java.io.IOException;
 import java.nio.file.Files;
