@@ -39,13 +39,6 @@ public class SignForPublicKeyHandler implements Handler<RoutingContext> {
     this.signerProvider = signerProvider;
   }
 
-  /**
-   * /signer/sign/<identifier>
-   *
-   * <p>/signer/bls/sign /signer/bls/verify
-   *
-   * <p>/signer/secp/sign
-   */
   @Override
   public void handle(RoutingContext routingContext) {
     final RequestParameters params = routingContext.get("parsedParameters");
