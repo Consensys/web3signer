@@ -15,8 +15,8 @@ package tech.pegasys.eth2signer.core.http.handlers;
 import static com.google.common.net.MediaType.PLAIN_TEXT_UTF_8;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.http.models.SigningRequestBody;
-import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
@@ -33,17 +33,24 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class SignForPublicKeyHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
-  final ArtifactSignerProvider signerProvider;
+  final ArtifactSignerProvider<BLSSignature> signerProvider;
 
-  public SignForPublicKeyHandler(final ArtifactSignerProvider signerProvider) {
+  public SignForPublicKeyHandler(final ArtifactSignerProvider<BLSSignature> signerProvider) {
     this.signerProvider = signerProvider;
   }
 
+  /**
+   * /signer/sign/<identifier>
+   *
+   * <p>/signer/bls/sign /signer/bls/verify
+   *
+   * <p>/signer/secp/sign
+   */
   @Override
   public void handle(RoutingContext routingContext) {
     final RequestParameters params = routingContext.get("parsedParameters");
     final String publicKey = params.pathParameter("publicKey").toString();
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(publicKey);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(publicKey);
     if (signer.isEmpty()) {
       LOG.error("Unable to find an appropriate signer for request: {}", publicKey);
       routingContext.fail(404);
@@ -51,11 +58,11 @@ public class SignForPublicKeyHandler implements Handler<RoutingContext> {
     }
 
     final Bytes dataToSign = getDataToSign(params);
-    final ArtifactSignature signature = signer.get().sign(dataToSign);
+    final BLSSignature signature = signer.get().sign(dataToSign);
     routingContext
         .response()
         .putHeader(CONTENT_TYPE, PLAIN_TEXT_UTF_8.toString())
-        .end(signature.toHexString());
+        .end(signature.toString());
   }
 
   private Bytes getDataToSign(final RequestParameters params) {

@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core;
 
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
@@ -24,6 +25,7 @@ import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.util.FileUtil;
@@ -108,7 +110,7 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final DirectoryBackedArtifactSignerProvider signerProvider =
+      final DirectoryBackedArtifactSignerProvider<BLSSignature> signerProvider =
           createSignerProvider(metricsSystem, vertx);
       signerProvider.cacheAllSigners();
 
@@ -134,7 +136,7 @@ public class Runner implements Runnable {
   }
 
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
-      final Vertx vertx, final ArtifactSignerProvider signerProvider)
+      final Vertx vertx, final ArtifactSignerProvider<BLSSignature> signerProvider)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
@@ -175,15 +177,15 @@ public class Runner implements Runnable {
     return completableFuture.get();
   }
 
-  private DirectoryBackedArtifactSignerProvider createSignerProvider(
+  private DirectoryBackedArtifactSignerProvider<BLSSignature> createSignerProvider(
       final MetricsSystem metricsSystem, final Vertx vertx) {
-    final ArtifactSignerFactory artifactSignerFactory =
-        new ArtifactSignerFactory(
+    final ArtifactSignerFactory<BLSSignature> artifactSignerFactory =
+        new BlsArtifactSignerFactory(
             config.getKeyConfigPath(), metricsSystem, new HashicorpConnectionFactory(vertx));
-    return new DirectoryBackedArtifactSignerProvider(
+    return new DirectoryBackedArtifactSignerProvider<>(
         config.getKeyConfigPath(),
         "yaml",
-        new YamlSignerParser(artifactSignerFactory),
+        new YamlSignerParser<>(artifactSignerFactory),
         config.getKeyCacheLimit());
   }
 

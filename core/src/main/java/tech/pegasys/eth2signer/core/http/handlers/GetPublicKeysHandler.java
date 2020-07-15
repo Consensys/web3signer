@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.core.http.handlers;
 import static com.google.common.net.MediaType.JSON_UTF_8;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
 import io.vertx.core.Handler;
@@ -22,9 +23,9 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
 
 public class GetPublicKeysHandler implements Handler<RoutingContext> {
-  private final ArtifactSignerProvider signerProvider;
+  private final ArtifactSignerProvider<BLSSignature> signerProvider;
 
-  public GetPublicKeysHandler(final ArtifactSignerProvider signerProvider) {
+  public GetPublicKeysHandler(final ArtifactSignerProvider<BLSSignature> signerProvider) {
     this.signerProvider = signerProvider;
   }
 

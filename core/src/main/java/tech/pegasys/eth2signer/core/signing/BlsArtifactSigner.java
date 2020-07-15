@@ -14,10 +14,11 @@ package tech.pegasys.eth2signer.core.signing;
 
 import tech.pegasys.artemis.bls.BLS;
 import tech.pegasys.artemis.bls.BLSKeyPair;
+import tech.pegasys.artemis.bls.BLSSignature;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class BlsArtifactSigner implements ArtifactSigner {
+public class BlsArtifactSigner implements ArtifactSigner<BLSSignature> {
 
   private final BLSKeyPair keyPair;
 
@@ -31,7 +32,7 @@ public class BlsArtifactSigner implements ArtifactSigner {
   }
 
   @Override
-  public ArtifactSignature sign(final Bytes message) {
-    return new BlsArtifactSignature(BLS.sign(keyPair.getSecretKey(), message));
+  public BLSSignature sign(final Bytes message) {
+    return BLS.sign(keyPair.getSecretKey(), message);
   }
 }

@@ -22,24 +22,25 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-public class YamlSignerParser implements SignerParser {
+public class YamlSignerParser<T> implements SignerParser<T> {
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper(new YAMLFactory()).registerModule(new SigningMetadataModule());
-  final ArtifactSignerFactory artifactSignerFactory;
+  final ArtifactSignerFactory<T> artifactSignerFactory;
 
-  public YamlSignerParser(final ArtifactSignerFactory artifactSignerFactory) {
+  public YamlSignerParser(final ArtifactSignerFactory<T> artifactSignerFactory) {
     this.artifactSignerFactory = artifactSignerFactory;
   }
 
   @Override
-  public ArtifactSigner parse(final Path metadataPath) {
+  public ArtifactSigner<T> parse(final Path metadataPath) {
     try {
-      final SigningMetadata metaDataInfo =
-          OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
+      final SigningMetadata<T> metaDataInfo =
+          OBJECT_MAPPER.readValue(metadataPath.toFile(), new TypeReference<>() {});
       return metaDataInfo.createSigner(artifactSignerFactory);
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file format", e);

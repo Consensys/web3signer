@@ -14,9 +14,11 @@ package tech.pegasys.eth2signer.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
@@ -47,11 +49,11 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
   @TempDir Path configsDirectory;
   private static final String FILE_EXTENSION = "yaml";
-  private static ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
 
-  private DirectoryBackedArtifactSignerProvider signerProvider;
+  private DirectoryBackedArtifactSignerProvider<BLSSignature> signerProvider;
   private Vertx vertx;
-  private TrackingLogAppender logAppender = new TrackingLogAppender();
+  private final TrackingLogAppender logAppender = new TrackingLogAppender();
   private final Logger logger =
       (Logger) LogManager.getLogger(DirectoryBackedArtifactSignerProvider.class);
 
@@ -64,12 +66,12 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
 
-    final ArtifactSignerFactory artifactSignerFactory =
-        new ArtifactSignerFactory(
+    final ArtifactSignerFactory<BLSSignature> artifactSignerFactory =
+        new BlsArtifactSignerFactory(
             configsDirectory, new NoOpMetricsSystem(), hashicorpConnectionFactory);
-    final SignerParser signerParser = new YamlSignerParser(artifactSignerFactory);
+    final SignerParser<BLSSignature> signerParser = new YamlSignerParser<>(artifactSignerFactory);
     signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
+        new DirectoryBackedArtifactSignerProvider<>(
             configsDirectory, FILE_EXTENSION, signerParser, 0);
 
     logAppender.start();
@@ -98,7 +100,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
     final List<String> errorMsgs = getErrorMessagesFromLogs();
@@ -126,7 +128,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
       final Path filename = createFileWithContent(signingMetadata);
 
       configsDirectory.toFile().setWritable(false);
-      final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+      final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY);
       assertThat(signer).isEmpty();
 
       final List<String> errorMsgs = getErrorMessagesFromLogs();
@@ -151,7 +153,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
     final List<String> errorMsgs = getErrorMessagesFromLogs();
@@ -171,7 +173,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
     final List<String> errorMsgs = getErrorMessagesFromLogs();

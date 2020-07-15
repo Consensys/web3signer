@@ -41,18 +41,18 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProvider {
+public class DirectoryBackedArtifactSignerProvider<T> implements ArtifactSignerProvider<T> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Path configsDirectory;
   private final String fileExtension;
-  private final SignerParser signerParser;
-  private final LoadingCache<String, ArtifactSigner> artifactSignerCache;
+  private final SignerParser<T> signerParser;
+  private final LoadingCache<String, ArtifactSigner<T>> artifactSignerCache;
 
   public DirectoryBackedArtifactSignerProvider(
       final Path rootDirectory,
       final String fileExtension,
-      final SignerParser signerParser,
+      final SignerParser<T> signerParser,
       final long maxSize) {
     this.configsDirectory = rootDirectory;
     this.fileExtension = fileExtension;
@@ -64,9 +64,9 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   @Override
-  public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
+  public Optional<ArtifactSigner<T>> getSigner(final String signerIdentifier) {
     final String normalisedIdentifier = normaliseIdentifier(signerIdentifier);
-    final ArtifactSigner signer;
+    final ArtifactSigner<T> signer;
     try {
       signer = artifactSignerCache.get(normalisedIdentifier);
     } catch (UncheckedExecutionException e) {
@@ -118,19 +118,20 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
 
   private void cacheSigner(final String identifier) {
     final String normaliseIdentifier = normaliseIdentifier(identifier);
-    final Optional<ArtifactSigner> loadedSigner = loadSignerForIdentifier(normaliseIdentifier);
+    final Optional<ArtifactSigner<T>> loadedSigner = loadSignerForIdentifier(normaliseIdentifier);
     // no need to log if signer couldn't be found this is done by loadSignerForIdentifier
     loadedSigner.ifPresent(signer -> artifactSignerCache.put(normaliseIdentifier, signer));
   }
 
   @VisibleForTesting
-  protected LoadingCache<String, ArtifactSigner> getArtifactSignerCache() {
+  protected LoadingCache<String, ArtifactSigner<T>> getArtifactSignerCache() {
     return artifactSignerCache;
   }
 
-  private Optional<ArtifactSigner> loadSignerForIdentifier(final String signerIdentifier) {
+  private Optional<ArtifactSigner<T>> loadSignerForIdentifier(final String signerIdentifier) {
     final Filter<Path> pathFilter = signerIdentifierFilenameFilter(signerIdentifier);
-    final Collection<ArtifactSigner> matchingSigners = findSigners(pathFilter, signerParser::parse);
+    final Collection<ArtifactSigner<T>> matchingSigners =
+        findSigners(pathFilter, signerParser::parse);
     if (matchingSigners.size() > 1) {
       LOG.error(
           "Found multiple signing metadata file matches for signer identifier " + signerIdentifier);
@@ -142,9 +143,9 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
     }
   }
 
-  private <T> Collection<T> findSigners(
-      final DirectoryStream.Filter<? super Path> filter, final Function<Path, T> mapper) {
-    final Collection<T> signers = new HashSet<>();
+  private <U> Collection<U> findSigners(
+      final DirectoryStream.Filter<? super Path> filter, final Function<Path, U> mapper) {
+    final Collection<U> signers = new HashSet<>();
 
     try (final DirectoryStream<Path> directoryStream =
         Files.newDirectoryStream(configsDirectory, filter)) {
@@ -176,7 +177,7 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   private boolean signerMatchesIdentifier(
-      final ArtifactSigner signer, final String signerIdentifier) {
+      final ArtifactSigner<T> signer, final String signerIdentifier) {
     final String identifier = signer.getIdentifier();
     return normaliseIdentifier(identifier).equalsIgnoreCase(normaliseIdentifier(signerIdentifier));
   }

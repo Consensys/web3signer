@@ -15,7 +15,9 @@ package tech.pegasys.eth2signer.core.multikey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
@@ -34,7 +36,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-class ArtifactSignerFactoryTest {
+class BlsArtifactSignerFactoryTest {
 
   private static final String PUBLIC_KEY =
       "95e57532ede3c1dd879061153f9cfdcdefa9dc5fb9c954a6677bc6641b8d26e39f70b660bbaa732c47277c0096e11400";
@@ -44,7 +46,7 @@ class ArtifactSignerFactoryTest {
   @TempDir Path configDir;
   private Path keystoreFile;
   private Path passwordFile;
-  private ArtifactSignerFactory artifactSignerFactory;
+  private ArtifactSignerFactory<BLSSignature> artifactSignerFactory;
 
   private Vertx vertx;
 
@@ -57,7 +59,7 @@ class ArtifactSignerFactoryTest {
     Files.copy(Path.of(Resources.getResource(PASSWORD_FILE).getPath()), passwordFile);
 
     artifactSignerFactory =
-        new ArtifactSignerFactory(
+        new BlsArtifactSignerFactory(
             configDir, new NoOpMetricsSystem(), new HashicorpConnectionFactory(vertx));
   }
 
@@ -70,7 +72,7 @@ class ArtifactSignerFactoryTest {
   void createsArtifactSignerFromKeyStoreUsingRelativePaths() {
     final Path relativeKeystorePath = Path.of(KEYSTORE_FILE);
     final Path relativePasswordPath = Path.of(PASSWORD_FILE);
-    final ArtifactSigner artifactSigner =
+    final ArtifactSigner<BLSSignature> artifactSigner =
         artifactSignerFactory.create(
             new FileKeyStoreMetadata(relativeKeystorePath, relativePasswordPath));
 
@@ -81,7 +83,7 @@ class ArtifactSignerFactoryTest {
 
   @Test
   void createsArtifactSignerFromKeyStoreUsingAbsolutePaths() {
-    final ArtifactSigner artifactSigner =
+    final ArtifactSigner<BLSSignature> artifactSigner =
         artifactSignerFactory.create(new FileKeyStoreMetadata(keystoreFile, passwordFile));
 
     assertThat(keystoreFile).isAbsolute();

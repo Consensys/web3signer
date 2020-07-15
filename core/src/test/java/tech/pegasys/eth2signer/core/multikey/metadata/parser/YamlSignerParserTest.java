@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.artemis.bls.BLSKeyPair;
 import tech.pegasys.artemis.bls.BLSSecretKey;
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
@@ -53,13 +54,13 @@ class YamlSignerParserTest {
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   @TempDir Path configDir;
-  @Mock private ArtifactSignerFactory artifactSignerFactory;
+  @Mock private ArtifactSignerFactory<BLSSignature> artifactSignerFactory;
 
-  private YamlSignerParser signerParser;
+  private YamlSignerParser<BLSSignature> signerParser;
 
   @BeforeEach
   public void setup() {
-    signerParser = new YamlSignerParser(artifactSignerFactory);
+    signerParser = new YamlSignerParser<>(artifactSignerFactory);
   }
 
   @Test
@@ -126,7 +127,7 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
+    final ArtifactSigner<BLSSignature> result = signerParser.parse(filename);
 
     assertThat(result).isEqualTo(artifactSigner);
     verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
@@ -146,7 +147,7 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
+    final ArtifactSigner<BLSSignature> result = signerParser.parse(filename);
 
     assertThat(result).isEqualTo(artifactSigner);
     verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
@@ -210,7 +211,7 @@ class YamlSignerParserTest {
     keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), keystoreMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
+    final ArtifactSigner<BLSSignature> result = signerParser.parse(filename);
     assertThat(result).isEqualTo(artifactSigner);
     verify(artifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
   }

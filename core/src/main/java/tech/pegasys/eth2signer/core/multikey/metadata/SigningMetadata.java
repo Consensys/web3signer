@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
   @Type(value = FileKeyStoreMetadata.class, name = "file-keystore"),
   @Type(value = HashicorpSigningMetadata.class, name = "hashicorp")
 })
-public interface SigningMetadata {
+public interface SigningMetadata<T> {
 
-  ArtifactSigner createSigner(ArtifactSignerFactory factory);
+  ArtifactSigner<T> createSigner(ArtifactSignerFactory<T> factory);
 }

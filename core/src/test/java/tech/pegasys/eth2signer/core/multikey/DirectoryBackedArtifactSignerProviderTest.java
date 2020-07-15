@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.artemis.bls.BLSKeyPair;
 import tech.pegasys.artemis.bls.BLSSecretKey;
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
@@ -50,7 +51,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DirectoryBackedArtifactSignerProviderTest {
 
   @TempDir Path configsDirectory;
-  @Mock private SignerParser signerParser;
+  @Mock private SignerParser<BLSSignature> signerParser;
 
   private static final String FILE_EXTENSION = "yaml";
   private static final String PUBLIC_KEY1 =
@@ -66,13 +67,13 @@ class DirectoryBackedArtifactSignerProviderTest {
   private static final String PRIVATE_KEY3 =
       "315ed405fafe339603932eebe8dbfd650ce5dafa561f6928664c75db85f97857";
 
-  private final ArtifactSigner artifactSigner = createArtifactSigner(PRIVATE_KEY1);
-  private DirectoryBackedArtifactSignerProvider signerProvider;
+  private final ArtifactSigner<BLSSignature> artifactSigner = createArtifactSigner(PRIVATE_KEY1);
+  private DirectoryBackedArtifactSignerProvider<BLSSignature> signerProvider;
 
   @BeforeEach
   void setup() {
     signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
+        new DirectoryBackedArtifactSignerProvider<>(
             configsDirectory, FILE_EXTENSION, signerParser, 0);
   }
 
@@ -82,7 +83,7 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
     verify(signerParser).parse(pathEndsWith(filename));
@@ -94,7 +95,7 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
     verify(signerParser).parse(pathEndsWith(filename));
@@ -106,7 +107,8 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(metadataFilename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer =
+        signerProvider.getSigner("0x" + PUBLIC_KEY1);
 
     assertThat(signer).isNotEmpty();
     verify(signerParser).parse(pathEndsWith(metadataFilename));
@@ -118,7 +120,8 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(metadataFilename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer =
+        signerProvider.getSigner("0X" + PUBLIC_KEY1);
 
     assertThat(signer).isNotEmpty();
     verify(signerParser).parse(pathEndsWith(metadataFilename));
@@ -132,7 +135,8 @@ class DirectoryBackedArtifactSignerProviderTest {
     file.createNewFile();
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer =
+        signerProvider.getSigner("0X" + PUBLIC_KEY1);
 
     assertThat(signer).isNotEmpty();
     assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
@@ -147,7 +151,7 @@ class DirectoryBackedArtifactSignerProviderTest {
     final File file = configsDirectory.resolve(metadataFilename).toFile();
     file.createNewFile();
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isEmpty();
     verifyNoMoreInteractions(signerParser);
   }
@@ -157,18 +161,18 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(PUBLIC_KEY1);
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isEmpty();
   }
 
   @Test
   void failedWithDirectoryErrorReturnEmptySigner() throws IOException {
-    final DirectoryBackedArtifactSignerProvider signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
+    final DirectoryBackedArtifactSignerProvider<BLSSignature> signerProvider =
+        new DirectoryBackedArtifactSignerProvider<>(
             configsDirectory.resolve("idontexist"), FILE_EXTENSION, signerParser, 5);
     createFileInConfigsDirectory(PUBLIC_KEY1);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isEmpty();
   }
 
@@ -184,7 +188,8 @@ class DirectoryBackedArtifactSignerProviderTest {
     when(signerParser.parse(pathEndsWith(filename2)))
         .thenReturn(createArtifactSigner(PRIVATE_KEY1));
 
-    final Optional<ArtifactSigner> loadedMetadataFile = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> loadedMetadataFile =
+        signerProvider.getSigner(PUBLIC_KEY1);
 
     assertThat(loadedMetadataFile).isEmpty();
   }
@@ -195,7 +200,7 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
     verify(signerParser).parse(pathEndsWith(filename));
@@ -218,10 +223,10 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void signIdentifiersUsesCache() throws IOException {
-    final DirectoryBackedArtifactSignerProvider signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
+    final DirectoryBackedArtifactSignerProvider<BLSSignature> signerProvider =
+        new DirectoryBackedArtifactSignerProvider<>(
             configsDirectory, FILE_EXTENSION, signerParser, 1);
-    final LoadingCache<String, ArtifactSigner> artifactSignerCache =
+    final LoadingCache<String, ArtifactSigner<BLSSignature>> artifactSignerCache =
         signerProvider.getArtifactSignerCache();
     artifactSignerCache.put(PUBLIC_KEY1, artifactSigner);
     createFileInConfigsDirectory(PUBLIC_KEY1);
@@ -282,8 +287,8 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void signerLoadedIntoCacheForValidMetadataFile() throws IOException {
-    DirectoryBackedArtifactSignerProvider signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
+    final DirectoryBackedArtifactSignerProvider<BLSSignature> signerProvider =
+        new DirectoryBackedArtifactSignerProvider<>(
             configsDirectory, FILE_EXTENSION, signerParser, 1);
     createFileInConfigsDirectory(PUBLIC_KEY1);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
@@ -291,11 +296,12 @@ class DirectoryBackedArtifactSignerProviderTest {
 
     assertThat(signerProvider.getArtifactSignerCache().size()).isEqualTo(0);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signer.get().getIdentifier()).isEqualTo(identifier);
 
-    final LoadingCache<String, ArtifactSigner> cache = signerProvider.getArtifactSignerCache();
+    final LoadingCache<String, ArtifactSigner<BLSSignature>> cache =
+        signerProvider.getArtifactSignerCache();
     assertThat(cache.size()).isEqualTo(1);
     assertThat(cache.getIfPresent(PUBLIC_KEY1).getIdentifier()).isEqualTo(identifier);
 
@@ -307,14 +313,14 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(PUBLIC_KEY1);
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isEmpty();
     assertThat(signerProvider.getArtifactSignerCache().size()).isEqualTo(0);
   }
 
   @Test
   void signerIsNotLoadedIntoCacheWhenNotFound() {
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY1);
 
     assertThat(signer).isEmpty();
     assertThat(signerProvider.getArtifactSignerCache().size()).isEqualTo(0);
@@ -322,15 +328,15 @@ class DirectoryBackedArtifactSignerProviderTest {
 
   @Test
   void signerCacheIsUsedIfAlreadyInCache() {
-    final DirectoryBackedArtifactSignerProvider signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
+    final DirectoryBackedArtifactSignerProvider<BLSSignature> signerProvider =
+        new DirectoryBackedArtifactSignerProvider<>(
             configsDirectory, FILE_EXTENSION, signerParser, 1);
     final String identifier = "0x" + PUBLIC_KEY1;
-    final LoadingCache<String, ArtifactSigner> artifactSignerCache =
+    final LoadingCache<String, ArtifactSigner<BLSSignature>> artifactSignerCache =
         signerProvider.getArtifactSignerCache();
     artifactSignerCache.put(PUBLIC_KEY1, artifactSigner);
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signer.get().getIdentifier()).isEqualTo(identifier);
     assertThat(signer.get()).isSameAs(artifactSigner);
@@ -344,10 +350,10 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(PUBLIC_KEY2);
     createFileInConfigsDirectory(PUBLIC_KEY3);
 
-    final DirectoryBackedArtifactSignerProvider signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
+    final DirectoryBackedArtifactSignerProvider<BLSSignature> signerProvider =
+        new DirectoryBackedArtifactSignerProvider<>(
             configsDirectory, FILE_EXTENSION, signerParser, 2);
-    final LoadingCache<String, ArtifactSigner> signerCache =
+    final LoadingCache<String, ArtifactSigner<BLSSignature>> signerCache =
         signerProvider.getArtifactSignerCache();
 
     when(signerParser.parse(pathEndsWith(PUBLIC_KEY1)))
@@ -357,31 +363,31 @@ class DirectoryBackedArtifactSignerProviderTest {
     when(signerParser.parse(pathEndsWith(PUBLIC_KEY3)))
         .thenReturn(createArtifactSigner(PRIVATE_KEY3));
 
-    final Optional<ArtifactSigner> signer1 = signerProvider.getSigner(PUBLIC_KEY1);
+    final Optional<ArtifactSigner<BLSSignature>> signer1 = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signerCache.size()).isEqualTo(1);
     assertThat(signerCache.getIfPresent(PUBLIC_KEY1)).isSameAs(signer1.get());
 
-    final Optional<ArtifactSigner> signer2 = signerProvider.getSigner(PUBLIC_KEY2);
+    final Optional<ArtifactSigner<BLSSignature>> signer2 = signerProvider.getSigner(PUBLIC_KEY2);
     assertThat(signerCache.size()).isEqualTo(2);
     assertThat(signerCache.getIfPresent(PUBLIC_KEY2)).isSameAs(signer2.get());
 
     // first public key is evicted because size is limited to 2
-    final Optional<ArtifactSigner> signer3 = signerProvider.getSigner(PUBLIC_KEY3);
+    final Optional<ArtifactSigner<BLSSignature>> signer3 = signerProvider.getSigner(PUBLIC_KEY3);
     assertThat(signerCache.size()).isEqualTo(2);
     assertThat(signerCache.asMap()).containsValues(signer2.get(), signer3.get());
   }
 
   @Test
   void cacheAllSignersPopulatesCacheForAllIdentifiers() throws IOException {
-    DirectoryBackedArtifactSignerProvider signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
+    DirectoryBackedArtifactSignerProvider<BLSSignature> signerProvider =
+        new DirectoryBackedArtifactSignerProvider<BLSSignature>(
             configsDirectory, FILE_EXTENSION, signerParser, 3);
     createFileInConfigsDirectory(PUBLIC_KEY1);
     createFileInConfigsDirectory(PUBLIC_KEY2);
     createFileInConfigsDirectory(PUBLIC_KEY3);
-    final ArtifactSigner signer1 = createArtifactSigner(PRIVATE_KEY1);
-    final ArtifactSigner signer2 = createArtifactSigner(PRIVATE_KEY2);
-    final ArtifactSigner signer3 = createArtifactSigner(PRIVATE_KEY3);
+    final ArtifactSigner<BLSSignature> signer1 = createArtifactSigner(PRIVATE_KEY1);
+    final ArtifactSigner<BLSSignature> signer2 = createArtifactSigner(PRIVATE_KEY2);
+    final ArtifactSigner<BLSSignature> signer3 = createArtifactSigner(PRIVATE_KEY3);
     when(signerParser.parse(pathEndsWith(PUBLIC_KEY1))).thenReturn(signer1);
     when(signerParser.parse(pathEndsWith(PUBLIC_KEY2))).thenReturn(signer2);
     when(signerParser.parse(pathEndsWith(PUBLIC_KEY3))).thenReturn(signer3);
@@ -407,7 +413,7 @@ class DirectoryBackedArtifactSignerProviderTest {
     file.createNewFile();
   }
 
-  private ArtifactSigner createArtifactSigner(final String privateKey) {
+  private ArtifactSigner<BLSSignature> createArtifactSigner(final String privateKey) {
     return new BlsArtifactSigner(
         new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey))));
   }

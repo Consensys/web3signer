@@ -13,11 +13,12 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.artemis.bls.BLSSecretKey;
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class FileRawSigningMetadata implements SigningMetadata {
+public class FileRawSigningMetadata implements SigningMetadata<BLSSignature> {
 
   private final BLSSecretKey privateKey;
 
@@ -27,7 +28,8 @@ public class FileRawSigningMetadata implements SigningMetadata {
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
+  public ArtifactSigner<BLSSignature> createSigner(
+      final ArtifactSignerFactory<BLSSignature> factory) {
     return factory.create(this);
   }
 

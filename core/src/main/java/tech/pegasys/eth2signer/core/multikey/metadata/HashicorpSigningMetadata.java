@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.nio.file.Path;
@@ -20,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
-public class HashicorpSigningMetadata implements SigningMetadata {
+public class HashicorpSigningMetadata implements SigningMetadata<BLSSignature> {
 
   private final String serverHost;
   private final String token;
@@ -102,7 +103,8 @@ public class HashicorpSigningMetadata implements SigningMetadata {
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
+  public ArtifactSigner<BLSSignature> createSigner(
+      final ArtifactSignerFactory<BLSSignature> factory) {
     return factory.create(this);
   }
 }

@@ -38,8 +38,8 @@ class BlsArtifactSignerTest {
     final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), message);
 
     final BlsArtifactSigner blsArtifactSigner = new BlsArtifactSigner(keyPair);
-    final ArtifactSignature signature = blsArtifactSigner.sign(message);
+    final BLSSignature signature = blsArtifactSigner.sign(message);
 
-    assertThat(signature.toHexString()).isEqualTo(expectedSignature.getSignature().toString());
+    assertThat(signature.toString()).isEqualTo(expectedSignature.toString());
   }
 }

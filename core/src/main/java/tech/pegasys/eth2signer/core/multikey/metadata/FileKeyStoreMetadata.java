@@ -12,13 +12,14 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
+import tech.pegasys.artemis.bls.BLSSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class FileKeyStoreMetadata implements SigningMetadata {
+public class FileKeyStoreMetadata implements SigningMetadata<BLSSignature> {
 
   private final Path keystoreFile;
   private final Path keystorePasswordFile;
@@ -31,7 +32,8 @@ public class FileKeyStoreMetadata implements SigningMetadata {
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory artifactSignerFactory) {
+  public ArtifactSigner<BLSSignature> createSigner(
+      final ArtifactSignerFactory<BLSSignature> artifactSignerFactory) {
     return artifactSignerFactory.create(this);
   }
 

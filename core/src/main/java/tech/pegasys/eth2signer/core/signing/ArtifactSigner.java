@@ -14,9 +14,9 @@ package tech.pegasys.eth2signer.core.signing;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public interface ArtifactSigner {
+public interface ArtifactSigner<T> {
 
   String getIdentifier();
 
-  ArtifactSignature sign(final Bytes message);
+  T sign(final Bytes message);
 }
