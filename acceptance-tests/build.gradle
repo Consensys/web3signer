@@ -11,6 +11,11 @@
  * specific language governing permissions and limitations under the License.
  */
 
+plugins {
+  id "de.undercouch.download" version "4.1.0"
+  id "com.google.osdetector" version "1.6.2"
+}
+
 dependencies {
 
   testImplementation project(":app")
@@ -21,8 +26,8 @@ dependencies {
   testRuntimeOnly 'javax.activation:activation'
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testRuntimeOnly 'org.zeroturnaround:zt-exec'
 
-  testImplementation 'com.github.docker-java:docker-java'
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'io.vertx:vertx-core'
@@ -40,15 +45,57 @@ dependencies {
 
 test.enabled = false
 
-task acceptanceTest(type: Test) {
+def vaultBinary () {
+  switch (osdetector.os) {
+    case "windows":
+      return new File(buildDir, "vault.exe").toString()
+    default:
+      return new File(buildDir, "vault").toString()
+  }
+}
+
+def vaultDownloadUrl() {
+  // see gradle.properties for Hashicorp Vault URL
+  switch (osdetector.os) {
+    case "windows":
+      return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_windows_amd64.zip"
+      break
+    case "linux":
+      return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_linux_amd64.zip"
+      break
+    case "osx":
+      return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_darwin_amd64.zip"
+      break
+  }
+}
+
+task downloadVault(type: Download) {
+  src {
+    return vaultDownloadUrl()
+  }
+  dest new File(buildDir, "hashicorp.zip")
+  onlyIfModified true
+}
+
+task extractVault(dependsOn: downloadVault, type: Copy) {
+  from zipTree(downloadVault.dest)
+  into buildDir
+}
+
+task acceptanceTest(dependsOn: [
+  rootProject.installDist,
+  extractVault
+], type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Eth2Signer acceptance tests.'
   group = 'verification'
 
   systemProperty 'acctests.runEth2SignerAsProcess', 'true'
+  systemProperty 'vaultBinary', vaultBinary()
 
   useJUnitPlatform()
   // toggle to show standard out and standard error of the test JVM(s) on the console
   testLogging.showStandardStreams = false
 }
-acceptanceTest.dependsOn(rootProject.installDist)

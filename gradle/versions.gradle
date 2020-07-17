@@ -16,8 +16,6 @@ dependencyManagement {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.10.1'
 
-    dependency 'com.github.docker-java:docker-java:3.2.2'
-
     dependency 'com.google.errorprone:error_prone_annotation:2.3.4'
     dependency 'com.google.errorprone:error_prone_check_api:2.3.4'
     dependency 'com.google.errorprone:error_prone_core:2.3.4'
@@ -76,11 +74,14 @@ dependencyManagement {
     dependency 'org.hyperledger.besu.internal:metrics-core:1.4.0'
     dependency 'org.hyperledger.besu:plugin-api:1.4.0'
 
-    dependency 'tech.pegasys.signers.internal:bls-keystore:1.0.0'
-
     dependency 'tech.pegasys.teku.internal:bls:0.12.1-SNAPSHOT'
-    dependency 'tech.pegasys.signers.internal:keystorage-hashicorp:1.0.0'
+
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.2') {
+      entry 'bls-keystore'
+      entry 'keystorage-hashicorp'
+    }
 
     dependency 'com.atlassian.oai:swagger-request-validator-restassured:2.10.0'
+    dependency 'org.zeroturnaround:zt-exec:1.11'
   }
 }

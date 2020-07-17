@@ -111,6 +111,11 @@ jobs:
           no_output_timeout: 20m
           command: |
             ./gradlew --no-daemon --parallel integrationTest --info
+      - run:
+          name: Acceptance Test
+          no_output_timeout: 20m
+          command: |
+            ./gradlew --no-daemon --parallel acceptanceTest
       - notify      
       - capture_test_results
       - capture_test_reports
@@ -223,9 +228,6 @@ workflows:
   default:
     jobs:
       - build
-      - acceptanceTests:
-          requires:
-            - build
       - buildDocker:
           requires:
             - build
@@ -237,7 +239,6 @@ workflows:
                 - /^release-.*/
           requires:
             - build
-            - acceptanceTests
       - publish:
           filters:
             branches:
@@ -246,7 +247,6 @@ workflows:
                 - /^release-.*/
           requires:
             - build
-            - acceptanceTests
       - publishDocker:
           filters:
             branches:
@@ -255,5 +255,4 @@ workflows:
                 - /^release-.*/
           requires:
             - build
-            - acceptanceTests
             - buildDocker
