@@ -21,7 +21,6 @@ import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
-import tech.pegasys.signers.hashicorp.dsl.DockerClientFactory;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -220,9 +219,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void ableToSignUsingHashicorp() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
-    final DockerClientFactory dockerClientFactory = new DockerClientFactory();
-    final HashicorpNode hashicorpNode =
-        HashicorpNode.createAndStartHashicorp(dockerClientFactory.create(), true);
+    final HashicorpNode hashicorpNode = HashicorpNode.createAndStartHashicorp(true);
     try {
       final String secretPath = "acceptanceTestSecretPath";
       final String secretName = "secretName";
