@@ -36,7 +36,7 @@ public class SignForPublicKeyHandler<T extends ArtifactSignature>
     implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
   final ArtifactSignerProvider signerProvider;
-  private SignatureFormatter<T> signatureFormatter;
+  private final SignatureFormatter<T> signatureFormatter;
   private final ArtifactSignatureType type;
 
   public SignForPublicKeyHandler(
