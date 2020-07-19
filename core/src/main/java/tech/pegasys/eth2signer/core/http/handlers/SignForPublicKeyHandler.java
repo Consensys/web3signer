@@ -72,8 +72,8 @@ public class SignForPublicKeyHandler<T extends ArtifactSignature>
   @SuppressWarnings("unchecked")
   private String formatSignature(final ArtifactSignature signature) {
     if (signature.getType() == type) {
-      final T blsArtifactSignature = (T) signature;
-      return signatureFormatter.format(blsArtifactSignature);
+      final T artifactSignature = (T) signature;
+      return signatureFormatter.format(artifactSignature);
     } else {
       throw new IllegalStateException("Invalid signature type");
     }
