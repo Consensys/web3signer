@@ -22,7 +22,6 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
 import java.util.Optional;
-import java.util.function.Function;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -37,15 +36,15 @@ public class SignForPublicKeyHandler<T extends ArtifactSignature>
     implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
   final ArtifactSignerProvider signerProvider;
-  private final Function<T, String> formatter;
+  private SignatureFormatter<T> signatureFormatter;
   private final ArtifactSignatureType type;
 
   public SignForPublicKeyHandler(
       final ArtifactSignerProvider signerProvider,
-      Function<T, String> formatter,
+      SignatureFormatter<T> signatureFormatter,
       ArtifactSignatureType type) {
     this.signerProvider = signerProvider;
-    this.formatter = formatter;
+    this.signatureFormatter = signatureFormatter;
     this.type = type;
   }
 
@@ -74,7 +73,7 @@ public class SignForPublicKeyHandler<T extends ArtifactSignature>
   private String formatSignature(final ArtifactSignature signature) {
     if (signature.getType() == type) {
       final T blsArtifactSignature = (T) signature;
-      return formatter.apply(blsArtifactSignature);
+      return signatureFormatter.format(blsArtifactSignature);
     } else {
       throw new IllegalStateException("Invalid signature type");
     }
