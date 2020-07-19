@@ -24,6 +24,7 @@ import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 
@@ -407,7 +408,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   }
 
   private ArtifactSigner createArtifactSigner(final String privateKey) {
-    return new ArtifactSigner(
+    return new BlsArtifactSigner(
         new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey))));
   }
 }

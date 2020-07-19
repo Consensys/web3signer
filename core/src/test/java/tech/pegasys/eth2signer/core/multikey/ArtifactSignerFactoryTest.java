@@ -19,7 +19,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 import java.io.IOException;
@@ -70,7 +70,7 @@ class ArtifactSignerFactoryTest {
   void createsArtifactSignerFromKeyStoreUsingRelativePaths() {
     final Path relativeKeystorePath = Path.of(KEYSTORE_FILE);
     final Path relativePasswordPath = Path.of(PASSWORD_FILE);
-    final ArtifactSigner artifactSigner =
+    final BlsArtifactSigner artifactSigner =
         artifactSignerFactory.create(
             new FileKeyStoreMetadata(relativeKeystorePath, relativePasswordPath));
 
@@ -82,7 +82,7 @@ class ArtifactSignerFactoryTest {
   @Test
   void createsArtifactSignerFromKeyStoreUsingAbsolutePaths() {
 
-    final ArtifactSigner artifactSigner =
+    final BlsArtifactSigner artifactSigner =
         artifactSignerFactory.create(new FileKeyStoreMetadata(keystoreFile, passwordFile));
 
     assertThat(keystoreFile).isAbsolute();

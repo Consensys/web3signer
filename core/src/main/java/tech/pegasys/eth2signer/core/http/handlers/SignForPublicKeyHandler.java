@@ -16,11 +16,13 @@ import static com.google.common.net.MediaType.PLAIN_TEXT_UTF_8;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
 import tech.pegasys.eth2signer.core.http.models.SigningRequestBody;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignatureType;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.teku.bls.BLSSignature;
 
 import java.util.Optional;
+import java.util.function.Function;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -31,12 +33,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class SignForPublicKeyHandler implements Handler<RoutingContext> {
+public class SignForPublicKeyHandler<T extends ArtifactSignature>
+    implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
   final ArtifactSignerProvider signerProvider;
+  private final Function<T, String> formatter;
+  private final ArtifactSignatureType type;
 
-  public SignForPublicKeyHandler(final ArtifactSignerProvider signerProvider) {
+  public SignForPublicKeyHandler(
+      final ArtifactSignerProvider signerProvider,
+      Function<T, String> formatter,
+      ArtifactSignatureType type) {
     this.signerProvider = signerProvider;
+    this.formatter = formatter;
+    this.type = type;
   }
 
   @Override
@@ -51,11 +61,23 @@ public class SignForPublicKeyHandler implements Handler<RoutingContext> {
     }
 
     final Bytes dataToSign = getDataToSign(params);
-    final BLSSignature signature = signer.get().sign(dataToSign);
+    final ArtifactSignature artifactSignature = signer.get().sign(dataToSign);
+    final String formatSignature = formatSignature(artifactSignature);
+
     routingContext
         .response()
         .putHeader(CONTENT_TYPE, PLAIN_TEXT_UTF_8.toString())
-        .end(signature.toString());
+        .end(formatSignature);
+  }
+
+  @SuppressWarnings("unchecked")
+  private String formatSignature(final ArtifactSignature signature) {
+    if (signature.getType() == type) {
+      final T blsArtifactSignature = (T) signature;
+      return formatter.apply(blsArtifactSignature);
+    } else {
+      throw new IllegalStateException("Invalid signature type");
+    }
   }
 
   private Bytes getDataToSign(final RequestParameters params) {
