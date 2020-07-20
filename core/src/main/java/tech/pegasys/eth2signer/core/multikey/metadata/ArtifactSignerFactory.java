@@ -69,7 +69,7 @@ public class ArtifactSignerFactory {
     }
   }
 
-  public BlsArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
+  public ArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-keystore").startTimer()) {
       return createKeystoreArtifact(fileKeyStoreMetadata);
     }
@@ -81,7 +81,7 @@ public class ArtifactSignerFactory {
     }
   }
 
-  private BlsArtifactSigner createKeystoreArtifact(
+  private ArtifactSigner createKeystoreArtifact(
       final FileKeyStoreMetadata fileKeyStoreMetadata) {
     final Path keystoreFile = makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystoreFile());
     final Path keystorePasswordFile =

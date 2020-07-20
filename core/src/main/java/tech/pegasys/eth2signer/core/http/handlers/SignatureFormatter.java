@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.core.http.handlers;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 
+@FunctionalInterface
 public interface SignatureFormatter<T extends ArtifactSignature> {
 
   String format(T signature);
