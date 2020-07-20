@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Eth2Signer'
   description: 'Sign Eth2 Artifacts'
-  version: '0.1.1-dev-8cd1dca9'
+  version: '0.1.1-dev-860f8940'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
