@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.tests;
+package tech.pegasys.eth2signer.tests.signing;
 
 import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -20,6 +20,7 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.teku.bls.BLS;
@@ -38,7 +39,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
+public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
 
   private static final Bytes DATA = Bytes.wrap("Hello, world!".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
@@ -98,121 +99,6 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .then()
         .statusCode(200)
         .contentType(ContentType.TEXT)
-        .body(equalToIgnoringCase(expectedSignature.toString()));
-  }
-
-  @Test
-  public void receiveA404IfRequestedKeyDoesNotExist() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    startSigner(builder.build());
-
-    given()
-        .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
-        .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("data", DATA.toHexString()).toString())
-        .when()
-        .post(SIGN_ENDPOINT)
-        .then()
-        .assertThat()
-        .statusCode(404);
-  }
-
-  @Test
-  public void receiveA400IfDataIsNull() {
-    final String configFilename = publicKey.toString().substring(2);
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
-
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
-
-    // without client-side openapi validator
-    given()
-        .baseUri(signer.getUrl())
-        .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("data", (String) null).toString())
-        .when()
-        .post(SIGN_ENDPOINT)
-        .then()
-        .assertThat()
-        .statusCode(400);
-  }
-
-  @Test
-  public void receiveA400IfDataIsMissingFromJsonBody() {
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
-
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
-
-    // without OpenAPI validation filter
-    given()
-        .baseUri(signer.getUrl())
-        .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body("{\"invalid\": \"json body\"}")
-        .when()
-        .post(SIGN_ENDPOINT)
-        .then()
-        .assertThat()
-        .statusCode(400);
-  }
-
-  @Test
-  public void receiveA400IfJsonBodyIsMalformed() {
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
-
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
-
-    // without OpenAPI validation filter
-    given()
-        .baseUri(signer.getUrl())
-        .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body("not a json body")
-        .when()
-        .post(SIGN_ENDPOINT)
-        .then()
-        .assertThat()
-        .statusCode(400);
-  }
-
-  @Test
-  public void unusedFieldsInRequestDoesNotAffectSigning() {
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
-
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
-
-    given()
-        .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
-        .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(
-            new JsonObject()
-                .put("data", DATA.toHexString())
-                .put("unknownField", "someValue")
-                .toString())
-        .when()
-        .post(SIGN_ENDPOINT)
-        .then()
-        .assertThat()
-        .statusCode(200)
         .body(equalToIgnoringCase(expectedSignature.toString()));
   }
 

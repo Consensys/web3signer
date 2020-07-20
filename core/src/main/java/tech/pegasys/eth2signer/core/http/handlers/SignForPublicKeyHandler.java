@@ -54,8 +54,8 @@ public class SignForPublicKeyHandler<T extends ArtifactSignature>
     final String publicKey = params.pathParameter("publicKey").toString();
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(publicKey);
     if (signer.isEmpty()) {
-      LOG.error("Unable to find an appropriate signer for request: {}", publicKey);
-      routingContext.fail(404);
+      LOG.trace("Unable to find an appropriate signer for request: {}", publicKey);
+      routingContext.next();
       return;
     }
 

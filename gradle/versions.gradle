@@ -79,9 +79,13 @@ dependencyManagement {
     dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.2') {
       entry 'bls-keystore'
       entry 'keystorage-hashicorp'
+      entry 'signing-secp256k1-api'
+      entry 'signing-secp256k1-impl'
+      entry 'acceptance-tests'
     }
 
     dependency 'com.atlassian.oai:swagger-request-validator-restassured:2.10.0'
     dependency 'org.zeroturnaround:zt-exec:1.11'
+    dependency 'org.web3j:core:4.5.14'
   }
 }
