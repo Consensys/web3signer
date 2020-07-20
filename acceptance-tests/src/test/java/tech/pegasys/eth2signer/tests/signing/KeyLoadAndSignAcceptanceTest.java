@@ -14,15 +14,11 @@ package tech.pegasys.eth2signer.tests.signing;
 
 import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.singletonMap;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
-import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
-import tech.pegasys.signers.bls.keystore.model.KdfFunction;
-import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -36,8 +32,6 @@ import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
 public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
 
@@ -53,54 +47,6 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   private static final String SIGN_ENDPOINT = "/signer/sign/{publicKey}";
 
   @TempDir Path testDirectory;
-
-  @Test
-  public void signDataWithKeyLoadedFromUnencryptedFile() {
-    final String configFilename = publicKey.toString().substring(2);
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
-
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
-
-    given()
-        .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
-        .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("data", DATA.toHexString()).toString())
-        .post(SIGN_ENDPOINT)
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.TEXT)
-        .body(equalToIgnoringCase(expectedSignature.toString()));
-  }
-
-  @ParameterizedTest
-  @EnumSource(KdfFunction.class)
-  public void signDataWithKeyLoadedFromKeyStoreFile(KdfFunction kdfFunction) {
-    final String configFilename = publicKey.toString().substring(2);
-
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, kdfFunction);
-
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
-
-    given()
-        .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
-        .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("data", DATA.toHexString()).toString())
-        .post(SIGN_ENDPOINT)
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.TEXT)
-        .body(equalToIgnoringCase(expectedSignature.toString()));
-  }
 
   @Test
   public void receiveA404IfRequestedKeyDoesNotExist() {
@@ -215,44 +161,5 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .assertThat()
         .statusCode(200)
         .body(equalToIgnoringCase(expectedSignature.toString()));
-  }
-
-  @Test
-  public void ableToSignUsingHashicorp() {
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
-    final HashicorpNode hashicorpNode = HashicorpNode.createAndStartHashicorp(true);
-    try {
-      final String secretPath = "acceptanceTestSecretPath";
-      final String secretName = "secretName";
-
-      hashicorpNode.addSecretsToVault(singletonMap(secretName, PRIVATE_KEY), secretPath);
-
-      final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-      metadataFileHelpers.createHashicorpYamlFileAt(
-          keyConfigFile, new HashicorpSigningParams(hashicorpNode, secretPath, secretName));
-
-      final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-      builder.withKeyStoreDirectory(testDirectory);
-      startSigner(builder.build());
-
-      given()
-          .baseUri(signer.getUrl())
-          .filter(getOpenApiValidationFilter())
-          .contentType(ContentType.JSON)
-          .pathParam("publicKey", keyPair.getPublicKey().toString())
-          .body(
-              new JsonObject()
-                  .put("data", DATA.toHexString())
-                  .put("unknownField", "someValue")
-                  .toString())
-          .when()
-          .post(SIGN_ENDPOINT)
-          .then()
-          .assertThat()
-          .statusCode(200)
-          .body(equalToIgnoringCase(expectedSignature.toString()));
-    } finally {
-      hashicorpNode.shutdown();
-    }
   }
 }

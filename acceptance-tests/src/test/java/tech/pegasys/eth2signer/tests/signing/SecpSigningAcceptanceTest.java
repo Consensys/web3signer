@@ -14,18 +14,28 @@ package tech.pegasys.eth2signer.tests.signing;
 
 import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.crypto.Sign.publicKeyFromPrivate;
 import static org.web3j.crypto.Sign.signedMessageToKey;
 import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createAzureTomlFileAt;
+import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createFileBasedTomlFileAt;
+import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createHashicorpTomlFileAt;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
+import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
+import tech.pegasys.signers.secp256k1.HashicorpSigningParams;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SignatureException;
 
+import com.google.common.io.Resources;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.vertx.core.json.JsonObject;
@@ -78,6 +88,73 @@ public class SecpSigningAcceptanceTest extends AcceptanceTestBase {
     assertThat(response.contentType()).startsWith(ContentType.TEXT.toString());
     assertThat(response.statusCode()).isEqualTo(200);
     verifySignature(Bytes.fromHexString(response.getBody().print()));
+  }
+
+  @Test
+  public void signDataWithFileBasedKey(@TempDir Path tomlDirectory)
+      throws IOException, URISyntaxException {
+    final String keyPath =
+        new File(Resources.getResource("secp256k1/rich_benefactor_one.json").toURI())
+            .getAbsolutePath();
+
+    final Path passwordPath = tomlDirectory.resolve("password");
+    Files.write(passwordPath, "pass".getBytes(UTF_8));
+
+    createFileBasedTomlFileAt(
+        tomlDirectory.resolve("arbitrary_prefix" + FILENAME + ".toml"),
+        keyPath,
+        passwordPath.toString());
+
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(tomlDirectory);
+    startSigner(builder.build());
+
+    final Response response =
+        given()
+            .baseUri(signer.getUrl())
+            .filter(getOpenApiValidationFilter())
+            .contentType(ContentType.JSON)
+            .pathParam("publicKey", FILENAME)
+            .body(new JsonObject().put("data", Bytes.wrap(DATA_TO_SIGN).toHexString()).toString())
+            .post(SIGN_ENDPOINT);
+
+    assertThat(response.contentType()).startsWith(ContentType.TEXT.toString());
+    assertThat(response.statusCode()).isEqualTo(200);
+    verifySignature(Bytes.fromHexString(response.getBody().print()));
+  }
+
+  @Test
+  public void signDataWithKeyFromHashicorp(@TempDir Path tomlDirectory) {
+    final HashicorpNode hashicorpNode = HashicorpNode.createAndStartHashicorp(true);
+    try {
+      final String secretPath = "acceptanceTestSecretPath";
+      final String secretName = "secretName";
+      hashicorpNode.addSecretsToVault(singletonMap(secretName, PRIVATE_KEY), secretPath);
+
+      final HashicorpSigningParams hashicorpSigningParams =
+          new HashicorpSigningParams(hashicorpNode, secretPath, secretName);
+
+      createHashicorpTomlFileAt(tomlDirectory.resolve(FILENAME + ".toml"), hashicorpSigningParams);
+
+      final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+      builder.withKeyStoreDirectory(tomlDirectory);
+      startSigner(builder.build());
+
+      final Response response =
+          given()
+              .baseUri(signer.getUrl())
+              .filter(getOpenApiValidationFilter())
+              .contentType(ContentType.JSON)
+              .pathParam("publicKey", FILENAME)
+              .body(new JsonObject().put("data", Bytes.wrap(DATA_TO_SIGN).toHexString()).toString())
+              .post(SIGN_ENDPOINT);
+
+      assertThat(response.contentType()).startsWith(ContentType.TEXT.toString());
+      assertThat(response.statusCode()).isEqualTo(200);
+      verifySignature(Bytes.fromHexString(response.getBody().print()));
+    } finally {
+      hashicorpNode.shutdown();
+    }
   }
 
   void verifySignature(final Bytes signature) {
