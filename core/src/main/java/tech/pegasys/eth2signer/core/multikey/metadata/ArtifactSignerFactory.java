@@ -81,8 +81,7 @@ public class ArtifactSignerFactory {
     }
   }
 
-  private ArtifactSigner createKeystoreArtifact(
-      final FileKeyStoreMetadata fileKeyStoreMetadata) {
+  private ArtifactSigner createKeystoreArtifact(final FileKeyStoreMetadata fileKeyStoreMetadata) {
     final Path keystoreFile = makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystoreFile());
     final Path keystorePasswordFile =
         makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystorePasswordFile());
