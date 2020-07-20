@@ -12,11 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import org.apache.tuweni.bytes.Bytes;
+public interface ArtifactSignature {
 
-public interface ArtifactSigner {
-
-  String getIdentifier();
-
-  ArtifactSignature sign(final Bytes data);
+  ArtifactSignatureType getType();
 }

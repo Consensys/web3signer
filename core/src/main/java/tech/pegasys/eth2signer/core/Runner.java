@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.core;
 
+import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.BLS;
+
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
@@ -25,6 +27,7 @@ import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
@@ -150,11 +153,16 @@ public class Runner implements Runnable {
         GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
 
     openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_PUBLIC_KEY_OPERATION_ID, new SignForPublicKeyHandler(signerProvider));
+        SIGN_FOR_PUBLIC_KEY_OPERATION_ID,
+        new SignForPublicKeyHandler<>(signerProvider, this::formatBlsSignature, BLS));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_PUBLIC_KEY_OPERATION_ID, errorHandler);
 
     return openAPI3RouterFactory;
+  }
+
+  private String formatBlsSignature(final BlsArtifactSignature signature) {
+    return signature.getSignatureData().toString();
   }
 
   private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)

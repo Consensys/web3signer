@@ -81,7 +81,6 @@ class ArtifactSignerFactoryTest {
 
   @Test
   void createsArtifactSignerFromKeyStoreUsingAbsolutePaths() {
-
     final ArtifactSigner artifactSigner =
         artifactSignerFactory.create(new FileKeyStoreMetadata(keystoreFile, passwordFile));
 

@@ -10,13 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.signing;
+package tech.pegasys.eth2signer.core.http.handlers;
 
-import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 
-public interface ArtifactSigner {
+@FunctionalInterface
+public interface SignatureFormatter<T extends ArtifactSignature> {
 
-  String getIdentifier();
-
-  ArtifactSignature sign(final Bytes data);
+  String format(T signature);
 }

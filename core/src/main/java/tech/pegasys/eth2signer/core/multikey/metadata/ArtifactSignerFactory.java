@@ -17,6 +17,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
@@ -64,7 +65,7 @@ public class ArtifactSignerFactory {
 
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
-      return new ArtifactSigner(new BLSKeyPair(fileRawSigningMetadata.getSecretKey()));
+      return new BlsArtifactSigner(new BLSKeyPair(fileRawSigningMetadata.getSecretKey()));
     }
   }
 
@@ -89,7 +90,7 @@ public class ArtifactSignerFactory {
       final String password = loadPassword(keystorePasswordFile);
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
-      return new ArtifactSigner(keyPair);
+      return new BlsArtifactSigner(keyPair);
     } catch (final KeyStoreValidationException e) {
       throw new SigningMetadataException(e.getMessage(), e);
     }
@@ -128,7 +129,7 @@ public class ArtifactSignerFactory {
                   metadata.getToken()));
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(secret)));
-      return new ArtifactSigner(keyPair);
+      return new BlsArtifactSigner(keyPair);
     } catch (Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
     }
