@@ -12,7 +12,21 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-public enum ArtifactSignatureType {
-  BLS,
-  SECP256K1
+import tech.pegasys.signers.secp256k1.api.Signature;
+
+public class SecpArtifactSignature implements ArtifactSignature {
+  private final Signature signature;
+
+  public SecpArtifactSignature(final Signature signature) {
+    this.signature = signature;
+  }
+
+  @Override
+  public ArtifactSignatureType getType() {
+    return ArtifactSignatureType.SECP256K1;
+  }
+
+  public Signature getSignatureData() {
+    return signature;
+  }
 }

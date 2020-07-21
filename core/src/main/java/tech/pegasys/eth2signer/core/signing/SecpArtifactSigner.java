@@ -12,7 +12,25 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-public enum ArtifactSignatureType {
-  BLS,
-  SECP256K1
+import tech.pegasys.signers.secp256k1.api.TransactionSigner;
+
+import org.apache.tuweni.bytes.Bytes;
+
+public class SecpArtifactSigner implements ArtifactSigner {
+
+  private final TransactionSigner transactionSigner;
+
+  public SecpArtifactSigner(final TransactionSigner transactionSigner) {
+    this.transactionSigner = transactionSigner;
+  }
+
+  @Override
+  public String getIdentifier() {
+    return transactionSigner.getAddress();
+  }
+
+  @Override
+  public ArtifactSignature sign(final Bytes message) {
+    return new SecpArtifactSignature(transactionSigner.sign(message.toArray()));
+  }
 }

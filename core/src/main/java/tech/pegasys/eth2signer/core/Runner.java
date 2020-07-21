@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.core;
 
 import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.BLS;
+import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.SECP256K1;
 
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
@@ -20,16 +21,22 @@ import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.eth2signer.core.http.handlers.LogErrorHandler;
-import tech.pegasys.eth2signer.core.http.handlers.SignForPublicKeyHandler;
+import tech.pegasys.eth2signer.core.http.handlers.SignForIdentifierHandler;
 import tech.pegasys.eth2signer.core.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.SecpArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.FileUtil;
+import tech.pegasys.eth2signer.core.utils.ByteUtils;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.signers.secp256k1.api.Signature;
+import tech.pegasys.signers.secp256k1.multikey.MultiKeyTransactionSignerProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -60,6 +67,8 @@ import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -76,7 +85,7 @@ public class Runner implements Runnable {
   // operationId as defined in eth2signer.yaml
   private static final String UPCHECK_OPERATION_ID = "upcheck";
   private static final String GET_PUBLIC_KEYS_OPERATION_ID = "getPublicKeys";
-  private static final String SIGN_FOR_PUBLIC_KEY_OPERATION_ID = "signForPublicKey";
+  private static final String SIGN_FOR_IDENTIFIER_OPERATION_ID = "signForIdentifier";
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
 
   private final Config config;
@@ -110,12 +119,17 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final DirectoryBackedArtifactSignerProvider signerProvider =
+      final DirectoryBackedArtifactSignerProvider blsSignerProvider =
           createSignerProvider(metricsSystem, vertx);
-      signerProvider.cacheAllSigners();
+      blsSignerProvider.cacheAllSigners();
+
+      final MultiKeyTransactionSignerProvider multiKeyTransactionSignerProvider =
+          MultiKeyTransactionSignerProvider.create(config.getKeyConfigPath());
+      final SecpArtifactSignerProvider secpSignerProvider =
+          new SecpArtifactSignerProvider(multiKeyTransactionSignerProvider);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
-          createOpenApiRouterFactory(vertx, signerProvider);
+          createOpenApiRouterFactory(vertx, blsSignerProvider, secpSignerProvider);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
       registerOpenApiSpecRoute(router); // serve static openapi spec
@@ -136,7 +150,9 @@ public class Runner implements Runnable {
   }
 
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
-      final Vertx vertx, final DirectoryBackedArtifactSignerProvider signerProvider)
+      final Vertx vertx,
+      final ArtifactSignerProvider blsSignerProvider,
+      final ArtifactSignerProvider secpSignerProvider)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
@@ -148,21 +164,34 @@ public class Runner implements Runnable {
     openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK_OPERATION_ID, errorHandler);
 
     openAPI3RouterFactory.addHandlerByOperationId(
-        GET_PUBLIC_KEYS_OPERATION_ID, new GetPublicKeysHandler(signerProvider));
+        GET_PUBLIC_KEYS_OPERATION_ID, new GetPublicKeysHandler(blsSignerProvider));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
 
     openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_PUBLIC_KEY_OPERATION_ID,
-        new SignForPublicKeyHandler<>(signerProvider, this::formatBlsSignature, BLS));
+        SIGN_FOR_IDENTIFIER_OPERATION_ID,
+        new SignForIdentifierHandler<>(blsSignerProvider, this::formatBlsSignature, BLS));
+    openAPI3RouterFactory.addHandlerByOperationId(
+        SIGN_FOR_IDENTIFIER_OPERATION_ID,
+        new SignForIdentifierHandler<>(secpSignerProvider, this::formatSecpSignature, SECP256K1));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
-        SIGN_FOR_PUBLIC_KEY_OPERATION_ID, errorHandler);
+        SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 
     return openAPI3RouterFactory;
   }
 
   private String formatBlsSignature(final BlsArtifactSignature signature) {
     return signature.getSignatureData().toString();
+  }
+
+  private String formatSecpSignature(final SecpArtifactSignature signature) {
+    final Signature signatureData = signature.getSignatureData();
+    final Bytes outputSignature =
+        Bytes.concatenate(
+            Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getR()))),
+            Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getS()))),
+            Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getV())));
+    return outputSignature.toHexString();
   }
 
   private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)
