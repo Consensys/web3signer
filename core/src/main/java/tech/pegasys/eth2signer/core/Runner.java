@@ -21,7 +21,7 @@ import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.eth2signer.core.http.handlers.LogErrorHandler;
-import tech.pegasys.eth2signer.core.http.handlers.SignForPublicKeyHandler;
+import tech.pegasys.eth2signer.core.http.handlers.SignForIdentifierHandler;
 import tech.pegasys.eth2signer.core.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
@@ -85,7 +85,7 @@ public class Runner implements Runnable {
   // operationId as defined in eth2signer.yaml
   private static final String UPCHECK_OPERATION_ID = "upcheck";
   private static final String GET_PUBLIC_KEYS_OPERATION_ID = "getPublicKeys";
-  private static final String SIGN_FOR_PUBLIC_KEY_OPERATION_ID = "signForPublicKey";
+  private static final String SIGN_FOR_IDENTIFIER_OPERATION_ID = "signForIdentifier";
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
 
   private final Config config;
@@ -169,13 +169,13 @@ public class Runner implements Runnable {
         GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
 
     openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_PUBLIC_KEY_OPERATION_ID,
-        new SignForPublicKeyHandler<>(blsSignerProvider, this::formatBlsSignature, BLS));
+        SIGN_FOR_IDENTIFIER_OPERATION_ID,
+        new SignForIdentifierHandler<>(blsSignerProvider, this::formatBlsSignature, BLS));
     openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_PUBLIC_KEY_OPERATION_ID,
-        new SignForPublicKeyHandler<>(secpSignerProvider, this::formatSecpSignature, SECP256K1));
+        SIGN_FOR_IDENTIFIER_OPERATION_ID,
+        new SignForIdentifierHandler<>(secpSignerProvider, this::formatSecpSignature, SECP256K1));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
-        SIGN_FOR_PUBLIC_KEY_OPERATION_ID, errorHandler);
+        SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 
     return openAPI3RouterFactory;
   }

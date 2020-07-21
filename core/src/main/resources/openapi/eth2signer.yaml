@@ -12,18 +12,18 @@ servers:
   - url: http://localhost:9000/
 
 paths:
-  /signer/sign/{publicKey}:
+  /signer/sign/{identifier}:
     post:
       tags:
       - 'Signing'
-      summary: 'Signs data for public key'
+      summary: 'Signs data for key'
       description: 'Signs data for the public key specified as part of the URL and returns the signature'
-      operationId: 'signForPublicKey'
+      operationId: 'signForIdentifier'
       parameters:
-      - name: 'publicKey'
+      - name: 'identifier'
         in: 'path'
         required: true
-        description: 'Public Key for which data to sign'
+        description: 'Key for which data to sign'
         schema:
           type: 'string'
       requestBody:

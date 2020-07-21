@@ -32,14 +32,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class SignForPublicKeyHandler<T extends ArtifactSignature>
+public class SignForIdentifierHandler<T extends ArtifactSignature>
     implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
   final ArtifactSignerProvider signerProvider;
   private final SignatureFormatter<T> signatureFormatter;
   private final ArtifactSignatureType type;
 
-  public SignForPublicKeyHandler(
+  public SignForIdentifierHandler(
       final ArtifactSignerProvider signerProvider,
       final SignatureFormatter<T> signatureFormatter,
       final ArtifactSignatureType type) {
@@ -51,10 +51,10 @@ public class SignForPublicKeyHandler<T extends ArtifactSignature>
   @Override
   public void handle(RoutingContext routingContext) {
     final RequestParameters params = routingContext.get("parsedParameters");
-    final String publicKey = params.pathParameter("publicKey").toString();
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(publicKey);
+    final String identifier = params.pathParameter("identifier").toString();
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(identifier);
     if (signer.isEmpty()) {
-      LOG.trace("Unable to find an appropriate signer for request: {}", publicKey);
+      LOG.trace("Unable to find an appropriate signer for request: {}", identifier);
       routingContext.next();
       return;
     }
