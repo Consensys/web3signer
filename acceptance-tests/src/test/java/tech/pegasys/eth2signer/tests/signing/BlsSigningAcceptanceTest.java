@@ -50,7 +50,7 @@ public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), DATA);
-  private static final String SIGN_ENDPOINT = "/signer/sign/{publicKey}";
+  private static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
 
   @TempDir Path testDirectory;
 
@@ -68,7 +68,7 @@ public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
         .baseUri(signer.getUrl())
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(new JsonObject().put("data", DATA.toHexString()).toString())
         .post(SIGN_ENDPOINT)
         .then()
@@ -93,7 +93,7 @@ public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
         .baseUri(signer.getUrl())
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(new JsonObject().put("data", DATA.toHexString()).toString())
         .post(SIGN_ENDPOINT)
         .then()
@@ -124,7 +124,7 @@ public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
           .baseUri(signer.getUrl())
           .filter(getOpenApiValidationFilter())
           .contentType(ContentType.JSON)
-          .pathParam("publicKey", keyPair.getPublicKey().toString())
+          .pathParam("identifier", keyPair.getPublicKey().toString())
           .body(
               new JsonObject()
                   .put("data", DATA.toHexString())

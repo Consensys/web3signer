@@ -51,7 +51,7 @@ public class SecpSigningAcceptanceTest extends AcceptanceTestBase {
   private static final String PRIVATE_KEY =
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
 
-  private static final String SIGN_ENDPOINT = "/signer/sign/{publicKey}";
+  private static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
 
   static final String FILENAME = "fe3b557e8fb62b89f4916b721be55ceb828dbd73";
 
@@ -81,7 +81,7 @@ public class SecpSigningAcceptanceTest extends AcceptanceTestBase {
             .baseUri(signer.getUrl())
             .filter(getOpenApiValidationFilter())
             .contentType(ContentType.JSON)
-            .pathParam("publicKey", FILENAME)
+            .pathParam("identifier", FILENAME)
             .body(new JsonObject().put("data", Bytes.wrap(DATA_TO_SIGN).toHexString()).toString())
             .post(SIGN_ENDPOINT);
 
@@ -114,7 +114,7 @@ public class SecpSigningAcceptanceTest extends AcceptanceTestBase {
             .baseUri(signer.getUrl())
             .filter(getOpenApiValidationFilter())
             .contentType(ContentType.JSON)
-            .pathParam("publicKey", FILENAME)
+            .pathParam("identifier", FILENAME)
             .body(new JsonObject().put("data", Bytes.wrap(DATA_TO_SIGN).toHexString()).toString())
             .post(SIGN_ENDPOINT);
 
@@ -145,7 +145,7 @@ public class SecpSigningAcceptanceTest extends AcceptanceTestBase {
               .baseUri(signer.getUrl())
               .filter(getOpenApiValidationFilter())
               .contentType(ContentType.JSON)
-              .pathParam("publicKey", FILENAME)
+              .pathParam("identifier", FILENAME)
               .body(new JsonObject().put("data", Bytes.wrap(DATA_TO_SIGN).toHexString()).toString())
               .post(SIGN_ENDPOINT);
 

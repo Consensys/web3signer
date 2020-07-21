@@ -44,7 +44,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), DATA);
-  private static final String SIGN_ENDPOINT = "/signer/sign/{publicKey}";
+  private static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
 
   @TempDir Path testDirectory;
 
@@ -57,7 +57,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .baseUri(signer.getUrl())
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(new JsonObject().put("data", DATA.toHexString()).toString())
         .when()
         .post(SIGN_ENDPOINT)
@@ -80,7 +80,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     given()
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(new JsonObject().put("data", (String) null).toString())
         .when()
         .post(SIGN_ENDPOINT)
@@ -103,7 +103,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     given()
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .pathParam("identifier", keyPair.getPublicKey().toString())
         .body("{\"invalid\": \"json body\"}")
         .when()
         .post(SIGN_ENDPOINT)
@@ -126,7 +126,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
     given()
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .pathParam("identifier", keyPair.getPublicKey().toString())
         .body("not a json body")
         .when()
         .post(SIGN_ENDPOINT)
@@ -149,7 +149,7 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
         .baseUri(signer.getUrl())
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
-        .pathParam("publicKey", keyPair.getPublicKey().toString())
+        .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(
             new JsonObject()
                 .put("data", DATA.toHexString())
