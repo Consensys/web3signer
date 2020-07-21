@@ -41,8 +41,8 @@ public class SignForPublicKeyHandler<T extends ArtifactSignature>
 
   public SignForPublicKeyHandler(
       final ArtifactSignerProvider signerProvider,
-      SignatureFormatter<T> signatureFormatter,
-      ArtifactSignatureType type) {
+      final SignatureFormatter<T> signatureFormatter,
+      final ArtifactSignatureType type) {
     this.signerProvider = signerProvider;
     this.signatureFormatter = signatureFormatter;
     this.type = type;

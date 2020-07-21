@@ -15,6 +15,8 @@ package tech.pegasys.eth2signer.core;
 import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.BLS;
 import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.SECP256K1;
 
+import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.BLS;
+
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
@@ -32,6 +34,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.eth2signer.core.utils.ByteUtils;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
