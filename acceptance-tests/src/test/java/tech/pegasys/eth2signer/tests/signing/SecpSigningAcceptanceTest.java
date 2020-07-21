@@ -171,7 +171,7 @@ public class SecpSigningAcceptanceTest extends AcceptanceTestBase {
   private BigInteger recoverPublicKey(final SignatureData signature) {
     try {
       return signedMessageToKey(DATA_TO_SIGN, signature);
-    } catch (SignatureException e) {
+    } catch (final SignatureException e) {
       throw new IllegalStateException("signature cannot be recovered", e);
     }
   }
