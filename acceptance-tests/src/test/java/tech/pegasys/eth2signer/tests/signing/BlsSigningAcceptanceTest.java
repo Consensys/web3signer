@@ -125,11 +125,7 @@ public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
           .filter(getOpenApiValidationFilter())
           .contentType(ContentType.JSON)
           .pathParam("identifier", keyPair.getPublicKey().toString())
-          .body(
-              new JsonObject()
-                  .put("data", DATA.toHexString())
-                  .put("unknownField", "someValue")
-                  .toString())
+          .body(new JsonObject().put("data", DATA.toHexString()).toString())
           .when()
           .post(SIGN_ENDPOINT)
           .then()
