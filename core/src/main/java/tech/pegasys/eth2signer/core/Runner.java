@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -164,7 +165,8 @@ public class Runner implements Runnable {
     openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK_OPERATION_ID, errorHandler);
 
     openAPI3RouterFactory.addHandlerByOperationId(
-        GET_PUBLIC_KEYS_OPERATION_ID, new GetPublicKeysHandler(blsSignerProvider));
+        GET_PUBLIC_KEYS_OPERATION_ID,
+        new GetPublicKeysHandler(List.of(blsSignerProvider, secpSignerProvider)));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
 

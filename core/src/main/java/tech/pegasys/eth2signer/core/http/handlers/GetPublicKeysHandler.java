@@ -17,21 +17,25 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
+import java.util.List;
+
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
 
 public class GetPublicKeysHandler implements Handler<RoutingContext> {
-  private final ArtifactSignerProvider signerProvider;
+  private final List<ArtifactSignerProvider> signerProviders;
 
-  public GetPublicKeysHandler(final ArtifactSignerProvider signerProvider) {
-    this.signerProvider = signerProvider;
+  public GetPublicKeysHandler(final List<ArtifactSignerProvider> signerProviders) {
+    this.signerProviders = signerProviders;
   }
 
   @Override
   public void handle(final RoutingContext context) {
     final JsonArray jsonArray = new JsonArray();
-    signerProvider.availableIdentifiers().forEach(jsonArray::add);
+    signerProviders.stream()
+        .flatMap(signerProviders -> signerProviders.availableIdentifiers().stream())
+        .forEach(jsonArray::add);
     context.response().putHeader(CONTENT_TYPE, JSON_UTF_8.toString()).end(jsonArray.encode());
   }
 }
