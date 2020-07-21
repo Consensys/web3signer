@@ -54,7 +54,7 @@ public class SignForIdentifierHandler<T extends ArtifactSignature>
     final String identifier = params.pathParameter("identifier").toString();
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(identifier);
     if (signer.isEmpty()) {
-      LOG.trace("Unable to find an appropriate signer for request: {}", identifier);
+      LOG.trace("Unsuitable handler for {}, invoking next handler", identifier);
       routingContext.next();
       return;
     }
