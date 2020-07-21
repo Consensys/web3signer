@@ -61,7 +61,6 @@ public class SecpSigningAcceptanceTest extends AcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
     @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*")
   })
-  @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*")
   public void signDataWithKeyInAzure(@TempDir Path tomlDirectory) {
     final String clientId = System.getenv("AZURE_CLIENT_ID");
     final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
