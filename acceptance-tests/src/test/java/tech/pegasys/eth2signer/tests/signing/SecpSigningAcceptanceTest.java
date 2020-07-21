@@ -94,8 +94,7 @@ public class SecpSigningAcceptanceTest extends AcceptanceTestBase {
   public void signDataWithFileBasedKey(@TempDir Path tomlDirectory)
       throws IOException, URISyntaxException {
     final String keyPath =
-        new File(Resources.getResource("secp256k1/rich_benefactor_one.json").toURI())
-            .getAbsolutePath();
+        new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
 
     final Path passwordPath = tomlDirectory.resolve("password");
     Files.write(passwordPath, "pass".getBytes(UTF_8));
