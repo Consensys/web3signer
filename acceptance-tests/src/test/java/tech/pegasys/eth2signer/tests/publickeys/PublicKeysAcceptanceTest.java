@@ -72,18 +72,18 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     validateBodyMatches(response, containsInAnyOrder(keys));
   }
 
-  protected Response getPublicKeys() {
+  private Response getPublicKeys() {
     return given()
         .filter(getOpenApiValidationFilter())
         .baseUri(signer.getUrl())
         .get(SIGNER_PUBLIC_KEYS_PATH);
   }
 
-  protected Response getPublicKeysWithoutOpenApiFilter() {
+  private Response getPublicKeysWithoutOpenApiFilter() {
     return given().baseUri(signer.getUrl()).accept("").get(SIGNER_PUBLIC_KEYS_PATH);
   }
 
-  protected void validateBodyMatches(final Response response, final Matcher<?> matcher) {
+  private void validateBodyMatches(final Response response, final Matcher<?> matcher) {
     response.then().statusCode(200).contentType(ContentType.JSON).body("", matcher);
   }
 }
