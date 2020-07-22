@@ -29,6 +29,9 @@ import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
 
@@ -58,8 +61,10 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .statusCode(404);
   }
 
-  @Test
-  public void receiveA400IfDataIsNull() {
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(strings = {"zzzddd"})
+  public void receiveA400IfDataIsNotValid(final String data) {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
@@ -71,7 +76,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
         .pathParam("identifier", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("data", (String) null).toString())
+        .body(new JsonObject().put("data", data).toString())
         .when()
         .post(SIGN_ENDPOINT)
         .then()

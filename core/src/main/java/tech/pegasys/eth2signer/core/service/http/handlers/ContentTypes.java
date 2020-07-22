@@ -10,12 +10,9 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.http.handlers;
+package tech.pegasys.eth2signer.core.service.http.handlers;
 
-import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
-
-@FunctionalInterface
-public interface SignatureFormatter<T extends ArtifactSignature> {
-
-  String format(T signature);
+public interface ContentTypes {
+  String JSON_UTF_8 = "application/json; charset=utf-8";
+  String TEXT_PLAIN_UTF_8 = "text/plain; charset=utf-8";
 }
