@@ -10,30 +10,25 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.http.models;
+package tech.pegasys.eth2signer.core.service.http.models;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class SigningRequestBody {
 
-  private final Bytes data;
+  private final String data;
 
   @JsonCreator
   public SigningRequestBody(@JsonProperty("data") final String data) {
-    this.data = Bytes.fromHexString(data);
-  }
-
-  public Bytes data() {
-    return data;
+    this.data = data;
   }
 
   @JsonGetter("data")
-  public String getdata() {
-    return data.toHexString();
+  public String getData() {
+    return data;
   }
 }

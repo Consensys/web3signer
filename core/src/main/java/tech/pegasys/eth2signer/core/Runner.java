@@ -18,18 +18,19 @@ import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.SECP256
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
-import tech.pegasys.eth2signer.core.http.HostAllowListHandler;
-import tech.pegasys.eth2signer.core.http.handlers.GetPublicKeysHandler;
-import tech.pegasys.eth2signer.core.http.handlers.LogErrorHandler;
-import tech.pegasys.eth2signer.core.http.handlers.SignForIdentifierHandler;
-import tech.pegasys.eth2signer.core.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SecpArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
-import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
+import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
+import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
+import tech.pegasys.eth2signer.core.service.http.handlers.SignForIdentifierHandler;
+import tech.pegasys.eth2signer.core.service.http.handlers.UpcheckHandler;
+import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
+import tech.pegasys.eth2signer.core.service.operations.SignForIdentifier;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.FileUtil;
@@ -123,13 +124,18 @@ public class Runner implements Runnable {
           createSignerProvider(metricsSystem, vertx);
       blsSignerProvider.cacheAllSigners();
 
-      final MultiKeyTransactionSignerProvider multiKeyTransactionSignerProvider =
-          MultiKeyTransactionSignerProvider.create(config.getKeyConfigPath());
       final SecpArtifactSignerProvider secpSignerProvider =
-          new SecpArtifactSignerProvider(multiKeyTransactionSignerProvider);
+          new SecpArtifactSignerProvider(
+              MultiKeyTransactionSignerProvider.create(config.getKeyConfigPath()));
+
+      final PublicKeys publicKeys = new PublicKeys(blsSignerProvider);
+      final SignForIdentifier<BlsArtifactSignature> blsSigner =
+          new SignForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
+      final SignForIdentifier<SecpArtifactSignature> secpSigner =
+          new SignForIdentifier<>(secpSignerProvider, this::formatSecpSignature, SECP256K1);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
-          createOpenApiRouterFactory(vertx, blsSignerProvider, secpSignerProvider);
+          createOpenApiRouterFactory(vertx, publicKeys, blsSigner, secpSigner);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
       registerOpenApiSpecRoute(router); // serve static openapi spec
@@ -151,29 +157,28 @@ public class Runner implements Runnable {
 
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
       final Vertx vertx,
-      final ArtifactSignerProvider blsSignerProvider,
-      final ArtifactSignerProvider secpSignerProvider)
+      final PublicKeys publicKeys,
+      final SignForIdentifier<BlsArtifactSignature> blsSigner,
+      final SignForIdentifier<SecpArtifactSignature> secpSigner)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
-    openAPI3RouterFactory
-        .getOptions()
-        .setMountResponseContentTypeHandler(false); // manually set content-type
 
+    // upcheck handler
     openAPI3RouterFactory.addHandlerByOperationId(UPCHECK_OPERATION_ID, new UpcheckHandler());
     openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK_OPERATION_ID, errorHandler);
 
+    // public key handler
     openAPI3RouterFactory.addHandlerByOperationId(
-        GET_PUBLIC_KEYS_OPERATION_ID, new GetPublicKeysHandler(blsSignerProvider));
+        GET_PUBLIC_KEYS_OPERATION_ID, new GetPublicKeysHandler(publicKeys));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
 
+    // sign handler
     openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new SignForIdentifierHandler<>(blsSignerProvider, this::formatBlsSignature, BLS));
+        SIGN_FOR_IDENTIFIER_OPERATION_ID, new SignForIdentifierHandler(blsSigner));
     openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new SignForIdentifierHandler<>(secpSignerProvider, this::formatSecpSignature, SECP256K1));
+        SIGN_FOR_IDENTIFIER_OPERATION_ID, new SignForIdentifierHandler(secpSigner));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 
@@ -208,7 +213,12 @@ public class Runner implements Runnable {
           }
         });
 
-    return completableFuture.get();
+    final OpenAPI3RouterFactory openAPI3RouterFactory = completableFuture.get();
+
+    // disable automatic response content handler as it doesn't handle some corner cases.
+    // Our handlers must set content type header manually.
+    openAPI3RouterFactory.getOptions().setMountResponseContentTypeHandler(false);
+    return openAPI3RouterFactory;
   }
 
   private DirectoryBackedArtifactSignerProvider createSignerProvider(

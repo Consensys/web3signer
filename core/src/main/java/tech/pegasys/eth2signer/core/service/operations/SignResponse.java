@@ -10,12 +10,28 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.http.handlers;
+package tech.pegasys.eth2signer.core.service.operations;
 
-import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
+public class SignResponse {
+  public enum Type {
+    SIGNER_NOT_FOUND,
+    INVALID_DATA,
+    SIGNATURE_OK
+  }
 
-@FunctionalInterface
-public interface SignatureFormatter<T extends ArtifactSignature> {
+  private Type responseType;
+  private String response;
 
-  String format(T signature);
+  public SignResponse(final Type responseType, final String response) {
+    this.responseType = responseType;
+    this.response = response;
+  }
+
+  public Type getResponseType() {
+    return responseType;
+  }
+
+  public String getResponse() {
+    return response;
+  }
 }
