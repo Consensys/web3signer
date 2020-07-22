@@ -24,7 +24,7 @@ public class UpcheckHandler implements Handler<RoutingContext> {
   final Upcheck upcheck = new Upcheck();
 
   @Override
-  public void handle(RoutingContext routingContext) {
+  public void handle(final RoutingContext routingContext) {
     routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(upcheck.status());
   }
 }
