@@ -164,8 +164,9 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
 
   private Filter<Path> signerIdentifierFilenameFilter(final String signerIdentifier) {
     return entry -> {
+      final boolean hidden = entry.toFile().isHidden();
       final String baseName = FilenameUtils.getBaseName(entry.toString());
-      return matchesFileExtension(entry)
+      return !hidden && matchesFileExtension(entry)
           && baseName.toLowerCase().endsWith(signerIdentifier.toLowerCase());
     };
   }
