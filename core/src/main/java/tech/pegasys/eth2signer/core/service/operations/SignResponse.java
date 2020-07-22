@@ -19,8 +19,8 @@ public class SignResponse {
     SIGNATURE_OK
   }
 
-  private Type responseType;
-  private String response;
+  private final Type responseType;
+  private final String response;
 
   public SignResponse(final Type responseType, final String response) {
     this.responseType = responseType;
