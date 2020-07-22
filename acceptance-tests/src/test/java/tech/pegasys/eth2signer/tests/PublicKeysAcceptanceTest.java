@@ -13,7 +13,6 @@
 package tech.pegasys.eth2signer.tests;
 
 import static io.restassured.RestAssured.given;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
@@ -25,27 +24,35 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 
-import com.google.common.io.Resources;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.web3j.crypto.CipherException;
+import org.web3j.crypto.ECKeyPair;
+import org.web3j.crypto.Keys;
+import org.web3j.crypto.WalletUtils;
+import org.web3j.utils.Numeric;
 
 public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
   private static final String SIGNER_PUBLIC_KEYS_PATH = "/signer/publicKeys";
 
-  private static final String PRIVATE_KEY_1 =
+  private static final String BLS_PRIVATE_KEY_1 =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-  private static final String PRIVATE_KEY_2 =
+  private static final String BLS_PRIVATE_KEY_2 =
       "32ae313afff2daa2ef7005a7f834bdf291855608fe82c24d30be6ac2017093a8";
-  private static final String SECP_PUBLIC_KEY = "fe3b557e8fb62b89f4916b721be55ceb828dbd73";
+  private static final String SECP_PRIVATE_KEY_1 =
+      "d392469474ec227b9ec4be232b402a0490045478ab621ca559d166965f0ffd32";
+  private static final String SECP_PRIVATE_KEY_2 =
+      "2e322a5f72c525422dc275e006d5cb3954ca5e02e9610fae0ed4cc389f622f33";
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
@@ -60,8 +67,8 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void invalidKeysReturnsEmptyPublicKeyResponse() throws Exception {
-    createInvalidKeyFile(PRIVATE_KEY_1);
-    createInvalidKeyFile(PRIVATE_KEY_2);
+    createInvalidKeyFile(BLS_PRIVATE_KEY_1);
+    createInvalidKeyFile(BLS_PRIVATE_KEY_2);
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
@@ -72,48 +79,45 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void onlyValidKeysAreReturnedInPublicKeyResponse() throws Exception {
-    final BLSKeyPair key1 = createBlsKey(PRIVATE_KEY_1);
-    createInvalidKeyFile(PRIVATE_KEY_2);
+    final BLSPublicKey blsPublicKey = createBlsKey(BLS_PRIVATE_KEY_1);
+    createInvalidKeyFile(BLS_PRIVATE_KEY_2);
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    whenGetSignerPublicKeysPathThenAssertThat().body("", contains(key1.getPublicKey().toString()));
+    whenGetSignerPublicKeysPathThenAssertThat().body("", contains(blsPublicKey.toString()));
   }
 
   @Test
-  public void allLoadedKeysAreReturnedPublicKeyResponse() throws IOException, URISyntaxException {
-    final BLSKeyPair key1 = createBlsKey(PRIVATE_KEY_1);
-    final BLSKeyPair key2 = createBlsKey(PRIVATE_KEY_2);
+  public void generateSecpKey()
+      throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
+    final ECKeyPair keyPair = Keys.createEcKeyPair();
+    final String privateKey = Numeric.toHexStringNoPrefix(keyPair.getPrivateKey());
+    System.out.println("privateKey = " + privateKey);
+  }
 
-    final String secpKeyPath =
-        new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
-    final Path passwordPath = testDirectory.resolve("password");
-    Files.write(passwordPath, "pass".getBytes(UTF_8));
-
-    createFileBasedTomlFileAt(
-        testDirectory.resolve("arbitrary_prefix" + SECP_PUBLIC_KEY + ".toml"),
-        secpKeyPath,
-        passwordPath.toString());
+  @Test
+  public void allLoadedKeysAreReturnedInPublicKeyResponse() throws IOException, CipherException {
+    final BLSPublicKey blsPublicKey1 = createBlsKey(BLS_PRIVATE_KEY_1);
+    final BLSPublicKey blsPublicKey2 = createBlsKey(BLS_PRIVATE_KEY_2);
+    final String secpAddress1 = createSecpKey(SECP_PRIVATE_KEY_1);
+    final String secpAddress2 = createSecpKey(SECP_PRIVATE_KEY_2);
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
 
-    whenGetSignerPublicKeysPathThenAssertThat()
-        .body(
-            "",
-            containsInAnyOrder(
-                key1.getPublicKey().toString(),
-                key2.getPublicKey().toString(),
-                "0x" + SECP_PUBLIC_KEY));
+    final String[] publicKeys = {
+      blsPublicKey1.toString(), blsPublicKey2.toString(), secpAddress1, secpAddress2
+    };
+    whenGetSignerPublicKeysPathThenAssertThat().body("", containsInAnyOrder(publicKeys));
   }
 
   @Test
   public void allLoadedKeysAreReturnedPublicKeyResponseWithEmptyAccept() {
-    final BLSKeyPair key1 = createBlsKey(PRIVATE_KEY_1);
-    final BLSKeyPair key2 = createBlsKey(PRIVATE_KEY_2);
+    final BLSPublicKey publicKey1 = createBlsKey(BLS_PRIVATE_KEY_1);
+    final BLSPublicKey publicKey2 = createBlsKey(BLS_PRIVATE_KEY_2);
 
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
@@ -127,8 +131,7 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body(
-            "", containsInAnyOrder(key1.getPublicKey().toString(), key2.getPublicKey().toString()));
+        .body("", containsInAnyOrder(publicKey1.toString(), publicKey2.toString()));
   }
 
   private ValidatableResponse whenGetSignerPublicKeysPathThenAssertThat() {
@@ -141,12 +144,29 @@ public class PublicKeysAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON);
   }
 
-  private BLSKeyPair createBlsKey(final String privateKey) {
+  private BLSPublicKey createBlsKey(final String privateKey) {
     final BLSKeyPair keyPair =
         new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey)));
     final Path keyConfigFile = configFileName(keyPair.getPublicKey());
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKey);
-    return keyPair;
+    return keyPair.getPublicKey();
+  }
+
+  private String createSecpKey(final String blsPrivateKey) throws CipherException, IOException {
+    final Bytes privateKey = Bytes.fromHexString(blsPrivateKey);
+    final ECKeyPair ecKeyPair = ECKeyPair.create(Numeric.toBigInt(privateKey.toArray()));
+    final String address = Keys.getAddress(ecKeyPair.getPublicKey());
+    final Path password = testDirectory.resolve(address + ".password");
+
+    final String walletFile =
+        WalletUtils.generateWalletFile("pass", ecKeyPair, testDirectory.toFile(), false);
+    Files.writeString(password, "pass");
+    createFileBasedTomlFileAt(
+        testDirectory.resolve(
+            "arbitrary_prefix" + Numeric.toHexStringWithPrefix(ecKeyPair.getPublicKey()) + ".toml"),
+        walletFile,
+        password.toString());
+    return "0x" + address;
   }
 
   private void createInvalidKeyFile(final String privateKey) throws IOException {
