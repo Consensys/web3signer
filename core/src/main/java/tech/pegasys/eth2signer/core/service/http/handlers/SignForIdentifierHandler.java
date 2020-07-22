@@ -41,13 +41,17 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
     final String identifier = params.pathParameter("identifier").toString();
     final String dataToSign = getDataToSign(params);
 
-    final SignResponse signResponse = signForIdentifier.sign(identifier, dataToSign);
+    final SignResponse signResponse;
+    try {
+      signResponse = signForIdentifier.sign(identifier, dataToSign);
+    } catch (final IllegalArgumentException e) {
+      routingContext.fail(400);
+      return;
+    }
+
     switch (signResponse.getResponseType()) {
       case SIGNER_NOT_FOUND:
         routingContext.next();
-        break;
-      case INVALID_DATA:
-        routingContext.fail(400);
         break;
       case SIGNATURE_OK:
         routingContext
@@ -56,7 +60,6 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
             .end(signResponse.getResponse());
         break;
       default:
-        LOG.error("Invalid Sign Response Type {}", signResponse.getResponseType());
         throw new IllegalStateException("Invalid Sign Response Type");
     }
   }

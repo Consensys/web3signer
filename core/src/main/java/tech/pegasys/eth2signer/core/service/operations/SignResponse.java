@@ -15,7 +15,6 @@ package tech.pegasys.eth2signer.core.service.operations;
 public class SignResponse {
   public enum Type {
     SIGNER_NOT_FOUND,
-    INVALID_DATA,
     SIGNATURE_OK
   }
 

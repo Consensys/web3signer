@@ -12,7 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.service.operations;
 
-import static tech.pegasys.eth2signer.core.service.operations.SignResponse.Type.INVALID_DATA;
 import static tech.pegasys.eth2signer.core.service.operations.SignResponse.Type.SIGNER_NOT_FOUND;
 
 import tech.pegasys.eth2signer.core.service.operations.SignResponse.Type;
@@ -29,7 +28,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class SignForIdentifier<T extends ArtifactSignature> {
   private static final Logger LOG = LogManager.getLogger();
-  final ArtifactSignerProvider signerProvider;
+  private final ArtifactSignerProvider signerProvider;
   private final SignatureFormatter<T> signatureFormatter;
   private final ArtifactSignatureType type;
 
@@ -52,9 +51,9 @@ public class SignForIdentifier<T extends ArtifactSignature> {
     final Bytes dataToSign;
     try {
       dataToSign = Bytes.fromHexString(data);
-    } catch (final NullPointerException | IllegalArgumentException e) {
+    } catch (final IllegalArgumentException e) {
       LOG.debug("Invalid hex string {}", data, e);
-      return new SignResponse(INVALID_DATA, data);
+      throw e;
     }
     final ArtifactSignature artifactSignature = signer.get().sign(dataToSign);
     final String formattedSignature = formatSignature(artifactSignature);
