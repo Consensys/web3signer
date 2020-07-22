@@ -14,7 +14,6 @@ package tech.pegasys.eth2signer.core.service.operations;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignatureType;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
 import java.util.Optional;
@@ -49,11 +48,12 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
    * @throws IllegalArgumentException if data is invalid i.e. not a valid hex string, null or empty.
    */
   public Optional<String> sign(final String identifier, final String data) {
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(identifier);
-    if (signer.isEmpty()) {
-      return Optional.empty();
-    }
+    return signerProvider
+        .getSigner(identifier)
+        .map(signer -> formatSignature(signer.sign(toBytes(data))));
+  }
 
+  private Bytes toBytes(final String data) {
     final Bytes dataToSign;
     try {
       if (StringUtils.isBlank(data)) {
@@ -64,8 +64,7 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
       LOG.debug("Invalid hex string {}", data, e);
       throw e;
     }
-    final ArtifactSignature artifactSignature = signer.get().sign(dataToSign);
-    return Optional.of(formatSignature(artifactSignature));
+    return dataToSign;
   }
 
   @SuppressWarnings("unchecked")
