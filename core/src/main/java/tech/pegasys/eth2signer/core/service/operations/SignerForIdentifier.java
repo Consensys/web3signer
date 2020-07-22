@@ -12,9 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.service.operations;
 
-import static tech.pegasys.eth2signer.core.service.operations.SignResponse.Type.SIGNER_NOT_FOUND;
-
-import tech.pegasys.eth2signer.core.service.operations.SignResponse.Type;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignatureType;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
@@ -27,13 +24,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
-public class SignForIdentifier<T extends ArtifactSignature> {
+public class SignerForIdentifier<T extends ArtifactSignature> {
   private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
   private final SignatureFormatter<T> signatureFormatter;
   private final ArtifactSignatureType type;
 
-  public SignForIdentifier(
+  public SignerForIdentifier(
       final ArtifactSignerProvider signerProvider,
       final SignatureFormatter<T> signatureFormatter,
       final ArtifactSignatureType type) {
@@ -42,11 +39,19 @@ public class SignForIdentifier<T extends ArtifactSignature> {
     this.type = type;
   }
 
-  public SignResponse sign(final String identifier, final String data) {
+  /**
+   * Sign data for given identifier
+   *
+   * @param identifier The identifier for which to sign data.
+   * @param data String in hex format which is signed
+   * @return Optional String of signature (in hex format). Empty if no signer available for given
+   *     identifier
+   * @throws IllegalArgumentException if data is invalid i.e. not a valid hex string, null or empty.
+   */
+  public Optional<String> sign(final String identifier, final String data) {
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(identifier);
     if (signer.isEmpty()) {
-      LOG.trace("Unsuitable handler for {}, invoking next handler", identifier);
-      return new SignResponse(SIGNER_NOT_FOUND, identifier);
+      return Optional.empty();
     }
 
     final Bytes dataToSign;
@@ -60,8 +65,7 @@ public class SignForIdentifier<T extends ArtifactSignature> {
       throw e;
     }
     final ArtifactSignature artifactSignature = signer.get().sign(dataToSign);
-    final String formattedSignature = formatSignature(artifactSignature);
-    return new SignResponse(Type.SIGNATURE_OK, formattedSignature);
+    return Optional.of(formatSignature(artifactSignature));
   }
 
   @SuppressWarnings("unchecked")

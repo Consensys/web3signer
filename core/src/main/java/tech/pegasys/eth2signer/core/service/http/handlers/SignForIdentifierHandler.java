@@ -16,20 +16,24 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 
 import tech.pegasys.eth2signer.core.service.http.models.SigningRequestBody;
-import tech.pegasys.eth2signer.core.service.operations.SignForIdentifier;
-import tech.pegasys.eth2signer.core.service.operations.SignResponse;
+import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
+
+import java.util.Optional;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.RequestParameter;
 import io.vertx.ext.web.api.RequestParameters;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SignForIdentifierHandler implements Handler<RoutingContext> {
-  private final SignForIdentifier<?> signForIdentifier;
+  private static final Logger LOG = LogManager.getLogger();
+  private final SignerForIdentifier<?> signerForIdentifier;
 
-  public SignForIdentifierHandler(final SignForIdentifier<?> signForIdentifier) {
-    this.signForIdentifier = signForIdentifier;
+  public SignForIdentifierHandler(final SignerForIdentifier<?> signerForIdentifier) {
+    this.signerForIdentifier = signerForIdentifier;
   }
 
   @Override
@@ -38,26 +42,19 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
     final String identifier = params.pathParameter("identifier").toString();
     final String dataToSign = getDataToSign(params);
 
-    final SignResponse signResponse;
+    final Optional<String> signature;
     try {
-      signResponse = signForIdentifier.sign(identifier, dataToSign);
+      signature = signerForIdentifier.sign(identifier, dataToSign);
     } catch (final IllegalArgumentException e) {
       routingContext.fail(400);
       return;
     }
 
-    switch (signResponse.getResponseType()) {
-      case SIGNER_NOT_FOUND:
-        routingContext.next();
-        break;
-      case SIGNATURE_OK:
-        routingContext
-            .response()
-            .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
-            .end(signResponse.getResponse());
-        break;
-      default:
-        throw new IllegalStateException("Invalid Sign Response Type");
+    if (signature.isEmpty()) {
+      LOG.trace("Unsuitable handler for {}, invoking next handler", identifier);
+      routingContext.next();
+    } else {
+      routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature.get());
     }
   }
 

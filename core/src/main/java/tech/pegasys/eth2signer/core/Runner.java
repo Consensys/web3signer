@@ -30,7 +30,7 @@ import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.SignForIdentifierHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
-import tech.pegasys.eth2signer.core.service.operations.SignForIdentifier;
+import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.FileUtil;
@@ -129,10 +129,10 @@ public class Runner implements Runnable {
               MultiKeyTransactionSignerProvider.create(config.getKeyConfigPath()));
 
       final PublicKeys publicKeys = new PublicKeys(blsSignerProvider);
-      final SignForIdentifier<BlsArtifactSignature> blsSigner =
-          new SignForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-      final SignForIdentifier<SecpArtifactSignature> secpSigner =
-          new SignForIdentifier<>(secpSignerProvider, this::formatSecpSignature, SECP256K1);
+      final SignerForIdentifier<BlsArtifactSignature> blsSigner =
+          new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner =
+          new SignerForIdentifier<>(secpSignerProvider, this::formatSecpSignature, SECP256K1);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(vertx, publicKeys, blsSigner, secpSigner);
@@ -158,8 +158,8 @@ public class Runner implements Runnable {
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
       final Vertx vertx,
       final PublicKeys publicKeys,
-      final SignForIdentifier<BlsArtifactSignature> blsSigner,
-      final SignForIdentifier<SecpArtifactSignature> secpSigner)
+      final SignerForIdentifier<BlsArtifactSignature> blsSigner,
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
