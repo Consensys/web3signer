@@ -24,11 +24,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.RequestParameter;
 import io.vertx.ext.web.api.RequestParameters;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class SignForIdentifierHandler implements Handler<RoutingContext> {
-  private static final Logger LOG = LogManager.getLogger();
   private final SignForIdentifier<?> signForIdentifier;
 
   public SignForIdentifierHandler(final SignForIdentifier<?> signForIdentifier) {
