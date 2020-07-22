@@ -37,7 +37,7 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
   }
 
   @Override
-  public void handle(RoutingContext routingContext) {
+  public void handle(final RoutingContext routingContext) {
     final RequestParameters params = routingContext.get("parsedParameters");
     final String identifier = params.pathParameter("identifier").toString();
     final String dataToSign = getDataToSign(params);
