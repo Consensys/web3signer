@@ -12,8 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.service.http.handlers;
 
-import static com.google.common.net.MediaType.PLAIN_TEXT_UTF_8;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 
 import tech.pegasys.eth2signer.core.service.http.models.SigningRequestBody;
 import tech.pegasys.eth2signer.core.service.operations.SignForIdentifier;
@@ -53,7 +53,7 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
       case SIGNATURE_OK:
         routingContext
             .response()
-            .putHeader(CONTENT_TYPE, PLAIN_TEXT_UTF_8.toString())
+            .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
             .end(signResponse.getResponse());
         break;
       default:
@@ -64,8 +64,8 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
   private String getDataToSign(final RequestParameters params) {
     final RequestParameter body = params.body();
     final JsonObject jsonObject = body.getJsonObject();
-    // this should not fail as openapifilter would have already thrown error
-    final SigningRequestBody signingRequestBody = jsonObject.mapTo(SigningRequestBody.class);
-    return signingRequestBody.getData();
+    // the mapping shouldn't fail as openapifilter would have already thrown error on schema
+    // mismatch
+    return jsonObject.mapTo(SigningRequestBody.class).getData();
   }
 }

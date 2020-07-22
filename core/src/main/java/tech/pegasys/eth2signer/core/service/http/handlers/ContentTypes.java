@@ -12,19 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.service.http.handlers;
 
-import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
-
-import tech.pegasys.eth2signer.core.service.operations.Upcheck;
-
-import io.vertx.core.Handler;
-import io.vertx.ext.web.RoutingContext;
-
-public class UpcheckHandler implements Handler<RoutingContext> {
-  final Upcheck upcheck = new Upcheck();
-
-  @Override
-  public void handle(RoutingContext routingContext) {
-    routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(upcheck.status());
-  }
+public interface ContentTypes {
+  String JSON_UTF_8 = "application/json; charset=utf-8";
+  String TEXT_PLAIN_UTF_8 = "text/plain; charset=utf-8";
 }
