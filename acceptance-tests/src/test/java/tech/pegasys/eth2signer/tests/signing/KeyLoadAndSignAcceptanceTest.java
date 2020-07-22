@@ -16,7 +16,6 @@ import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
-import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -42,13 +41,10 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), DATA);
-  private static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
 
   @Test
   public void receiveA404IfRequestedKeyDoesNotExist() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    startSigner(builder.build());
-
+    setupSigner();
     given()
         .baseUri(signer.getUrl())
         .filter(getOpenApiValidationFilter())
@@ -68,9 +64,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
+    setupSigner();
 
     // without client-side openapi validator
     given()
@@ -91,9 +85,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
+    setupSigner();
 
     // without OpenAPI validation filter
     given()
@@ -114,9 +106,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
+    setupSigner();
 
     // without OpenAPI validation filter
     given()
@@ -137,9 +127,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
+    setupSigner();
 
     given()
         .baseUri(signer.getUrl())
