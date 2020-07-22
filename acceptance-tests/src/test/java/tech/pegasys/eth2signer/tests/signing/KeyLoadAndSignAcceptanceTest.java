@@ -18,7 +18,6 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
-import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -31,9 +30,8 @@ import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
+public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
 
   private static final Bytes DATA = Bytes.wrap("Hello, world!".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
@@ -45,8 +43,6 @@ public class KeyLoadAndSignAcceptanceTest extends AcceptanceTestBase {
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), DATA);
   private static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
-
-  @TempDir Path testDirectory;
 
   @Test
   public void receiveA404IfRequestedKeyDoesNotExist() {

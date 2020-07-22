@@ -12,15 +12,11 @@
  */
 package tech.pegasys.eth2signer.tests.signing;
 
-import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
-import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
-import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
-import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.teku.bls.BLS;
@@ -31,15 +27,12 @@ import tech.pegasys.teku.bls.BLSSignature;
 
 import java.nio.file.Path;
 
-import io.restassured.http.ContentType;
-import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
+public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   private static final Bytes DATA = Bytes.wrap("Hello, world!".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
@@ -50,9 +43,6 @@ public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), DATA);
-  private static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
-
-  @TempDir Path testDirectory;
 
   @Test
   public void signDataWithKeyLoadedFromUnencryptedFile() {
@@ -60,21 +50,9 @@ public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
-
-    given()
-        .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
-        .contentType(ContentType.JSON)
-        .pathParam("identifier", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("data", DATA.toHexString()).toString())
-        .post(SIGN_ENDPOINT)
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.TEXT)
-        .body(equalToIgnoringCase(expectedSignature.toString()));
+    setupSigner();
+    verifySignature(
+        keyPair.getPublicKey().toString(), DATA.toHexString(), expectedSignature.toString());
   }
 
   @ParameterizedTest
@@ -85,21 +63,9 @@ public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, kdfFunction);
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
-
-    given()
-        .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
-        .contentType(ContentType.JSON)
-        .pathParam("identifier", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("data", DATA.toHexString()).toString())
-        .post(SIGN_ENDPOINT)
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.TEXT)
-        .body(equalToIgnoringCase(expectedSignature.toString()));
+    setupSigner();
+    verifySignature(
+        keyPair.getPublicKey().toString(), DATA.toHexString(), expectedSignature.toString());
   }
 
   @Test
@@ -116,22 +82,9 @@ public class BlsSigningAcceptanceTest extends AcceptanceTestBase {
       metadataFileHelpers.createHashicorpYamlFileAt(
           keyConfigFile, new HashicorpSigningParams(hashicorpNode, secretPath, secretName));
 
-      final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-      builder.withKeyStoreDirectory(testDirectory);
-      startSigner(builder.build());
-
-      given()
-          .baseUri(signer.getUrl())
-          .filter(getOpenApiValidationFilter())
-          .contentType(ContentType.JSON)
-          .pathParam("identifier", keyPair.getPublicKey().toString())
-          .body(new JsonObject().put("data", DATA.toHexString()).toString())
-          .when()
-          .post(SIGN_ENDPOINT)
-          .then()
-          .assertThat()
-          .statusCode(200)
-          .body(equalToIgnoringCase(expectedSignature.toString()));
+      setupSigner();
+      verifySignature(
+          keyPair.getPublicKey().toString(), DATA.toHexString(), expectedSignature.toString());
     } finally {
       hashicorpNode.shutdown();
     }

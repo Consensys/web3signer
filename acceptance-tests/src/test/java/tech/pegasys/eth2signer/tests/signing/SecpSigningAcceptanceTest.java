@@ -23,7 +23,6 @@ import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createFileBase
 import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createHashicorpTomlFileAt;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.signers.secp256k1.HashicorpSigningParams;
 
@@ -46,7 +45,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 import org.junit.jupiter.api.io.TempDir;
 import org.web3j.crypto.Sign.SignatureData;
 
-public class SecpSigningAcceptanceTest extends AcceptanceTestBase {
+public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final byte[] DATA_TO_SIGN = "42".getBytes(UTF_8);
   private static final String PRIVATE_KEY =
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
