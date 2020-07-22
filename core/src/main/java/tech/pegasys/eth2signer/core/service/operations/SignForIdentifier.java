@@ -22,6 +22,7 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -50,6 +51,9 @@ public class SignForIdentifier<T extends ArtifactSignature> {
 
     final Bytes dataToSign;
     try {
+      if (StringUtils.isBlank(data)) {
+        throw new IllegalArgumentException("Blank data");
+      }
       dataToSign = Bytes.fromHexString(data);
     } catch (final IllegalArgumentException e) {
       LOG.debug("Invalid hex string {}", data, e);
