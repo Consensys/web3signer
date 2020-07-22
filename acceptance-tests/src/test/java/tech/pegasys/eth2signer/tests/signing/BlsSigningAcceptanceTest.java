@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.tests.signing;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
@@ -27,6 +28,7 @@ import tech.pegasys.teku.bls.BLSSignature;
 
 import java.nio.file.Path;
 
+import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,9 +52,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
 
-    setupSigner();
-    verifySignature(
-        keyPair.getPublicKey().toString(), DATA.toHexString(), expectedSignature.toString());
+    signAndVerifySignature();
   }
 
   @ParameterizedTest
@@ -63,9 +63,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, kdfFunction);
 
-    setupSigner();
-    verifySignature(
-        keyPair.getPublicKey().toString(), DATA.toHexString(), expectedSignature.toString());
+    signAndVerifySignature();
   }
 
   @Test
@@ -82,11 +80,19 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       metadataFileHelpers.createHashicorpYamlFileAt(
           keyConfigFile, new HashicorpSigningParams(hashicorpNode, secretPath, secretName));
 
-      setupSigner();
-      verifySignature(
-          keyPair.getPublicKey().toString(), DATA.toHexString(), expectedSignature.toString());
+      signAndVerifySignature();
     } finally {
       hashicorpNode.shutdown();
     }
+  }
+
+  private void signAndVerifySignature() {
+    setupSigner();
+
+    final Response response = sign(keyPair.getPublicKey().toString(), DATA);
+    verifySignatureResponse(response);
+
+    final Bytes signature = Bytes.fromHexString(response.getBody().print());
+    assertThat(signature).isEqualTo(expectedSignature.toBytes());
   }
 }

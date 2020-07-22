@@ -13,7 +13,7 @@
 package tech.pegasys.eth2signer.tests.signing;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
@@ -21,7 +21,9 @@ import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 import java.nio.file.Path;
 
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import io.vertx.core.json.JsonObject;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.io.TempDir;
 
 public class SigningAcceptanceTestBase extends AcceptanceTestBase {
@@ -34,18 +36,18 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected void verifySignature(
-      final String publicKey, final String dataToSign, final String expectedSignature) {
-    given()
+  protected Response sign(final String publicKey, final Bytes dataToSign) {
+    return given()
         .baseUri(signer.getUrl())
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
-        .body(new JsonObject().put("data", dataToSign).toString())
-        .post(SIGN_ENDPOINT)
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.TEXT)
-        .body(equalToIgnoringCase(expectedSignature));
+        .body(new JsonObject().put("data", dataToSign.toHexString()).toString())
+        .post(SIGN_ENDPOINT);
+  }
+
+  protected void verifySignatureResponse(final Response response) {
+    assertThat(response.contentType()).startsWith(ContentType.TEXT.toString());
+    assertThat(response.statusCode()).isEqualTo(200);
   }
 }

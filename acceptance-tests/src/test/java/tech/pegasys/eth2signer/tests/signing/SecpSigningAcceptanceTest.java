@@ -12,7 +12,6 @@
  */
 package tech.pegasys.eth2signer.tests.signing;
 
-import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +21,6 @@ import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createAzureTom
 import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createFileBasedTomlFileAt;
 import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createHashicorpTomlFileAt;
 
-import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.signers.secp256k1.HashicorpSigningParams;
 
@@ -35,9 +33,7 @@ import java.nio.file.Path;
 import java.security.SignatureException;
 
 import com.google.common.io.Resources;
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -46,13 +42,10 @@ import org.junit.jupiter.api.io.TempDir;
 import org.web3j.crypto.Sign.SignatureData;
 
 public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
-  private static final byte[] DATA_TO_SIGN = "42".getBytes(UTF_8);
+  private static final Bytes DATA = Bytes.wrap("42".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
-
-  private static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
-
-  static final String FILENAME = "fe3b557e8fb62b89f4916b721be55ceb828dbd73";
+  private static final String ADDRESS = "fe3b557e8fb62b89f4916b721be55ceb828dbd73";
 
   @Test
   @EnabledIfEnvironmentVariables({
@@ -65,27 +58,12 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
     final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
     createAzureTomlFileAt(
-        tomlDirectory.resolve("arbitrary_prefix" + FILENAME + ".toml"),
+        tomlDirectory.resolve("arbitrary_prefix" + ADDRESS + ".toml"),
         clientId,
         clientSecret,
         keyVaultName);
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(tomlDirectory);
-    startSigner(builder.build());
-
-    final Response response =
-        given()
-            .baseUri(signer.getUrl())
-            .filter(getOpenApiValidationFilter())
-            .contentType(ContentType.JSON)
-            .pathParam("identifier", FILENAME)
-            .body(new JsonObject().put("data", Bytes.wrap(DATA_TO_SIGN).toHexString()).toString())
-            .post(SIGN_ENDPOINT);
-
-    assertThat(response.contentType()).startsWith(ContentType.TEXT.toString());
-    assertThat(response.statusCode()).isEqualTo(200);
-    verifySignature(Bytes.fromHexString(response.getBody().print()));
+    signAndVerifySignature();
   }
 
   @Test
@@ -98,26 +76,11 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     Files.write(passwordPath, "pass".getBytes(UTF_8));
 
     createFileBasedTomlFileAt(
-        tomlDirectory.resolve("arbitrary_prefix" + FILENAME + ".toml"),
+        tomlDirectory.resolve("arbitrary_prefix" + ADDRESS + ".toml"),
         keyPath,
         passwordPath.toString());
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(tomlDirectory);
-    startSigner(builder.build());
-
-    final Response response =
-        given()
-            .baseUri(signer.getUrl())
-            .filter(getOpenApiValidationFilter())
-            .contentType(ContentType.JSON)
-            .pathParam("identifier", FILENAME)
-            .body(new JsonObject().put("data", Bytes.wrap(DATA_TO_SIGN).toHexString()).toString())
-            .post(SIGN_ENDPOINT);
-
-    assertThat(response.contentType()).startsWith(ContentType.TEXT.toString());
-    assertThat(response.statusCode()).isEqualTo(200);
-    verifySignature(Bytes.fromHexString(response.getBody().print()));
+    signAndVerifySignature();
   }
 
   @Test
@@ -131,27 +94,22 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
       final HashicorpSigningParams hashicorpSigningParams =
           new HashicorpSigningParams(hashicorpNode, secretPath, secretName);
 
-      createHashicorpTomlFileAt(tomlDirectory.resolve(FILENAME + ".toml"), hashicorpSigningParams);
+      createHashicorpTomlFileAt(tomlDirectory.resolve(ADDRESS + ".toml"), hashicorpSigningParams);
 
-      final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-      builder.withKeyStoreDirectory(tomlDirectory);
-      startSigner(builder.build());
-
-      final Response response =
-          given()
-              .baseUri(signer.getUrl())
-              .filter(getOpenApiValidationFilter())
-              .contentType(ContentType.JSON)
-              .pathParam("identifier", FILENAME)
-              .body(new JsonObject().put("data", Bytes.wrap(DATA_TO_SIGN).toHexString()).toString())
-              .post(SIGN_ENDPOINT);
-
-      assertThat(response.contentType()).startsWith(ContentType.TEXT.toString());
-      assertThat(response.statusCode()).isEqualTo(200);
-      verifySignature(Bytes.fromHexString(response.getBody().print()));
+      signAndVerifySignature();
     } finally {
       hashicorpNode.shutdown();
     }
+  }
+
+  private void signAndVerifySignature() {
+    setupSigner();
+
+    final Response response = sign(ADDRESS, DATA);
+    verifySignatureResponse(response);
+
+    final Bytes signature = Bytes.fromHexString(response.getBody().print());
+    verifySignature(signature);
   }
 
   void verifySignature(final Bytes signature) {
@@ -167,7 +125,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   private BigInteger recoverPublicKey(final SignatureData signature) {
     try {
-      return signedMessageToKey(DATA_TO_SIGN, signature);
+      return signedMessageToKey(DATA.toArray(), signature);
     } catch (final SignatureException e) {
       throw new IllegalStateException("signature cannot be recovered", e);
     }
