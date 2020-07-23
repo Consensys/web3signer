@@ -13,7 +13,6 @@
 package tech.pegasys.eth2signer.tests.signing;
 
 import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
@@ -25,7 +24,6 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
-import org.hamcrest.Matcher;
 import org.junit.jupiter.api.io.TempDir;
 
 public class SigningAcceptanceTestBase extends AcceptanceTestBase {
@@ -48,9 +46,9 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
         .post(SIGN_ENDPOINT);
   }
 
-  protected void verifySignatureResponse(final Response response) {
-    assertThat(response.contentType()).startsWith(ContentType.TEXT.toString());
-    assertThat(response.statusCode()).isEqualTo(200);
+  protected Bytes verifyAndGetSignatureResponse(final Response response) {
+    response.then().contentType(ContentType.TEXT).statusCode(200);
+    return Bytes.fromHexString(response.body().print());
   }
 
   protected Response callJsonRpcSign(final String publicKey, final Bytes dataToSign) {
@@ -65,11 +63,13 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
         .post(JSON_RPC_PATH);
   }
 
-  protected void validateJsonRpcResponse(final Response response, final Matcher<?> resultMatcher) {
+  protected Bytes verifyAndGetJsonRpcSignatureResponse(final Response response) {
     response
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("jsonrpc", equalTo("2.0"), "id", equalTo(1), "result", resultMatcher);
+        .body("jsonrpc", equalTo("2.0"), "id", equalTo(1));
+
+    return Bytes.fromHexString(response.body().jsonPath().get("result"));
   }
 }

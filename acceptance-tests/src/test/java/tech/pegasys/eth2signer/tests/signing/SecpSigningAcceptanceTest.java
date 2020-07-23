@@ -105,11 +105,15 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private void signAndVerifySignature() {
     setupSigner();
 
+    // openapi
     final Response response = sign(ADDRESS, DATA);
-    verifySignatureResponse(response);
-
-    final Bytes signature = Bytes.fromHexString(response.getBody().print());
+    final Bytes signature = verifyAndGetSignatureResponse(response);
     verifySignature(signature);
+
+    // jsonrpc
+    final Response jsonResponse = callJsonRpcSign(ADDRESS, DATA);
+    final Bytes jsonResponseSignature = verifyAndGetJsonRpcSignatureResponse(jsonResponse);
+    verifySignature(jsonResponseSignature);
   }
 
   void verifySignature(final Bytes signature) {

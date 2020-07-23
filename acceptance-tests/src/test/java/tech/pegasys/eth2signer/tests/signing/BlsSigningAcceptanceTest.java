@@ -15,7 +15,6 @@ package tech.pegasys.eth2signer.tests.signing;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
 
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
@@ -31,7 +30,6 @@ import java.nio.file.Path;
 
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -91,18 +89,14 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private void signAndVerifySignature() {
     setupSigner();
 
-    assertAll(
-        "OpenApi and JsonRpc",
-        () -> {
-          final Response response = sign(keyPair.getPublicKey().toString(), DATA);
-          verifySignatureResponse(response);
+    // openapi
+    final Response response = sign(keyPair.getPublicKey().toString(), DATA);
+    final Bytes signature = verifyAndGetSignatureResponse(response);
+    assertThat(signature).isEqualTo(expectedSignature.toBytes());
 
-          final Bytes signature = Bytes.fromHexString(response.getBody().print());
-          assertThat(signature).isEqualTo(expectedSignature.toBytes());
-        },
-        () -> {
-          final Response response = callJsonRpcSign(keyPair.getPublicKey().toString(), DATA);
-          validateJsonRpcResponse(response, Matchers.equalTo(expectedSignature.toString()));
-        });
+    // jsonrpc
+    final Response jsonResponse = callJsonRpcSign(keyPair.getPublicKey().toString(), DATA);
+    final Bytes jsonResponseSignature = verifyAndGetJsonRpcSignatureResponse(jsonResponse);
+    assertThat(jsonResponseSignature).isEqualTo(expectedSignature.toBytes());
   }
 }
