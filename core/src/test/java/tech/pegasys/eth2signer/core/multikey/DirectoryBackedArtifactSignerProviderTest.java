@@ -15,11 +15,13 @@ package tech.pegasys.eth2signer.core.multikey;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.eth2signer.FileHiddenUtil;
 import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
@@ -217,6 +219,24 @@ class DirectoryBackedArtifactSignerProviderTest {
   }
 
   @Test
+  void signerIdentifiersNotReturnedForHiddenFiles() throws IOException {
+    final Path key1 = createFileInConfigsDirectory(PUBLIC_KEY1);
+    FileHiddenUtil.makeFileHidden(key1);
+    final Path key2 = createFileInConfigsDirectory(PUBLIC_KEY2);
+
+    // Using lenient so it's clear key is not returned due file being hidden instead no stub
+    lenient()
+        .when(signerParser.parse(pathEndsWith(PUBLIC_KEY1)))
+        .thenReturn(createArtifactSigner(PRIVATE_KEY1));
+    when(signerParser.parse(pathEndsWith(PUBLIC_KEY2)))
+        .thenReturn(createArtifactSigner(PRIVATE_KEY2));
+
+    assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY2);
+    verify(signerParser, never()).parse(key1);
+    verify(signerParser).parse(key2);
+  }
+
+  @Test
   void signIdentifiersUsesCache() throws IOException {
     final DirectoryBackedArtifactSignerProvider signerProvider =
         new DirectoryBackedArtifactSignerProvider(
@@ -401,10 +421,11 @@ class DirectoryBackedArtifactSignerProviderTest {
     return argThat((Path path) -> path != null && path.endsWith(endsWith + "." + FILE_EXTENSION));
   }
 
-  @SuppressWarnings("ResultOfMethodCallIgnored")
-  private void createFileInConfigsDirectory(final String filename) throws IOException {
+  private Path createFileInConfigsDirectory(final String filename) throws IOException {
     final File file = configsDirectory.resolve(filename + "." + FILE_EXTENSION).toFile();
-    file.createNewFile();
+    final boolean fileWasCreated = file.createNewFile();
+    assertThat(fileWasCreated).isTrue();
+    return file.toPath();
   }
 
   private ArtifactSigner createArtifactSigner(final String privateKey) {
