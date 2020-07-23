@@ -72,7 +72,7 @@ public class JsonRpcSigningErrorsAcceptanceTest extends SigningAcceptanceTestBas
     setupSigner();
 
     final Response jsonResponse = callJsonRpcSign(publicKey, null);
-    verifyJsonRpcSignatureErrorResponse(jsonResponse, -36202, "Invalid params", null);
+    verifyJsonRpcSignatureErrorResponse(jsonResponse, -32602, "Invalid params", null);
   }
 
   @Test

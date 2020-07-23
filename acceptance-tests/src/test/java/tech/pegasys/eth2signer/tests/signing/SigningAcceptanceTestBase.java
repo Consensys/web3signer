@@ -13,9 +13,16 @@
 package tech.pegasys.eth2signer.tests.signing;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 
+import io.restassured.path.json.JsonPath;
+import org.assertj.core.api.Assertions;
+import org.hamcrest.CoreMatchers;
+import tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 

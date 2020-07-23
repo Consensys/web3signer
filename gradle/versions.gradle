@@ -88,9 +88,6 @@ dependencyManagement {
     dependency 'org.zeroturnaround:zt-exec:1.11'
     dependency 'org.web3j:core:4.5.14'
 
-    dependencySet(group: 'com.github.arteam', version: '1.2') {
-      entry 'simple-json-rpc-server'
-      entry 'simple-json-rpc-client'
-    }
+    dependency 'com.github.arteam:simple-json-rpc-server:1.2'
   }
 }
