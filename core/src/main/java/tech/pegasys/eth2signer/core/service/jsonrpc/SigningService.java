@@ -57,7 +57,7 @@ public class SigningService {
                   new SignerNotFoundException(
                       "Signer not found for identifier", new String[] {data}));
     } catch (final IllegalArgumentException e) {
-      throw new InvalidDataFormatException(e.getMessage(), e);
+      throw new InvalidDataFormatException(e.getMessage());
     }
   }
 

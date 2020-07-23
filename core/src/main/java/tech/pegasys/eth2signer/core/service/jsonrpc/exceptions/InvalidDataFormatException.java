@@ -15,8 +15,8 @@ package tech.pegasys.eth2signer.core.service.jsonrpc.exceptions;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
 @JsonRpcError(code = -30001, message = "Invalid data format. Not a hex string")
-public class InvalidDataFormatException extends IllegalArgumentException {
-  public InvalidDataFormatException(final String message, final Throwable cause) {
-    super(message, cause);
+public class InvalidDataFormatException extends RuntimeException {
+  public InvalidDataFormatException(final String message) {
+    super(message);
   }
 }

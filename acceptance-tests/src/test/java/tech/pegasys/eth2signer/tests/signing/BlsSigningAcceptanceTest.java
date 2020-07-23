@@ -95,7 +95,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     assertThat(signature).isEqualTo(expectedSignature.toBytes());
 
     // jsonrpc
-    final Response jsonResponse = callJsonRpcSign(keyPair.getPublicKey().toString(), DATA);
+    final Response jsonResponse =
+        callJsonRpcSign(keyPair.getPublicKey().toString(), DATA.toHexString());
     final Bytes jsonResponseSignature = verifyAndGetJsonRpcSignatureResponse(jsonResponse);
     assertThat(jsonResponseSignature).isEqualTo(expectedSignature.toBytes());
   }

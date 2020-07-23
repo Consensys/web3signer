@@ -111,7 +111,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     verifySignature(signature);
 
     // jsonrpc
-    final Response jsonResponse = callJsonRpcSign(ADDRESS, DATA);
+    final Response jsonResponse = callJsonRpcSign(ADDRESS, DATA.toHexString());
     final Bytes jsonResponseSignature = verifyAndGetJsonRpcSignatureResponse(jsonResponse);
     verifySignature(jsonResponseSignature);
   }

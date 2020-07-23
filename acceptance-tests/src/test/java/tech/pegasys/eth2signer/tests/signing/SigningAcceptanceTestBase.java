@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.tests.signing;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
@@ -22,6 +23,7 @@ import java.nio.file.Path;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.io.TempDir;
@@ -51,16 +53,20 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
     return Bytes.fromHexString(response.body().print());
   }
 
-  protected Response callJsonRpcSign(final String publicKey, final Bytes dataToSign) {
+  protected Response callJsonRpcSign(final String publicKey, final String dataToSign) {
     return given()
         .baseUri(signer.getUrl())
         .body(
             "{\"jsonrpc\":\"2.0\",\"method\":\"sign\",\"params\":{\"identifier\":\""
                 + publicKey
-                + "\",\"data\":\""
-                + dataToSign.toHexString()
-                + "\"},\"id\":1}")
+                + "\","
+                + dataJsonFormat(dataToSign)
+                + "},\"id\":1}")
         .post(JSON_RPC_PATH);
+  }
+
+  private String dataJsonFormat(final String dataToSign) {
+    return dataToSign == null ? "\"data\":null" : "\"data\":\"" + dataToSign + "\"";
   }
 
   protected Bytes verifyAndGetJsonRpcSignatureResponse(final Response response) {
@@ -71,5 +77,21 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
         .body("jsonrpc", equalTo("2.0"), "id", equalTo(1));
 
     return Bytes.fromHexString(response.body().jsonPath().get("result"));
+  }
+
+  protected void verifyJsonRpcSignatureErrorResponse(
+      final Response response, final int code, final String message, final String[] data) {
+    final ValidatableResponse validatableResponse =
+        response
+            .then()
+            .statusCode(200)
+            .contentType(ContentType.JSON)
+            .body("jsonrpc", equalTo("2.0"))
+            .body("error.code", equalTo(code))
+            .body("error.message", equalTo(message));
+
+    if (data != null) {
+      validatableResponse.body("error.data", containsInAnyOrder(data));
+    }
   }
 }
