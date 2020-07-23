@@ -171,9 +171,9 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   private boolean matchesFileExtension(final Path filename) {
-    final boolean hidden = filename.toFile().isHidden();
+    final boolean isHidden = filename.toFile().isHidden();
     final String extension = FilenameUtils.getExtension(filename.toString());
-    return !hidden && extension.toLowerCase().endsWith(fileExtension.toLowerCase());
+    return !isHidden && extension.toLowerCase().endsWith(fileExtension.toLowerCase());
   }
 
   private boolean signerMatchesIdentifier(
