@@ -29,14 +29,14 @@ public class JsonRpcPublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBas
     initAndStartSigner();
 
     final Response response = callPublicKeys();
-    validateBodyMatches(response, containsInAnyOrder(publicKeys));
+    validateJsonRpcResponse(response, containsInAnyOrder(publicKeys));
   }
 
   @Test
   public void publicKeysMethodEmptyResultWhenNoKeysAreLoaded() {
     initAndStartSigner();
     final Response response = callPublicKeys();
-    validateBodyMatches(response, empty());
+    validateJsonRpcResponse(response, empty());
   }
 
   private Response callPublicKeys() {
@@ -46,7 +46,7 @@ public class JsonRpcPublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBas
         .post(JSON_RPC_PATH);
   }
 
-  private void validateBodyMatches(final Response response, final Matcher<?> resultMatcher) {
+  private void validateJsonRpcResponse(final Response response, final Matcher<?> resultMatcher) {
     response
         .then()
         .statusCode(200)
