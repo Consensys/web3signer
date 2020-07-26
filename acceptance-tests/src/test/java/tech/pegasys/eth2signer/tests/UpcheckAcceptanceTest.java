@@ -49,10 +49,10 @@ public class UpcheckAcceptanceTest extends AcceptanceTestBase {
             .body("{\"jsonrpc\":\"2.0\",\"method\":\"upcheck\",\"params\":[],\"id\":1}")
             .post(JSON_RPC_PATH);
 
-    validateBodyMatches(response);
+    validateJsonRpcUpcheckResponse(response);
   }
 
-  private void validateBodyMatches(final Response response) {
+  private void validateJsonRpcUpcheckResponse(final Response response) {
     response
         .then()
         .statusCode(200)
