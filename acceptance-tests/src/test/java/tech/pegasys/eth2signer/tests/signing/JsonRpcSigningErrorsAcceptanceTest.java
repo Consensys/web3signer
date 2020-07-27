@@ -25,7 +25,7 @@ import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EmptySource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 public class JsonRpcSigningErrorsAcceptanceTest extends SigningAcceptanceTestBase {
@@ -43,13 +43,13 @@ public class JsonRpcSigningErrorsAcceptanceTest extends SigningAcceptanceTestBas
     final String publicKey = keyPair.getPublicKey().toString();
     final Response jsonResponse = callJsonRpcSign(publicKey, DATA.toHexString());
     verifyJsonRpcSignatureErrorResponse(
-        jsonResponse, -30000, "Signer not found for identifier", new String[] {DATA.toHexString()});
+        jsonResponse, -30000, "Signer not found for identifier", new String[] {publicKey});
   }
 
   @ParameterizedTest
-  @EmptySource
+  @NullAndEmptySource
   @ValueSource(strings = {"zzzddd"})
-  public void signReturnErrorCode30001WhenDataValueIsInvalid(final String data) {
+  public void signReturnInvalidParamErrorWhenDataValueIsInvalid(final String data) {
     final String publicKey = keyPair.getPublicKey().toString();
     final String configFilename = publicKey.substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
@@ -58,20 +58,6 @@ public class JsonRpcSigningErrorsAcceptanceTest extends SigningAcceptanceTestBas
     setupSigner();
 
     final Response jsonResponse = callJsonRpcSign(publicKey, data);
-    verifyJsonRpcSignatureErrorResponse(
-        jsonResponse, -30001, "Invalid data format. Not a hex string", null);
-  }
-
-  @Test
-  public void signReturnInvalidParamErrorWhenRequiredDataValueIsNull() {
-    final String publicKey = keyPair.getPublicKey().toString();
-    final String configFilename = publicKey.substring(2);
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY);
-
-    setupSigner();
-
-    final Response jsonResponse = callJsonRpcSign(publicKey, null);
     verifyJsonRpcSignatureErrorResponse(jsonResponse, -32602, "Invalid params", null);
   }
 

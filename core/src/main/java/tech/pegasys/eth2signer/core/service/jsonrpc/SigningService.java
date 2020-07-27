@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
-import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.InvalidDataFormatException;
+import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.InvalidParamException;
 import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.SignerNotFoundException;
 import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
@@ -24,9 +24,14 @@ import java.util.Optional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 @JsonRpcService
 public class SigningService {
+  private static final Logger LOG = LogManager.getLogger();
+
   private final Upcheck upcheck = new Upcheck();
   private final PublicKeys publicKeys;
   private final List<SignerForIdentifier<?>> signerForIdentifierList;
@@ -45,20 +50,28 @@ public class SigningService {
   @JsonRpcMethod("sign")
   public String sign(
       @JsonRpcParam("identifier") final String identifier,
-      @JsonRpcParam("data") final String data) {
+      @JsonRpcParam("data") final String dataToSign) {
 
+    return signerForIdentifierList.stream()
+        .map(signerForIdentifier -> signerForIdentifier.sign(identifier, convertData(dataToSign)))
+        .flatMap(Optional::stream)
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new SignerNotFoundException(
+                    "Signer not found for identifier", new String[] {identifier}));
+  }
+
+  private Bytes convertData(final String dataToSign) {
+    final Bytes data;
     try {
-      return signerForIdentifierList.stream()
-          .map(signerForIdentifier -> signerForIdentifier.sign(identifier, data))
-          .flatMap(Optional::stream)
-          .findFirst()
-          .orElseThrow(
-              () ->
-                  new SignerNotFoundException(
-                      "Signer not found for identifier", new String[] {data}));
+      data = SignerForIdentifier.toBytes(dataToSign);
     } catch (final IllegalArgumentException e) {
-      throw new InvalidDataFormatException(e.getMessage());
+      // LOG it as this exception will be handled by JsonRPC Server (not vertx handler)
+      LOG.error("Unable to convert data [{}] to bytes", dataToSign, e);
+      throw new InvalidParamException(e.getMessage());
     }
+    return data;
   }
 
   @JsonRpcMethod
