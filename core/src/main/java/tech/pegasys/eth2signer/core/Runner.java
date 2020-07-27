@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.core;
 
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.BLS;
 import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.SECP256K1;
 
@@ -29,6 +31,7 @@ import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.SignForIdentifierHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.UpcheckHandler;
+import tech.pegasys.eth2signer.core.service.jsonrpc.SigningService;
 import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
@@ -45,11 +48,13 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.Handler;
@@ -64,6 +69,7 @@ import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,6 +94,7 @@ public class Runner implements Runnable {
   private static final String GET_PUBLIC_KEYS_OPERATION_ID = "getPublicKeys";
   private static final String SIGN_FOR_IDENTIFIER_OPERATION_ID = "signForIdentifier";
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
+  private static final String JSON_RPC_PATH = "/rpc/v1";
 
   private final Config config;
 
@@ -138,7 +145,10 @@ public class Runner implements Runnable {
           createOpenApiRouterFactory(vertx, publicKeys, blsSigner, secpSigner);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
+
+      // register non-openapi routes ...
       registerOpenApiSpecRoute(router); // serve static openapi spec
+      registerJsonRpcRoute(router, publicKeys, List.of(blsSigner, secpSigner));
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -250,6 +260,25 @@ public class Runner implements Runnable {
         .produces(CONTENT_TYPE_TEXT_HTML)
         .handler(ResponseContentTypeHandler.create())
         .handler(routingContext -> routingContext.response().end(indexHtml));
+  }
+
+  private void registerJsonRpcRoute(
+      final Router router,
+      final PublicKeys publicKeys,
+      final List<SignerForIdentifier<?>> signerForIdentifierList) {
+    // Handles JSON-RPC calls on /rpc/v1
+    final SigningService signingService = new SigningService(publicKeys, signerForIdentifierList);
+    final JsonRpcServer jsonRpcServer = new JsonRpcServer();
+    router
+        .post(JSON_RPC_PATH)
+        .handler(BodyHandler.create())
+        .blockingHandler(
+            routingContext -> {
+              final String body = routingContext.getBodyAsString();
+              final String jsonRpcResponse = jsonRpcServer.handle(body, signingService);
+              routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
+            },
+            false);
   }
 
   private HttpServer createServerAndWait(

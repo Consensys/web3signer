@@ -89,10 +89,15 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private void signAndVerifySignature() {
     setupSigner();
 
+    // openapi
     final Response response = sign(keyPair.getPublicKey().toString(), DATA);
-    verifySignatureResponse(response);
-
-    final Bytes signature = Bytes.fromHexString(response.getBody().print());
+    final Bytes signature = verifyAndGetSignatureResponse(response);
     assertThat(signature).isEqualTo(expectedSignature.toBytes());
+
+    // jsonrpc
+    final Response jsonResponse =
+        callJsonRpcSign(keyPair.getPublicKey().toString(), DATA.toHexString());
+    final Bytes jsonResponseSignature = verifyAndGetJsonRpcSignatureResponse(jsonResponse);
+    assertThat(jsonResponseSignature).isEqualTo(expectedSignature.toBytes());
   }
 }

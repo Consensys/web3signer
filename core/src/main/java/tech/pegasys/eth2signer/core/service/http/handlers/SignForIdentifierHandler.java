@@ -14,11 +14,9 @@ package tech.pegasys.eth2signer.core.service.http.handlers;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
+import static tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier.toBytes;
 
-import tech.pegasys.eth2signer.core.service.http.models.SigningRequestBody;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
-
-import java.util.Optional;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -27,6 +25,7 @@ import io.vertx.ext.web.api.RequestParameter;
 import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class SignForIdentifierHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
@@ -40,29 +39,28 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
   public void handle(final RoutingContext routingContext) {
     final RequestParameters params = routingContext.get("parsedParameters");
     final String identifier = params.pathParameter("identifier").toString();
-    final String dataToSign = getDataToSign(params);
-
-    final Optional<String> signature;
+    final Bytes data;
     try {
-      signature = signerForIdentifier.sign(identifier, dataToSign);
+      data = getDataToSign(params);
     } catch (final IllegalArgumentException e) {
       routingContext.fail(400);
       return;
     }
 
-    if (signature.isEmpty()) {
-      LOG.trace("Unsuitable handler for {}, invoking next handler", identifier);
-      routingContext.next();
-    } else {
-      routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature.get());
-    }
+    signerForIdentifier
+        .sign(identifier, data)
+        .ifPresentOrElse(
+            signature ->
+                routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature),
+            () -> {
+              LOG.trace("Unsuitable handler for {}, invoking next handler", identifier);
+              routingContext.next();
+            });
   }
 
-  private String getDataToSign(final RequestParameters params) {
+  private Bytes getDataToSign(final RequestParameters params) {
     final RequestParameter body = params.body();
     final JsonObject jsonObject = body.getJsonObject();
-    // the mapping shouldn't fail as openapifilter would have already thrown error on schema
-    // mismatch
-    return jsonObject.mapTo(SigningRequestBody.class).getData();
+    return toBytes(jsonObject.getString("data"));
   }
 }

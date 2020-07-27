@@ -47,13 +47,18 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
    *     identifier
    * @throws IllegalArgumentException if data is invalid i.e. not a valid hex string, null or empty.
    */
-  public Optional<String> sign(final String identifier, final String data) {
-    return signerProvider
-        .getSigner(identifier)
-        .map(signer -> formatSignature(signer.sign(toBytes(data))));
+  public Optional<String> sign(final String identifier, final Bytes data) {
+    return signerProvider.getSigner(identifier).map(signer -> formatSignature(signer.sign(data)));
   }
 
-  private Bytes toBytes(final String data) {
+  /**
+   * Converts hex string to bytes
+   *
+   * @param data hex string
+   * @return Bytes
+   * @throws IllegalArgumentException if data is invalid i.e. not a valid hex string, null or empty
+   */
+  public static Bytes toBytes(final String data) {
     final Bytes dataToSign;
     try {
       if (StringUtils.isBlank(data)) {
