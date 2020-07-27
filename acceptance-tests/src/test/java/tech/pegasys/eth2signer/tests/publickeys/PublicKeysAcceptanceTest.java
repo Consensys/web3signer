@@ -12,7 +12,6 @@
  */
 package tech.pegasys.eth2signer.tests.publickeys;
 
-import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;
@@ -20,9 +19,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.collection.IsIn.in;
 
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.hamcrest.Matcher;
 import org.junit.jupiter.api.Test;
 
 public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
@@ -31,7 +28,9 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
   public void noLoadedKeysReturnsEmptyPublicKeyResponse() {
     initAndStartSigner();
 
-    validateBodyMatches(getPublicKeys(), empty());
+    validateApiResponse(callApiPublicKeys(), empty());
+
+    validateRpcResponse(callRpcPublicKeys(), empty());
   }
 
   @Test
@@ -39,7 +38,9 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     createKeys(false, privateKeys());
     initAndStartSigner();
 
-    validateBodyMatches(getPublicKeys(), empty());
+    validateApiResponse(callApiPublicKeys(), empty());
+
+    validateRpcResponse(callRpcPublicKeys(), empty());
   }
 
   @Test
@@ -49,9 +50,14 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     final String[] invalidKeys = createKeys(false, prvKeys[1]);
 
     initAndStartSigner();
-    final Response response = getPublicKeys();
-    validateBodyMatches(response, contains(keys));
-    validateBodyMatches(response, everyItem(not(in(invalidKeys))));
+
+    final Response response = callApiPublicKeys();
+    validateApiResponse(response, contains(keys));
+    validateApiResponse(response, everyItem(not(in(invalidKeys))));
+
+    final Response jsonResponse = callRpcPublicKeys();
+    validateRpcResponse(jsonResponse, contains(keys));
+    validateRpcResponse(jsonResponse, everyItem(not(in(invalidKeys))));
   }
 
   @Test
@@ -59,8 +65,8 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     final String[] keys = createKeys(true, privateKeys());
     initAndStartSigner();
 
-    final Response response = getPublicKeys();
-    validateBodyMatches(response, containsInAnyOrder(keys));
+    validateApiResponse(callApiPublicKeys(), containsInAnyOrder(keys));
+    validateRpcResponse(callRpcPublicKeys(), containsInAnyOrder(keys));
   }
 
   @Test
@@ -68,22 +74,7 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     final String[] keys = createKeys(true, privateKeys());
     initAndStartSigner();
 
-    final Response response = getPublicKeysWithoutOpenApiFilter();
-    validateBodyMatches(response, containsInAnyOrder(keys));
-  }
-
-  private Response getPublicKeys() {
-    return given()
-        .filter(getOpenApiValidationFilter())
-        .baseUri(signer.getUrl())
-        .get(SIGNER_PUBLIC_KEYS_PATH);
-  }
-
-  private Response getPublicKeysWithoutOpenApiFilter() {
-    return given().baseUri(signer.getUrl()).accept("").get(SIGNER_PUBLIC_KEYS_PATH);
-  }
-
-  private void validateBodyMatches(final Response response, final Matcher<?> matcher) {
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", matcher);
+    final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter();
+    validateApiResponse(response, containsInAnyOrder(keys));
   }
 }

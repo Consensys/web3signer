@@ -12,6 +12,9 @@
  */
 package tech.pegasys.eth2signer.tests.publickeys;
 
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
+
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
@@ -25,7 +28,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.io.TempDir;
 
 public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
@@ -74,5 +80,35 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
+  }
+
+  protected Response callApiPublicKeys() {
+    return given()
+        .filter(getOpenApiValidationFilter())
+        .baseUri(signer.getUrl())
+        .get(SIGNER_PUBLIC_KEYS_PATH);
+  }
+
+  protected Response callApiPublicKeysWithoutOpenApiClientSideFilter() {
+    return given().baseUri(signer.getUrl()).accept("").get(SIGNER_PUBLIC_KEYS_PATH);
+  }
+
+  protected void validateApiResponse(final Response response, final Matcher<?> matcher) {
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", matcher);
+  }
+
+  protected Response callRpcPublicKeys() {
+    return given()
+        .baseUri(signer.getUrl())
+        .body("{\"jsonrpc\":\"2.0\",\"method\":\"public_keys\",\"params\":[],\"id\":1}")
+        .post(JSON_RPC_PATH);
+  }
+
+  protected void validateRpcResponse(final Response response, final Matcher<?> resultMatcher) {
+    response
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("jsonrpc", equalTo("2.0"), "id", equalTo(1), "result", resultMatcher);
   }
 }
