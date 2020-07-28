@@ -12,24 +12,28 @@
  */
 package tech.pegasys.eth2signer.core;
 
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.BLS;
 import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.SECP256K1;
 
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
-import tech.pegasys.eth2signer.core.http.HostAllowListHandler;
-import tech.pegasys.eth2signer.core.http.handlers.GetPublicKeysHandler;
-import tech.pegasys.eth2signer.core.http.handlers.LogErrorHandler;
-import tech.pegasys.eth2signer.core.http.handlers.SignForIdentifierHandler;
-import tech.pegasys.eth2signer.core.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SecpArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
-import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
+import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
+import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
+import tech.pegasys.eth2signer.core.service.http.handlers.SignForIdentifierHandler;
+import tech.pegasys.eth2signer.core.service.http.handlers.UpcheckHandler;
+import tech.pegasys.eth2signer.core.service.jsonrpc.SigningService;
+import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
+import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.FileUtil;
@@ -50,6 +54,7 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.Handler;
@@ -64,6 +69,7 @@ import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,6 +94,7 @@ public class Runner implements Runnable {
   private static final String GET_PUBLIC_KEYS_OPERATION_ID = "getPublicKeys";
   private static final String SIGN_FOR_IDENTIFIER_OPERATION_ID = "signForIdentifier";
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
+  private static final String JSON_RPC_PATH = "/rpc/v1";
 
   private final Config config;
 
@@ -124,16 +131,24 @@ public class Runner implements Runnable {
           createSignerProvider(metricsSystem, vertx);
       blsSignerProvider.cacheAllSigners();
 
-      final MultiKeyTransactionSignerProvider multiKeyTransactionSignerProvider =
-          MultiKeyTransactionSignerProvider.create(config.getKeyConfigPath());
       final SecpArtifactSignerProvider secpSignerProvider =
-          new SecpArtifactSignerProvider(multiKeyTransactionSignerProvider);
+          new SecpArtifactSignerProvider(
+              MultiKeyTransactionSignerProvider.create(config.getKeyConfigPath()));
+
+      final PublicKeys publicKeys = new PublicKeys(blsSignerProvider);
+      final SignerForIdentifier<BlsArtifactSignature> blsSigner =
+          new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner =
+          new SignerForIdentifier<>(secpSignerProvider, this::formatSecpSignature, SECP256K1);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
-          createOpenApiRouterFactory(vertx, blsSignerProvider, secpSignerProvider);
+          createOpenApiRouterFactory(vertx, publicKeys, blsSigner, secpSigner);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
+
+      // register non-openapi routes ...
       registerOpenApiSpecRoute(router); // serve static openapi spec
+      registerJsonRpcRoute(router, publicKeys, List.of(blsSigner, secpSigner));
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -152,30 +167,28 @@ public class Runner implements Runnable {
 
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
       final Vertx vertx,
-      final ArtifactSignerProvider blsSignerProvider,
-      final ArtifactSignerProvider secpSignerProvider)
+      final PublicKeys publicKeys,
+      final SignerForIdentifier<BlsArtifactSignature> blsSigner,
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
-    openAPI3RouterFactory
-        .getOptions()
-        .setMountResponseContentTypeHandler(false); // manually set content-type
 
+    // upcheck handler
     openAPI3RouterFactory.addHandlerByOperationId(UPCHECK_OPERATION_ID, new UpcheckHandler());
     openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK_OPERATION_ID, errorHandler);
 
+    // public key handler
     openAPI3RouterFactory.addHandlerByOperationId(
-        GET_PUBLIC_KEYS_OPERATION_ID,
-        new GetPublicKeysHandler(List.of(blsSignerProvider, secpSignerProvider)));
+        GET_PUBLIC_KEYS_OPERATION_ID, new GetPublicKeysHandler(publicKeys));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
 
+    // sign handler
     openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new SignForIdentifierHandler<>(blsSignerProvider, this::formatBlsSignature, BLS));
+        SIGN_FOR_IDENTIFIER_OPERATION_ID, new SignForIdentifierHandler(blsSigner));
     openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new SignForIdentifierHandler<>(secpSignerProvider, this::formatSecpSignature, SECP256K1));
+        SIGN_FOR_IDENTIFIER_OPERATION_ID, new SignForIdentifierHandler(secpSigner));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 
@@ -210,7 +223,12 @@ public class Runner implements Runnable {
           }
         });
 
-    return completableFuture.get();
+    final OpenAPI3RouterFactory openAPI3RouterFactory = completableFuture.get();
+
+    // disable automatic response content handler as it doesn't handle some corner cases.
+    // Our handlers must set content type header manually.
+    openAPI3RouterFactory.getOptions().setMountResponseContentTypeHandler(false);
+    return openAPI3RouterFactory;
   }
 
   private DirectoryBackedArtifactSignerProvider createSignerProvider(
@@ -242,6 +260,25 @@ public class Runner implements Runnable {
         .produces(CONTENT_TYPE_TEXT_HTML)
         .handler(ResponseContentTypeHandler.create())
         .handler(routingContext -> routingContext.response().end(indexHtml));
+  }
+
+  private void registerJsonRpcRoute(
+      final Router router,
+      final PublicKeys publicKeys,
+      final List<SignerForIdentifier<?>> signerForIdentifierList) {
+    // Handles JSON-RPC calls on /rpc/v1
+    final SigningService signingService = new SigningService(publicKeys, signerForIdentifierList);
+    final JsonRpcServer jsonRpcServer = new JsonRpcServer();
+    router
+        .post(JSON_RPC_PATH)
+        .handler(BodyHandler.create())
+        .blockingHandler(
+            routingContext -> {
+              final String body = routingContext.getBodyAsString();
+              final String jsonRpcResponse = jsonRpcServer.handle(body, signingService);
+              routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
+            },
+            false);
   }
 
   private HttpServer createServerAndWait(

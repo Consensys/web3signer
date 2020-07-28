@@ -10,18 +10,22 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.http.handlers;
+package tech.pegasys.eth2signer.core.service.jsonrpc.exceptions;
 
-import static com.google.common.net.MediaType.PLAIN_TEXT_UTF_8;
-import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcErrorData;
 
-import io.vertx.core.Handler;
-import io.vertx.ext.web.RoutingContext;
+@JsonRpcError(code = -30000, message = "Signer not found for identifier")
+public class SignerNotFoundException extends RuntimeException {
+  private final String[] data;
 
-public class UpcheckHandler implements Handler<RoutingContext> {
+  public SignerNotFoundException(final String message, final String[] data) {
+    super(message);
+    this.data = data;
+  }
 
-  @Override
-  public void handle(RoutingContext routingContext) {
-    routingContext.response().putHeader(CONTENT_TYPE, PLAIN_TEXT_UTF_8.toString()).end("OK");
+  @JsonRpcErrorData
+  public String[] getData() {
+    return data;
   }
 }

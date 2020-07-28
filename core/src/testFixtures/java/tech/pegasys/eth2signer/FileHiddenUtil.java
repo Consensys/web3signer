@@ -10,12 +10,23 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.http.handlers;
+package tech.pegasys.eth2signer;
 
-import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-@FunctionalInterface
-public interface SignatureFormatter<T extends ArtifactSignature> {
+import org.apache.commons.lang.SystemUtils;
 
-  String format(T signature);
+public class FileHiddenUtil {
+
+  public static void makeFileHidden(final Path file) throws IOException {
+    if (SystemUtils.IS_OS_WINDOWS) {
+      Files.setAttribute(file, "dos:hidden", true);
+    } else {
+      final File hiddenFile = file.getParent().resolve("." + file.getFileName()).toFile();
+      file.toFile().renameTo(hiddenFile);
+    }
+  }
 }
