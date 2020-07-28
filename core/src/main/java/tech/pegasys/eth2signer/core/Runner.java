@@ -36,11 +36,12 @@ import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.TomlFileSelector;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.eth2signer.core.utils.ByteUtils;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.api.Signature;
-import tech.pegasys.signers.secp256k1.multikey.MultiKeyTransactionSignerProvider;
+import tech.pegasys.signers.secp256k1.multikey.MultiKeySignerProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -133,7 +134,7 @@ public class Runner implements Runnable {
 
       final SecpArtifactSignerProvider secpSignerProvider =
           new SecpArtifactSignerProvider(
-              MultiKeyTransactionSignerProvider.create(config.getKeyConfigPath()));
+              MultiKeySignerProvider.create(config.getKeyConfigPath(), new TomlFileSelector()));
 
       final PublicKeys publicKeys = new PublicKeys(blsSignerProvider);
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =
