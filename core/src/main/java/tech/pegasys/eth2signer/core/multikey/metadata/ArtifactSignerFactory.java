@@ -81,6 +81,12 @@ public class ArtifactSignerFactory {
     }
   }
 
+  public ArtifactSigner create(final AzureSigningMetadata azureSigningMetadata) {
+    try (TimingContext ignored = privateKeyRetrievalTimer.labels("azure").startTimer()) {
+      return createAzureArtifact(azureSigningMetadata);
+    }
+  }
+
   private ArtifactSigner createKeystoreArtifact(final FileKeyStoreMetadata fileKeyStoreMetadata) {
     final Path keystoreFile = makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystoreFile());
     final Path keystorePasswordFile =
@@ -132,6 +138,20 @@ public class ArtifactSignerFactory {
       return new BlsArtifactSigner(keyPair);
     } catch (Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
+    }
+  }
+
+  private ArtifactSigner createAzureArtifact(final AzureSigningMetadata metadata) {
+
+    try {
+      final AzureVault azureVault = new AzureVault(metadata.getClientId(), metadata.getClientSecret(), metadata.getTenantId(), metadata.getVaultName());
+
+      final String secret = azureVault.fetchSecret(metadata.getSecretName());
+      final BLSKeyPair keyPair =
+              new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(secret)));
+      return new BlsArtifactSigner(keyPair);
+    } catch (Exception e) {
+      throw new SigningMetadataException("Failed to fetch secret from azure vault", e);
     }
   }
 
