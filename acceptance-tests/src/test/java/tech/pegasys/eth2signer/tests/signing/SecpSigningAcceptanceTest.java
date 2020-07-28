@@ -45,7 +45,8 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final Bytes DATA = Bytes.wrap("42".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
-  private static final String ADDRESS = "fe3b557e8fb62b89f4916b721be55ceb828dbd73";
+  public static final String PUBLIC_KEY_HEX_STRING =
+      "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
 
   @Test
   @EnabledIfEnvironmentVariables({
@@ -58,7 +59,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
     final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
     createAzureTomlFileAt(
-        tomlDirectory.resolve("arbitrary_prefix" + ADDRESS + ".toml"),
+        tomlDirectory.resolve("arbitrary_prefix" + PUBLIC_KEY_HEX_STRING + ".toml"),
         clientId,
         clientSecret,
         keyVaultName);
@@ -76,7 +77,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     Files.write(passwordPath, "pass".getBytes(UTF_8));
 
     createFileBasedTomlFileAt(
-        tomlDirectory.resolve("arbitrary_prefix" + ADDRESS + ".toml"),
+        tomlDirectory.resolve("arbitrary_prefix" + PUBLIC_KEY_HEX_STRING + ".toml"),
         keyPath,
         passwordPath.toString());
 
@@ -94,7 +95,8 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
       final HashicorpSigningParams hashicorpSigningParams =
           new HashicorpSigningParams(hashicorpNode, secretPath, secretName);
 
-      createHashicorpTomlFileAt(tomlDirectory.resolve(ADDRESS + ".toml"), hashicorpSigningParams);
+      createHashicorpTomlFileAt(
+          tomlDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".toml"), hashicorpSigningParams);
 
       signAndVerifySignature();
     } finally {
@@ -106,12 +108,12 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     setupSigner();
 
     // openapi
-    final Response response = sign(ADDRESS, DATA);
+    final Response response = sign(PUBLIC_KEY_HEX_STRING, DATA);
     final Bytes signature = verifyAndGetSignatureResponse(response);
     verifySignature(signature);
 
     // jsonrpc
-    final Response jsonResponse = callJsonRpcSign(ADDRESS, DATA.toHexString());
+    final Response jsonResponse = callJsonRpcSign(PUBLIC_KEY_HEX_STRING, DATA.toHexString());
     final Bytes jsonResponseSignature = verifyAndGetJsonRpcSignatureResponse(jsonResponse);
     verifySignature(jsonResponseSignature);
   }

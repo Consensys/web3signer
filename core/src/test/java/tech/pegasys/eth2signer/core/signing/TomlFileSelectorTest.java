@@ -57,9 +57,9 @@ class TomlFileSelectorTest {
       })
   void specificFilterMatchesPublicKey(final String input) throws IOException {
     final TomlFileSelector tomlFileSelector = new TomlFileSelector();
-    final Path file = createConfigFile(input);
+    final Path file = createConfigFile(input + ".toml");
     final PublicKey publicKey = new PublicKeyImpl(Bytes.fromHexString(PUBLIC_KEY_HEX_STRING));
-    assertThat(tomlFileSelector.getSpecificConfigFileFilter(publicKey).accept(file)).isFalse();
+    assertThat(tomlFileSelector.getSpecificConfigFileFilter(publicKey).accept(file)).isTrue();
   }
 
   private Path createConfigFile(final String input) throws IOException {

@@ -33,12 +33,18 @@ public class TomlFileSelector implements FileSelector<PublicKey> {
   public Filter<Path> getSpecificConfigFileFilter(PublicKey publicKey) {
     return (entry) -> {
       final String baseName = FilenameUtils.getBaseName(entry.toString());
-      final String identifier = publicKey.toString();
+      final String identifier = normaliseIdentifier(publicKey.toString().toLowerCase());
       return matchesFileExtension(entry) && baseName.toLowerCase().endsWith(identifier);
     };
   }
 
   private boolean matchesFileExtension(final Path entry) {
     return FilenameUtils.getExtension(entry.toString()).equalsIgnoreCase(TOML_FILE_EXT);
+  }
+
+  private String normaliseIdentifier(final String signerIdentifier) {
+    return signerIdentifier.toLowerCase().startsWith("0x")
+        ? signerIdentifier.substring(2)
+        : signerIdentifier;
   }
 }
