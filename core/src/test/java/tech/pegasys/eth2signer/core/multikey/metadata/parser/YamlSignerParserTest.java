@@ -230,7 +230,7 @@ class YamlSignerParserTest {
   }
 
   @Test
-  void azureMetaDataInfoReturnsMetadata() throws IOException {
+  void azureMetadataInfoReturnsMetadata() throws IOException {
     final BlsArtifactSigner artifactSigner =
         new BlsArtifactSigner(
             new BLSKeyPair(
