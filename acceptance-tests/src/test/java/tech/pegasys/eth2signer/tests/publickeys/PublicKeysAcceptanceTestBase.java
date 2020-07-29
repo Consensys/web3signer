@@ -29,6 +29,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ValueNode;
+import com.github.arteam.simplejsonrpc.core.domain.Request;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
@@ -160,13 +164,10 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   protected Response callRpcPublicKeys(final String keyType) {
-    return given()
-        .baseUri(signer.getUrl())
-        .body(
-            "{\"jsonrpc\":\"2.0\",\"method\":\"public_keys\",\"params\":{\"keyType\":\""
-                + keyType
-                + "\"},\"id\":1}")
-        .post(JSON_RPC_PATH);
+    final JsonNode params = JsonNodeFactory.instance.objectNode().put("keyType", keyType);
+    final ValueNode id = JsonNodeFactory.instance.numberNode(1);
+    final Request request = new Request("2.0", "public_keys", params, id);
+    return given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);
   }
 
   protected void validateRpcResponse(final Response response, final Matcher<?> resultMatcher) {
