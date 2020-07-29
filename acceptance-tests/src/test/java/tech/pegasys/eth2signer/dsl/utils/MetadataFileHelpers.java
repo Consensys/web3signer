@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.dsl.utils;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.AzureSigningMetadata;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
@@ -104,6 +105,24 @@ public class MetadataFileHelpers {
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {
       throw new RuntimeException("Unable to construct hashicorp yaml file", e);
+    }
+  }
+
+  public void createAzureYamlFileAt(
+      final Path metadataFilePath, final AzureSigningMetadata azureSigningMetadata) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+
+      signingMetadata.put("type", "azure");
+      signingMetadata.put("clientId", azureSigningMetadata.getClientId());
+      signingMetadata.put("clientSecret", azureSigningMetadata.getClientSecret());
+      signingMetadata.put("tenantId", azureSigningMetadata.getTenantId());
+      signingMetadata.put("vaultName", azureSigningMetadata.getVaultName());
+      signingMetadata.put("secretName", azureSigningMetadata.getSecretName());
+
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to construct azure yaml file", e);
     }
   }
 

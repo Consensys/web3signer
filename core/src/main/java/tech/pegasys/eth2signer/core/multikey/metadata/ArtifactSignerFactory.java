@@ -155,13 +155,14 @@ public class ArtifactSignerFactory {
       final Optional<String> secret = azureVault.fetchSecret(metadata.getSecretName());
       if (secret.isEmpty()) {
         throw new SigningMetadataException(
-            "Failed to fetch secret from azure vault because secret doesn't exist");
+            "secret '" + metadata.getSecretName() + "' doesn't exist");
       }
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(secret.get())));
       return new BlsArtifactSigner(keyPair);
     } catch (final RuntimeException e) {
-      throw new SigningMetadataException("Failed to fetch secret from azure vault", e);
+      throw new SigningMetadataException(
+          "Failed to fetch secret from azure vault: " + e.getMessage(), e);
     }
   }
 

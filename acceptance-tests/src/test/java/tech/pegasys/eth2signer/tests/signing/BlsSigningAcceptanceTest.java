@@ -16,6 +16,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.AzureSigningMetadata;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
@@ -31,6 +32,8 @@ import java.nio.file.Path;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -84,6 +87,29 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     } finally {
       hashicorpNode.shutdown();
     }
+  }
+
+  @Test
+  @EnabledIfEnvironmentVariables({
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
+  })
+  public void ableToSignUsingAzure() {
+    final String clientId = System.getenv("AZURE_CLIENT_ID");
+    final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
+    final String tenantId = System.getenv("AZURE_TENANT_ID");
+    final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
+    final String secretName = "TEST-KEY";
+
+    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createAzureYamlFileAt(
+        keyConfigFile,
+        new AzureSigningMetadata(clientId, clientSecret, tenantId, keyVaultName, secretName));
+
+    signAndVerifySignature();
   }
 
   private void signAndVerifySignature() {
