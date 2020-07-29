@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-public enum ArtifactSignatureType {
+public enum KeyType {
   BLS,
   SECP256K1
 }

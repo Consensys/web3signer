@@ -57,13 +57,23 @@ paths:
         '500':
           description: 'Internal Eth2Signer server error'
 
-  /signer/publicKeys:
+  /signer/publicKeys/{keyType}:
     get:
       tags:
         - 'Public Key'
       summary: 'List of available Public Keys'
       description: 'Returns the public keys for the private keys that have been loaded into Eth2Signer'
       operationId: 'getPublicKeys'
+      parameters:
+        - name: 'keyType'
+          in: 'path'
+          required: true
+          description: 'Type of public keys to return'
+          schema:
+            type: string
+            enum:
+              - BLS
+              - SECP256K1
       responses:
         '200':
           description: 'list of public keys'
@@ -73,8 +83,11 @@ paths:
                 type: array
                 items:
                   type: string
+        '400':
+          description: 'Bad request format'
         '500':
           description: 'Internal Eth2Signer server error'
+
   /upcheck:
     get:
       tags:

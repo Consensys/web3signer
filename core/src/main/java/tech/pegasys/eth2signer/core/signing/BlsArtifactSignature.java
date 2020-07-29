@@ -22,8 +22,8 @@ public class BlsArtifactSignature implements ArtifactSignature {
   }
 
   @Override
-  public ArtifactSignatureType getType() {
-    return ArtifactSignatureType.BLS;
+  public KeyType getType() {
+    return KeyType.BLS;
   }
 
   public BLSSignature getSignatureData() {
