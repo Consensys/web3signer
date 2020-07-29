@@ -57,15 +57,9 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
   @TempDir Path testDirectory;
 
   protected String[] privateKeys(final String keyType) {
-    return keyType.equals("BLS") ? blsPrivateKeys() : secpPrivateKeys();
-  }
-
-  protected String[] blsPrivateKeys() {
-    return new String[] {BLS_PRIVATE_KEY_1, BLS_PRIVATE_KEY_2};
-  }
-
-  protected String[] secpPrivateKeys() {
-    return new String[] {SECP_PRIVATE_KEY_1, SECP_PRIVATE_KEY_2};
+    return keyType.equals("BLS")
+        ? new String[] {BLS_PRIVATE_KEY_1, BLS_PRIVATE_KEY_2}
+        : new String[] {SECP_PRIVATE_KEY_1, SECP_PRIVATE_KEY_2};
   }
 
   protected String[] createKeys(

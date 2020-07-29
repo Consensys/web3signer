@@ -39,7 +39,7 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
   @ParameterizedTest
   @ValueSource(strings = {BLS, SECP256K1})
   public void invalidKeysReturnsEmptyPublicKeyResponse(final String keyType) {
-    createKeys(keyType, false, blsPrivateKeys());
+    createKeys(keyType, false, privateKeys(keyType));
     initAndStartSigner();
 
     validateApiResponse(callApiPublicKeys(keyType), empty());
@@ -69,7 +69,7 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
   @ParameterizedTest
   @ValueSource(strings = {BLS, SECP256K1})
   public void allLoadedKeysAreReturnedInPublicKeyResponse(final String keyType) {
-    final String[] keys = createKeys(keyType, true, blsPrivateKeys());
+    final String[] keys = createKeys(keyType, true, privateKeys(keyType));
     initAndStartSigner();
 
     validateApiResponse(callApiPublicKeys(keyType), containsInAnyOrder(keys));
@@ -79,7 +79,7 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
   @ParameterizedTest
   @ValueSource(strings = {BLS, SECP256K1})
   public void allLoadedKeysAreReturnedPublicKeyResponseWithEmptyAccept(final String keyType) {
-    final String[] keys = createKeys(keyType, true, blsPrivateKeys());
+    final String[] keys = createKeys(keyType, true, privateKeys(keyType));
     initAndStartSigner();
 
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(keyType);
