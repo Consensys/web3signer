@@ -14,8 +14,8 @@ package tech.pegasys.eth2signer.core;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
-import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.BLS;
-import static tech.pegasys.eth2signer.core.signing.ArtifactSignatureType.SECP256K1;
+import static tech.pegasys.eth2signer.core.signing.KeyType.BLS;
+import static tech.pegasys.eth2signer.core.signing.KeyType.SECP256K1;
 
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
@@ -136,7 +136,7 @@ public class Runner implements Runnable {
           new SecpArtifactSignerProvider(
               MultiKeySignerProvider.create(config.getKeyConfigPath(), new TomlFileSelector()));
 
-      final PublicKeys publicKeys = new PublicKeys(blsSignerProvider);
+      final PublicKeys publicKeys = new PublicKeys(blsSignerProvider, secpSignerProvider);
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =
           new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
       final SignerForIdentifier<SecpArtifactSignature> secpSigner =

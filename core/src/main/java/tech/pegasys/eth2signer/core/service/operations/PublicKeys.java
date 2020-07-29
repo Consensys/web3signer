@@ -12,19 +12,28 @@
  */
 package tech.pegasys.eth2signer.core.service.operations;
 
+import static tech.pegasys.eth2signer.core.signing.KeyType.BLS;
+
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PublicKeys {
-  private final ArtifactSignerProvider signerProvider;
+  private final ArtifactSignerProvider blsSignerProvider;
+  private final ArtifactSignerProvider secpSignerProvider;
 
-  public PublicKeys(final ArtifactSignerProvider signerProvider) {
-    this.signerProvider = signerProvider;
+  public PublicKeys(
+      final ArtifactSignerProvider blsSignerProvider,
+      final ArtifactSignerProvider secpSignerProvider) {
+    this.blsSignerProvider = blsSignerProvider;
+    this.secpSignerProvider = secpSignerProvider;
   }
 
-  public List<String> list() {
+  public List<String> list(final KeyType keyType) {
+    final ArtifactSignerProvider signerProvider =
+        keyType == BLS ? blsSignerProvider : secpSignerProvider;
     return new ArrayList<>(signerProvider.availableIdentifiers());
   }
 }

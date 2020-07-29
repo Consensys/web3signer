@@ -16,10 +16,14 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
 import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
+import tech.pegasys.eth2signer.core.signing.KeyType;
+
+import java.util.List;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.api.RequestParameters;
 
 public class GetPublicKeysHandler implements Handler<RoutingContext> {
   private final PublicKeys publicKeys;
@@ -30,9 +34,16 @@ public class GetPublicKeysHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(final RoutingContext context) {
-    context
-        .response()
-        .putHeader(CONTENT_TYPE, JSON_UTF_8)
-        .end(new JsonArray(publicKeys.list()).encode());
+    final RequestParameters params = context.get("parsedParameters");
+    final KeyType keyType;
+    try {
+      keyType = KeyType.valueOf(params.pathParameter("keyType").getString());
+    } catch (final IllegalArgumentException e) {
+      context.fail(400);
+    return;
+  }
+
+    final List<String> keys = publicKeys.list(keyType);
+    context.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(new JsonArray(keys).encode());
   }
 }
