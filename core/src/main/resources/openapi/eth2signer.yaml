@@ -68,7 +68,7 @@ paths:
         - name: 'keyType'
           in: 'path'
           required: true
-          description: 'Key for which data to sign'
+          description: 'Type of public keys to return'
           schema:
             type: string
             enum:
