@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.tests.publickeys;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createFileBasedTomlFileAt;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
@@ -28,52 +29,117 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ValueNode;
+import com.github.arteam.simplejsonrpc.core.domain.Request;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.io.TempDir;
+import org.web3j.crypto.ECKeyPair;
+import org.web3j.crypto.WalletUtils;
+import org.web3j.utils.Numeric;
 
 public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
   static final String SIGNER_PUBLIC_KEYS_PATH = "/signer/publicKeys";
+  static final String BLS = "BLS";
+  static final String SECP256K1 = "SECP256K1";
 
-  private static final String PRIVATE_KEY_1 =
+  private static final String BLS_PRIVATE_KEY_1 =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-  private static final String PRIVATE_KEY_2 =
+  private static final String BLS_PRIVATE_KEY_2 =
       "32ae313afff2daa2ef7005a7f834bdf291855608fe82c24d30be6ac2017093a8";
+  private static final String SECP_PRIVATE_KEY_1 =
+      "d392469474ec227b9ec4be232b402a0490045478ab621ca559d166965f0ffd32";
+  private static final String SECP_PRIVATE_KEY_2 =
+      "2e322a5f72c525422dc275e006d5cb3954ca5e02e9610fae0ed4cc389f622f33";
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
   @TempDir Path testDirectory;
 
-  protected String[] privateKeys() {
-    return new String[] {PRIVATE_KEY_1, PRIVATE_KEY_2};
+  protected String[] privateKeys(final String keyType) {
+    return keyType.equals("BLS")
+        ? new String[] {BLS_PRIVATE_KEY_1, BLS_PRIVATE_KEY_2}
+        : new String[] {SECP_PRIVATE_KEY_1, SECP_PRIVATE_KEY_2};
   }
 
-  protected String[] createKeys(boolean isValid, final String... privateKeys) {
+  protected String[] createKeys(
+      final String keyType, boolean isValid, final String... privateKeys) {
+    return keyType.equals("BLS")
+        ? createBlsKeys(isValid, privateKeys)
+        : createSecpKeys(isValid, privateKeys);
+  }
+
+  protected String[] createBlsKeys(boolean isValid, final String... privateKeys) {
     return Stream.of(privateKeys)
         .map(
             privateKey -> {
               final BLSKeyPair keyPair =
                   new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey)));
-              final Path keyConfigFile = configFileName(keyPair.getPublicKey());
+              final Path keyConfigFile = blsConfigFileName(keyPair.getPublicKey());
               if (isValid) {
                 metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKey);
               } else {
-                try {
-                  Files.createFile(keyConfigFile);
-                } catch (final IOException e) {
-                  throw new UncheckedIOException(e);
-                }
+                createInvalidFile(keyConfigFile);
               }
               return keyPair.getPublicKey().toString();
             })
         .toArray(String[]::new);
   }
 
-  private Path configFileName(final BLSPublicKey publicKey) {
-    final String configFilename2 = publicKey.toString().substring(2);
-    return testDirectory.resolve(configFilename2 + ".yaml");
+  protected String[] createSecpKeys(boolean isValid, final String... privateKeys) {
+    return Stream.of(privateKeys)
+        .map(
+            privateKey -> {
+              final ECKeyPair ecKeyPair =
+                  ECKeyPair.create(Numeric.toBigInt(Bytes.fromHexString(privateKey).toArray()));
+              final String publicKey = Numeric.toHexStringWithPrefix(ecKeyPair.getPublicKey());
+              if (isValid) {
+                createSecpKey(privateKey);
+              } else {
+                final Path keyConfigFile = testDirectory.resolve(publicKey + ".toml");
+                createInvalidFile(keyConfigFile);
+              }
+              return publicKey;
+            })
+        .toArray(String[]::new);
+  }
+
+  private void createInvalidFile(final Path keyConfigFile) {
+    try {
+      Files.createFile(keyConfigFile);
+    } catch (final IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private void createSecpKey(final String blsPrivateKey) {
+    final Bytes privateKey = Bytes.fromHexString(blsPrivateKey);
+    final ECKeyPair ecKeyPair = ECKeyPair.create(Numeric.toBigInt(privateKey.toArray()));
+    final String publicKey = Numeric.toHexStringNoPrefix(ecKeyPair.getPublicKey());
+    final Path password = testDirectory.resolve(publicKey + ".password");
+
+    final String walletFile;
+    try {
+      walletFile = WalletUtils.generateWalletFile("pass", ecKeyPair, testDirectory.toFile(), false);
+      Files.writeString(password, "pass");
+    } catch (Exception e) {
+      throw new IllegalStateException("Unable to create wallet file", e);
+    }
+
+    createFileBasedTomlFileAt(
+        testDirectory.resolve(
+            "arbitrary_prefix" + Numeric.toHexStringWithPrefix(ecKeyPair.getPublicKey()) + ".toml"),
+        walletFile,
+        password.toString());
+  }
+
+  private Path blsConfigFileName(final BLSPublicKey publicKey) {
+    final String configFilename = publicKey.toString().substring(2);
+    return testDirectory.resolve(configFilename + ".yaml");
   }
 
   protected void initAndStartSigner() {
@@ -82,26 +148,26 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected Response callApiPublicKeys() {
+  protected Response callApiPublicKeys(final String keyType) {
     return given()
         .filter(getOpenApiValidationFilter())
         .baseUri(signer.getUrl())
-        .get(SIGNER_PUBLIC_KEYS_PATH);
+        .get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
   }
 
-  protected Response callApiPublicKeysWithoutOpenApiClientSideFilter() {
-    return given().baseUri(signer.getUrl()).accept("").get(SIGNER_PUBLIC_KEYS_PATH);
+  protected Response callApiPublicKeysWithoutOpenApiClientSideFilter(final String keyType) {
+    return given().baseUri(signer.getUrl()).accept("").get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
   }
 
   protected void validateApiResponse(final Response response, final Matcher<?> matcher) {
     response.then().statusCode(200).contentType(ContentType.JSON).body("", matcher);
   }
 
-  protected Response callRpcPublicKeys() {
-    return given()
-        .baseUri(signer.getUrl())
-        .body("{\"jsonrpc\":\"2.0\",\"method\":\"public_keys\",\"params\":[],\"id\":1}")
-        .post(JSON_RPC_PATH);
+  protected Response callRpcPublicKeys(final String keyType) {
+    final JsonNode params = JsonNodeFactory.instance.objectNode().put("keyType", keyType);
+    final ValueNode id = JsonNodeFactory.instance.numberNode(1);
+    final Request request = new Request("2.0", "public_keys", params, id);
+    return given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);
   }
 
   protected void validateRpcResponse(final Response response, final Matcher<?> resultMatcher) {

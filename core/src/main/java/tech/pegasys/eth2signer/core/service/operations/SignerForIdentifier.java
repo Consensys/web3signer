@@ -13,8 +13,8 @@
 package tech.pegasys.eth2signer.core.service.operations;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
-import tech.pegasys.eth2signer.core.signing.ArtifactSignatureType;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.util.Optional;
 
@@ -27,12 +27,12 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
   private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
   private final SignatureFormatter<T> signatureFormatter;
-  private final ArtifactSignatureType type;
+  private final KeyType type;
 
   public SignerForIdentifier(
       final ArtifactSignerProvider signerProvider,
       final SignatureFormatter<T> signatureFormatter,
-      final ArtifactSignatureType type) {
+      final KeyType type) {
     this.signerProvider = signerProvider;
     this.signatureFormatter = signatureFormatter;
     this.type = type;

@@ -17,6 +17,7 @@ import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.SignerNotFoundExc
 import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.service.operations.Upcheck;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,8 +44,8 @@ public class SigningService {
   }
 
   @JsonRpcMethod("public_keys")
-  public String[] publicKeys() {
-    return publicKeys.list().toArray(String[]::new);
+  public String[] publicKeys(@JsonRpcParam("keyType") final KeyType keyType) {
+    return publicKeys.list(keyType).toArray(String[]::new);
   }
 
   @JsonRpcMethod("sign")

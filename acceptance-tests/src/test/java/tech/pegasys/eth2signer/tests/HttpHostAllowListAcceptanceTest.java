@@ -23,7 +23,7 @@ import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
 public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
-  private static final String PUBLIC_KEYS_ENDPOINT = "/signer/publicKeys";
+  private static final String UPCHECK_ENDPOINT = "/upcheck";
 
   @Test
   void httpEndpointWithDefaultAllowHostsRespondsWithOkResponse() {
@@ -34,7 +34,7 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
         .when()
-        .get(PUBLIC_KEYS_ENDPOINT)
+        .get(UPCHECK_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(200);
@@ -53,7 +53,7 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .when()
         .header("Host", "foo")
-        .get(PUBLIC_KEYS_ENDPOINT)
+        .get(UPCHECK_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(200);
@@ -72,7 +72,7 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .when()
         .header("Host", "bar")
-        .get(PUBLIC_KEYS_ENDPOINT)
+        .get(UPCHECK_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(403);
