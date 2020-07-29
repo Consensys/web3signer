@@ -40,8 +40,8 @@ public class GetPublicKeysHandler implements Handler<RoutingContext> {
       keyType = KeyType.valueOf(params.pathParameter("keyType").getString());
     } catch (final IllegalArgumentException e) {
       context.fail(400);
-    return;
-  }
+      return;
+    }
 
     final List<String> keys = publicKeys.list(keyType);
     context.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(new JsonArray(keys).encode());

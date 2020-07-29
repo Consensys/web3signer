@@ -67,7 +67,7 @@ paths:
       parameters:
         - name: 'keyType'
           in: 'path'
-          required: false
+          required: true
           description: 'Key for which data to sign'
           schema:
             type: string
