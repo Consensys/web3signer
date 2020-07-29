@@ -44,8 +44,8 @@ public class SigningService {
   }
 
   @JsonRpcMethod("public_keys")
-  public String[] publicKeys(@JsonRpcParam("keyType") final String keyType) {
-    return publicKeys.list(KeyType.valueOf(keyType)).toArray(String[]::new);
+  public String[] publicKeys(@JsonRpcParam("keyType") final KeyType keyType) {
+    return publicKeys.list(keyType).toArray(String[]::new);
   }
 
   @JsonRpcMethod("sign")
