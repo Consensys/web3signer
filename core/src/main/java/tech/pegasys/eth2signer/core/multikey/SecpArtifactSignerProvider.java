@@ -15,27 +15,35 @@ package tech.pegasys.eth2signer.core.multikey;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSigner;
-import tech.pegasys.signers.secp256k1.api.TransactionSigner;
-import tech.pegasys.signers.secp256k1.multikey.MultiKeyTransactionSignerProvider;
+import tech.pegasys.signers.secp256k1.PublicKeyImpl;
+import tech.pegasys.signers.secp256k1.api.PublicKey;
+import tech.pegasys.signers.secp256k1.api.Signer;
+import tech.pegasys.signers.secp256k1.multikey.MultiKeySignerProvider;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class SecpArtifactSignerProvider implements ArtifactSignerProvider {
-  final MultiKeyTransactionSignerProvider secp256k1Signer;
+  final MultiKeySignerProvider secp256k1Signer;
 
-  public SecpArtifactSignerProvider(final MultiKeyTransactionSignerProvider secp256k1Signer) {
+  public SecpArtifactSignerProvider(final MultiKeySignerProvider secp256k1Signer) {
     this.secp256k1Signer = secp256k1Signer;
   }
 
   @Override
   public Optional<ArtifactSigner> getSigner(final String identifier) {
-    final Optional<TransactionSigner> signer = secp256k1Signer.getSigner(identifier);
+    final PublicKey publicKey = new PublicKeyImpl(Bytes.fromHexString(identifier));
+    final Optional<Signer> signer = secp256k1Signer.getSigner(publicKey);
     return signer.map(SecpArtifactSigner::new);
   }
 
   @Override
   public Set<String> availableIdentifiers() {
-    return secp256k1Signer.availableAddresses();
+    return secp256k1Signer.availablePublicKeys().stream()
+        .map(Object::toString)
+        .collect(Collectors.toSet());
   }
 }
