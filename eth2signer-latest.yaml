@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Eth2Signer'
   description: 'Sign Eth2 Artifacts'
-  version: '0.1.1-dev-a7835974'
+  version: '0.1.1-dev-7f2a2531'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -57,13 +57,23 @@ paths:
         '500':
           description: 'Internal Eth2Signer server error'
 
-  /signer/publicKeys:
+  /signer/publicKeys/{keyType}:
     get:
       tags:
         - 'Public Key'
       summary: 'List of available Public Keys'
       description: 'Returns the public keys for the private keys that have been loaded into Eth2Signer'
       operationId: 'getPublicKeys'
+      parameters:
+        - name: 'keyType'
+          in: 'path'
+          required: true
+          description: 'Type of public keys to return'
+          schema:
+            type: string
+            enum:
+              - BLS
+              - SECP256K1
       responses:
         '200':
           description: 'list of public keys'
@@ -73,8 +83,11 @@ paths:
                 type: array
                 items:
                   type: string
+        '400':
+          description: 'Bad request format'
         '500':
           description: 'Internal Eth2Signer server error'
+
   /upcheck:
     get:
       tags:
