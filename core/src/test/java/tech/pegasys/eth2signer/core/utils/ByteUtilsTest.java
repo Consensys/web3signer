@@ -14,6 +14,8 @@ package tech.pegasys.eth2signer.core.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.eth2signer.core.util.ByteUtils;
+
 import java.math.BigInteger;
 
 import org.bouncycastle.util.encoders.Hex;
