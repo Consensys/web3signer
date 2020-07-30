@@ -16,7 +16,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.AzureSigningMetadata;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
@@ -106,8 +105,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createAzureYamlFileAt(
-        keyConfigFile,
-        new AzureSigningMetadata(clientId, clientSecret, tenantId, keyVaultName, secretName));
+        keyConfigFile, clientId, clientSecret, tenantId, keyVaultName, secretName);
 
     signAndVerifySignature();
   }
