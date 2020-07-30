@@ -107,6 +107,29 @@ public class MetadataFileHelpers {
     }
   }
 
+  public void createAzureYamlFileAt(
+      final Path metadataFilePath,
+      final String clientId,
+      final String clientSecret,
+      final String tenantId,
+      final String keyVaultName,
+      final String secretName) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+
+      signingMetadata.put("type", "azure");
+      signingMetadata.put("clientId", clientId);
+      signingMetadata.put("clientSecret", clientSecret);
+      signingMetadata.put("tenantId", tenantId);
+      signingMetadata.put("vaultName", keyVaultName);
+      signingMetadata.put("secretName", secretName);
+
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to construct azure yaml file", e);
+    }
+  }
+
   private void createPasswordFile(final Path passwordFilePath, final String password) {
     try {
       Files.writeString(passwordFilePath, password);

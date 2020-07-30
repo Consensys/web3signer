@@ -18,6 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
@@ -81,6 +82,12 @@ public class ArtifactSignerFactory {
     }
   }
 
+  public ArtifactSigner create(final AzureSigningMetadata azureSigningMetadata) {
+    try (TimingContext ignored = privateKeyRetrievalTimer.labels("azure").startTimer()) {
+      return createAzureArtifact(azureSigningMetadata);
+    }
+  }
+
   private ArtifactSigner createKeystoreArtifact(final FileKeyStoreMetadata fileKeyStoreMetadata) {
     final Path keystoreFile = makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystoreFile());
     final Path keystorePasswordFile =
@@ -132,6 +139,30 @@ public class ArtifactSignerFactory {
       return new BlsArtifactSigner(keyPair);
     } catch (Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
+    }
+  }
+
+  private ArtifactSigner createAzureArtifact(final AzureSigningMetadata metadata) {
+
+    try {
+      final AzureKeyVault azureVault =
+          new AzureKeyVault(
+              metadata.getClientId(),
+              metadata.getClientSecret(),
+              metadata.getTenantId(),
+              metadata.getVaultName());
+
+      final Optional<String> secret = azureVault.fetchSecret(metadata.getSecretName());
+      if (secret.isEmpty()) {
+        throw new SigningMetadataException(
+            "secret '" + metadata.getSecretName() + "' doesn't exist");
+      }
+      final BLSKeyPair keyPair =
+          new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(secret.get())));
+      return new BlsArtifactSigner(keyPair);
+    } catch (final RuntimeException e) {
+      throw new SigningMetadataException(
+          "Failed to fetch secret from azure vault: " + e.getMessage(), e);
     }
   }
 

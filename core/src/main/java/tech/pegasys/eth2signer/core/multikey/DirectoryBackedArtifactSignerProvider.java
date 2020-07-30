@@ -151,7 +151,7 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
       for (final Path file : directoryStream) {
         try {
           signers.add(mapper.apply(file));
-        } catch (Exception e) {
+        } catch (final Exception e) {
           renderException(e, file.getFileName().toString());
         }
       }
