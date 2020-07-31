@@ -32,11 +32,16 @@ class FilecoinAddressTest {
       "86b454258c589475f7d16f5aac018a79f6c1169d20fc33921dd8b5ce1cac6c348f90a3603624f6aeb91b64518c2e8095";
   private static final String BLS_PRIVATE_KEY5 =
       "a7726b038022f75a384617585360cee629070a2d9d28712965e5f26ecc40858382803724ed34f2720336f09db631f074";
-  private static final String BLS_ADDRESS_1 = "f3vvmn62lofvhjd2ugzca6sof2j2ubwok6cj4xxbfzz4yuxfkgobpihhd2thlanmsh3w2ptld2gqkn2jvlss4a";
-  private static final String BLS_ADDRESS_2 = "f3wmuu6crofhqmm3v4enos73okk2l366ck6yc4owxwbdtkmpk42ohkqxfitcpa57pjdcftql4tojda2poeruwa";
-  private static final String BLS_ADDRESS_3 = "f3s2q2hzhkpiknjgmf4zq3ejab2rh62qbndueslmsdzervrhapxr7dftie4kpnpdiv2n6tvkr743ndhrsw6d3a";
-  private static final String BLS_ADDRESS_4 = "f3q22fijmmlckhl56rn5nkyamkph3mcfu5ed6dheq53c244hfmnq2i7efdma3cj5voxenwiummf2ajlsbxc65a";
-  private static final String BLS_ADDRESS_5 = "f3u5zgwa4ael3vuocgc5mfgygo4yuqocrntuuhcklf4xzg5tcaqwbyfabxetwtj4tsam3pbhnwghyhijr5mixa";
+  private static final String BLS_ADDRESS_1 =
+      "f3vvmn62lofvhjd2ugzca6sof2j2ubwok6cj4xxbfzz4yuxfkgobpihhd2thlanmsh3w2ptld2gqkn2jvlss4a";
+  private static final String BLS_ADDRESS_2 =
+      "f3wmuu6crofhqmm3v4enos73okk2l366ck6yc4owxwbdtkmpk42ohkqxfitcpa57pjdcftql4tojda2poeruwa";
+  private static final String BLS_ADDRESS_3 =
+      "f3s2q2hzhkpiknjgmf4zq3ejab2rh62qbndueslmsdzervrhapxr7dftie4kpnpdiv2n6tvkr743ndhrsw6d3a";
+  private static final String BLS_ADDRESS_4 =
+      "f3q22fijmmlckhl56rn5nkyamkph3mcfu5ed6dheq53c244hfmnq2i7efdma3cj5voxenwiummf2ajlsbxc65a";
+  private static final String BLS_ADDRESS_5 =
+      "f3u5zgwa4ael3vuocgc5mfgygo4yuqocrntuuhcklf4xzg5tcaqwbyfabxetwtj4tsam3pbhnwghyhijr5mixa";
   private static final String SECP_KEY_1 =
       "047687b910379bf28cbe3aea674b12000c6b7dba46ffc05f6c94fe2a22bbcc2602ff7f5c76f21ca55d36959152b0e1e887917c393576eef093f61ebd3ad06f7fda";
   private static final String SECP_ADDRESS_1 = "f12fiakbhe2gwd5cnmrenekasyn6v5tnaxaqizq6a";
