@@ -28,5 +28,5 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 })
 public interface SigningMetadata {
 
-  ArtifactSigner createSigner(ArtifactSignerFactory factory);
+  ArtifactSigner createSigner(ArtifactSignerFactory artifactSignerFactory);
 }

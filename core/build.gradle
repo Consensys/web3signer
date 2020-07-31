@@ -25,6 +25,7 @@ dependencies {
 
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'org.web3j:core'
 
 
 

@@ -225,8 +225,9 @@ class YamlSignerParserTest {
   }
 
   private FileRawSigningMetadata hasPrivateKey(final String privateKey) {
-    final BLSSecretKey blsSecretKey = BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey));
-    return argThat((FileRawSigningMetadata m) -> m.getSecretKey().equals(blsSecretKey));
+    return argThat(
+        (FileRawSigningMetadata m) ->
+            m.getPrivateKeyBytes().equals(Bytes.fromHexString(privateKey)));
   }
 
   @Test

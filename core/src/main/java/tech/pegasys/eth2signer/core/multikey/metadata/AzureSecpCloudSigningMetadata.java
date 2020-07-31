@@ -13,25 +13,24 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.signers.secp256k1.azure.AzureConfig;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
-public class FileRawSigningMetadata implements SigningMetadata {
+public class AzureSecpCloudSigningMetadata implements SigningMetadata {
 
-  private final Bytes privateKey;
+  @JsonUnwrapped final AzureConfig config;
 
-  public FileRawSigningMetadata(
-      @JsonProperty(value = "privateKey", required = true) Bytes privateKey) {
-    this.privateKey = privateKey;
+  public AzureSecpCloudSigningMetadata(final AzureConfig config) {
+    this.config = config;
+  }
+
+  public AzureConfig getConfig() {
+    return config;
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory artifactSignerFactory) {
+  public ArtifactSigner createSigner(ArtifactSignerFactory artifactSignerFactory) {
     return artifactSignerFactory.create(this);
-  }
-
-  public Bytes getPrivateKeyBytes() {
-    return privateKey;
   }
 }

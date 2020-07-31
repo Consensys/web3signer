@@ -25,6 +25,7 @@ import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SecpArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
@@ -235,7 +236,7 @@ public class Runner implements Runnable {
   private DirectoryBackedArtifactSignerProvider createSignerProvider(
       final MetricsSystem metricsSystem, final Vertx vertx) {
     final ArtifactSignerFactory artifactSignerFactory =
-        new ArtifactSignerFactory(
+        new BlsArtifactSignerFactory(
             config.getKeyConfigPath(), metricsSystem, new HashicorpConnectionFactory(vertx));
     return new DirectoryBackedArtifactSignerProvider(
         config.getKeyConfigPath(),
