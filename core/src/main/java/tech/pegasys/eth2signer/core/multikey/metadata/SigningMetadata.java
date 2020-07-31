@@ -24,7 +24,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
   @Type(value = FileRawSigningMetadata.class, name = "file-raw"),
   @Type(value = FileKeyStoreMetadata.class, name = "file-keystore"),
   @Type(value = HashicorpSigningMetadata.class, name = "hashicorp"),
-  @Type(value = AzureSigningMetadata.class, name = "azure")
+  @Type(value = AzureSigningMetadata.class, name = "azure"),
+  @Type(value = AzureSecpCloudSigningMetadata.class, name = "azure-cloud")
 })
 public interface SigningMetadata {
 
