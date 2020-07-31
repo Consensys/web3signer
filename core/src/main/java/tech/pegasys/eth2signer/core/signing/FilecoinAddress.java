@@ -23,7 +23,6 @@ import tech.pegasys.eth2signer.core.util.Blake2b;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.io.Base32;
-import org.jetbrains.annotations.NotNull;
 
 public class FilecoinAddress {
   private static final String MAINNET_PREFIX = "f";
@@ -68,17 +67,12 @@ public class FilecoinAddress {
     this.payload = payload;
   }
 
-  // TODO add decode
-  // TODO cbor, json encodings as well?
-
   @Override
   public String toString() {
-    final Bytes checkSum = Blake2b.sum32(concatenate(Bytes.of(getProtocol()), payload));
-    // TODO allow network to be specified
-    return getNetwork() + getProtocol() + base32(concatenate(payload, checkSum)).toLowerCase();
+    final Bytes checksum = Blake2b.sum32(concatenate(Bytes.of(getProtocol()), payload));
+    return getNetwork() + getProtocol() + base32(concatenate(payload, checksum)).toLowerCase();
   }
 
-  @NotNull
   private String getNetwork() {
     return network == MAINNET ? MAINNET_PREFIX : TESTNET_PREFIX;
   }
