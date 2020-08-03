@@ -18,26 +18,26 @@ public interface ArtifactSignerFactory {
 
   default ArtifactSigner create(FileRawSigningMetadata fileRawSigningMetadata) {
     throw new UnsupportedOperationException(
-        "Unable to generate a signer of requested type from supplied metdata");
+        "Unable to generate a signer of requested type from supplied metadata");
   }
 
   default ArtifactSigner create(FileKeyStoreMetadata fileKeyStoreMetadata) {
     throw new UnsupportedOperationException(
-        "Unable to generate a signer of requested type from supplied metdata");
+        "Unable to generate a signer of requested type from supplied metadata");
   }
 
   default ArtifactSigner create(HashicorpSigningMetadata hashicorpMetadata) {
     throw new UnsupportedOperationException(
-        "Unable to generate a signer of requested type from supplied metdata");
+        "Unable to generate a signer of requested type from supplied metadata");
   }
 
   default ArtifactSigner create(AzureSigningMetadata azureSigningMetadata) {
     throw new UnsupportedOperationException(
-        "Unable to generate a signer of requested type from supplied metdata");
+        "Unable to generate a signer of requested type from supplied metadata");
   }
 
   default ArtifactSigner create(AzureSecpCloudSigningMetadata azureSigningMetadata) {
     throw new UnsupportedOperationException(
-        "Unable to generate a signer of requested type from supplied metdata");
+        "Unable to generate a signer of requested type from supplied metadata");
   }
 }

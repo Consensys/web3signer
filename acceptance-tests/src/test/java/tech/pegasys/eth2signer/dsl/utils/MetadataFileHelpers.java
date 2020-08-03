@@ -40,6 +40,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.tuweni.bytes.Bytes;
 
 public class MetadataFileHelpers {
+
   private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   private static final Bytes SALT =
       Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");
@@ -139,6 +140,25 @@ public class MetadataFileHelpers {
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {
       throw new RuntimeException("Unable to construct azure yaml file", e);
+    }
+  }
+
+  public void createAzureCloudSigningYamlFileAt(
+      final Path metadataFilePath,
+      final String clientId,
+      final String clientSecret,
+      final String keyVaultName) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+      signingMetadata.put("type", "azure-cloud");
+      signingMetadata.put("key-vault-name", keyVaultName);
+      signingMetadata.put("key-name", "TestKey");
+      signingMetadata.put("key-version", "7c01fe58d68148bba5824ce418241092");
+      signingMetadata.put("client-id", clientId);
+      signingMetadata.put("client-secret", clientSecret);
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to construct hashicorp yaml file", e);
     }
   }
 

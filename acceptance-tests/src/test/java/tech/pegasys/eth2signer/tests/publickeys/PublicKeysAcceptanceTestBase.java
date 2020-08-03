@@ -55,7 +55,7 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
   private static final String SECP_PRIVATE_KEY_2 =
       "2e322a5f72c525422dc275e006d5cb3954ca5e02e9610fae0ed4cc389f622f33";
 
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
   @TempDir Path testDirectory;
 
@@ -115,9 +115,9 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
     }
   }
 
-  private void createSecpKey(final String blsPrivateKey) {
+  private void createSecpKey(final String privateKeyHexString) {
     final String password = "pass";
-    final Bytes privateKey = Bytes.fromHexString(blsPrivateKey);
+    final Bytes privateKey = Bytes.fromHexString(privateKeyHexString);
     final ECKeyPair ecKeyPair = ECKeyPair.create(Numeric.toBigInt(privateKey.toArray()));
     final String publicKey = Numeric.toHexStringNoPrefix(ecKeyPair.getPublicKey());
 

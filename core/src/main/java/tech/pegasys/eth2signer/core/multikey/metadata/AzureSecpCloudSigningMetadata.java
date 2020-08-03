@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.signers.secp256k1.azure.AzureConfig;
 
@@ -21,6 +22,7 @@ public class AzureSecpCloudSigningMetadata implements SigningMetadata {
 
   @JsonUnwrapped final AzureConfig config;
 
+  @JsonCreator
   public AzureSecpCloudSigningMetadata(final AzureConfig config) {
     this.config = config;
   }
