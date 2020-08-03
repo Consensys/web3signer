@@ -147,7 +147,8 @@ public class MetadataFileHelpers {
       final Path metadataFilePath,
       final String clientId,
       final String clientSecret,
-      final String keyVaultName) {
+      final String keyVaultName,
+      final String tenantId) {
     try {
       final Map<String, String> signingMetadata = new HashMap<>();
       signingMetadata.put("type", "azure-cloud");
@@ -156,6 +157,7 @@ public class MetadataFileHelpers {
       signingMetadata.put("key-version", "7c01fe58d68148bba5824ce418241092");
       signingMetadata.put("client-id", clientId);
       signingMetadata.put("client-secret", clientSecret);
+      signingMetadata.put("tenant-id", tenantId);
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {
       throw new RuntimeException("Unable to construct hashicorp yaml file", e);

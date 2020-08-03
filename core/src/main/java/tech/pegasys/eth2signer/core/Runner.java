@@ -37,7 +37,6 @@ import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.eth2signer.core.utils.ByteUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
-import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultAuthenticator;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.io.File;
@@ -125,8 +124,7 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final AzureKeyVaultSignerFactory azureFactory =
-          new AzureKeyVaultSignerFactory(new AzureKeyVaultAuthenticator());
+      final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
 
       final ArtifactSignerProviderFactory factory =
           new ArtifactSignerProviderFactory(metricsSystem, vertx, azureFactory);

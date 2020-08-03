@@ -52,17 +52,20 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @EnabledIfEnvironmentVariables({
     @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
     @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
+      @EnabledIfEnvironmentVariable(named = "AZURE_KEY_TENANT_ID", matches = ".*")
   })
   public void signDataWithKeyInAzure(@TempDir Path tomlDirectory) {
     final String clientId = System.getenv("AZURE_CLIENT_ID");
     final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
     final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
-    createAzureTomlFileAt(
-        tomlDirectory.resolve("arbitrary_prefix" + PUBLIC_KEY_HEX_STRING + ".toml"),
+    final String tenantId = System.getenv("AZURE_TENANT_ID");
+    metadataFileHelpers.createAzureCloudSigningYamlFileAt(
+        tomlDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
         clientId,
         clientSecret,
-        keyVaultName);
+        keyVaultName,
+        tenantId);
 
     signAndVerifySignature();
   }
