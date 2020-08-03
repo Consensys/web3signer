@@ -14,7 +14,6 @@ package tech.pegasys.eth2signer.tests.publickeys;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
-import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createFileBasedTomlFileAt;
 
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
@@ -100,7 +99,7 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
               if (isValid) {
                 createSecpKey(privateKey);
               } else {
-                final Path keyConfigFile = testDirectory.resolve(publicKey + ".toml");
+                final Path keyConfigFile = testDirectory.resolve(publicKey + ".yaml");
                 createInvalidFile(keyConfigFile);
               }
               return publicKey;
@@ -117,24 +116,21 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   private void createSecpKey(final String blsPrivateKey) {
+    final String password = "pass";
     final Bytes privateKey = Bytes.fromHexString(blsPrivateKey);
     final ECKeyPair ecKeyPair = ECKeyPair.create(Numeric.toBigInt(privateKey.toArray()));
     final String publicKey = Numeric.toHexStringNoPrefix(ecKeyPair.getPublicKey());
-    final Path password = testDirectory.resolve(publicKey + ".password");
 
     final String walletFile;
     try {
-      walletFile = WalletUtils.generateWalletFile("pass", ecKeyPair, testDirectory.toFile(), false);
-      Files.writeString(password, "pass");
+      walletFile =
+          WalletUtils.generateWalletFile(password, ecKeyPair, testDirectory.toFile(), false);
     } catch (Exception e) {
       throw new IllegalStateException("Unable to create wallet file", e);
     }
 
-    createFileBasedTomlFileAt(
-        testDirectory.resolve(
-            "arbitrary_prefix" + Numeric.toHexStringWithPrefix(ecKeyPair.getPublicKey()) + ".toml"),
-        walletFile,
-        password.toString());
+    metadataFileHelpers.createKeyStoreYamlFileAt(
+        testDirectory.resolve(publicKey + ".yaml"), Path.of(walletFile), password);
   }
 
   private Path blsConfigFileName(final BLSPublicKey publicKey) {

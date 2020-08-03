@@ -77,17 +77,16 @@ public class MetadataFileHelpers {
     createYamlFile(metadataFilePath, signingMetadata);
   }
 
-  public void createKeyStoreYamlFileAt(final Path metadataFilePath, final Path keystorePath, final String password) {
+  public void createKeyStoreYamlFileAt(
+      final Path metadataFilePath, final Path keystorePath, final String password) {
     final Path passwordFile = metadataFilePath.getParent().resolve("password");
     createPasswordFile(passwordFile, password);
-
 
     final Map<String, String> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "file-keystore");
     signingMetadata.put("keystoreFile", keystorePath.toString());
     signingMetadata.put("keystorePasswordFile", passwordFile.toString());
     createYamlFile(metadataFilePath, signingMetadata);
-
   }
 
   public void createHashicorpYamlFileAt(

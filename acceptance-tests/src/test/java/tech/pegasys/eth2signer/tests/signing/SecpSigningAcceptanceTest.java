@@ -18,17 +18,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.crypto.Sign.publicKeyFromPrivate;
 import static org.web3j.crypto.Sign.signedMessageToKey;
 import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createAzureTomlFileAt;
-import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createFileBasedTomlFileAt;
 
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SignatureException;
 
@@ -53,9 +50,9 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @Test
   @EnabledIfEnvironmentVariables({
-      @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
-      @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
-      @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*")
   })
   public void signDataWithKeyInAzure(@TempDir Path tomlDirectory) {
     final String clientId = System.getenv("AZURE_CLIENT_ID");
@@ -71,18 +68,15 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  public void signDataWithFileBasedKey(@TempDir Path keyConfigDirectory)
-      throws URISyntaxException {
+  public void signDataWithFileBasedKey(@TempDir Path keyConfigDirectory) throws URISyntaxException {
     final String keyPath =
         new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
 
-    //final Path passwordPath = keyConfigDirectory.resolve("password");
-    //Files.write(passwordPath, "pass".getBytes(UTF_8));
+    // final Path passwordPath = keyConfigDirectory.resolve("password");
+    // Files.write(passwordPath, "pass".getBytes(UTF_8));
 
-    metadataFileHelpers
-        .createKeyStoreYamlFileAt(keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
-            Path.of(keyPath),
-            "pass");
+    metadataFileHelpers.createKeyStoreYamlFileAt(
+        keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"), Path.of(keyPath), "pass");
 
     signAndVerifySignature();
   }
