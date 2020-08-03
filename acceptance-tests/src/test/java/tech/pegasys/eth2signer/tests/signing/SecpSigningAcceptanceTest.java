@@ -19,10 +19,10 @@ import static org.web3j.crypto.Sign.publicKeyFromPrivate;
 import static org.web3j.crypto.Sign.signedMessageToKey;
 import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createAzureTomlFileAt;
 import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createFileBasedTomlFileAt;
-import static tech.pegasys.signers.secp256k1.MultiKeyTomlFileUtil.createHashicorpTomlFileAt;
 
+import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
+import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
-import tech.pegasys.signers.secp256k1.HashicorpSigningParams;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,17 +42,20 @@ import org.junit.jupiter.api.io.TempDir;
 import org.web3j.crypto.Sign.SignatureData;
 
 public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
+
   private static final Bytes DATA = Bytes.wrap("42".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
   public static final String PUBLIC_KEY_HEX_STRING =
       "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
 
+  private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+
   @Test
   @EnabledIfEnvironmentVariables({
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*")
+      @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
+      @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
+      @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*")
   })
   public void signDataWithKeyInAzure(@TempDir Path tomlDirectory) {
     final String clientId = System.getenv("AZURE_CLIENT_ID");
@@ -68,18 +71,18 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  public void signDataWithFileBasedKey(@TempDir Path tomlDirectory)
-      throws IOException, URISyntaxException {
+  public void signDataWithFileBasedKey(@TempDir Path keyConfigDirectory)
+      throws URISyntaxException {
     final String keyPath =
         new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
 
-    final Path passwordPath = tomlDirectory.resolve("password");
-    Files.write(passwordPath, "pass".getBytes(UTF_8));
+    //final Path passwordPath = keyConfigDirectory.resolve("password");
+    //Files.write(passwordPath, "pass".getBytes(UTF_8));
 
-    createFileBasedTomlFileAt(
-        tomlDirectory.resolve("arbitrary_prefix" + PUBLIC_KEY_HEX_STRING + ".toml"),
-        keyPath,
-        passwordPath.toString());
+    metadataFileHelpers
+        .createKeyStoreYamlFileAt(keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+            Path.of(keyPath),
+            "pass");
 
     signAndVerifySignature();
   }
@@ -95,8 +98,8 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
       final HashicorpSigningParams hashicorpSigningParams =
           new HashicorpSigningParams(hashicorpNode, secretPath, secretName);
 
-      createHashicorpTomlFileAt(
-          tomlDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".toml"), hashicorpSigningParams);
+      metadataFileHelpers.createHashicorpYamlFileAt(
+          tomlDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"), hashicorpSigningParams);
 
       signAndVerifySignature();
     } finally {
