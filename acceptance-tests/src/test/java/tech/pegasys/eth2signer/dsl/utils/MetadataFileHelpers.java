@@ -58,9 +58,6 @@ public class MetadataFileHelpers {
     final Bytes privateKeyBytes = keyPair.getSecretKey().getSecretKey().toBytes();
 
     final String password = "password";
-    final Path passwordFile =
-        metadataFilePath.getParent().resolve(keyPair.getPublicKey().toString() + ".password");
-    createPasswordFile(passwordFile, password);
 
     final Path keystoreFile =
         metadataFilePath.getParent().resolve(keyPair.getPublicKey().toString() + ".json");
@@ -71,16 +68,14 @@ public class MetadataFileHelpers {
         keyPair.getPublicKey().toBytesCompressed(),
         kdfFunctionType);
 
-    final Map<String, String> signingMetadata = new HashMap<>();
-    signingMetadata.put("type", "file-keystore");
-    signingMetadata.put("keystoreFile", keystoreFile.toString());
-    signingMetadata.put("keystorePasswordFile", passwordFile.toString());
-    createYamlFile(metadataFilePath, signingMetadata);
+    createKeyStoreYamlFileAt(metadataFilePath, keystoreFile, password);
   }
 
   public void createKeyStoreYamlFileAt(
       final Path metadataFilePath, final Path keystorePath, final String password) {
-    final Path passwordFile = metadataFilePath.getParent().resolve("password");
+    final String filename = metadataFilePath.getFileName().toString();
+    final String passwordFilename = filename + ".password";
+    final Path passwordFile = metadataFilePath.getParent().resolve(passwordFilename);
     createPasswordFile(passwordFile, password);
 
     final Map<String, String> signingMetadata = new HashMap<>();

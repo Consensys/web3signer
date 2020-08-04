@@ -39,7 +39,7 @@ public class SigningMetadataModule extends SimpleModule {
     public Bytes deserialize(final JsonParser p, final DeserializationContext ctxt) {
       try {
         return Bytes.fromHexString(p.getValueAsString());
-      } catch (Exception e) {
+      } catch (final Exception e) {
         throw new SigningMetadataException("Invalid hex value for private key", e);
       }
     }

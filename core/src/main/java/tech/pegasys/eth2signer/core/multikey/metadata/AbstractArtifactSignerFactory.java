@@ -50,36 +50,25 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
             metadata.getTenantId(),
             metadata.getVaultName());
 
-    final Optional<String> secret = azureVault.fetchSecret(metadata.getSecretName());
-    if (secret.isEmpty()) {
-      throw new SigningMetadataException("secret '" + metadata.getSecretName() + "' doesn't exist");
-    }
-    return Bytes.fromHexString(secret.get());
+    return azureVault
+        .fetchSecret(metadata.getSecretName())
+        .map(Bytes::fromHexString)
+        .orElseThrow(
+            () ->
+                new SigningMetadataException(
+                    "secret '" + metadata.getSecretName() + "' doesn't exist"));
   }
 
   protected Bytes extractBytesFromVault(final HashicorpSigningMetadata metadata) {
-    TlsOptions tlsOptions = null;
-    if (metadata.getTlsEnabled()) {
-      final Path knownServerFile = metadata.getTlsKnownServerFile();
-      if (knownServerFile == null) {
-        tlsOptions = new TlsOptions(Optional.empty(), null, null); // use CA Auth
-      } else {
-        final Path configRelativeKnownServerPath = makeRelativePathAbsolute(knownServerFile);
-        if (!configRelativeKnownServerPath.toFile().exists()) {
-          throw new SigningMetadataException(
-              String.format(
-                  "Known servers file (%s) does not exist.", configRelativeKnownServerPath));
-        }
-        tlsOptions = new TlsOptions(Optional.of(TrustStoreType.WHITELIST), knownServerFile, null);
-      }
-    }
+    final Optional<TlsOptions> tlsOptions = buildTlsOptions(metadata);
+
     try {
       final HashicorpConnection connection =
           connectionFactory.create(
               new ConnectionParameters(
                   metadata.getServerHost(),
                   Optional.ofNullable(metadata.getServerPort()),
-                  Optional.ofNullable(tlsOptions),
+                  tlsOptions,
                   Optional.ofNullable(metadata.getTimeout())));
 
       final String secret =
@@ -89,9 +78,28 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
                   Optional.ofNullable(metadata.getKeyName()),
                   metadata.getToken()));
       return Bytes.fromHexString(secret);
-    } catch (Exception e) {
+    } catch (final Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
     }
+  }
+
+  private Optional<TlsOptions> buildTlsOptions(final HashicorpSigningMetadata metadata) {
+    if (metadata.getTlsEnabled()) {
+      final Path knownServerFile = metadata.getTlsKnownServerFile();
+      if (knownServerFile == null) {
+        return Optional.of(new TlsOptions(Optional.empty(), null, null)); // use CA Auth
+      } else {
+        final Path configRelativeKnownServerPath = makeRelativePathAbsolute(knownServerFile);
+        if (!configRelativeKnownServerPath.toFile().exists()) {
+          throw new SigningMetadataException(
+              String.format(
+                  "Known servers file (%s) does not exist.", configRelativeKnownServerPath));
+        }
+        return Optional.of(
+            new TlsOptions(Optional.of(TrustStoreType.WHITELIST), knownServerFile, null));
+      }
+    }
+    return Optional.empty();
   }
 
   protected String loadPassword(final Path passwordFile) {

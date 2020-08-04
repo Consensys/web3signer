@@ -101,7 +101,7 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
     @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
     @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
-      @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
   })
   public void azureKeysReturnAppropriatePublicKey() {
 

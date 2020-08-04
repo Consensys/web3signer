@@ -13,26 +13,54 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.signers.secp256k1.azure.AzureConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class AzureSecpCloudSigningMetadata implements SigningMetadata {
 
-  @JsonUnwrapped final AzureConfig config;
+  private final String clientId;
+  private final String clientSecret;
+  private final String tenantId;
+  private final String vaultName;
+  private final String keyName;
 
   @JsonCreator
-  public AzureSecpCloudSigningMetadata(final AzureConfig config) {
-    this.config = config;
+  public AzureSecpCloudSigningMetadata(
+      @JsonProperty("clientId") final String clientId,
+      @JsonProperty("clientSecret") final String clientSecret,
+      @JsonProperty("tenantId") final String tenantId,
+      @JsonProperty("vaultName") final String vaultName,
+      @JsonProperty("keyName") final String keyName) {
+    this.clientId = clientId;
+    this.clientSecret = clientSecret;
+    this.tenantId = tenantId;
+    this.vaultName = vaultName;
+    this.keyName = keyName;
   }
 
-  public AzureConfig getConfig() {
-    return config;
+  public String getClientId() {
+    return clientId;
+  }
+
+  public String getClientSecret() {
+    return clientSecret;
+  }
+
+  public String getTenantId() {
+    return tenantId;
+  }
+
+  public String getVaultName() {
+    return vaultName;
+  }
+
+  public String getKeyName() {
+    return keyName;
   }
 
   @Override
-  public ArtifactSigner createSigner(ArtifactSignerFactory artifactSignerFactory) {
+  public ArtifactSigner createSigner(final ArtifactSignerFactory artifactSignerFactory) {
     return artifactSignerFactory.create(this);
   }
 }
