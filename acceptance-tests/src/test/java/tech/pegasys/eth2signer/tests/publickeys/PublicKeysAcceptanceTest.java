@@ -113,6 +113,6 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
         tenantId);
     initAndStartSigner();
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(SECP256K1);
-    validateApiResponse(response, containsInAnyOrder(PUBLIC_KEY_HEX_STRING));
+    validateApiResponse(response, containsInAnyOrder("0x" + PUBLIC_KEY_HEX_STRING));
   }
 }
