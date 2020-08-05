@@ -16,7 +16,6 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureConfig;
-import tech.pegasys.signers.secp256k1.azure.AzureConfig.AzureConfigBuilder;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.signers.secp256k1.filebased.CredentialSigner;
 
@@ -78,13 +77,13 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   @Override
   public ArtifactSigner create(final AzureSecpCloudSigningMetadata azureSigningMetadata) {
     final AzureConfig config =
-        new AzureConfigBuilder()
-            .withTenantId(azureSigningMetadata.getTenantId())
-            .withClientId(azureSigningMetadata.getClientId())
-            .withClientSecret(azureSigningMetadata.getClientSecret())
-            .withKeyName(azureSigningMetadata.getKeyName())
-            .withKeyVaultName(azureSigningMetadata.getVaultName())
-            .build();
+        new AzureConfig(
+            azureSigningMetadata.getVaultName(),
+            azureSigningMetadata.getKeyName(),
+            "",
+            azureSigningMetadata.getClientId(),
+            azureSigningMetadata.getClientSecret(),
+            azureSigningMetadata.getTenantId());
 
     return new SecpArtifactSigner(azureCloudSignerFactory.createSigner(config));
   }

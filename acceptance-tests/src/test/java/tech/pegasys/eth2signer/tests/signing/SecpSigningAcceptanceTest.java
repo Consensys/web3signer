@@ -81,7 +81,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  public void signDataWithKeyFromHashicorp(@TempDir Path tomlDirectory) {
+  public void signDataWithKeyFromHashicorp(@TempDir Path keyConfigDirectory) {
     final HashicorpNode hashicorpNode = HashicorpNode.createAndStartHashicorp(true);
     try {
       final String secretPath = "acceptanceTestSecretPath";
@@ -92,12 +92,35 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
           new HashicorpSigningParams(hashicorpNode, secretPath, secretName);
 
       metadataFileHelpers.createHashicorpYamlFileAt(
-          tomlDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"), hashicorpSigningParams);
+          keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"), hashicorpSigningParams);
 
       signAndVerifySignature();
     } finally {
       hashicorpNode.shutdown();
     }
+  }
+
+  @Test
+  @EnabledIfEnvironmentVariables({
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
+  })
+  public void signDatWithKeyFromAzure(@TempDir Path keyConfigDirectory) {
+    final String clientId = System.getenv("AZURE_CLIENT_ID");
+    final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
+    final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
+    final String tenantId = System.getenv("AZURE_TENANT_ID");
+
+    metadataFileHelpers.createAzureCloudSigningYamlFileAt(
+        keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+        clientId,
+        clientSecret,
+        keyVaultName,
+        tenantId);
+
+    signAndVerifySignature();
   }
 
   private void signAndVerifySignature() {

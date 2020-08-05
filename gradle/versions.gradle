@@ -90,5 +90,9 @@ dependencyManagement {
     dependency 'org.web3j:core:4.5.14'
 
     dependency 'com.github.arteam:simple-json-rpc-server:1.2'
+
+    dependency 'com.azure:azure-security-keyvault-secrets:4.1.5'
+    dependency 'com.azure:azure-security-keyvault-keys:4.1.5'
+    dependency 'com.azure:azure-identity:1.0.9'
   }
 }

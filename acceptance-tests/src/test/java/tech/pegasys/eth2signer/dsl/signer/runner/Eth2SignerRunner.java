@@ -120,6 +120,7 @@ public abstract class Eth2SignerRunner {
       params.add("--data-path");
       params.add(dataPath.toAbsolutePath().toString());
     }
+    params.add("--key-cache-limit=0");
 
     params.addAll(createServerTlsArgs());
 
