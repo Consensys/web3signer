@@ -39,6 +39,11 @@ import org.web3j.crypto.Sign.SignatureData;
 
 public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
+  private static final String clientId = System.getenv("AZURE_CLIENT_ID");
+  private static final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
+  private static final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
+  private static final String tenantId = System.getenv("AZURE_TENANT_ID");
+
   private static final Bytes DATA = Bytes.wrap("42".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
@@ -55,10 +60,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_KEY_TENANT_ID", matches = ".*")
   })
   public void signDataWithKeyInAzure(@TempDir Path tomlDirectory) {
-    final String clientId = System.getenv("AZURE_CLIENT_ID");
-    final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
-    final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
-    final String tenantId = System.getenv("AZURE_TENANT_ID");
+
     metadataFileHelpers.createAzureCloudSigningYamlFileAt(
         tomlDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
         clientId,
@@ -108,11 +110,6 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
   })
   public void signDatWithKeyFromAzure(@TempDir Path keyConfigDirectory) {
-    final String clientId = System.getenv("AZURE_CLIENT_ID");
-    final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
-    final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
-    final String tenantId = System.getenv("AZURE_TENANT_ID");
-
     metadataFileHelpers.createAzureCloudSigningYamlFileAt(
         keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
         clientId,

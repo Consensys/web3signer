@@ -46,10 +46,6 @@ dependencies {
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-impl'
 
-  implementation 'com.azure:azure-security-keyvault-secrets'
-  implementation 'com.azure:azure-security-keyvault-keys'
-  implementation 'com.azure:azure-identity'
-
   implementation 'com.github.arteam:simple-json-rpc-server'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'

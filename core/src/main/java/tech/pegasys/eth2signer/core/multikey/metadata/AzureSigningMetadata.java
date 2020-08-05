@@ -60,7 +60,7 @@ public class AzureSigningMetadata implements SigningMetadata {
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory artifactSignerFactory) {
-    return artifactSignerFactory.create(this);
+  public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
+    return factory.create(this);
   }
 }

@@ -40,7 +40,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.tuweni.bytes.Bytes;
 
 public class MetadataFileHelpers {
-
   private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
   private static final Bytes SALT =
       Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");
@@ -72,7 +71,7 @@ public class MetadataFileHelpers {
   }
 
   public void createKeyStoreYamlFileAt(
-      final Path metadataFilePath, final Path keystorePath, final String password) {
+      final Path metadataFilePath, final Path keystoreFile, final String password) {
     final String filename = metadataFilePath.getFileName().toString();
     final String passwordFilename = filename + ".password";
     final Path passwordFile = metadataFilePath.getParent().resolve(passwordFilename);
@@ -80,7 +79,7 @@ public class MetadataFileHelpers {
 
     final Map<String, String> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "file-keystore");
-    signingMetadata.put("keystoreFile", keystorePath.toString());
+    signingMetadata.put("keystoreFile", keystoreFile.toString());
     signingMetadata.put("keystorePasswordFile", passwordFile.toString());
     createYamlFile(metadataFilePath, signingMetadata);
   }

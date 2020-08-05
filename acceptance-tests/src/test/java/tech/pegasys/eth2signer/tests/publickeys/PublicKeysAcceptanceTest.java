@@ -28,13 +28,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
-  static final String clientId = System.getenv("AZURE_CLIENT_ID");
-  static final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
-  static final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
-  static final String tenantId = System.getenv("AZURE_TENANT_ID");
-  public static final String PUBLIC_KEY_HEX_STRING =
-      "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
-
   @ParameterizedTest
   @ValueSource(strings = {BLS, SECP256K1})
   public void noLoadedKeysReturnsEmptyPublicKeyResponse(final String keyType) {
@@ -104,6 +97,12 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
   })
   public void azureKeysReturnAppropriatePublicKey() {
+    final String clientId = System.getenv("AZURE_CLIENT_ID");
+    final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
+    final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
+    final String tenantId = System.getenv("AZURE_TENANT_ID");
+    final String PUBLIC_KEY_HEX_STRING =
+        "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
 
     metadataFileHelpers.createAzureCloudSigningYamlFileAt(
         testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
