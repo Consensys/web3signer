@@ -61,7 +61,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   })
   public void signDataWithKeyInAzure(@TempDir Path tomlDirectory) {
 
-    metadataFileHelpers.createAzureCloudSigningYamlFileAt(
+    metadataFileHelpers.createAzureKeyYamlFileAt(
         tomlDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
         clientId,
         clientSecret,
@@ -110,7 +110,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
   })
   public void signDatWithKeyFromAzure(@TempDir Path keyConfigDirectory) {
-    metadataFileHelpers.createAzureCloudSigningYamlFileAt(
+    metadataFileHelpers.createAzureKeyYamlFileAt(
         keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
         clientId,
         clientSecret,

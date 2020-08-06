@@ -231,7 +231,7 @@ class YamlSignerParserTest {
   }
 
   @Test
-  void azureMetadataInfoReturnsMetadata() throws IOException {
+  void azureSecretMetadataInfoReturnsMetadata() throws IOException {
     final BlsArtifactSigner artifactSigner =
         new BlsArtifactSigner(
             new BLSKeyPair(
@@ -241,7 +241,7 @@ class YamlSignerParserTest {
     final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
 
     final Map<String, String> azureMetaDataMap = new HashMap<>();
-    azureMetaDataMap.put("type", "azure");
+    azureMetaDataMap.put("type", "azure-secret");
     azureMetaDataMap.put("clientId", "sample-client-id");
     azureMetaDataMap.put("clientSecret", "sample-client-secret");
     azureMetaDataMap.put("tenantId", "sample-tenant-id");

@@ -104,7 +104,7 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     final String PUBLIC_KEY_HEX_STRING =
         "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
 
-    metadataFileHelpers.createAzureCloudSigningYamlFileAt(
+    metadataFileHelpers.createAzureKeyYamlFileAt(
         testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
         clientId,
         clientSecret,

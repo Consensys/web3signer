@@ -17,7 +17,7 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class AzureSecpCloudSigningMetadata implements SigningMetadata {
+public class AzureKeySigningMetadata implements SigningMetadata {
 
   private final String clientId;
   private final String clientSecret;
@@ -26,7 +26,7 @@ public class AzureSecpCloudSigningMetadata implements SigningMetadata {
   private final String keyName;
 
   @JsonCreator
-  public AzureSecpCloudSigningMetadata(
+  public AzureKeySigningMetadata(
       @JsonProperty("clientId") final String clientId,
       @JsonProperty("clientSecret") final String clientSecret,
       @JsonProperty("tenantId") final String tenantId,

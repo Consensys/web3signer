@@ -75,7 +75,7 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   }
 
   @Override
-  public ArtifactSigner create(final AzureSecpCloudSigningMetadata azureSigningMetadata) {
+  public ArtifactSigner create(final AzureKeySigningMetadata azureSigningMetadata) {
     final AzureConfig config =
         new AzureConfig(
             azureSigningMetadata.getVaultName(),
