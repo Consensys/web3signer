@@ -42,7 +42,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
     this.configsDirectory = configsDirectory;
   }
 
-  protected Bytes extractBytesFromVault(final AzureSigningMetadata metadata) {
+  protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
     final AzureKeyVault azureVault =
         new AzureKeyVault(
             metadata.getClientId(),

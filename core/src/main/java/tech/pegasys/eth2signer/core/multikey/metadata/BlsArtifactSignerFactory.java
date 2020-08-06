@@ -73,9 +73,9 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
   }
 
   @Override
-  public ArtifactSigner create(final AzureSigningMetadata azureSigningMetadata) {
+  public ArtifactSigner create(final AzureSecretSigningMetadata azureSecretSigningMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("azure").startTimer()) {
-      final Bytes privateKeyBytes = extractBytesFromVault(azureSigningMetadata);
+      final Bytes privateKeyBytes = extractBytesFromVault(azureSecretSigningMetadata);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKeyBytes));
       return new BlsArtifactSigner(keyPair);
     }

@@ -31,7 +31,7 @@ public interface ArtifactSignerFactory {
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(AzureSigningMetadata azureSigningMetadata) {
+  default ArtifactSigner create(AzureSecretSigningMetadata azureSecretSigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }

@@ -68,8 +68,8 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   }
 
   @Override
-  public ArtifactSigner create(final AzureSigningMetadata azureSigningMetadata) {
-    final Bytes privateKeyBytes = extractBytesFromVault(azureSigningMetadata);
+  public ArtifactSigner create(final AzureSecretSigningMetadata azureSecretSigningMetadata) {
+    final Bytes privateKeyBytes = extractBytesFromVault(azureSecretSigningMetadata);
     final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
     return new SecpArtifactSigner(new CredentialSigner(credentials));
   }

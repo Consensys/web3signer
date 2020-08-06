@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.AzureSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.AzureSecretSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
@@ -236,7 +236,8 @@ class YamlSignerParserTest {
         new BlsArtifactSigner(
             new BLSKeyPair(
                 BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
-    when(artifactSignerFactory.create(any(AzureSigningMetadata.class))).thenReturn(artifactSigner);
+    when(artifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
+        .thenReturn(artifactSigner);
 
     final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
 
@@ -254,9 +255,9 @@ class YamlSignerParserTest {
     verify(artifactSignerFactory).create(hasCorrectAzureMetadataArguments());
   }
 
-  private AzureSigningMetadata hasCorrectAzureMetadataArguments() {
+  private AzureSecretSigningMetadata hasCorrectAzureMetadataArguments() {
     return argThat(
-        (AzureSigningMetadata m) ->
+        (AzureSecretSigningMetadata m) ->
             m.getClientId().equals("sample-client-id")
                 && m.getClientSecret().equals("sample-client-secret")
                 && m.getTenantId().equals("sample-tenant-id")
