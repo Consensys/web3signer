@@ -20,6 +20,8 @@ import java.math.BigInteger;
 
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class ByteUtilsTest {
 
@@ -46,5 +48,11 @@ class ByteUtilsTest {
   public void ifBigIntegerZeroReturnsZeroValueArray() {
     final byte[] a = ByteUtils.bigIntegerToBytes(BigInteger.ZERO);
     assertThat(a).containsExactly(0);
+  }
+
+  @ParameterizedTest
+  @CsvSource({"00,00", "150,9601", "1024,8008", "1729,c10d"})
+  public void leb128(final Long input, final String output) {
+    assertThat(ByteUtils.leb128UnsignedEncode(input).toUnprefixedHexString()).isEqualTo(output);
   }
 }

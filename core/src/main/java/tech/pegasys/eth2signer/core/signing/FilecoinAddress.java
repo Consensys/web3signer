@@ -17,9 +17,14 @@ import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network.MAINN
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network.TESTNET;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.ACTOR;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.BLS;
+import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.ID;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.SECP256K1;
+import static tech.pegasys.eth2signer.core.util.ByteUtils.leb128UnsignedEncode;
 
 import tech.pegasys.eth2signer.core.util.Blake2b;
+import tech.pegasys.eth2signer.core.util.ByteUtils;
+
+import java.math.BigInteger;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.io.Base32;
@@ -27,6 +32,7 @@ import org.apache.tuweni.io.Base32;
 public class FilecoinAddress {
   private static final String MAINNET_PREFIX = "f";
   private static final String TESTNET_PREFIX = "t";
+  private static final int CHECKSUM_SIZE = 4;
 
   public enum Network {
     MAINNET,
@@ -54,18 +60,34 @@ public class FilecoinAddress {
 
   public static FilecoinAddress fromString(final String address) {
     final Network network = address.startsWith(MAINNET_PREFIX) ? MAINNET : TESTNET;
-    final Protocol protocol = toProtocol(address.substring(1, 1));
-    final String payload = address.substring(2, address.length() - 4);
-    final String checksum = address.substring(address.length() - 4);
-    final Bytes decode = Base32.decode(payload);
-    return new FilecoinAddress(network, protocol, decode);
+    final Protocol protocol = toProtocol(address.substring(1, 2));
+
+    if (protocol == ID) {
+      final BigInteger value = new BigInteger(address.substring(2));
+      final Bytes bytes =
+          leb128UnsignedEncode(Bytes.wrap(ByteUtils.bigIntegerToBytes(value)).toLong());
+      return new FilecoinAddress(network, protocol, bytes);
+    } else {
+      final Bytes value = Bytes.wrap(Base32.decode(address.substring(2)));
+      final Bytes payload = value.slice(0, value.size() - CHECKSUM_SIZE);
+      return new FilecoinAddress(network, protocol, payload);
+    }
   }
 
+  // TODO only use network when encoding?
   private FilecoinAddress(final Network network, final Protocol protocol, final Bytes payload) {
     this.network = network;
     this.protocol = protocol;
     this.payload = payload;
   }
+
+  public Bytes getPayload() {
+    return payload;
+  }
+
+  // TODO getProtocol
+
+  // TODO encode, decode, checksum, validateChecksum
 
   @Override
   public String toString() {
@@ -95,7 +117,7 @@ public class FilecoinAddress {
   private static Protocol toProtocol(final String protocol) {
     switch (protocol) {
       case "0":
-        return Protocol.ACTOR;
+        return ID;
       case "1":
         return SECP256K1;
       case "2":

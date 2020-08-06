@@ -14,6 +14,8 @@ package tech.pegasys.eth2signer.core.util;
 
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class ByteUtils {
 
   /**
@@ -39,5 +41,26 @@ public class ByteUtils {
       data = tmp;
     }
     return data;
+  }
+
+  /**
+   * Little endian base 128 variable length encoding based on the go implementation of
+   * binary/variant PutUVariant function.
+   *
+   * <p>Note: the range of values is smaller than that of the go implementation due to use of signed
+   * long type used in the input.
+   *
+   * @param input Number to be encoded
+   * @return Bytes encoded in LEB128-varint format
+   */
+  public static Bytes leb128UnsignedEncode(final Long input) {
+    Bytes output = Bytes.wrap();
+    Long x = input;
+    while (x >= 0x80) {
+      output = Bytes.concatenate(output, Bytes.of((byte) (x.byteValue() | 0x80)));
+      x >>= 7;
+    }
+    output = Bytes.concatenate(output, Bytes.of(x.byteValue()));
+    return output;
   }
 }
