@@ -52,7 +52,12 @@ class ByteUtilsTest {
 
   @ParameterizedTest
   @CsvSource({"00,00", "150,9601", "1024,8008", "1729,c10d"})
-  public void leb128(final Long input, final String output) {
-    assertThat(ByteUtils.leb128UnsignedEncode(input).toUnprefixedHexString()).isEqualTo(output);
+  public void putUVariant(final String input, final String output) {
+    assertThat(ByteUtils.putUVariant(new BigInteger(input)).toUnprefixedHexString())
+        .isEqualTo(output);
   }
+
+  // TODO fromUVariant
+
+  // TODO corner cases for these
 }

@@ -14,15 +14,14 @@ package tech.pegasys.eth2signer.core.signing;
 
 import static org.apache.tuweni.bytes.Bytes.concatenate;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network.MAINNET;
-import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network.TESTNET;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.ACTOR;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.BLS;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.ID;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.SECP256K1;
-import static tech.pegasys.eth2signer.core.util.ByteUtils.leb128UnsignedEncode;
+import static tech.pegasys.eth2signer.core.util.ByteUtils.fromUVariant;
+import static tech.pegasys.eth2signer.core.util.ByteUtils.putUVariant;
 
 import tech.pegasys.eth2signer.core.util.Blake2b;
-import tech.pegasys.eth2signer.core.util.ByteUtils;
 
 import java.math.BigInteger;
 
@@ -46,37 +45,14 @@ public class FilecoinAddress {
     BLS
   }
 
-  private final Network network;
   private final Protocol protocol;
   private final Bytes payload;
 
-  public static FilecoinAddress blsAddress(final Network network, final Bytes publicKey) {
-    return new FilecoinAddress(network, BLS, publicKey);
-  }
-
-  public static FilecoinAddress secpAddress(final Network network, final Bytes publicKey) {
-    return new FilecoinAddress(network, Protocol.SECP256K1, Blake2b.sum160(publicKey));
-  }
-
   public static FilecoinAddress fromString(final String address) {
-    final Network network = address.startsWith(MAINNET_PREFIX) ? MAINNET : TESTNET;
-    final Protocol protocol = toProtocol(address.substring(1, 2));
-
-    if (protocol == ID) {
-      final BigInteger value = new BigInteger(address.substring(2));
-      final Bytes bytes =
-          leb128UnsignedEncode(Bytes.wrap(ByteUtils.bigIntegerToBytes(value)).toLong());
-      return new FilecoinAddress(network, protocol, bytes);
-    } else {
-      final Bytes value = Bytes.wrap(Base32.decode(address.substring(2)));
-      final Bytes payload = value.slice(0, value.size() - CHECKSUM_SIZE);
-      return new FilecoinAddress(network, protocol, payload);
-    }
+    return decode(address);
   }
 
-  // TODO only use network when encoding?
-  private FilecoinAddress(final Network network, final Protocol protocol, final Bytes payload) {
-    this.network = network;
+  private FilecoinAddress(final Protocol protocol, final Bytes payload) {
     this.protocol = protocol;
     this.payload = payload;
   }
@@ -85,21 +61,43 @@ public class FilecoinAddress {
     return payload;
   }
 
-  // TODO getProtocol
-
-  // TODO encode, decode, checksum, validateChecksum
-
-  @Override
-  public String toString() {
-    final Bytes checksum = Blake2b.sum32(concatenate(Bytes.of(getProtocol()), payload));
-    return getNetwork() + getProtocol() + base32(concatenate(payload, checksum)).toLowerCase();
+  public Protocol getProtocol() {
+    return protocol;
   }
 
-  private String getNetwork() {
+  // TODO checksum, validateChecksum
+
+  public String encode(final Network network) {
+    final Bytes checksum = Blake2b.sum32(concatenate(Bytes.of(fromProtocol()), payload));
+    if (protocol == ID) {
+      final BigInteger l = fromUVariant(payload);
+      final String payload = l.toString();
+      return network(network) + fromProtocol() + payload;
+    } else {
+      return network(network)
+          + fromProtocol()
+          + base32(concatenate(payload, checksum)).toLowerCase();
+    }
+  }
+
+  public static FilecoinAddress decode(final String address) {
+    final Protocol protocol = toProtocol(address.substring(1, 2));
+    final String rawPayload = address.substring(2);
+    if (protocol == ID) {
+      final Bytes payload = putUVariant(new BigInteger(rawPayload));
+      return new FilecoinAddress(protocol, payload);
+    } else {
+      final Bytes value = Bytes.wrap(Base32.decode(rawPayload));
+      final Bytes payload = value.slice(0, value.size() - CHECKSUM_SIZE);
+      return new FilecoinAddress(protocol, payload);
+    }
+  }
+
+  private String network(final Network network) {
     return network == MAINNET ? MAINNET_PREFIX : TESTNET_PREFIX;
   }
 
-  private byte getProtocol() {
+  private byte fromProtocol() {
     switch (protocol) {
       case ID:
         return (byte) 0;

@@ -44,23 +44,48 @@ public class ByteUtils {
   }
 
   /**
-   * Little endian base 128 variable length encoding based on the go implementation of
-   * binary/variant PutUVariant function.
+   * Variable length encoding based on the go implementation of binary/variant PutUVariant function.
    *
    * <p>Note: the range of values is smaller than that of the go implementation due to use of signed
    * long type used in the input.
    *
    * @param input Number to be encoded
-   * @return Bytes encoded in LEB128-varint format
+   * @return Bytes encoded in unsigned varint format
    */
-  public static Bytes leb128UnsignedEncode(final Long input) {
+  public static Bytes putUVariant(final BigInteger input) {
     Bytes output = Bytes.wrap();
-    Long x = input;
-    while (x >= 0x80) {
+    BigInteger x = input;
+    while ((x.longValue() & 0xff) >= 0x80) {
       output = Bytes.concatenate(output, Bytes.of((byte) (x.byteValue() | 0x80)));
-      x >>= 7;
+      x = x.shiftRight(7);
     }
     output = Bytes.concatenate(output, Bytes.of(x.byteValue()));
     return output;
+  }
+
+  /**
+   * Variable length decoding based on the go implementation of binary/variant ReadUVariant
+   * function.
+   *
+   * @param input Bytes to be decoded
+   * @return Bytes encoded in unsigned varint format
+   */
+  public static BigInteger fromUVariant(final Bytes input) {
+    BigInteger x = BigInteger.ZERO;
+    int s = 0;
+    final byte[] bytes = input.toArray();
+
+    for (int i = 0; i < bytes.length; i++) {
+      int b = bytes[i] & 0xff; // convert to unsigned value
+      if (b < 0x80) {
+        if (i > 9 || i == 9 && b > 1) {
+          return BigInteger.ZERO;
+        }
+        return x.or(BigInteger.valueOf(b).shiftLeft(s));
+      }
+      x = x.or(BigInteger.valueOf(b & 0x7f).shiftLeft(s));
+      s += 7;
+    }
+    return BigInteger.ZERO;
   }
 }

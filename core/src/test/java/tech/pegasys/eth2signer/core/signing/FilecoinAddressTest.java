@@ -14,13 +14,16 @@ package tech.pegasys.eth2signer.core.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network;
+import tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 
 class FilecoinAddressTest {
 
-  // TODO round trip tests
   // TODO invalid address tests
+  // TODO test network encoding
 
   @ParameterizedTest
   @CsvFileSource(resources = "bls_testvectors.csv")
@@ -28,6 +31,10 @@ class FilecoinAddressTest {
     final FilecoinAddress filecoinAddress = FilecoinAddress.fromString(address);
     final String expectedPayload = payload.substring(2);
     assertThat(filecoinAddress.getPayload().toUnprefixedHexString()).isEqualTo(expectedPayload);
+    assertThat(filecoinAddress.getProtocol()).isEqualTo(Protocol.BLS);
+
+    final String encodedAddress = filecoinAddress.encode(Network.MAINNET);
+    assertThat(encodedAddress).isEqualTo(address);
   }
 
   @ParameterizedTest
@@ -36,6 +43,10 @@ class FilecoinAddressTest {
     final FilecoinAddress filecoinAddress = FilecoinAddress.fromString(address);
     final String expectedPayload = payload.substring(2);
     assertThat(filecoinAddress.getPayload().toUnprefixedHexString()).isEqualTo(expectedPayload);
+    assertThat(filecoinAddress.getProtocol()).isEqualTo(Protocol.SECP256K1);
+
+    final String encodedAddress = filecoinAddress.encode(Network.MAINNET);
+    assertThat(encodedAddress).isEqualTo(address);
   }
 
   @ParameterizedTest
@@ -44,6 +55,10 @@ class FilecoinAddressTest {
     final FilecoinAddress filecoinAddress = FilecoinAddress.fromString(address);
     final String expectedPayload = payload.substring(2);
     assertThat(filecoinAddress.getPayload().toUnprefixedHexString()).isEqualTo(expectedPayload);
+    assertThat(filecoinAddress.getProtocol()).isEqualTo(Protocol.ID);
+
+    final String encodedAddress = filecoinAddress.encode(Network.MAINNET);
+    assertThat(encodedAddress).isEqualTo(address);
   }
 
   @ParameterizedTest
@@ -52,5 +67,9 @@ class FilecoinAddressTest {
     final FilecoinAddress filecoinAddress = FilecoinAddress.fromString(address);
     final String expectedPayload = payload.substring(2);
     assertThat(filecoinAddress.getPayload().toUnprefixedHexString()).isEqualTo(expectedPayload);
+    assertThat(filecoinAddress.getProtocol()).isEqualTo(Protocol.ACTOR);
+
+    final String encodedAddress = filecoinAddress.encode(Network.MAINNET);
+    assertThat(encodedAddress).isEqualTo(address);
   }
 }
