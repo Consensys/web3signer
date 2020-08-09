@@ -20,6 +20,9 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.collection.IsIn.in;
 
 import io.restassured.response.Response;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -84,5 +87,31 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(keyType);
     validateApiResponse(response, containsInAnyOrder(keys));
+  }
+
+  @Test
+  @EnabledIfEnvironmentVariables({
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_SECRET", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
+  })
+  public void azureKeysReturnAppropriatePublicKey() {
+    final String clientId = System.getenv("AZURE_CLIENT_ID");
+    final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
+    final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
+    final String tenantId = System.getenv("AZURE_TENANT_ID");
+    final String PUBLIC_KEY_HEX_STRING =
+        "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
+
+    metadataFileHelpers.createAzureKeyYamlFileAt(
+        testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+        clientId,
+        clientSecret,
+        keyVaultName,
+        tenantId);
+    initAndStartSigner();
+    final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(SECP256K1);
+    validateApiResponse(response, containsInAnyOrder("0x" + PUBLIC_KEY_HEX_STRING));
   }
 }

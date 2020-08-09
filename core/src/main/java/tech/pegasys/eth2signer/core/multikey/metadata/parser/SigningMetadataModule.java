@@ -13,7 +13,6 @@
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.teku.bls.BLSSecretKey;
 
 import java.io.IOException;
 
@@ -30,30 +29,29 @@ public class SigningMetadataModule extends SimpleModule {
 
   public SigningMetadataModule() {
     super("SigningMetadata");
-    addDeserializer(BLSSecretKey.class, new PrivateKeyDeserializer());
-    addSerializer(BLSSecretKey.class, new PrivateKeySerializer());
+    addDeserializer(Bytes.class, new HexStringDeserialiser());
+    addSerializer(Bytes.class, new HexStringSerializer());
   }
 
-  private static class PrivateKeyDeserializer extends JsonDeserializer<BLSSecretKey> {
+  private static class HexStringDeserialiser extends JsonDeserializer<Bytes> {
 
     @Override
-    public BLSSecretKey deserialize(final JsonParser p, final DeserializationContext ctxt) {
+    public Bytes deserialize(final JsonParser p, final DeserializationContext ctxt) {
       try {
-        final Bytes privateKeyBytes = Bytes.fromHexString(p.getValueAsString());
-        return BLSSecretKey.fromBytes(privateKeyBytes);
-      } catch (Exception e) {
+        return Bytes.fromHexString(p.getValueAsString());
+      } catch (final Exception e) {
         throw new SigningMetadataException("Invalid hex value for private key", e);
       }
     }
   }
 
-  private static class PrivateKeySerializer extends JsonSerializer<BLSSecretKey> {
+  private static class HexStringSerializer extends JsonSerializer<Bytes> {
 
     @Override
     public void serialize(
-        final BLSSecretKey value, final JsonGenerator gen, final SerializerProvider serializers)
+        final Bytes value, final JsonGenerator gen, final SerializerProvider serializers)
         throws IOException {
-      gen.writeString(value.getSecretKey().toBytes().toString());
+      gen.writeString(value.toString());
     }
   }
 }
