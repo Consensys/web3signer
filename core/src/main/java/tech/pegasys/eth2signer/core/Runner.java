@@ -17,6 +17,7 @@ import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.JS
 import static tech.pegasys.eth2signer.core.signing.KeyType.BLS;
 import static tech.pegasys.eth2signer.core.signing.KeyType.SECP256K1;
 
+import java.util.concurrent.TimeUnit;
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
@@ -278,6 +279,9 @@ public class Runner implements Runnable {
         new HttpServerOptions()
             .setPort(config.getHttpListenPort())
             .setHost(config.getHttpListenHost())
+            .setTcpKeepAlive(false)
+            .setIdleTimeout(5)
+            .setIdleTimeoutUnit(TimeUnit.SECONDS)
             .setReuseAddress(true)
             .setReusePort(true);
     final HttpServerOptions tlsServerOptions = applyConfigTlsSettingsTo(serverOptions);
