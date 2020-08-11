@@ -57,6 +57,7 @@ class CommandlineParserTest {
     assertThat(config.getLogLevel()).isEqualTo(Level.INFO);
     assertThat(config.getHttpListenHost()).isEqualTo("localhost");
     assertThat(config.getHttpListenPort()).isEqualTo(5001);
+    assertThat(config.getIdleConnectionTimeoutSeconds()).isEqualTo(45);
   }
 
   @Test
@@ -92,6 +93,12 @@ class CommandlineParserTest {
     final int result = parser.parseCommandLine("--nonExistentOption=9");
     assertThat(result).isNotZero();
     assertThat(commandOutput.toString()).containsOnlyOnce(defaultUsageText);
+  }
+
+  @Test
+  void missingIdleConnectionDefaultsToThirtySeconds() {
+    missingOptionalParameterIsValidAndMeetsDefault(
+        "idle-connection-timeout-seconds", config::getIdleConnectionTimeoutSeconds, 30);
   }
 
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(
