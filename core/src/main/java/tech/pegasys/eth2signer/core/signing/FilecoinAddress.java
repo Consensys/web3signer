@@ -13,8 +13,6 @@
 package tech.pegasys.eth2signer.core.signing;
 
 import static org.apache.tuweni.bytes.Bytes.concatenate;
-import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network.MAINNET;
-import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network.TESTNET;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.ACTOR;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.BLS;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.ID;
@@ -38,7 +36,6 @@ public class FilecoinAddress {
   private static final org.apache.commons.codec.binary.Base32 base32 =
       new org.apache.commons.codec.binary.Base32();
 
-  // TODO move these enums out of the class?
   public enum Network {
     MAINNET,
     TESTNET
