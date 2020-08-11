@@ -50,6 +50,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import com.google.common.base.Charsets;
@@ -278,6 +279,8 @@ public class Runner implements Runnable {
         new HttpServerOptions()
             .setPort(config.getHttpListenPort())
             .setHost(config.getHttpListenHost())
+            .setIdleTimeout(config.getIdleConnectionTimeoutSeconds())
+            .setIdleTimeoutUnit(TimeUnit.SECONDS)
             .setReuseAddress(true)
             .setReusePort(true);
     final HttpServerOptions tlsServerOptions = applyConfigTlsSettingsTo(serverOptions);

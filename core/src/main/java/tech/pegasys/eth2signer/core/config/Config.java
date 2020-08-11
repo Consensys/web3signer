@@ -47,4 +47,6 @@ public interface Config {
   Long getKeyCacheLimit();
 
   Optional<TlsOptions> getTlsOptions();
+
+  int getIdleConnectionTimeoutSeconds();
 }

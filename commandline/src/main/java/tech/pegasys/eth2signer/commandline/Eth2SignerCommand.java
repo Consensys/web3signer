@@ -164,6 +164,14 @@ public class Eth2SignerCommand implements Config, Runnable {
       defaultValue = "localhost,127.0.0.1")
   private final AllowListHostsProperty metricsHostAllowList = new AllowListHostsProperty();
 
+  @Option(
+      names = {"--idle-connection-timeout-seconds"},
+      paramLabel = "<timeout in seconds>",
+      description =
+          "Number of seconds after which an idle connection will be terminated (Default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private int idleConnectionTimeoutSeconds = 30;
+
   @ArgGroup(exclusive = false)
   private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
@@ -233,6 +241,11 @@ public class Eth2SignerCommand implements Config, Runnable {
   }
 
   @Override
+  public int getIdleConnectionTimeoutSeconds() {
+    return idleConnectionTimeoutSeconds;
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -249,6 +262,7 @@ public class Eth2SignerCommand implements Config, Runnable {
         .add("metricCategories", metricCategories)
         .add("metricsHostAllowList", metricsHostAllowList)
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
+        .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
         .toString();
   }
 
