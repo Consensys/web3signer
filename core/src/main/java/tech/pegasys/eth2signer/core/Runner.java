@@ -34,10 +34,8 @@ import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
-import tech.pegasys.eth2signer.core.signing.TomlFileSelector;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.eth2signer.core.util.FileUtil;
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.api.Signature;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 
