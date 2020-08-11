@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
+import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.signers.secp256k1.api.Signer;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -26,7 +27,7 @@ public class SecpArtifactSigner implements ArtifactSigner {
 
   @Override
   public String getIdentifier() {
-    return signer.getPublicKey().toString();
+    return EthPublicKeyUtils.toHexString(signer.getPublicKey());
   }
 
   @Override

@@ -59,10 +59,10 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
     @EnabledIfEnvironmentVariable(named = "AZURE_KEY_TENANT_ID", matches = ".*")
   })
-  public void signDataWithKeyInAzure(@TempDir Path tomlDirectory) {
+  public void signDataWithKeyInAzure(@TempDir Path keyConfigDirectory) {
 
     metadataFileHelpers.createAzureKeyYamlFileAt(
-        tomlDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+        keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
         clientId,
         clientSecret,
         keyVaultName,
