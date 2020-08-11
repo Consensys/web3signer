@@ -76,7 +76,7 @@ dependencyManagement {
 
     dependency 'tech.pegasys.teku.internal:bls:0.12.1-SNAPSHOT'
 
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.3-SNAPSHOT') {
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.3') {
       entry 'bls-keystore'
       entry 'keystorage-hashicorp'
       entry 'keystorage-azure'
