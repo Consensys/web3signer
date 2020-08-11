@@ -13,25 +13,25 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.teku.bls.BLSSecretKey;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 public class FileRawSigningMetadata implements SigningMetadata {
 
-  private final BLSSecretKey privateKey;
+  private final Bytes privateKey;
 
   public FileRawSigningMetadata(
-      @JsonProperty(value = "privateKey", required = true) BLSSecretKey privateKey) {
+      @JsonProperty(value = "privateKey", required = true) Bytes privateKey) {
     this.privateKey = privateKey;
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
-    return factory.create(this);
+  public ArtifactSigner createSigner(final ArtifactSignerFactory artifactSignerFactory) {
+    return artifactSignerFactory.create(this);
   }
 
-  public BLSSecretKey getSecretKey() {
+  public Bytes getPrivateKeyBytes() {
     return privateKey;
   }
 }

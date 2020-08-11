@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.eth2signer.TrackingLogAppender;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
@@ -65,7 +66,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
         new HashicorpConnectionFactory(vertx);
 
     final ArtifactSignerFactory artifactSignerFactory =
-        new ArtifactSignerFactory(
+        new BlsArtifactSignerFactory(
             configsDirectory, new NoOpMetricsSystem(), hashicorpConnectionFactory);
     final SignerParser signerParser = new YamlSignerParser(artifactSignerFactory);
     signerProvider =

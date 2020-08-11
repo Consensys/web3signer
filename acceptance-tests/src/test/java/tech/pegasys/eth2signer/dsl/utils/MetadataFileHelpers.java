@@ -57,9 +57,6 @@ public class MetadataFileHelpers {
     final Bytes privateKeyBytes = keyPair.getSecretKey().getSecretKey().toBytes();
 
     final String password = "password";
-    final Path passwordFile =
-        metadataFilePath.getParent().resolve(keyPair.getPublicKey().toString() + ".password");
-    createPasswordFile(passwordFile, password);
 
     final Path keystoreFile =
         metadataFilePath.getParent().resolve(keyPair.getPublicKey().toString() + ".json");
@@ -69,6 +66,16 @@ public class MetadataFileHelpers {
         privateKeyBytes,
         keyPair.getPublicKey().toBytesCompressed(),
         kdfFunctionType);
+
+    createKeyStoreYamlFileAt(metadataFilePath, keystoreFile, password);
+  }
+
+  public void createKeyStoreYamlFileAt(
+      final Path metadataFilePath, final Path keystoreFile, final String password) {
+    final String filename = metadataFilePath.getFileName().toString();
+    final String passwordFilename = filename + ".password";
+    final Path passwordFile = metadataFilePath.getParent().resolve(passwordFilename);
+    createPasswordFile(passwordFile, password);
 
     final Map<String, String> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "file-keystore");
@@ -101,6 +108,49 @@ public class MetadataFileHelpers {
       signingMetadata.put("keyName", node.getSecretName());
       signingMetadata.put("token", node.getVaultToken());
 
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to construct hashicorp yaml file", e);
+    }
+  }
+
+  public void createAzureYamlFileAt(
+      final Path metadataFilePath,
+      final String clientId,
+      final String clientSecret,
+      final String tenantId,
+      final String keyVaultName,
+      final String secretName) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+
+      signingMetadata.put("type", "azure-secret");
+      signingMetadata.put("clientId", clientId);
+      signingMetadata.put("clientSecret", clientSecret);
+      signingMetadata.put("tenantId", tenantId);
+      signingMetadata.put("vaultName", keyVaultName);
+      signingMetadata.put("secretName", secretName);
+
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to construct azure yaml file", e);
+    }
+  }
+
+  public void createAzureKeyYamlFileAt(
+      final Path metadataFilePath,
+      final String clientId,
+      final String clientSecret,
+      final String keyVaultName,
+      final String tenantId) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+      signingMetadata.put("type", "azure-key");
+      signingMetadata.put("vaultName", keyVaultName);
+      signingMetadata.put("keyName", "TestKey");
+      signingMetadata.put("clientId", clientId);
+      signingMetadata.put("clientSecret", clientSecret);
+      signingMetadata.put("tenantId", tenantId);
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {
       throw new RuntimeException("Unable to construct hashicorp yaml file", e);

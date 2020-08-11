@@ -23,9 +23,7 @@ import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.multikey.SecpArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerProviderFactory;
 import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
@@ -41,7 +39,7 @@ import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.api.Signature;
-import tech.pegasys.signers.secp256k1.multikey.MultiKeySignerProvider;
+import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -128,13 +126,18 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
+      final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+
+      final ArtifactSignerProviderFactory factory =
+          new ArtifactSignerProviderFactory(metricsSystem, vertx, azureFactory);
+
       final DirectoryBackedArtifactSignerProvider blsSignerProvider =
-          createSignerProvider(metricsSystem, vertx);
+          factory.createBlsSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
       blsSignerProvider.cacheAllSigners();
 
-      final SecpArtifactSignerProvider secpSignerProvider =
-          new SecpArtifactSignerProvider(
-              MultiKeySignerProvider.create(config.getKeyConfigPath(), new TomlFileSelector()));
+      final DirectoryBackedArtifactSignerProvider secpSignerProvider =
+          factory.createSecpSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
+      secpSignerProvider.cacheAllSigners();
 
       final PublicKeys publicKeys = new PublicKeys(blsSignerProvider, secpSignerProvider);
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =
@@ -230,18 +233,6 @@ public class Runner implements Runnable {
     // Our handlers must set content type header manually.
     openAPI3RouterFactory.getOptions().setMountResponseContentTypeHandler(false);
     return openAPI3RouterFactory;
-  }
-
-  private DirectoryBackedArtifactSignerProvider createSignerProvider(
-      final MetricsSystem metricsSystem, final Vertx vertx) {
-    final ArtifactSignerFactory artifactSignerFactory =
-        new ArtifactSignerFactory(
-            config.getKeyConfigPath(), metricsSystem, new HashicorpConnectionFactory(vertx));
-    return new DirectoryBackedArtifactSignerProvider(
-        config.getKeyConfigPath(),
-        "yaml",
-        new YamlSignerParser(artifactSignerFactory),
-        config.getKeyCacheLimit());
   }
 
   private void registerOpenApiSpecRoute(final Router router) throws IOException {

@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.AzureSecretSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
@@ -224,7 +225,43 @@ class YamlSignerParserTest {
   }
 
   private FileRawSigningMetadata hasPrivateKey(final String privateKey) {
-    final BLSSecretKey blsSecretKey = BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey));
-    return argThat((FileRawSigningMetadata m) -> m.getSecretKey().equals(blsSecretKey));
+    return argThat(
+        (FileRawSigningMetadata m) ->
+            m.getPrivateKeyBytes().equals(Bytes.fromHexString(privateKey)));
+  }
+
+  @Test
+  void azureSecretMetadataInfoReturnsMetadata() throws IOException {
+    final BlsArtifactSigner artifactSigner =
+        new BlsArtifactSigner(
+            new BLSKeyPair(
+                BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
+    when(artifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
+        .thenReturn(artifactSigner);
+
+    final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
+
+    final Map<String, String> azureMetaDataMap = new HashMap<>();
+    azureMetaDataMap.put("type", "azure-secret");
+    azureMetaDataMap.put("clientId", "sample-client-id");
+    azureMetaDataMap.put("clientSecret", "sample-client-secret");
+    azureMetaDataMap.put("tenantId", "sample-tenant-id");
+    azureMetaDataMap.put("vaultName", "sample-vault-name");
+    azureMetaDataMap.put("secretName", "TEST-KEY");
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), azureMetaDataMap);
+
+    final ArtifactSigner result = signerParser.parse(filename);
+    assertThat(result).isEqualTo(artifactSigner);
+    verify(artifactSignerFactory).create(hasCorrectAzureMetadataArguments());
+  }
+
+  private AzureSecretSigningMetadata hasCorrectAzureMetadataArguments() {
+    return argThat(
+        (AzureSecretSigningMetadata m) ->
+            m.getClientId().equals("sample-client-id")
+                && m.getClientSecret().equals("sample-client-secret")
+                && m.getTenantId().equals("sample-tenant-id")
+                && m.getVaultName().equals("sample-vault-name")
+                && m.getSecretName().equals("TEST-KEY"));
   }
 }
