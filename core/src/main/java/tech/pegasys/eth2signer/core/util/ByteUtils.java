@@ -78,7 +78,7 @@ public class ByteUtils {
     for (int i = 0; i < bytes.length; i++) {
       int b = bytes[i] & 0xff; // convert to unsigned value
       if (b < 0x80) {
-        if (i > 9 || i == 9 && b > 1) {
+        if (i > 9 || (i == 9 && b > 1)) {
           return BigInteger.ZERO;
         }
         return x.or(BigInteger.valueOf(b).shiftLeft(s));

@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.core.signing;
 
 import static org.apache.tuweni.bytes.Bytes.concatenate;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network.MAINNET;
+import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network.TESTNET;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.ACTOR;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.BLS;
 import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.ID;
@@ -24,6 +25,7 @@ import static tech.pegasys.eth2signer.core.util.ByteUtils.putUVariant;
 import tech.pegasys.eth2signer.core.util.Blake2b;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.io.Base32;
@@ -33,6 +35,10 @@ public class FilecoinAddress {
   private static final String TESTNET_PREFIX = "t";
   private static final int CHECKSUM_SIZE = 4;
 
+  private static final org.apache.commons.codec.binary.Base32 base32 =
+      new org.apache.commons.codec.binary.Base32();
+
+  // TODO move these enums out of the class?
   public enum Network {
     MAINNET,
     TESTNET
@@ -52,7 +58,7 @@ public class FilecoinAddress {
     return decode(address);
   }
 
-  private FilecoinAddress(final Protocol protocol, final Bytes payload) {
+  public FilecoinAddress(final Protocol protocol, final Bytes payload) {
     this.protocol = protocol;
     this.payload = payload;
   }
@@ -65,39 +71,68 @@ public class FilecoinAddress {
     return protocol;
   }
 
-  // TODO checksum, validateChecksum
-
   public String encode(final Network network) {
-    final Bytes checksum = Blake2b.sum32(concatenate(Bytes.of(fromProtocol()), payload));
     if (protocol == ID) {
-      final BigInteger l = fromUVariant(payload);
-      final String payload = l.toString();
-      return network(network) + fromProtocol() + payload;
+      final String payload = fromUVariant(this.payload).toString();
+      return networkToString(network) + protocolToByte() + payload;
     } else {
-      return network(network)
-          + fromProtocol()
-          + base32(concatenate(payload, checksum)).toLowerCase();
+      return networkToString(network)
+          + protocolToByte()
+          + base32(concatenate(payload, checksum(this))).toLowerCase();
     }
   }
 
   public static FilecoinAddress decode(final String address) {
-    final Protocol protocol = toProtocol(address.substring(1, 2));
+    validateNetwork(address.substring(0, 1));
+    final Protocol protocol = stringToProtocol(address.substring(1, 2));
     final String rawPayload = address.substring(2);
+
     if (protocol == ID) {
       final Bytes payload = putUVariant(new BigInteger(rawPayload));
       return new FilecoinAddress(protocol, payload);
     } else {
+      if (!base32.isInAlphabet(rawPayload)) {
+        throw new IllegalStateException("Invalid payload must be base32 encoded");
+      }
       final Bytes value = Bytes.wrap(Base32.decode(rawPayload));
       final Bytes payload = value.slice(0, value.size() - CHECKSUM_SIZE);
-      return new FilecoinAddress(protocol, payload);
+      final Bytes checksum = value.slice(value.size() - 4);
+      final FilecoinAddress filecoinAddress = new FilecoinAddress(protocol, payload);
+      if (!validateChecksum(filecoinAddress, checksum)) {
+        throw new IllegalStateException("Filecoin address checksum doesn't match");
+      }
+      return filecoinAddress;
     }
   }
 
-  private String network(final Network network) {
-    return network == MAINNET ? MAINNET_PREFIX : TESTNET_PREFIX;
+  public static Bytes checksum(final FilecoinAddress address) {
+    return Blake2b.sum32(concatenate(Bytes.of(address.protocolToByte()), address.getPayload()));
   }
 
-  private byte fromProtocol() {
+  public static boolean validateChecksum(
+      final FilecoinAddress address, final Bytes expectedChecksum) {
+    final Bytes checksum = checksum(address);
+    return expectedChecksum.equals(checksum);
+  }
+
+  private String networkToString(final Network network) {
+    switch (network) {
+      case MAINNET:
+        return MAINNET_PREFIX;
+      case TESTNET:
+        return TESTNET_PREFIX;
+      default:
+        throw new IllegalStateException("Unknown Filecoin network");
+    }
+  }
+
+  private static void validateNetwork(final String network) {
+    if (!List.of(MAINNET_PREFIX, TESTNET_PREFIX).contains(network)) {
+      throw new IllegalStateException("Unknown Filecoin network");
+    }
+  }
+
+  private byte protocolToByte() {
     switch (protocol) {
       case ID:
         return (byte) 0;
@@ -108,11 +143,11 @@ public class FilecoinAddress {
       case BLS:
         return (byte) 3;
       default:
-        throw new IllegalStateException("Unknown protocol");
+        throw new IllegalStateException("Unknown Filecoin protocol");
     }
   }
 
-  private static Protocol toProtocol(final String protocol) {
+  private static Protocol stringToProtocol(final String protocol) {
     switch (protocol) {
       case "0":
         return ID;
@@ -123,7 +158,7 @@ public class FilecoinAddress {
       case "3":
         return BLS;
       default:
-        throw new IllegalStateException("Unknown protocol");
+        throw new IllegalStateException("Unknown Filecoin protocol");
     }
   }
 
