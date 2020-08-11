@@ -18,6 +18,7 @@ import tech.pegasys.eth2signer.core.util.ByteUtils;
 
 import java.math.BigInteger;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -51,13 +52,30 @@ class ByteUtilsTest {
   }
 
   @ParameterizedTest
-  @CsvSource({"00,00", "150,9601", "1024,8008", "1729,c10d"})
-  public void putUVariant(final String input, final String output) {
+  @CsvSource({
+    "00,00",
+    "150,9601",
+    "1024,8008",
+    "1729,c10d",
+    "999999,bf843d",
+    "18446744073709551615,ffffffffffffffffff01"
+  })
+  public void encodesUVariantToBytes(final String input, final String output) {
     assertThat(ByteUtils.putUVariant(new BigInteger(input)).toUnprefixedHexString())
         .isEqualTo(output);
   }
 
-  // TODO fromUVariant
-
-  // TODO corner cases for these
+  @ParameterizedTest
+  @CsvSource({
+    "00,00",
+    "9601,150",
+    "8008,1024",
+    "c10d,1729",
+    "bf843d,999999",
+    "ffffffffffffffffff01,18446744073709551615"
+  })
+  public void decodesUVariantFromBytes(final String input, final String output) {
+    assertThat(ByteUtils.fromUVariant(Bytes.fromHexString(input)))
+        .isEqualTo(new BigInteger(output));
+  }
 }

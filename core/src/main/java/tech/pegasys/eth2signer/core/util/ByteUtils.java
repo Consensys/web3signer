@@ -44,18 +44,18 @@ public class ByteUtils {
   }
 
   /**
-   * Variable length encoding based on the go implementation of binary/variant PutUVariant function.
-   *
-   * <p>Note: the range of values is smaller than that of the go implementation due to use of signed
-   * long type used in the input.
+   * Variable length encoding in LEB128 based on the go implementation of the binary/variant
+   * PutUVariant function.
    *
    * @param input Number to be encoded
    * @return Bytes encoded in unsigned varint format
    */
   public static Bytes putUVariant(final BigInteger input) {
+    final BigInteger highOrderBitValue = new BigInteger(1, Bytes.fromHexString("0x80").toArray());
+
     Bytes output = Bytes.wrap();
     BigInteger x = input;
-    while ((x.longValue() & 0xff) >= 0x80) {
+    while (x.compareTo(highOrderBitValue) > 0) {
       output = Bytes.concatenate(output, Bytes.of((byte) (x.byteValue() | 0x80)));
       x = x.shiftRight(7);
     }
@@ -64,8 +64,8 @@ public class ByteUtils {
   }
 
   /**
-   * Variable length decoding based on the go implementation of binary/variant ReadUVariant
-   * function.
+   * Variable length decoding of LEB128 based on the go implementation of binary/variant
+   * FromUVariant function.
    *
    * @param input Bytes to be decoded
    * @return Bytes encoded in unsigned varint format
