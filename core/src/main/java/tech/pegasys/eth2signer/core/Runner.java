@@ -279,7 +279,6 @@ public class Runner implements Runnable {
         new HttpServerOptions()
             .setPort(config.getHttpListenPort())
             .setHost(config.getHttpListenHost())
-            .setTcpKeepAlive(false)
             .setIdleTimeout(config.getIdleConnectionTimeoutSeconds())
             .setIdleTimeoutUnit(TimeUnit.SECONDS)
             .setReuseAddress(true)
