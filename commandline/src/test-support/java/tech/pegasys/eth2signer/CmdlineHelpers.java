@@ -20,6 +20,7 @@ public class CmdlineHelpers {
     return "--http-listen-port=5001 "
         + "--http-listen-host=localhost "
         + "--key-store-path=./keys "
+        + "--idle-connection-timeout-seconds=45 "
         + "--logging=INFO ";
   }
 

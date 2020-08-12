@@ -50,5 +50,7 @@ public interface Config {
 
   Optional<TlsOptions> getTlsOptions();
 
+  int getIdleConnectionTimeoutSeconds();
+
   FilecoinAddress.Network getFilecoinNetwork();
 }

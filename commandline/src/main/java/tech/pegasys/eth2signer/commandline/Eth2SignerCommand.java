@@ -167,6 +167,14 @@ public class Eth2SignerCommand implements Config, Runnable {
   private final AllowListHostsProperty metricsHostAllowList = new AllowListHostsProperty();
 
   @Option(
+      names = {"--idle-connection-timeout-seconds"},
+      paramLabel = "<timeout in seconds>",
+      description =
+          "Number of seconds after which an idle connection will be terminated (Default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private int idleConnectionTimeoutSeconds = 30;
+
+  @Option(
       names = {"--filecoin-network"},
       description = "Filecoin network to use for addresses (default: ${DEFAULT-VALUE})",
       paramLabel = "<network name>",
@@ -242,6 +250,11 @@ public class Eth2SignerCommand implements Config, Runnable {
   }
 
   @Override
+  public int getIdleConnectionTimeoutSeconds() {
+    return idleConnectionTimeoutSeconds;
+  }
+
+  @Override
   public Network getFilecoinNetwork() {
     return filecoinNetwork;
   }
@@ -263,6 +276,7 @@ public class Eth2SignerCommand implements Config, Runnable {
         .add("metricCategories", metricCategories)
         .add("metricsHostAllowList", metricsHostAllowList)
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
+        .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
         .add("filecoinNetwork", filecoinNetwork)
         .toString();
   }
