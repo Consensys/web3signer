@@ -34,25 +34,28 @@ public class SigningService {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Upcheck upcheck = new Upcheck();
-  private final PublicKeys publicKeys;
+  private final PublicKeys ethPublicKeys;
+  private final PublicKeys fcPublicKeys;
   private final List<SignerForIdentifier<?>> signerForIdentifierList;
 
   public SigningService(
-      final PublicKeys publicKeys, final List<SignerForIdentifier<?>> signerForIdentifierList) {
-    this.publicKeys = publicKeys;
+      final PublicKeys ethPublicKeys,
+      final PublicKeys fcPublicKeys,
+      final List<SignerForIdentifier<?>> signerForIdentifierList) {
+    this.ethPublicKeys = ethPublicKeys;
+    this.fcPublicKeys = fcPublicKeys;
     this.signerForIdentifierList = signerForIdentifierList;
   }
 
   @JsonRpcMethod("public_keys")
   public String[] publicKeys(@JsonRpcParam("keyType") final KeyType keyType) {
-    return publicKeys.list(keyType).toArray(String[]::new);
+    return ethPublicKeys.list(keyType).toArray(String[]::new);
   }
 
   @JsonRpcMethod("sign")
   public String sign(
       @JsonRpcParam("identifier") final String identifier,
       @JsonRpcParam("data") final String dataToSign) {
-
     return signerForIdentifierList.stream()
         .map(signerForIdentifier -> signerForIdentifier.sign(identifier, convertData(dataToSign)))
         .flatMap(Optional::stream)
@@ -78,5 +81,10 @@ public class SigningService {
   @JsonRpcMethod
   public String upcheck() {
     return upcheck.status();
+  }
+
+  @JsonRpcMethod("Filecoin.WalletList")
+  public List<String> filecoinWalletList() {
+    return fcPublicKeys.list(KeyType.SECP256K1);
   }
 }

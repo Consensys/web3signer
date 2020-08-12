@@ -51,11 +51,19 @@ public class FilecoinAddress {
   private final Protocol protocol;
   private final Bytes payload;
 
+  public static FilecoinAddress blsAddress(final Bytes publicKey) {
+    return new FilecoinAddress(BLS, publicKey);
+  }
+
+  public static FilecoinAddress secpAddress(final Bytes publicKey) {
+    return new FilecoinAddress(Protocol.SECP256K1, Blake2b.sum160(publicKey));
+  }
+
   public static FilecoinAddress fromString(final String address) {
     return decode(address);
   }
 
-  public FilecoinAddress(final Protocol protocol, final Bytes payload) {
+  private FilecoinAddress(final Protocol protocol, final Bytes payload) {
     this.protocol = protocol;
     this.payload = payload;
   }

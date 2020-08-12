@@ -12,22 +12,29 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
+import tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network;
 import tech.pegasys.signers.secp256k1.api.Signer;
 
+import java.security.interfaces.ECPublicKey;
+
 import org.apache.tuweni.bytes.Bytes;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 
-public class SecpArtifactSigner implements ArtifactSigner {
-
+public class FcSecpArtifactSigner implements ArtifactSigner {
   private final Signer signer;
 
-  public SecpArtifactSigner(final Signer signer) {
+  public FcSecpArtifactSigner(final Signer signer) {
     this.signer = signer;
   }
 
   @Override
   public String getIdentifier() {
-    return EthPublicKeyUtils.toHexString(signer.getPublicKey());
+    final ECPublicKey publicKey = signer.getPublicKey();
+    final SubjectPublicKeyInfo subjectPublicKeyInfo =
+        SubjectPublicKeyInfo.getInstance(ASN1Sequence.getInstance(publicKey.getEncoded()));
+    final Bytes encodedPublicKey = Bytes.wrap(subjectPublicKeyInfo.getPublicKeyData().getBytes());
+    return FilecoinAddress.secpAddress(encodedPublicKey).encode(Network.TESTNET);
   }
 
   @Override

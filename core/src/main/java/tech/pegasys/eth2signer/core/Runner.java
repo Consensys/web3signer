@@ -23,6 +23,7 @@ import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.UnsupportedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerProviderFactory;
 import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
@@ -133,24 +134,32 @@ public class Runner implements Runnable {
           factory.createBlsSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
       blsSignerProvider.cacheAllSigners();
 
-      final DirectoryBackedArtifactSignerProvider secpSignerProvider =
-          factory.createSecpSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
-      secpSignerProvider.cacheAllSigners();
+      final DirectoryBackedArtifactSignerProvider ethSecpSignerProvider =
+          factory.createEthSecpSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
+      ethSecpSignerProvider.cacheAllSigners();
 
-      final PublicKeys publicKeys = new PublicKeys(blsSignerProvider, secpSignerProvider);
+      final DirectoryBackedArtifactSignerProvider fcSecpSignerProvider =
+          factory.createFilecoinSecpSignerProvider(
+              config.getKeyConfigPath(), config.getKeyCacheLimit());
+      ethSecpSignerProvider.cacheAllSigners();
+
+      final PublicKeys ethPublicKeys = new PublicKeys(blsSignerProvider, ethSecpSignerProvider);
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =
           new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
       final SignerForIdentifier<SecpArtifactSignature> secpSigner =
-          new SignerForIdentifier<>(secpSignerProvider, this::formatSecpSignature, SECP256K1);
+          new SignerForIdentifier<>(ethSecpSignerProvider, this::formatSecpSignature, SECP256K1);
+
+      final PublicKeys fcPublicKeys =
+          new PublicKeys(new UnsupportedArtifactSignerProvider(), fcSecpSignerProvider);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
-          createOpenApiRouterFactory(vertx, publicKeys, blsSigner, secpSigner);
+          createOpenApiRouterFactory(vertx, ethPublicKeys, blsSigner, secpSigner);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
 
       // register non-openapi routes ...
       registerOpenApiSpecRoute(router); // serve static openapi spec
-      registerJsonRpcRoute(router, publicKeys, List.of(blsSigner, secpSigner));
+      registerJsonRpcRoute(router, ethPublicKeys, fcPublicKeys, List.of(blsSigner, secpSigner));
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -254,10 +263,12 @@ public class Runner implements Runnable {
 
   private void registerJsonRpcRoute(
       final Router router,
-      final PublicKeys publicKeys,
+      final PublicKeys ethPublicKeys,
+      final PublicKeys fcPublicKeys,
       final List<SignerForIdentifier<?>> signerForIdentifierList) {
     // Handles JSON-RPC calls on /rpc/v1
-    final SigningService signingService = new SigningService(publicKeys, signerForIdentifierList);
+    final SigningService signingService =
+        new SigningService(ethPublicKeys, fcPublicKeys, signerForIdentifierList);
     final JsonRpcServer jsonRpcServer = new JsonRpcServer();
     router
         .post(JSON_RPC_PATH)

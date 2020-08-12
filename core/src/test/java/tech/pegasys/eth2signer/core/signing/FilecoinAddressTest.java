@@ -82,7 +82,7 @@ class FilecoinAddressTest {
     assertThat(filecoinAddress.getPayload().toUnprefixedHexString()).isEqualTo(expectedPayload);
     assertThat(filecoinAddress.getProtocol()).isEqualTo(bls);
 
-    final String encodedAddress = filecoinAddress.encode(Network.MAINNET);
+    String encodedAddress = filecoinAddress.encode(Network.MAINNET);
     assertThat(encodedAddress).isEqualTo(address);
   }
 }
