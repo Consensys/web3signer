@@ -132,11 +132,11 @@ public class Runner implements Runnable {
 
       final DirectoryBackedArtifactSignerProvider blsSignerProvider =
           factory.createBlsSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
-      blsSignerProvider.cacheAllSigners();
+      blsSignerProvider.loadSigners();
 
       final DirectoryBackedArtifactSignerProvider secpSignerProvider =
           factory.createSecpSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
-      secpSignerProvider.cacheAllSigners();
+      secpSignerProvider.loadSigners();
 
       final PublicKeys publicKeys = new PublicKeys(blsSignerProvider, secpSignerProvider);
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =

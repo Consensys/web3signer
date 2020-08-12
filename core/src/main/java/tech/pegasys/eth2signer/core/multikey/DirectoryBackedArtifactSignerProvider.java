@@ -12,34 +12,27 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
+import static java.util.Collections.emptySet;
+
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.NoSuchElementException;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
@@ -51,7 +44,7 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   private final Path configsDirectory;
   private final String fileExtension;
   private final SignerParser signerParser;
-  private final LoadingCache<String, ArtifactSigner> artifactSignerCache;
+  private final Map<String, ArtifactSigner> artifactSigners = new ConcurrentHashMap<>();
 
   public DirectoryBackedArtifactSignerProvider(
       final Path rootDirectory,
@@ -61,122 +54,79 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
     this.configsDirectory = rootDirectory;
     this.fileExtension = fileExtension;
     this.signerParser = signerParser;
-    this.artifactSignerCache =
-        CacheBuilder.newBuilder()
-            .maximumSize(maxSize)
-            .build(CacheLoader.from((i) -> loadSignerForIdentifier(i).orElseThrow()));
   }
 
   @Override
   public Optional<ArtifactSigner> getSigner(final String signerIdentifier) {
     final String normalisedIdentifier = normaliseIdentifier(signerIdentifier);
-    final ArtifactSigner signer;
-    try {
-      signer = artifactSignerCache.get(normalisedIdentifier);
-    } catch (UncheckedExecutionException e) {
-      if (e.getCause() instanceof NoSuchElementException) {
-        LOG.error("No valid matching metadata file found for the identifier {}", signerIdentifier);
-      } else {
-        LOG.error("Error loading for signer for identifier {}", signerIdentifier);
-      }
-      return Optional.empty();
-    } catch (Exception e) {
-      LOG.error("Error loading for signer for identifier {}", signerIdentifier);
-      return Optional.empty();
-    }
+    final Optional<ArtifactSigner> result =
+        Optional.ofNullable(artifactSigners.get(normalisedIdentifier));
 
-    if (!signerMatchesIdentifier(signer, signerIdentifier)) {
-      LOG.error(
-          "Signing metadata config does not correspond to the specified signer identifier {}",
-          signer.getIdentifier());
-      return Optional.empty();
+    if (result.isEmpty()) {
+      LOG.error("No signer was loaded matching identifitier '{}'", signerIdentifier);
     }
-    return Optional.of(signer);
+    return result;
   }
 
   @Override
   public Set<String> availableIdentifiers() {
-    return allIdentifiers()
+    return artifactSigners
+        .keySet()
         .parallelStream()
-        .map(this::getSigner)
-        .flatMap(Optional::stream)
-        .map(ArtifactSigner::getIdentifier)
+        .map(id -> "0x" + id)
         .collect(Collectors.toSet());
   }
 
-  private Set<String> allIdentifiers() {
-    final Function<Path, String> getSignerIdentifier =
-        file -> FilenameUtils.getBaseName(file.toString());
-    return findSigners(this::matchesFileExtension, getSignerIdentifier).stream()
-        .filter(Objects::nonNull)
-        .map(identifier -> "0x" + normaliseIdentifier(identifier))
-        .collect(Collectors.toSet());
-  }
-
-  public void cacheAllSigners() {
+  public void loadSigners() {
     final Collection<ArtifactSigner> allSigners =
         findSigners(this::matchesFileExtension, signerParser::parse);
-    allSigners.forEach(
-        signer -> artifactSignerCache.put(normaliseIdentifier(signer.getIdentifier()), signer));
-    LOG.info("Loading signers complete");
+    LOG.info(
+        "Loading signers complete. Signers = {}, {}", allSigners.size(), artifactSigners.size());
+    allSigners
+        .parallelStream()
+        .forEach(
+            signer -> artifactSigners.put(normaliseIdentifier(signer.getIdentifier()), signer));
+    LOG.info("Created artifactSigners = {}", artifactSigners.size());
   }
 
   @VisibleForTesting
-  protected LoadingCache<String, ArtifactSigner> getArtifactSignerCache() {
-    return artifactSignerCache;
-  }
-
-  private Optional<ArtifactSigner> loadSignerForIdentifier(final String signerIdentifier) {
-    final Predicate<Path> pathFilter = signerIdentifierFilenameFilter(signerIdentifier);
-    final Collection<ArtifactSigner> matchingSigners = findSigners(pathFilter, signerParser::parse);
-    if (matchingSigners.size() > 1) {
-      LOG.error(
-          "Found multiple signing metadata file matches for signer identifier " + signerIdentifier);
-      return Optional.empty();
-    } else if (matchingSigners.isEmpty()) {
-      return Optional.empty();
-    } else {
-      return Optional.of(matchingSigners.iterator().next());
-    }
+  protected Map<String, ArtifactSigner> getArtifactSignerCache() {
+    return artifactSigners;
   }
 
   private <T> Collection<T> findSigners(
       final Predicate<? super Path> filter, final Function<Path, T> mapper) {
-    final Collection<T> signers = new HashSet<>();
-
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
-      fileStream.filter(filter).parallel().forEach(signerConfigFile -> {
-        try {
-          LOG.debug("Loading {}", signerConfigFile);
-          signers.add(mapper.apply(signerConfigFile));
-        } catch (final Exception e) {
-          renderException(e, signerConfigFile.getFileName().toString());
-        }
-      });
+      LOG.info("Config files count = {}", fileStream.count());
     } catch (final IOException e) {
       LOG.error("Didn't want this one", e);
     }
-    return signers;
-  }
 
-  private Predicate<Path> signerIdentifierFilenameFilter(final String signerIdentifier) {
-    return entry -> {
-      final String baseName = FilenameUtils.getBaseName(entry.toString());
-      return matchesFileExtension(entry)
-          && baseName.toLowerCase().endsWith(signerIdentifier.toLowerCase());
-    };
+    try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
+      return fileStream
+          .parallel()
+          .filter(filter)
+          .map(
+              signerConfigFile -> {
+                try {
+                  return mapper.apply(signerConfigFile);
+                } catch (final Exception e) {
+                  renderException(e, signerConfigFile.getFileName().toString());
+                  return null;
+                }
+              })
+          .filter(Objects::nonNull)
+          .collect(Collectors.toSet());
+    } catch (final IOException e) {
+      LOG.error("Didn't want this one", e);
+    }
+    return emptySet();
   }
 
   private boolean matchesFileExtension(final Path filename) {
     final boolean isHidden = filename.toFile().isHidden();
     final String extension = FilenameUtils.getExtension(filename.toString());
     return !isHidden && extension.toLowerCase().endsWith(fileExtension.toLowerCase());
-  }
-
-  private boolean signerMatchesIdentifier(
-      final ArtifactSigner signer, final String signerIdentifier) {
-    final String identifier = signer.getIdentifier();
-    return normaliseIdentifier(identifier).equalsIgnoreCase(normaliseIdentifier(signerIdentifier));
   }
 
   private String normaliseIdentifier(final String signerIdentifier) {

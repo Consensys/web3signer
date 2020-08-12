@@ -99,6 +99,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
 
+    signerProvider.loadSigners();
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
@@ -108,7 +109,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
         .contains("Error parsing signing metadata file " + filename.getFileName());
     assertThat(errorMsgs.get(0)).contains("Invalid fingerprint");
     assertThat(errorMsgs.get(1))
-        .contains("No valid matching metadata file found for the identifier " + PUBLIC_KEY);
+        .contains("No signer was loaded matching identifitier '" + PUBLIC_KEY + "'");
   }
 
   @Test
@@ -127,6 +128,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
       final Path filename = createFileWithContent(signingMetadata);
 
       configsDirectory.toFile().setWritable(false);
+      signerProvider.loadSigners();
       final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
       assertThat(signer).isEmpty();
 
@@ -151,7 +153,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     signingMetadata.put("tlsEnabled", "false");
 
     final Path filename = createFileWithContent(signingMetadata);
-
+    signerProvider.loadSigners();
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
@@ -172,6 +174,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
 
+    signerProvider.loadSigners();
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
