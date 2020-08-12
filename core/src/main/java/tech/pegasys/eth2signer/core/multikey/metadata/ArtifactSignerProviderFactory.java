@@ -16,6 +16,7 @@ import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvid
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.EthSecpArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.FcSecpArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.FilecoinAddress;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 
@@ -58,10 +59,15 @@ public class ArtifactSignerProviderFactory {
   }
 
   public DirectoryBackedArtifactSignerProvider createFilecoinSecpSignerProvider(
-      final Path keyConfigPath, final long cacheSize) {
+      final Path keyConfigPath,
+      final long cacheSize,
+      final FilecoinAddress.Network filecoinNetwork) {
     final ArtifactSignerFactory artifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory, keyConfigPath, azureFactory, FcSecpArtifactSigner::new);
+            hashicorpConnectionFactory,
+            keyConfigPath,
+            azureFactory,
+            signer -> new FcSecpArtifactSigner(signer, filecoinNetwork));
 
     return new DirectoryBackedArtifactSignerProvider(
         keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory), cacheSize);

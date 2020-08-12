@@ -25,6 +25,8 @@ import tech.pegasys.eth2signer.core.Runner;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
+import tech.pegasys.eth2signer.core.signing.FilecoinAddress;
+import tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -164,6 +166,13 @@ public class Eth2SignerCommand implements Config, Runnable {
       defaultValue = "localhost,127.0.0.1")
   private final AllowListHostsProperty metricsHostAllowList = new AllowListHostsProperty();
 
+  @Option(
+      names = {"--filecoin-network"},
+      description = "Filecoin network to use for addresses (default: ${DEFAULT-VALUE})",
+      paramLabel = "<network name>",
+      arity = "1")
+  private final FilecoinAddress.Network filecoinNetwork = Network.TESTNET;
+
   @ArgGroup(exclusive = false)
   private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
@@ -233,6 +242,11 @@ public class Eth2SignerCommand implements Config, Runnable {
   }
 
   @Override
+  public Network getFilecoinNetwork() {
+    return filecoinNetwork;
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -249,6 +263,7 @@ public class Eth2SignerCommand implements Config, Runnable {
         .add("metricCategories", metricCategories)
         .add("metricsHostAllowList", metricsHostAllowList)
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
+        .add("filecoinNetwork", filecoinNetwork)
         .toString();
   }
 

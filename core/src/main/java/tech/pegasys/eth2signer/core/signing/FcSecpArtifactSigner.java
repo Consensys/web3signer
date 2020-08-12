@@ -23,9 +23,11 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 
 public class FcSecpArtifactSigner implements ArtifactSigner {
   private final Signer signer;
+  private final FilecoinAddress.Network filecoinNetwork;
 
-  public FcSecpArtifactSigner(final Signer signer) {
+  public FcSecpArtifactSigner(final Signer signer, final Network filecoinNetwork) {
     this.signer = signer;
+    this.filecoinNetwork = filecoinNetwork;
   }
 
   @Override
@@ -34,7 +36,7 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
     final SubjectPublicKeyInfo subjectPublicKeyInfo =
         SubjectPublicKeyInfo.getInstance(ASN1Sequence.getInstance(publicKey.getEncoded()));
     final Bytes encodedPublicKey = Bytes.wrap(subjectPublicKeyInfo.getPublicKeyData().getBytes());
-    return FilecoinAddress.secpAddress(encodedPublicKey).encode(Network.TESTNET);
+    return FilecoinAddress.secpAddress(encodedPublicKey).encode(filecoinNetwork);
   }
 
   @Override

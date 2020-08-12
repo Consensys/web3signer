@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.config;
 
+import tech.pegasys.eth2signer.core.signing.FilecoinAddress;
+
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -47,4 +49,6 @@ public interface Config {
   Long getKeyCacheLimit();
 
   Optional<TlsOptions> getTlsOptions();
+
+  FilecoinAddress.Network getFilecoinNetwork();
 }

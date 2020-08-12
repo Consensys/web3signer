@@ -140,7 +140,7 @@ public class Runner implements Runnable {
 
       final DirectoryBackedArtifactSignerProvider fcSecpSignerProvider =
           factory.createFilecoinSecpSignerProvider(
-              config.getKeyConfigPath(), config.getKeyCacheLimit());
+              config.getKeyConfigPath(), config.getKeyCacheLimit(), config.getFilecoinNetwork());
       ethSecpSignerProvider.cacheAllSigners();
 
       final PublicKeys ethPublicKeys = new PublicKeys(blsSignerProvider, ethSecpSignerProvider);
