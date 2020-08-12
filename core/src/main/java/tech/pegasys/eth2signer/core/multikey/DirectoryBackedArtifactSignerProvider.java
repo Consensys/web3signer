@@ -12,6 +12,10 @@
  */
 package tech.pegasys.eth2signer.core.multikey;
 
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -110,17 +114,11 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   public void cacheAllSigners() {
-    final Set<String> identifiers = allIdentifiers();
-    LOG.info("Loading {} signers", identifiers.size());
-    identifiers.parallelStream().forEach(this::cacheSigner);
+    final Collection<ArtifactSigner> allSigners =
+        findSigners(this::matchesFileExtension, signerParser::parse);
+    allSigners.forEach(
+        signer -> artifactSignerCache.put(normaliseIdentifier(signer.getIdentifier()), signer));
     LOG.info("Loading signers complete");
-  }
-
-  private void cacheSigner(final String identifier) {
-    final String normaliseIdentifier = normaliseIdentifier(identifier);
-    final Optional<ArtifactSigner> loadedSigner = loadSignerForIdentifier(normaliseIdentifier);
-    // no need to log if signer couldn't be found this is done by loadSignerForIdentifier
-    loadedSigner.ifPresent(signer -> artifactSignerCache.put(normaliseIdentifier, signer));
   }
 
   @VisibleForTesting
@@ -129,7 +127,7 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   private Optional<ArtifactSigner> loadSignerForIdentifier(final String signerIdentifier) {
-    final Filter<Path> pathFilter = signerIdentifierFilenameFilter(signerIdentifier);
+    final Predicate<Path> pathFilter = signerIdentifierFilenameFilter(signerIdentifier);
     final Collection<ArtifactSigner> matchingSigners = findSigners(pathFilter, signerParser::parse);
     if (matchingSigners.size() > 1) {
       LOG.error(
@@ -143,26 +141,25 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   }
 
   private <T> Collection<T> findSigners(
-      final DirectoryStream.Filter<? super Path> filter, final Function<Path, T> mapper) {
+      final Predicate<? super Path> filter, final Function<Path, T> mapper) {
     final Collection<T> signers = new HashSet<>();
 
-    try (final DirectoryStream<Path> directoryStream =
-        Files.newDirectoryStream(configsDirectory, filter)) {
-      for (final Path file : directoryStream) {
+    try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
+      fileStream.filter(filter).parallel().forEach(signerConfigFile -> {
         try {
-          signers.add(mapper.apply(file));
+          LOG.debug("Loading {}", signerConfigFile);
+          signers.add(mapper.apply(signerConfigFile));
         } catch (final Exception e) {
-          renderException(e, file.getFileName().toString());
+          renderException(e, signerConfigFile.getFileName().toString());
         }
-      }
-      return signers;
-    } catch (final IOException | SecurityException e) {
-      LOG.warn("Error searching for signing metadata files: {}", e.getMessage());
-      return Collections.emptySet();
+      });
+    } catch (final IOException e) {
+      LOG.error("Didn't want this one", e);
     }
+    return signers;
   }
 
-  private Filter<Path> signerIdentifierFilenameFilter(final String signerIdentifier) {
+  private Predicate<Path> signerIdentifierFilenameFilter(final String signerIdentifier) {
     return entry -> {
       final String baseName = FilenameUtils.getBaseName(entry.toString());
       return matchesFileExtension(entry)

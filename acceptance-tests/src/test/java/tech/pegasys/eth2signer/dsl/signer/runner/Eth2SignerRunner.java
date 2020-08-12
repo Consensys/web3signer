@@ -170,7 +170,7 @@ public abstract class Eth2SignerRunner {
   }
 
   private void awaitPortsFile(final Path dataDir) {
-    final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 30;
+    final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 1000;
     final File file = new File(dataDir.toFile(), PORTS_FILENAME);
     Awaitility.waitAtMost(secondsToWait, TimeUnit.SECONDS)
         .until(
