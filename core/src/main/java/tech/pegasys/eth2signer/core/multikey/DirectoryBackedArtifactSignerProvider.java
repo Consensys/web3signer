@@ -83,7 +83,8 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
 
     if (!signerMatchesIdentifier(signer, signerIdentifier)) {
       LOG.error(
-          "Signing metadata config does not correspond to the specified signer identifier {}",
+          "Signing metadata config {} does not correspond to the specified signer identifier {}",
+          signerIdentifier,
           signer.getIdentifier());
       return Optional.empty();
     }

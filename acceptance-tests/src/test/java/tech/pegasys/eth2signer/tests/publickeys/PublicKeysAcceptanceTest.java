@@ -34,9 +34,8 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     initAndStartSigner();
 
     validateApiResponse(callApiPublicKeys(keyType), empty());
-    validateApiResponse(callApiPublicKeys(keyType), empty());
     validateRpcResponse(callRpcPublicKeys(keyType), empty());
-    validateRpcResponse(callRpcPublicKeys(keyType), empty());
+    validateRpcResponse(callFilecoinRpcPublicKeys(), empty());
   }
 
   @ParameterizedTest
@@ -46,9 +45,8 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     initAndStartSigner();
 
     validateApiResponse(callApiPublicKeys(keyType), empty());
-    validateApiResponse(callApiPublicKeys(keyType), empty());
     validateRpcResponse(callRpcPublicKeys(keyType), empty());
-    validateRpcResponse(callRpcPublicKeys(keyType), empty());
+    validateRpcResponse(callFilecoinRpcPublicKeys(), empty());
   }
 
   @ParameterizedTest
@@ -64,9 +62,9 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     validateApiResponse(response, contains(keys));
     validateApiResponse(response, everyItem(not(in(invalidKeys))));
 
-    final Response jsonResponse = callRpcPublicKeys(keyType);
-    validateRpcResponse(jsonResponse, contains(keys));
-    validateRpcResponse(jsonResponse, everyItem(not(in(invalidKeys))));
+    final Response rpcResponse = callRpcPublicKeys(keyType);
+    validateRpcResponse(rpcResponse, contains(keys));
+    validateRpcResponse(rpcResponse, everyItem(not(in(invalidKeys))));
   }
 
   @ParameterizedTest
@@ -113,5 +111,13 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     initAndStartSigner();
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(SECP256K1);
     validateApiResponse(response, containsInAnyOrder("0x" + PUBLIC_KEY_HEX_STRING));
+  }
+
+  @Test
+  public void fileCoinSecpKeysAreReturnedInPublicKeyResponse() {
+    final String[] keys = createFilecoinSecpKeys(true, SECP_PRIVATE_KEY_1, SECP_PRIVATE_KEY_2);
+    initAndStartSigner();
+
+    validateRpcResponse(callFilecoinRpcPublicKeys(), containsInAnyOrder(keys));
   }
 }
