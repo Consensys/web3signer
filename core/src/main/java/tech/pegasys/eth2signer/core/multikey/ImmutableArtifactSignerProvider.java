@@ -38,7 +38,13 @@ public class ImmutableArtifactSignerProvider implements ArtifactSignerProvider {
     final Map<String, ArtifactSigner> signerMap =
         signers
             .parallelStream()
-            .collect(Collectors.toMap(ArtifactSigner::getIdentifier, Function.identity()));
+            .collect(
+                Collectors.toMap(
+                    signer -> normaliseIdentifier(signer.getIdentifier()), Function.identity(),
+                (signer1, signer2) -> {
+                  LOG.warn("Duplicate keys were found.");
+                  return signer1;
+                }));
     return new ImmutableArtifactSignerProvider(signerMap);
   }
 
@@ -58,9 +64,10 @@ public class ImmutableArtifactSignerProvider implements ArtifactSignerProvider {
     return signers.keySet().parallelStream().map(id -> "0x" + id).collect(Collectors.toSet());
   }
 
-  private String normaliseIdentifier(final String signerIdentifier) {
-    return signerIdentifier.toLowerCase().startsWith("0x")
-        ? signerIdentifier.substring(2)
-        : signerIdentifier;
+  private static String normaliseIdentifier(final String signerIdentifier) {
+    final String lowerCaseIdentifier = signerIdentifier.toLowerCase();
+    return lowerCaseIdentifier.startsWith("0x")
+        ? lowerCaseIdentifier.substring(2)
+        : lowerCaseIdentifier;
   }
 }
