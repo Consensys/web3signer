@@ -21,8 +21,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Lists;
+import java.util.List;
+import java.util.stream.Collectors;
 import tech.pegasys.eth2signer.FileHiddenUtil;
 import tech.pegasys.eth2signer.TrackingLogAppender;
+import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
@@ -47,10 +51,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DirectoryBackedArtifactSignerProviderTest {
+class DirectoryLoaderTest {
 
-  @TempDir Path configsDirectory;
-  @Mock private SignerParser signerParser;
+  @TempDir
+  Path configsDirectory;
+  @Mock
+  private SignerParser signerParser;
 
   private static final String FILE_EXTENSION = "yaml";
   private static final String PUBLIC_KEY1 =
@@ -67,65 +73,59 @@ class DirectoryBackedArtifactSignerProviderTest {
       "315ed405fafe339603932eebe8dbfd650ce5dafa561f6928664c75db85f97857";
 
   private final ArtifactSigner artifactSigner = createArtifactSigner(PRIVATE_KEY1);
-  private DirectoryBackedArtifactSignerProvider signerProvider;
-
-  @BeforeEach
-  void setup() {
-    signerProvider =
-        new DirectoryBackedArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser);
-  }
 
   @Test
   void signerReturnedForValidMetadataFile() throws IOException {
     final String filename = PUBLIC_KEY1;
     createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
-    signerProvider.loadSigners();
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
-    assertThat(signer).isNotEmpty();
-    assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
+    assertThat(signerList.size()).isOne();
+    assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
     verify(signerParser).parse(pathEndsWith(filename));
   }
 
   @Test
   void signerReturnedWhenIdentifierHasCaseMismatchToFilename() throws IOException {
-    final String filename = PUBLIC_KEY1.toUpperCase();
+    final String filename = "arbitraryFilename.yaml";
     createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
-    signerProvider.loadSigners();
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
-    assertThat(signer).isNotEmpty();
-    assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
+    assertThat(signerList.size()).isOne();
+    assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
     verify(signerParser).parse(pathEndsWith(filename));
   }
 
-  @Test
-  void signerReturnedWhenHasHexPrefix() throws IOException {
-    final String metadataFilename = PUBLIC_KEY1;
-    createFileInConfigsDirectory(metadataFilename);
-    when(signerParser.parse(any())).thenReturn(artifactSigner);
-    signerProvider.loadSigners();
-
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY1);
-
-    assertThat(signer).isNotEmpty();
-    verify(signerParser).parse(pathEndsWith(metadataFilename));
-  }
-
-  @Test
-  void signerReturnedWhenHasUpperCaseHexPrefix() throws IOException {
-    final String metadataFilename = PUBLIC_KEY1;
-    createFileInConfigsDirectory(metadataFilename);
-    when(signerParser.parse(any())).thenReturn(artifactSigner);
-    signerProvider.loadSigners();
-
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY1);
-
-    assertThat(signer).isNotEmpty();
-    verify(signerParser).parse(pathEndsWith(metadataFilename));
-  }
+  // TODO(tmm) - MOVE THIS TO ImmuntableArtifactSignerProvider
+//  @Test
+//  void signerReturnedWhenHasHexPrefix() throws IOException {
+//    final String metadataFilename = PUBLIC_KEY1;
+//    createFileInConfigsDirectory(metadataFilename);
+//    when(signerParser.parse(any())).thenReturn(artifactSigner);
+//    signerProvider.loadSigners();
+//
+//    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY1);
+//
+//    assertThat(signer).isNotEmpty();
+//    verify(signerParser).parse(pathEndsWith(metadataFilename));
+//  }
+//
+//  @Test
+//  void signerReturnedWhenHasUpperCaseHexPrefix() throws IOException {
+//    final String metadataFilename = PUBLIC_KEY1;
+//    createFileInConfigsDirectory(metadataFilename);
+//    when(signerParser.parse(any())).thenReturn(artifactSigner);
+//    signerProvider.loadSigners();
+//
+//    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY1);
+//
+//    assertThat(signer).isNotEmpty();
+//    verify(signerParser).parse(pathEndsWith(metadataFilename));
+//  }
 
   @Test
   @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -134,12 +134,11 @@ class DirectoryBackedArtifactSignerProviderTest {
     final File file = configsDirectory.resolve(metadataFilename).toFile();
     file.createNewFile();
     when(signerParser.parse(any())).thenReturn(artifactSigner);
-    signerProvider.loadSigners();
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY1);
-
-    assertThat(signer).isNotEmpty();
-    assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
+    assertThat(signerList.size()).isOne();
+    assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
     verify(signerParser)
         .parse(argThat((Path path) -> path != null && path.endsWith(metadataFilename)));
   }
@@ -151,9 +150,10 @@ class DirectoryBackedArtifactSignerProviderTest {
     final File file = configsDirectory.resolve(metadataFilename).toFile();
     file.createNewFile();
 
-    signerProvider.loadSigners();
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
-    assertThat(signer).isEmpty();
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+
+    assertThat(signerList).isEmpty();
     verifyNoMoreInteractions(signerParser);
   }
 
@@ -162,23 +162,23 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(PUBLIC_KEY1);
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
 
-    signerProvider.loadSigners();
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
-    assertThat(signer).isEmpty();
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+
+    assertThat(signerList).isEmpty();
   }
 
   @Test
   void failedWithDirectoryErrorReturnEmptySigner() throws IOException {
-    final DirectoryBackedArtifactSignerProvider signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
-            configsDirectory.resolve("idontexist"), FILE_EXTENSION, signerParser);
+    final Path missingDir = configsDirectory.resolve("idontexist");
     createFileInConfigsDirectory(PUBLIC_KEY1);
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(missingDir, FILE_EXTENSION, signerParser));
 
-    signerProvider.loadSigners();
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
-    assertThat(signer).isEmpty();
+    assertThat(signerList).isEmpty();
   }
 
+  //TODO(tmm): NEED TO THINK ABOUT THIS ONE!!!!!
   @Test
   void multipleMatchesForSameIdentifierReturnsASingleSigner() throws IOException {
     final String filename1 = "1_" + PUBLIC_KEY1;
@@ -191,10 +191,10 @@ class DirectoryBackedArtifactSignerProviderTest {
     when(signerParser.parse(pathEndsWith(filename2)))
         .thenReturn(createArtifactSigner(PRIVATE_KEY1));
 
-    signerProvider.loadSigners();
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
 
-    assertThat(signer).isNotEmpty();
+    assertThat(signerList.size()).isEqualTo(1);
   }
 
   @Test
@@ -203,28 +203,32 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
-    signerProvider.loadSigners();
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
-    assertThat(signer).isNotEmpty();
-    assertThat(signer.get().getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+
+    assertThat(signerList.size()).isOne();
+    assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
     verify(signerParser).parse(pathEndsWith(filename));
   }
-
-  @Test
-  void signerIdentifiersReturnedForMetadataFile() throws IOException {
-    createFileInConfigsDirectory(PUBLIC_KEY1);
-    when(signerParser.parse(any())).thenReturn(artifactSigner);
-
-    signerProvider.loadSigners();
-    assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY1);
-  }
+//
+//  @Test
+//  void signerIdentifiersReturnedForMetadataFile() throws IOException {
+//    createFileInConfigsDirectory(PUBLIC_KEY1);
+//    when(signerParser.parse(any())).thenReturn(artifactSigner);
+//
+//    final List<ArtifactSigner> signerList = Lists
+//        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+//
+//    assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY1);
+//  }
 
   @Test
   void signerIdentifiersNotReturnedInvalidMetadataFile() throws IOException {
     createFileInConfigsDirectory(PUBLIC_KEY1);
     createFileInConfigsDirectory(PUBLIC_KEY2);
-    signerProvider.loadSigners();
-    assertThat(signerProvider.availableIdentifiers()).isEmpty();
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+    assertThat(signerList).isEmpty();
   }
 
   @Test
@@ -240,8 +244,12 @@ class DirectoryBackedArtifactSignerProviderTest {
     when(signerParser.parse(pathEndsWith(PUBLIC_KEY2)))
         .thenReturn(createArtifactSigner(PRIVATE_KEY2));
 
-    signerProvider.loadSigners();
-    assertThat(signerProvider.availableIdentifiers()).containsExactly("0x" + PUBLIC_KEY2);
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+
+    assertThat(signerList.size()).isOne();
+    assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY2);
+
     verify(signerParser, never()).parse(key1);
     verify(signerParser).parse(key2);
   }
@@ -260,11 +268,11 @@ class DirectoryBackedArtifactSignerProviderTest {
     when(signerParser.parse(pathEndsWith(PUBLIC_KEY3)))
         .thenReturn(createArtifactSigner(PRIVATE_KEY3));
 
-    signerProvider.loadSigners();
-    final Collection<String> identifiers = signerProvider.availableIdentifiers();
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
 
-    assertThat(identifiers).hasSize(3);
-    assertThat(identifiers)
+    assertThat(signerList).hasSize(3);
+    assertThat(signerList.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList()))
         .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
   }
 
@@ -280,14 +288,14 @@ class DirectoryBackedArtifactSignerProviderTest {
 
     final TrackingLogAppender logAppender = new TrackingLogAppender();
     final Logger logger =
-        (Logger) LogManager.getLogger(DirectoryBackedArtifactSignerProvider.class);
+        (Logger) LogManager.getLogger(DirectoryLoader.class);
     logAppender.start();
     logger.addAppender(logAppender);
 
     try {
       createFileInConfigsDirectory(PUBLIC_KEY1);
-      signerProvider.loadSigners();
-      signerProvider.getSigner(PUBLIC_KEY1);
+      final List<ArtifactSigner> signerList = Lists
+          .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
 
       assertThat(logAppender.getLogMessagesReceived().get(0).getMessage().getFormattedMessage())
           .contains(rootCause.getMessage());
@@ -302,10 +310,10 @@ class DirectoryBackedArtifactSignerProviderTest {
     createFileInConfigsDirectory(PUBLIC_KEY1);
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
 
-    signerProvider.loadSigners();
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
-    assertThat(signer).isEmpty();
-    assertThat(signerProvider.getArtifactSignerCache().size()).isEqualTo(0);
+    final List<ArtifactSigner> signerList = Lists
+        .newArrayList(DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+
+    assertThat(signerList).isEmpty();
   }
 
   @Test

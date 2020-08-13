@@ -14,15 +14,9 @@ package tech.pegasys.eth2signer.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.eth2signer.TrackingLogAppender;
-import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
-import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import io.vertx.core.Vertx;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,10 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.vertx.core.Vertx;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
@@ -43,18 +33,25 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import tech.pegasys.eth2signer.TrackingLogAppender;
+import tech.pegasys.eth2signer.core.multikey.DirectoryLoader;
+import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerProviderFactory;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
-public class DirectoryBackedArtifactSigningProviderIntegrationTest {
+public class ArtifactSignerProviderFactoryIntegrationTest {
 
   @TempDir Path configsDirectory;
   private static final String FILE_EXTENSION = "yaml";
   private static ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
 
-  private DirectoryBackedArtifactSignerProvider signerProvider;
+  private ArtifactSignerProviderFactory providerFactory;
+
   private Vertx vertx;
   private TrackingLogAppender logAppender = new TrackingLogAppender();
   private final Logger logger =
-      (Logger) LogManager.getLogger(DirectoryBackedArtifactSignerProvider.class);
+      (Logger) LogManager.getLogger(DirectoryLoader.class);
 
   private static final String PUBLIC_KEY =
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
@@ -65,12 +62,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
 
-    final ArtifactSignerFactory artifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            configsDirectory, new NoOpMetricsSystem(), hashicorpConnectionFactory);
-    final SignerParser signerParser = new YamlSignerParser(artifactSignerFactory);
-    signerProvider =
-        new DirectoryBackedArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser);
+    providerFactory = new ArtifactSignerProviderFactory(new NoOpMetricsSystem(), vertx, null);
 
     logAppender.start();
     logger.addAppender(logAppender);
@@ -98,7 +90,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
 
-    signerProvider.loadSigners();
+    final ArtifactSignerProvider signerProvider = providerFactory.createBlsSignerProvider(configsDirectory);
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
@@ -127,7 +119,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
       final Path filename = createFileWithContent(signingMetadata);
 
       configsDirectory.toFile().setWritable(false);
-      signerProvider.loadSigners();
+      final ArtifactSignerProvider signerProvider = providerFactory.createBlsSignerProvider(configsDirectory);
       final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
       assertThat(signer).isEmpty();
 
@@ -152,7 +144,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
     signingMetadata.put("tlsEnabled", "false");
 
     final Path filename = createFileWithContent(signingMetadata);
-    signerProvider.loadSigners();
+    final ArtifactSignerProvider signerProvider = providerFactory.createBlsSignerProvider(configsDirectory);
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
@@ -173,7 +165,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
 
-    signerProvider.loadSigners();
+    final ArtifactSignerProvider signerProvider = providerFactory.createBlsSignerProvider(configsDirectory);
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 

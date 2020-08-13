@@ -123,14 +123,14 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
   }
 
   @Test
-  public void loadKeys() {
+  public void ensureSystemCanLoadAndRerpotTenThousandKeysWithinExistingTimeLimits() {
     final int keyCount = 10000;
     final String[] publicKeys = new String[keyCount];
     for (int i = 0; i < keyCount; i++) {
       final Bytes bytes = Bytes.fromHexString(String.format("%064X", i + 1));
       final BLSSecretKey key = BLSSecretKey.fromBytes(bytes);
       final BLSKeyPair keyPair = new BLSKeyPair(key);
-      BLSPublicKey publicKey = keyPair.getPublicKey();
+      final BLSPublicKey publicKey = keyPair.getPublicKey();
       final String configFilename = publicKey.toString().substring(2);
       publicKeys[i] = publicKey.toString();
       final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
