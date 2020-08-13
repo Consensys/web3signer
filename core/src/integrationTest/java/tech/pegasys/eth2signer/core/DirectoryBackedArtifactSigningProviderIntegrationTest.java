@@ -70,8 +70,7 @@ public class DirectoryBackedArtifactSigningProviderIntegrationTest {
             configsDirectory, new NoOpMetricsSystem(), hashicorpConnectionFactory);
     final SignerParser signerParser = new YamlSignerParser(artifactSignerFactory);
     signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
-            configsDirectory, FILE_EXTENSION, signerParser, 0);
+        new DirectoryBackedArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser);
 
     logAppender.start();
     logger.addAppender(logAppender);

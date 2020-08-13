@@ -72,8 +72,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   @BeforeEach
   void setup() {
     signerProvider =
-        new DirectoryBackedArtifactSignerProvider(
-            configsDirectory, FILE_EXTENSION, signerParser, 0);
+        new DirectoryBackedArtifactSignerProvider(configsDirectory, FILE_EXTENSION, signerParser);
   }
 
   @Test
@@ -172,7 +171,7 @@ class DirectoryBackedArtifactSignerProviderTest {
   void failedWithDirectoryErrorReturnEmptySigner() throws IOException {
     final DirectoryBackedArtifactSignerProvider signerProvider =
         new DirectoryBackedArtifactSignerProvider(
-            configsDirectory.resolve("idontexist"), FILE_EXTENSION, signerParser, 5);
+            configsDirectory.resolve("idontexist"), FILE_EXTENSION, signerParser);
     createFileInConfigsDirectory(PUBLIC_KEY1);
 
     signerProvider.loadSigners();

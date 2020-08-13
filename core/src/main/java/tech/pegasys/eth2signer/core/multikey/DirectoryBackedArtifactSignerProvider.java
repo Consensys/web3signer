@@ -47,10 +47,7 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
   private final Map<String, ArtifactSigner> artifactSigners = new ConcurrentHashMap<>();
 
   public DirectoryBackedArtifactSignerProvider(
-      final Path rootDirectory,
-      final String fileExtension,
-      final SignerParser signerParser,
-      final long maxSize) {
+      final Path rootDirectory, final String fileExtension, final SignerParser signerParser) {
     this.configsDirectory = rootDirectory;
     this.fileExtension = fileExtension;
     this.signerParser = signerParser;

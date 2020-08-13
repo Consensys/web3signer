@@ -131,11 +131,11 @@ public class Runner implements Runnable {
           new ArtifactSignerProviderFactory(metricsSystem, vertx, azureFactory);
 
       final DirectoryBackedArtifactSignerProvider blsSignerProvider =
-          factory.createBlsSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
+          factory.createBlsSignerProvider(config.getKeyConfigPath());
       blsSignerProvider.loadSigners();
 
       final DirectoryBackedArtifactSignerProvider secpSignerProvider =
-          factory.createSecpSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
+          factory.createSecpSignerProvider(config.getKeyConfigPath());
       secpSignerProvider.loadSigners();
 
       final PublicKeys publicKeys = new PublicKeys(blsSignerProvider, secpSignerProvider);

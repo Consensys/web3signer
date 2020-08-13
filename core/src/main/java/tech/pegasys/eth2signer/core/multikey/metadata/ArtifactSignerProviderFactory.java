@@ -37,20 +37,18 @@ public class ArtifactSignerProviderFactory {
     this.hashicorpConnectionFactory = new HashicorpConnectionFactory(vertx);
   }
 
-  public DirectoryBackedArtifactSignerProvider createBlsSignerProvider(
-      final Path keyConfigPath, final long cacheSize) {
+  public DirectoryBackedArtifactSignerProvider createBlsSignerProvider(final Path keyConfigPath) {
     final ArtifactSignerFactory artifactSignerFactory =
         new BlsArtifactSignerFactory(keyConfigPath, metricsSystem, hashicorpConnectionFactory);
     return new DirectoryBackedArtifactSignerProvider(
-        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory), cacheSize);
+        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory));
   }
 
-  public DirectoryBackedArtifactSignerProvider createSecpSignerProvider(
-      final Path keyConfigPath, final long cacheSize) {
+  public DirectoryBackedArtifactSignerProvider createSecpSignerProvider(final Path keyConfigPath) {
     final ArtifactSignerFactory artifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(hashicorpConnectionFactory, keyConfigPath, azureFactory);
 
     return new DirectoryBackedArtifactSignerProvider(
-        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory), cacheSize);
+        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory));
   }
 }
