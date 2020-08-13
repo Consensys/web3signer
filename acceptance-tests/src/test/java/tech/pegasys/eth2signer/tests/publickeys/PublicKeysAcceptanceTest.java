@@ -123,7 +123,7 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
   }
 
   @Test
-  public void ensureSystemCanLoadAndRerpotTenThousandKeysWithinExistingTimeLimits() {
+  public void ensureSystemCanLoadAndReportTenThousandKeysWithinExistingTimeLimits() {
     final int keyCount = 10000;
     final String[] publicKeys = new String[keyCount];
     for (int i = 0; i < keyCount; i++) {

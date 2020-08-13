@@ -25,16 +25,16 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ImmutableArtifactSignerProvider implements ArtifactSignerProvider {
+public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Map<String, ArtifactSigner> signers;
 
-  private ImmutableArtifactSignerProvider(final Map<String, ArtifactSigner> signers) {
+  private DefaultArtifactSignerProvider(final Map<String, ArtifactSigner> signers) {
     this.signers = signers;
   }
 
-  public static ImmutableArtifactSignerProvider wrap(final Collection<ArtifactSigner> signers) {
+  public static DefaultArtifactSignerProvider create(final Collection<ArtifactSigner> signers) {
     final Map<String, ArtifactSigner> signerMap =
         signers
             .parallelStream()
@@ -46,11 +46,11 @@ public class ImmutableArtifactSignerProvider implements ArtifactSignerProvider {
                       LOG.warn("Duplicate keys were found.");
                       return signer1;
                     }));
-    return new ImmutableArtifactSignerProvider(signerMap);
+    return new DefaultArtifactSignerProvider(signerMap);
   }
 
   @Override
-  public Optional<ArtifactSigner> getSigner(String identifier) {
+  public Optional<ArtifactSigner> getSigner(final String identifier) {
     final String normalisedIdentifier = normaliseIdentifier(identifier);
     final Optional<ArtifactSigner> result = Optional.ofNullable(signers.get(normalisedIdentifier));
 

@@ -24,7 +24,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-class ImmutableArtifactSignerProviderTest {
+class DefaultArtifactSignerProviderTest {
 
   private static final String PUBLIC_KEY1 =
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
@@ -37,7 +37,7 @@ class ImmutableArtifactSignerProviderTest {
     when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1);
 
     final ArtifactSignerProvider signerProvider =
-        ImmutableArtifactSignerProvider.wrap(List.of(mockSigner));
+        DefaultArtifactSignerProvider.create(List.of(mockSigner));
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
@@ -50,7 +50,7 @@ class ImmutableArtifactSignerProviderTest {
     when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1);
 
     final ArtifactSignerProvider signerProvider =
-        ImmutableArtifactSignerProvider.wrap(List.of(mockSigner));
+        DefaultArtifactSignerProvider.create(List.of(mockSigner));
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
@@ -63,7 +63,7 @@ class ImmutableArtifactSignerProviderTest {
     when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1.toUpperCase());
 
     final ArtifactSignerProvider signerProvider =
-        ImmutableArtifactSignerProvider.wrap(List.of(mockSigner));
+        DefaultArtifactSignerProvider.create(List.of(mockSigner));
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
@@ -78,7 +78,7 @@ class ImmutableArtifactSignerProviderTest {
     when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY1.toUpperCase());
 
     final ArtifactSignerProvider signerProvider =
-        ImmutableArtifactSignerProvider.wrap(List.of(mockSigner1, mockSigner2));
+        DefaultArtifactSignerProvider.create(List.of(mockSigner1, mockSigner2));
 
     assertThat(signerProvider.availableIdentifiers()).hasSize(1);
     assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
@@ -92,7 +92,7 @@ class ImmutableArtifactSignerProviderTest {
     when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY2.toUpperCase());
 
     final ArtifactSignerProvider signerProvider =
-        ImmutableArtifactSignerProvider.wrap(List.of(mockSigner1, mockSigner2));
+        DefaultArtifactSignerProvider.create(List.of(mockSigner1, mockSigner2));
 
     assertThat(signerProvider.availableIdentifiers()).hasSize(2);
     assertThat(signerProvider.availableIdentifiers())

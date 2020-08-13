@@ -12,8 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
+import tech.pegasys.eth2signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.DirectoryLoader;
-import tech.pegasys.eth2signer.core.multikey.ImmutableArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -43,7 +43,7 @@ public class ArtifactSignerProviderFactory {
     final ArtifactSignerFactory artifactSignerFactory =
         new BlsArtifactSignerFactory(keyConfigPath, metricsSystem, hashicorpConnectionFactory);
 
-    return ImmutableArtifactSignerProvider.wrap(
+    return DefaultArtifactSignerProvider.create(
         DirectoryLoader.loadFromDisk(
             keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
   }
@@ -52,7 +52,7 @@ public class ArtifactSignerProviderFactory {
     final ArtifactSignerFactory artifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(hashicorpConnectionFactory, keyConfigPath, azureFactory);
 
-    return ImmutableArtifactSignerProvider.wrap(
+    return DefaultArtifactSignerProvider.create(
         DirectoryLoader.loadFromDisk(
             keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
   }

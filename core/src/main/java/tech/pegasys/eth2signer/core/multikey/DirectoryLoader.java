@@ -47,12 +47,12 @@ public class DirectoryLoader {
   public static Collection<ArtifactSigner> loadFromDisk(
       final Path rootDirectory, final String fileExtension, final SignerParser signerParser) {
     final DirectoryLoader loader = new DirectoryLoader(rootDirectory, fileExtension, signerParser);
-    final Collection<ArtifactSigner> signers = loader.operateOnFileSubset();
+    final Collection<ArtifactSigner> signers = loader.loadFiles();
     LOG.info("Loaded {} signers", signers.size());
     return signers;
   }
 
-  public Collection<ArtifactSigner> operateOnFileSubset() {
+  private Collection<ArtifactSigner> loadFiles() {
 
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
