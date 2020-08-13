@@ -79,14 +79,13 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
 
   public void loadSigners() {
     final Collection<ArtifactSigner> allSigners =
-        findSigners(this::matchesFileExtension, signerParser::parse);
-    LOG.info(
-        "Loading signers complete. Signers = {}, {}", allSigners.size(), artifactSigners.size());
+        operateOnFileSubset(this::matchesFileExtension, signerParser::parse);
+
     allSigners
         .parallelStream()
         .forEach(
             signer -> artifactSigners.put(normaliseIdentifier(signer.getIdentifier()), signer));
-    LOG.info("Created artifactSigners = {}", artifactSigners.size());
+    LOG.info("Loaded {} signers", allSigners.size());
   }
 
   @VisibleForTesting
@@ -94,13 +93,8 @@ public class DirectoryBackedArtifactSignerProvider implements ArtifactSignerProv
     return artifactSigners;
   }
 
-  private <T> Collection<T> findSigners(
+  private <T> Collection<T> operateOnFileSubset(
       final Predicate<? super Path> filter, final Function<Path, T> mapper) {
-    try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
-      LOG.info("Config files count = {}", fileStream.count());
-    } catch (final IOException e) {
-      LOG.error("Didn't want this one", e);
-    }
 
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream

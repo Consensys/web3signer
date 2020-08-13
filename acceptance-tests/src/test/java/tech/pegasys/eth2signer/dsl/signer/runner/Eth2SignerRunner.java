@@ -120,7 +120,6 @@ public abstract class Eth2SignerRunner {
       params.add("--data-path");
       params.add(dataPath.toAbsolutePath().toString());
     }
-    params.add("--key-cache-limit=5");
 
     params.addAll(createServerTlsArgs());
 
@@ -171,7 +170,7 @@ public abstract class Eth2SignerRunner {
   }
 
   private void awaitPortsFile(final Path dataDir) {
-    final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 1000;
+    final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 30;
     final File file = new File(dataDir.toFile(), PORTS_FILENAME);
     Awaitility.waitAtMost(secondsToWait, TimeUnit.SECONDS)
         .until(
