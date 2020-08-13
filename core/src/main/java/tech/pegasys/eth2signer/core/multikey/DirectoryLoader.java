@@ -9,29 +9,26 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.eth2signer.core.multikey;
 
 import static java.util.Collections.emptySet;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 
 public class DirectoryLoader {
 
@@ -40,15 +37,15 @@ public class DirectoryLoader {
   private final String fileExtension;
   private final SignerParser signerParser;
 
-  public DirectoryLoader(final Path configsDirectory, final String fileExtension,
-      final SignerParser signerParser) {
+  public DirectoryLoader(
+      final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
     this.configsDirectory = configsDirectory;
     this.fileExtension = fileExtension;
     this.signerParser = signerParser;
   }
 
-  public static Collection<ArtifactSigner> loadFromDisk(final Path rootDirectory,
-      final String fileExtension, final SignerParser signerParser) {
+  public static Collection<ArtifactSigner> loadFromDisk(
+      final Path rootDirectory, final String fileExtension, final SignerParser signerParser) {
     final DirectoryLoader loader = new DirectoryLoader(rootDirectory, fileExtension, signerParser);
     final Collection<ArtifactSigner> signers = loader.operateOnFileSubset();
     LOG.info("Loaded {} signers", signers.size());

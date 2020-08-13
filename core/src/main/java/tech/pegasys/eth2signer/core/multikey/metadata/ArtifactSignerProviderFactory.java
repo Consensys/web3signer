@@ -43,15 +43,17 @@ public class ArtifactSignerProviderFactory {
     final ArtifactSignerFactory artifactSignerFactory =
         new BlsArtifactSignerFactory(keyConfigPath, metricsSystem, hashicorpConnectionFactory);
 
-    return ImmutableArtifactSignerProvider.wrap(DirectoryLoader.loadFromDisk(
-        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
+    return ImmutableArtifactSignerProvider.wrap(
+        DirectoryLoader.loadFromDisk(
+            keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
   }
 
   public ArtifactSignerProvider createSecpSignerProvider(final Path keyConfigPath) {
     final ArtifactSignerFactory artifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(hashicorpConnectionFactory, keyConfigPath, azureFactory);
 
-    return ImmutableArtifactSignerProvider.wrap(DirectoryLoader.loadFromDisk(
-        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
+    return ImmutableArtifactSignerProvider.wrap(
+        DirectoryLoader.loadFromDisk(
+            keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
   }
 }
