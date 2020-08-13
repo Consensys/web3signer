@@ -40,11 +40,12 @@ public class ImmutableArtifactSignerProvider implements ArtifactSignerProvider {
             .parallelStream()
             .collect(
                 Collectors.toMap(
-                    signer -> normaliseIdentifier(signer.getIdentifier()), Function.identity(),
-                (signer1, signer2) -> {
-                  LOG.warn("Duplicate keys were found.");
-                  return signer1;
-                }));
+                    signer -> normaliseIdentifier(signer.getIdentifier()),
+                    Function.identity(),
+                    (signer1, signer2) -> {
+                      LOG.warn("Duplicate keys were found.");
+                      return signer1;
+                    }));
     return new ImmutableArtifactSignerProvider(signerMap);
   }
 

@@ -19,7 +19,6 @@ import tech.pegasys.eth2signer.core.multikey.DirectoryLoader;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerProviderFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -60,8 +59,6 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
   @BeforeEach
   void setup() {
     vertx = Vertx.vertx();
-    final HashicorpConnectionFactory hashicorpConnectionFactory =
-        new HashicorpConnectionFactory(vertx);
 
     providerFactory = new ArtifactSignerProviderFactory(new NoOpMetricsSystem(), vertx, null);
 
@@ -97,12 +94,10 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
     assertThat(signer).isEmpty();
 
     final List<String> errorMsgs = getErrorMessagesFromLogs();
-    assertThat(errorMsgs.size()).isEqualTo(2);
+    assertThat(errorMsgs.size()).isEqualTo(1);
     assertThat(errorMsgs.get(0))
         .contains("Error parsing signing metadata file " + filename.getFileName());
     assertThat(errorMsgs.get(0)).contains("Invalid fingerprint");
-    assertThat(errorMsgs.get(1))
-        .contains("No signer was loaded matching identifitier '" + PUBLIC_KEY + "'");
   }
 
   @Test
