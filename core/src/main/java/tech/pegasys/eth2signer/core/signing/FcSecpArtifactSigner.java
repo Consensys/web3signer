@@ -41,6 +41,6 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
 
   @Override
   public ArtifactSignature sign(final Bytes message) {
-    return new SecpArtifactSignature(signer.sign(message.toArray()));
+    throw new UnsupportedOperationException();
   }
 }
