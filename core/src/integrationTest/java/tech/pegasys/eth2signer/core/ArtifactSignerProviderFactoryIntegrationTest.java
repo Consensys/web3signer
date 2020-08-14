@@ -15,7 +15,7 @@ package tech.pegasys.eth2signer.core;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.eth2signer.TrackingLogAppender;
-import tech.pegasys.eth2signer.core.multikey.DirectoryLoader;
+import tech.pegasys.eth2signer.core.multikey.SignerLoader;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerProviderFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -51,7 +51,7 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
 
   private Vertx vertx;
   private TrackingLogAppender logAppender = new TrackingLogAppender();
-  private final Logger logger = (Logger) LogManager.getLogger(DirectoryLoader.class);
+  private final Logger logger = (Logger) LogManager.getLogger(SignerLoader.class);
 
   private static final String PUBLIC_KEY =
       "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";

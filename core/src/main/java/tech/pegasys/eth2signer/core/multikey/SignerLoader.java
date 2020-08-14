@@ -30,34 +30,17 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DirectoryLoader {
+public class SignerLoader {
 
   private static final Logger LOG = LogManager.getLogger();
-  private final Path configsDirectory;
-  private final String fileExtension;
-  private final SignerParser signerParser;
 
-  public DirectoryLoader(
+  public static Collection<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
-    this.configsDirectory = configsDirectory;
-    this.fileExtension = fileExtension;
-    this.signerParser = signerParser;
-  }
-
-  public static Collection<ArtifactSigner> loadFromDisk(
-      final Path rootDirectory, final String fileExtension, final SignerParser signerParser) {
-    final DirectoryLoader loader = new DirectoryLoader(rootDirectory, fileExtension, signerParser);
-    final Collection<ArtifactSigner> signers = loader.loadFiles();
-    LOG.info("Loaded {} signers", signers.size());
-    return signers;
-  }
-
-  private Collection<ArtifactSigner> loadFiles() {
 
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
           .parallel()
-          .filter(this::matchesFileExtension)
+          .filter(path -> matchesFileExtension(fileExtension, path))
           .map(
               signerConfigFile -> {
                 try {
@@ -75,13 +58,14 @@ public class DirectoryLoader {
     return emptySet();
   }
 
-  private boolean matchesFileExtension(final Path filename) {
+  private static boolean matchesFileExtension(
+      final String validFileExtension, final Path filename) {
     final boolean isHidden = filename.toFile().isHidden();
     final String extension = FilenameUtils.getExtension(filename.toString());
-    return !isHidden && extension.toLowerCase().endsWith(fileExtension.toLowerCase());
+    return !isHidden && extension.toLowerCase().endsWith(validFileExtension.toLowerCase());
   }
 
-  private void renderException(final Throwable t, final String filename) {
+  private static void renderException(final Throwable t, final String filename) {
     LOG.error(
         "Error parsing signing metadata file {}: {}",
         filename,

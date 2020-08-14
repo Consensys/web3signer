@@ -47,7 +47,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class DirectoryLoaderTest {
+class SignerLoaderTest {
 
   @TempDir Path configsDirectory;
   @Mock private SignerParser signerParser;
@@ -74,8 +74,7 @@ class DirectoryLoaderTest {
     createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
@@ -88,8 +87,7 @@ class DirectoryLoaderTest {
     createFileInConfigsDirectory(filename);
     when(signerParser.parse(any())).thenReturn(artifactSigner);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
@@ -104,8 +102,7 @@ class DirectoryLoaderTest {
     file.createNewFile();
     when(signerParser.parse(any())).thenReturn(artifactSigner);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
@@ -121,8 +118,7 @@ class DirectoryLoaderTest {
     file.createNewFile();
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList).isEmpty();
     verifyNoMoreInteractions(signerParser);
@@ -134,8 +130,7 @@ class DirectoryLoaderTest {
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList).isEmpty();
   }
@@ -145,7 +140,7 @@ class DirectoryLoaderTest {
     final Path missingDir = configsDirectory.resolve("idontexist");
     createFileInConfigsDirectory(PUBLIC_KEY1);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(DirectoryLoader.loadFromDisk(missingDir, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(missingDir, FILE_EXTENSION, signerParser));
 
     assertThat(signerList).isEmpty();
   }
@@ -163,8 +158,7 @@ class DirectoryLoaderTest {
         .thenReturn(createArtifactSigner(PRIVATE_KEY1));
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isEqualTo(2);
   }
@@ -176,8 +170,7 @@ class DirectoryLoaderTest {
     when(signerParser.parse(any())).thenReturn(artifactSigner);
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
@@ -189,8 +182,7 @@ class DirectoryLoaderTest {
     createFileInConfigsDirectory(PUBLIC_KEY1);
     createFileInConfigsDirectory(PUBLIC_KEY2);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
     assertThat(signerList).isEmpty();
   }
 
@@ -208,8 +200,7 @@ class DirectoryLoaderTest {
         .thenReturn(createArtifactSigner(PRIVATE_KEY2));
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY2);
@@ -233,8 +224,7 @@ class DirectoryLoaderTest {
         .thenReturn(createArtifactSigner(PRIVATE_KEY3));
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList).hasSize(3);
     assertThat(signerList.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList()))
@@ -252,13 +242,13 @@ class DirectoryLoaderTest {
     when(signerParser.parse(any())).thenThrow(topMostException);
 
     final TrackingLogAppender logAppender = new TrackingLogAppender();
-    final Logger logger = (Logger) LogManager.getLogger(DirectoryLoader.class);
+    final Logger logger = (Logger) LogManager.getLogger(SignerLoader.class);
     logAppender.start();
     logger.addAppender(logAppender);
 
     try {
       createFileInConfigsDirectory(PUBLIC_KEY1);
-      DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser);
+      SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
       assertThat(logAppender.getLogMessagesReceived().get(0).getMessage().getFormattedMessage())
           .contains(rootCause.getMessage());
@@ -274,8 +264,7 @@ class DirectoryLoaderTest {
     when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            DirectoryLoader.loadFromDisk(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList).isEmpty();
   }
