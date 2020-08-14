@@ -40,7 +40,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
             .parallelStream()
             .collect(
                 Collectors.toMap(
-                    signer -> normaliseIdentifier(signer.getIdentifier()),
+                    ArtifactSigner::getIdentifier,
                     Function.identity(),
                     (signer1, signer2) -> {
                       LOG.warn("Duplicate keys were found.");
@@ -51,8 +51,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   @Override
   public Optional<ArtifactSigner> getSigner(final String identifier) {
-    final String normalisedIdentifier = normaliseIdentifier(identifier);
-    final Optional<ArtifactSigner> result = Optional.ofNullable(signers.get(normalisedIdentifier));
+    final Optional<ArtifactSigner> result = Optional.ofNullable(signers.get(identifier));
 
     if (result.isEmpty()) {
       LOG.error("No signer was loaded matching identifier '{}'", identifier);
@@ -62,13 +61,6 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   @Override
   public Set<String> availableIdentifiers() {
-    return signers.keySet().parallelStream().map(id -> "0x" + id).collect(Collectors.toSet());
-  }
-
-  private static String normaliseIdentifier(final String signerIdentifier) {
-    final String lowerCaseIdentifier = signerIdentifier.toLowerCase();
-    return lowerCaseIdentifier.startsWith("0x")
-        ? lowerCaseIdentifier.substring(2)
-        : lowerCaseIdentifier;
+    return signers.keySet().parallelStream().collect(Collectors.toSet());
   }
 }

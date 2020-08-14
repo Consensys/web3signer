@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.core.service.http.handlers;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
+import static tech.pegasys.eth2signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
 import static tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier.toBytes;
 
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
@@ -48,7 +49,7 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
     }
 
     signerForIdentifier
-        .sign(identifier, data)
+        .sign(normaliseIdentifier(identifier), data)
         .ifPresentOrElse(
             signature ->
                 routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature),

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
+import static tech.pegasys.eth2signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
+
 import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.InvalidParamException;
 import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.SignerNotFoundException;
 import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
@@ -57,7 +59,9 @@ public class SigningService {
       @JsonRpcParam("identifier") final String identifier,
       @JsonRpcParam("data") final String dataToSign) {
     return signerForIdentifierList.stream()
-        .map(signerForIdentifier -> signerForIdentifier.sign(identifier, convertData(dataToSign)))
+        .map(
+            signerForIdentifier ->
+                signerForIdentifier.sign(normaliseIdentifier(identifier), convertData(dataToSign)))
         .flatMap(Optional::stream)
         .findFirst()
         .orElseThrow(
