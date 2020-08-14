@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.config;
 
-import tech.pegasys.eth2signer.core.signing.FilecoinAddress;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -52,5 +52,5 @@ public interface Config {
 
   int getIdleConnectionTimeoutSeconds();
 
-  FilecoinAddress.Network getFilecoinNetwork();
+  FilecoinNetwork getFilecoinNetwork();
 }

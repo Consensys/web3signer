@@ -12,7 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.signers.secp256k1.api.Signer;
 
 import java.security.interfaces.ECPublicKey;
@@ -23,9 +24,9 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 
 public class FcSecpArtifactSigner implements ArtifactSigner {
   private final Signer signer;
-  private final FilecoinAddress.Network filecoinNetwork;
+  private final FilecoinNetwork filecoinNetwork;
 
-  public FcSecpArtifactSigner(final Signer signer, final Network filecoinNetwork) {
+  public FcSecpArtifactSigner(final Signer signer, final FilecoinNetwork filecoinNetwork) {
     this.signer = signer;
     this.filecoinNetwork = filecoinNetwork;
   }

@@ -15,8 +15,8 @@ package tech.pegasys.eth2signer.tests.publickeys;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-import tech.pegasys.eth2signer.core.signing.FilecoinAddress;
-import tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
@@ -98,7 +98,7 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
         pk ->
             FilecoinAddress.secpAddress(
                     Bytes.concatenate(Bytes.of(0x4), Bytes.wrap(Numeric.toBytesPadded(pk, 64))))
-                .encode(Network.TESTNET);
+                .encode(FilecoinNetwork.TESTNET);
     return createSecpKeys(isValid, fcIdentifier, privateKeys);
   }
 

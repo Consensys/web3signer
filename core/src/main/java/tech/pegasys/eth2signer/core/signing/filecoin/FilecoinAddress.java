@@ -10,13 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.signing;
+package tech.pegasys.eth2signer.core.signing.filecoin;
 
 import static org.apache.tuweni.bytes.Bytes.concatenate;
-import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.ACTOR;
-import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.BLS;
-import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.ID;
-import static tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol.SECP256K1;
+import static tech.pegasys.eth2signer.core.signing.filecoin.FilecoinProtocol.BLS;
+import static tech.pegasys.eth2signer.core.signing.filecoin.FilecoinProtocol.ID;
+import static tech.pegasys.eth2signer.core.signing.filecoin.FilecoinProtocol.SECP256K1;
 import static tech.pegasys.eth2signer.core.util.ByteUtils.fromUVariant;
 import static tech.pegasys.eth2signer.core.util.ByteUtils.putUVariant;
 
@@ -31,24 +30,12 @@ import org.apache.tuweni.io.Base32;
 public class FilecoinAddress {
   private static final String MAINNET_PREFIX = "f";
   private static final String TESTNET_PREFIX = "t";
-  private static final int CHECKSUM_SIZE = 4;
+  private static final int CHECKSUM_BYTE_SIZE = 4;
 
   private static final org.apache.commons.codec.binary.Base32 base32 =
       new org.apache.commons.codec.binary.Base32();
 
-  public enum Network {
-    MAINNET,
-    TESTNET
-  }
-
-  public enum Protocol {
-    ID,
-    SECP256K1,
-    ACTOR,
-    BLS
-  }
-
-  private final Protocol protocol;
+  private final FilecoinProtocol protocol;
   private final Bytes payload;
 
   public static FilecoinAddress blsAddress(final Bytes publicKey) {
@@ -56,14 +43,14 @@ public class FilecoinAddress {
   }
 
   public static FilecoinAddress secpAddress(final Bytes publicKey) {
-    return new FilecoinAddress(Protocol.SECP256K1, Blake2b.sum160(publicKey));
+    return new FilecoinAddress(SECP256K1, Blake2b.sum160(publicKey));
   }
 
   public static FilecoinAddress fromString(final String address) {
     return decode(address);
   }
 
-  private FilecoinAddress(final Protocol protocol, final Bytes payload) {
+  private FilecoinAddress(final FilecoinProtocol protocol, final Bytes payload) {
     this.protocol = protocol;
     this.payload = payload;
   }
@@ -72,24 +59,24 @@ public class FilecoinAddress {
     return payload;
   }
 
-  public Protocol getProtocol() {
+  public FilecoinProtocol getProtocol() {
     return protocol;
   }
 
-  public String encode(final Network network) {
+  public String encode(final FilecoinNetwork network) {
     if (protocol == ID) {
       final String payload = fromUVariant(this.payload).toString();
-      return networkToString(network) + protocolToByte() + payload;
+      return networkToString(network) + protocol.getAddrValue() + payload;
     } else {
       return networkToString(network)
-          + protocolToByte()
+          + protocol.getAddrValue()
           + base32(concatenate(payload, checksum(this))).toLowerCase();
     }
   }
 
   public static FilecoinAddress decode(final String address) {
     validateNetwork(address.substring(0, 1));
-    final Protocol protocol = stringToProtocol(address.substring(1, 2));
+    final FilecoinProtocol protocol = FilecoinProtocol.findByAddrValue(address.substring(1, 2));
     final String rawPayload = address.substring(2);
 
     if (protocol == ID) {
@@ -100,7 +87,7 @@ public class FilecoinAddress {
         throw new IllegalStateException("Invalid payload must be base32 encoded");
       }
       final Bytes value = Bytes.wrap(Base32.decode(rawPayload));
-      final Bytes payload = value.slice(0, value.size() - CHECKSUM_SIZE);
+      final Bytes payload = value.slice(0, value.size() - CHECKSUM_BYTE_SIZE);
       final Bytes checksum = value.slice(value.size() - 4);
       final FilecoinAddress filecoinAddress = new FilecoinAddress(protocol, payload);
       if (!validateChecksum(filecoinAddress, checksum)) {
@@ -111,7 +98,8 @@ public class FilecoinAddress {
   }
 
   public static Bytes checksum(final FilecoinAddress address) {
-    return Blake2b.sum32(concatenate(Bytes.of(address.protocolToByte()), address.getPayload()));
+    final Integer protocolValue = Integer.valueOf(address.protocol.getAddrValue());
+    return Blake2b.sum32(concatenate(Bytes.of(protocolValue), address.getPayload()));
   }
 
   public static boolean validateChecksum(
@@ -120,7 +108,7 @@ public class FilecoinAddress {
     return expectedChecksum.equals(checksum);
   }
 
-  private String networkToString(final Network network) {
+  private String networkToString(final FilecoinNetwork network) {
     switch (network) {
       case MAINNET:
         return MAINNET_PREFIX;
@@ -134,36 +122,6 @@ public class FilecoinAddress {
   private static void validateNetwork(final String network) {
     if (!List.of(MAINNET_PREFIX, TESTNET_PREFIX).contains(network)) {
       throw new IllegalStateException("Unknown Filecoin network");
-    }
-  }
-
-  private byte protocolToByte() {
-    switch (protocol) {
-      case ID:
-        return (byte) 0;
-      case SECP256K1:
-        return (byte) 1;
-      case ACTOR:
-        return (byte) 2;
-      case BLS:
-        return (byte) 3;
-      default:
-        throw new IllegalStateException("Unknown Filecoin protocol");
-    }
-  }
-
-  private static Protocol stringToProtocol(final String protocol) {
-    switch (protocol) {
-      case "0":
-        return ID;
-      case "1":
-        return SECP256K1;
-      case "2":
-        return ACTOR;
-      case "3":
-        return BLS;
-      default:
-        throw new IllegalStateException("Unknown Filecoin protocol");
     }
   }
 

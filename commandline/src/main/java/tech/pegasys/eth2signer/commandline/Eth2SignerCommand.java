@@ -25,8 +25,7 @@ import tech.pegasys.eth2signer.core.Runner;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
-import tech.pegasys.eth2signer.core.signing.FilecoinAddress;
-import tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -179,7 +178,7 @@ public class Eth2SignerCommand implements Config, Runnable {
       description = "Filecoin network to use for addresses (default: ${DEFAULT-VALUE})",
       paramLabel = "<network name>",
       arity = "1")
-  private final FilecoinAddress.Network filecoinNetwork = Network.TESTNET;
+  private final FilecoinNetwork filecoinNetwork = FilecoinNetwork.TESTNET;
 
   @ArgGroup(exclusive = false)
   private PicoCliTlsServerOptions picoCliTlsServerOptions;
@@ -255,7 +254,7 @@ public class Eth2SignerCommand implements Config, Runnable {
   }
 
   @Override
-  public Network getFilecoinNetwork() {
+  public FilecoinNetwork getFilecoinNetwork() {
     return filecoinNetwork;
   }
 

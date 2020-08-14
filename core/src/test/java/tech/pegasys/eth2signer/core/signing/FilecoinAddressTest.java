@@ -15,8 +15,9 @@ package tech.pegasys.eth2signer.core.signing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import tech.pegasys.eth2signer.core.signing.FilecoinAddress.Network;
-import tech.pegasys.eth2signer.core.signing.FilecoinAddress.Protocol;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinProtocol;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,26 +27,26 @@ class FilecoinAddressTest {
 
   @ParameterizedTest
   @CsvFileSource(resources = "bls_testvectors.csv")
-  void testVectorsForBlsAddresses(final String address, final String payload) {
-    verifyAddress(address, payload, Protocol.BLS);
+  void referenceTestsForBlsAddresses(final String address, final String payload) {
+    verifyAddress(address, payload, FilecoinProtocol.BLS);
   }
 
   @ParameterizedTest
   @CsvFileSource(resources = "secp_testvectors.csv")
-  void testVectorsForSecpAddresses(final String address, final String payload) {
-    verifyAddress(address, payload, Protocol.SECP256K1);
+  void referenceTestsForSecpAddresses(final String address, final String payload) {
+    verifyAddress(address, payload, FilecoinProtocol.SECP256K1);
   }
 
   @ParameterizedTest
   @CsvFileSource(resources = "id_testvectors.csv")
-  void testVectorsForIdAddresses(final String address, final String payload) {
-    verifyAddress(address, payload, Protocol.ID);
+  void referenceTestsForIdAddresses(final String address, final String payload) {
+    verifyAddress(address, payload, FilecoinProtocol.ID);
   }
 
   @ParameterizedTest
   @CsvFileSource(resources = "actor_testvectors.csv")
-  void testVectorsForActorAddresses(final String address, final String payload) {
-    verifyAddress(address, payload, Protocol.ACTOR);
+  void referenceTestsForActorAddresses(final String address, final String payload) {
+    verifyAddress(address, payload, FilecoinProtocol.ACTOR);
   }
 
   @Test
@@ -76,13 +77,14 @@ class FilecoinAddressTest {
         .hasMessage("Invalid payload must be base32 encoded");
   }
 
-  private void verifyAddress(final String address, final String payload, final Protocol bls) {
+  private void verifyAddress(
+      final String address, final String payload, final FilecoinProtocol bls) {
     final FilecoinAddress filecoinAddress = FilecoinAddress.fromString(address);
     final String expectedPayload = payload.substring(2);
     assertThat(filecoinAddress.getPayload().toUnprefixedHexString()).isEqualTo(expectedPayload);
     assertThat(filecoinAddress.getProtocol()).isEqualTo(bls);
 
-    String encodedAddress = filecoinAddress.encode(Network.MAINNET);
+    String encodedAddress = filecoinAddress.encode(FilecoinNetwork.MAINNET);
     assertThat(encodedAddress).isEqualTo(address);
   }
 }
