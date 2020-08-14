@@ -22,7 +22,6 @@ import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
-import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.UnsupportedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerProviderFactory;
 import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
@@ -135,14 +134,12 @@ public class Runner implements Runnable {
       final ArtifactSignerProvider blsSignerProvider =
           factory.createBlsSignerProvider(config.getKeyConfigPath());
 
-      final DirectoryBackedArtifactSignerProvider ethSecpSignerProvider =
+      final ArtifactSignerProvider ethSecpSignerProvider =
           factory.createEthSecpSignerProvider(config.getKeyConfigPath());
-      ethSecpSignerProvider.cacheAllSigners();
 
-      final DirectoryBackedArtifactSignerProvider fcSecpSignerProvider =
+      final ArtifactSignerProvider fcSecpSignerProvider =
           factory.createFilecoinSecpSignerProvider(
               config.getKeyConfigPath(), config.getFilecoinNetwork());
-      ethSecpSignerProvider.cacheAllSigners();
 
       final PublicKeys ethPublicKeys = new PublicKeys(blsSignerProvider, ethSecpSignerProvider);
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =
