@@ -41,6 +41,5 @@ class EnvironmentVariableDefaultProviderTest {
 
     assertThat(eth2SignerCommand.getHttpListenPort()).isEqualTo(7001);
     assertThat(eth2SignerCommand.getKeyConfigPath()).isEqualTo(Path.of("./keys_env"));
-    assertThat(eth2SignerCommand.getKeyCacheLimit()).isEqualTo(1000L);
   }
 }

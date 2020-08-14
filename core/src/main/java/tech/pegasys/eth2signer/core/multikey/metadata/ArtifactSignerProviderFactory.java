@@ -12,8 +12,10 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.DefaultArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.SignerLoader;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 
@@ -37,20 +39,19 @@ public class ArtifactSignerProviderFactory {
     this.hashicorpConnectionFactory = new HashicorpConnectionFactory(vertx);
   }
 
-  public DirectoryBackedArtifactSignerProvider createBlsSignerProvider(
-      final Path keyConfigPath, final long cacheSize) {
+  public ArtifactSignerProvider createBlsSignerProvider(final Path keyConfigPath) {
     final ArtifactSignerFactory artifactSignerFactory =
         new BlsArtifactSignerFactory(keyConfigPath, metricsSystem, hashicorpConnectionFactory);
-    return new DirectoryBackedArtifactSignerProvider(
-        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory), cacheSize);
+
+    return DefaultArtifactSignerProvider.create(
+        SignerLoader.load(keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
   }
 
-  public DirectoryBackedArtifactSignerProvider createSecpSignerProvider(
-      final Path keyConfigPath, final long cacheSize) {
+  public ArtifactSignerProvider createSecpSignerProvider(final Path keyConfigPath) {
     final ArtifactSignerFactory artifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(hashicorpConnectionFactory, keyConfigPath, azureFactory);
 
-    return new DirectoryBackedArtifactSignerProvider(
-        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory), cacheSize);
+    return DefaultArtifactSignerProvider.create(
+        SignerLoader.load(keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
   }
 }
