@@ -33,6 +33,7 @@ import tech.pegasys.eth2signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.service.jsonrpc.SigningService;
 import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
@@ -131,17 +132,16 @@ public class Runner implements Runnable {
       final ArtifactSignerProviderFactory factory =
           new ArtifactSignerProviderFactory(metricsSystem, vertx, azureFactory);
 
-      final DirectoryBackedArtifactSignerProvider blsSignerProvider =
-          factory.createBlsSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
-      blsSignerProvider.cacheAllSigners();
+      final ArtifactSignerProvider blsSignerProvider =
+          factory.createBlsSignerProvider(config.getKeyConfigPath());
 
       final DirectoryBackedArtifactSignerProvider ethSecpSignerProvider =
-          factory.createEthSecpSignerProvider(config.getKeyConfigPath(), config.getKeyCacheLimit());
+          factory.createEthSecpSignerProvider(config.getKeyConfigPath());
       ethSecpSignerProvider.cacheAllSigners();
 
       final DirectoryBackedArtifactSignerProvider fcSecpSignerProvider =
           factory.createFilecoinSecpSignerProvider(
-              config.getKeyConfigPath(), config.getKeyCacheLimit(), config.getFilecoinNetwork());
+              config.getKeyConfigPath(), config.getFilecoinNetwork());
       ethSecpSignerProvider.cacheAllSigners();
 
       final PublicKeys ethPublicKeys = new PublicKeys(blsSignerProvider, ethSecpSignerProvider);

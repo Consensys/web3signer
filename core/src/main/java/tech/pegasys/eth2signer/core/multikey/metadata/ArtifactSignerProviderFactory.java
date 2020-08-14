@@ -12,11 +12,13 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.eth2signer.core.multikey.DirectoryBackedArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.DefaultArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.multikey.SignerLoader;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.EthSecpArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.FcSecpArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 
@@ -40,26 +42,25 @@ public class ArtifactSignerProviderFactory {
     this.hashicorpConnectionFactory = new HashicorpConnectionFactory(vertx);
   }
 
-  public DirectoryBackedArtifactSignerProvider createBlsSignerProvider(
-      final Path keyConfigPath, final long cacheSize) {
+  public ArtifactSignerProvider createBlsSignerProvider(final Path keyConfigPath) {
     final ArtifactSignerFactory artifactSignerFactory =
         new BlsArtifactSignerFactory(keyConfigPath, metricsSystem, hashicorpConnectionFactory);
-    return new DirectoryBackedArtifactSignerProvider(
-        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory), cacheSize);
+
+    return DefaultArtifactSignerProvider.create(
+        SignerLoader.load(keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
   }
 
-  public DirectoryBackedArtifactSignerProvider createEthSecpSignerProvider(
-      final Path keyConfigPath, final long cacheSize) {
+  public ArtifactSignerProvider createEthSecpSignerProvider(
+      final Path keyConfigPath) {
     final ArtifactSignerFactory artifactSignerFactory =
-        new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory, keyConfigPath, azureFactory, EthSecpArtifactSigner::new);
+        new Secp256k1ArtifactSignerFactory(hashicorpConnectionFactory, keyConfigPath, azureFactory, EthSecpArtifactSigner::new);
 
-    return new DirectoryBackedArtifactSignerProvider(
-        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory), cacheSize);
+    return DefaultArtifactSignerProvider.create(
+        SignerLoader.load(keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
   }
 
-  public DirectoryBackedArtifactSignerProvider createFilecoinSecpSignerProvider(
-      final Path keyConfigPath, final long cacheSize, final FilecoinNetwork filecoinNetwork) {
+  public ArtifactSignerProvider createFilecoinSecpSignerProvider(
+      final Path keyConfigPath, final FilecoinNetwork filecoinNetwork) {
     final ArtifactSignerFactory artifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(
             hashicorpConnectionFactory,
@@ -67,7 +68,7 @@ public class ArtifactSignerProviderFactory {
             azureFactory,
             signer -> new FcSecpArtifactSigner(signer, filecoinNetwork));
 
-    return new DirectoryBackedArtifactSignerProvider(
-        keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory), cacheSize);
+    return DefaultArtifactSignerProvider.create(
+        SignerLoader.load(keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
   }
 }

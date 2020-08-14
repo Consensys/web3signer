@@ -19,7 +19,14 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.collection.IsIn.in;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSPublicKey;
+import tech.pegasys.teku.bls.BLSSecretKey;
+
+import java.nio.file.Path;
+
 import io.restassured.response.Response;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -111,6 +118,25 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     initAndStartSigner();
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(SECP256K1);
     validateApiResponse(response, containsInAnyOrder("0x" + PUBLIC_KEY_HEX_STRING));
+  }
+
+  @Test
+  public void ensureSystemCanLoadAndReportTenThousandKeysWithinExistingTimeLimits() {
+    final int keyCount = 10000;
+    final String[] publicKeys = new String[keyCount];
+    for (int i = 0; i < keyCount; i++) {
+      final Bytes bytes = Bytes.fromHexString(String.format("%064X", i + 1));
+      final BLSSecretKey key = BLSSecretKey.fromBytes(bytes);
+      final BLSKeyPair keyPair = new BLSKeyPair(key);
+      final BLSPublicKey publicKey = keyPair.getPublicKey();
+      final String configFilename = publicKey.toString().substring(2);
+      publicKeys[i] = publicKey.toString();
+      final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+      metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, bytes.toUnprefixedHexString());
+    }
+
+    initAndStartSigner();
+    validateApiResponse(callApiPublicKeys(BLS), containsInAnyOrder(publicKeys));
   }
 
   @Test

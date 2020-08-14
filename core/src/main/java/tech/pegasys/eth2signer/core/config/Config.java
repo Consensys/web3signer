@@ -46,8 +46,6 @@ public interface Config {
 
   List<String> getMetricsHostAllowList();
 
-  Long getKeyCacheLimit();
-
   Optional<TlsOptions> getTlsOptions();
 
   int getIdleConnectionTimeoutSeconds();

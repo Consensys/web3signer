@@ -90,14 +90,6 @@ public class Eth2SignerCommand implements Config, Runnable {
   private Path keyStorePath = Path.of("./");
 
   @Option(
-      names = {"--key-cache-limit"},
-      description =
-          "The maximum number of keys that will be cached in memory (default: ${DEFAULT-VALUE})",
-      paramLabel = DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP,
-      converter = CacheLimitConverter.class)
-  private Long keyCacheLimit = 1000L;
-
-  @Option(
       names = {"--logging", "-l"},
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description =
@@ -239,11 +231,6 @@ public class Eth2SignerCommand implements Config, Runnable {
   }
 
   @Override
-  public Long getKeyCacheLimit() {
-    return keyCacheLimit;
-  }
-
-  @Override
   public Optional<TlsOptions> getTlsOptions() {
     return Optional.ofNullable(picoCliTlsServerOptions);
   }
@@ -264,7 +251,6 @@ public class Eth2SignerCommand implements Config, Runnable {
         .add("configFile", configFile)
         .add("dataPath", dataPath)
         .add("keyStorePath", keyStorePath)
-        .add("keyCacheLimit", keyCacheLimit)
         .add("logLevel", logLevel)
         .add("httpListenHost", httpListenHost)
         .add("httpListenPort", httpListenPort)
