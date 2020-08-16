@@ -22,8 +22,8 @@ public class SecpArtifactSignature implements ArtifactSignature {
   }
 
   @Override
-  public KeyType getType() {
-    return KeyType.SECP256K1;
+  public Curve getType() {
+    return Curve.SECP256K1;
   }
 
   public Signature getSignatureData() {

@@ -15,6 +15,8 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.model.AzureSecretSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.HashicorpSigningMetadata;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnection;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;

@@ -18,6 +18,8 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.Curve;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,46 +35,46 @@ class DefaultArtifactSignerProviderTest {
 
   @Test
   void signerReturnedWhenHasHexPrefix() {
-    final ArtifactSigner mockSigner = mock(ArtifactSigner.class);
+    final BlsArtifactSigner mockSigner = mock(BlsArtifactSigner.class);
     when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1);
 
     final ArtifactSignerProvider signerProvider =
         DefaultArtifactSignerProvider.create(List.of(mockSigner));
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY1);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(Curve.BLS, "0x" + PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
   }
 
   @Test
   void signerReturnedWhenHasUpperCaseHexPrefix() {
-    final ArtifactSigner mockSigner = mock(ArtifactSigner.class);
+    final BlsArtifactSigner mockSigner = mock(BlsArtifactSigner.class);
     when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1);
 
     final ArtifactSignerProvider signerProvider =
         DefaultArtifactSignerProvider.create(List.of(mockSigner));
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY1);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(Curve.BLS, "0X" + PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
   }
 
   @Test
   void signerReturnedWhenHasNoPrefixAndDifferentCase() {
-    final ArtifactSigner mockSigner = mock(ArtifactSigner.class);
+    final BlsArtifactSigner mockSigner = mock(BlsArtifactSigner.class);
     when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1.toUpperCase());
 
     final ArtifactSignerProvider signerProvider =
         DefaultArtifactSignerProvider.create(List.of(mockSigner));
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY1);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(Curve.BLS, "0x" + PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
   }
 
   @Test
   void signerProviderOnlyHasSingleEntryIfPassedInListHasMultipleMatchingSigners() {
-    final ArtifactSigner mockSigner1 = mock(ArtifactSigner.class);
+    final BlsArtifactSigner mockSigner1 = mock(BlsArtifactSigner.class);
     when(mockSigner1.getIdentifier()).thenReturn(PUBLIC_KEY1.toUpperCase());
     final ArtifactSigner mockSigner2 = mock(ArtifactSigner.class);
     when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY1.toUpperCase());

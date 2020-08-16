@@ -17,9 +17,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
-import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.FileKeyStoreMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.HashicorpSigningMetadata;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
@@ -73,7 +73,7 @@ class BlsArtifactSignerFactoryTest {
     final Path relativePasswordPath = Path.of(PASSWORD_FILE);
     final ArtifactSigner artifactSigner =
         artifactSignerFactory.create(
-            new FileKeyStoreMetadata(relativeKeystorePath, relativePasswordPath));
+            new FileKeyStoreMetadata(relativeKeystorePath, relativePasswordPath, null));
 
     assertThat(relativeKeystorePath).isRelative();
     assertThat(relativePasswordPath).isRelative();
@@ -83,7 +83,7 @@ class BlsArtifactSignerFactoryTest {
   @Test
   void createsArtifactSignerFromKeyStoreUsingAbsolutePaths() {
     final ArtifactSigner artifactSigner =
-        artifactSignerFactory.create(new FileKeyStoreMetadata(keystoreFile, passwordFile));
+        artifactSignerFactory.create(new FileKeyStoreMetadata(keystoreFile, passwordFile, null));
 
     assertThat(keystoreFile).isAbsolute();
     assertThat(passwordFile).isAbsolute();
@@ -94,7 +94,7 @@ class BlsArtifactSignerFactoryTest {
   void nonExistentKeyStoreThrowsError() {
     final Path nonExistingKeystoreFile = configDir.resolve("someNonExistingKeystore");
     final FileKeyStoreMetadata fileKeyStoreMetadata =
-        new FileKeyStoreMetadata(nonExistingKeystoreFile, passwordFile);
+        new FileKeyStoreMetadata(nonExistingKeystoreFile, passwordFile, null);
 
     assertThatThrownBy(() -> artifactSignerFactory.create(fileKeyStoreMetadata))
         .isInstanceOf(SigningMetadataException.class)
@@ -107,7 +107,7 @@ class BlsArtifactSignerFactoryTest {
     Files.writeString(invalidPasswordFile, "invalid_password");
 
     final FileKeyStoreMetadata fileKeyStoreMetadata =
-        new FileKeyStoreMetadata(keystoreFile, invalidPasswordFile);
+        new FileKeyStoreMetadata(keystoreFile, invalidPasswordFile, null);
 
     assertThatThrownBy(() -> artifactSignerFactory.create(fileKeyStoreMetadata))
         .isInstanceOf(SigningMetadataException.class)
@@ -120,7 +120,7 @@ class BlsArtifactSignerFactoryTest {
     Files.createFile(emptyPasswordFile);
 
     final FileKeyStoreMetadata fileKeyStoreMetadata =
-        new FileKeyStoreMetadata(keystoreFile, emptyPasswordFile);
+        new FileKeyStoreMetadata(keystoreFile, emptyPasswordFile, null);
 
     assertThatThrownBy(() -> artifactSignerFactory.create(fileKeyStoreMetadata))
         .isInstanceOf(SigningMetadataException.class)
@@ -132,7 +132,7 @@ class BlsArtifactSignerFactoryTest {
     final Path nonExistentPassword = configDir.resolve("nonExistentPassword");
 
     final FileKeyStoreMetadata fileKeyStoreMetadata =
-        new FileKeyStoreMetadata(keystoreFile, nonExistentPassword);
+        new FileKeyStoreMetadata(keystoreFile, nonExistentPassword, null);
 
     assertThatThrownBy(() -> artifactSignerFactory.create(fileKeyStoreMetadata))
         .isInstanceOf(SigningMetadataException.class)
@@ -146,7 +146,7 @@ class BlsArtifactSignerFactoryTest {
     Files.writeString(malformedknownServers, "Illegal Known Servers.");
 
     final HashicorpSigningMetadata metaData =
-        new HashicorpSigningMetadata("localhost", "keyPath", "token");
+        new HashicorpSigningMetadata("localhost", "keyPath", "token", null);
     metaData.setTlsEnabled(true);
     metaData.setTlsKnownServersPath(malformedknownServers);
 

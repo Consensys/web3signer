@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.tests.publickeys;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
+import tech.pegasys.eth2signer.core.signing.Curve;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
@@ -80,7 +81,8 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
                   new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey)));
               final Path keyConfigFile = blsConfigFileName(keyPair.getPublicKey());
               if (isValid) {
-                metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKey);
+                metadataFileHelpers.createUnencryptedYamlFileAt(
+                    keyConfigFile, privateKey, Curve.BLS);
               } else {
                 createInvalidFile(keyConfigFile);
               }
@@ -130,7 +132,7 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
     }
 
     metadataFileHelpers.createKeyStoreYamlFileAt(
-        testDirectory.resolve(publicKey + ".yaml"), Path.of(walletFile), password);
+        testDirectory.resolve(publicKey + ".yaml"), Path.of(walletFile), password, Curve.SECP256K1);
   }
 
   private Path blsConfigFileName(final BLSPublicKey publicKey) {
@@ -160,7 +162,7 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   protected Response callRpcPublicKeys(final String keyType) {
-    final JsonNode params = JsonNodeFactory.instance.objectNode().put("keyType", keyType);
+    final JsonNode params = JsonNodeFactory.instance.objectNode().put("curve", keyType);
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final Request request = new Request("2.0", "public_keys", params, id);
     return given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);

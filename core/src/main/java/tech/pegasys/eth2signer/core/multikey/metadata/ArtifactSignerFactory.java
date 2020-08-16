@@ -12,6 +12,11 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.model.AzureKeySigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.AzureSecretSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.FileKeyStoreMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.FileRawSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.HashicorpSigningMetadata;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 public interface ArtifactSignerFactory {

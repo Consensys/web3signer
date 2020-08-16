@@ -13,6 +13,10 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.AzureSecretSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.FileKeyStoreMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.FileRawSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.HashicorpSigningMetadata;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.signers.bls.keystore.KeyStore;

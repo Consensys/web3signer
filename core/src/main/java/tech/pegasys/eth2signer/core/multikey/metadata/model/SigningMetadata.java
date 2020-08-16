@@ -10,10 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.multikey.metadata;
+package tech.pegasys.eth2signer.core.multikey.metadata.model;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.Curve;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -27,7 +30,17 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
   @Type(value = AzureSecretSigningMetadata.class, name = "azure-secret"),
   @Type(value = AzureKeySigningMetadata.class, name = "azure-key")
 })
-public interface SigningMetadata {
+public abstract class SigningMetadata {
 
-  ArtifactSigner createSigner(ArtifactSignerFactory artifactSignerFactory);
+  private final Curve curve;
+
+  public SigningMetadata(@JsonProperty(value = "curve", defaultValue = "BLS12_381") Curve curve) {
+    this.curve = curve;
+  }
+
+  public abstract ArtifactSigner createSigner(ArtifactSignerFactory artifactSignerFactory);
+
+  public Curve getCurve() {
+    return curve;
+  }
 }

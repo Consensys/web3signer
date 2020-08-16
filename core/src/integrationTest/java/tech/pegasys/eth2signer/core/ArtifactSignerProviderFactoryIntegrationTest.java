@@ -19,6 +19,7 @@ import tech.pegasys.eth2signer.core.multikey.SignerLoader;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerProviderFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.signing.Curve;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -90,7 +91,7 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
 
     final ArtifactSignerProvider signerProvider =
         providerFactory.createBlsSignerProvider(configsDirectory);
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(Curve.BLS, PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
     final List<String> errorMsgs = getErrorMessagesFromLogs();
@@ -118,7 +119,7 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
       configsDirectory.toFile().setWritable(false);
       final ArtifactSignerProvider signerProvider =
           providerFactory.createBlsSignerProvider(configsDirectory);
-      final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+      final Optional<ArtifactSigner> signer = signerProvider.getSigner(Curve.BLS, PUBLIC_KEY);
       assertThat(signer).isEmpty();
 
       final List<String> errorMsgs = getErrorMessagesFromLogs();
@@ -144,7 +145,7 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
     final Path filename = createFileWithContent(signingMetadata);
     final ArtifactSignerProvider signerProvider =
         providerFactory.createBlsSignerProvider(configsDirectory);
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(Curve.BLS, PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
     final List<String> errorMsgs = getErrorMessagesFromLogs();
@@ -166,7 +167,7 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
 
     final ArtifactSignerProvider signerProvider =
         providerFactory.createBlsSignerProvider(configsDirectory);
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(Curve.BLS, PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
     final List<String> errorMsgs = getErrorMessagesFromLogs();

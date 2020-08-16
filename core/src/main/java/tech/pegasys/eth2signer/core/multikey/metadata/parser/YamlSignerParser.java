@@ -13,8 +13,8 @@
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
+import tech.pegasys.eth2signer.core.multikey.metadata.model.SigningMetadata;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.io.FileNotFoundException;

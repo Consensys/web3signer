@@ -14,5 +14,5 @@ package tech.pegasys.eth2signer.core.signing;
 
 public interface ArtifactSignature {
 
-  KeyType getType();
+  Curve getType();
 }

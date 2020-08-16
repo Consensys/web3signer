@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.crypto.Sign.publicKeyFromPrivate;
 import static org.web3j.crypto.Sign.signedMessageToKey;
 
+import tech.pegasys.eth2signer.core.signing.Curve;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
@@ -77,7 +78,10 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
         new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
 
     metadataFileHelpers.createKeyStoreYamlFileAt(
-        keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"), Path.of(keyPath), "pass");
+        keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+        Path.of(keyPath),
+        "pass",
+        Curve.SECP256K1);
 
     signAndVerifySignature();
   }
@@ -91,7 +95,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
       hashicorpNode.addSecretsToVault(singletonMap(secretName, PRIVATE_KEY), secretPath);
 
       final HashicorpSigningParams hashicorpSigningParams =
-          new HashicorpSigningParams(hashicorpNode, secretPath, secretName);
+          new HashicorpSigningParams(hashicorpNode, secretPath, secretName, Curve.SECP256K1);
 
       metadataFileHelpers.createHashicorpYamlFileAt(
           keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"), hashicorpSigningParams);

@@ -12,28 +12,38 @@
  */
 package tech.pegasys.eth2signer.core.service.operations;
 
-import static tech.pegasys.eth2signer.core.signing.KeyType.BLS;
-
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.signing.KeyType;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.SecpArtifactSigner;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PublicKeys {
-  private final ArtifactSignerProvider blsSignerProvider;
-  private final ArtifactSignerProvider secpSignerProvider;
 
-  public PublicKeys(
-      final ArtifactSignerProvider blsSignerProvider,
-      final ArtifactSignerProvider secpSignerProvider) {
-    this.blsSignerProvider = blsSignerProvider;
-    this.secpSignerProvider = secpSignerProvider;
+  private final ArtifactSignerProvider signerProviders;
+
+  public PublicKeys(final ArtifactSignerProvider signerProviders) {
+    this.signerProviders = signerProviders;
   }
 
-  public List<String> list(final KeyType keyType) {
-    final ArtifactSignerProvider signerProvider =
-        keyType == BLS ? blsSignerProvider : secpSignerProvider;
-    return new ArrayList<>(signerProvider.availableIdentifiers());
+  public List<String> list(final Curve curve) {
+    final Set<String> identifier = signerProviders.availableIdentifiers();
+
+    if (curve.equals(Curve.BLS)) {
+      return identifier
+          .parallelStream()
+          .filter(i -> signerProviders.getSigner(Curve.BLS, i).get() instanceof BlsArtifactSigner)
+          .collect(Collectors.toList());
+    } else {
+      return identifier
+          .parallelStream()
+          .filter(
+              i ->
+                  signerProviders.getSigner(Curve.SECP256K1, i).get() instanceof SecpArtifactSigner)
+          .collect(Collectors.toList());
+    }
   }
 }

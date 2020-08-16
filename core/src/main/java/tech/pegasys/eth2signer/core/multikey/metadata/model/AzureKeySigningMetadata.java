@@ -10,14 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.multikey.metadata;
+package tech.pegasys.eth2signer.core.multikey.metadata.model;
 
+import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.Curve;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class AzureKeySigningMetadata implements SigningMetadata {
+public class AzureKeySigningMetadata extends SigningMetadata {
 
   private final String clientId;
   private final String clientSecret;
@@ -31,7 +33,9 @@ public class AzureKeySigningMetadata implements SigningMetadata {
       @JsonProperty("clientSecret") final String clientSecret,
       @JsonProperty("tenantId") final String tenantId,
       @JsonProperty("vaultName") final String vaultName,
-      @JsonProperty("keyName") final String keyName) {
+      @JsonProperty("keyName") final String keyName,
+      @JsonProperty(value = "curve") final Curve curve) {
+    super(curve != null ? curve : Curve.SECP256K1);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.tenantId = tenantId;
