@@ -14,7 +14,7 @@ package tech.pegasys.eth2signer.core.service.operations;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSigner;
 
 import java.util.List;
@@ -29,20 +29,21 @@ public class PublicKeys {
     this.signerProviders = signerProviders;
   }
 
-  public List<String> list(final Curve curve) {
+  public List<String> list(final KeyType keyType) {
     final Set<String> identifier = signerProviders.availableIdentifiers();
 
-    if (curve.equals(Curve.BLS)) {
+    if (keyType.equals(KeyType.BLS)) {
       return identifier
           .parallelStream()
-          .filter(i -> signerProviders.getSigner(Curve.BLS, i).get() instanceof BlsArtifactSigner)
+          .filter(i -> signerProviders.getSigner(KeyType.BLS, i).get() instanceof BlsArtifactSigner)
           .collect(Collectors.toList());
     } else {
       return identifier
           .parallelStream()
           .filter(
               i ->
-                  signerProviders.getSigner(Curve.SECP256K1, i).get() instanceof SecpArtifactSigner)
+                  signerProviders.getSigner(KeyType.SECP256K1, i).get()
+                      instanceof SecpArtifactSigner)
           .collect(Collectors.toList());
     }
   }

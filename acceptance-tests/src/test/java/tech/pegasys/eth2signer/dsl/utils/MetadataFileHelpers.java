@@ -15,7 +15,7 @@ package tech.pegasys.eth2signer.dsl.utils;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
@@ -47,11 +47,11 @@ public class MetadataFileHelpers {
   private static final Bytes IV = Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789");
 
   public void createUnencryptedYamlFileAt(
-      final Path metadataFilePath, final String keyContent, final Curve curve) {
+      final Path metadataFilePath, final String keyContent, final KeyType keyType) {
     final Map<String, String> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "file-raw");
     signingMetadata.put("privateKey", keyContent);
-    signingMetadata.put("curve", curve.asString());
+    signingMetadata.put("keyType", keyType.name());
 
     createYamlFile(metadataFilePath, signingMetadata);
   }
@@ -71,14 +71,14 @@ public class MetadataFileHelpers {
         keyPair.getPublicKey().toBytesCompressed(),
         kdfFunctionType);
 
-    createKeyStoreYamlFileAt(metadataFilePath, keystoreFile, password, Curve.BLS);
+    createKeyStoreYamlFileAt(metadataFilePath, keystoreFile, password, KeyType.BLS);
   }
 
   public void createKeyStoreYamlFileAt(
       final Path metadataFilePath,
       final Path keystoreFile,
       final String password,
-      final Curve curve) {
+      final KeyType keyType) {
     final String filename = metadataFilePath.getFileName().toString();
     final String passwordFilename = filename + ".password";
     final Path passwordFile = metadataFilePath.getParent().resolve(passwordFilename);
@@ -88,7 +88,7 @@ public class MetadataFileHelpers {
     signingMetadata.put("type", "file-keystore");
     signingMetadata.put("keystoreFile", keystoreFile.toString());
     signingMetadata.put("keystorePasswordFile", passwordFile.toString());
-    signingMetadata.put("curve", curve.asString());
+    signingMetadata.put("keyType", keyType.name());
     createYamlFile(metadataFilePath, signingMetadata);
   }
 
@@ -115,7 +115,7 @@ public class MetadataFileHelpers {
       signingMetadata.put("keyPath", node.getSecretHttpPath());
       signingMetadata.put("keyName", node.getSecretName());
       signingMetadata.put("token", node.getVaultToken());
-      signingMetadata.put("curve", node.getCurve().asString());
+      signingMetadata.put("keyType", node.getKeyType().toString());
 
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {

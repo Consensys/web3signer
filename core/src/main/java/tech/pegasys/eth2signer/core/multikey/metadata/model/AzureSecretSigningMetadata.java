@@ -14,7 +14,7 @@ package tech.pegasys.eth2signer.core.multikey.metadata.model;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,8 +34,8 @@ public class AzureSecretSigningMetadata extends SigningMetadata {
       @JsonProperty("tenantId") final String tenantId,
       @JsonProperty("vaultName") final String vaultName,
       @JsonProperty("secretName") final String secretName,
-      @JsonProperty(value = "curve") final Curve curve) {
-    super(curve != null ? curve : Curve.BLS);
+      @JsonProperty(value = "keyType") final KeyType keyType) {
+    super(keyType != null ? keyType : KeyType.BLS);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.tenantId = tenantId;

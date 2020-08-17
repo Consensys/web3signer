@@ -18,7 +18,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.model.FileKeyStoreMetadata
 import tech.pegasys.eth2signer.core.multikey.metadata.model.FileRawSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.model.HashicorpSigningMetadata;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 public class ArtifactSignerFactoryImpl implements ArtifactSignerFactory {
 
@@ -33,7 +33,7 @@ public class ArtifactSignerFactoryImpl implements ArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final FileRawSigningMetadata metadata) {
-    if (metadata.getCurve() == Curve.BLS) {
+    if (metadata.getKeyType() == KeyType.BLS) {
       return blsFactory.create(metadata);
     } else {
       return secpFactory.create(metadata);
@@ -42,7 +42,7 @@ public class ArtifactSignerFactoryImpl implements ArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final FileKeyStoreMetadata metadata) {
-    if (metadata.getCurve() == Curve.BLS) {
+    if (metadata.getKeyType() == KeyType.BLS) {
       return blsFactory.create(metadata);
     } else {
       return secpFactory.create(metadata);
@@ -51,7 +51,7 @@ public class ArtifactSignerFactoryImpl implements ArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final HashicorpSigningMetadata metadata) {
-    if (metadata.getCurve() == Curve.BLS) {
+    if (metadata.getKeyType() == KeyType.BLS) {
       return blsFactory.create(metadata);
     } else {
       return secpFactory.create(metadata);
@@ -60,7 +60,7 @@ public class ArtifactSignerFactoryImpl implements ArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final AzureSecretSigningMetadata metadata) {
-    if (metadata.getCurve() == Curve.BLS) {
+    if (metadata.getKeyType() == KeyType.BLS) {
       return blsFactory.create(metadata);
     } else {
       return secpFactory.create(metadata);
@@ -69,7 +69,7 @@ public class ArtifactSignerFactoryImpl implements ArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final AzureKeySigningMetadata metadata) {
-    if (metadata.getCurve() == Curve.BLS) {
+    if (metadata.getKeyType() == KeyType.BLS) {
       throw new SigningMetadataException(
           "Cannot perform BLS12-381 signing in using Azure Keyvault Key.");
     } else {

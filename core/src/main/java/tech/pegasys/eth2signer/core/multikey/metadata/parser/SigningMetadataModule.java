@@ -13,7 +13,7 @@
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.io.IOException;
 
@@ -33,8 +33,8 @@ public class SigningMetadataModule extends SimpleModule {
     super("SigningMetadata");
     addDeserializer(Bytes.class, new HexStringDeserializer());
     addSerializer(Bytes.class, new HexStringSerializer());
-    addDeserializer(Curve.class, new CurveDeserialiser());
-    addSerializer(Curve.class, new CurveSerializer());
+    addDeserializer(KeyType.class, new KeyTypeDeserializer());
+    addSerializer(KeyType.class, new KeyTypeSerializer());
   }
 
   private static class HexStringDeserializer extends JsonDeserializer<Bytes> {
@@ -59,25 +59,25 @@ public class SigningMetadataModule extends SimpleModule {
     }
   }
 
-  private static class CurveDeserialiser extends JsonDeserializer<Curve> {
+  private static class KeyTypeDeserializer extends JsonDeserializer<KeyType> {
 
     @Override
-    public Curve deserialize(final JsonParser p, final DeserializationContext ctxt)
+    public KeyType deserialize(final JsonParser p, final DeserializationContext ctxt)
         throws IOException, JsonProcessingException {
       try {
-        return Curve.fromString(p.getValueAsString());
+        return KeyType.valueOf(p.getValueAsString());
       } catch (final Exception e) {
         throw new SigningMetadataException(e.getMessage());
       }
     }
   }
 
-  private static class CurveSerializer extends JsonSerializer<Curve> {
+  private static class KeyTypeSerializer extends JsonSerializer<KeyType> {
 
     @Override
-    public void serialize(Curve value, JsonGenerator gen, SerializerProvider serializers)
+    public void serialize(KeyType value, JsonGenerator gen, SerializerProvider serializers)
         throws IOException {
-      gen.writeString(value.asString());
+      gen.writeString(value.name());
     }
   }
 }

@@ -16,7 +16,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.dsl.HashicorpSigningParams;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
@@ -53,7 +53,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   public void signDataWithKeyLoadedFromUnencryptedFile() {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, Curve.BLS);
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     signAndVerifySignature();
   }
@@ -82,7 +82,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
       metadataFileHelpers.createHashicorpYamlFileAt(
           keyConfigFile,
-          new HashicorpSigningParams(hashicorpNode, secretPath, secretName, Curve.BLS));
+          new HashicorpSigningParams(hashicorpNode, secretPath, secretName, KeyType.BLS));
 
       signAndVerifySignature();
     } finally {

@@ -12,26 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-public enum Curve {
-  SECP256K1("SECP256K1"),
-  BLS("BLS");
-
-  private final String curveName;
-
-  Curve(final String curveName) {
-    this.curveName = curveName;
-  }
-
-  public static Curve fromString(final String value) {
-    if (value.toUpperCase().equals(SECP256K1.curveName)) {
-      return SECP256K1;
-    } else if (value.toUpperCase().equals(BLS.curveName)) {
-      return BLS;
-    }
-    throw new IllegalArgumentException("Invalid curve value (" + value + ")  provided.");
-  }
-
-  public String asString() {
-    return curveName;
-  }
+public enum KeyType {
+  BLS,
+  SECP256K1
 }

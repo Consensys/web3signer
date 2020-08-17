@@ -16,7 +16,7 @@ import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -68,7 +68,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   public void receiveA400IfDataIsNotValid(final String data) {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, Curve.BLS);
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner();
 
@@ -89,7 +89,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   public void receiveA400IfDataIsMissingFromJsonBody() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, Curve.BLS);
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner();
 
@@ -110,7 +110,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   public void receiveA400IfJsonBodyIsMalformed() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, Curve.BLS);
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner();
 
@@ -131,7 +131,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   public void unusedFieldsInRequestDoesNotAffectSigning() {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, Curve.BLS);
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner();
 

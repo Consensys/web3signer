@@ -36,7 +36,7 @@ import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.eth2signer.core.utils.ByteUtils;
@@ -147,18 +147,18 @@ public class Runner implements Runnable {
           new ArtifactSignerFactoryImpl(blsArtifactSignerFactory, secp256k1ArtifactSignerFactory);
 
       final Collection<ArtifactSigner> signers =
-          SignerLoader
-              .load(config.getKeyConfigPath(), "yaml", new YamlSignerParser(artifactSignerFactory));
+          SignerLoader.load(
+              config.getKeyConfigPath(), "yaml", new YamlSignerParser(artifactSignerFactory));
 
       final DefaultArtifactSignerProvider artifactSignerProvider =
           DefaultArtifactSignerProvider.create(signers);
 
       final PublicKeys publicKeys = new PublicKeys(artifactSignerProvider);
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =
-          new SignerForIdentifier<>(artifactSignerProvider, this::formatBlsSignature, Curve.BLS);
+          new SignerForIdentifier<>(artifactSignerProvider, this::formatBlsSignature, KeyType.BLS);
       final SignerForIdentifier<SecpArtifactSignature> secpSigner =
           new SignerForIdentifier<>(
-              artifactSignerProvider, this::formatSecpSignature, Curve.SECP256K1);
+              artifactSignerProvider, this::formatSecpSignature, KeyType.SECP256K1);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(vertx, publicKeys, blsSigner, secpSigner);

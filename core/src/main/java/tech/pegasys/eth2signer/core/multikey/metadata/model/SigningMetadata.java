@@ -14,7 +14,7 @@ package tech.pegasys.eth2signer.core.multikey.metadata.model;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -32,15 +32,15 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 })
 public abstract class SigningMetadata {
 
-  private final Curve curve;
+  private final KeyType keyType;
 
-  public SigningMetadata(@JsonProperty(value = "curve", defaultValue = "BLS12_381") Curve curve) {
-    this.curve = curve;
+  public SigningMetadata(@JsonProperty(value = "keyType", defaultValue = "BLS") KeyType keyType) {
+    this.keyType = keyType;
   }
 
   public abstract ArtifactSigner createSigner(ArtifactSignerFactory artifactSignerFactory);
 
-  public Curve getCurve() {
-    return curve;
+  public KeyType getKeyType() {
+    return keyType;
   }
 }

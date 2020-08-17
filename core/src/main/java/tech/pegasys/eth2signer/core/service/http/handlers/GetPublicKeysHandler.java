@@ -16,7 +16,7 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
 import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.util.List;
 
@@ -35,8 +35,8 @@ public class GetPublicKeysHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext context) {
     final RequestParameters params = context.get("parsedParameters");
-    final Curve curve = Curve.valueOf(params.pathParameter("curve").getString());
-    final List<String> keys = publicKeys.list(curve);
+    final KeyType keyType = KeyType.valueOf(params.pathParameter("keyType").getString());
+    final List<String> keys = publicKeys.list(keyType);
     context.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(new JsonArray(keys).encode());
   }
 }

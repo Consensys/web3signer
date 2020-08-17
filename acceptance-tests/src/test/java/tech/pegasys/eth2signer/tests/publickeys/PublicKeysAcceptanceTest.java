@@ -19,7 +19,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.collection.IsIn.in;
 
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
@@ -136,7 +136,7 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
       publicKeys[i] = publicKey.toString();
       final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
       metadataFileHelpers.createUnencryptedYamlFileAt(
-          keyConfigFile, bytes.toUnprefixedHexString(), Curve.BLS);
+          keyConfigFile, bytes.toUnprefixedHexString(), KeyType.BLS);
     }
 
     initAndStartSigner();

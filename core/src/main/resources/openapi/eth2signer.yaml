@@ -57,7 +57,7 @@ paths:
         '500':
           description: 'Internal Eth2Signer server error'
 
-  /signer/publicKeys/{curve}:
+  /signer/publicKeys/{keyType}:
     get:
       tags:
         - 'Public Key'
@@ -65,7 +65,7 @@ paths:
       description: 'Returns the public keys for the private keys that have been loaded into Eth2Signer'
       operationId: 'getPublicKeys'
       parameters:
-        - name: 'curve'
+        - name: 'keyType'
           in: 'path'
           required: true
           description: 'Type of public keys to return'

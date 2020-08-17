@@ -17,7 +17,7 @@ import java.util.Set;
 
 public interface ArtifactSignerProvider {
 
-  Optional<ArtifactSigner> getSigner(final Curve curve, final String identifier);
+  Optional<ArtifactSigner> getSigner(final KeyType keyType, final String identifier);
 
   Set<String> availableIdentifiers();
 }

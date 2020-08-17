@@ -15,7 +15,7 @@ package tech.pegasys.eth2signer.tests.signing;
 import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
@@ -54,7 +54,7 @@ public class JsonRpcSigningErrorsAcceptanceTest extends SigningAcceptanceTestBas
     final String publicKey = keyPair.getPublicKey().toString();
     final String configFilename = publicKey.substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, Curve.BLS);
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner();
 
@@ -67,7 +67,7 @@ public class JsonRpcSigningErrorsAcceptanceTest extends SigningAcceptanceTestBas
     final String publicKey = keyPair.getPublicKey().toString();
     final String configFilename = publicKey.substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, Curve.BLS);
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner();
 

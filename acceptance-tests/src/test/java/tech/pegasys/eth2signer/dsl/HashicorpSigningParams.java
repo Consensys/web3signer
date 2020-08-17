@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.dsl;
 
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.signers.hashicorp.dsl.certificates.SelfSignedCertificate;
 
@@ -23,17 +23,17 @@ public class HashicorpSigningParams {
   private final HashicorpNode hashicorpNode;
   private final String secretPath;
   private final String secretName;
-  private final Curve curve;
+  private final KeyType keyType;
 
   public HashicorpSigningParams(
       final HashicorpNode hashicorpNode,
       final String secretPath,
       final String secretName,
-      final Curve curve) {
+      final KeyType keyType) {
     this.hashicorpNode = hashicorpNode;
     this.secretPath = secretPath;
     this.secretName = secretName;
-    this.curve = curve;
+    this.keyType = keyType;
   }
 
   public int getPort() {
@@ -60,8 +60,8 @@ public class HashicorpSigningParams {
     return secretName;
   }
 
-  public Curve getCurve() {
-    return curve;
+  public KeyType getKeyType() {
+    return keyType;
   }
 
   public void shutdown() {

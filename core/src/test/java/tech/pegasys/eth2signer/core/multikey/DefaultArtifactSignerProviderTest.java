@@ -19,7 +19,7 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +41,8 @@ class DefaultArtifactSignerProviderTest {
     final ArtifactSignerProvider signerProvider =
         DefaultArtifactSignerProvider.create(List.of(mockSigner));
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(Curve.BLS, "0x" + PUBLIC_KEY1);
+    final Optional<ArtifactSigner> signer =
+        signerProvider.getSigner(KeyType.BLS, "0x" + PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
   }
@@ -54,7 +55,8 @@ class DefaultArtifactSignerProviderTest {
     final ArtifactSignerProvider signerProvider =
         DefaultArtifactSignerProvider.create(List.of(mockSigner));
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(Curve.BLS, "0X" + PUBLIC_KEY1);
+    final Optional<ArtifactSigner> signer =
+        signerProvider.getSigner(KeyType.BLS, "0X" + PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
   }
@@ -67,7 +69,8 @@ class DefaultArtifactSignerProviderTest {
     final ArtifactSignerProvider signerProvider =
         DefaultArtifactSignerProvider.create(List.of(mockSigner));
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner(Curve.BLS, "0x" + PUBLIC_KEY1);
+    final Optional<ArtifactSigner> signer =
+        signerProvider.getSigner(KeyType.BLS, "0x" + PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
     assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
   }

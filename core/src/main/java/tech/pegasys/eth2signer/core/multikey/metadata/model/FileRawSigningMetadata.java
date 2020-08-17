@@ -14,7 +14,7 @@ package tech.pegasys.eth2signer.core.multikey.metadata.model;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
@@ -25,8 +25,8 @@ public class FileRawSigningMetadata extends SigningMetadata {
 
   public FileRawSigningMetadata(
       @JsonProperty(value = "privateKey", required = true) final Bytes privateKey,
-      @JsonProperty(value = "curve") final Curve curve) {
-    super(curve != null ? curve : Curve.BLS);
+      @JsonProperty(value = "keyType") final KeyType keyType) {
+    super(keyType != null ? keyType : KeyType.BLS);
     this.privateKey = privateKey;
   }
 

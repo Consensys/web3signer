@@ -14,7 +14,7 @@ package tech.pegasys.eth2signer.core.service.operations;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.signing.Curve;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.util.Optional;
 
@@ -27,15 +27,15 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
   private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
   private final SignatureFormatter<T> signatureFormatter;
-  private final Curve curve;
+  private final KeyType keyType;
 
   public SignerForIdentifier(
       final ArtifactSignerProvider signerProvider,
       final SignatureFormatter<T> signatureFormatter,
-      final Curve curve) {
+      final KeyType keyType) {
     this.signerProvider = signerProvider;
     this.signatureFormatter = signatureFormatter;
-    this.curve = curve;
+    this.keyType = keyType;
   }
 
   /**
@@ -49,7 +49,7 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
    */
   public Optional<String> sign(final String identifier, final Bytes data) {
     return signerProvider
-        .getSigner(curve, identifier)
+        .getSigner(keyType, identifier)
         .map(signer -> formatSignature(signer.sign(data)));
   }
 
@@ -76,7 +76,7 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
 
   @SuppressWarnings("unchecked")
   private String formatSignature(final ArtifactSignature signature) {
-    if (signature.getType() == curve) {
+    if (signature.getType() == keyType) {
       final T artifactSignature = (T) signature;
       return signatureFormatter.format(artifactSignature);
     } else {
