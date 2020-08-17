@@ -22,14 +22,11 @@ import static tech.pegasys.eth2signer.core.util.ByteUtils.putUVariant;
 import tech.pegasys.eth2signer.core.util.Blake2b;
 
 import java.math.BigInteger;
-import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.io.Base32;
 
 public class FilecoinAddress {
-  private static final String MAINNET_PREFIX = "f";
-  private static final String TESTNET_PREFIX = "t";
   private static final int CHECKSUM_BYTE_SIZE = 4;
 
   private static final org.apache.commons.codec.binary.Base32 base32 =
@@ -66,16 +63,16 @@ public class FilecoinAddress {
   public String encode(final FilecoinNetwork network) {
     if (protocol == ID) {
       final String payload = fromUVariant(this.payload).toString();
-      return networkToString(network) + protocol.getAddrValue() + payload;
+      return network.getNetworkValue() + protocol.getAddrValue() + payload;
     } else {
-      return networkToString(network)
+      return network.getNetworkValue()
           + protocol.getAddrValue()
           + base32(concatenate(payload, checksum(this))).toLowerCase();
     }
   }
 
   public static FilecoinAddress decode(final String address) {
-    validateNetwork(address.substring(0, 1));
+    FilecoinNetwork.findByNetworkValue(address.substring(0, 1));
     final FilecoinProtocol protocol = FilecoinProtocol.findByAddrValue(address.substring(1, 2));
     final String rawPayload = address.substring(2);
 
@@ -106,23 +103,6 @@ public class FilecoinAddress {
       final FilecoinAddress address, final Bytes expectedChecksum) {
     final Bytes checksum = checksum(address);
     return expectedChecksum.equals(checksum);
-  }
-
-  private String networkToString(final FilecoinNetwork network) {
-    switch (network) {
-      case MAINNET:
-        return MAINNET_PREFIX;
-      case TESTNET:
-        return TESTNET_PREFIX;
-      default:
-        throw new IllegalStateException("Unknown Filecoin network");
-    }
-  }
-
-  private static void validateNetwork(final String network) {
-    if (!List.of(MAINNET_PREFIX, TESTNET_PREFIX).contains(network)) {
-      throw new IllegalStateException("Unknown Filecoin network");
-    }
   }
 
   private String base32(final Bytes bytes) {

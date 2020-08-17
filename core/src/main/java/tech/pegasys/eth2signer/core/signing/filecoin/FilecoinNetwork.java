@@ -12,7 +12,26 @@
  */
 package tech.pegasys.eth2signer.core.signing.filecoin;
 
+import java.util.Arrays;
+
 public enum FilecoinNetwork {
-  MAINNET,
-  TESTNET
+  MAINNET("f"),
+  TESTNET("t");
+
+  private final String networkValue;
+
+  FilecoinNetwork(final String addrValue) {
+    this.networkValue = addrValue;
+  }
+
+  public String getNetworkValue() {
+    return networkValue;
+  }
+
+  public static FilecoinNetwork findByNetworkValue(final String networkValue) {
+    return Arrays.stream(values())
+        .filter(p -> p.networkValue.equals(networkValue))
+        .findFirst()
+        .orElseThrow(() -> new IllegalStateException("Unknown Filecoin network"));
+  }
 }
