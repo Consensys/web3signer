@@ -139,6 +139,19 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     validateApiResponse(callApiPublicKeys(BLS), containsInAnyOrder(publicKeys));
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {BLS, SECP256K1})
+  public void keysWithArbitraryFilenamesAreLoaded(final String keyType) {
+    final String privateKey = privateKeys(keyType)[0];
+    final String filename = "foo" + "_" + keyType + ".yaml";
+    metadataFileHelpers.createUnencryptedYamlFileAt(testDirectory.resolve(filename), privateKey);
+    initAndStartSigner();
+
+    final String publicKey = keyType.equals(BLS) ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
+    validateApiResponse(callApiPublicKeys(keyType), contains(publicKey));
+    validateRpcResponse(callRpcPublicKeys(keyType), contains(publicKey));
+  }
+
   @Test
   public void fileCoinSecpKeysAreReturnedInPublicKeyResponse() {
     final String[] keys = createFilecoinSecpKeys(true, SECP_PRIVATE_KEY_1, SECP_PRIVATE_KEY_2);

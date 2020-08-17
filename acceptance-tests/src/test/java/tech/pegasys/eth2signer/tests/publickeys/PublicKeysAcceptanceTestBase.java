@@ -54,10 +54,19 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
   private static final String BLS_PRIVATE_KEY_2 =
       "32ae313afff2daa2ef7005a7f834bdf291855608fe82c24d30be6ac2017093a8";
+  protected static final String BLS_PUBLIC_KEY_1 =
+      "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
+  protected static final String BLS_PUBLIC_KEY_2 =
+      "0xb6ee692dd6e14d1e897006b64b797c63908c17ce804cb32b3cfd160e5d9fbdc6a7a38a7b0613c0d39715d6fb7062415f";
+
   protected static final String SECP_PRIVATE_KEY_1 =
       "d392469474ec227b9ec4be232b402a0490045478ab621ca559d166965f0ffd32";
   protected static final String SECP_PRIVATE_KEY_2 =
       "2e322a5f72c525422dc275e006d5cb3954ca5e02e9610fae0ed4cc389f622f33";
+  protected static final String SECP_PUBLIC_KEY_1 =
+      "0x24491715b7514b315d06b6be809173e7c8051a2cd1880d29f8af5efda30e0877e816820c91d46444afc4063742a1602648751df36e11b5c95037fab1d4dd93eb";
+  protected static final String SECP_PUBLIC_KEY_2 =
+      "0xdb7983b4ae6df057760cb87f349197c32ddf5065fa2b634a83569d6ffa5a1bdffa256773d40c2a3892d3801a16c3eef341e99af70d889c77e8882f060bc5829b";
 
   protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
