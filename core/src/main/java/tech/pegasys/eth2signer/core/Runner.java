@@ -143,11 +143,12 @@ public class Runner implements Runnable {
           new Secp256k1ArtifactSignerFactory(
               hashicorpConnectionFactory, config.getKeyConfigPath(), azureFactory);
 
-      final ArtifactSignerFactoryImpl impl =
+      final ArtifactSignerFactoryImpl artifactSignerFactory =
           new ArtifactSignerFactoryImpl(blsArtifactSignerFactory, secp256k1ArtifactSignerFactory);
 
       final Collection<ArtifactSigner> signers =
-          SignerLoader.load(config.getKeyConfigPath(), "yaml", new YamlSignerParser(impl));
+          SignerLoader
+              .load(config.getKeyConfigPath(), "yaml", new YamlSignerParser(artifactSignerFactory));
 
       final DefaultArtifactSignerProvider artifactSignerProvider =
           DefaultArtifactSignerProvider.create(signers);
