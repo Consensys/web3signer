@@ -10,24 +10,27 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.core.multikey.metadata.model;
+package tech.pegasys.eth2signer.core.multikey.metadata;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 
+import java.nio.file.Path;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes;
 
-public class FileRawSigningMetadata extends SigningMetadata {
+public class FileKeyStoreMetadata extends SigningMetadata {
 
-  private final Bytes privateKey;
+  private final Path keystoreFile;
+  private final Path keystorePasswordFile;
 
-  public FileRawSigningMetadata(
-      @JsonProperty(value = "privateKey", required = true) final Bytes privateKey,
+  public FileKeyStoreMetadata(
+      @JsonProperty(value = "keystoreFile", required = true) final Path keystoreFile,
+      @JsonProperty(value = "keystorePasswordFile", required = true) Path keystorePasswordFile,
       @JsonProperty(value = "keyType") final KeyType keyType) {
     super(keyType != null ? keyType : KeyType.BLS);
-    this.privateKey = privateKey;
+    this.keystoreFile = keystoreFile;
+    this.keystorePasswordFile = keystorePasswordFile;
   }
 
   @Override
@@ -35,7 +38,11 @@ public class FileRawSigningMetadata extends SigningMetadata {
     return artifactSignerFactory.create(this);
   }
 
-  public Bytes getPrivateKeyBytes() {
-    return privateKey;
+  public Path getKeystoreFile() {
+    return keystoreFile;
+  }
+
+  public Path getKeystorePasswordFile() {
+    return keystorePasswordFile;
   }
 }

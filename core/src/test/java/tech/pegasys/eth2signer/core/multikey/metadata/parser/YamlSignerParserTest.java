@@ -21,9 +21,9 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.eth2signer.core.multikey.metadata.model.AzureSecretSigningMetadata;
-import tech.pegasys.eth2signer.core.multikey.metadata.model.FileKeyStoreMetadata;
-import tech.pegasys.eth2signer.core.multikey.metadata.model.FileRawSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.AzureSecretSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.teku.bls.BLSKeyPair;
