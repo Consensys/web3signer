@@ -15,8 +15,6 @@ package tech.pegasys.eth2signer.tests.publickeys;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
-import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
@@ -26,10 +24,8 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -56,17 +52,14 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
       "32ae313afff2daa2ef7005a7f834bdf291855608fe82c24d30be6ac2017093a8";
   protected static final String BLS_PUBLIC_KEY_1 =
       "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
-  protected static final String BLS_PUBLIC_KEY_2 =
-      "0xb6ee692dd6e14d1e897006b64b797c63908c17ce804cb32b3cfd160e5d9fbdc6a7a38a7b0613c0d39715d6fb7062415f";
-
   protected static final String SECP_PRIVATE_KEY_1 =
       "d392469474ec227b9ec4be232b402a0490045478ab621ca559d166965f0ffd32";
   protected static final String SECP_PRIVATE_KEY_2 =
       "2e322a5f72c525422dc275e006d5cb3954ca5e02e9610fae0ed4cc389f622f33";
   protected static final String SECP_PUBLIC_KEY_1 =
       "0x24491715b7514b315d06b6be809173e7c8051a2cd1880d29f8af5efda30e0877e816820c91d46444afc4063742a1602648751df36e11b5c95037fab1d4dd93eb";
-  protected static final String SECP_PUBLIC_KEY_2 =
-      "0xdb7983b4ae6df057760cb87f349197c32ddf5065fa2b634a83569d6ffa5a1bdffa256773d40c2a3892d3801a16c3eef341e99af70d889c77e8882f060bc5829b";
+  protected static final String SECP_FC_PUBLIC_KEY_1 = "t1yv62jzybqbktnamqrart5ovqtpuiizf33dv45ga";
+  protected static final String SECP_FC_PUBLIC_KEY_2 = "t1fg4ofyvbbqkobf7gdv4ggozuhen5johtimueabi";
 
   protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
@@ -82,7 +75,7 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
       final String keyType, boolean isValid, final String... privateKeys) {
     return keyType.equals("BLS")
         ? createBlsKeys(isValid, privateKeys)
-        : createSecpKeys(isValid, Numeric::toHexStringWithPrefix, privateKeys);
+        : createSecpKeys(isValid, privateKeys);
   }
 
   protected String[] createBlsKeys(boolean isValid, final String... privateKeys) {
@@ -102,32 +95,20 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
         .toArray(String[]::new);
   }
 
-  protected String[] createFilecoinSecpKeys(boolean isValid, final String... privateKeys) {
-    final Function<BigInteger, String> fcIdentifier =
-        pk ->
-            FilecoinAddress.secpAddress(
-                    Bytes.concatenate(Bytes.of(0x4), Bytes.wrap(Numeric.toBytesPadded(pk, 64))))
-                .encode(FilecoinNetwork.TESTNET);
-    return createSecpKeys(isValid, fcIdentifier, privateKeys);
-  }
-
-  protected String[] createSecpKeys(
-      boolean isValid,
-      final Function<BigInteger, String> identifierCreator,
-      final String... privateKeys) {
+  protected String[] createSecpKeys(boolean isValid, final String... privateKeys) {
     return Stream.of(privateKeys)
         .map(
             privateKey -> {
               final ECKeyPair ecKeyPair =
                   ECKeyPair.create(Numeric.toBigInt(Bytes.fromHexString(privateKey).toArray()));
-              final String identifier = identifierCreator.apply(ecKeyPair.getPublicKey());
+              final String publicKey = Numeric.toHexStringWithPrefix(ecKeyPair.getPublicKey());
               if (isValid) {
-                createSecpKey(privateKey, identifier);
+                createSecpKey(privateKey);
               } else {
-                final Path keyConfigFile = testDirectory.resolve(identifier + ".yaml");
+                final Path keyConfigFile = testDirectory.resolve(publicKey + ".yaml");
                 createInvalidFile(keyConfigFile);
               }
-              return identifier;
+              return publicKey;
             })
         .toArray(String[]::new);
   }
@@ -140,10 +121,11 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
     }
   }
 
-  private void createSecpKey(final String privateKeyHexString, final String filename) {
+  private void createSecpKey(final String privateKeyHexString) {
     final String password = "pass";
     final Bytes privateKey = Bytes.fromHexString(privateKeyHexString);
     final ECKeyPair ecKeyPair = ECKeyPair.create(Numeric.toBigInt(privateKey.toArray()));
+    final String publicKey = Numeric.toHexStringNoPrefix(ecKeyPair.getPublicKey());
 
     final String walletFile;
     try {
@@ -154,7 +136,7 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
     }
 
     metadataFileHelpers.createKeyStoreYamlFileAt(
-        testDirectory.resolve(filename + ".yaml"), Path.of(walletFile), password);
+        testDirectory.resolve(publicKey + ".yaml"), Path.of(walletFile), password);
   }
 
   private Path blsConfigFileName(final BLSPublicKey publicKey) {
@@ -198,7 +180,7 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
         .body("jsonrpc", equalTo("2.0"), "id", equalTo(1), "result", resultMatcher);
   }
 
-  protected Response callFilecoinRpcPublicKeys() {
+  protected Response callFilecoinRpcWalletList() {
     final JsonNode params = JsonNodeFactory.instance.objectNode();
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final Request request = new Request("2.0", "Filecoin.WalletList", params, id);

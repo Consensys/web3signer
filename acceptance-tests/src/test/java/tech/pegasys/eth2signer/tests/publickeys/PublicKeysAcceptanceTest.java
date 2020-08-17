@@ -42,7 +42,7 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
     validateApiResponse(callApiPublicKeys(keyType), empty());
     validateRpcResponse(callRpcPublicKeys(keyType), empty());
-    validateRpcResponse(callFilecoinRpcPublicKeys(), empty());
+    validateRpcResponse(callFilecoinRpcWalletList(), empty());
   }
 
   @ParameterizedTest
@@ -53,7 +53,7 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
     validateApiResponse(callApiPublicKeys(keyType), empty());
     validateRpcResponse(callRpcPublicKeys(keyType), empty());
-    validateRpcResponse(callFilecoinRpcPublicKeys(), empty());
+    validateRpcResponse(callFilecoinRpcWalletList(), empty());
   }
 
   @ParameterizedTest
@@ -72,6 +72,12 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     final Response rpcResponse = callRpcPublicKeys(keyType);
     validateRpcResponse(rpcResponse, contains(keys));
     validateRpcResponse(rpcResponse, everyItem(not(in(invalidKeys))));
+
+    if (keyType.equals(SECP256K1)) {
+      final Response fcResponse = callFilecoinRpcWalletList();
+      validateRpcResponse(fcResponse, contains(SECP_FC_PUBLIC_KEY_1));
+      validateRpcResponse(fcResponse, everyItem((not(SECP_FC_PUBLIC_KEY_2))));
+    }
   }
 
   @ParameterizedTest
@@ -82,6 +88,11 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
     validateApiResponse(callApiPublicKeys(keyType), containsInAnyOrder(keys));
     validateRpcResponse(callRpcPublicKeys(keyType), containsInAnyOrder(keys));
+    if (keyType.equals(SECP256K1)) {
+      validateRpcResponse(
+          callFilecoinRpcWalletList(),
+          containsInAnyOrder(SECP_FC_PUBLIC_KEY_1, SECP_FC_PUBLIC_KEY_2));
+    }
   }
 
   @ParameterizedTest
@@ -92,6 +103,11 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(keyType);
     validateApiResponse(response, containsInAnyOrder(keys));
+    if (keyType.equals(SECP256K1)) {
+      validateRpcResponse(
+          callFilecoinRpcWalletList(),
+          containsInAnyOrder(SECP_FC_PUBLIC_KEY_1, SECP_FC_PUBLIC_KEY_2));
+    }
   }
 
   @Test
@@ -150,13 +166,5 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     final String publicKey = keyType.equals(BLS) ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
     validateApiResponse(callApiPublicKeys(keyType), contains(publicKey));
     validateRpcResponse(callRpcPublicKeys(keyType), contains(publicKey));
-  }
-
-  @Test
-  public void fileCoinSecpKeysAreReturnedInPublicKeyResponse() {
-    final String[] keys = createFilecoinSecpKeys(true, SECP_PRIVATE_KEY_1, SECP_PRIVATE_KEY_2);
-    initAndStartSigner();
-
-    validateRpcResponse(callFilecoinRpcPublicKeys(), containsInAnyOrder(keys));
   }
 }
