@@ -17,9 +17,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
