@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.core.signing;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.eth2signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -28,7 +29,8 @@ class BlsArtifactSignerTest {
   void publicKeyIsReturnedAsIdentifier() {
     final BLSKeyPair keyPair = BLSKeyPair.random(4);
     final BlsArtifactSigner blsArtifactSigner = new BlsArtifactSigner(keyPair);
-    assertThat(blsArtifactSigner.getIdentifier()).isEqualTo(keyPair.getPublicKey().toString());
+    final String expectedIdentifier = normaliseIdentifier(keyPair.getPublicKey().toString());
+    assertThat(blsArtifactSigner.getIdentifier()).isEqualTo(expectedIdentifier);
   }
 
   @Test

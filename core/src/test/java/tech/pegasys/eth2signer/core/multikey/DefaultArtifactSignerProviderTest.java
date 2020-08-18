@@ -18,7 +18,6 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,70 +32,43 @@ class DefaultArtifactSignerProviderTest {
       "a99a76ed7796f7be22d5b7e85deeb7c5677e88e511e0b337618f8c4eb61349b4bf2d153f649f7b53359fe8b94a38e44c";
 
   @Test
-  void signerReturnedWhenHasHexPrefix() {
-    final BlsArtifactSigner mockSigner = mock(BlsArtifactSigner.class);
+  void signerReturnedForMatchingIdentifer() {
+    final ArtifactSigner mockSigner = mock(ArtifactSigner.class);
     when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1);
 
     final ArtifactSignerProvider signerProvider =
         DefaultArtifactSignerProvider.create(List.of(mockSigner));
 
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY1);
+    final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
-    assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
-  }
-
-  @Test
-  void signerReturnedWhenHasUpperCaseHexPrefix() {
-    final BlsArtifactSigner mockSigner = mock(BlsArtifactSigner.class);
-    when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1);
-
-    final ArtifactSignerProvider signerProvider =
-        DefaultArtifactSignerProvider.create(List.of(mockSigner));
-
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0X" + PUBLIC_KEY1);
-    assertThat(signer).isNotEmpty();
-    assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
-  }
-
-  @Test
-  void signerReturnedWhenHasNoPrefixAndDifferentCase() {
-    final BlsArtifactSigner mockSigner = mock(BlsArtifactSigner.class);
-    when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1.toUpperCase());
-
-    final ArtifactSignerProvider signerProvider =
-        DefaultArtifactSignerProvider.create(List.of(mockSigner));
-
-    final Optional<ArtifactSigner> signer = signerProvider.getSigner("0x" + PUBLIC_KEY1);
-    assertThat(signer).isNotEmpty();
-    assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
+    assertThat(signerProvider.availableIdentifiers()).containsOnly(PUBLIC_KEY1);
   }
 
   @Test
   void signerProviderOnlyHasSingleEntryIfPassedInListHasMultipleMatchingSigners() {
-    final BlsArtifactSigner mockSigner1 = mock(BlsArtifactSigner.class);
-    when(mockSigner1.getIdentifier()).thenReturn(PUBLIC_KEY1.toUpperCase());
+    final ArtifactSigner mockSigner1 = mock(ArtifactSigner.class);
+    when(mockSigner1.getIdentifier()).thenReturn(PUBLIC_KEY1);
     final ArtifactSigner mockSigner2 = mock(ArtifactSigner.class);
-    when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY1.toUpperCase());
+    when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY1);
 
     final ArtifactSignerProvider signerProvider =
         DefaultArtifactSignerProvider.create(List.of(mockSigner1, mockSigner2));
 
     assertThat(signerProvider.availableIdentifiers()).hasSize(1);
-    assertThat(signerProvider.availableIdentifiers()).containsOnly("0x" + PUBLIC_KEY1);
+    assertThat(signerProvider.availableIdentifiers()).containsOnly(PUBLIC_KEY1);
   }
 
   @Test
   void signerProviderCanMapInTwoSigners() {
     final ArtifactSigner mockSigner1 = mock(ArtifactSigner.class);
-    when(mockSigner1.getIdentifier()).thenReturn(PUBLIC_KEY1.toUpperCase());
+    when(mockSigner1.getIdentifier()).thenReturn(PUBLIC_KEY1);
     final ArtifactSigner mockSigner2 = mock(ArtifactSigner.class);
-    when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY2.toUpperCase());
+    when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY2);
 
     final ArtifactSignerProvider signerProvider =
         DefaultArtifactSignerProvider.create(List.of(mockSigner1, mockSigner2));
 
     assertThat(signerProvider.availableIdentifiers()).hasSize(2);
-    assertThat(signerProvider.availableIdentifiers())
-        .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2);
+    assertThat(signerProvider.availableIdentifiers()).containsOnly(PUBLIC_KEY1, PUBLIC_KEY2);
   }
 }

@@ -25,6 +25,7 @@ import tech.pegasys.eth2signer.core.Runner;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -164,6 +165,13 @@ public class Eth2SignerCommand implements Config, Runnable {
       arity = "1")
   private int idleConnectionTimeoutSeconds = 30;
 
+  @Option(
+      names = {"--filecoin-network"},
+      description = "Filecoin network to use for addresses (default: ${DEFAULT-VALUE})",
+      paramLabel = "<network name>",
+      arity = "1")
+  private final FilecoinNetwork filecoinNetwork = FilecoinNetwork.TESTNET;
+
   @ArgGroup(exclusive = false)
   private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
@@ -233,6 +241,11 @@ public class Eth2SignerCommand implements Config, Runnable {
   }
 
   @Override
+  public FilecoinNetwork getFilecoinNetwork() {
+    return filecoinNetwork;
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -249,6 +262,7 @@ public class Eth2SignerCommand implements Config, Runnable {
         .add("metricsHostAllowList", metricsHostAllowList)
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
+        .add("filecoinNetwork", filecoinNetwork)
         .toString();
   }
 

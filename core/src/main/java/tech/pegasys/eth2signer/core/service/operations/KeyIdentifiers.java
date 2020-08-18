@@ -20,11 +20,11 @@ import tech.pegasys.eth2signer.core.signing.KeyType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PublicKeys {
+public class KeyIdentifiers {
   private final ArtifactSignerProvider blsSignerProvider;
   private final ArtifactSignerProvider secpSignerProvider;
 
-  public PublicKeys(
+  public KeyIdentifiers(
       final ArtifactSignerProvider blsSignerProvider,
       final ArtifactSignerProvider secpSignerProvider) {
     this.blsSignerProvider = blsSignerProvider;

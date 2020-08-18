@@ -14,26 +14,26 @@ package tech.pegasys.eth2signer.core.signing;
 
 import static tech.pegasys.eth2signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
 
-import tech.pegasys.teku.bls.BLS;
-import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
+import tech.pegasys.signers.secp256k1.api.Signer;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class BlsArtifactSigner implements ArtifactSigner {
+public class EthSecpArtifactSigner implements ArtifactSigner {
 
-  private final BLSKeyPair keyPair;
+  private final Signer signer;
 
-  public BlsArtifactSigner(final BLSKeyPair keyPair) {
-    this.keyPair = keyPair;
+  public EthSecpArtifactSigner(final Signer signer) {
+    this.signer = signer;
   }
 
   @Override
   public String getIdentifier() {
-    return normaliseIdentifier(keyPair.getPublicKey().toString());
+    return normaliseIdentifier(EthPublicKeyUtils.toHexString(signer.getPublicKey()));
   }
 
   @Override
-  public ArtifactSignature sign(final Bytes data) {
-    return new BlsArtifactSignature(BLS.sign(keyPair.getSecretKey(), data));
+  public ArtifactSignature sign(final Bytes message) {
+    return new SecpArtifactSignature(signer.sign(message.toArray()));
   }
 }
