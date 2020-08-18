@@ -85,7 +85,7 @@ public class FilecoinAddress {
       }
       final Bytes value = Bytes.wrap(Base32.decode(rawPayload));
       final Bytes payload = value.slice(0, value.size() - CHECKSUM_BYTE_SIZE);
-      final Bytes checksum = value.slice(value.size() - 4);
+      final Bytes checksum = value.slice(value.size() - CHECKSUM_BYTE_SIZE);
       final FilecoinAddress filecoinAddress = new FilecoinAddress(protocol, payload);
       if (!validateChecksum(filecoinAddress, checksum)) {
         throw new IllegalStateException("Filecoin address checksum doesn't match");

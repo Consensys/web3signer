@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
+import static tech.pegasys.eth2signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
+
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 
@@ -27,7 +29,7 @@ public class BlsArtifactSigner implements ArtifactSigner {
 
   @Override
   public String getIdentifier() {
-    return keyPair.getPublicKey().toString();
+    return normaliseIdentifier(keyPair.getPublicKey().toString());
   }
 
   @Override

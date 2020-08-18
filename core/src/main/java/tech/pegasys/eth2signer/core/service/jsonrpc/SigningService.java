@@ -16,7 +16,7 @@ import static tech.pegasys.eth2signer.core.service.operations.IdentifierUtils.no
 
 import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.InvalidParamException;
 import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.SignerNotFoundException;
-import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
+import tech.pegasys.eth2signer.core.service.operations.KeyIdentifiers;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.service.operations.Upcheck;
 import tech.pegasys.eth2signer.core.signing.KeyType;
@@ -36,22 +36,22 @@ public class SigningService {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Upcheck upcheck = new Upcheck();
-  private final PublicKeys ethPublicKeys;
-  private final PublicKeys fcPublicKeys;
+  private final KeyIdentifiers ethKeyIdentifiers;
+  private final KeyIdentifiers fcKeyIdentifiers;
   private final List<SignerForIdentifier<?>> signerForIdentifierList;
 
   public SigningService(
-      final PublicKeys ethPublicKeys,
-      final PublicKeys fcPublicKeys,
+      final KeyIdentifiers ethKeyIdentifiers,
+      final KeyIdentifiers fcKeyIdentifiers,
       final List<SignerForIdentifier<?>> signerForIdentifierList) {
-    this.ethPublicKeys = ethPublicKeys;
-    this.fcPublicKeys = fcPublicKeys;
+    this.ethKeyIdentifiers = ethKeyIdentifiers;
+    this.fcKeyIdentifiers = fcKeyIdentifiers;
     this.signerForIdentifierList = signerForIdentifierList;
   }
 
   @JsonRpcMethod("public_keys")
   public String[] publicKeys(@JsonRpcParam("keyType") final KeyType keyType) {
-    return ethPublicKeys.list(keyType).toArray(String[]::new);
+    return ethKeyIdentifiers.list(keyType).toArray(String[]::new);
   }
 
   @JsonRpcMethod("sign")
@@ -89,6 +89,6 @@ public class SigningService {
 
   @JsonRpcMethod("Filecoin.WalletList")
   public List<String> filecoinWalletList() {
-    return fcPublicKeys.list(KeyType.SECP256K1);
+    return fcKeyIdentifiers.list(KeyType.SECP256K1);
   }
 }

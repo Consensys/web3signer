@@ -30,7 +30,7 @@ import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.SignForIdentifierHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.service.jsonrpc.SigningService;
-import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
+import tech.pegasys.eth2signer.core.service.operations.KeyIdentifiers;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
@@ -141,23 +141,25 @@ public class Runner implements Runnable {
           factory.createFilecoinSecpSignerProvider(
               config.getKeyConfigPath(), config.getFilecoinNetwork());
 
-      final PublicKeys ethPublicKeys = new PublicKeys(blsSignerProvider, ethSecpSignerProvider);
+      final KeyIdentifiers ethKeyIdentifiers =
+          new KeyIdentifiers(blsSignerProvider, ethSecpSignerProvider);
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =
           new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
       final SignerForIdentifier<SecpArtifactSignature> secpSigner =
           new SignerForIdentifier<>(ethSecpSignerProvider, this::formatSecpSignature, SECP256K1);
 
-      final PublicKeys fcPublicKeys =
-          new PublicKeys(new UnsupportedArtifactSignerProvider(), fcSecpSignerProvider);
+      final KeyIdentifiers fcKeyIdentifiers =
+          new KeyIdentifiers(new UnsupportedArtifactSignerProvider(), fcSecpSignerProvider);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
-          createOpenApiRouterFactory(vertx, ethPublicKeys, blsSigner, secpSigner);
+          createOpenApiRouterFactory(vertx, ethKeyIdentifiers, blsSigner, secpSigner);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
 
       // register non-openapi routes ...
       registerOpenApiSpecRoute(router); // serve static openapi spec
-      registerJsonRpcRoute(router, ethPublicKeys, fcPublicKeys, List.of(blsSigner, secpSigner));
+      registerJsonRpcRoute(
+          router, ethKeyIdentifiers, fcKeyIdentifiers, List.of(blsSigner, secpSigner));
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -176,7 +178,7 @@ public class Runner implements Runnable {
 
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
       final Vertx vertx,
-      final PublicKeys publicKeys,
+      final KeyIdentifiers keyIdentifiers,
       final SignerForIdentifier<BlsArtifactSignature> blsSigner,
       final SignerForIdentifier<SecpArtifactSignature> secpSigner)
       throws InterruptedException, ExecutionException {
@@ -189,7 +191,7 @@ public class Runner implements Runnable {
 
     // public key handler
     openAPI3RouterFactory.addHandlerByOperationId(
-        GET_PUBLIC_KEYS_OPERATION_ID, new GetPublicKeysHandler(publicKeys));
+        GET_PUBLIC_KEYS_OPERATION_ID, new GetPublicKeysHandler(keyIdentifiers));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
 
@@ -261,12 +263,12 @@ public class Runner implements Runnable {
 
   private void registerJsonRpcRoute(
       final Router router,
-      final PublicKeys ethPublicKeys,
-      final PublicKeys fcPublicKeys,
+      final KeyIdentifiers ethKeyIdentifiers,
+      final KeyIdentifiers fcKeyIdentifiers,
       final List<SignerForIdentifier<?>> signerForIdentifierList) {
     // Handles JSON-RPC calls on /rpc/v1
     final SigningService signingService =
-        new SigningService(ethPublicKeys, fcPublicKeys, signerForIdentifierList);
+        new SigningService(ethKeyIdentifiers, fcKeyIdentifiers, signerForIdentifierList);
     final JsonRpcServer jsonRpcServer = new JsonRpcServer();
     router
         .post(JSON_RPC_PATH)
