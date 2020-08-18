@@ -13,7 +13,6 @@
 package tech.pegasys.eth2signer.core;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static java.util.Collections.emptyList;
 import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.eth2signer.core.signing.KeyType.BLS;
 import static tech.pegasys.eth2signer.core.signing.KeyType.SECP256K1;
@@ -24,11 +23,7 @@ import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DefaultArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.multikey.SignerLoader;
 import tech.pegasys.eth2signer.core.multikey.UnsupportedArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
@@ -37,17 +32,12 @@ import tech.pegasys.eth2signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.service.jsonrpc.SigningService;
 import tech.pegasys.eth2signer.core.service.operations.KeyIdentifiers;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
-import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.EthSecpArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.FcSecpArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.LoadedSigners;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.eth2signer.core.util.FileUtil;
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.api.Signature;
-import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -55,15 +45,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import com.google.common.base.Charsets;
@@ -138,71 +125,11 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
-      final HashicorpConnectionFactory hashicorpConnectionFactory =
-          new HashicorpConnectionFactory(vertx);
+      final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
 
-      final BlsArtifactSignerFactory blsArtifactSignerFactory =
-          new BlsArtifactSignerFactory(
-              config.getKeyConfigPath(), metricsSystem, hashicorpConnectionFactory);
-
-      final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
-          new Secp256k1ArtifactSignerFactory(
-              hashicorpConnectionFactory,
-              config.getKeyConfigPath(),
-              azureFactory,
-              EthSecpArtifactSigner::new);
-
-      final Secp256k1ArtifactSignerFactory fcSecpArtifactSignerFactory =
-          new Secp256k1ArtifactSignerFactory(
-              hashicorpConnectionFactory,
-              config.getKeyConfigPath(),
-              azureFactory,
-              signer -> new FcSecpArtifactSigner(signer, config.getFilecoinNetwork()));
-
-      final Collection<ArtifactSigner> signers =
-          SignerLoader.load(
-              config.getKeyConfigPath(),
-              "yaml",
-              new YamlSignerParser(
-                  blsArtifactSignerFactory,
-                  ethSecpArtifactSignerFactory,
-                  fcSecpArtifactSignerFactory));
-
-      final Map<SignerTypes, List<ArtifactSigner>> signersByType =
-          signers
-              .parallelStream()
-              .collect(
-                  Collectors.groupingBy(
-                      i -> {
-                        if (i instanceof BlsArtifactSigner) {
-                          return SignerTypes.BLS;
-                        } else if (i instanceof EthSecpArtifactSigner) {
-                          return SignerTypes.ETH;
-                        } else if (i instanceof FcSecpArtifactSigner) {
-                          return SignerTypes.FC_SECP;
-                        } else {
-                          return SignerTypes.FC_BLS;
-                        }
-                      }));
-
-      final DefaultArtifactSignerProvider blsSignerProvider =
-          DefaultArtifactSignerProvider.create(
-              signersByType.get(SignerTypes.BLS) != null
-                  ? signersByType.get(SignerTypes.BLS)
-                  : emptyList());
-
-      final DefaultArtifactSignerProvider ethSecpSignerProvider =
-          DefaultArtifactSignerProvider.create(
-              signersByType.get(SignerTypes.ETH) != null
-                  ? signersByType.get(SignerTypes.ETH)
-                  : emptyList());
-
-      final DefaultArtifactSignerProvider fcSecpSignerProvider =
-          DefaultArtifactSignerProvider.create(
-              signersByType.get(SignerTypes.FC_SECP) != null
-                  ? signersByType.get(SignerTypes.FC_SECP)
-                  : emptyList());
+      final DefaultArtifactSignerProvider blsSignerProvider = signers.getBlsSignerProvider();
+      final DefaultArtifactSignerProvider ethSecpSignerProvider = signers.getEthSignerProvider();
+      final DefaultArtifactSignerProvider fcSecpSignerProvider = signers.getFcSecpSignerProvider();
 
       final KeyIdentifiers ethKeyIdentifiers =
           new KeyIdentifiers(blsSignerProvider, ethSecpSignerProvider);
