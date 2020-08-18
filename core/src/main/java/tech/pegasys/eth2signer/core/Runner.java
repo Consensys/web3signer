@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.core;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static java.util.Collections.emptyList;
 import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
@@ -38,7 +39,6 @@ import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
-import tech.pegasys.eth2signer.core.signing.SecpArtifactSigner;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.eth2signer.core.utils.ByteUtils;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -53,6 +53,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -151,19 +152,23 @@ public class Runner implements Runnable {
               "yaml",
               new YamlSignerParser(blsArtifactSignerFactory, secp256k1ArtifactSignerFactory));
 
+      final Map<KeyType, List<ArtifactSigner>> signersByType =
+          signers
+              .parallelStream()
+              .collect(
+                  Collectors.groupingBy(
+                      i -> i instanceof BlsArtifactSigner ? KeyType.BLS : KeyType.SECP256K1));
       final DefaultArtifactSignerProvider blsArtifactSigners =
           DefaultArtifactSignerProvider.create(
-              signers
-                  .parallelStream()
-                  .filter(i -> i instanceof BlsArtifactSigner)
-                  .collect(Collectors.toSet()));
+              signersByType.get(KeyType.BLS) != null
+                  ? signersByType.get(KeyType.BLS)
+                  : emptyList());
 
       final DefaultArtifactSignerProvider secpArtifactSigners =
           DefaultArtifactSignerProvider.create(
-              signers
-                  .parallelStream()
-                  .filter(i -> i instanceof SecpArtifactSigner)
-                  .collect(Collectors.toSet()));
+              signersByType.get(KeyType.SECP256K1) != null
+                  ? signersByType.get(KeyType.SECP256K1)
+                  : emptyList());
 
       final PublicKeys publicKeys = new PublicKeys(blsArtifactSigners, secpArtifactSigners);
 
