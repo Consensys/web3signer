@@ -33,7 +33,7 @@ public class AzureSecretSigningMetadata extends SigningMetadata {
       @JsonProperty("tenantId") final String tenantId,
       @JsonProperty("vaultName") final String vaultName,
       @JsonProperty("secretName") final String secretName,
-      @JsonProperty(value = "keyType") final KeyType keyType) {
+      @JsonProperty("keyType") final KeyType keyType) {
     super(keyType != null ? keyType : KeyType.BLS);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
