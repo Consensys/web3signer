@@ -162,7 +162,8 @@ public class KeyIdentifiersAcceptanceTest extends PublicKeysAcceptanceTestBase {
   public void keysWithArbitraryFilenamesAreLoaded(final String keyType) {
     final String privateKey = privateKeys(keyType)[0];
     final String filename = "foo" + "_" + keyType + ".yaml";
-    metadataFileHelpers.createUnencryptedYamlFileAt(testDirectory.resolve(filename), privateKey);
+    metadataFileHelpers.createUnencryptedYamlFileAt(
+        testDirectory.resolve(filename), privateKey, KeyType.valueOf(keyType));
     initAndStartSigner();
 
     final String publicKey = keyType.equals(BLS) ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;

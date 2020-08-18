@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
+import static java.util.Collections.singletonList;
+
 import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadata;
@@ -22,6 +24,7 @@ import tech.pegasys.eth2signer.core.signing.KeyType;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -34,22 +37,27 @@ public class YamlSignerParser implements SignerParser {
       new ObjectMapper(new YAMLFactory()).registerModule(new SigningMetadataModule());
 
   private final BlsArtifactSignerFactory blsFactory;
-  private final Secp256k1ArtifactSignerFactory secpFactory;
+  private final Secp256k1ArtifactSignerFactory ethSecpFactory;
+  private final Secp256k1ArtifactSignerFactory fcSecpFactory;
 
   public YamlSignerParser(
-      final BlsArtifactSignerFactory blsFactory, final Secp256k1ArtifactSignerFactory secpFactory) {
+      final BlsArtifactSignerFactory blsFactory,
+      final Secp256k1ArtifactSignerFactory ethSecpFactory,
+      final Secp256k1ArtifactSignerFactory fcSecpFactory) {
     this.blsFactory = blsFactory;
-    this.secpFactory = secpFactory;
+    this.ethSecpFactory = ethSecpFactory;
+    this.fcSecpFactory = fcSecpFactory;
   }
 
   @Override
-  public ArtifactSigner parse(final Path metadataPath) {
+  public List<ArtifactSigner> parse(final Path metadataPath) {
     try {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
       return metaDataInfo.getKeyType() == KeyType.BLS
-          ? metaDataInfo.createSigner(blsFactory)
-          : metaDataInfo.createSigner(secpFactory);
+          ? singletonList(metaDataInfo.createSigner(blsFactory))
+          : List.of(
+              metaDataInfo.createSigner(ethSecpFactory), metaDataInfo.createSigner(fcSecpFactory));
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file format", e);
     } catch (final FileNotFoundException e) {

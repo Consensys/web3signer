@@ -32,6 +32,7 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -60,7 +61,7 @@ class YamlSignerParserTest {
 
   @BeforeEach
   public void setup() {
-    signerParser = new YamlSignerParser(artifactSignerFactory, null);
+    signerParser = new YamlSignerParser(artifactSignerFactory, null, null);
   }
 
   @Test
@@ -127,9 +128,9 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
+    final List<ArtifactSigner> result = signerParser.parse(filename);
 
-    assertThat(result).isEqualTo(artifactSigner);
+    assertThat(result).containsOnly(artifactSigner);
     verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
   }
 
@@ -147,9 +148,9 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
+    final List<ArtifactSigner> result = signerParser.parse(filename);
 
-    assertThat(result).isEqualTo(artifactSigner);
+    assertThat(result).containsOnly(artifactSigner);
     verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
   }
 
@@ -211,8 +212,8 @@ class YamlSignerParserTest {
     keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), keystoreMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
-    assertThat(result).isEqualTo(artifactSigner);
+    final List<ArtifactSigner> result = signerParser.parse(filename);
+    assertThat(result).containsOnly(artifactSigner);
     verify(artifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
   }
 
@@ -250,8 +251,8 @@ class YamlSignerParserTest {
     azureMetaDataMap.put("secretName", "TEST-KEY");
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), azureMetaDataMap);
 
-    final ArtifactSigner result = signerParser.parse(filename);
-    assertThat(result).isEqualTo(artifactSigner);
+    final List<ArtifactSigner> result = signerParser.parse(filename);
+    assertThat(result).containsOnly(artifactSigner);
     verify(artifactSignerFactory).create(hasCorrectAzureMetadataArguments());
   }
 
