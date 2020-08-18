@@ -28,7 +28,7 @@ class BlsArtifactSignerTest {
   @Test
   void publicKeyIsReturnedAsIdentifier() {
     final BLSKeyPair keyPair = BLSKeyPair.random(4);
-    final BlsArtifactSigner blsArtifactSigner = new BlsArtifactSigner(keyPair);
+    final BlsArtifactSigner blsArtifactSigner = new BlsArtifactSigner(keyPair.getSecretKey().toBytes());
     final String expectedIdentifier = normaliseIdentifier(keyPair.getPublicKey().toString());
     assertThat(blsArtifactSigner.getIdentifier()).isEqualTo(expectedIdentifier);
   }
@@ -39,7 +39,8 @@ class BlsArtifactSignerTest {
     final BLSKeyPair keyPair = BLSKeyPair.random(4);
     final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), message);
 
-    final BlsArtifactSigner blsArtifactSigner = new BlsArtifactSigner(keyPair);
+    final BlsArtifactSigner blsArtifactSigner =
+        new BlsArtifactSigner(keyPair.getSecretKey().toBytes());
     final BlsArtifactSignature signature = (BlsArtifactSignature) blsArtifactSigner.sign(message);
 
     assertThat(signature.getSignatureData().toString()).isEqualTo(expectedSignature.toString());

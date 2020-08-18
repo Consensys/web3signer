@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static tech.pegasys.filecoin.bls12_381.LibBlsFilecoin.fil_private_key_public_key;
 
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
@@ -27,6 +28,7 @@ public class FcBlsArtifactSigner implements ArtifactSigner {
   private final FilecoinNetwork filecoinNetwork;
 
   public FcBlsArtifactSigner(final Bytes privateKey, final FilecoinNetwork filecoinNetwork) {
+    checkArgument(privateKey.size() == 32);
     this.privateKey = privateKey;
     this.filecoinNetwork = filecoinNetwork;
   }

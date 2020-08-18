@@ -27,8 +27,6 @@ import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSecretKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -282,7 +280,6 @@ class SignerLoaderTest {
   }
 
   private ArtifactSigner createArtifactSigner(final String privateKey) {
-    return new BlsArtifactSigner(
-        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey))));
+    return new BlsArtifactSigner(Bytes.fromHexString(privateKey));
   }
 }

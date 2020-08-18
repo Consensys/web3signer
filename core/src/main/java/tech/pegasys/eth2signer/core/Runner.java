@@ -22,7 +22,6 @@ import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
-import tech.pegasys.eth2signer.core.multikey.UnsupportedArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerProviderFactory;
 import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
@@ -132,7 +131,11 @@ public class Runner implements Runnable {
           new ArtifactSignerProviderFactory(metricsSystem, vertx, azureFactory);
 
       final ArtifactSignerProvider blsSignerProvider =
-          factory.createBlsSignerProvider(config.getKeyConfigPath());
+          factory.createEthBlsSignerProvider(config.getKeyConfigPath());
+
+      final ArtifactSignerProvider fcBlsSignerProvider =
+          factory.createFilecoinBlsSignerProvider(
+              config.getKeyConfigPath(), config.getFilecoinNetwork());
 
       final ArtifactSignerProvider ethSecpSignerProvider =
           factory.createEthSecpSignerProvider(config.getKeyConfigPath());
@@ -149,7 +152,7 @@ public class Runner implements Runnable {
           new SignerForIdentifier<>(ethSecpSignerProvider, this::formatSecpSignature, SECP256K1);
 
       final KeyIdentifiers fcKeyIdentifiers =
-          new KeyIdentifiers(new UnsupportedArtifactSignerProvider(), fcSecpSignerProvider);
+          new KeyIdentifiers(fcBlsSignerProvider, fcSecpSignerProvider);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(vertx, ethKeyIdentifiers, blsSigner, secpSigner);

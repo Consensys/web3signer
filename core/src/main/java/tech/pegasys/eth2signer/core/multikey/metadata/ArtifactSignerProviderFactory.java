@@ -16,7 +16,9 @@ import tech.pegasys.eth2signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SignerLoader;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.EthSecpArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.FcBlsArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.FcSecpArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -42,9 +44,23 @@ public class ArtifactSignerProviderFactory {
     this.hashicorpConnectionFactory = new HashicorpConnectionFactory(vertx);
   }
 
-  public ArtifactSignerProvider createBlsSignerProvider(final Path keyConfigPath) {
+  public ArtifactSignerProvider createEthBlsSignerProvider(final Path keyConfigPath) {
     final ArtifactSignerFactory artifactSignerFactory =
-        new BlsArtifactSignerFactory(keyConfigPath, metricsSystem, hashicorpConnectionFactory);
+        new BlsArtifactSignerFactory(
+            keyConfigPath, metricsSystem, hashicorpConnectionFactory, BlsArtifactSigner::new);
+
+    return DefaultArtifactSignerProvider.create(
+        SignerLoader.load(keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));
+  }
+
+  public ArtifactSignerProvider createFilecoinBlsSignerProvider(
+      final Path keyConfigPath, final FilecoinNetwork filecoinNetwork) {
+    final ArtifactSignerFactory artifactSignerFactory =
+        new BlsArtifactSignerFactory(
+            keyConfigPath,
+            metricsSystem,
+            hashicorpConnectionFactory,
+            privatekey -> new FcBlsArtifactSigner(privatekey, filecoinNetwork));
 
     return DefaultArtifactSignerProvider.create(
         SignerLoader.load(keyConfigPath, "yaml", new YamlSignerParser(artifactSignerFactory)));

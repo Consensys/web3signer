@@ -89,7 +89,7 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
     final Path filename = createFileWithContent(signingMetadata);
 
     final ArtifactSignerProvider signerProvider =
-        providerFactory.createBlsSignerProvider(configsDirectory);
+        providerFactory.createEthBlsSignerProvider(configsDirectory);
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
@@ -117,7 +117,7 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
 
       configsDirectory.toFile().setWritable(false);
       final ArtifactSignerProvider signerProvider =
-          providerFactory.createBlsSignerProvider(configsDirectory);
+          providerFactory.createEthBlsSignerProvider(configsDirectory);
       final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
       assertThat(signer).isEmpty();
 
@@ -143,7 +143,7 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
 
     final Path filename = createFileWithContent(signingMetadata);
     final ArtifactSignerProvider signerProvider =
-        providerFactory.createBlsSignerProvider(configsDirectory);
+        providerFactory.createEthBlsSignerProvider(configsDirectory);
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 
@@ -165,7 +165,7 @@ public class ArtifactSignerProviderFactoryIntegrationTest {
     final Path filename = createFileWithContent(signingMetadata);
 
     final ArtifactSignerProvider signerProvider =
-        providerFactory.createBlsSignerProvider(configsDirectory);
+        providerFactory.createEthBlsSignerProvider(configsDirectory);
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY);
     assertThat(signer).isEmpty();
 

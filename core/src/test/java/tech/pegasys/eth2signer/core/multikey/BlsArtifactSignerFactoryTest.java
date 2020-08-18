@@ -21,6 +21,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.HashicorpSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 
 import java.io.IOException;
@@ -59,7 +60,10 @@ class BlsArtifactSignerFactoryTest {
 
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
-            configDir, new NoOpMetricsSystem(), new HashicorpConnectionFactory(vertx));
+            configDir,
+            new NoOpMetricsSystem(),
+            new HashicorpConnectionFactory(vertx),
+            BlsArtifactSigner::new);
   }
 
   @AfterEach
