@@ -45,7 +45,8 @@ dependencies {
   implementation 'tech.pegasys.signers.internal:keystorage-azure'
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-impl'
-
+  implementation 'tech.pegasys.java-filecoin-ffi.internal:bls12-381'
+  implementation 'net.java.dev.jna:jna'
   implementation 'com.github.arteam:simple-json-rpc-server'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
