@@ -33,7 +33,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
+public class KeyIdentifiersAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
   @ParameterizedTest
   @ValueSource(strings = {BLS, SECP256K1})
@@ -41,9 +41,8 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     initAndStartSigner();
 
     validateApiResponse(callApiPublicKeys(keyType), empty());
-    validateApiResponse(callApiPublicKeys(keyType), empty());
     validateRpcResponse(callRpcPublicKeys(keyType), empty());
-    validateRpcResponse(callRpcPublicKeys(keyType), empty());
+    validateRpcResponse(callFilecoinRpcWalletList(), empty());
   }
 
   @ParameterizedTest
@@ -53,9 +52,8 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     initAndStartSigner();
 
     validateApiResponse(callApiPublicKeys(keyType), empty());
-    validateApiResponse(callApiPublicKeys(keyType), empty());
     validateRpcResponse(callRpcPublicKeys(keyType), empty());
-    validateRpcResponse(callRpcPublicKeys(keyType), empty());
+    validateRpcResponse(callFilecoinRpcWalletList(), empty());
   }
 
   @ParameterizedTest
@@ -71,9 +69,15 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
     validateApiResponse(response, contains(keys));
     validateApiResponse(response, everyItem(not(in(invalidKeys))));
 
-    final Response jsonResponse = callRpcPublicKeys(keyType);
-    validateRpcResponse(jsonResponse, contains(keys));
-    validateRpcResponse(jsonResponse, everyItem(not(in(invalidKeys))));
+    final Response rpcResponse = callRpcPublicKeys(keyType);
+    validateRpcResponse(rpcResponse, contains(keys));
+    validateRpcResponse(rpcResponse, everyItem(not(in(invalidKeys))));
+
+    if (keyType.equals(SECP256K1)) {
+      final Response fcResponse = callFilecoinRpcWalletList();
+      validateRpcResponse(fcResponse, contains(SECP_FC_PUBLIC_KEY_1));
+      validateRpcResponse(fcResponse, everyItem((not(SECP_FC_PUBLIC_KEY_2))));
+    }
   }
 
   @ParameterizedTest
@@ -84,6 +88,11 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
     validateApiResponse(callApiPublicKeys(keyType), containsInAnyOrder(keys));
     validateRpcResponse(callRpcPublicKeys(keyType), containsInAnyOrder(keys));
+    if (keyType.equals(SECP256K1)) {
+      validateRpcResponse(
+          callFilecoinRpcWalletList(),
+          containsInAnyOrder(SECP_FC_PUBLIC_KEY_1, SECP_FC_PUBLIC_KEY_2));
+    }
   }
 
   @ParameterizedTest
@@ -94,6 +103,11 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(keyType);
     validateApiResponse(response, containsInAnyOrder(keys));
+    if (keyType.equals(SECP256K1)) {
+      validateRpcResponse(
+          callFilecoinRpcWalletList(),
+          containsInAnyOrder(SECP_FC_PUBLIC_KEY_1, SECP_FC_PUBLIC_KEY_2));
+    }
   }
 
   @Test
@@ -139,5 +153,18 @@ public class PublicKeysAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
     initAndStartSigner();
     validateApiResponse(callApiPublicKeys(BLS), containsInAnyOrder(publicKeys));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {BLS, SECP256K1})
+  public void keysWithArbitraryFilenamesAreLoaded(final String keyType) {
+    final String privateKey = privateKeys(keyType)[0];
+    final String filename = "foo" + "_" + keyType + ".yaml";
+    metadataFileHelpers.createUnencryptedYamlFileAt(testDirectory.resolve(filename), privateKey);
+    initAndStartSigner();
+
+    final String publicKey = keyType.equals(BLS) ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
+    validateApiResponse(callApiPublicKeys(keyType), contains(publicKey));
+    validateRpcResponse(callRpcPublicKeys(keyType), contains(publicKey));
   }
 }

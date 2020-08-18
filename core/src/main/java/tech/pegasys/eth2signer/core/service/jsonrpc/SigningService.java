@@ -12,9 +12,11 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
+import static tech.pegasys.eth2signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
+
 import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.InvalidParamException;
 import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.SignerNotFoundException;
-import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
+import tech.pegasys.eth2signer.core.service.operations.KeyIdentifiers;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.service.operations.Upcheck;
 import tech.pegasys.eth2signer.core.signing.KeyType;
@@ -34,27 +36,32 @@ public class SigningService {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Upcheck upcheck = new Upcheck();
-  private final PublicKeys publicKeys;
+  private final KeyIdentifiers ethKeyIdentifiers;
+  private final KeyIdentifiers fcKeyIdentifiers;
   private final List<SignerForIdentifier<?>> signerForIdentifierList;
 
   public SigningService(
-      final PublicKeys publicKeys, final List<SignerForIdentifier<?>> signerForIdentifierList) {
-    this.publicKeys = publicKeys;
+      final KeyIdentifiers ethKeyIdentifiers,
+      final KeyIdentifiers fcKeyIdentifiers,
+      final List<SignerForIdentifier<?>> signerForIdentifierList) {
+    this.ethKeyIdentifiers = ethKeyIdentifiers;
+    this.fcKeyIdentifiers = fcKeyIdentifiers;
     this.signerForIdentifierList = signerForIdentifierList;
   }
 
   @JsonRpcMethod("public_keys")
   public String[] publicKeys(@JsonRpcParam("keyType") final KeyType keyType) {
-    return publicKeys.list(keyType).toArray(String[]::new);
+    return ethKeyIdentifiers.list(keyType).toArray(String[]::new);
   }
 
   @JsonRpcMethod("sign")
   public String sign(
       @JsonRpcParam("identifier") final String identifier,
       @JsonRpcParam("data") final String dataToSign) {
-
     return signerForIdentifierList.stream()
-        .map(signerForIdentifier -> signerForIdentifier.sign(identifier, convertData(dataToSign)))
+        .map(
+            signerForIdentifier ->
+                signerForIdentifier.sign(normaliseIdentifier(identifier), convertData(dataToSign)))
         .flatMap(Optional::stream)
         .findFirst()
         .orElseThrow(
@@ -78,5 +85,10 @@ public class SigningService {
   @JsonRpcMethod
   public String upcheck() {
     return upcheck.status();
+  }
+
+  @JsonRpcMethod("Filecoin.WalletList")
+  public List<String> filecoinWalletList() {
+    return fcKeyIdentifiers.list(KeyType.SECP256K1);
   }
 }

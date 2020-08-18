@@ -13,14 +13,15 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.SecpArtifactSigner;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.signers.secp256k1.api.Signer;
 import tech.pegasys.signers.secp256k1.azure.AzureConfig;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.signers.secp256k1.filebased.CredentialSigner;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.crypto.CipherException;
@@ -29,21 +30,24 @@ import org.web3j.crypto.WalletUtils;
 
 public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
-  final AzureKeyVaultSignerFactory azureCloudSignerFactory;
+  private final AzureKeyVaultSignerFactory azureCloudSignerFactory;
+  private final Function<Signer, ArtifactSigner> signerFactory;
 
   public Secp256k1ArtifactSignerFactory(
       final HashicorpConnectionFactory connectionFactory,
       final Path configsDirectory,
-      final AzureKeyVaultSignerFactory azureCloudSignerFactory) {
+      final AzureKeyVaultSignerFactory azureCloudSignerFactory,
+      final Function<Signer, ArtifactSigner> signerFactory) {
     super(connectionFactory, configsDirectory);
     this.azureCloudSignerFactory = azureCloudSignerFactory;
+    this.signerFactory = signerFactory;
   }
 
   @Override
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
     final Bytes privateKeyBytes = fileRawSigningMetadata.getPrivateKeyBytes();
     final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
-    return new SecpArtifactSigner(new CredentialSigner(credentials));
+    return signerFactory.apply(new CredentialSigner(credentials));
   }
 
   @Override
@@ -54,7 +58,7 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
     try {
       final String password = loadPassword(keystorePasswordFile);
       final Credentials credentials = WalletUtils.loadCredentials(password, keystoreFile.toFile());
-      return new SecpArtifactSigner(new CredentialSigner(credentials));
+      return signerFactory.apply(new CredentialSigner(credentials));
     } catch (final IOException | CipherException e) {
       throw new SigningMetadataException(e.getMessage(), e);
     }
@@ -64,14 +68,14 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   public ArtifactSigner create(final HashicorpSigningMetadata hashicorpMetadata) {
     final Bytes privateKeyBytes = extractBytesFromVault(hashicorpMetadata);
     final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
-    return new SecpArtifactSigner(new CredentialSigner(credentials));
+    return signerFactory.apply(new CredentialSigner(credentials));
   }
 
   @Override
   public ArtifactSigner create(final AzureSecretSigningMetadata azureSecretSigningMetadata) {
     final Bytes privateKeyBytes = extractBytesFromVault(azureSecretSigningMetadata);
     final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
-    return new SecpArtifactSigner(new CredentialSigner(credentials));
+    return signerFactory.apply(new CredentialSigner(credentials));
   }
 
   @Override
@@ -85,6 +89,6 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
             azureSigningMetadata.getClientSecret(),
             azureSigningMetadata.getTenantId());
 
-    return new SecpArtifactSigner(azureCloudSignerFactory.createSigner(config));
+    return signerFactory.apply(azureCloudSignerFactory.createSigner(config));
   }
 }

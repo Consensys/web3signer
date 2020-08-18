@@ -50,10 +50,16 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
   private static final String BLS_PRIVATE_KEY_2 =
       "32ae313afff2daa2ef7005a7f834bdf291855608fe82c24d30be6ac2017093a8";
-  private static final String SECP_PRIVATE_KEY_1 =
+  protected static final String BLS_PUBLIC_KEY_1 =
+      "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
+  protected static final String SECP_PRIVATE_KEY_1 =
       "d392469474ec227b9ec4be232b402a0490045478ab621ca559d166965f0ffd32";
-  private static final String SECP_PRIVATE_KEY_2 =
+  protected static final String SECP_PRIVATE_KEY_2 =
       "2e322a5f72c525422dc275e006d5cb3954ca5e02e9610fae0ed4cc389f622f33";
+  protected static final String SECP_PUBLIC_KEY_1 =
+      "0x24491715b7514b315d06b6be809173e7c8051a2cd1880d29f8af5efda30e0877e816820c91d46444afc4063742a1602648751df36e11b5c95037fab1d4dd93eb";
+  protected static final String SECP_FC_PUBLIC_KEY_1 = "t1yv62jzybqbktnamqrart5ovqtpuiizf33dv45ga";
+  protected static final String SECP_FC_PUBLIC_KEY_2 = "t1fg4ofyvbbqkobf7gdv4ggozuhen5johtimueabi";
 
   protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
@@ -172,5 +178,12 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
         .statusCode(200)
         .contentType(ContentType.JSON)
         .body("jsonrpc", equalTo("2.0"), "id", equalTo(1), "result", resultMatcher);
+  }
+
+  protected Response callFilecoinRpcWalletList() {
+    final JsonNode params = JsonNodeFactory.instance.objectNode();
+    final ValueNode id = JsonNodeFactory.instance.numberNode(1);
+    final Request request = new Request("2.0", "Filecoin.WalletList", params, id);
+    return given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);
   }
 }
