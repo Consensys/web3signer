@@ -12,10 +12,12 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -29,10 +31,14 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 public class YamlSignerParser implements SignerParser {
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper(new YAMLFactory()).registerModule(new SigningMetadataModule());
-  final ArtifactSignerFactory artifactSignerFactory;
 
-  public YamlSignerParser(final ArtifactSignerFactory artifactSignerFactory) {
-    this.artifactSignerFactory = artifactSignerFactory;
+  private final BlsArtifactSignerFactory blsFactory;
+  private final Secp256k1ArtifactSignerFactory secpFactory;
+
+  public YamlSignerParser(
+      final BlsArtifactSignerFactory blsFactory, final Secp256k1ArtifactSignerFactory secpFactory) {
+    this.blsFactory = blsFactory;
+    this.secpFactory = secpFactory;
   }
 
   @Override
@@ -40,7 +46,11 @@ public class YamlSignerParser implements SignerParser {
     try {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
-      return metaDataInfo.createSigner(artifactSignerFactory);
+      if (metaDataInfo.getKeyType().equals(KeyType.BLS)) {
+        return metaDataInfo.createSigner(blsFactory);
+      } else {
+        return metaDataInfo.createSigner(secpFactory);
+      }
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file format", e);
     } catch (final FileNotFoundException e) {

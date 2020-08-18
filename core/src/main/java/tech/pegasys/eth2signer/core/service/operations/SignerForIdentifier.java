@@ -27,15 +27,15 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
   private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
   private final SignatureFormatter<T> signatureFormatter;
-  private final KeyType keyType;
+  private final KeyType type;
 
   public SignerForIdentifier(
       final ArtifactSignerProvider signerProvider,
       final SignatureFormatter<T> signatureFormatter,
-      final KeyType keyType) {
+      final KeyType type) {
     this.signerProvider = signerProvider;
     this.signatureFormatter = signatureFormatter;
-    this.keyType = keyType;
+    this.type = type;
   }
 
   /**
@@ -48,9 +48,7 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
    * @throws IllegalArgumentException if data is invalid i.e. not a valid hex string, null or empty.
    */
   public Optional<String> sign(final String identifier, final Bytes data) {
-    return signerProvider
-        .getSigner(keyType, identifier)
-        .map(signer -> formatSignature(signer.sign(data)));
+    return signerProvider.getSigner(identifier).map(signer -> formatSignature(signer.sign(data)));
   }
 
   /**
@@ -76,7 +74,7 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
 
   @SuppressWarnings("unchecked")
   private String formatSignature(final ArtifactSignature signature) {
-    if (signature.getType() == keyType) {
+    if (signature.getType() == type) {
       final T artifactSignature = (T) signature;
       return signatureFormatter.format(artifactSignature);
     } else {

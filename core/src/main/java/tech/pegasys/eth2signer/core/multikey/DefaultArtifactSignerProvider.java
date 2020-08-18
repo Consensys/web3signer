@@ -14,9 +14,6 @@ package tech.pegasys.eth2signer.core.multikey;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.KeyType;
-import tech.pegasys.eth2signer.core.signing.SecpArtifactSigner;
 
 import java.util.Collection;
 import java.util.Map;
@@ -53,24 +50,14 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
-  public Optional<ArtifactSigner> getSigner(final KeyType keyType, final String identifier) {
+  public Optional<ArtifactSigner> getSigner(final String identifier) {
     final String normalisedIdentifier = normaliseIdentifier(identifier);
     final Optional<ArtifactSigner> result = Optional.ofNullable(signers.get(normalisedIdentifier));
 
     if (result.isEmpty()) {
       LOG.error("No signer was loaded matching identifier '{}'", identifier);
-      return Optional.empty();
-    } else {
-      if ((result.get() instanceof BlsArtifactSigner) && keyType.equals(KeyType.BLS)) {
-        return result;
-      } else if ((result.get() instanceof SecpArtifactSigner)
-          && keyType.equals(KeyType.SECP256K1)) {
-        return result;
-      } else {
-        LOG.error("Requested signers does not conform to expected curve ({})", keyType.name());
-        return Optional.empty();
-      }
     }
+    return result;
   }
 
   @Override

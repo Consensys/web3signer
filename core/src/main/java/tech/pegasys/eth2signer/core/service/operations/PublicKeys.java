@@ -12,39 +12,28 @@
  */
 package tech.pegasys.eth2signer.core.service.operations;
 
-import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.KeyType;
-import tech.pegasys.eth2signer.core.signing.SecpArtifactSigner;
+import static tech.pegasys.eth2signer.core.signing.KeyType.BLS;
 
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.signing.KeyType;
+
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class PublicKeys {
+  private final ArtifactSignerProvider blsSignerProvider;
+  private final ArtifactSignerProvider secpSignerProvider;
 
-  private final ArtifactSignerProvider signerProviders;
-
-  public PublicKeys(final ArtifactSignerProvider signerProviders) {
-    this.signerProviders = signerProviders;
+  public PublicKeys(
+      final ArtifactSignerProvider blsSignerProvider,
+      final ArtifactSignerProvider secpSignerProvider) {
+    this.blsSignerProvider = blsSignerProvider;
+    this.secpSignerProvider = secpSignerProvider;
   }
 
   public List<String> list(final KeyType keyType) {
-    final Set<String> identifier = signerProviders.availableIdentifiers();
-
-    if (keyType.equals(KeyType.BLS)) {
-      return identifier
-          .parallelStream()
-          .filter(i -> signerProviders.getSigner(KeyType.BLS, i).get() instanceof BlsArtifactSigner)
-          .collect(Collectors.toList());
-    } else {
-      return identifier
-          .parallelStream()
-          .filter(
-              i ->
-                  signerProviders.getSigner(KeyType.SECP256K1, i).get()
-                      instanceof SecpArtifactSigner)
-          .collect(Collectors.toList());
-    }
+    final ArtifactSignerProvider signerProvider =
+        keyType == BLS ? blsSignerProvider : secpSignerProvider;
+    return new ArrayList<>(signerProvider.availableIdentifiers());
   }
 }

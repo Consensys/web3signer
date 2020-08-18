@@ -22,7 +22,6 @@ import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.multikey.SignerLoader;
-import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactoryImpl;
 import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.parser.YamlSignerParser;
@@ -36,8 +35,10 @@ import tech.pegasys.eth2signer.core.service.operations.PublicKeys;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.SecpArtifactSigner;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.eth2signer.core.utils.ByteUtils;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -57,6 +58,7 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import com.google.common.base.Charsets;
@@ -143,22 +145,34 @@ public class Runner implements Runnable {
           new Secp256k1ArtifactSignerFactory(
               hashicorpConnectionFactory, config.getKeyConfigPath(), azureFactory);
 
-      final ArtifactSignerFactoryImpl artifactSignerFactory =
-          new ArtifactSignerFactoryImpl(blsArtifactSignerFactory, secp256k1ArtifactSignerFactory);
-
       final Collection<ArtifactSigner> signers =
           SignerLoader.load(
-              config.getKeyConfigPath(), "yaml", new YamlSignerParser(artifactSignerFactory));
+              config.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(blsArtifactSignerFactory, secp256k1ArtifactSignerFactory));
 
-      final DefaultArtifactSignerProvider artifactSignerProvider =
-          DefaultArtifactSignerProvider.create(signers);
+      final DefaultArtifactSignerProvider blsArtifactSigners =
+          DefaultArtifactSignerProvider.create(
+              signers
+                  .parallelStream()
+                  .filter(i -> i instanceof BlsArtifactSigner)
+                  .collect(Collectors.toSet()));
 
-      final PublicKeys publicKeys = new PublicKeys(artifactSignerProvider);
+      final DefaultArtifactSignerProvider secpArtifactSigners =
+          DefaultArtifactSignerProvider.create(
+              signers
+                  .parallelStream()
+                  .filter(i -> i instanceof SecpArtifactSigner)
+                  .collect(Collectors.toSet()));
+
+      final PublicKeys publicKeys = new PublicKeys(blsArtifactSigners, secpArtifactSigners);
+
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =
-          new SignerForIdentifier<>(artifactSignerProvider, this::formatBlsSignature, KeyType.BLS);
+          new SignerForIdentifier<>(blsArtifactSigners, this::formatBlsSignature, KeyType.BLS);
+
       final SignerForIdentifier<SecpArtifactSignature> secpSigner =
           new SignerForIdentifier<>(
-              artifactSignerProvider, this::formatSecpSignature, KeyType.SECP256K1);
+              secpArtifactSigners, this::formatSecpSignature, KeyType.SECP256K1);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(vertx, publicKeys, blsSigner, secpSigner);

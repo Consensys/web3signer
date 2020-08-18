@@ -19,8 +19,8 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.AzureSecretSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
@@ -54,13 +54,13 @@ class YamlSignerParserTest {
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   @TempDir Path configDir;
-  @Mock private ArtifactSignerFactory artifactSignerFactory;
+  @Mock private BlsArtifactSignerFactory artifactSignerFactory;
 
   private YamlSignerParser signerParser;
 
   @BeforeEach
   public void setup() {
-    signerParser = new YamlSignerParser(artifactSignerFactory);
+    signerParser = new YamlSignerParser(artifactSignerFactory, null);
   }
 
   @Test
