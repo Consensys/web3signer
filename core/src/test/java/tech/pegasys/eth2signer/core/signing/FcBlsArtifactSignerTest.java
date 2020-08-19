@@ -23,13 +23,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class FcBlsArtifactSignerTest {
-  private static final String BLS_PRIVATE_KEY = "z38sVnSEnswoEHFC9e4g/aPk96c1NvXt425UKv/tKz0=";
+  private static final String FC_BLS_PRIVATE_KEY = "z38sVnSEnswoEHFC9e4g/aPk96c1NvXt425UKv/tKz0=";
 
   private FcBlsArtifactSigner fcBlsArtifactSigner;
 
   @BeforeEach
   public void setup() {
-    final Bytes fcPrivateKey = Bytes.fromBase64String(BLS_PRIVATE_KEY);
+    final Bytes fcPrivateKey = Bytes.fromBase64String(FC_BLS_PRIVATE_KEY);
     // Filecoin private keys are serialised in little endian so must convert to big endian
     final Bytes privateKey = fcPrivateKey.reverse();
     final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));

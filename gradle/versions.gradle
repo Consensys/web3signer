@@ -90,9 +90,5 @@ dependencyManagement {
     dependency 'org.web3j:core:4.5.14'
 
     dependency 'com.github.arteam:simple-json-rpc-server:1.2'
-
-    dependency 'tech.pegasys.java-filecoin-ffi.internal:bls12-381:0.0.1-SNAPSHOT'
-
-    dependency 'net.java.dev.jna:jna:5.5.0'
   }
 }
