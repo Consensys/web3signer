@@ -16,7 +16,6 @@ import static tech.pegasys.eth2signer.core.service.operations.IdentifierUtils.no
 
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSecretKey;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -24,8 +23,8 @@ public class BlsArtifactSigner implements ArtifactSigner {
 
   private final BLSKeyPair keyPair;
 
-  public BlsArtifactSigner(final Bytes privateKey) {
-    this.keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
+  public BlsArtifactSigner(final BLSKeyPair keyPair) {
+    this.keyPair = keyPair;
   }
 
   @Override

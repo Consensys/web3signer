@@ -12,43 +12,28 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static tech.pegasys.filecoin.bls12_381.LibBlsFilecoin.fil_private_key_public_key;
-
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
-import tech.pegasys.filecoin.bls12_381.LibBlsFilecoin;
-import tech.pegasys.filecoin.bls12_381.LibBlsFilecoin.fil_PrivateKeyPublicKeyResponse;
-import tech.pegasys.filecoin.bls12_381.LibBlsFilecoin.fil_PrivateKeySignResponse;
+import tech.pegasys.teku.bls.BLSKeyPair;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class FcBlsArtifactSigner implements ArtifactSigner {
-  private final Bytes privateKey;
+  private final BLSKeyPair keyPair;
   private final FilecoinNetwork filecoinNetwork;
 
-  public FcBlsArtifactSigner(final Bytes privateKey, final FilecoinNetwork filecoinNetwork) {
-    checkArgument(privateKey.size() == 32);
-    this.privateKey = privateKey;
+  public FcBlsArtifactSigner(final BLSKeyPair keyPair, final FilecoinNetwork filecoinNetwork) {
+    this.keyPair = keyPair;
     this.filecoinNetwork = filecoinNetwork;
   }
 
   @Override
   public String getIdentifier() {
-    final fil_PrivateKeyPublicKeyResponse publicKeyResponse =
-        fil_private_key_public_key(privateKey.toArrayUnsafe());
-    final Bytes publicKey = Bytes.wrap(publicKeyResponse.public_key);
-    LibBlsFilecoin.fil_destroy_private_key_public_key_response(publicKeyResponse);
-    return FilecoinAddress.blsAddress(publicKey).encode(filecoinNetwork);
+    return FilecoinAddress.blsAddress(keyPair.getPublicKey().toBytes()).encode(filecoinNetwork);
   }
 
   @Override
-  public ArtifactSignature sign(final Bytes data) {
-    final fil_PrivateKeySignResponse signResponse =
-        LibBlsFilecoin.fil_private_key_sign(
-            privateKey.toArrayUnsafe(), data.toArrayUnsafe(), data.size());
-    final Bytes signature = Bytes.wrap(signResponse.signature);
-    LibBlsFilecoin.fil_destroy_private_key_sign_response(signResponse);
-    return new FcBlsArtifactSignature(signature);
+  public ArtifactSignature sign(Bytes data) {
+    throw new UnsupportedOperationException("BLS Signing for FileCoin has not been implemented.");
   }
 }

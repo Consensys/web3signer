@@ -15,6 +15,8 @@ package tech.pegasys.eth2signer.core.signing;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,8 +29,11 @@ class FcBlsArtifactSignerTest {
 
   @BeforeEach
   public void setup() {
-    final Bytes privateKey = Bytes.fromBase64String(BLS_PRIVATE_KEY);
-    fcBlsArtifactSigner = new FcBlsArtifactSigner(privateKey, FilecoinNetwork.TESTNET);
+    final Bytes fcPrivateKey = Bytes.fromBase64String(BLS_PRIVATE_KEY);
+    // Filecoin private keys are serialised in little endian so must convert to big endian
+    final Bytes privateKey = fcPrivateKey.reverse();
+    final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
+    fcBlsArtifactSigner = new FcBlsArtifactSigner(keyPair, FilecoinNetwork.TESTNET);
   }
 
   @Test
@@ -37,17 +42,5 @@ class FcBlsArtifactSignerTest {
     final String expectedBlsAddress =
         "t3sjhgtrk5fdio52k5lzanh7yy4mj4rqbiowd6odddzprrxejgbjbl2irr3gmpbf7epigf45oy7asljj3v3lva";
     assertThat(identifier).isEqualTo(expectedBlsAddress);
-  }
-
-  @Test
-  void signsDataUsingPrivateKey() {
-    final Bytes data = Bytes.fromBase64String("NDI=");
-    final ArtifactSignature signature = fcBlsArtifactSigner.sign(data);
-    assertThat(signature).isInstanceOf(FcBlsArtifactSignature.class);
-    FcBlsArtifactSignature blsArtifactSignature = (FcBlsArtifactSignature) signature;
-    final Bytes expectedSignature =
-        Bytes.fromBase64String(
-            "p/LeJS8KPzuOco2qpqjhvJxFrA5qj++LpeVoActWkDRQTLhuGsnwAvY1kluQ6PntAqISjvR/RU0kzgkR38F8Hm5NuNPsu9/BEiU+IQheNeD7OoG8THq4OuZMbISg7uR/");
-    assertThat(blsArtifactSignature.getSignatureData()).isEqualTo(expectedSignature);
   }
 }

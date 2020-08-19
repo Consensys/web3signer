@@ -28,6 +28,8 @@ import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.KeyType;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -38,6 +40,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,13 +68,6 @@ class YamlSignerParserTest {
         new YamlSignerParser(List.of(blsArtifactSignerFactory, otherBlsArtifactSignerFactory));
     lenient().when(blsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
     lenient().when(otherBlsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.SECP256K1);
-  }
-
-  @Test
-  void convertbase64ToHex() {
-    final String s =
-        Bytes.fromBase64String("z38sVnSEnswoEHFC9e4g/aPk96c1NvXt425UKv/tKz0=").toHexString();
-    System.out.println("s = " + s);
   }
 
   @Test
@@ -126,7 +122,9 @@ class YamlSignerParserTest {
 
   @Test
   void unencryptedMetaDataInfoWithPrivateKeyReturnsMetadata() throws IOException {
-    final ArtifactSigner artifactSigner = new BlsArtifactSigner(Bytes.fromHexString(PRIVATE_KEY));
+    final ArtifactSigner artifactSigner =
+        new BlsArtifactSigner(
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
     when(blsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
@@ -144,7 +142,9 @@ class YamlSignerParserTest {
 
   @Test
   void unencryptedMetaDataInfoWith0xPrefixPrivateKeyReturnsMetadata() throws IOException {
-    final ArtifactSigner artifactSigner = new BlsArtifactSigner(Bytes.fromHexString(PRIVATE_KEY));
+    final ArtifactSigner artifactSigner =
+        new BlsArtifactSigner(
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
     when(blsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
@@ -203,7 +203,9 @@ class YamlSignerParserTest {
   @Test
   void keyStoreMetaDataInfoReturnsMetadata() throws IOException {
     final BlsArtifactSigner artifactSigner =
-        new BlsArtifactSigner(Bytes.fromHexString(PRIVATE_KEY));
+        new BlsArtifactSigner(
+            new BLSKeyPair(
+                BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
     when(blsArtifactSignerFactory.create(any(FileKeyStoreMetadata.class)))
         .thenReturn(artifactSigner);
 
@@ -252,7 +254,9 @@ class YamlSignerParserTest {
   @Test
   void azureSecretMetadataInfoReturnsMetadata() throws IOException {
     final BlsArtifactSigner artifactSigner =
-        new BlsArtifactSigner(Bytes.fromHexString(PRIVATE_KEY));
+        new BlsArtifactSigner(
+            new BLSKeyPair(
+                BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
     when(blsArtifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
         .thenReturn(artifactSigner);
 

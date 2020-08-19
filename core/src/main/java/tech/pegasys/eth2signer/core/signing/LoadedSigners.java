@@ -54,6 +54,13 @@ public class LoadedSigners {
             hashicorpConnectionFactory,
             BlsArtifactSigner::new);
 
+    final BlsArtifactSignerFactory fcBlsArtifactSignerFactory =
+        new BlsArtifactSignerFactory(
+            config.getKeyConfigPath(),
+            metricsSystem,
+            hashicorpConnectionFactory,
+            keyPair -> new FcBlsArtifactSigner(keyPair, config.getFilecoinNetwork()));
+
     final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(
             hashicorpConnectionFactory,
@@ -76,7 +83,8 @@ public class LoadedSigners {
                 List.of(
                     blsArtifactSignerFactory,
                     ethSecpArtifactSignerFactory,
-                    fcSecpArtifactSignerFactory)));
+                    fcSecpArtifactSignerFactory,
+                    fcBlsArtifactSignerFactory)));
 
     return new LoadedSigners(
         signers
