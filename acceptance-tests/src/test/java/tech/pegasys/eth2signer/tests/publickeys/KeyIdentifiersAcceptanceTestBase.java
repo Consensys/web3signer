@@ -42,7 +42,7 @@ import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.utils.Numeric;
 
-public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
+public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
   static final String SIGNER_PUBLIC_KEYS_PATH = "/signer/publicKeys";
   static final String BLS = "BLS";
   static final String SECP256K1 = "SECP256K1";
@@ -60,7 +60,7 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
   protected static final String SECP_PUBLIC_KEY_1 =
       "0x24491715b7514b315d06b6be809173e7c8051a2cd1880d29f8af5efda30e0877e816820c91d46444afc4063742a1602648751df36e11b5c95037fab1d4dd93eb";
 
-  // These values were generated using the go-address https://github.com/filecoin-project/go-address
+  // These values were generated using go-address https://github.com/filecoin-project/go-address
   // with above corresponding public keys
   protected static final String SECP_FC_ADDRESS_1 = "t1yv62jzybqbktnamqrart5ovqtpuiizf33dv45ga";
   protected static final String SECP_FC_ADDRESS_2 = "t1fg4ofyvbbqkobf7gdv4ggozuhen5johtimueabi";

@@ -34,7 +34,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class KeyIdentifiersAcceptanceTest extends PublicKeysAcceptanceTestBase {
+public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
 
   @ParameterizedTest
   @ValueSource(strings = {BLS, SECP256K1})
