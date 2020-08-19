@@ -59,24 +59,37 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
       "2e322a5f72c525422dc275e006d5cb3954ca5e02e9610fae0ed4cc389f622f33";
   protected static final String SECP_PUBLIC_KEY_1 =
       "0x24491715b7514b315d06b6be809173e7c8051a2cd1880d29f8af5efda30e0877e816820c91d46444afc4063742a1602648751df36e11b5c95037fab1d4dd93eb";
-  protected static final String SECP_FC_PUBLIC_KEY_1 = "t1yv62jzybqbktnamqrart5ovqtpuiizf33dv45ga";
-  protected static final String SECP_FC_PUBLIC_KEY_2 = "t1fg4ofyvbbqkobf7gdv4ggozuhen5johtimueabi";
+
+  // These values were generated using the go-address https://github.com/filecoin-project/go-address
+  // with above corresponding public keys
+  protected static final String SECP_FC_ADDRESS_1 = "t1yv62jzybqbktnamqrart5ovqtpuiizf33dv45ga";
+  protected static final String SECP_FC_ADDRESS_2 = "t1fg4ofyvbbqkobf7gdv4ggozuhen5johtimueabi";
+  protected static final String BLS_FC_ADDRESS_1 =
+      "t3tcoti4s2fp6d6fiql47v7sdud5bwyjpod3spssheexllzogfnphg4bwcnfrvw7uylj77uy46eqe36xecyo6a";
+  protected static final String BLS_FC_ADDRESS_2 =
+      "t3w3xgslow4fgr5clqa23ew6l4moiiyf6oqbglgkz47ula4xm7xxdkpi4kpmdbhqgts4k5n63qmjav6uulgb4q";
 
   protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
   @TempDir Path testDirectory;
 
   protected String[] privateKeys(final String keyType) {
-    return keyType.equals("BLS")
+    return keyType.equals(BLS)
         ? new String[] {BLS_PRIVATE_KEY_1, BLS_PRIVATE_KEY_2}
         : new String[] {SECP_PRIVATE_KEY_1, SECP_PRIVATE_KEY_2};
   }
 
   protected String[] createKeys(
       final String keyType, boolean isValid, final String... privateKeys) {
-    return keyType.equals("BLS")
+    return keyType.equals(BLS)
         ? createBlsKeys(isValid, privateKeys)
         : createSecpKeys(isValid, privateKeys);
+  }
+
+  protected String[] filecoinAddresses(final String keyType) {
+    return keyType.equals(BLS)
+        ? new String[] {BLS_FC_ADDRESS_1, BLS_FC_ADDRESS_2}
+        : new String[] {SECP_FC_ADDRESS_1, SECP_FC_ADDRESS_2};
   }
 
   protected String[] createBlsKeys(boolean isValid, final String... privateKeys) {
