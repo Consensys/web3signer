@@ -16,22 +16,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.AzureSecretSigningMetadata;
+import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,13 +57,17 @@ class YamlSignerParserTest {
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   @TempDir Path configDir;
-  @Mock private ArtifactSignerFactory artifactSignerFactory;
+  @Mock private BlsArtifactSignerFactory blsArtifactSignerFactory;
+  @Mock private BlsArtifactSignerFactory otherBlsArtifactSignerFactory;
 
   private YamlSignerParser signerParser;
 
   @BeforeEach
   public void setup() {
-    signerParser = new YamlSignerParser(artifactSignerFactory);
+    signerParser =
+        new YamlSignerParser(List.of(blsArtifactSignerFactory, otherBlsArtifactSignerFactory));
+    lenient().when(blsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
+    lenient().when(otherBlsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.SECP256K1);
   }
 
   @Test
@@ -118,7 +125,7 @@ class YamlSignerParserTest {
     final ArtifactSigner artifactSigner =
         new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
-    when(artifactSignerFactory.create(any(FileRawSigningMetadata.class)))
+    when(blsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
@@ -127,10 +134,10 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
+    final List<ArtifactSigner> result = signerParser.parse(filename);
 
-    assertThat(result).isEqualTo(artifactSigner);
-    verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
+    assertThat(result).containsOnly(artifactSigner);
+    verify(blsArtifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
   }
 
   @Test
@@ -138,7 +145,7 @@ class YamlSignerParserTest {
     final ArtifactSigner artifactSigner =
         new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
-    when(artifactSignerFactory.create(any(FileRawSigningMetadata.class)))
+    when(blsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
@@ -147,10 +154,10 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
+    final List<ArtifactSigner> result = signerParser.parse(filename);
 
-    assertThat(result).isEqualTo(artifactSigner);
-    verify(artifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
+    assertThat(result).containsOnly(artifactSigner);
+    verify(blsArtifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
   }
 
   @Test
@@ -199,7 +206,8 @@ class YamlSignerParserTest {
         new BlsArtifactSigner(
             new BLSKeyPair(
                 BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
-    when(artifactSignerFactory.create(any(FileKeyStoreMetadata.class))).thenReturn(artifactSigner);
+    when(blsArtifactSignerFactory.create(any(FileKeyStoreMetadata.class)))
+        .thenReturn(artifactSigner);
 
     final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
     final Path keystoreFile = configDir.resolve("keystore.json");
@@ -211,9 +219,22 @@ class YamlSignerParserTest {
     keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), keystoreMetadataFile);
 
-    final ArtifactSigner result = signerParser.parse(filename);
-    assertThat(result).isEqualTo(artifactSigner);
-    verify(artifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
+    final List<ArtifactSigner> result = signerParser.parse(filename);
+    assertThat(result).containsOnly(artifactSigner);
+    verify(blsArtifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
+  }
+
+  @Test
+  void aSignerIsCreatedForEachMatchingFactory() throws IOException {
+    lenient().when(otherBlsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
+    final Path filename = configDir.resolve("bls_unencrypted." + YAML_FILE_EXTENSION);
+    final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
+    unencryptedKeyMetadataFile.put("type", "file-raw");
+    unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), unencryptedKeyMetadataFile);
+
+    final List<ArtifactSigner> result = signerParser.parse(filename);
+    assertThat(result).hasSize(2);
   }
 
   private FileKeyStoreMetadata hasKeystoreAndPasswordFile(
@@ -236,7 +257,7 @@ class YamlSignerParserTest {
         new BlsArtifactSigner(
             new BLSKeyPair(
                 BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
-    when(artifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
+    when(blsArtifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
     final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
@@ -248,11 +269,12 @@ class YamlSignerParserTest {
     azureMetaDataMap.put("tenantId", "sample-tenant-id");
     azureMetaDataMap.put("vaultName", "sample-vault-name");
     azureMetaDataMap.put("secretName", "TEST-KEY");
+    azureMetaDataMap.put("keyType", "BLS");
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), azureMetaDataMap);
 
-    final ArtifactSigner result = signerParser.parse(filename);
-    assertThat(result).isEqualTo(artifactSigner);
-    verify(artifactSignerFactory).create(hasCorrectAzureMetadataArguments());
+    final List<ArtifactSigner> result = signerParser.parse(filename);
+    assertThat(result).containsOnly(artifactSigner);
+    verify(blsArtifactSignerFactory).create(hasCorrectAzureMetadataArguments());
   }
 
   private AzureSecretSigningMetadata hasCorrectAzureMetadataArguments() {

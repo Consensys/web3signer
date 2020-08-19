@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnection;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -123,4 +124,6 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   protected Path makeRelativePathAbsolute(final Path path) {
     return path.isAbsolute() ? path : configsDirectory.resolve(path);
   }
+
+  public abstract KeyType getKeyType();
 }

@@ -19,6 +19,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.collection.IsIn.in;
 
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
@@ -148,7 +149,8 @@ public class KeyIdentifiersAcceptanceTest extends PublicKeysAcceptanceTestBase {
       final String configFilename = publicKey.toString().substring(2);
       publicKeys[i] = publicKey.toString();
       final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-      metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, bytes.toUnprefixedHexString());
+      metadataFileHelpers.createUnencryptedYamlFileAt(
+          keyConfigFile, bytes.toUnprefixedHexString(), KeyType.BLS);
     }
 
     initAndStartSigner();
@@ -160,7 +162,8 @@ public class KeyIdentifiersAcceptanceTest extends PublicKeysAcceptanceTestBase {
   public void keysWithArbitraryFilenamesAreLoaded(final String keyType) {
     final String privateKey = privateKeys(keyType)[0];
     final String filename = "foo" + "_" + keyType + ".yaml";
-    metadataFileHelpers.createUnencryptedYamlFileAt(testDirectory.resolve(filename), privateKey);
+    metadataFileHelpers.createUnencryptedYamlFileAt(
+        testDirectory.resolve(filename), privateKey, KeyType.valueOf(keyType));
     initAndStartSigner();
 
     final String publicKey = keyType.equals(BLS) ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
