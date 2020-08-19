@@ -91,4 +91,9 @@ public class SigningService {
   public List<String> filecoinWalletList() {
     return fcKeyIdentifiers.list(KeyType.SECP256K1);
   }
+
+  @JsonRpcMethod("Filecoin.WalletHas")
+  public boolean filecoinWalletList(final String address) {
+    return fcKeyIdentifiers.list(KeyType.BLS).contains(address) || fcKeyIdentifiers.list(KeyType.SECP256K1).contains(address);
+  }
 }
