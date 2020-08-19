@@ -48,7 +48,7 @@ public class YamlSignerParser implements SignerParser {
 
       return signerFactories.stream()
           .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
-          .map(factory -> metaDataInfo.createSigner(factory))
+          .map(metaDataInfo::createSigner)
           .collect(Collectors.toList());
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file format", e);

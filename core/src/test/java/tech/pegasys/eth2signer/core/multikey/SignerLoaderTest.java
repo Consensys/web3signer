@@ -280,8 +280,6 @@ class SignerLoaderTest {
   }
 
   private List<ArtifactSigner> createArtifactSigner(final String privateKey) {
-    return List.of(
-        new BlsArtifactSigner(
-            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey)))));
+    return List.of(new BlsArtifactSigner(Bytes.fromHexString(privateKey)));
   }
 }

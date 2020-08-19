@@ -49,7 +49,10 @@ public class LoadedSigners {
 
     final BlsArtifactSignerFactory blsArtifactSignerFactory =
         new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(), metricsSystem, hashicorpConnectionFactory);
+            config.getKeyConfigPath(),
+            metricsSystem,
+            hashicorpConnectionFactory,
+            BlsArtifactSigner::new);
 
     final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(

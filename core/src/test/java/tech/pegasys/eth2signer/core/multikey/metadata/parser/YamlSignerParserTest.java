@@ -28,8 +28,6 @@ import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.KeyType;
-import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSecretKey;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -128,9 +126,7 @@ class YamlSignerParserTest {
 
   @Test
   void unencryptedMetaDataInfoWithPrivateKeyReturnsMetadata() throws IOException {
-    final ArtifactSigner artifactSigner =
-        new BlsArtifactSigner(
-            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
+    final ArtifactSigner artifactSigner = new BlsArtifactSigner(Bytes.fromHexString(PRIVATE_KEY));
     when(blsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
@@ -148,9 +144,7 @@ class YamlSignerParserTest {
 
   @Test
   void unencryptedMetaDataInfoWith0xPrefixPrivateKeyReturnsMetadata() throws IOException {
-    final ArtifactSigner artifactSigner =
-        new BlsArtifactSigner(
-            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY))));
+    final ArtifactSigner artifactSigner = new BlsArtifactSigner(Bytes.fromHexString(PRIVATE_KEY));
     when(blsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
@@ -209,9 +203,7 @@ class YamlSignerParserTest {
   @Test
   void keyStoreMetaDataInfoReturnsMetadata() throws IOException {
     final BlsArtifactSigner artifactSigner =
-        new BlsArtifactSigner(
-            new BLSKeyPair(
-                BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
+        new BlsArtifactSigner(Bytes.fromHexString(PRIVATE_KEY));
     when(blsArtifactSignerFactory.create(any(FileKeyStoreMetadata.class)))
         .thenReturn(artifactSigner);
 
@@ -260,9 +252,7 @@ class YamlSignerParserTest {
   @Test
   void azureSecretMetadataInfoReturnsMetadata() throws IOException {
     final BlsArtifactSigner artifactSigner =
-        new BlsArtifactSigner(
-            new BLSKeyPair(
-                BLSSecretKey.fromBytes(Bytes48.leftPad(Bytes.fromHexString(PRIVATE_KEY)))));
+        new BlsArtifactSigner(Bytes.fromHexString(PRIVATE_KEY));
     when(blsArtifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
