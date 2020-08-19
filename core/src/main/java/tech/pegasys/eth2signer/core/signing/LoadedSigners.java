@@ -87,25 +87,31 @@ public class LoadedSigners {
                         return SignerTypes.ETH_SECP;
                       } else if (i instanceof FcSecpArtifactSigner) {
                         return SignerTypes.FC_SECP;
-                      } else {
+                      } else if (i instanceof FcBlsArtifactSigner) {
                         return SignerTypes.FC_BLS;
+                      } else {
+                        throw new IllegalStateException("Loaded an unknown type of ArtifactSigner");
                       }
                     })));
   }
 
-  public DefaultArtifactSignerProvider getBlsSignerProvider() {
+  public ArtifactSignerProvider getBlsSignerProvider() {
     return getSignerProvider(SignerTypes.BLS);
   }
 
-  public DefaultArtifactSignerProvider getEthSignerProvider() {
+  public ArtifactSignerProvider getEthSignerProvider() {
     return getSignerProvider(SignerTypes.ETH_SECP);
   }
 
-  public DefaultArtifactSignerProvider getFcSecpSignerProvider() {
+  public ArtifactSignerProvider getFcSecpSignerProvider() {
     return getSignerProvider(SignerTypes.FC_SECP);
   }
 
-  private DefaultArtifactSignerProvider getSignerProvider(final SignerTypes type) {
+  public ArtifactSignerProvider getFcBlsSignerProvider() {
+    return getSignerProvider(SignerTypes.FC_BLS);
+  }
+
+  private ArtifactSignerProvider getSignerProvider(final SignerTypes type) {
     return DefaultArtifactSignerProvider.create(signersByType.getOrDefault(type, emptyList()));
   }
 }
