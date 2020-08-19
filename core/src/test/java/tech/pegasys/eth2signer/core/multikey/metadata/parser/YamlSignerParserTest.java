@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,6 +27,7 @@ import tech.pegasys.eth2signer.core.multikey.metadata.FileRawSigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 
@@ -61,7 +63,8 @@ class YamlSignerParserTest {
 
   @BeforeEach
   public void setup() {
-    signerParser = new YamlSignerParser(artifactSignerFactory, null, null);
+    signerParser = new YamlSignerParser(List.of(artifactSignerFactory));
+    lenient().when(artifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
   }
 
   @Test
@@ -249,6 +252,7 @@ class YamlSignerParserTest {
     azureMetaDataMap.put("tenantId", "sample-tenant-id");
     azureMetaDataMap.put("vaultName", "sample-vault-name");
     azureMetaDataMap.put("secretName", "TEST-KEY");
+    azureMetaDataMap.put("keyType", "BLS");
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), azureMetaDataMap);
 
     final List<ArtifactSigner> result = signerParser.parse(filename);

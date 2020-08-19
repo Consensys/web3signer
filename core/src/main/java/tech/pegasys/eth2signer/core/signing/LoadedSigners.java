@@ -70,9 +70,10 @@ public class LoadedSigners {
             config.getKeyConfigPath(),
             "yaml",
             new YamlSignerParser(
-                blsArtifactSignerFactory,
-                ethSecpArtifactSignerFactory,
-                fcSecpArtifactSignerFactory));
+                List.of(
+                    blsArtifactSignerFactory,
+                    ethSecpArtifactSignerFactory,
+                    fcSecpArtifactSignerFactory)));
 
     return new LoadedSigners(
         signers
@@ -83,7 +84,7 @@ public class LoadedSigners {
                       if (i instanceof BlsArtifactSigner) {
                         return SignerTypes.BLS;
                       } else if (i instanceof EthSecpArtifactSigner) {
-                        return SignerTypes.ETH;
+                        return SignerTypes.ETH_SECP;
                       } else if (i instanceof FcSecpArtifactSigner) {
                         return SignerTypes.FC_SECP;
                       } else {
@@ -97,7 +98,7 @@ public class LoadedSigners {
   }
 
   public DefaultArtifactSignerProvider getEthSignerProvider() {
-    return getSignerProvider(SignerTypes.ETH);
+    return getSignerProvider(SignerTypes.ETH_SECP);
   }
 
   public DefaultArtifactSignerProvider getFcSecpSignerProvider() {
@@ -105,7 +106,6 @@ public class LoadedSigners {
   }
 
   private DefaultArtifactSignerProvider getSignerProvider(final SignerTypes type) {
-    return DefaultArtifactSignerProvider.create(
-        signersByType.get(type) != null ? signersByType.get(type) : emptyList());
+    return DefaultArtifactSignerProvider.create(signersByType.getOrDefault(type, emptyList()));
   }
 }

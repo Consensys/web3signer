@@ -14,7 +14,7 @@ package tech.pegasys.eth2signer.core;
 
 public enum SignerTypes {
   BLS,
-  ETH,
+  ETH_SECP,
   FC_SECP,
   FC_BLS
 }

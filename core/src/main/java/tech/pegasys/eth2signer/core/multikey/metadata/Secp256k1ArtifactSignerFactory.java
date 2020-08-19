@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.api.Signer;
 import tech.pegasys.signers.secp256k1.azure.AzureConfig;
@@ -90,5 +91,10 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
             azureSigningMetadata.getTenantId());
 
     return signerFactory.apply(azureCloudSignerFactory.createSigner(config));
+  }
+
+  @Override
+  public KeyType getKeyType() {
+    return KeyType.SECP256K1;
   }
 }

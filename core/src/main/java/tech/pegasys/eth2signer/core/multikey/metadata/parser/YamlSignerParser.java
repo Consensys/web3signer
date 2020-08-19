@@ -12,19 +12,17 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
-import static java.util.Collections.singletonList;
-
-import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -36,17 +34,10 @@ public class YamlSignerParser implements SignerParser {
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper(new YAMLFactory()).registerModule(new SigningMetadataModule());
 
-  private final BlsArtifactSignerFactory blsFactory;
-  private final Secp256k1ArtifactSignerFactory ethSecpFactory;
-  private final Secp256k1ArtifactSignerFactory fcSecpFactory;
+  private final Collection<AbstractArtifactSignerFactory> signerFactories;
 
-  public YamlSignerParser(
-      final BlsArtifactSignerFactory blsFactory,
-      final Secp256k1ArtifactSignerFactory ethSecpFactory,
-      final Secp256k1ArtifactSignerFactory fcSecpFactory) {
-    this.blsFactory = blsFactory;
-    this.ethSecpFactory = ethSecpFactory;
-    this.fcSecpFactory = fcSecpFactory;
+  public YamlSignerParser(final Collection<AbstractArtifactSignerFactory> signerFactories) {
+    this.signerFactories = signerFactories;
   }
 
   @Override
@@ -54,10 +45,11 @@ public class YamlSignerParser implements SignerParser {
     try {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
-      return metaDataInfo.getKeyType() == KeyType.BLS
-          ? singletonList(metaDataInfo.createSigner(blsFactory))
-          : List.of(
-              metaDataInfo.createSigner(ethSecpFactory), metaDataInfo.createSigner(fcSecpFactory));
+
+      return signerFactories.stream()
+          .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
+          .map(factory -> metaDataInfo.createSigner(factory))
+          .collect(Collectors.toList());
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file format", e);
     } catch (final FileNotFoundException e) {
