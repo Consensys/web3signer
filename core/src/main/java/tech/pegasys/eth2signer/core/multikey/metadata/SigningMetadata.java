@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -27,7 +28,17 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
   @Type(value = AzureSecretSigningMetadata.class, name = "azure-secret"),
   @Type(value = AzureKeySigningMetadata.class, name = "azure-key")
 })
-public interface SigningMetadata {
+public abstract class SigningMetadata {
 
-  ArtifactSigner createSigner(ArtifactSignerFactory artifactSignerFactory);
+  private final KeyType keyType;
+
+  public SigningMetadata(final KeyType keyType) {
+    this.keyType = keyType;
+  }
+
+  public abstract ArtifactSigner createSigner(ArtifactSignerFactory artifactSignerFactory);
+
+  public KeyType getKeyType() {
+    return keyType;
+  }
 }

@@ -13,19 +13,22 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class FileKeyStoreMetadata implements SigningMetadata {
+public class FileKeyStoreMetadata extends SigningMetadata {
 
   private final Path keystoreFile;
   private final Path keystorePasswordFile;
 
   public FileKeyStoreMetadata(
       @JsonProperty(value = "keystoreFile", required = true) final Path keystoreFile,
-      @JsonProperty(value = "keystorePasswordFile", required = true) Path keystorePasswordFile) {
+      @JsonProperty(value = "keystorePasswordFile", required = true) Path keystorePasswordFile,
+      @JsonProperty(value = "keyType") final KeyType keyType) {
+    super(keyType != null ? keyType : KeyType.BLS);
     this.keystoreFile = keystoreFile;
     this.keystorePasswordFile = keystorePasswordFile;
   }

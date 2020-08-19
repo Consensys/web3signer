@@ -41,10 +41,10 @@ public class SignerLoader {
       return fileStream
           .parallel()
           .filter(path -> matchesFileExtension(fileExtension, path))
-          .map(
+          .flatMap(
               signerConfigFile -> {
                 try {
-                  return signerParser.parse(signerConfigFile);
+                  return signerParser.parse(signerConfigFile).stream();
                 } catch (final Exception e) {
                   renderException(e, signerConfigFile.getFileName().toString());
                   return null;

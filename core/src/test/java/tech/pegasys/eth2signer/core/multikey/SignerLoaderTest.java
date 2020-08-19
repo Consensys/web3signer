@@ -64,7 +64,7 @@ class SignerLoaderTest {
   private static final String PRIVATE_KEY3 =
       "315ed405fafe339603932eebe8dbfd650ce5dafa561f6928664c75db85f97857";
 
-  private final ArtifactSigner artifactSigner = createArtifactSigner(PRIVATE_KEY1);
+  private final List<ArtifactSigner> artifactSigner = createArtifactSigner(PRIVATE_KEY1);
 
   @Test
   void signerReturnedForValidMetadataFile() throws IOException {
@@ -279,7 +279,9 @@ class SignerLoaderTest {
     return file.toPath();
   }
 
-  private ArtifactSigner createArtifactSigner(final String privateKey) {
-    return new BlsArtifactSigner(Bytes.fromHexString(privateKey));
+  private List<ArtifactSigner> createArtifactSigner(final String privateKey) {
+    return List.of(
+        new BlsArtifactSigner(
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey)))));
   }
 }

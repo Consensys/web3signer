@@ -12,7 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
-import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
+import tech.pegasys.eth2signer.core.multikey.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadata;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
@@ -20,6 +20,9 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -27,20 +30,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 public class YamlSignerParser implements SignerParser {
+
   private static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper(new YAMLFactory()).registerModule(new SigningMetadataModule());
-  final ArtifactSignerFactory artifactSignerFactory;
 
-  public YamlSignerParser(final ArtifactSignerFactory artifactSignerFactory) {
-    this.artifactSignerFactory = artifactSignerFactory;
+  private final Collection<AbstractArtifactSignerFactory> signerFactories;
+
+  public YamlSignerParser(final Collection<AbstractArtifactSignerFactory> signerFactories) {
+    this.signerFactories = signerFactories;
   }
 
   @Override
-  public ArtifactSigner parse(final Path metadataPath) {
+  public List<ArtifactSigner> parse(final Path metadataPath) {
     try {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
-      return metaDataInfo.createSigner(artifactSignerFactory);
+
+      return signerFactories.stream()
+          .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
+          .map(factory -> metaDataInfo.createSigner(factory))
+          .collect(Collectors.toList());
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file format", e);
     } catch (final FileNotFoundException e) {

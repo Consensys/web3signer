@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.tests.publickeys;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
@@ -86,7 +87,8 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
                   new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey)));
               final Path keyConfigFile = blsConfigFileName(keyPair.getPublicKey());
               if (isValid) {
-                metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKey);
+                metadataFileHelpers.createUnencryptedYamlFileAt(
+                    keyConfigFile, privateKey, KeyType.BLS);
               } else {
                 createInvalidFile(keyConfigFile);
               }
@@ -136,7 +138,10 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
     }
 
     metadataFileHelpers.createKeyStoreYamlFileAt(
-        testDirectory.resolve(publicKey + ".yaml"), Path.of(walletFile), password);
+        testDirectory.resolve(publicKey + ".yaml"),
+        Path.of(walletFile),
+        password,
+        KeyType.SECP256K1);
   }
 
   private Path blsConfigFileName(final BLSPublicKey publicKey) {

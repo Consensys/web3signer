@@ -16,8 +16,9 @@ import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 
 import java.nio.file.Path;
+import java.util.List;
 
 public interface SignerParser {
 
-  ArtifactSigner parse(Path file) throws SigningMetadataException;
+  List<ArtifactSigner> parse(Path file) throws SigningMetadataException;
 }

@@ -33,11 +33,11 @@ import tech.pegasys.eth2signer.core.service.operations.KeyIdentifiers;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.LoadedSigners;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.eth2signer.core.util.FileUtil;
 import tech.pegasys.signers.secp256k1.api.Signature;
-import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -125,27 +125,16 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+      final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
 
-      final ArtifactSignerProviderFactory factory =
-          new ArtifactSignerProviderFactory(metricsSystem, vertx, azureFactory);
-
-      final ArtifactSignerProvider blsSignerProvider =
-          factory.createEthBlsSignerProvider(config.getKeyConfigPath());
-
-      final ArtifactSignerProvider fcBlsSignerProvider =
-          factory.createFilecoinBlsSignerProvider(
-              config.getKeyConfigPath(), config.getFilecoinNetwork());
-
-      final ArtifactSignerProvider ethSecpSignerProvider =
-          factory.createEthSecpSignerProvider(config.getKeyConfigPath());
-
-      final ArtifactSignerProvider fcSecpSignerProvider =
-          factory.createFilecoinSecpSignerProvider(
-              config.getKeyConfigPath(), config.getFilecoinNetwork());
+      final ArtifactSignerProvider blsSignerProvider = signers.getBlsSignerProvider();
+      final ArtifactSignerProvider ethSecpSignerProvider = signers.getEthSignerProvider();
+      final ArtifactSignerProvider fcSecpSignerProvider = signers.getFcSecpSignerProvider();
+      final ArtifactSignerProvider fcBlsSignerProvider = signers.getFcBlsSignerProvider();
 
       final KeyIdentifiers ethKeyIdentifiers =
           new KeyIdentifiers(blsSignerProvider, ethSecpSignerProvider);
+
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =
           new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
       final SignerForIdentifier<SecpArtifactSignature> secpSigner =
@@ -159,7 +148,7 @@ public class Runner implements Runnable {
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
 
-      // register non-openapi routes ...
+      // register non-
       registerOpenApiSpecRoute(router); // serve static openapi spec
       registerJsonRpcRoute(
           router, ethKeyIdentifiers, fcKeyIdentifiers, List.of(blsSigner, secpSigner));

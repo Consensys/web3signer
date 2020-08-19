@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import java.nio.file.Path;
 
@@ -20,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
-public class HashicorpSigningMetadata implements SigningMetadata {
+public class HashicorpSigningMetadata extends SigningMetadata {
 
   private final String serverHost;
   private final String token;
@@ -38,7 +39,9 @@ public class HashicorpSigningMetadata implements SigningMetadata {
   public HashicorpSigningMetadata(
       @JsonProperty(value = "serverHost", required = true) final String serverHost,
       @JsonProperty(value = "keyPath", required = true) final String keyPath,
-      @JsonProperty(value = "token", required = true) final String token) {
+      @JsonProperty(value = "token", required = true) final String token,
+      @JsonProperty(value = "keyType") final KeyType keyType) {
+    super(keyType != null ? keyType : KeyType.BLS);
     this.serverHost = serverHost;
     this.token = token;
     this.keyPath = keyPath;

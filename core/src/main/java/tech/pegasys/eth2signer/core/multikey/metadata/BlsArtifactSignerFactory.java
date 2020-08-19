@@ -14,6 +14,8 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
@@ -91,5 +93,10 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     } catch (final KeyStoreValidationException e) {
       throw new SigningMetadataException(e.getMessage(), e);
     }
+  }
+
+  @Override
+  public KeyType getKeyType() {
+    return KeyType.BLS;
   }
 }

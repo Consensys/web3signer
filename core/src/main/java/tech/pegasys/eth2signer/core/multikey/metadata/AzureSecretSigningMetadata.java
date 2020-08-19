@@ -13,11 +13,12 @@
 package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class AzureSecretSigningMetadata implements SigningMetadata {
+public class AzureSecretSigningMetadata extends SigningMetadata {
 
   private final String clientId;
   private final String clientSecret;
@@ -31,7 +32,9 @@ public class AzureSecretSigningMetadata implements SigningMetadata {
       @JsonProperty("clientSecret") final String clientSecret,
       @JsonProperty("tenantId") final String tenantId,
       @JsonProperty("vaultName") final String vaultName,
-      @JsonProperty("secretName") final String secretName) {
+      @JsonProperty("secretName") final String secretName,
+      @JsonProperty("keyType") final KeyType keyType) {
+    super(keyType != null ? keyType : KeyType.BLS);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.tenantId = tenantId;
