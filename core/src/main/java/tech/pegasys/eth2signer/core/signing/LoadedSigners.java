@@ -111,7 +111,7 @@ public class LoadedSigners {
     return getSignerProvider(SignerTypes.FC_BLS);
   }
 
-  private ArtifactSignerProvider getSignerProvider(final SignerTypes type) {
+  public ArtifactSignerProvider getSignerProvider(final SignerTypes type) {
     return DefaultArtifactSignerProvider.create(signersByType.getOrDefault(type, emptyList()));
   }
 }

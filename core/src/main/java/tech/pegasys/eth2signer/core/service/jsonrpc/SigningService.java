@@ -19,10 +19,15 @@ import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.SignerNotFoundExc
 import tech.pegasys.eth2signer.core.service.operations.KeyIdentifiers;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.service.operations.Upcheck;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
+import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.KeyType;
+import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
@@ -33,19 +38,20 @@ import org.apache.tuweni.bytes.Bytes;
 
 @JsonRpcService
 public class SigningService {
+
   private static final Logger LOG = LogManager.getLogger();
 
   private final Upcheck upcheck = new Upcheck();
   private final KeyIdentifiers ethKeyIdentifiers;
-  private final KeyIdentifiers fcKeyIdentifiers;
+  private final ArtifactSignerProvider fcSigners;
   private final List<SignerForIdentifier<?>> signerForIdentifierList;
 
   public SigningService(
       final KeyIdentifiers ethKeyIdentifiers,
-      final KeyIdentifiers fcKeyIdentifiers,
+      final ArtifactSignerProvider fcSigners,
       final List<SignerForIdentifier<?>> signerForIdentifierList) {
     this.ethKeyIdentifiers = ethKeyIdentifiers;
-    this.fcKeyIdentifiers = fcKeyIdentifiers;
+    this.fcSigners = fcSigners;
     this.signerForIdentifierList = signerForIdentifierList;
   }
 
@@ -89,6 +95,30 @@ public class SigningService {
 
   @JsonRpcMethod("Filecoin.WalletList")
   public List<String> filecoinWalletList() {
-    return fcKeyIdentifiers.list(KeyType.SECP256K1);
+    return fcSigners.availableIdentifiers().parallelStream().collect(Collectors.toList());
+  }
+
+  @JsonRpcMethod("Filecoin.WalletSign")
+  public Bytes filecoinWalletSign(final String filecoinAddress, final String dataToSign) {
+    // convert dataToSign from Base32 to Bytes
+    final Optional<ArtifactSigner> signer = fcSigners.getSigner(filecoinAddress);
+
+    final ArtifactSignature signature;
+    if (signer.isPresent()) {
+      final Bytes bytesToSign = Bytes.fromBase64String(dataToSign);
+      signature = signer.get().sign(bytesToSign);
+    } else {
+      throw new IllegalArgumentException("No such signer");
+    }
+
+    if (signature.getType() == KeyType.SECP256K1) {
+      final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
+      return Bytes.concatenate(
+          Bytes.wrap(secpSig.getSignatureData().getR().toByteArray()),
+          Bytes.wrap(secpSig.getSignatureData().getS().toByteArray()),
+          Bytes.wrap(secpSig.getSignatureData().getV().toByteArray()));
+    } else {
+      throw new UnsupportedOperationException("Cannot perform BLS Signing ... yet");
+    }
   }
 }
