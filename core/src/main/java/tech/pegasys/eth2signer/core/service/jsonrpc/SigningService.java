@@ -20,6 +20,7 @@ import tech.pegasys.eth2signer.core.service.operations.KeyIdentifiers;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.service.operations.Upcheck;
 import tech.pegasys.eth2signer.core.signing.KeyType;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 
 import java.util.List;
 import java.util.Optional;
@@ -94,7 +95,14 @@ public class SigningService {
 
   @JsonRpcMethod("Filecoin.WalletHas")
   public boolean filecoinWalletHas(final String address) {
-    return fcKeyIdentifiers.list(KeyType.BLS).contains(address)
-        || fcKeyIdentifiers.list(KeyType.SECP256K1).contains(address);
+    final FilecoinAddress filecoinAddress = FilecoinAddress.decode(address);
+    switch (filecoinAddress.getProtocol()) {
+      case BLS:
+        return fcKeyIdentifiers.list(KeyType.BLS).contains(address);
+      case SECP256K1:
+        return fcKeyIdentifiers.list(KeyType.SECP256K1).contains(address);
+      default:
+        return false;
+    }
   }
 }
