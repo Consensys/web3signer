@@ -45,7 +45,6 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
 
   @Override
   public ArtifactSignature sign(final Bytes message) {
-    // need to blake2b the message first
     final Bytes dataHash = Blake2b.sum256(message);
     final Signature ethSignature = signer.sign(dataHash.toArray());
 

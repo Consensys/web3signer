@@ -49,7 +49,7 @@ public class FcJsonRpc {
   }
 
   @JsonRpcMethod("Filecoin.WalletSign")
-  public FilecoinSignResponse filecoinWalletSign(
+  public FilecoinSignResult filecoinWalletSign(
       @JsonRpcParam("identifier") final String filecoinAddress,
       @JsonRpcParam("data") final String dataToSign) {
     LOG.debug("Received FC sign request id = {}; data = {}", filecoinAddress, dataToSign);
@@ -66,7 +66,7 @@ public class FcJsonRpc {
 
     if (signature.getType() == KeyType.SECP256K1) {
       final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
-      return new FilecoinSignResponse(1, formatSecpSignature(secpSig).toBase64String());
+      return new FilecoinSignResult(1, formatSecpSignature(secpSig).toBase64String());
     } else {
       // responseSignature = "unsupported";
       // responseId = 3;

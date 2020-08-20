@@ -130,12 +130,8 @@ public class Runner implements Runnable {
 
       final ArtifactSignerProvider blsSignerProvider = signers.getBlsSignerProvider();
       final ArtifactSignerProvider ethSecpSignerProvider = signers.getEthSignerProvider();
-
       final ArtifactSignerProvider fcSecpSignerProvider = signers.getFcSecpSignerProvider();
       final ArtifactSignerProvider fcBlsSignerProvider = signers.getFcBlsSignerProvider();
-
-      final FileCoinArtifactSignerProvider fcArtifactSignerProvider =
-          new FileCoinArtifactSignerProvider(fcBlsSignerProvider, fcSecpSignerProvider);
 
       final KeyIdentifiers ethKeyIdentifiers =
           new KeyIdentifiers(blsSignerProvider, ethSecpSignerProvider);
@@ -144,6 +140,10 @@ public class Runner implements Runnable {
           new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
       final SignerForIdentifier<SecpArtifactSignature> secpSigner =
           new SignerForIdentifier<>(ethSecpSignerProvider, this::formatSecpSignature, SECP256K1);
+
+      final FileCoinArtifactSignerProvider fcArtifactSignerProvider =
+          new FileCoinArtifactSignerProvider(fcBlsSignerProvider, fcSecpSignerProvider);
+
 
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(vertx, ethKeyIdentifiers, blsSigner, secpSigner);
