@@ -17,15 +17,16 @@ import static tech.pegasys.teku.bls.hashToG2.HashToCurve.hashToG2;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.bls.mikuli.G2Point;
-import tech.pegasys.teku.bls.mikuli.Signature;
 
 import java.nio.charset.StandardCharsets;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class FcBlsArtifactSigner implements ArtifactSigner {
+  private static final Bytes DST =
+      Bytes.wrap("BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_".getBytes(StandardCharsets.US_ASCII));
+
   private final BLSKeyPair keyPair;
   private final FilecoinNetwork filecoinNetwork;
 
@@ -41,11 +42,9 @@ public class FcBlsArtifactSigner implements ArtifactSigner {
 
   @Override
   public ArtifactSignature sign(Bytes data) {
-    final Bytes DST =
-        Bytes.wrap(
-            "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_".getBytes(StandardCharsets.US_ASCII));
     final G2Point hashInGroup2 = new G2Point(hashToG2(data, DST));
     final G2Point g2Point = keyPair.getSecretKey().getSecretKey().sign(hashInGroup2);
-    return new FcBlsArtifactSignature(new BLSSignature(new Signature(g2Point)).toBytes());
+    final Bytes g2PointBytes = g2Point.toBytesCompressed();
+    return new FcBlsArtifactSignature(g2PointBytes);
   }
 }
