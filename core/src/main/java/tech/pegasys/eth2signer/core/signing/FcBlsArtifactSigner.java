@@ -12,13 +12,24 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
+import tech.pegasys.teku.bls.BLSKeyPair;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class FcBlsArtifactSigner implements ArtifactSigner {
+  private final BLSKeyPair keyPair;
+  private final FilecoinNetwork filecoinNetwork;
+
+  public FcBlsArtifactSigner(final BLSKeyPair keyPair, final FilecoinNetwork filecoinNetwork) {
+    this.keyPair = keyPair;
+    this.filecoinNetwork = filecoinNetwork;
+  }
 
   @Override
   public String getIdentifier() {
-    throw new UnsupportedOperationException("BLS Signing for FileCoin has not been implemented.");
+    return FilecoinAddress.blsAddress(keyPair.getPublicKey().toBytes()).encode(filecoinNetwork);
   }
 
   @Override

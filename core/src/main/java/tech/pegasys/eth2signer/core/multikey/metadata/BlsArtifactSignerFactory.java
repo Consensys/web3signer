@@ -14,7 +14,6 @@ package tech.pegasys.eth2signer.core.multikey.metadata;
 
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
@@ -25,6 +24,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 
 import java.nio.file.Path;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -35,11 +35,13 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext
 public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   private final LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
+  private final Function<BLSKeyPair, ArtifactSigner> signerFactory;
 
   public BlsArtifactSignerFactory(
       final Path configsDirectory,
       final MetricsSystem metricsSystem,
-      final HashicorpConnectionFactory connectionFactory) {
+      final HashicorpConnectionFactory connectionFactory,
+      final Function<BLSKeyPair, ArtifactSigner> signerFactory) {
     super(connectionFactory, configsDirectory);
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
@@ -47,12 +49,13 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
             "private_key_retrieval_time",
             "Time taken to retrieve private key",
             "signer");
+    this.signerFactory = signerFactory;
   }
 
   @Override
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
-      return new BlsArtifactSigner(
+      return signerFactory.apply(
           new BLSKeyPair(BLSSecretKey.fromBytes(fileRawSigningMetadata.getPrivateKeyBytes())));
     }
   }
@@ -69,7 +72,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("hashicorp").startTimer()) {
       final Bytes privateKeyBytes = extractBytesFromVault(hashicorpMetadata);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKeyBytes));
-      return new BlsArtifactSigner(keyPair);
+      return signerFactory.apply(keyPair);
     }
   }
 
@@ -78,7 +81,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("azure").startTimer()) {
       final Bytes privateKeyBytes = extractBytesFromVault(azureSecretSigningMetadata);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKeyBytes));
-      return new BlsArtifactSigner(keyPair);
+      return signerFactory.apply(keyPair);
     }
   }
 
@@ -91,7 +94,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final String password = loadPassword(keystorePasswordFile);
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
-      return new BlsArtifactSigner(keyPair);
+      return signerFactory.apply(keyPair);
     } catch (final KeyStoreValidationException e) {
       throw new SigningMetadataException(e.getMessage(), e);
     }
