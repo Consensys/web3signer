@@ -17,7 +17,9 @@ import static tech.pegasys.teku.bls.hashToG2.HashToCurve.hashToG2;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.bls.mikuli.G2Point;
+import tech.pegasys.teku.bls.mikuli.Signature;
 
 import java.nio.charset.StandardCharsets;
 
@@ -44,7 +46,7 @@ public class FcBlsArtifactSigner implements ArtifactSigner {
   public ArtifactSignature sign(Bytes data) {
     final G2Point hashInGroup2 = new G2Point(hashToG2(data, DST));
     final G2Point g2Point = keyPair.getSecretKey().getSecretKey().sign(hashInGroup2);
-    final Bytes g2PointBytes = g2Point.toBytesCompressed();
-    return new FcBlsArtifactSignature(g2PointBytes);
+    final BLSSignature blsSignature = new BLSSignature(new Signature(g2Point));
+    return new BlsArtifactSignature(blsSignature);
   }
 }

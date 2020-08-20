@@ -53,9 +53,9 @@ class FcBlsArtifactSignerTest {
   })
   void signsData(final String message, final String expectedSignature) {
     final ArtifactSignature signature = fcBlsArtifactSigner.sign(Bytes.fromBase64String(message));
-    assertThat(signature).isInstanceOf(FcBlsArtifactSignature.class);
-    FcBlsArtifactSignature blsArtifactSignature = (FcBlsArtifactSignature) signature;
-    assertThat(blsArtifactSignature.getSignatureData().toBase64String())
+    assertThat(signature).isInstanceOf(BlsArtifactSignature.class);
+    BlsArtifactSignature blsArtifactSignature = (BlsArtifactSignature) signature;
+    assertThat(blsArtifactSignature.getSignatureData().toBytes().toBase64String())
         .isEqualTo(expectedSignature);
   }
 }
