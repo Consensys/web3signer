@@ -34,7 +34,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class KeyIdentifiersAcceptanceTest extends PublicKeysAcceptanceTestBase {
+public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
 
   @ParameterizedTest
   @ValueSource(strings = {BLS, SECP256K1})
@@ -74,11 +74,10 @@ public class KeyIdentifiersAcceptanceTest extends PublicKeysAcceptanceTestBase {
     validateRpcResponse(rpcResponse, contains(keys));
     validateRpcResponse(rpcResponse, everyItem(not(in(invalidKeys))));
 
-    if (keyType.equals(SECP256K1)) {
-      final Response fcResponse = callFilecoinRpcWalletList();
-      validateRpcResponse(fcResponse, contains(SECP_FC_PUBLIC_KEY_1));
-      validateRpcResponse(fcResponse, everyItem((not(SECP_FC_PUBLIC_KEY_2))));
-    }
+    final Response fcResponse = callFilecoinRpcWalletList();
+    final String[] filecoinAddresses = filecoinAddresses(keyType);
+    validateRpcResponse(fcResponse, contains(filecoinAddresses[0]));
+    validateRpcResponse(fcResponse, everyItem((not(filecoinAddresses[1]))));
   }
 
   @ParameterizedTest
@@ -89,11 +88,9 @@ public class KeyIdentifiersAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
     validateApiResponse(callApiPublicKeys(keyType), containsInAnyOrder(keys));
     validateRpcResponse(callRpcPublicKeys(keyType), containsInAnyOrder(keys));
-    if (keyType.equals(SECP256K1)) {
-      validateRpcResponse(
-          callFilecoinRpcWalletList(),
-          containsInAnyOrder(SECP_FC_PUBLIC_KEY_1, SECP_FC_PUBLIC_KEY_2));
-    }
+
+    final String[] filecoinAddresses = filecoinAddresses(keyType);
+    validateRpcResponse(callFilecoinRpcWalletList(), containsInAnyOrder(filecoinAddresses));
   }
 
   @ParameterizedTest
@@ -104,11 +101,8 @@ public class KeyIdentifiersAcceptanceTest extends PublicKeysAcceptanceTestBase {
 
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(keyType);
     validateApiResponse(response, containsInAnyOrder(keys));
-    if (keyType.equals(SECP256K1)) {
-      validateRpcResponse(
-          callFilecoinRpcWalletList(),
-          containsInAnyOrder(SECP_FC_PUBLIC_KEY_1, SECP_FC_PUBLIC_KEY_2));
-    }
+    final String[] filecoinAddresses = filecoinAddresses(keyType);
+    validateRpcResponse(callFilecoinRpcWalletList(), containsInAnyOrder(filecoinAddresses));
   }
 
   @Test

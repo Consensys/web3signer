@@ -22,6 +22,7 @@ import tech.pegasys.eth2signer.core.service.operations.Upcheck;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -90,7 +91,10 @@ public class SigningService {
 
   @JsonRpcMethod("Filecoin.WalletList")
   public List<String> filecoinWalletList() {
-    return fcKeyIdentifiers.list(KeyType.SECP256K1);
+    final List<String> addresses = new ArrayList<>();
+    addresses.addAll(fcKeyIdentifiers.list(KeyType.SECP256K1));
+    addresses.addAll(fcKeyIdentifiers.list(KeyType.BLS));
+    return addresses;
   }
 
   @JsonRpcMethod("Filecoin.WalletHas")
