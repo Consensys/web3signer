@@ -21,10 +21,9 @@ import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.eth2signer.core.service.operations.Upcheck;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
@@ -91,8 +90,9 @@ public class SigningService {
 
   @JsonRpcMethod("Filecoin.WalletList")
   public List<String> filecoinWalletList() {
-    final List<String> secp = fcKeyIdentifiers.list(KeyType.SECP256K1);
-    final List<String> bls = fcKeyIdentifiers.list(KeyType.BLS);
-    return Stream.concat(secp.stream(), bls.stream()).collect(Collectors.toList());
+    final List<String> addresses = new ArrayList<>();
+    addresses.addAll(fcKeyIdentifiers.list(KeyType.SECP256K1));
+    addresses.addAll(fcKeyIdentifiers.list(KeyType.BLS));
+    return addresses;
   }
 }
