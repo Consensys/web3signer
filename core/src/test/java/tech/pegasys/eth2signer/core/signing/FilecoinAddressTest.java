@@ -18,6 +18,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinProtocol;
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidAddressChecksumException;
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidAddressLengthException;
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidAddressPayloadException;
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidFilecoinNetworkException;
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidFilecoinProtocolException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -52,29 +57,36 @@ class FilecoinAddressTest {
   @Test
   void addressWithInvalidChecksumThrowsError() {
     assertThatThrownBy(() -> FilecoinAddress.decode("f17uoq6tp427uzv7fztkbsnn64iwotfrristwprz"))
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(InvalidAddressChecksumException.class)
         .hasMessage("Filecoin address checksum doesn't match");
   }
 
   @Test
   void addressWithInvalidNetworkThrowsError() {
     assertThatThrownBy(() -> FilecoinAddress.decode("Q17uoq6tp427uzv7fztkbsnn64iwotfrristwpryy"))
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(InvalidFilecoinNetworkException.class)
         .hasMessage("Unknown Filecoin network");
   }
 
   @Test
   void addressWithInvalidProtocolThrowsError() {
     assertThatThrownBy(() -> FilecoinAddress.decode("f57uoq6tp427uzv7fztkbsnn64iwotfrristwpryy"))
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(InvalidFilecoinProtocolException.class)
         .hasMessage("Unknown Filecoin protocol");
   }
 
   @Test
   void addressWithInvalidPayloadThrowsError() {
     assertThatThrownBy(() -> FilecoinAddress.decode("f17uoq6tp427uzT7fztkbsnn64iwot!rristwpryy"))
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(InvalidAddressPayloadException.class)
         .hasMessage("Invalid payload must be base32 encoded");
+  }
+
+  @Test
+  void addressWithInvalidLengthThrowsError() {
+    assertThatThrownBy(() -> FilecoinAddress.decode("f1"))
+        .isInstanceOf(InvalidAddressLengthException.class)
+        .hasMessage("Invalid Address length");
   }
 
   private void verifyAddress(
