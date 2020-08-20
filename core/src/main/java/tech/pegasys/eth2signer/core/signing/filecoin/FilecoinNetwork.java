@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.signing.filecoin;
 
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidFilecoinNetworkException;
+
 import java.util.Arrays;
 
 public enum FilecoinNetwork {
@@ -32,6 +34,6 @@ public enum FilecoinNetwork {
     return Arrays.stream(values())
         .filter(p -> p.networkValue.equals(networkValue))
         .findFirst()
-        .orElseThrow(() -> new IllegalStateException("Unknown Filecoin network"));
+        .orElseThrow(InvalidFilecoinNetworkException::new);
   }
 }
