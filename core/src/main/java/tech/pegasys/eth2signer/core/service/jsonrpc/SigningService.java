@@ -98,7 +98,7 @@ public class SigningService {
   }
 
   @JsonRpcMethod("Filecoin.WalletHas")
-  public boolean filecoinWalletHas(final String address) {
+  public boolean filecoinWalletHas(@JsonRpcParam("address") final String address) {
     final FilecoinAddress filecoinAddress = FilecoinAddress.decode(address);
     switch (filecoinAddress.getProtocol()) {
       case BLS:
