@@ -80,7 +80,7 @@ public class FilecoinAddress {
       final Bytes payload = putUVariant(new BigInteger(rawPayload));
       return new FilecoinAddress(protocol, payload);
     } else {
-      if (!base32.isInAlphabet(rawPayload)) {
+      if (!base32.isInAlphabet(rawPayload.toUpperCase())) {
         throw new IllegalStateException("Invalid payload must be base32 encoded");
       }
       final Bytes value = Bytes.wrap(Base32.decode(rawPayload));

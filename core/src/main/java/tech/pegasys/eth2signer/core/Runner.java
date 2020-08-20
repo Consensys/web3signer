@@ -27,6 +27,7 @@ import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.SignForIdentifierHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.UpcheckHandler;
+import tech.pegasys.eth2signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.eth2signer.core.service.jsonrpc.SigningService;
 import tech.pegasys.eth2signer.core.service.operations.KeyIdentifiers;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
@@ -261,7 +262,10 @@ public class Runner implements Runnable {
       final List<SignerForIdentifier<?>> signerForIdentifierList) {
     // Handles JSON-RPC calls on /rpc/v1
     final SigningService signingService =
-        new SigningService(ethKeyIdentifiers, fcSigners, signerForIdentifierList);
+        new SigningService(ethKeyIdentifiers, signerForIdentifierList);
+
+    final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners);
+
     final JsonRpcServer jsonRpcServer = new JsonRpcServer();
     router
         .post(JSON_RPC_PATH)
@@ -270,6 +274,17 @@ public class Runner implements Runnable {
             routingContext -> {
               final String body = routingContext.getBodyAsString();
               final String jsonRpcResponse = jsonRpcServer.handle(body, signingService);
+              routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
+            },
+            false);
+
+    router
+        .post(JSON_RPC_PATH + "/filecoin")
+        .handler(BodyHandler.create())
+        .blockingHandler(
+            routingContext -> {
+              final String body = routingContext.getBodyAsString();
+              final String jsonRpcResponse = jsonRpcServer.handle(body, fileCoinJsonRpc);
               routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
             },
             false);

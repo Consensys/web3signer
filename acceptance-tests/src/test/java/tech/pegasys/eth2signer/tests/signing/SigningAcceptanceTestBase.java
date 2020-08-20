@@ -29,7 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.io.TempDir;
 
 public class SigningAcceptanceTestBase extends AcceptanceTestBase {
-  @TempDir Path testDirectory;
+  protected @TempDir Path testDirectory;
   static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
 
   protected void setupSigner() {
@@ -65,7 +65,7 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
         .post(JSON_RPC_PATH);
   }
 
-  private String dataJsonFormat(final String dataToSign) {
+  protected String dataJsonFormat(final String dataToSign) {
     return dataToSign == null ? "\"data\":null" : "\"data\":\"" + dataToSign + "\"";
   }
 

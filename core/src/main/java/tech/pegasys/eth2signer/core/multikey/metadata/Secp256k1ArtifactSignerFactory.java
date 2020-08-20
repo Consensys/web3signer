@@ -34,14 +34,19 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   private final AzureKeyVaultSignerFactory azureCloudSignerFactory;
   private final Function<Signer, ArtifactSigner> signerFactory;
 
+  @SuppressWarnings("UnusedVariable")
+  private final boolean needToHash;
+
   public Secp256k1ArtifactSignerFactory(
       final HashicorpConnectionFactory connectionFactory,
       final Path configsDirectory,
       final AzureKeyVaultSignerFactory azureCloudSignerFactory,
-      final Function<Signer, ArtifactSigner> signerFactory) {
+      final Function<Signer, ArtifactSigner> signerFactory,
+      final boolean needToHash) {
     super(connectionFactory, configsDirectory);
     this.azureCloudSignerFactory = azureCloudSignerFactory;
     this.signerFactory = signerFactory;
+    this.needToHash = needToHash;
   }
 
   @Override

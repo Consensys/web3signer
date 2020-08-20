@@ -56,14 +56,16 @@ public class LoadedSigners {
             hashicorpConnectionFactory,
             config.getKeyConfigPath(),
             azureFactory,
-            EthSecpArtifactSigner::new);
+            EthSecpArtifactSigner::new,
+            true);
 
     final Secp256k1ArtifactSignerFactory fcSecpArtifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(
             hashicorpConnectionFactory,
             config.getKeyConfigPath(),
             azureFactory,
-            signer -> new FcSecpArtifactSigner(signer, config.getFilecoinNetwork()));
+            signer -> new FcSecpArtifactSigner(signer, config.getFilecoinNetwork()),
+            false);
 
     final Collection<ArtifactSigner> signers =
         SignerLoader.load(

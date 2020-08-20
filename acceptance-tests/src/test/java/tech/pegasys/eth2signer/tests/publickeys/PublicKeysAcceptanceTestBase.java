@@ -189,6 +189,6 @@ public class PublicKeysAcceptanceTestBase extends AcceptanceTestBase {
     final JsonNode params = JsonNodeFactory.instance.objectNode();
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final Request request = new Request("2.0", "Filecoin.WalletList", params, id);
-    return given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);
+    return given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH + "/filecoin");
   }
 }
