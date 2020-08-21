@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.core.service.jsonrpc;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
@@ -68,9 +69,8 @@ public class FcJsonRpc {
         final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
         return new FilecoinSignResult(1, formatSecpSignature(secpSig).toBase64String());
       case BLS:
-        // responseSignature = "unsupported";
-        // responseId = 3;
-        throw new UnsupportedOperationException("Cannot perform BLS Signing ... yet");
+        final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
+        return new FilecoinSignResult(2, blsSig.getSignatureData().toBytes().toBase64String());
       default:
         throw new IllegalArgumentException("Unable to sign for requested protocol");
     }
