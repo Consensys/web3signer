@@ -17,10 +17,10 @@ import static tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidFi
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
 @JsonRpcError(code = -32700, message = MESSAGE)
-public class UnusableFilecoinProtocolException extends RuntimeException {
+public class FilecoinSignerNotFoundException extends RuntimeException {
   static final String MESSAGE = "No keys associated with supplied address";
 
-  public UnusableFilecoinProtocolException() {
+  public FilecoinSignerNotFoundException() {
     super(MESSAGE);
   }
 }

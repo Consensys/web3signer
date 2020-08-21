@@ -63,7 +63,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytes());
 
   @Test
-  void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint() throws URISyntaxException {
+  void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint()  {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
@@ -87,7 +87,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         .body("jsonrpc", equalTo("2.0"), "id", equalTo(id.asInt()));
 
     final Map<String, Object> result = response.body().jsonPath().get("result");
-    assertThat(result.get("Type")).isEqualTo(1);
+    assertThat(result.get("Type")).isEqualTo(2);
     assertThat(result.get("Data")).isEqualTo(expectedSignature);
 
 
