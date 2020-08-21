@@ -9,8 +9,11 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.eth2signer.tests.filecoin;
+
 
 import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -22,10 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.github.arteam.simplejsonrpc.core.domain.Request;
-import com.google.common.io.Resources;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Base64;
@@ -38,29 +39,34 @@ import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.signing.SigningAcceptanceTestBase;
+import tech.pegasys.teku.bls.BLS;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSPublicKey;
+import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.teku.bls.BLSSignature;
 
-public class FcSecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
+public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
-  private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  private static final String dataString =
+      Base64.getEncoder().encodeToString("Hello World".getBytes(UTF_8));
+  private static final String PRIVATE_KEY =
+      "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
-  // Public Key of Keystore stored in resource "secp256k1/wallet.json"
-  public static final String PUBLIC_KEY_HEX_STRING =
-      "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
-  final String dataString = Base64.getEncoder().encodeToString("Hello World".getBytes(UTF_8));
-  final String expectedBase64Signature =
-      "rapLdQPn5RQkiPeG6ij/0cCSBbsvHgO1Mx/rZVyM+HUrpdjamK6QSwSHzobfTaF2ehGevZ31t4XwZc7M5SnPwwA=";
-  final FilecoinAddress identifier =
-      FilecoinAddress.secpAddress(Bytes.fromHexString("04" + PUBLIC_KEY_HEX_STRING));
+  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  private static final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
+  private static final BLSKeyPair keyPair = new BLSKeyPair(key);
+  private static final BLSPublicKey publicKey = keyPair.getPublicKey();
+  private static final BLSSignature expectedSignature =
+      BLS.sign(keyPair.getSecretKey(), Bytes.fromBase64String(dataString));
+
+
+  final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytes());
 
   @Test
   void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint() throws URISyntaxException {
-    final String keyPath =
-        new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
-
-    final Path keyConfigFile = testDirectory.resolve("arbitrary_secp.yaml");
-
-    metadataFileHelpers.createKeyStoreYamlFileAt(
-        keyConfigFile, Path.of(keyPath), "pass", KeyType.SECP256K1);
+    final String configFilename = publicKey.toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner();
 
@@ -82,6 +88,9 @@ public class FcSecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final Map<String, Object> result = response.body().jsonPath().get("result");
     assertThat(result.get("Type")).isEqualTo(1);
-    assertThat(result.get("Data")).isEqualTo(expectedBase64Signature);
+    assertThat(result.get("Data")).isEqualTo(expectedSignature);
+
+
   }
+
 }

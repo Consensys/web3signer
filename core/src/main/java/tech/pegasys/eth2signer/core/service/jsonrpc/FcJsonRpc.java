@@ -12,17 +12,17 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
+import java.util.Set;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.FilecoinSignerNotFoundException;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
@@ -35,6 +35,21 @@ import org.apache.tuweni.bytes.Bytes32;
 @JsonRpcService
 public class FcJsonRpc {
 
+  private static enum SignatureType {
+    SECP(1),
+    BLS(2);
+
+    private final int value;
+
+    SignatureType(final int value) {
+      this.value = value;
+    }
+
+    public int getValue() {
+      return value;
+    }
+  }
+
   private static final Logger LOG = LogManager.getLogger();
 
   private final ArtifactSignerProvider fcSigners;
@@ -44,8 +59,8 @@ public class FcJsonRpc {
   }
 
   @JsonRpcMethod("Filecoin.WalletList")
-  public List<String> filecoinWalletList() {
-    return fcSigners.availableIdentifiers().parallelStream().collect(Collectors.toList());
+  public Set<String> filecoinWalletList() {
+    return fcSigners.availableIdentifiers();
   }
 
   @JsonRpcMethod("Filecoin.WalletSign")
@@ -61,18 +76,18 @@ public class FcJsonRpc {
       final Bytes bytesToSign = Bytes.fromBase64String(dataToSign);
       signature = signer.get().sign(bytesToSign);
     } else {
-      throw new IllegalArgumentException("No such signer");
+      throw new FilecoinSignerNotFoundException();
     }
 
     switch (signature.getType()) {
       case SECP256K1:
         final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
-        return new FilecoinSignResult(1, formatSecpSignature(secpSig).toBase64String());
+        return new FilecoinSignResult(SignatureType.SECP.getValue(),
+            formatSecpSignature(secpSig).toBase64String());
       case BLS:
         final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
-        return new FilecoinSignResult(2, blsSig.getSignatureData().toBytes().toBase64String());
-      default:
-        throw new IllegalArgumentException("Unable to sign for requested protocol");
+        return new FilecoinSignResult(SignatureType.BLS.getValue(),
+            blsSig.getSignatureData().toBytes().toBase64String());
     }
   }
 

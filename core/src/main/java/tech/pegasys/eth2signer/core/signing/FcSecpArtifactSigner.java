@@ -45,13 +45,14 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
 
   @Override
   public ArtifactSignature sign(final Bytes message) {
+    final int ETHEREUM_V_OFFSET = 27;
     final Bytes dataHash = Blake2b.sum256(message);
     final Signature ethSignature = signer.sign(dataHash.toArray());
 
     // signer performs an Ethereum signing - thus the "V" value is 27 or 28 (not 0 or 1).
     final Signature fcSignature =
         new Signature(
-            ethSignature.getV().subtract(BigInteger.valueOf(27)),
+            ethSignature.getV().subtract(BigInteger.valueOf(ETHEREUM_V_OFFSET)),
             ethSignature.getR(),
             ethSignature.getS());
 
