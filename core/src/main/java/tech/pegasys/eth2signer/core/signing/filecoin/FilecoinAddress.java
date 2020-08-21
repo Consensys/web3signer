@@ -19,6 +19,9 @@ import static tech.pegasys.eth2signer.core.signing.filecoin.FilecoinProtocol.SEC
 import static tech.pegasys.eth2signer.core.util.ByteUtils.fromUVariant;
 import static tech.pegasys.eth2signer.core.util.ByteUtils.putUVariant;
 
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidAddressChecksumException;
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidAddressLengthException;
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidAddressPayloadException;
 import tech.pegasys.eth2signer.core.util.Blake2b;
 
 import java.math.BigInteger;
@@ -27,6 +30,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.io.Base32;
 
 public class FilecoinAddress {
+
   private static final int CHECKSUM_BYTE_SIZE = 4;
 
   private static final org.apache.commons.codec.binary.Base32 base32 =
@@ -85,18 +89,18 @@ public class FilecoinAddress {
       return new FilecoinAddress(protocol, payload);
     } else {
       // TODO(tmm): The toUpper shouldn't be required.
-      if (!base32.isInAlphabet(rawPayload.toUpperCase())) 
+      if (!base32.isInAlphabet(rawPayload.toUpperCase())) {
         throw new InvalidAddressPayloadException();
       }
-      final Bytes value = Bytes.wrap(Base32.decode(rawPayload));
-      final Bytes payload = value.slice(0, value.size() - CHECKSUM_BYTE_SIZE);
-      final Bytes checksum = value.slice(value.size() - CHECKSUM_BYTE_SIZE);
-      final FilecoinAddress filecoinAddress = new FilecoinAddress(protocol, payload);
-      if (!validateChecksum(filecoinAddress, checksum)) {
-        throw new InvalidAddressChecksumException();
-      }
-      return filecoinAddress;
     }
+    final Bytes value = Bytes.wrap(Base32.decode(rawPayload));
+    final Bytes payload = value.slice(0, value.size() - CHECKSUM_BYTE_SIZE);
+    final Bytes checksum = value.slice(value.size() - CHECKSUM_BYTE_SIZE);
+    final FilecoinAddress filecoinAddress = new FilecoinAddress(protocol, payload);
+    if (!validateChecksum(filecoinAddress, checksum)) {
+      throw new InvalidAddressChecksumException();
+    }
+    return filecoinAddress;
   }
 
   public static Bytes checksum(final FilecoinAddress address) {

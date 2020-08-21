@@ -83,6 +83,6 @@ public class FcSecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     assertThat(result.get("Type")).isEqualTo(1);
     assertThat(result.get("Data"))
         .isEqualTo(
-            "CyIqxcj+aAmEIWF0s27hLMT9/65DWFsTKeLr2a0SEoNO+gfQGM8L5FuS8rcr2CHy5YEGkyslpm8ZTJbZJIjEIwE=");
+            "rapLdQPn5RQkiPeG6ij/0cCSBbsvHgO1Mx/rZVyM+HUrpdjamK6QSwSHzobfTaF2ehGevZ31t4XwZc7M5SnPwwA=");
   }
 }

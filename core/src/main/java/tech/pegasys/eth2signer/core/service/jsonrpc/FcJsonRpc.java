@@ -15,7 +15,6 @@ package tech.pegasys.eth2signer.core.service.jsonrpc;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
@@ -64,7 +63,7 @@ public class FcJsonRpc {
       throw new IllegalArgumentException("No such signer");
     }
 
-    switch(signature.getType()) {
+    switch (signature.getType()) {
       case SECP256K1:
         final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
         return new FilecoinSignResult(1, formatSecpSignature(secpSig).toBase64String());
@@ -75,6 +74,11 @@ public class FcJsonRpc {
       default:
         throw new IllegalArgumentException("Unable to sign for requested protocol");
     }
+  }
+
+  @JsonRpcMethod("Filecoin.WalletHas")
+  public boolean filecoinWalletHas(@JsonRpcParam("address") final String address) {
+    return fcSigners.availableIdentifiers().contains(address);
   }
 
   private Bytes formatSecpSignature(final SecpArtifactSignature signature) {

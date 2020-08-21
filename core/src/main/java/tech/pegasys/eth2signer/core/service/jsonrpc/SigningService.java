@@ -83,25 +83,4 @@ public class SigningService {
   public String upcheck() {
     return upcheck.status();
   }
-
-  @JsonRpcMethod("Filecoin.WalletList")
-  public List<String> filecoinWalletList() {
-    final List<String> addresses = new ArrayList<>();
-    addresses.addAll(fcKeyIdentifiers.list(KeyType.SECP256K1));
-    addresses.addAll(fcKeyIdentifiers.list(KeyType.BLS));
-    return addresses;
-  }
-
-  @JsonRpcMethod("Filecoin.WalletHas")
-  public boolean filecoinWalletHas(@JsonRpcParam("address") final String address) {
-    final FilecoinAddress filecoinAddress = FilecoinAddress.decode(address);
-    switch (filecoinAddress.getProtocol()) {
-      case BLS:
-        return fcKeyIdentifiers.list(KeyType.BLS).contains(address);
-      case SECP256K1:
-        return fcKeyIdentifiers.list(KeyType.SECP256K1).contains(address);
-      default:
-        return false;
-    }
-  }
 }
