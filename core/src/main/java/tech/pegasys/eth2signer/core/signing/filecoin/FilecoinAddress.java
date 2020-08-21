@@ -72,6 +72,10 @@ public class FilecoinAddress {
   }
 
   public static FilecoinAddress decode(final String address) {
+    if (address == null || address.length() < 3) {
+      throw new InvalidAddressLengthException();
+    }
+
     FilecoinNetwork.findByNetworkValue(address.substring(0, 1));
     final FilecoinProtocol protocol = FilecoinProtocol.findByAddrValue(address.substring(1, 2));
     final String rawPayload = address.substring(2);
@@ -81,15 +85,15 @@ public class FilecoinAddress {
       return new FilecoinAddress(protocol, payload);
     } else {
       // TODO(tmm): The toUpper shouldn't be required.
-      if (!base32.isInAlphabet(rawPayload.toUpperCase())) {
-        throw new IllegalStateException("Invalid payload must be base32 encoded");
+      if (!base32.isInAlphabet(rawPayload.toUpperCase())) 
+        throw new InvalidAddressPayloadException();
       }
       final Bytes value = Bytes.wrap(Base32.decode(rawPayload));
       final Bytes payload = value.slice(0, value.size() - CHECKSUM_BYTE_SIZE);
       final Bytes checksum = value.slice(value.size() - CHECKSUM_BYTE_SIZE);
       final FilecoinAddress filecoinAddress = new FilecoinAddress(protocol, payload);
       if (!validateChecksum(filecoinAddress, checksum)) {
-        throw new IllegalStateException("Filecoin address checksum doesn't match");
+        throw new InvalidAddressChecksumException();
       }
       return filecoinAddress;
     }

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.signing.filecoin;
 
+import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidFilecoinProtocolException;
+
 import java.util.Arrays;
 
 public enum FilecoinProtocol {
@@ -34,6 +36,6 @@ public enum FilecoinProtocol {
     return Arrays.stream(values())
         .filter(p -> p.addrValue.equals(addrValue))
         .findFirst()
-        .orElseThrow(() -> new IllegalStateException("Unknown Filecoin protocol"));
+        .orElseThrow(InvalidFilecoinProtocolException::new);
   }
 }
