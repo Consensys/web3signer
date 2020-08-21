@@ -17,6 +17,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.collection.IsIn.in;
 
 import tech.pegasys.eth2signer.core.signing.KeyType;
@@ -78,6 +79,38 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String[] filecoinAddresses = filecoinAddresses(keyType);
     validateRpcResponse(fcResponse, contains(filecoinAddresses[0]));
     validateRpcResponse(fcResponse, everyItem((not(filecoinAddresses[1]))));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {BLS, SECP256K1})
+  public void filecoinWalletHasReturnFalseWhenKeysAreNotLoaded(final String keyType) {
+    initAndStartSigner();
+
+    final String[] filecoinAddresses = filecoinAddresses(keyType);
+
+    final Response fcHasWalletHasTrueResponse = callFilecoinRpcWalletHas(filecoinAddresses[0]);
+    validateRpcResponse(fcHasWalletHasTrueResponse, equalTo(false));
+
+    final Response fcHasWalletHasFalseResponse = callFilecoinRpcWalletHas(filecoinAddresses[1]);
+    validateRpcResponse(fcHasWalletHasFalseResponse, equalTo(false));
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {BLS, SECP256K1})
+  public void filecoinWalletHasReturnsValidResponse(final String keyType) {
+    final String[] prvKeys = privateKeys(keyType);
+    createKeys(keyType, true, prvKeys[0]);
+    createKeys(keyType, false, prvKeys[1]);
+
+    initAndStartSigner();
+
+    final String[] filecoinAddresses = filecoinAddresses(keyType);
+
+    final Response fcHasWalletHasTrueResponse = callFilecoinRpcWalletHas(filecoinAddresses[0]);
+    validateRpcResponse(fcHasWalletHasTrueResponse, equalTo(true));
+
+    final Response fcHasWalletHasFalseResponse = callFilecoinRpcWalletHas(filecoinAddresses[1]);
+    validateRpcResponse(fcHasWalletHasFalseResponse, equalTo(false));
   }
 
   @ParameterizedTest
