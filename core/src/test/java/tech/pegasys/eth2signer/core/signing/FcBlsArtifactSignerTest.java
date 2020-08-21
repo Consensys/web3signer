@@ -21,6 +21,8 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class FcBlsArtifactSignerTest {
   private static final String FC_BLS_PRIVATE_KEY = "z38sVnSEnswoEHFC9e4g/aPk96c1NvXt425UKv/tKz0=";
@@ -42,5 +44,18 @@ class FcBlsArtifactSignerTest {
     final String expectedBlsAddress =
         "t3sjhgtrk5fdio52k5lzanh7yy4mj4rqbiowd6odddzprrxejgbjbl2irr3gmpbf7epigf45oy7asljj3v3lva";
     assertThat(identifier).isEqualTo(expectedBlsAddress);
+  }
+
+  @ParameterizedTest
+  @CsvSource({
+    "'',qqsXe9+kDAGOh8uKmI6+oGN90ydJ0jRELvxvf2VwAd+g3WRKT/bi65RlhiGTrzzCFP4gY0BiAMe3+ghInVFLs1CXBcYGol+RiPoFUew7UZ6ON1zq5Tjhs5F2vWFj1qt8",
+    "NDI=,p/LeJS8KPzuOco2qpqjhvJxFrA5qj++LpeVoActWkDRQTLhuGsnwAvY1kluQ6PntAqISjvR/RU0kzgkR38F8Hm5NuNPsu9/BEiU+IQheNeD7OoG8THq4OuZMbISg7uR/"
+  })
+  void signsData(final String message, final String expectedSignature) {
+    final ArtifactSignature signature = fcBlsArtifactSigner.sign(Bytes.fromBase64String(message));
+    assertThat(signature).isInstanceOf(BlsArtifactSignature.class);
+    BlsArtifactSignature blsArtifactSignature = (BlsArtifactSignature) signature;
+    assertThat(blsArtifactSignature.getSignatureData().toBytes().toBase64String())
+        .isEqualTo(expectedSignature);
   }
 }
