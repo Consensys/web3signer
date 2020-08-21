@@ -17,23 +17,27 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ValueNode;
+import com.github.arteam.simplejsonrpc.core.domain.Request;
+import com.google.common.io.Resources;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import java.io.File;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.signing.SigningAcceptanceTestBase;
-
-import java.io.File;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.util.Base64;
-import java.util.Map;
-
-import com.google.common.io.Resources;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Test;
 
 public class FcSecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
@@ -58,14 +62,23 @@ public class FcSecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final FilecoinAddress identifier =
         FilecoinAddress.secpAddress(Bytes.fromHexString("04" + PUBLIC_KEY_HEX_STRING));
     final String dataString = Base64.getEncoder().encodeToString("Hello World".getBytes(UTF_8));
-    final Response response =
+
+    final ValueNode id = JsonNodeFactory.instance.numberNode(1);
+
+    ObjectMapper mapper = new ObjectMapper();
+    final JsonNode params = mapper
+        .convertValue(List.of(identifier.encode(FilecoinNetwork.TESTNET), dataString),
+            JsonNode.class);
+
+    final Request request = new Request("2.0", "Filecoin.WalletSign", params, id);
+    final Response response = //given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH + "/filecoin");
         given()
             .baseUri(signer.getUrl())
             .body(
                 "{\"jsonrpc\":\"2.0\",\"method\":\"Filecoin.WalletSign\",\"params\":["
                     + "\""
                     + identifier.encode(FilecoinNetwork.TESTNET)
-                    + "\""
+                    +"\""
                     + ","
                     + "\""
                     + dataString

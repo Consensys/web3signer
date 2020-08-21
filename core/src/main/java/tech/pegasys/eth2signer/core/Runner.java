@@ -264,18 +264,7 @@ public class Runner implements Runnable {
         new SigningService(ethKeyIdentifiers, signerForIdentifierList);
 
     final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners);
-
     final JsonRpcServer jsonRpcServer = new JsonRpcServer();
-    router
-        .post(JSON_RPC_PATH)
-        .handler(BodyHandler.create())
-        .blockingHandler(
-            routingContext -> {
-              final String body = routingContext.getBodyAsString();
-              final String jsonRpcResponse = jsonRpcServer.handle(body, signingService);
-              routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
-            },
-            false);
 
     router
         .post(JSON_RPC_PATH + "/filecoin")
@@ -284,6 +273,17 @@ public class Runner implements Runnable {
             routingContext -> {
               final String body = routingContext.getBodyAsString();
               final String jsonRpcResponse = jsonRpcServer.handle(body, fileCoinJsonRpc);
+              routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
+            },
+            false);
+
+    router
+        .post(JSON_RPC_PATH)
+        .handler(BodyHandler.create())
+        .blockingHandler(
+            routingContext -> {
+              final String body = routingContext.getBodyAsString();
+              final String jsonRpcResponse = jsonRpcServer.handle(body, signingService);
               routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
             },
             false);
