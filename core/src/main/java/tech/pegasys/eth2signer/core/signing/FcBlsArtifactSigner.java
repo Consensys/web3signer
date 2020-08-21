@@ -43,7 +43,7 @@ public class FcBlsArtifactSigner implements ArtifactSigner {
   }
 
   @Override
-  public ArtifactSignature sign(Bytes data) {
+  public ArtifactSignature sign(final Bytes data) {
     final G2Point hashInGroup2 = new G2Point(hashToG2(data, DST));
     final G2Point g2Point = keyPair.getSecretKey().getSecretKey().sign(hashInGroup2);
     final BLSSignature blsSignature = new BLSSignature(new Signature(g2Point));
