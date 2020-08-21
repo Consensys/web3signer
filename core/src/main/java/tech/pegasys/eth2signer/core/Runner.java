@@ -144,7 +144,6 @@ public class Runner implements Runnable {
       final FileCoinArtifactSignerProvider fcArtifactSignerProvider =
           new FileCoinArtifactSignerProvider(fcBlsSignerProvider, fcSecpSignerProvider);
 
-
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(vertx, ethKeyIdentifiers, blsSigner, secpSigner);
       registerHttpHostAllowListHandler(openApiRouterFactory);

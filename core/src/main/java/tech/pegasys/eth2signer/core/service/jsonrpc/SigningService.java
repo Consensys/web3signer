@@ -33,7 +33,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 @JsonRpcService
 public class SigningService {
-
   private static final Logger LOG = LogManager.getLogger();
 
   private final Upcheck upcheck = new Upcheck();

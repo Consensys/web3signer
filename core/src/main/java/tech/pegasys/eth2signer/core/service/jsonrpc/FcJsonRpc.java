@@ -64,13 +64,16 @@ public class FcJsonRpc {
       throw new IllegalArgumentException("No such signer");
     }
 
-    if (signature.getType() == KeyType.SECP256K1) {
-      final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
-      return new FilecoinSignResult(1, formatSecpSignature(secpSig).toBase64String());
-    } else {
-      // responseSignature = "unsupported";
-      // responseId = 3;
-      throw new UnsupportedOperationException("Cannot perform BLS Signing ... yet");
+    switch(signature.getType()) {
+      case SECP256K1:
+        final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
+        return new FilecoinSignResult(1, formatSecpSignature(secpSig).toBase64String());
+      case BLS:
+        // responseSignature = "unsupported";
+        // responseId = 3;
+        throw new UnsupportedOperationException("Cannot perform BLS Signing ... yet");
+      default:
+        throw new IllegalArgumentException("Unable to sign for requested protocol");
     }
   }
 

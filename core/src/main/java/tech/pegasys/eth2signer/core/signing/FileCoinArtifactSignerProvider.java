@@ -48,7 +48,6 @@ public class FileCoinArtifactSignerProvider implements ArtifactSignerProvider {
   public Set<String> availableIdentifiers() {
     final Set<String> result = new HashSet<>(secpSignerProvider.availableIdentifiers());
     result.addAll(blsSignerProvider.availableIdentifiers());
-
     return result;
   }
 }

@@ -34,7 +34,6 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   private final AzureKeyVaultSignerFactory azureCloudSignerFactory;
   private final Function<Signer, ArtifactSigner> signerFactory;
 
-  @SuppressWarnings("UnusedVariable")
   private final boolean needToHash;
 
   public Secp256k1ArtifactSignerFactory(
@@ -53,7 +52,7 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
     final Bytes privateKeyBytes = fileRawSigningMetadata.getPrivateKeyBytes();
     final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
-    return signerFactory.apply(new CredentialSigner(credentials));
+    return createCredentialSigner(credentials);
   }
 
   @Override
@@ -64,7 +63,7 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
     try {
       final String password = loadPassword(keystorePasswordFile);
       final Credentials credentials = WalletUtils.loadCredentials(password, keystoreFile.toFile());
-      return signerFactory.apply(new CredentialSigner(credentials));
+      return createCredentialSigner(credentials);
     } catch (final IOException | CipherException e) {
       throw new SigningMetadataException(e.getMessage(), e);
     }
@@ -74,14 +73,14 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   public ArtifactSigner create(final HashicorpSigningMetadata hashicorpMetadata) {
     final Bytes privateKeyBytes = extractBytesFromVault(hashicorpMetadata);
     final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
-    return signerFactory.apply(new CredentialSigner(credentials));
+    return createCredentialSigner(credentials);
   }
 
   @Override
   public ArtifactSigner create(final AzureSecretSigningMetadata azureSecretSigningMetadata) {
     final Bytes privateKeyBytes = extractBytesFromVault(azureSecretSigningMetadata);
     final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
-    return signerFactory.apply(new CredentialSigner(credentials));
+    return createCredentialSigner(credentials);
   }
 
   @Override
@@ -96,6 +95,10 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
             azureSigningMetadata.getTenantId());
 
     return signerFactory.apply(azureCloudSignerFactory.createSigner(config));
+  }
+
+  private ArtifactSigner createCredentialSigner(final Credentials credentials) {
+    return signerFactory.apply(new CredentialSigner(credentials, needToHash));
   }
 
   @Override

@@ -80,7 +80,7 @@ public class FilecoinAddress {
       final Bytes payload = putUVariant(new BigInteger(rawPayload));
       return new FilecoinAddress(protocol, payload);
     } else {
-      //TODO(tmm): The toUpper shouldn't be required.
+      // TODO(tmm): The toUpper shouldn't be required.
       if (!base32.isInAlphabet(rawPayload.toUpperCase())) {
         throw new IllegalStateException("Invalid payload must be base32 encoded");
       }
