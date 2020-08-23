@@ -82,14 +82,16 @@ public class FilecoinAddress {
 
     FilecoinNetwork.findByNetworkValue(address.substring(0, 1));
     final FilecoinProtocol protocol = FilecoinProtocol.findByAddrValue(address.substring(1, 2));
-    final String rawPayload = address.substring(2);
+
+    // TODO(tmm): The toUpper shouldn't be required.
+    final String rawPayload = address.substring(2).toUpperCase();
 
     if (protocol == ID) {
       final Bytes payload = putUVariant(new BigInteger(rawPayload));
       return new FilecoinAddress(protocol, payload);
     } else {
-      // TODO(tmm): The toUpper shouldn't be required.
-      if (!base32.isInAlphabet(rawPayload.toUpperCase())) {
+
+      if (!base32.isInAlphabet(rawPayload)) {
         throw new InvalidAddressPayloadException();
       }
     }

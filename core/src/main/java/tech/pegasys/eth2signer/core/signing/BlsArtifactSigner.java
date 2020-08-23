@@ -33,7 +33,7 @@ public class BlsArtifactSigner implements ArtifactSigner {
   }
 
   @Override
-  public ArtifactSignature sign(final Bytes data) {
+  public BlsArtifactSignature sign(final Bytes data) {
     return new BlsArtifactSignature(BLS.sign(keyPair.getSecretKey(), data));
   }
 }

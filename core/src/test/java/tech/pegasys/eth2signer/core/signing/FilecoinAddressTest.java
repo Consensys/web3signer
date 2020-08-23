@@ -89,12 +89,6 @@ class FilecoinAddressTest {
         .hasMessage("Invalid Address length");
   }
 
-  @Test
-  void testValue() {
-    final String input = "t1pzrmbh7zfrppecothkiafiskbfnjza3ruommgta";
-    final FilecoinAddress addr = FilecoinAddress.decode(input);
-  }
-
   private void verifyAddress(
       final String address, final String payload, final FilecoinProtocol bls) {
     final FilecoinAddress filecoinAddress = FilecoinAddress.fromString(address);

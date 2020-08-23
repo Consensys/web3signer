@@ -44,7 +44,7 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
   }
 
   @Override
-  public ArtifactSignature sign(final Bytes message) {
+  public SecpArtifactSignature sign(final Bytes message) {
     final int ETHEREUM_V_OFFSET = 27;
     final Bytes dataHash = Blake2b.sum256(message);
     final Signature ethSignature = signer.sign(dataHash.toArray());

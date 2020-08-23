@@ -12,15 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
-import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
-import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
-import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
-import java.util.Optional;
-import java.util.Set;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -29,6 +20,17 @@ import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.FilecoinSignerNotFoundException;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
+
+import java.util.Optional;
+import java.util.Set;
+
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 @JsonRpcService
 public class FcJsonRpc {
@@ -80,12 +82,12 @@ public class FcJsonRpc {
     switch (signature.getType()) {
       case SECP256K1:
         final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
-        return new FilecoinSignResult(SignatureType.SECP.getValue(),
-            formatSecpSignature(secpSig).toBase64String());
+        return new FilecoinSignResult(
+            SignatureType.SECP.getValue(), formatSecpSignature(secpSig).toBase64String());
       case BLS:
         final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
-        return new FilecoinSignResult(SignatureType.BLS.getValue(),
-            blsSig.getSignatureData().toBytes().toBase64String());
+        return new FilecoinSignResult(
+            SignatureType.BLS.getValue(), blsSig.getSignatureData().toBytes().toBase64String());
       default:
         throw new IllegalArgumentException("Invalid Signature type created.");
     }
