@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
+import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.InvalidParamException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -24,6 +25,9 @@ import tech.pegasys.signers.secp256k1.api.Signature;
 import java.util.Optional;
 import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
@@ -96,6 +100,29 @@ public class FcJsonRpc {
   @JsonRpcMethod("Filecoin.WalletHas")
   public boolean filecoinWalletHas(@JsonRpcParam("address") final String address) {
     return fcSigners.availableIdentifiers().contains(address);
+  }
+
+  @JsonRpcMethod("Filecoin.WalletSignMessage")
+  public FilecoinSignedMessage filecoinSignMessage(
+      @JsonRpcParam("Version") final Integer version,
+      @JsonRpcParam("To") final String to,
+      @JsonRpcParam("From") final String from,
+      @JsonRpcParam("Nonce") final Integer nonce,
+      @JsonRpcParam("Value") final String value,
+      @JsonRpcParam("GasPrice") final String gasPrice,
+      @JsonRpcParam("GasLimit") final Integer gasLimit,
+      @JsonRpcParam("Method") final Integer method,
+      @JsonRpcParam("Params") final String params) {
+    final FilecoinMessage message =
+        new FilecoinMessage(version, to, from, nonce, value, gasPrice, gasLimit, method, params);
+    final ObjectMapper cborObjectMapper = new ObjectMapper(new CBORFactory());
+    try {
+      final byte[] bytes = cborObjectMapper.writeValueAsBytes(message);
+      return new FilecoinSignedMessage(
+          message, filecoinWalletSign(from, Bytes.wrap(bytes).toBase64String()));
+    } catch (JsonProcessingException e) {
+      throw new InvalidParamException("Unable to decode Json Rpc parameters.");
+    }
   }
 
   private Bytes formatSecpSignature(final SecpArtifactSignature signature) {
