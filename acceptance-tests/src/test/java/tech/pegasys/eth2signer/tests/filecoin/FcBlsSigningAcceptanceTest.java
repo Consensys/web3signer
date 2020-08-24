@@ -17,7 +17,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.FcBlsArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.KeyType;
@@ -58,7 +57,8 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final FilecoinNetwork network = FilecoinNetwork.TESTNET;
   private static final FcBlsArtifactSigner signatureGenerator =
       new FcBlsArtifactSigner(keyPair, network);
-  private static final BlsArtifactSignature expectedSignature = signatureGenerator.sign(Bytes.fromBase64String(dataString));
+  private static final BlsArtifactSignature expectedSignature =
+      signatureGenerator.sign(Bytes.fromBase64String(dataString));
 
   final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytes());
 
@@ -88,6 +88,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final Map<String, Object> result = response.body().jsonPath().get("result");
     assertThat(result.get("Type")).isEqualTo(2);
-    assertThat(result.get("Data")).isEqualTo(expectedSignature.getSignatureData().toBytes().toBase64String());
+    assertThat(result.get("Data"))
+        .isEqualTo(expectedSignature.getSignatureData().toBytes().toBase64String());
   }
 }
