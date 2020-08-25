@@ -75,7 +75,7 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
         new ECDSASignature(signatureData.getR(), signatureData.getS());
     final ECDSASignature canonicalSignature = initialSignature.toCanonicalised();
 
-    final int recId = signatureData.getV().intValue() - ETHEREUM_V_OFFSET;
+    final int recId = signatureData.getV().intValue();
     final byte[] digest = Blake2b.sum256(message).toArrayUnsafe();
     final BigInteger signaturePublicKey =
         Sign.recoverFromSignature(recId, canonicalSignature, digest);

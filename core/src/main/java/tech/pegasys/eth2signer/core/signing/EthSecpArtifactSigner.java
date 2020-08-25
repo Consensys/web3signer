@@ -20,15 +20,18 @@ import tech.pegasys.signers.secp256k1.api.Signature;
 import tech.pegasys.signers.secp256k1.api.Signer;
 
 import java.math.BigInteger;
+import java.security.SignatureException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.web3j.crypto.ECDSASignature;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
+import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.utils.Numeric;
 
 public class EthSecpArtifactSigner implements ArtifactSigner {
-
+  private static final Logger LOG = LogManager.getLogger();
   private final Signer signer;
 
   public EthSecpArtifactSigner(final Signer signer) {
@@ -46,21 +49,26 @@ public class EthSecpArtifactSigner implements ArtifactSigner {
   }
 
   @Override
-  public boolean verify(final Bytes message, final ArtifactSignature signature) {
-    checkArgument(signature instanceof SecpArtifactSignature);
-    final SecpArtifactSignature secpArtifactSignature = (SecpArtifactSignature) signature;
-    final Signature signatureData = secpArtifactSignature.getSignatureData();
+  public boolean verify(final Bytes message, final ArtifactSignature artifactSignature) {
+    checkArgument(artifactSignature instanceof SecpArtifactSignature);
+    final SecpArtifactSignature secpArtifactSignature = (SecpArtifactSignature) artifactSignature;
+    final Signature signature = secpArtifactSignature.getSignatureData();
+    final SignatureData signatureData =
+        new SignatureData(
+            Numeric.toBytesPadded(signature.getV(), 1),
+            Numeric.toBytesPadded(signature.getR(), 32),
+            Numeric.toBytesPadded(signature.getS(), 32));
 
-    final ECDSASignature initialSignature =
-        new ECDSASignature(signatureData.getR(), signatureData.getS());
-    final ECDSASignature canonicalSignature = initialSignature.toCanonicalised();
-
-    final int recId = signatureData.getV().intValue();
     final byte[] digest = Hash.sha3(message.toArrayUnsafe());
-    final BigInteger signaturePublicKey =
-        Sign.recoverFromSignature(recId, canonicalSignature, digest);
-    final BigInteger expectedPublicKey =
-        Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
-    return signaturePublicKey.equals(expectedPublicKey);
+
+    try {
+      final BigInteger signaturePublicKey = Sign.signedMessageHashToKey(digest, signatureData);
+      final BigInteger expectedPublicKey =
+          Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
+      return signaturePublicKey.equals(expectedPublicKey);
+    } catch (SignatureException e) {
+      LOG.error("Invalid signature", e);
+      return false;
+    }
   }
 }
