@@ -14,8 +14,11 @@ package tech.pegasys.eth2signer.core.signing;
 
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
+import tech.pegasys.eth2signer.core.util.Blake2b;
+import tech.pegasys.signers.secp256k1.api.Signature;
 import tech.pegasys.signers.secp256k1.api.Signer;
 
+import java.math.BigInteger;
 import java.security.interfaces.ECPublicKey;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -41,7 +44,18 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
   }
 
   @Override
-  public ArtifactSignature sign(final Bytes message) {
-    throw new UnsupportedOperationException();
+  public SecpArtifactSignature sign(final Bytes message) {
+    final int ETHEREUM_V_OFFSET = 27;
+    final Bytes dataHash = Blake2b.sum256(message);
+    final Signature ethSignature = signer.sign(dataHash.toArray());
+
+    // signer performs an Ethereum signing - thus the "V" value is 27 or 28 (not 0 or 1).
+    final Signature fcSignature =
+        new Signature(
+            ethSignature.getV().subtract(BigInteger.valueOf(ETHEREUM_V_OFFSET)),
+            ethSignature.getR(),
+            ethSignature.getS());
+
+    return new SecpArtifactSignature(fcSignature);
   }
 }

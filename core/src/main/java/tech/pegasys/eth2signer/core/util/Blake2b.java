@@ -25,6 +25,10 @@ public class Blake2b {
     return blake2b(message, 160);
   }
 
+  public static Bytes sum256(final Bytes message) {
+    return blake2b(message, 256);
+  }
+
   private static Bytes blake2b(final Bytes message, final int digestSize) {
     final Blake2bDigest blake2bDigest = new Blake2bDigest(digestSize);
     final byte[] messageByteArray = message.toArray();

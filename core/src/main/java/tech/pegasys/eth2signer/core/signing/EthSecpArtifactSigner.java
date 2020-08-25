@@ -33,7 +33,7 @@ public class EthSecpArtifactSigner implements ArtifactSigner {
   }
 
   @Override
-  public ArtifactSignature sign(final Bytes message) {
+  public SecpArtifactSignature sign(final Bytes message) {
     return new SecpArtifactSignature(signer.sign(message.toArray()));
   }
 }
