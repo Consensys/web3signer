@@ -13,9 +13,9 @@
 package tech.pegasys.eth2signer.tests.filecoin;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -53,11 +54,11 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
   final FilecoinAddress sender = FilecoinAddress.blsAddress(publicKey.toBytes());
 
   @Test
-  void fcSignMessageReturnsASignedMessage() throws JsonProcessingException {
+  void fcSignMessageReturnsASignedMessage() {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile,
-        key.getSecretKey().toBytes().toUnprefixedHexString(), KeyType.BLS);
+    metadataFileHelpers.createUnencryptedYamlFileAt(
+        keyConfigFile, key.getSecretKey().toBytes().toUnprefixedHexString(), KeyType.BLS);
 
     setupSigner();
 
@@ -88,6 +89,9 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("jsonrpc", equalTo("2.0"), "id", equalTo(id.asInt()));
 
-    final FilecoinSignedMessage signedMessage = response.body().jsonPath().getObject("result", FilecoinSignedMessage.class);
+    final FilecoinSignedMessage signedMessage =
+        response.body().jsonPath().getObject("result", FilecoinSignedMessage.class);
+
+    assertThat(signedMessage.getSignature().getType()).isEqualTo(2);
   }
 }

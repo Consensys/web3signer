@@ -22,8 +22,8 @@ public class FilecoinSignResult {
   @JsonProperty("Data")
   private final String data;
 
-  public FilecoinSignResult(final @JsonProperty("Type") int type,
-      final @JsonProperty("Data") String data) {
+  public FilecoinSignResult(
+      final @JsonProperty("Type") int type, final @JsonProperty("Data") String data) {
     this.type = type;
     this.data = data;
   }

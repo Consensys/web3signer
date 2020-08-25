@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.core.service.jsonrpc;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@SuppressWarnings("UnusedVariable")
 public class FilecoinMessage {
 
   @JsonProperty("Version")
