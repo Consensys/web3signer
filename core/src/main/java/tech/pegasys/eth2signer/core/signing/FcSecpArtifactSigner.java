@@ -79,6 +79,7 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
     final byte[] digest = Blake2b.sum256(message).toArrayUnsafe();
     final BigInteger signaturePublicKey =
         Sign.recoverFromSignature(recId, canonicalSignature, digest);
+    // TODO throw error if null is returned as this indicates an invalid signature
     final BigInteger expectedPublicKey =
         Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
     return signaturePublicKey.equals(expectedPublicKey);
