@@ -36,8 +36,8 @@ import org.web3j.utils.Numeric;
 
 @JsonRpcService
 public class FcJsonRpc {
-  private static final int SECP_VALUE = 1;
-  private static final int BLS_VALUE = 2;
+  public static final int SECP_VALUE = 1;
+  public static final int BLS_VALUE = 2;
 
   private enum SignatureType {
     SECP(SECP_VALUE),
