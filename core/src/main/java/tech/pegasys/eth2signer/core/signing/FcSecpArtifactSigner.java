@@ -24,6 +24,8 @@ import tech.pegasys.signers.secp256k1.api.Signer;
 import java.math.BigInteger;
 import java.security.interfaces.ECPublicKey;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -32,6 +34,7 @@ import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
 
 public class FcSecpArtifactSigner implements ArtifactSigner {
+  private static final Logger LOG = LogManager.getLogger();
   private static final int ETHEREUM_V_OFFSET = 27;
   private final Signer signer;
   private final FilecoinNetwork filecoinNetwork;
@@ -79,9 +82,13 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
     final byte[] digest = Blake2b.sum256(message).toArrayUnsafe();
     final BigInteger signaturePublicKey =
         Sign.recoverFromSignature(recId, canonicalSignature, digest);
-    // TODO throw error if null is returned as this indicates an invalid signature
-    final BigInteger expectedPublicKey =
-        Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
-    return signaturePublicKey.equals(expectedPublicKey);
+    if (signaturePublicKey == null) {
+      LOG.error("Invalid signature");
+      return false;
+    } else {
+      final BigInteger expectedPublicKey =
+          Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
+      return signaturePublicKey.equals(expectedPublicKey);
+    }
   }
 }
