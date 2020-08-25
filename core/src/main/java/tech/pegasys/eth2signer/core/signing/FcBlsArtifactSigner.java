@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static tech.pegasys.teku.bls.hashToG2.HashToCurve.hashToG2;
 
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
@@ -43,10 +44,19 @@ public class FcBlsArtifactSigner implements ArtifactSigner {
   }
 
   @Override
-  public BlsArtifactSignature sign(final Bytes data) {
-    final G2Point hashInGroup2 = new G2Point(hashToG2(data, DST));
+  public BlsArtifactSignature sign(final Bytes message) {
+    final G2Point hashInGroup2 = new G2Point(hashToG2(message, DST));
     final G2Point g2Point = keyPair.getSecretKey().getSecretKey().sign(hashInGroup2);
     final BLSSignature blsSignature = new BLSSignature(new Signature(g2Point));
     return new BlsArtifactSignature(blsSignature);
+  }
+
+  @Override
+  public boolean verify(final Bytes message, final ArtifactSignature artifactSignature) {
+    checkArgument(artifactSignature instanceof BlsArtifactSignature);
+    final BlsArtifactSignature blsArtifactSignature = (BlsArtifactSignature) artifactSignature;
+    final Signature signature = blsArtifactSignature.getSignatureData().getSignature();
+    final G2Point hashInGroup2 = new G2Point(hashToG2(message, DST));
+    return signature.verify(keyPair.getPublicKey().getPublicKey(), hashInGroup2);
   }
 }
