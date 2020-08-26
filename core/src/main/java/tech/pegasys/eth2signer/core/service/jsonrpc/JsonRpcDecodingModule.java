@@ -26,8 +26,6 @@ import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.eth2signer.core.service.jsonrpc.CborModule.UInt64Deserializer;
-import tech.pegasys.eth2signer.core.service.jsonrpc.CborModule.UInt64Serialiser;
 
 public class JsonRpcDecodingModule extends SimpleModule {
 
@@ -82,4 +80,26 @@ public class JsonRpcDecodingModule extends SimpleModule {
       gen.writeString(value.toString(10));
     }
   }
+
+  public static class UInt64Deserializer extends JsonDeserializer<UInt64> {
+    @Override
+    public UInt64 deserialize(final JsonParser p, final DeserializationContext ctxt) {
+      try {
+        return UInt64.valueOf(p.getBigIntegerValue());
+      } catch (final Exception e) {
+        throw new SigningMetadataException("Invalid hex value for private key", e);
+      }
+    }
+  }
+
+  public static class UInt64Serialiser extends JsonSerializer<UInt64> {
+    @Override
+    public void serialize(
+        final UInt64 value, final JsonGenerator gen, final SerializerProvider serializers)
+        throws IOException {
+      gen.writeNumber(value.toBigInteger());
+    }
+  }
+
+
 }

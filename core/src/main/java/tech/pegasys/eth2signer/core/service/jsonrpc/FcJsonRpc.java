@@ -107,11 +107,25 @@ public class FcJsonRpc {
   public FilecoinSignedMessage filecoinSignMessage(
       @JsonRpcParam("identifier") final String identifier,
       @JsonRpcParam("message") final FilecoinMessage message) {
+
+    final Bytes cborEncodedBytes = cborEncode(message);
+    final Bytes messageHash = Blake2b.sum256(cborEncodedBytes);
+    final Bytes encodedHashAndCode = encodeHashWithCode(messageHash);
+    final Bytes fcCid = createFilecoinCid(encodedHashAndCode);
+
+    final FilecoinSignature signature =
+        filecoinWalletSign(identifier, Bytes.wrap(fcCid).toBase64String());
+
+    return new FilecoinSignedMessage(message, signature );
+  }
+
+  private Bytes cborEncode(final FilecoinMessage message) {
+    final byte FILECOIN_MESSAGE_PREFIX = (byte) 138;
     final CBORFactory cborFactory = new CBORFactory();
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     try {
       final CBORGenerator gen = cborFactory.createGenerator(outputStream);
-      outputStream.write((byte) 138);
+      outputStream.write(FILECOIN_MESSAGE_PREFIX);
       gen.writeNumber(message.getVersion());
       gen.writeBinary(FilecoinAddress.decode(message.getTo()).getEncodedBytes().toArrayUnsafe());
       gen.writeBinary(FilecoinAddress.decode(message.getFrom()).getEncodedBytes().toArrayUnsafe());
@@ -125,23 +139,29 @@ public class FcJsonRpc {
       final Bytes paramBytes = Bytes.fromBase64String(message.getParams());
       gen.writeBinary(null, paramBytes.toArrayUnsafe(), 0, paramBytes.size());
       gen.close();
-      final byte[] bytes = outputStream.toByteArray();
-      final Bytes hash = Blake2b.sum256(Bytes.wrap(bytes));
-
-      final Bytes encodedCode = Bytes.concatenate(
-          ByteUtils.putUVariant(BigInteger.valueOf(45600)),
-          ByteUtils.putUVariant(BigInteger.valueOf(hash.size())),
-          hash);
-
-      final Bytes bytesToSign = Bytes.concatenate(
-          Bytes.wrap(new byte[]{1}),
-          Bytes.wrap(new byte[]{113}),
-          encodedCode);
-      return new FilecoinSignedMessage(
-          message, filecoinWalletSign(identifier, Bytes.wrap(bytesToSign).toBase64String()));
+      return Bytes.wrap(outputStream.toByteArray());
     } catch (IOException e) {
       throw new IllegalStateException("Failed to create cbor encoded message");
     }
+  }
+
+  // Roughly corresponds with filecoin:multhash:Encode
+  private Bytes encodeHashWithCode(final Bytes hashBytes) {
+    final BigInteger FC_HASHING_ALGO_CODE = BigInteger.valueOf(0xb232);
+    return Bytes.concatenate(
+        ByteUtils.putUVariant(FC_HASHING_ALGO_CODE),
+        ByteUtils.putUVariant(BigInteger.valueOf(hashBytes.size())),
+        hashBytes);
+  }
+
+  // Roughly corresponds to NewCidV1
+  private Bytes createFilecoinCid(final Bytes encodedHashAndCode) {
+    final byte CID_VERSION = (byte) 1;
+    final byte DagCBOR_CODEC_ID = (byte) 113;
+    return Bytes.concatenate(
+        Bytes.wrap(new byte[]{CID_VERSION}),
+        Bytes.wrap(new byte[]{DagCBOR_CODEC_ID}),
+        encodedHashAndCode);
   }
 
   private void serialiseBigInteger(final BigInteger value, final CBORGenerator gen)

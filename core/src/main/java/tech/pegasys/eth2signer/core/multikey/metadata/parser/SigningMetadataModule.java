@@ -12,12 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.multikey.metadata.parser;
 
-import org.apache.tuweni.units.bigints.UInt64;
-import org.web3j.abi.datatypes.generated.Uint64;
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
-
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -25,9 +19,9 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import java.io.IOException;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.eth2signer.core.service.jsonrpc.CborModule.UInt64Deserializer;
-import tech.pegasys.eth2signer.core.service.jsonrpc.CborModule.UInt64Serialiser;
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 
 public class SigningMetadataModule extends SimpleModule {
 
@@ -35,8 +29,6 @@ public class SigningMetadataModule extends SimpleModule {
     super("SigningMetadata");
     addDeserializer(Bytes.class, new HexStringDeserialiser());
     addSerializer(Bytes.class, new HexStringSerializer());
-    addSerializer(UInt64.class, new UInt64Serialiser());
-    addDeserializer(UInt64.class, new UInt64Deserializer());
   }
 
   public static class HexStringDeserialiser extends JsonDeserializer<Bytes> {
