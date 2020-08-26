@@ -61,6 +61,7 @@ commands:
           name: "Gather test results"
           when: "always"
           command: |
+            rm -rf build/test-output
             FILES=`find . -name test-results`
             for FILE in $FILES
             do
@@ -79,6 +80,7 @@ commands:
           name: Gather test results
           when: always
           command: |
+            rm -rf build/test-reports
             FILES=`find . -name reports`
             for FILE in $FILES
             do
