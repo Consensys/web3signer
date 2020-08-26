@@ -13,13 +13,30 @@
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import java.math.BigInteger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
+import org.web3j.abi.datatypes.generated.Uint64;
 
 @SuppressWarnings("UnusedVariable")
+@JsonPropertyOrder({ "Version", "To", "From", "Nonce", "Value", "GasPrice", "GasLimit", "Method", "Params" })
 public class FilecoinMessage {
 
+  //Version gets written as a uint64. or (-version-1 if < 0)
+  //To & From are strings
+  //Nonce is written as a positive number
+  //Value is written as an array of bytes
+  //GasPrice is written as an array of bytes
+  //GasLimit is written as uint64 or(-version-1 if <0)
+  //method written as uint64
+  //params written as bytes if small enough
+
+
   @JsonProperty("Version")
-  private final Integer version;
+  private final long version;
 
   @JsonProperty("To")
   private final String to;
@@ -28,42 +45,89 @@ public class FilecoinMessage {
   private final String from;
 
   @JsonProperty("Nonce")
-  private final Integer nonce;
+  private final UInt64 nonce;
 
   @JsonProperty("Value")
-  private final String value;
+  private final BigInteger value;
 
-  @JsonProperty("GasPrice")
-  private final String gasPrice;
+  @JsonProperty("GasFeeCap")
+  private final BigInteger gasFeeCap;
+
+  @JsonProperty("GasPremium")
+  private final BigInteger gasPremium;
 
   @JsonProperty("GasLimit")
-  private final Integer gasLimit;
+  private final long gasLimit;
 
   @JsonProperty("Method")
-  private final Integer method;
+  private final UInt64 method;
 
   @JsonProperty("Params")
-  private final String params;
+  private final Bytes params;
 
   @JsonCreator
   public FilecoinMessage(
-      final @JsonProperty("Version") Integer version,
+      final @JsonProperty("Version") long version,
       final @JsonProperty("To") String to,
       final @JsonProperty("From") String from,
-      final @JsonProperty("Nonce") Integer nonce,
-      final @JsonProperty("Value") String value,
-      final @JsonProperty("GasPrice") String gasPrice,
-      final @JsonProperty("GasLimit") Integer gasLimit,
-      final @JsonProperty("Method") Integer method,
+      final @JsonProperty("Nonce") UInt64 nonce,
+      final @JsonProperty("Value") BigInteger value,
+      final @JsonProperty("GasLimit") long gasLimit,
+      final @JsonProperty("GasFeeCap") BigInteger gasFeeCap,
+      final @JsonProperty("GasPremium") BigInteger gasPremium,
+      final @JsonProperty("Method") UInt64 method,
       final @JsonProperty("Params") String params) {
     this.version = version;
     this.to = to;
     this.from = from;
     this.nonce = nonce;
     this.value = value;
-    this.gasPrice = gasPrice;
     this.gasLimit = gasLimit;
+    this.gasFeeCap = gasFeeCap;
+    this.gasPremium = gasPremium;
+
     this.method = method;
-    this.params = params;
+    this.params = Bytes.fromBase64String(params);
+  }
+
+  public long getVersion() {
+    return version;
+  }
+
+  public String getTo() {
+    return to;
+  }
+
+  public String getFrom() {
+    return from;
+  }
+
+  public UInt64 getNonce() {
+    return nonce;
+  }
+
+  public BigInteger getValue() {
+    return value;
+  }
+
+  public long getGasLimit() {
+    return gasLimit;
+  }
+
+  public BigInteger getGasFeeCap() {
+    return gasFeeCap;
+  }
+
+  public BigInteger getGasPremium() {
+    return gasPremium;
+  }
+
+  public UInt64 getMethod() {
+    return method;
+  }
+
+  @JsonGetter("Params")
+  public String getParams() {
+    return params.toBase64String();
   }
 }

@@ -21,12 +21,12 @@ public class FilecoinSignedMessage {
   private final FilecoinMessage message;
 
   @JsonProperty("Signature")
-  private final FilecoinSignResult signature;
+  private final FilecoinSignature signature;
 
   @JsonCreator
   public FilecoinSignedMessage(
       final @JsonProperty("Message") FilecoinMessage message,
-      final @JsonProperty("Signature") FilecoinSignResult signature) {
+      final @JsonProperty("Signature") FilecoinSignature signature) {
     this.message = message;
     this.signature = signature;
   }
@@ -35,7 +35,7 @@ public class FilecoinSignedMessage {
     return message;
   }
 
-  public FilecoinSignResult getSignature() {
+  public FilecoinSignature getSignature() {
     return signature;
   }
 }

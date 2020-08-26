@@ -60,6 +60,12 @@ public class FilecoinAddress {
     return payload;
   }
 
+  public Bytes getEncodedBytes() {
+    final byte protocolByte = Byte.parseByte(protocol.getAddrValue());
+    return Bytes.concatenate(Bytes.wrap(new byte[]{protocolByte}),
+        payload);
+  }
+
   public FilecoinProtocol getProtocol() {
     return protocol;
   }

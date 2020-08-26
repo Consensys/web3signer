@@ -12,29 +12,30 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
-import tech.pegasys.eth2signer.core.service.jsonrpc.exceptions.InvalidParamException;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.fasterxml.jackson.dataformat.cbor.CBORGenerator;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.Optional;
+import java.util.Set;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.FilecoinSignerNotFoundException;
+import tech.pegasys.eth2signer.core.util.Blake2b;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
-
-import java.util.Optional;
-import java.util.Set;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
-import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
-import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 @JsonRpcService
 public class FcJsonRpc {
@@ -68,7 +69,7 @@ public class FcJsonRpc {
   }
 
   @JsonRpcMethod("Filecoin.WalletSign")
-  public FilecoinSignResult filecoinWalletSign(
+  public FilecoinSignature filecoinWalletSign(
       @JsonRpcParam("identifier") final String filecoinAddress,
       @JsonRpcParam("data") final String dataToSign) {
     LOG.debug("Received FC sign request id = {}; data = {}", filecoinAddress, dataToSign);
@@ -86,11 +87,11 @@ public class FcJsonRpc {
     switch (signature.getType()) {
       case SECP256K1:
         final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
-        return new FilecoinSignResult(
+        return new FilecoinSignature(
             SignatureType.SECP.getValue(), formatSecpSignature(secpSig).toBase64String());
       case BLS:
         final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
-        return new FilecoinSignResult(
+        return new FilecoinSignature(
             SignatureType.BLS.getValue(), blsSig.getSignatureData().toBytes().toBase64String());
       default:
         throw new IllegalArgumentException("Invalid Signature type created.");
@@ -104,24 +105,52 @@ public class FcJsonRpc {
 
   @JsonRpcMethod("Filecoin.WalletSignMessage")
   public FilecoinSignedMessage filecoinSignMessage(
-      @JsonRpcParam("Version") final Integer version,
-      @JsonRpcParam("To") final String to,
-      @JsonRpcParam("From") final String from,
-      @JsonRpcParam("Nonce") final Integer nonce,
-      @JsonRpcParam("Value") final String value,
-      @JsonRpcParam("GasPrice") final String gasPrice,
-      @JsonRpcParam("GasLimit") final Integer gasLimit,
-      @JsonRpcParam("Method") final Integer method,
-      @JsonRpcParam("Params") final String params) {
-    final FilecoinMessage message =
-        new FilecoinMessage(version, to, from, nonce, value, gasPrice, gasLimit, method, params);
-    final ObjectMapper cborObjectMapper = new ObjectMapper(new CBORFactory());
+      @JsonRpcParam("identifier") final String identifier,
+      @JsonRpcParam("message") final FilecoinMessage message) {
+    final CBORFactory cborFactory = new CBORFactory();
+    final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     try {
-      final byte[] bytes = cborObjectMapper.writeValueAsBytes(message);
+      final CBORGenerator gen = cborFactory.createGenerator(outputStream);
+      outputStream.write((byte) 138);
+      gen.writeNumber(message.getVersion());
+      gen.writeBinary(FilecoinAddress.decode(message.getTo()).getEncodedBytes().toArrayUnsafe());
+      gen.writeBinary(FilecoinAddress.decode(message.getFrom()).getEncodedBytes().toArrayUnsafe());
+      gen.writeNumber(
+          message.getNonce().toLong()); // NOT SURE this is valid - what happens when  >2^63?
+      serialiseBigInteger(message.getValue(), gen);
+      gen.writeNumber(message.getGasLimit());
+      serialiseBigInteger(message.getGasFeeCap(), gen);
+      serialiseBigInteger(message.getGasPremium(), gen);
+      gen.writeNumber(message.getMethod().toLong());
+      final Bytes paramBytes = Bytes.fromBase64String(message.getParams());
+      gen.writeBinary(null, paramBytes.toArrayUnsafe(), 0, paramBytes.size());
+      gen.close();
+      final byte[] bytes = outputStream.toByteArray();
+      final Bytes hash = Blake2b.sum256(Bytes.wrap(bytes));
+
+      final Bytes encodedCode = Bytes.concatenate(
+          ByteUtils.putUVariant(BigInteger.valueOf(45600)),
+          ByteUtils.putUVariant(BigInteger.valueOf(hash.size())),
+          hash);
+
+      final Bytes bytesToSign = Bytes.concatenate(
+          Bytes.wrap(new byte[]{1}),
+          Bytes.wrap(new byte[]{113}),
+          encodedCode);
       return new FilecoinSignedMessage(
-          message, filecoinWalletSign(from, Bytes.wrap(bytes).toBase64String()));
-    } catch (JsonProcessingException e) {
-      throw new InvalidParamException("Unable to decode Json Rpc parameters.");
+          message, filecoinWalletSign(identifier, Bytes.wrap(bytesToSign).toBase64String()));
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to create cbor encoded message");
+    }
+  }
+
+  private void serialiseBigInteger(final BigInteger value, final CBORGenerator gen)
+      throws IOException {
+    if (value.equals(BigInteger.ZERO)) {
+      gen.writeBinary(null, new byte[]{0}, 0, 0);
+    } else {
+      final byte[] bigIntBytes = value.toByteArray();
+      gen.writeBinary(null, bigIntBytes, 0, bigIntBytes.length);
     }
   }
 
