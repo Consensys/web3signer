@@ -147,7 +147,7 @@ public class FcJsonRpc {
 
   // Roughly corresponds with filecoin:multhash:Encode
   private Bytes encodeHashWithCode(final Bytes hashBytes) {
-    final BigInteger FC_HASHING_ALGO_CODE = BigInteger.valueOf(0xb232);
+    final BigInteger FC_HASHING_ALGO_CODE = BigInteger.valueOf(0xb220); // aka Blake2b-256
     return Bytes.concatenate(
         ByteUtils.putUVariant(FC_HASHING_ALGO_CODE),
         ByteUtils.putUVariant(BigInteger.valueOf(hashBytes.size())),
