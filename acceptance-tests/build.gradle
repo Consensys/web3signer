@@ -43,6 +43,7 @@ dependencies {
   testImplementation 'org.web3j:core'
   testImplementation 'org.apache.tuweni:tuweni-bytes'
   testImplementation 'com.github.arteam:simple-json-rpc-server'
+  testImplementation 'com.github.arteam:simple-json-rpc-client'
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'keystorage-hashicorp', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'acceptance-tests', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'signing-secp256k1-impl', classifier: 'test-fixtures')
@@ -102,5 +103,5 @@ task acceptanceTest(dependsOn: [
 
   useJUnitPlatform()
   // toggle to show standard out and standard error of the test JVM(s) on the console
-  testLogging.showStandardStreams = false
+  testLogging.showStandardStreams = true
 }

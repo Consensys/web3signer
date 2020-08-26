@@ -22,6 +22,7 @@ public class AcceptanceTestBase {
 
   protected Signer signer;
   public static final String JSON_RPC_PATH = "/rpc/v1";
+  public static final String FC_RPC_PATH = JSON_RPC_PATH + "/filecoin";
 
   protected void startSigner(final SignerConfiguration config) {
     signer = new Signer(config, null);
