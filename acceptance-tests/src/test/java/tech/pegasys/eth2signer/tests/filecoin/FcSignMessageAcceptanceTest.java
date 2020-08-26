@@ -16,6 +16,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
+import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
@@ -77,6 +78,7 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
     messageMap.put("GasPremium", "0");
     messageMap.put("Method", 1);
     messageMap.put("Params", "Ynl0ZSBhcnJheQ==");
+    final FilecoinMessage sentMessage = mapper.convertValue(messageMap, FilecoinMessage.class);
 
     final List<Object> paramList = Lists.newArrayList();
     paramList.add(sender.encode(network));
@@ -104,7 +106,7 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
     assertThat(signedMessage.getSignature().getData())
         .isEqualTo(
             "qlJIb3fhpH5v3kuhyq+DIv/LLqppuiatvnQzWDZcSVFW0bLvceEh4QEorhvffYPLCPzuAi/KrWUBZcZLcEFsXWc16EPuxOddK23k65rJduHrsAtbOJmaWOf4fBUI8Vkl");
-    // assertThat(signedMessage.getMessage()).isEqualToComparingFieldByField(message);
+    assertThat(signedMessage.getMessage()).isEqualToComparingFieldByField(sentMessage);
 
   }
 }
