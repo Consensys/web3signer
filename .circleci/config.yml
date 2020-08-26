@@ -226,8 +226,8 @@ workflows:
     jobs:
       - build
       - acceptanceTests:
-          - requires:
-              - build
+          requires:
+            - build
       - buildDocker:
           requires:
             - build
