@@ -83,12 +83,12 @@ commands:
             for FILE in $FILES
             do
               MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/reports@\1@'`
-              TARGET="~/test-reports/$MODULE"
+              TARGET="build/test-reports/$MODULE"
               mkdir -p "$TARGET"
               cp -rf ${FILE}/*/* "$TARGET"
             done
       - store_artifacts:
-          path: ~/test-reports
+          path: build/test-reports
           destination: test-reports
 
   notify:
