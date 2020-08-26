@@ -61,7 +61,7 @@ commands:
           name: Save test results
           command: |
             mkdir -p ~/test-results/junit/
-            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+            find . -type f -regex ".*/build/test-results/**/.*xml" -exec cp {} ~/test-results/junit/ \;
           when: always
       - store_test_results:
           path: ~/test-results
@@ -75,16 +75,16 @@ commands:
           name: Gather test results
           when: always
           command: |
-            FILES=`find . -name reports`
+            FILES=`find . -type d -name reports`
             for FILE in $FILES
             do
               MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/reports@\1@'`
-              TARGET="build/test-reports/$MODULE"
+              TARGET="~/test-reports/$MODULE"
               mkdir -p "$TARGET"
               cp -rf ${FILE}/*/* "$TARGET"
             done
       - store_artifacts:
-          path: build/test-reports
+          path: ~/test-reports
           destination: test-reports
 
   notify:
@@ -139,6 +139,7 @@ jobs:
           name: Acceptance Tests
           no_output_timeout: 20m
           command: |
+            ./gradlew --no-daemon clean installDist
             ./gradlew --no-daemon --parallel acceptanceTest
       - notify
       - capture_test_results
