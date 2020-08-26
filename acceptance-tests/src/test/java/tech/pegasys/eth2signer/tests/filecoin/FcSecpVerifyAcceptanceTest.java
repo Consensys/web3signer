@@ -74,7 +74,7 @@ public class FcSecpVerifyAcceptanceTest extends AcceptanceTestBase {
     startSigner(builder.build());
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
-    ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = new ObjectMapper();
 
     final FilecoinSignature filecoinSignature =
         new FilecoinSignature(FcJsonRpc.SECP_VALUE, expectedBase64Signature);

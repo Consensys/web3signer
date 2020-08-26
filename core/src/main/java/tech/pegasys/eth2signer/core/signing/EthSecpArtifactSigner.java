@@ -66,8 +66,8 @@ public class EthSecpArtifactSigner implements ArtifactSigner {
       final BigInteger expectedPublicKey =
           Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
       return signaturePublicKey.equals(expectedPublicKey);
-    } catch (SignatureException e) {
-      LOG.error("Invalid signature", e);
+    } catch (final SignatureException e) {
+      LOG.error("Unable to recover public key from signature", e);
       return false;
     }
   }

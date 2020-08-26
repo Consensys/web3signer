@@ -83,7 +83,7 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
     final BigInteger signaturePublicKey =
         Sign.recoverFromSignature(recId, canonicalSignature, digest);
     if (signaturePublicKey == null) {
-      LOG.error("Invalid signature");
+      LOG.error("Unable to recover public key from signature");
       return false;
     } else {
       final BigInteger expectedPublicKey =
