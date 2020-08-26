@@ -64,7 +64,7 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
             (fcAddress, key) ->
                 metadataFileHelpers.createUnencryptedYamlFileAt(
                     keyConfigFile(key.getPublicKey()),
-                    key.getPrivateKey(),
+                    key.getPrivateKeyHex(),
                     key.getType() == FilecoinKeyType.BLS ? KeyType.BLS : KeyType.SECP256K1));
   }
 
