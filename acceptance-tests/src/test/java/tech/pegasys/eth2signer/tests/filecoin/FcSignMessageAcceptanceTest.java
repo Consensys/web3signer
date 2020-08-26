@@ -107,6 +107,5 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
         .isEqualTo(
             "qlJIb3fhpH5v3kuhyq+DIv/LLqppuiatvnQzWDZcSVFW0bLvceEh4QEorhvffYPLCPzuAi/KrWUBZcZLcEFsXWc16EPuxOddK23k65rJduHrsAtbOJmaWOf4fBUI8Vkl");
     assertThat(signedMessage.getMessage()).isEqualToComparingFieldByField(sentMessage);
-
   }
 }
