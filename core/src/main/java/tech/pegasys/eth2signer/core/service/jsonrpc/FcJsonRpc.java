@@ -17,6 +17,9 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinProtocol;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinVerify;
 import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.FilecoinSignerNotFoundException;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
@@ -107,34 +110,30 @@ public class FcJsonRpc {
       @JsonRpcParam("address") final String filecoinAddress,
       @JsonRpcParam("data") final String dataToVerify,
       @JsonRpcParam("signature") final FilecoinSignature filecoinSignature) {
-    final Optional<ArtifactSigner> signer = fcSigners.getSigner(filecoinAddress);
-
-    if (signer.isPresent()) {
-      final Bytes bytesToVerify = Bytes.fromBase64String(dataToVerify);
-      final ArtifactSignature artifactSignature = createArtifactSignature(filecoinSignature);
-      return signer.get().verify(bytesToVerify, artifactSignature);
+    final FilecoinAddress address = FilecoinAddress.fromString(filecoinAddress);
+    final Bytes signature = Bytes.fromBase64String(filecoinSignature.getData());
+    if (address.getProtocol() == FilecoinProtocol.SECP256K1) {
+      return FilecoinVerify.verify(
+          address, Bytes.fromBase64String(dataToVerify), createSecpArtifactSignature(signature));
+    } else if (address.getProtocol() == FilecoinProtocol.BLS) {
+      return FilecoinVerify.verify(
+          address,
+          Bytes.fromBase64String(dataToVerify),
+          new BlsArtifactSignature(BLSSignature.fromBytes(signature)));
     } else {
-      throw new FilecoinSignerNotFoundException();
+      throw new IllegalArgumentException("Invalid Signature type");
     }
   }
 
-  private ArtifactSignature createArtifactSignature(final FilecoinSignature filecoinSignature) {
-    final Bytes signature = Bytes.fromBase64String(filecoinSignature.getData());
-    switch (filecoinSignature.getType()) {
-      case SECP_VALUE:
-        final Bytes r = signature.slice(0, 32);
-        final Bytes s = signature.slice(32, 32);
-        final Bytes v = signature.slice(64);
-        return new SecpArtifactSignature(
-            new Signature(
-                Numeric.toBigInt(v.toArrayUnsafe()),
-                Numeric.toBigInt(r.toArrayUnsafe()),
-                Numeric.toBigInt(s.toArrayUnsafe())));
-      case BLS_VALUE:
-        return new BlsArtifactSignature(BLSSignature.fromBytes(signature));
-      default:
-        throw new IllegalArgumentException("Invalid Signature type");
-    }
+  private SecpArtifactSignature createSecpArtifactSignature(final Bytes signature) {
+    final Bytes r = signature.slice(0, 32);
+    final Bytes s = signature.slice(32, 32);
+    final Bytes v = signature.slice(64);
+    return new SecpArtifactSignature(
+        new Signature(
+            Numeric.toBigInt(v.toArrayUnsafe()),
+            Numeric.toBigInt(r.toArrayUnsafe()),
+            Numeric.toBigInt(s.toArrayUnsafe())));
   }
 
   private Bytes formatSecpSignature(final SecpArtifactSignature signature) {

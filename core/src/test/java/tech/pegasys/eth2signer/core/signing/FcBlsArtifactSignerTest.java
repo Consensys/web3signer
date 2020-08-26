@@ -12,7 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
@@ -58,19 +57,5 @@ class FcBlsArtifactSignerTest {
     assertThat(signature).isInstanceOf(BlsArtifactSignature.class);
     assertThat(signature.getSignatureData().toBytes().toBase64String())
         .isEqualTo(expectedSignature);
-  }
-
-  @Test
-  void verifiesSignatureWasSignedWithKey() {
-    final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
-
-    final BlsArtifactSignature artifactSignature = fcBlsArtifactSigner.sign(message);
-    assertThat(fcBlsArtifactSigner.verify(message, artifactSignature)).isTrue();
-
-    final BLSKeyPair otherKeyPair = BLSKeyPair.random(5);
-    final FcBlsArtifactSigner otherBlsArtifactSigner =
-        new FcBlsArtifactSigner(otherKeyPair, FilecoinNetwork.TESTNET);
-    final BlsArtifactSignature otherArtifactSignature = otherBlsArtifactSigner.sign(message);
-    assertThat(fcBlsArtifactSigner.verify(message, otherArtifactSignature)).isFalse();
   }
 }
