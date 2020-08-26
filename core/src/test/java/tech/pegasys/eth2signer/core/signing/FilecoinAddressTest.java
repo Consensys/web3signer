@@ -56,7 +56,7 @@ class FilecoinAddressTest {
 
   @Test
   void addressWithInvalidChecksumThrowsError() {
-    assertThatThrownBy(() -> FilecoinAddress.decode("f17uoq6tp427uzv7fztkbsnn64iwotfrristwprz"))
+    assertThatThrownBy(() -> FilecoinAddress.decode("f17uoq6tp427uzv7fztkbsnn64iwotfrristwpr"))
         .isInstanceOf(InvalidAddressChecksumException.class)
         .hasMessage("Filecoin address checksum doesn't match");
   }

@@ -26,16 +26,14 @@ import tech.pegasys.eth2signer.core.util.Blake2b;
 
 import java.math.BigInteger;
 
+import com.google.common.io.BaseEncoding;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.io.Base32;
 
 public class FilecoinAddress {
 
   private static final int CHECKSUM_BYTE_SIZE = 4;
-
-  private static final org.apache.commons.codec.binary.Base32 base32 =
-      new org.apache.commons.codec.binary.Base32();
-
+  private static final BaseEncoding BASE_32_ENCODING =
+      BaseEncoding.base32().lowerCase().omitPadding();
   private final FilecoinProtocol protocol;
   private final Bytes payload;
 
@@ -71,7 +69,7 @@ public class FilecoinAddress {
     } else {
       return network.getNetworkValue()
           + protocol.getAddrValue()
-          + base32(concatenate(payload, checksum(this))).toLowerCase();
+          + BASE_32_ENCODING.encode(concatenate(payload, checksum(this)).toArrayUnsafe());
     }
   }
 
@@ -83,19 +81,18 @@ public class FilecoinAddress {
     FilecoinNetwork.findByNetworkValue(address.substring(0, 1));
     final FilecoinProtocol protocol = FilecoinProtocol.findByAddrValue(address.substring(1, 2));
 
-    // TODO(tmm): The toUpper shouldn't be required.
-    final String rawPayload = address.substring(2).toUpperCase();
+    final String rawPayload = address.substring(2);
 
     if (protocol == ID) {
       final Bytes payload = putUVariant(new BigInteger(rawPayload));
       return new FilecoinAddress(protocol, payload);
     } else {
 
-      if (!base32.isInAlphabet(rawPayload)) {
+      if (!BASE_32_ENCODING.canDecode(rawPayload)) {
         throw new InvalidAddressPayloadException();
       }
     }
-    final Bytes value = Bytes.wrap(Base32.decode(rawPayload));
+    final Bytes value = Bytes.wrap(BASE_32_ENCODING.decode(rawPayload));
     final Bytes payload = value.slice(0, value.size() - CHECKSUM_BYTE_SIZE);
     final Bytes checksum = value.slice(value.size() - CHECKSUM_BYTE_SIZE);
     final FilecoinAddress filecoinAddress = new FilecoinAddress(protocol, payload);
@@ -114,10 +111,5 @@ public class FilecoinAddress {
       final FilecoinAddress address, final Bytes expectedChecksum) {
     final Bytes checksum = checksum(address);
     return expectedChecksum.equals(checksum);
-  }
-
-  private String base32(final Bytes bytes) {
-    final String base32 = Base32.encode(bytes);
-    return base32.replaceAll("=", "");
   }
 }
