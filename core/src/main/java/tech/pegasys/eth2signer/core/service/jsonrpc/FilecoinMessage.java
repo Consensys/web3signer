@@ -12,28 +12,16 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
+import java.math.BigInteger;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.web3j.abi.datatypes.generated.Uint64;
 
 @SuppressWarnings("UnusedVariable")
-@JsonPropertyOrder({ "Version", "To", "From", "Nonce", "Value", "GasPrice", "GasLimit", "Method", "Params" })
 public class FilecoinMessage {
-
-  //Version gets written as a uint64. or (-version-1 if < 0)
-  //To & From are strings
-  //Nonce is written as a positive number
-  //Value is written as an array of bytes
-  //GasPrice is written as an array of bytes
-  //GasLimit is written as uint64 or(-version-1 if <0)
-  //method written as uint64
-  //params written as bytes if small enough
-
 
   @JsonProperty("Version")
   private final long version;

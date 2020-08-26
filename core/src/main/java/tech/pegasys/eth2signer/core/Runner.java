@@ -17,13 +17,11 @@ import static tech.pegasys.eth2signer.core.service.http.handlers.ContentTypes.JS
 import static tech.pegasys.eth2signer.core.signing.KeyType.BLS;
 import static tech.pegasys.eth2signer.core.signing.KeyType.SECP256K1;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
-import tech.pegasys.eth2signer.core.multikey.metadata.parser.SigningMetadataModule;
 import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
@@ -56,6 +54,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;

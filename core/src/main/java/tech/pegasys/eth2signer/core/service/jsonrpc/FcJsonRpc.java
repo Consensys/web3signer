@@ -12,20 +12,9 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import com.fasterxml.jackson.dataformat.cbor.CBORGenerator;
-import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
-import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
-import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.util.Optional;
-import java.util.Set;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import static com.fasterxml.jackson.dataformat.cbor.CBORConstants.PREFIX_TYPE_INT_POS;
+import static com.fasterxml.jackson.dataformat.cbor.CBORConstants.SUFFIX_UINT64_ELEMENTS;
+
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
@@ -36,6 +25,23 @@ import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.FilecoinSignerNo
 import tech.pegasys.eth2signer.core.util.Blake2b;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.Optional;
+import java.util.Set;
+
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
+import com.fasterxml.jackson.dataformat.cbor.CBORGenerator;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 
 @JsonRpcService
 public class FcJsonRpc {
@@ -116,7 +122,7 @@ public class FcJsonRpc {
     final FilecoinSignature signature =
         filecoinWalletSign(identifier, Bytes.wrap(fcCid).toBase64String());
 
-    return new FilecoinSignedMessage(message, signature );
+    return new FilecoinSignedMessage(message, signature);
   }
 
   private Bytes cborEncode(final FilecoinMessage message) {
@@ -124,24 +130,38 @@ public class FcJsonRpc {
     final CBORFactory cborFactory = new CBORFactory();
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     try {
+      // need to ensure _cfgMinimalInts is set in cborgen ... no idea how.
       final CBORGenerator gen = cborFactory.createGenerator(outputStream);
       outputStream.write(FILECOIN_MESSAGE_PREFIX);
       gen.writeNumber(message.getVersion());
       gen.writeBinary(FilecoinAddress.decode(message.getTo()).getEncodedBytes().toArrayUnsafe());
       gen.writeBinary(FilecoinAddress.decode(message.getFrom()).getEncodedBytes().toArrayUnsafe());
-      gen.writeNumber(
-          message.getNonce().toLong()); // NOT SURE this is valid - what happens when  >2^63?
+      encodeUint64Value(message.getNonce(), gen);
       serialiseBigInteger(message.getValue(), gen);
       gen.writeNumber(message.getGasLimit());
       serialiseBigInteger(message.getGasFeeCap(), gen);
       serialiseBigInteger(message.getGasPremium(), gen);
-      gen.writeNumber(message.getMethod().toLong());
+      encodeUint64Value(message.getMethod(), gen);
       final Bytes paramBytes = Bytes.fromBase64String(message.getParams());
       gen.writeBinary(null, paramBytes.toArrayUnsafe(), 0, paramBytes.size());
       gen.close();
       return Bytes.wrap(outputStream.toByteArray());
     } catch (IOException e) {
       throw new IllegalStateException("Failed to create cbor encoded message");
+    }
+  }
+
+  private void encodeUint64Value(final UInt64 value, final CBORGenerator gen) throws IOException {
+    if (value.fitsInt()) {
+      gen.writeNumber(value.intValue());
+    } else if (value.fitsLong()) {
+      gen.writeNumber(value.toLong());
+    } else {
+      final BigInteger bi = value.toBigInteger();
+      gen.writeRaw((byte) (PREFIX_TYPE_INT_POS + SUFFIX_UINT64_ELEMENTS));
+      final Bytes bytes = Bytes.wrap(bi.toByteArray());
+      final int numericBytes = bytes.size() - 1;
+      gen.writeBytes(bytes.slice(1, numericBytes).toArrayUnsafe(), 0, numericBytes);
     }
   }
 
@@ -159,15 +179,15 @@ public class FcJsonRpc {
     final byte CID_VERSION = (byte) 1;
     final byte DagCBOR_CODEC_ID = (byte) 113;
     return Bytes.concatenate(
-        Bytes.wrap(new byte[]{CID_VERSION}),
-        Bytes.wrap(new byte[]{DagCBOR_CODEC_ID}),
+        Bytes.wrap(new byte[] {CID_VERSION}),
+        Bytes.wrap(new byte[] {DagCBOR_CODEC_ID}),
         encodedHashAndCode);
   }
 
   private void serialiseBigInteger(final BigInteger value, final CBORGenerator gen)
       throws IOException {
     if (value.equals(BigInteger.ZERO)) {
-      gen.writeBinary(null, new byte[]{0}, 0, 0);
+      gen.writeBinary(null, new byte[] {0}, 0, 0);
     } else {
       final byte[] bigIntBytes = value.toByteArray();
       gen.writeBinary(null, bigIntBytes, 0, bigIntBytes.length);

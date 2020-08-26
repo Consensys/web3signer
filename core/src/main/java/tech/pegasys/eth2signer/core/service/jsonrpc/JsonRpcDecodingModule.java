@@ -9,10 +9,13 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
+
+import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
+
+import java.io.IOException;
+import java.math.BigInteger;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -21,11 +24,8 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import java.io.IOException;
-import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
-import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 
 public class JsonRpcDecodingModule extends SimpleModule {
 
@@ -100,6 +100,4 @@ public class JsonRpcDecodingModule extends SimpleModule {
       gen.writeNumber(value.toBigInteger());
     }
   }
-
-
 }

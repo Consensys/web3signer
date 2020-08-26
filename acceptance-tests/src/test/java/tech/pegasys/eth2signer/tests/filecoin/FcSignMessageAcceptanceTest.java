@@ -14,16 +14,9 @@ package tech.pegasys.eth2signer.tests.filecoin;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.InstanceOfAssertFactories.map;
 import static org.hamcrest.Matchers.equalTo;
 
-import io.restassured.RestAssured;
-import java.util.List;
-import org.apache.tuweni.units.bigints.UInt64;
-import org.assertj.core.util.Lists;
-import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
-import tech.pegasys.eth2signer.core.service.jsonrpc.JsonRpcDecodingModule;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
@@ -35,6 +28,7 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -45,6 +39,7 @@ import com.github.arteam.simplejsonrpc.core.domain.Request;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
+import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 
 public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
@@ -58,7 +53,6 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final FilecoinNetwork network = FilecoinNetwork.TESTNET;
   private final FilecoinAddress sender = FilecoinAddress.blsAddress(publicKey.toBytes());
-  private final ObjectMapper mapper = new ObjectMapper();
 
   @Test
   void fcSignMessageReturnsASignedMessage() {
@@ -70,7 +64,7 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
     setupSigner();
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
-    final ObjectMapper mapper = new ObjectMapper().registerModule(new JsonRpcDecodingModule());
+    final ObjectMapper mapper = new ObjectMapper(); // .registerModule(new JsonRpcDecodingModule());
 
     final Map<String, Object> messageMap = new HashMap<>();
     messageMap.put("Version", 9);
@@ -90,7 +84,9 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
 
     final Request request =
         new Request(
-            "2.0", "Filecoin.WalletSignMessage", mapper.convertValue(paramList, JsonNode.class),
+            "2.0",
+            "Filecoin.WalletSignMessage",
+            mapper.convertValue(paramList, JsonNode.class),
             id);
     final Response response =
         given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH + "/filecoin");
@@ -105,9 +101,10 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
         response.body().jsonPath().getObject("result", FilecoinSignedMessage.class);
 
     assertThat(signedMessage.getSignature().getType()).isEqualTo(2);
-    assertThat(signedMessage.getSignature().getData()).isEqualTo(
-        "qlJIb3fhpH5v3kuhyq+DIv/LLqppuiatvnQzWDZcSVFW0bLvceEh4QEorhvffYPLCPzuAi/KrWUBZcZLcEFsXWc16EPuxOddK23k65rJduHrsAtbOJmaWOf4fBUI8Vkl");
-    //assertThat(signedMessage.getMessage()).isEqualToComparingFieldByField(message);
+    assertThat(signedMessage.getSignature().getData())
+        .isEqualTo(
+            "qlJIb3fhpH5v3kuhyq+DIv/LLqppuiatvnQzWDZcSVFW0bLvceEh4QEorhvffYPLCPzuAi/KrWUBZcZLcEFsXWc16EPuxOddK23k65rJduHrsAtbOJmaWOf4fBUI8Vkl");
+    // assertThat(signedMessage.getMessage()).isEqualToComparingFieldByField(message);
 
   }
 }
