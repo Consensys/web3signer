@@ -20,6 +20,7 @@ import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.FilecoinSignerNotFoundException;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
+import tech.pegasys.teku.bls.BLSSignature;
 
 import java.util.Optional;
 import java.util.Set;
@@ -31,13 +32,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.web3j.utils.Numeric;
 
 @JsonRpcService
 public class FcJsonRpc {
+  public static final int SECP_VALUE = 1;
+  public static final int BLS_VALUE = 2;
 
-  private static enum SignatureType {
-    SECP(1),
-    BLS(2);
+  private enum SignatureType {
+    SECP(SECP_VALUE),
+    BLS(BLS_VALUE);
 
     private final int value;
 
@@ -64,7 +68,7 @@ public class FcJsonRpc {
   }
 
   @JsonRpcMethod("Filecoin.WalletSign")
-  public FilecoinSignResult filecoinWalletSign(
+  public FilecoinSignature filecoinWalletSign(
       @JsonRpcParam("identifier") final String filecoinAddress,
       @JsonRpcParam("data") final String dataToSign) {
     LOG.debug("Received FC sign request id = {}; data = {}", filecoinAddress, dataToSign);
@@ -82,11 +86,11 @@ public class FcJsonRpc {
     switch (signature.getType()) {
       case SECP256K1:
         final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
-        return new FilecoinSignResult(
+        return new FilecoinSignature(
             SignatureType.SECP.getValue(), formatSecpSignature(secpSig).toBase64String());
       case BLS:
         final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
-        return new FilecoinSignResult(
+        return new FilecoinSignature(
             SignatureType.BLS.getValue(), blsSig.getSignatureData().toBytes().toBase64String());
       default:
         throw new IllegalArgumentException("Invalid Signature type created.");
@@ -96,6 +100,41 @@ public class FcJsonRpc {
   @JsonRpcMethod("Filecoin.WalletHas")
   public boolean filecoinWalletHas(@JsonRpcParam("address") final String address) {
     return fcSigners.availableIdentifiers().contains(address);
+  }
+
+  @JsonRpcMethod("Filecoin.WalletVerify")
+  public boolean filecoinWalletVerify(
+      @JsonRpcParam("address") final String filecoinAddress,
+      @JsonRpcParam("data") final String dataToVerify,
+      @JsonRpcParam("signature") final FilecoinSignature filecoinSignature) {
+    final Optional<ArtifactSigner> signer = fcSigners.getSigner(filecoinAddress);
+
+    if (signer.isPresent()) {
+      final Bytes bytesToVerify = Bytes.fromBase64String(dataToVerify);
+      final ArtifactSignature artifactSignature = createArtifactSignature(filecoinSignature);
+      return signer.get().verify(bytesToVerify, artifactSignature);
+    } else {
+      throw new FilecoinSignerNotFoundException();
+    }
+  }
+
+  private ArtifactSignature createArtifactSignature(final FilecoinSignature filecoinSignature) {
+    final Bytes signature = Bytes.fromBase64String(filecoinSignature.getData());
+    switch (filecoinSignature.getType()) {
+      case SECP_VALUE:
+        final Bytes r = signature.slice(0, 32);
+        final Bytes s = signature.slice(32, 32);
+        final Bytes v = signature.slice(64);
+        return new SecpArtifactSignature(
+            new Signature(
+                Numeric.toBigInt(v.toArrayUnsafe()),
+                Numeric.toBigInt(r.toArrayUnsafe()),
+                Numeric.toBigInt(s.toArrayUnsafe())));
+      case BLS_VALUE:
+        return new BlsArtifactSignature(BLSSignature.fromBytes(signature));
+      default:
+        throw new IllegalArgumentException("Invalid Signature type");
+    }
   }
 
   private Bytes formatSecpSignature(final SecpArtifactSignature signature) {

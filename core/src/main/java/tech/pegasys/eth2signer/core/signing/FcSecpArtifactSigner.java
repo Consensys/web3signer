@@ -12,20 +12,30 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.eth2signer.core.util.Blake2b;
+import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
 import tech.pegasys.signers.secp256k1.api.Signer;
 
 import java.math.BigInteger;
 import java.security.interfaces.ECPublicKey;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.web3j.crypto.ECDSASignature;
+import org.web3j.crypto.Sign;
+import org.web3j.utils.Numeric;
 
 public class FcSecpArtifactSigner implements ArtifactSigner {
+  private static final Logger LOG = LogManager.getLogger();
+  private static final int ETHEREUM_V_OFFSET = 27;
   private final Signer signer;
   private final FilecoinNetwork filecoinNetwork;
 
@@ -45,7 +55,6 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
 
   @Override
   public SecpArtifactSignature sign(final Bytes message) {
-    final int ETHEREUM_V_OFFSET = 27;
     final Bytes dataHash = Blake2b.sum256(message);
     final Signature ethSignature = signer.sign(dataHash.toArray());
 
@@ -57,5 +66,29 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
             ethSignature.getS());
 
     return new SecpArtifactSignature(fcSignature);
+  }
+
+  @Override
+  public boolean verify(final Bytes message, final ArtifactSignature signature) {
+    checkArgument(signature instanceof SecpArtifactSignature);
+    final SecpArtifactSignature secpArtifactSignature = (SecpArtifactSignature) signature;
+    final Signature signatureData = secpArtifactSignature.getSignatureData();
+
+    final ECDSASignature initialSignature =
+        new ECDSASignature(signatureData.getR(), signatureData.getS());
+    final ECDSASignature canonicalSignature = initialSignature.toCanonicalised();
+
+    final int recId = signatureData.getV().intValue();
+    final byte[] digest = Blake2b.sum256(message).toArrayUnsafe();
+    final BigInteger signaturePublicKey =
+        Sign.recoverFromSignature(recId, canonicalSignature, digest);
+    if (signaturePublicKey == null) {
+      LOG.error("Unable to recover public key from signature");
+      return false;
+    } else {
+      final BigInteger expectedPublicKey =
+          Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
+      return signaturePublicKey.equals(expectedPublicKey);
+    }
   }
 }

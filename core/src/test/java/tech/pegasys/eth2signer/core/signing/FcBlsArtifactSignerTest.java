@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
@@ -52,10 +53,24 @@ class FcBlsArtifactSignerTest {
     "NDI=,p/LeJS8KPzuOco2qpqjhvJxFrA5qj++LpeVoActWkDRQTLhuGsnwAvY1kluQ6PntAqISjvR/RU0kzgkR38F8Hm5NuNPsu9/BEiU+IQheNeD7OoG8THq4OuZMbISg7uR/"
   })
   void signsData(final String message, final String expectedSignature) {
-    final ArtifactSignature signature = fcBlsArtifactSigner.sign(Bytes.fromBase64String(message));
+    final BlsArtifactSignature signature =
+        fcBlsArtifactSigner.sign(Bytes.fromBase64String(message));
     assertThat(signature).isInstanceOf(BlsArtifactSignature.class);
-    BlsArtifactSignature blsArtifactSignature = (BlsArtifactSignature) signature;
-    assertThat(blsArtifactSignature.getSignatureData().toBytes().toBase64String())
+    assertThat(signature.getSignatureData().toBytes().toBase64String())
         .isEqualTo(expectedSignature);
+  }
+
+  @Test
+  void verifiesSignatureWasSignedWithKey() {
+    final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
+
+    final BlsArtifactSignature artifactSignature = fcBlsArtifactSigner.sign(message);
+    assertThat(fcBlsArtifactSigner.verify(message, artifactSignature)).isTrue();
+
+    final BLSKeyPair otherKeyPair = BLSKeyPair.random(5);
+    final FcBlsArtifactSigner otherBlsArtifactSigner =
+        new FcBlsArtifactSigner(otherKeyPair, FilecoinNetwork.TESTNET);
+    final BlsArtifactSignature otherArtifactSignature = otherBlsArtifactSigner.sign(message);
+    assertThat(fcBlsArtifactSigner.verify(message, otherArtifactSignature)).isFalse();
   }
 }
