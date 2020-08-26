@@ -18,5 +18,7 @@ public interface ArtifactSigner {
 
   String getIdentifier();
 
-  ArtifactSignature sign(final Bytes data);
+  ArtifactSignature sign(final Bytes message);
+
+  boolean verify(final Bytes message, final ArtifactSignature signature);
 }

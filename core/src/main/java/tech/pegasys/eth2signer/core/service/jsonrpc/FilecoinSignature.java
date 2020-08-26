@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class FilecoinSignature {
@@ -22,8 +23,9 @@ public class FilecoinSignature {
   @JsonProperty("Data")
   private final String data;
 
+  @JsonCreator
   public FilecoinSignature(
-      final @JsonProperty("Type") int type, final @JsonProperty("Data") String data) {
+      @JsonProperty("Type") final int type, @JsonProperty("Data") final String data) {
     this.type = type;
     this.data = data;
   }
