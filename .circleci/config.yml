@@ -58,19 +58,15 @@ commands:
     description: "Capture test results"
     steps:
       - run:
-          name: Gather test results
-          when: always
+          name: Save test results
           command: |
-            FILES=`find . -name test-results`
-            for FILE in $FILES
-            do
-              MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/test-results@\1@'`
-              TARGET="build/test-results/$MODULE"
-              mkdir -p "$TARGET"
-              cp -rf ${FILE}/*/* "$TARGET"
-            done
-      - store_test_results:
-          path: build/test-results
+            mkdir -p ~/test-results/junit/
+            find . -type f -regex ".*/build/test-results/.*xml" -exec cp {} ~/test-results/junit/ \;
+          when: always
+            - store_test_results:
+                path: ~/test-results
+            - store_artifacts:
+                path: ~/test-results/junit
 
   capture_test_reports:
     description: "Capture test reports"
