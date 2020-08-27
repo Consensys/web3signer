@@ -16,6 +16,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.eth2signer.dsl.lotus.AddressesUtil;
 
+import java.util.List;
+
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -25,15 +29,27 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 })
 public class CompareFilecoinApis extends CompareApisAcceptanceTestBase {
 
-  @Test
-  void compareWalletHasResponse() {
-    initAndStartSigner(true);
+  @BeforeEach
+  void initSigner() {
+    super.initAndStartSigner(true);
+  }
 
+  @Test
+  void compareWalletHasResponses() {
     AddressesUtil.getDefaultFilecoinAddressMap()
         .forEach(
             (address, key) -> {
-              assertThat(LOTUS_NODE.hasAddress(address)).isTrue();
-              assertThat(signerHasAddress(address)).isTrue();
+              assertThat(walletHas(LOTUS_NODE.getJsonRpcClient(), address)).isTrue();
+              assertThat(walletHas(getSignerJsonRpcClient(), address)).isTrue();
             });
+  }
+
+  @Test
+  void compareWalletListResponses() {
+    final List<String> lotusWalletList = walletList(LOTUS_NODE.getJsonRpcClient());
+    final List<String> signerWalletList = walletList(getSignerJsonRpcClient());
+
+    // note: lotus node may have additional minor addresses.
+    Assertions.assertThat(lotusWalletList).containsAll(signerWalletList);
   }
 }

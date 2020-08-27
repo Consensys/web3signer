@@ -56,6 +56,10 @@ public class LotusNode {
             });
   }
 
+  public JsonRpcClient getJsonRpcClient() {
+    return jsonRpcClient;
+  }
+
   private void importPrivateKey(final FilecoinKey key) {
     jsonRpcClient
         .createRequest()

@@ -22,6 +22,7 @@ import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.google.common.net.MediaType;
@@ -84,13 +85,22 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
         request -> executeRawJsonRpcRequest(signer.getUrl() + FC_RPC_PATH, request));
   }
 
-  protected Boolean signerHasAddress(final String address) {
+  protected Boolean walletHas(final JsonRpcClient jsonRpcClient, final String address) {
     return getSignerJsonRpcClient()
         .createRequest()
         .method("Filecoin.WalletHas")
         .params(address)
         .id(101)
         .returnAs(Boolean.class)
+        .execute();
+  }
+
+  public List<String> walletList(final JsonRpcClient jsonRpcClient) {
+    return jsonRpcClient
+        .createRequest()
+        .method("Filecoin.WalletList")
+        .id(101)
+        .returnAsList(String.class)
         .execute();
   }
 

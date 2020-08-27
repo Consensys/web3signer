@@ -57,18 +57,17 @@ public class FilecoinKey {
 
   private void initKeyPairs() {
     final Bytes fcPrivateKey = Bytes.fromBase64String(privateKey);
-    // Filecoin private keys are serialised in little endian so must convert to big endian
-    final Bytes privateKeyBE = fcPrivateKey.reverse();
 
     switch (type) {
       case BLS:
-        final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKeyBE));
+        // Filecoin BLS private keys are serialised in little endian so must convert to big endian
+        final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(fcPrivateKey.reverse()));
         this.publicKey = keyPair.getPublicKey().toString();
         this.privateKeyHex = keyPair.getSecretKey().toBytes().toUnprefixedHexString();
         break;
       case SECP256K1:
         final ECKeyPair ecKeyPair =
-            ECKeyPair.create(Numeric.toBigInt(privateKeyBE.toArrayUnsafe()));
+            ECKeyPair.create(Numeric.toBigInt(fcPrivateKey.toArrayUnsafe()));
         this.publicKey = Numeric.toHexStringWithPrefix(ecKeyPair.getPublicKey());
         this.privateKeyHex = Numeric.toHexStringWithPrefix(ecKeyPair.getPrivateKey());
         break;
