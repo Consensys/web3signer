@@ -39,21 +39,6 @@ public class FcJsonRpc {
   public static final int SECP_VALUE = 1;
   public static final int BLS_VALUE = 2;
 
-  private enum SignatureType {
-    SECP(SECP_VALUE),
-    BLS(BLS_VALUE);
-
-    private final int value;
-
-    SignatureType(final int value) {
-      this.value = value;
-    }
-
-    public int getValue() {
-      return value;
-    }
-  }
-
   private static final Logger LOG = LogManager.getLogger();
 
   private final ArtifactSignerProvider fcSigners;
@@ -86,12 +71,11 @@ public class FcJsonRpc {
     switch (signature.getType()) {
       case SECP256K1:
         final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
-        return new FilecoinSignature(
-            SignatureType.SECP.getValue(), formatSecpSignature(secpSig).toBase64String());
+        return new FilecoinSignature(SECP_VALUE, formatSecpSignature(secpSig).toBase64String());
       case BLS:
         final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
         return new FilecoinSignature(
-            SignatureType.BLS.getValue(), blsSig.getSignatureData().toBytes().toBase64String());
+            BLS_VALUE, blsSig.getSignatureData().toBytes().toBase64String());
       default:
         throw new IllegalArgumentException("Invalid Signature type created.");
     }
@@ -100,6 +84,20 @@ public class FcJsonRpc {
   @JsonRpcMethod("Filecoin.WalletHas")
   public boolean filecoinWalletHas(@JsonRpcParam("address") final String address) {
     return fcSigners.availableIdentifiers().contains(address);
+  }
+
+  @JsonRpcMethod("Filecoin.WalletSignMessage")
+  public FilecoinSignedMessage filecoinSignMessage(
+      @JsonRpcParam("identifier") final String identifier,
+      @JsonRpcParam("message") final FilecoinMessage message) {
+
+    final FcMessageEncoder encoder = new FcMessageEncoder();
+    final Bytes fcCid = encoder.createFilecoinCid(message);
+
+    final FilecoinSignature signature =
+        filecoinWalletSign(identifier, Bytes.wrap(fcCid).toBase64String());
+
+    return new FilecoinSignedMessage(message, signature);
   }
 
   @JsonRpcMethod("Filecoin.WalletVerify")
