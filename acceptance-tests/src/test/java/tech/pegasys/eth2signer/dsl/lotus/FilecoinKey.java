@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.dsl.lotus;
 
+import static tech.pegasys.eth2signer.dsl.lotus.FilecoinKeyType.BLS;
+
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -21,8 +23,8 @@ import org.apache.tuweni.bytes.Bytes;
 public class FilecoinKey {
   private final FilecoinKeyType type;
   private final String privateKey;
-
-  private String privateKeyHex;
+  // the hex version is to be stored in Signers configuration file
+  private final String privateKeyHex;
 
   @JsonCreator
   public FilecoinKey(
@@ -30,7 +32,8 @@ public class FilecoinKey {
       @JsonProperty("PrivateKey") final String privateKey) {
     this.type = type;
     this.privateKey = privateKey;
-    initPrivateKeyHex();
+    final Bytes pkBytes = Bytes.fromBase64String(privateKey);
+    this.privateKeyHex = type == BLS ? pkBytes.reverse().toHexString() : pkBytes.toHexString();
   }
 
   public FilecoinKeyType getType() {
@@ -43,21 +46,6 @@ public class FilecoinKey {
 
   public String getPrivateKeyHex() {
     return privateKeyHex;
-  }
-
-  private void initPrivateKeyHex() {
-    final Bytes fcPrivateKey = Bytes.fromBase64String(privateKey);
-    switch (type) {
-      case BLS:
-        // Filecoin BLS private keys are serialised in little endian so must convert to big endian
-        this.privateKeyHex = fcPrivateKey.reverse().toHexString();
-        break;
-      case SECP256K1:
-        this.privateKeyHex = fcPrivateKey.toHexString();
-        break;
-      default:
-        throw new IllegalStateException("Unexpected type: " + type);
-    }
   }
 
   @Override
