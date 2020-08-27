@@ -27,10 +27,10 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class JsonRpcDecodingModule extends SimpleModule {
+public class FilecoinJsonRpcModule extends SimpleModule {
 
-  public JsonRpcDecodingModule() {
-    super("JsonRpcDecodingModule");
+  public FilecoinJsonRpcModule() {
+    super("FilecoinJsonRpcModule");
     addDeserializer(Bytes.class, new Base64Deserialiser());
     addSerializer(Bytes.class, new Base64Serialiser());
     addDeserializer(UInt64.class, new UInt64Deserializer());

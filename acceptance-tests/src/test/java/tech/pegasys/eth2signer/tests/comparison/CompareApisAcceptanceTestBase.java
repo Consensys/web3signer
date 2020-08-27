@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.tests.comparison;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.executeRawJsonRpcRequest;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinKeyType.BLS;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinKeyType.SECP256K1;
+import static tech.pegasys.eth2signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
 
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.dsl.lotus.FilecoinKey;
@@ -64,18 +65,18 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected void initSignerKeystoreDirectory() {
+  protected JsonRpcClient getSignerJsonRpcClient() {
+    return new JsonRpcClient(
+        request -> executeRawJsonRpcRequest(signer.getUrl() + FC_RPC_PATH, request), OBJECT_MAPPER);
+  }
+
+  private void initSignerKeystoreDirectory() {
     addressMap.forEach(
         (fcAddress, key) ->
             metadataFileHelpers.createUnencryptedYamlFileAt(
-                keyConfigFile(key.getPublicKey()),
+                keyConfigFile(fcAddress),
                 key.getPrivateKeyHex(),
                 key.getType() == BLS ? KeyType.BLS : KeyType.SECP256K1));
-  }
-
-  protected JsonRpcClient getSignerJsonRpcClient() {
-    return new JsonRpcClient(
-        request -> executeRawJsonRpcRequest(signer.getUrl() + FC_RPC_PATH, request));
   }
 
   private Path keyConfigFile(final String publicKey) {

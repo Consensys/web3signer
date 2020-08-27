@@ -15,11 +15,14 @@ package tech.pegasys.eth2signer.dsl.lotus;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.BLS_SIGTYPE;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.SECP_SIGTYPE;
 
+import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinJsonRpcModule;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 
 /**
@@ -34,11 +37,15 @@ public class LotusNode {
 
   private final String fcUrl;
   private final JsonRpcClient jsonRpcClient;
+  public static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
 
   public LotusNode(final String host, final int port) {
     fcUrl = String.format(FC_URL_FORMAT, host, port);
     jsonRpcClient =
-        new JsonRpcClient(request -> FilecoinJsonRequests.executeRawJsonRpcRequest(fcUrl, request));
+        new JsonRpcClient(
+            request -> FilecoinJsonRequests.executeRawJsonRpcRequest(fcUrl, request),
+            OBJECT_MAPPER);
   }
 
   public LotusNode(final int port) {

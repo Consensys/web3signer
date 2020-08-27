@@ -103,5 +103,5 @@ task acceptanceTest(dependsOn: [
 
   useJUnitPlatform()
   // toggle to show standard out and standard error of the test JVM(s) on the console
-  testLogging.showStandardStreams = false
+  testLogging.showStandardStreams = true
 }

@@ -12,23 +12,17 @@
  */
 package tech.pegasys.eth2signer.dsl.lotus;
 
-import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSecretKey;
-
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
-import org.web3j.crypto.ECKeyPair;
-import org.web3j.utils.Numeric;
 
 public class FilecoinKey {
   private final FilecoinKeyType type;
   private final String privateKey;
 
   private String privateKeyHex;
-  private String publicKey;
 
   @JsonCreator
   public FilecoinKey(
@@ -36,7 +30,7 @@ public class FilecoinKey {
       @JsonProperty("PrivateKey") final String privateKey) {
     this.type = type;
     this.privateKey = privateKey;
-    initKeyPairs();
+    initPrivateKeyHex();
   }
 
   public FilecoinKeyType getType() {
@@ -51,25 +45,15 @@ public class FilecoinKey {
     return privateKeyHex;
   }
 
-  public String getPublicKey() {
-    return publicKey;
-  }
-
-  private void initKeyPairs() {
+  private void initPrivateKeyHex() {
     final Bytes fcPrivateKey = Bytes.fromBase64String(privateKey);
-
     switch (type) {
       case BLS:
         // Filecoin BLS private keys are serialised in little endian so must convert to big endian
-        final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(fcPrivateKey.reverse()));
-        this.publicKey = keyPair.getPublicKey().toString();
-        this.privateKeyHex = keyPair.getSecretKey().toBytes().toUnprefixedHexString();
+        this.privateKeyHex = fcPrivateKey.reverse().toHexString();
         break;
       case SECP256K1:
-        final ECKeyPair ecKeyPair =
-            ECKeyPair.create(Numeric.toBigInt(fcPrivateKey.toArrayUnsafe()));
-        this.publicKey = Numeric.toHexStringWithPrefix(ecKeyPair.getPublicKey());
-        this.privateKeyHex = Numeric.toHexStringWithPrefix(ecKeyPair.getPrivateKey());
+        this.privateKeyHex = fcPrivateKey.toHexString();
         break;
       default:
         throw new IllegalStateException("Unexpected type: " + type);

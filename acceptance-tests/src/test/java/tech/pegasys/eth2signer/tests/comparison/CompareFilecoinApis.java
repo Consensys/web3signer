@@ -15,9 +15,13 @@ package tech.pegasys.eth2signer.tests.comparison;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletHas;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletList;
+import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletSign;
+
+import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignature;
 
 import java.util.List;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,5 +60,21 @@ public class CompareFilecoinApis extends CompareApisAcceptanceTestBase {
 
     // note: lotus node may have additional miner addresses which aren't loaded in Signer.
     Assertions.assertThat(lotusWalletList).containsAll(signerWalletList);
+  }
+
+  @Test
+  void compareWalletSignResponses() {
+      for (int i=0; i< 100; i++) {
+          addressMap.forEach(
+                  (address, key) -> {
+                      final Bytes dataToSign = Bytes.random(32);
+                      final FilecoinSignature lotusFcSig =
+                              walletSign(LOTUS_NODE.getJsonRpcClient(), address, dataToSign);
+                      final FilecoinSignature signerFcSig =
+                              walletSign(getSignerJsonRpcClient(), address, dataToSign);
+
+                      assertThat(signerFcSig).isEqualTo(lotusFcSig);
+                  });
+      }
   }
 }
