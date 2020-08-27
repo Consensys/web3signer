@@ -30,6 +30,12 @@ import org.apache.tuweni.units.bigints.UInt64;
 
 public class FcMessageEncoder {
 
+  private static final byte FILECOIN_MESSAGE_PREFIX = (byte) 138;
+  // aka Blake2b-256
+  private static final BigInteger FC_HASHING_ALGO_CODE = BigInteger.valueOf(0xb220);
+  private static final byte CID_VERSION = (byte) 1;
+  private static final byte DagCBOR_CODEC_ID = (byte) 113;
+
   final Bytes createFilecoinCid(final FilecoinMessage message) {
     final Bytes cborEncodedBytes = cborEncode(message);
     final Bytes messageHash = Blake2b.sum256(cborEncodedBytes);
@@ -38,7 +44,7 @@ public class FcMessageEncoder {
   }
 
   private Bytes cborEncode(final FilecoinMessage message) {
-    final byte FILECOIN_MESSAGE_PREFIX = (byte) 138;
+
     final CBORFactory cborFactory = new CBORFactory();
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     try {
@@ -79,7 +85,7 @@ public class FcMessageEncoder {
 
   // Roughly corresponds with filecoin:multhash:Encode
   private Bytes encodeHashWithCode(final Bytes hashBytes) {
-    final BigInteger FC_HASHING_ALGO_CODE = BigInteger.valueOf(0xb220); // aka Blake2b-256
+
     return Bytes.concatenate(
         ByteUtils.putUVariant(FC_HASHING_ALGO_CODE),
         ByteUtils.putUVariant(BigInteger.valueOf(hashBytes.size())),
@@ -88,8 +94,6 @@ public class FcMessageEncoder {
 
   // Roughly corresponds to NewCidV1
   private Bytes createFilecoinCid(final Bytes encodedHashAndCode) {
-    final byte CID_VERSION = (byte) 1;
-    final byte DagCBOR_CODEC_ID = (byte) 113;
     return Bytes.concatenate(
         Bytes.wrap(new byte[] {CID_VERSION}),
         Bytes.wrap(new byte[] {DagCBOR_CODEC_ID}),
