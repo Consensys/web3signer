@@ -44,18 +44,4 @@ class BlsArtifactSignerTest {
 
     assertThat(signature.getSignatureData().toString()).isEqualTo(expectedSignature.toString());
   }
-
-  @Test
-  void verifiesSignatureWasSignedWithKey() {
-    final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
-
-    final BlsArtifactSigner blsArtifactSigner = new BlsArtifactSigner(BLSKeyPair.random(4));
-    final BlsArtifactSignature artifactSignature = blsArtifactSigner.sign(message);
-    assertThat(blsArtifactSigner.verify(message, artifactSignature)).isTrue();
-
-    final BLSKeyPair otherKeyPair = BLSKeyPair.random(5);
-    final BlsArtifactSigner otherBlsArtifactSigner = new BlsArtifactSigner(otherKeyPair);
-    final BlsArtifactSignature otherArtifactSignature = otherBlsArtifactSigner.sign(message);
-    assertThat(blsArtifactSigner.verify(message, otherArtifactSignature)).isFalse();
-  }
 }

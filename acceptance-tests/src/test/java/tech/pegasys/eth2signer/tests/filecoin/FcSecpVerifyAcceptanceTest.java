@@ -19,16 +19,11 @@ import static org.hamcrest.Matchers.equalTo;
 
 import tech.pegasys.eth2signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignature;
-import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 
-import java.io.File;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
 
@@ -37,18 +32,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.github.arteam.simplejsonrpc.core.domain.Request;
-import com.google.common.io.Resources;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 public class FcSecpVerifyAcceptanceTest extends AcceptanceTestBase {
-  protected @TempDir Path testDirectory;
-
-  private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-
   // Public Key of Keystore stored in resource "secp256k1/wallet.json"
   public static final String PUBLIC_KEY_HEX_STRING =
       "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
@@ -59,19 +48,8 @@ public class FcSecpVerifyAcceptanceTest extends AcceptanceTestBase {
       FilecoinAddress.secpAddress(Bytes.fromHexString("04" + PUBLIC_KEY_HEX_STRING));
 
   @Test
-  void receiveTrueResponseWhenSubmitValidVerifyRequestToFilecoinEndpoint()
-      throws URISyntaxException {
-    final String keyPath =
-        new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
-
-    final Path keyConfigFile = testDirectory.resolve("arbitrary_secp.yaml");
-
-    metadataFileHelpers.createKeyStoreYamlFileAt(
-        keyConfigFile, Path.of(keyPath), "pass", KeyType.SECP256K1);
-
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
+  void receiveTrueResponseWhenSubmitValidVerifyRequestToFilecoinEndpoint() {
+    startSigner(new SignerConfigurationBuilder().build());
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final ObjectMapper mapper = new ObjectMapper();
