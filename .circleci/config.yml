@@ -58,8 +58,8 @@ commands:
     description: "Capture test results"
     steps:
       - run:
-          name: "Gather test results"
-          when: "always"
+          name: Gather test results
+          when: always
           command: |
             rm -rf build/test-output
             FILES=`find . -name test-results`
