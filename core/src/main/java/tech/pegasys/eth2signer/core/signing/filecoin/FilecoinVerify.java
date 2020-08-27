@@ -48,17 +48,8 @@ public class FilecoinVerify {
       final FilecoinAddress address,
       final Bytes message,
       final SecpArtifactSignature artifactSignature) {
-    final tech.pegasys.signers.secp256k1.api.Signature signatureData =
-        artifactSignature.getSignatureData();
-
-    final ECDSASignature initialSignature =
-        new ECDSASignature(signatureData.getR(), signatureData.getS());
-    final ECDSASignature canonicalSignature = initialSignature.toCanonicalised();
-
-    final int recId = signatureData.getV().intValue();
     final byte[] digest = Blake2b.sum256(message).toArrayUnsafe();
-    final BigInteger signaturePublicKey =
-        Sign.recoverFromSignature(recId, canonicalSignature, digest);
+    final BigInteger signaturePublicKey = recoverSignature(artifactSignature, digest);
     if (signaturePublicKey == null) {
       LOG.error("Unable to recover public key from signature");
       return false;
@@ -69,5 +60,15 @@ public class FilecoinVerify {
       final FilecoinAddress filecoinAddress = FilecoinAddress.secpAddress(publicKeyBytes);
       return address.getPayload().equals(filecoinAddress.getPayload());
     }
+  }
+
+  private static BigInteger recoverSignature(
+      final SecpArtifactSignature artifactSignature, final byte[] digest) {
+    final tech.pegasys.signers.secp256k1.api.Signature signatureData =
+        artifactSignature.getSignatureData();
+    final ECDSASignature signature = new ECDSASignature(signatureData.getR(), signatureData.getS());
+    final ECDSASignature canonicalSignature = signature.toCanonicalised();
+    final int recId = signatureData.getV().intValue();
+    return Sign.recoverFromSignature(recId, canonicalSignature, digest);
   }
 }
