@@ -64,17 +64,17 @@ public class CompareFilecoinApis extends CompareApisAcceptanceTestBase {
 
   @Test
   void compareWalletSignResponses() {
-      for (int i=0; i< 100; i++) {
-          addressMap.forEach(
-                  (address, key) -> {
-                      final Bytes dataToSign = Bytes.random(32);
-                      final FilecoinSignature lotusFcSig =
-                              walletSign(LOTUS_NODE.getJsonRpcClient(), address, dataToSign);
-                      final FilecoinSignature signerFcSig =
-                              walletSign(getSignerJsonRpcClient(), address, dataToSign);
+    for (int i = 0; i < 100; i++) {
+      addressMap.forEach(
+          (address, key) -> {
+            final Bytes dataToSign = Bytes.random(32);
+            final FilecoinSignature lotusFcSig =
+                walletSign(LOTUS_NODE.getJsonRpcClient(), address, dataToSign);
+            final FilecoinSignature signerFcSig =
+                walletSign(getSignerJsonRpcClient(), address, dataToSign);
 
-                      assertThat(signerFcSig).isEqualTo(lotusFcSig);
-                  });
-      }
+            assertThat(signerFcSig).isEqualTo(lotusFcSig);
+          });
+    }
   }
 }
