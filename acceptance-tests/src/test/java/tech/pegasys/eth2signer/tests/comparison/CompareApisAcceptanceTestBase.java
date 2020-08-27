@@ -28,32 +28,31 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
-import org.junit.jupiter.api.BeforeAll;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.io.TempDir;
 
 public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
   protected static final LotusNode LOTUS_NODE =
       new LotusNode(Integer.parseInt(System.getenv("LOTUS_PORT")));
-  protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-
-  @TempDir protected Path testDirectory;
-
-  protected static Map<String, FilecoinKey> addressMap;
+  protected static Map<String, FilecoinKey> addressMap = LOTUS_NODE.loadAddresses(2, 2);
   protected static Map<String, FilecoinKey> nonExistentAddressMap =
       Map.of(
           "t3q7sj7rgvvlfpc7gx7z7jeco5x3q3aa4g6s54w3rl5alzdb6xa422seznjmtp7agboegcvrakcv22eo5bjlna",
-          new FilecoinKey(BLS, "NlWGbwCt8rEK7OTDYat3jy+3tj60cER81cIDUSEnFjU="),
+          new FilecoinKey(
+              BLS, Bytes.fromBase64String("NlWGbwCt8rEK7OTDYat3jy+3tj60cER81cIDUSEnFjU=")),
           "t3rzhwtyxwmfbgikcddna3bv3eedn3meyt75gc6urmunbju26asfhaycsim6oc5qvyqbldziq53l3ujfpprhfa",
-          new FilecoinKey(BLS, "tFzDgbfTT983FdhnZ8xZjr0JdP37DcijmVm+XvurhFY="),
+          new FilecoinKey(
+              BLS, Bytes.fromBase64String("tFzDgbfTT983FdhnZ8xZjr0JdP37DcijmVm+XvurhFY=")),
           "t1jcaxt7yoonwcvllj52kjzh4buo7gjmzemm3c3ny",
-          new FilecoinKey(SECP256K1, "5airIxsTE4wslOvXDcHoTnZE2ZWYGw/ZMwJQY0p7Pi4="),
+          new FilecoinKey(
+              SECP256K1, Bytes.fromBase64String("5airIxsTE4wslOvXDcHoTnZE2ZWYGw/ZMwJQY0p7Pi4=")),
           "t1te5vep7vlsxoh5vqz3fqlm76gewzpd63juum6jq",
-          new FilecoinKey(SECP256K1, "0oKQu6xyg0bOCaqNqpHULzxDa4VDQu1D19iArDL8+JU="));
+          new FilecoinKey(
+              SECP256K1, Bytes.fromBase64String("0oKQu6xyg0bOCaqNqpHULzxDa4VDQu1D19iArDL8+JU=")));
 
-  @BeforeAll
-  static void setupWallet() {
-    addressMap = LOTUS_NODE.loadAddresses(2, 2);
-  }
+  protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+
+  @TempDir protected Path testDirectory;
 
   protected void initAndStartSigner(final boolean initKeystoreDirectory) {
     if (initKeystoreDirectory) {

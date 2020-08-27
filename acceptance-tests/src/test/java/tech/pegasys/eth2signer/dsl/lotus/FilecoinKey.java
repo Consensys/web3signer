@@ -22,25 +22,26 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class FilecoinKey {
   private final FilecoinKeyType type;
-  private final String privateKey;
+  private final Bytes privateKey;
   // the hex version is to be stored in Signers configuration file
   private final String privateKeyHex;
 
   @JsonCreator
   public FilecoinKey(
       @JsonProperty("Type") final FilecoinKeyType type,
-      @JsonProperty("PrivateKey") final String privateKey) {
+      @JsonProperty("PrivateKey") final Bytes privateKey) {
     this.type = type;
     this.privateKey = privateKey;
-    final Bytes pkBytes = Bytes.fromBase64String(privateKey);
-    this.privateKeyHex = type == BLS ? pkBytes.reverse().toHexString() : pkBytes.toHexString();
+    // FC BLS Key in Little endian, reverse it.
+    this.privateKeyHex =
+        type == BLS ? privateKey.reverse().toHexString() : privateKey.toHexString();
   }
 
   public FilecoinKeyType getType() {
     return type;
   }
 
-  public String getPrivateKey() {
+  public Bytes getPrivateKey() {
     return privateKey;
   }
 
