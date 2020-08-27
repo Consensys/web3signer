@@ -13,7 +13,7 @@
 package tech.pegasys.eth2signer.tests.comparison;
 
 import tech.pegasys.eth2signer.core.signing.KeyType;
-import tech.pegasys.eth2signer.dsl.lotus.AddressesUtil;
+import tech.pegasys.eth2signer.dsl.lotus.FilecoinKey;
 import tech.pegasys.eth2signer.dsl.lotus.FilecoinKeyType;
 import tech.pegasys.eth2signer.dsl.lotus.LotusNode;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
@@ -23,6 +23,7 @@ import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.google.common.net.MediaType;
@@ -44,9 +45,11 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
 
   @TempDir protected Path testDirectory;
 
+  protected static Map<String, FilecoinKey> addressMap;
+
   @BeforeAll
   static void setupWallet() {
-    LOTUS_NODE.loadDefaultAddresses();
+    addressMap = LOTUS_NODE.loadAddresses(2, 2);
   }
 
   protected void initAndStartSigner(boolean initKeystoreDirectory) {
@@ -60,13 +63,12 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   protected void initSignerKeystoreDirectory() {
-    AddressesUtil.getDefaultFilecoinAddressMap()
-        .forEach(
-            (fcAddress, key) ->
-                metadataFileHelpers.createUnencryptedYamlFileAt(
-                    keyConfigFile(key.getPublicKey()),
-                    key.getPrivateKeyHex(),
-                    key.getType() == FilecoinKeyType.BLS ? KeyType.BLS : KeyType.SECP256K1));
+    addressMap.forEach(
+        (fcAddress, key) ->
+            metadataFileHelpers.createUnencryptedYamlFileAt(
+                keyConfigFile(key.getPublicKey()),
+                key.getPrivateKeyHex(),
+                key.getType() == FilecoinKeyType.BLS ? KeyType.BLS : KeyType.SECP256K1));
   }
 
   protected String executeRawJsonRpcRequest(final String url, final String request)

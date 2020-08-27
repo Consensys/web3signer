@@ -14,8 +14,6 @@ package tech.pegasys.eth2signer.tests.comparison;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.eth2signer.dsl.lotus.AddressesUtil;
-
 import java.util.List;
 
 import org.assertj.core.api.Assertions;
@@ -36,12 +34,11 @@ public class CompareFilecoinApis extends CompareApisAcceptanceTestBase {
 
   @Test
   void compareWalletHasResponses() {
-    AddressesUtil.getDefaultFilecoinAddressMap()
-        .forEach(
-            (address, key) -> {
-              assertThat(walletHas(LOTUS_NODE.getJsonRpcClient(), address)).isTrue();
-              assertThat(walletHas(getSignerJsonRpcClient(), address)).isTrue();
-            });
+    addressMap.forEach(
+        (address, key) -> {
+          assertThat(walletHas(LOTUS_NODE.getJsonRpcClient(), address)).isTrue();
+          assertThat(walletHas(getSignerJsonRpcClient(), address)).isTrue();
+        });
   }
 
   @Test
@@ -49,7 +46,7 @@ public class CompareFilecoinApis extends CompareApisAcceptanceTestBase {
     final List<String> lotusWalletList = walletList(LOTUS_NODE.getJsonRpcClient());
     final List<String> signerWalletList = walletList(getSignerJsonRpcClient());
 
-    // note: lotus node may have additional minor addresses.
+    // note: lotus node may have additional miner addresses which aren't loaded in Signer.
     Assertions.assertThat(lotusWalletList).containsAll(signerWalletList);
   }
 }

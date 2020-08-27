@@ -13,6 +13,10 @@
 package tech.pegasys.eth2signer.dsl.lotus;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.google.common.net.MediaType;
@@ -34,6 +38,8 @@ import org.apache.http.util.EntityUtils;
  */
 public class LotusNode {
   private static final String FC_URL_FORMAT = "http://%s:%d/rpc/v0";
+  private static final int BLS_SIGTYPE = 1;
+  private static final int SECP_SIGTYPE = 2;
   private final String fcUrl;
   private final JsonRpcClient jsonRpcClient;
 
@@ -46,38 +52,52 @@ public class LotusNode {
     this("127.0.0.1", port);
   }
 
-  public void loadDefaultAddresses() {
-    AddressesUtil.getDefaultFilecoinAddressMap()
-        .forEach(
-            (address, key) -> {
-              if (!hasAddress(address)) {
-                importPrivateKey(key);
-              }
-            });
+  public Map<String, FilecoinKey> loadAddresses(final int blsKeys, final int secpKeys) {
+    final Set<String> addresses = new HashSet<>();
+    final Map<String, FilecoinKey> addressKeys = new HashMap<>();
+
+    for (int i = 0; i < blsKeys; i++) {
+      final String address =
+          jsonRpcClient
+              .createRequest()
+              .method("Filecoin.WalletNew")
+              .params(BLS_SIGTYPE)
+              .id(i)
+              .returnAs(String.class)
+              .execute();
+      addresses.add(address);
+    }
+
+    for (int i = 0; i < secpKeys; i++) {
+      final String address =
+          jsonRpcClient
+              .createRequest()
+              .method("Filecoin.WalletNew")
+              .params(SECP_SIGTYPE)
+              .id(i)
+              .returnAs(String.class)
+              .execute();
+      addresses.add(address);
+    }
+
+    addresses.forEach(
+        address -> {
+          final FilecoinKey filecoinKey =
+              jsonRpcClient
+                  .createRequest()
+                  .method("Filecoin.WalletExport")
+                  .params(address)
+                  .id(101)
+                  .returnAs(FilecoinKey.class)
+                  .execute();
+          addressKeys.put(address, filecoinKey);
+        });
+
+    return Map.copyOf(addressKeys);
   }
 
   public JsonRpcClient getJsonRpcClient() {
     return jsonRpcClient;
-  }
-
-  private void importPrivateKey(final FilecoinKey key) {
-    jsonRpcClient
-        .createRequest()
-        .method("Filecoin.WalletImport")
-        .params(key)
-        .id(202)
-        .returnAs(String.class)
-        .execute();
-  }
-
-  public Boolean hasAddress(final String address) {
-    return jsonRpcClient
-        .createRequest()
-        .method("Filecoin.WalletHas")
-        .params(address)
-        .id(101)
-        .returnAs(Boolean.class)
-        .execute();
   }
 
   public String executeRawJsonRpcRequest(final String request) throws IOException {
