@@ -54,7 +54,7 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
     addressMap = LOTUS_NODE.loadAddresses(2, 2);
   }
 
-  protected void initAndStartSigner(boolean initKeystoreDirectory) {
+  protected void initAndStartSigner(final boolean initKeystoreDirectory) {
     if (initKeystoreDirectory) {
       initSignerKeystoreDirectory();
     }
