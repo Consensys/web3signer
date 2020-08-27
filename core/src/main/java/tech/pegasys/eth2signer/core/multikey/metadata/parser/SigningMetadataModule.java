@@ -33,7 +33,7 @@ public class SigningMetadataModule extends SimpleModule {
     addSerializer(Bytes.class, new HexStringSerializer());
   }
 
-  private static class HexStringDeserialiser extends JsonDeserializer<Bytes> {
+  public static class HexStringDeserialiser extends JsonDeserializer<Bytes> {
 
     @Override
     public Bytes deserialize(final JsonParser p, final DeserializationContext ctxt) {
@@ -45,7 +45,7 @@ public class SigningMetadataModule extends SimpleModule {
     }
   }
 
-  private static class HexStringSerializer extends JsonSerializer<Bytes> {
+  public static class HexStringSerializer extends JsonSerializer<Bytes> {
 
     @Override
     public void serialize(

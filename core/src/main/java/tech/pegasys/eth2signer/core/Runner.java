@@ -28,6 +28,7 @@ import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.SignForIdentifierHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FcJsonRpc;
+import tech.pegasys.eth2signer.core.service.jsonrpc.JsonRpcDecodingModule;
 import tech.pegasys.eth2signer.core.service.jsonrpc.SigningService;
 import tech.pegasys.eth2signer.core.service.operations.KeyIdentifiers;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
@@ -53,6 +54,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -70,6 +72,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
+import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -179,20 +182,24 @@ public class Runner implements Runnable {
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
 
     // upcheck handler
-    openAPI3RouterFactory.addHandlerByOperationId(UPCHECK_OPERATION_ID, new UpcheckHandler());
+    openAPI3RouterFactory.addHandlerByOperationId(
+        UPCHECK_OPERATION_ID, new BlockingHandlerDecorator(new UpcheckHandler(), false));
     openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK_OPERATION_ID, errorHandler);
 
     // public key handler
     openAPI3RouterFactory.addHandlerByOperationId(
-        GET_PUBLIC_KEYS_OPERATION_ID, new GetPublicKeysHandler(keyIdentifiers));
+        GET_PUBLIC_KEYS_OPERATION_ID,
+        new BlockingHandlerDecorator(new GetPublicKeysHandler(keyIdentifiers), false));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
 
     // sign handler
     openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_IDENTIFIER_OPERATION_ID, new SignForIdentifierHandler(blsSigner));
+        SIGN_FOR_IDENTIFIER_OPERATION_ID,
+        new BlockingHandlerDecorator(new SignForIdentifierHandler(blsSigner), false));
     openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_IDENTIFIER_OPERATION_ID, new SignForIdentifierHandler(secpSigner));
+        SIGN_FOR_IDENTIFIER_OPERATION_ID,
+        new BlockingHandlerDecorator(new SignForIdentifierHandler(secpSigner), false));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 
@@ -264,7 +271,8 @@ public class Runner implements Runnable {
         new SigningService(ethKeyIdentifiers, signerForIdentifierList);
 
     final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners);
-    final JsonRpcServer jsonRpcServer = new JsonRpcServer();
+    final ObjectMapper mapper = new ObjectMapper().registerModule(new JsonRpcDecodingModule());
+    final JsonRpcServer jsonRpcServer = JsonRpcServer.withMapper(mapper);
 
     router
         .post(JSON_RPC_PATH + "/filecoin")
