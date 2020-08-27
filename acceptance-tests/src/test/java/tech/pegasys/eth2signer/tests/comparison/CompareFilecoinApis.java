@@ -13,6 +13,8 @@
 package tech.pegasys.eth2signer.tests.comparison;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletHas;
+import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletList;
 
 import java.util.List;
 
@@ -38,6 +40,12 @@ public class CompareFilecoinApis extends CompareApisAcceptanceTestBase {
         (address, key) -> {
           assertThat(walletHas(LOTUS_NODE.getJsonRpcClient(), address)).isTrue();
           assertThat(walletHas(getSignerJsonRpcClient(), address)).isTrue();
+        });
+
+    nonExistentAddressMap.forEach(
+        (address, key) -> {
+          assertThat(walletHas(LOTUS_NODE.getJsonRpcClient(), address)).isFalse();
+          assertThat(walletHas(getSignerJsonRpcClient(), address)).isFalse();
         });
   }
 

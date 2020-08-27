@@ -12,29 +12,21 @@
  */
 package tech.pegasys.eth2signer.tests.comparison;
 
+import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.executeRawJsonRpcRequest;
+import static tech.pegasys.eth2signer.dsl.lotus.FilecoinKeyType.BLS;
+import static tech.pegasys.eth2signer.dsl.lotus.FilecoinKeyType.SECP256K1;
+
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.dsl.lotus.FilecoinKey;
-import tech.pegasys.eth2signer.dsl.lotus.FilecoinKeyType;
 import tech.pegasys.eth2signer.dsl.lotus.LotusNode;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
-import com.google.common.net.MediaType;
-import org.apache.commons.codec.Charsets;
-import org.apache.http.HttpHeaders;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -46,6 +38,16 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
   @TempDir protected Path testDirectory;
 
   protected static Map<String, FilecoinKey> addressMap;
+  protected static Map<String, FilecoinKey> nonExistentAddressMap =
+      Map.of(
+          "t3q7sj7rgvvlfpc7gx7z7jeco5x3q3aa4g6s54w3rl5alzdb6xa422seznjmtp7agboegcvrakcv22eo5bjlna",
+          new FilecoinKey(BLS, "NlWGbwCt8rEK7OTDYat3jy+3tj60cER81cIDUSEnFjU="),
+          "t3rzhwtyxwmfbgikcddna3bv3eedn3meyt75gc6urmunbju26asfhaycsim6oc5qvyqbldziq53l3ujfpprhfa",
+          new FilecoinKey(BLS, "tFzDgbfTT983FdhnZ8xZjr0JdP37DcijmVm+XvurhFY="),
+          "t1jcaxt7yoonwcvllj52kjzh4buo7gjmzemm3c3ny",
+          new FilecoinKey(SECP256K1, "5airIxsTE4wslOvXDcHoTnZE2ZWYGw/ZMwJQY0p7Pi4="),
+          "t1te5vep7vlsxoh5vqz3fqlm76gewzpd63juum6jq",
+          new FilecoinKey(SECP256K1, "0oKQu6xyg0bOCaqNqpHULzxDa4VDQu1D19iArDL8+JU="));
 
   @BeforeAll
   static void setupWallet() {
@@ -68,42 +70,12 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
             metadataFileHelpers.createUnencryptedYamlFileAt(
                 keyConfigFile(key.getPublicKey()),
                 key.getPrivateKeyHex(),
-                key.getType() == FilecoinKeyType.BLS ? KeyType.BLS : KeyType.SECP256K1));
-  }
-
-  protected String executeRawJsonRpcRequest(final String url, final String request)
-      throws IOException {
-    final HttpPost post = new HttpPost(url);
-    post.setEntity(new StringEntity(request, Charsets.UTF_8));
-    post.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
-    try (final CloseableHttpClient httpClient = HttpClients.createDefault();
-        final CloseableHttpResponse httpResponse = httpClient.execute(post)) {
-      return EntityUtils.toString(httpResponse.getEntity(), Charsets.UTF_8);
-    }
+                key.getType() == BLS ? KeyType.BLS : KeyType.SECP256K1));
   }
 
   protected JsonRpcClient getSignerJsonRpcClient() {
     return new JsonRpcClient(
         request -> executeRawJsonRpcRequest(signer.getUrl() + FC_RPC_PATH, request));
-  }
-
-  protected Boolean walletHas(final JsonRpcClient jsonRpcClient, final String address) {
-    return getSignerJsonRpcClient()
-        .createRequest()
-        .method("Filecoin.WalletHas")
-        .params(address)
-        .id(101)
-        .returnAs(Boolean.class)
-        .execute();
-  }
-
-  public List<String> walletList(final JsonRpcClient jsonRpcClient) {
-    return jsonRpcClient
-        .createRequest()
-        .method("Filecoin.WalletList")
-        .id(101)
-        .returnAsList(String.class)
-        .execute();
   }
 
   private Path keyConfigFile(final String publicKey) {
