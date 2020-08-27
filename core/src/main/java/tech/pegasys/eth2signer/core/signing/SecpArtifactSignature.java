@@ -12,7 +12,12 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
+import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.signers.secp256k1.api.Signature;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.web3j.utils.Numeric;
 
 public class SecpArtifactSignature implements ArtifactSignature {
   private final Signature signature;
@@ -28,5 +33,24 @@ public class SecpArtifactSignature implements ArtifactSignature {
 
   public Signature getSignatureData() {
     return signature;
+  }
+
+  public static SecpArtifactSignature fromBytes(final Bytes signature) {
+    final Bytes r = signature.slice(0, 32);
+    final Bytes s = signature.slice(32, 32);
+    final Bytes v = signature.slice(64);
+    return new SecpArtifactSignature(
+        new Signature(
+            Numeric.toBigInt(v.toArrayUnsafe()),
+            Numeric.toBigInt(r.toArrayUnsafe()),
+            Numeric.toBigInt(s.toArrayUnsafe())));
+  }
+
+  public static Bytes toBytes(final SecpArtifactSignature signature) {
+    final Signature signatureData = signature.getSignatureData();
+    return Bytes.concatenate(
+        Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getR()))),
+        Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getS()))),
+        Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getV())));
   }
 }

@@ -37,9 +37,7 @@ import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.FileCoinArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.LoadedSigners;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
-import tech.pegasys.eth2signer.core.util.ByteUtils;
 import tech.pegasys.eth2signer.core.util.FileUtil;
-import tech.pegasys.signers.secp256k1.api.Signature;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -76,8 +74,6 @@ import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -211,13 +207,7 @@ public class Runner implements Runnable {
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {
-    final Signature signatureData = signature.getSignatureData();
-    final Bytes outputSignature =
-        Bytes.concatenate(
-            Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getR()))),
-            Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getS()))),
-            Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getV())));
-    return outputSignature.toHexString();
+    return SecpArtifactSignature.toBytes(signature).toHexString();
   }
 
   private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)

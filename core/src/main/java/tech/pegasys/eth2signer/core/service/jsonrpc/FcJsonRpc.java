@@ -12,14 +12,16 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
+import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinVerify;
 import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.FilecoinSignerNotFoundException;
-import tech.pegasys.eth2signer.core.util.ByteUtils;
-import tech.pegasys.signers.secp256k1.api.Signature;
 import tech.pegasys.teku.bls.BLSSignature;
 
 import java.util.Optional;
@@ -31,8 +33,6 @@ import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.web3j.utils.Numeric;
 
 @JsonRpcService
 public class FcJsonRpc {
@@ -70,7 +70,8 @@ public class FcJsonRpc {
     switch (signature.getType()) {
       case SECP256K1:
         final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
-        return new FilecoinSignature(SECP_VALUE, formatSecpSignature(secpSig).toBase64String());
+        return new FilecoinSignature(
+            SECP_VALUE, SecpArtifactSignature.toBytes(secpSig).toBase64String());
       case BLS:
         final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
         return new FilecoinSignature(
@@ -103,40 +104,20 @@ public class FcJsonRpc {
       @JsonRpcParam("address") final String filecoinAddress,
       @JsonRpcParam("data") final Bytes dataToVerify,
       @JsonRpcParam("signature") final FilecoinSignature filecoinSignature) {
-    final Optional<ArtifactSigner> signer = fcSigners.getSigner(filecoinAddress);
-
-    if (signer.isPresent()) {
-      final ArtifactSignature artifactSignature = createArtifactSignature(filecoinSignature);
-      return signer.get().verify(dataToVerify, artifactSignature);
-    } else {
-      throw new FilecoinSignerNotFoundException();
-    }
-  }
-
-  private ArtifactSignature createArtifactSignature(final FilecoinSignature filecoinSignature) {
+    final FilecoinAddress address = FilecoinAddress.fromString(filecoinAddress);
     final Bytes signature = Bytes.fromBase64String(filecoinSignature.getData());
-    switch (filecoinSignature.getType()) {
-      case SECP_VALUE:
-        final Bytes r = signature.slice(0, 32);
-        final Bytes s = signature.slice(32, 32);
-        final Bytes v = signature.slice(64);
-        return new SecpArtifactSignature(
-            new Signature(
-                Numeric.toBigInt(v.toArrayUnsafe()),
-                Numeric.toBigInt(r.toArrayUnsafe()),
-                Numeric.toBigInt(s.toArrayUnsafe())));
-      case BLS_VALUE:
-        return new BlsArtifactSignature(BLSSignature.fromBytes(signature));
-      default:
-        throw new IllegalArgumentException("Invalid Signature type");
-    }
-  }
 
-  private Bytes formatSecpSignature(final SecpArtifactSignature signature) {
-    final Signature signatureData = signature.getSignatureData();
-    return Bytes.concatenate(
-        Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getR()))),
-        Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getS()))),
-        Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getV())));
+    switch (address.getProtocol()) {
+      case SECP256K1:
+        checkArgument(filecoinSignature.getType() == SECP_VALUE, "Invalid signature type");
+        return FilecoinVerify.verify(
+            address, dataToVerify, SecpArtifactSignature.fromBytes(signature));
+      case BLS:
+        checkArgument(filecoinSignature.getType() == BLS_VALUE, "Invalid signature type");
+        return FilecoinVerify.verify(
+            address, dataToVerify, new BlsArtifactSignature(BLSSignature.fromBytes(signature)));
+      default:
+        throw new IllegalArgumentException("Invalid address protocol type");
+    }
   }
 }

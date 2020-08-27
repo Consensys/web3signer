@@ -59,18 +59,4 @@ class EthSecpArtifactSignerTest {
     assertThat(signatureData.getS()).isEqualTo(Numeric.toBigInt(expectedSignature.getS()));
     assertThat(signatureData.getV()).isEqualTo(Numeric.toBigInt(expectedSignature.getV()));
   }
-
-  @Test
-  void verifiesSignatureWasSignedWithKey() {
-    final ECKeyPair ecKeyPair =
-        new ECKeyPair(Numeric.toBigInt(PRIVATE_KEY), Numeric.toBigInt(PUBLIC_KEY));
-    final Credentials credentials = Credentials.create(ecKeyPair);
-    final EthSecpArtifactSigner ethSecpArtifactSigner =
-        new EthSecpArtifactSigner(new CredentialSigner(credentials));
-
-    final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
-    final SecpArtifactSignature signature = ethSecpArtifactSigner.sign(message);
-
-    assertThat(ethSecpArtifactSigner.verify(message, signature)).isTrue();
-  }
 }

@@ -21,17 +21,14 @@ import tech.pegasys.eth2signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignature;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.FcBlsArtifactSigner;
-import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.eth2signer.tests.AcceptanceTestBase;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 
-import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
 
@@ -44,7 +41,6 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
   private static final String dataString =
@@ -52,8 +48,6 @@ public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
   private static final String PRIVATE_KEY =
       "5abc1334d98d1432150df310f9d2fd51780a2b8a7489891f5d4ab9e77e6fb169";
 
-  protected @TempDir Path testDirectory;
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
   private static final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
@@ -67,13 +61,7 @@ public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void receiveTrueResponseWhenSubmitValidVerifyRequestToFilecoinEndpoint() {
-    final String configFilename = publicKey.toString().substring(2);
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
-
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
-    startSigner(builder.build());
+    startSigner(new SignerConfigurationBuilder().build());
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final ObjectMapper mapper = new ObjectMapper();

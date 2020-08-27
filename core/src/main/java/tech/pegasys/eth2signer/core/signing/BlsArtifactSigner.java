@@ -12,7 +12,6 @@
  */
 package tech.pegasys.eth2signer.core.signing;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static tech.pegasys.eth2signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.bls.BLS;
@@ -36,12 +35,5 @@ public class BlsArtifactSigner implements ArtifactSigner {
   @Override
   public BlsArtifactSignature sign(final Bytes data) {
     return new BlsArtifactSignature(BLS.sign(keyPair.getSecretKey(), data));
-  }
-
-  @Override
-  public boolean verify(final Bytes data, final ArtifactSignature signature) {
-    checkArgument(signature instanceof BlsArtifactSignature);
-    final BlsArtifactSignature blsArtifactSignature = (BlsArtifactSignature) signature;
-    return BLS.verify(keyPair.getPublicKey(), data, blsArtifactSignature.getSignatureData());
   }
 }
