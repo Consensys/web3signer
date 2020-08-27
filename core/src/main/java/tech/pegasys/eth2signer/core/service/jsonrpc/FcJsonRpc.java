@@ -18,7 +18,6 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
-import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinProtocol;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinVerify;
 import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.FilecoinSignerNotFoundException;
 import tech.pegasys.eth2signer.core.util.ByteUtils;
@@ -112,16 +111,18 @@ public class FcJsonRpc {
       @JsonRpcParam("signature") final FilecoinSignature filecoinSignature) {
     final FilecoinAddress address = FilecoinAddress.fromString(filecoinAddress);
     final Bytes signature = Bytes.fromBase64String(filecoinSignature.getData());
-    if (address.getProtocol() == FilecoinProtocol.SECP256K1) {
-      return FilecoinVerify.verify(
-          address, Bytes.fromBase64String(dataToVerify), createSecpArtifactSignature(signature));
-    } else if (address.getProtocol() == FilecoinProtocol.BLS) {
-      return FilecoinVerify.verify(
-          address,
-          Bytes.fromBase64String(dataToVerify),
-          new BlsArtifactSignature(BLSSignature.fromBytes(signature)));
-    } else {
-      throw new IllegalArgumentException("Invalid Signature type");
+
+    switch (address.getProtocol()) {
+      case SECP256K1:
+        return FilecoinVerify.verify(
+            address, Bytes.fromBase64String(dataToVerify), createSecpArtifactSignature(signature));
+      case BLS:
+        return FilecoinVerify.verify(
+            address,
+            Bytes.fromBase64String(dataToVerify),
+            new BlsArtifactSignature(BLSSignature.fromBytes(signature)));
+      default:
+        throw new IllegalArgumentException("Invalid address protocol type");
     }
   }
 
