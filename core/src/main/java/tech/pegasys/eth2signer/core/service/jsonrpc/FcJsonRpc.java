@@ -55,15 +55,14 @@ public class FcJsonRpc {
   @JsonRpcMethod("Filecoin.WalletSign")
   public FilecoinSignature filecoinWalletSign(
       @JsonRpcParam("identifier") final String filecoinAddress,
-      @JsonRpcParam("data") final String dataToSign) {
+      @JsonRpcParam("data") final Bytes dataToSign) {
     LOG.debug("Received FC sign request id = {}; data = {}", filecoinAddress, dataToSign);
 
     final Optional<ArtifactSigner> signer = fcSigners.getSigner(filecoinAddress);
 
     final ArtifactSignature signature;
     if (signer.isPresent()) {
-      final Bytes bytesToSign = Bytes.fromBase64String(dataToSign);
-      signature = signer.get().sign(bytesToSign);
+      signature = signer.get().sign(dataToSign);
     } else {
       throw new FilecoinSignerNotFoundException();
     }
@@ -94,8 +93,7 @@ public class FcJsonRpc {
     final FcMessageEncoder encoder = new FcMessageEncoder();
     final Bytes fcCid = encoder.createFilecoinCid(message);
 
-    final FilecoinSignature signature =
-        filecoinWalletSign(identifier, Bytes.wrap(fcCid).toBase64String());
+    final FilecoinSignature signature = filecoinWalletSign(identifier, fcCid);
 
     return new FilecoinSignedMessage(message, signature);
   }
@@ -103,14 +101,13 @@ public class FcJsonRpc {
   @JsonRpcMethod("Filecoin.WalletVerify")
   public boolean filecoinWalletVerify(
       @JsonRpcParam("address") final String filecoinAddress,
-      @JsonRpcParam("data") final String dataToVerify,
+      @JsonRpcParam("data") final Bytes dataToVerify,
       @JsonRpcParam("signature") final FilecoinSignature filecoinSignature) {
     final Optional<ArtifactSigner> signer = fcSigners.getSigner(filecoinAddress);
 
     if (signer.isPresent()) {
-      final Bytes bytesToVerify = Bytes.fromBase64String(dataToVerify);
       final ArtifactSignature artifactSignature = createArtifactSignature(filecoinSignature);
-      return signer.get().verify(bytesToVerify, artifactSignature);
+      return signer.get().verify(dataToVerify, artifactSignature);
     } else {
       throw new FilecoinSignerNotFoundException();
     }
