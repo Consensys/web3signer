@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.core.signing.filecoin;
 
+import static tech.pegasys.eth2signer.core.signing.FcBlsArtifactSigner.FC_DST;
 import static tech.pegasys.teku.bls.hashToG2.HashToCurve.hashToG2;
 
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
@@ -22,7 +23,6 @@ import tech.pegasys.teku.bls.mikuli.PublicKey;
 import tech.pegasys.teku.bls.mikuli.Signature;
 
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,8 +33,6 @@ import org.web3j.utils.Numeric;
 
 public class FilecoinVerify {
   private static final Logger LOG = LogManager.getLogger();
-  private static final Bytes DST =
-      Bytes.wrap("BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_".getBytes(StandardCharsets.US_ASCII));
 
   public static boolean verify(
       final FilecoinAddress address,
@@ -42,7 +40,7 @@ public class FilecoinVerify {
       final BlsArtifactSignature artifactSignature) {
     final PublicKey blsPublicKey = PublicKey.fromBytesCompressed(address.getPayload());
     final Signature signature = artifactSignature.getSignatureData().getSignature();
-    final G2Point hashInGroup2 = new G2Point(hashToG2(message, DST));
+    final G2Point hashInGroup2 = new G2Point(hashToG2(message, FC_DST));
     return signature.verify(blsPublicKey, hashInGroup2);
   }
 

@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 import org.apache.tuweni.bytes.Bytes;
 
 public class FcBlsArtifactSigner implements ArtifactSigner {
-  private static final Bytes DST =
+  public static final Bytes FC_DST =
       Bytes.wrap("BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_".getBytes(StandardCharsets.US_ASCII));
 
   private final BLSKeyPair keyPair;
@@ -44,7 +44,7 @@ public class FcBlsArtifactSigner implements ArtifactSigner {
 
   @Override
   public BlsArtifactSignature sign(final Bytes message) {
-    final G2Point hashInGroup2 = new G2Point(hashToG2(message, DST));
+    final G2Point hashInGroup2 = new G2Point(hashToG2(message, FC_DST));
     final G2Point g2Point = keyPair.getSecretKey().getSecretKey().sign(hashInGroup2);
     final BLSSignature blsSignature = new BLSSignature(new Signature(g2Point));
     return new BlsArtifactSignature(blsSignature);
