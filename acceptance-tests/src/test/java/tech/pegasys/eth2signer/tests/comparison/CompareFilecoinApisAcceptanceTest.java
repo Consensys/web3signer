@@ -31,7 +31,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 @EnabledIfEnvironmentVariables({
   @EnabledIfEnvironmentVariable(named = "LOTUS_PORT", matches = ".*")
 })
-public class CompareFilecoinApis extends CompareApisAcceptanceTestBase {
+public class CompareFilecoinApisAcceptanceTest extends CompareApisAcceptanceTestBase {
 
   @BeforeEach
   void initSigner() {

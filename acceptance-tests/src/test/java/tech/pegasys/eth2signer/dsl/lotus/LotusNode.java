@@ -53,15 +53,15 @@ public class LotusNode {
     this("127.0.0.1", port);
   }
 
-  public Map<String, FilecoinKey> createKeys(final int blsKeys, final int secpKeys) {
+  public Map<String, FilecoinKey> createKeys(final int blsKeysCount, final int secpKeysCount) {
     final Set<String> addresses = new HashSet<>();
 
-    for (int i = 0; i < blsKeys; i++) {
+    for (int i = 0; i < blsKeysCount; i++) {
       final String address = FilecoinJsonRequests.walletNew(jsonRpcClient, BLS_SIGTYPE);
       addresses.add(address);
     }
 
-    for (int i = 0; i < secpKeys; i++) {
+    for (int i = 0; i < secpKeysCount; i++) {
       final String address = FilecoinJsonRequests.walletNew(jsonRpcClient, SECP_SIGTYPE);
       addresses.add(address);
     }

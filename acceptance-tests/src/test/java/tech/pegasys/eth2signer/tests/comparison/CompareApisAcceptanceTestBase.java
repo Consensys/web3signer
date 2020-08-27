@@ -81,13 +81,7 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
                 key.getType() == BLS ? KeyType.BLS : KeyType.SECP256K1));
   }
 
-  private Path keyConfigFile(final String publicKey) {
-    return testDirectory.resolve(stripOxPrefix(publicKey) + ".yaml");
-  }
-
-  private String stripOxPrefix(final String publicKey) {
-    return publicKey.startsWith("0x") || publicKey.startsWith("0X")
-        ? publicKey.substring(2)
-        : publicKey;
+  private Path keyConfigFile(final String prefix) {
+    return testDirectory.resolve(prefix + ".yaml");
   }
 }
