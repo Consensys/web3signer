@@ -28,6 +28,7 @@ dependencies {
   implementation 'org.web3j:core'
 
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
