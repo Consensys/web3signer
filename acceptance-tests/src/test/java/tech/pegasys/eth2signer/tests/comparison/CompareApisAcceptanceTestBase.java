@@ -34,7 +34,10 @@ import org.junit.jupiter.api.io.TempDir;
 public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
   protected static final LotusNode LOTUS_NODE =
       new LotusNode(Integer.parseInt(System.getenv("LOTUS_PORT")));
-  protected static Map<String, FilecoinKey> addressMap = LOTUS_NODE.loadAddresses(2, 2);
+  protected static final int NO_OF_BLS_KEYS = 2;
+  protected static final int NO_OF_SECP_KEYS = 2;
+  protected static Map<String, FilecoinKey> addressMap =
+      LOTUS_NODE.createKeys(NO_OF_BLS_KEYS, NO_OF_SECP_KEYS);
   protected static Map<String, FilecoinKey> nonExistentAddressMap =
       Map.of(
           "t3q7sj7rgvvlfpc7gx7z7jeco5x3q3aa4g6s54w3rl5alzdb6xa422seznjmtp7agboegcvrakcv22eo5bjlna",

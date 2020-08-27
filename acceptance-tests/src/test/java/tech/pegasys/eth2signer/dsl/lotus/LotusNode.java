@@ -17,10 +17,11 @@ import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.SECP_SIGTYP
 
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
@@ -52,9 +53,8 @@ public class LotusNode {
     this("127.0.0.1", port);
   }
 
-  public Map<String, FilecoinKey> loadAddresses(final int blsKeys, final int secpKeys) {
+  public Map<String, FilecoinKey> createKeys(final int blsKeys, final int secpKeys) {
     final Set<String> addresses = new HashSet<>();
-    final Map<String, FilecoinKey> addressKeys = new HashMap<>();
 
     for (int i = 0; i < blsKeys; i++) {
       final String address = FilecoinJsonRequests.walletNew(jsonRpcClient, BLS_SIGTYPE);
@@ -66,13 +66,12 @@ public class LotusNode {
       addresses.add(address);
     }
 
-    addresses.forEach(
-        address -> {
-          final FilecoinKey filecoinKey = FilecoinJsonRequests.walletExport(jsonRpcClient, address);
-          addressKeys.put(address, filecoinKey);
-        });
-
-    return Map.copyOf(addressKeys);
+    return addresses
+        .parallelStream()
+        .collect(
+            Collectors.toMap(
+                Function.identity(),
+                address -> FilecoinJsonRequests.walletExport(jsonRpcClient, address)));
   }
 
   public JsonRpcClient getJsonRpcClient() {
