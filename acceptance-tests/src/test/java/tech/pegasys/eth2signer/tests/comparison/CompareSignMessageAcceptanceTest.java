@@ -13,7 +13,6 @@
 package tech.pegasys.eth2signer.tests.comparison;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.entry;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletSignMessage;
 import static tech.pegasys.eth2signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
 
@@ -52,7 +51,6 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
           .forEach(
               entry -> {
                 final String address = entry.getKey();
-                // final FilecoinKey key = entry.getValue();
 
                 final Map<String, Object> message = createRandomMessage();
 
@@ -80,7 +78,7 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
   private Map<String, Object> createRandomMessage() {
     final Random rand = new Random();
 
-    final byte[] paramByteArray = new byte[Math.abs(rand.nextInt() % 50)];
+    final byte[] paramByteArray = new byte[Math.abs(rand.nextInt(Integer.MAX_VALUE)) % 50];
     rand.nextBytes(paramByteArray);
     final Bytes params = Bytes.wrap(paramByteArray);
 
@@ -90,7 +88,7 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
     messageMap.put("From", "t01234");
     messageMap.put("Nonce", createRandomUInt64(rand));
     messageMap.put("Value", createRandomBigInt(rand));
-    messageMap.put("GasLimit", Math.abs(rand.nextLong()));
+    messageMap.put("GasLimit", rand.nextLong());
     messageMap.put("GasFeeCap", createRandomBigInt(rand));
     messageMap.put("GasPremium", createRandomBigInt(rand));
     messageMap.put("Method", createRandomUInt64(rand));

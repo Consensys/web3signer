@@ -51,6 +51,7 @@ dependencyManagement {
       entry 'tuweni-toml'
       entry 'tuweni-bytes'
       entry 'tuweni-crypto'
+      entry 'tuweni-units'
     }
 
     dependency 'org.assertj:assertj-core:3.15.0'
