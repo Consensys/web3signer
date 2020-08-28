@@ -16,24 +16,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletSignMessage;
 import static tech.pegasys.eth2signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
 
-import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.concurrent.CompletableFuture;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
 
 public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestBase {
-
-  private static final Logger LOG = LogManager.getLogger();
 
   @BeforeEach
   void initSigner() {
@@ -41,27 +38,12 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
   }
 
   @Test
-  void compareRandomMessageSignaturesBetweenLotusAndEthSigner() throws JsonProcessingException {
-    for (int i = 0; i < 50; i++) {
-      final Map<String, Object> message = createRandomMessage();
-      final String jsonRequest = OBJECT_MAPPER.writeValueAsString(message);
-      addressMap
-          .keySet()
-          .parallelStream()
-          .forEach(
-              address -> {
-                final FilecoinSignedMessage lotusFcSig =
-                    walletSignMessage(LOTUS_NODE.getJsonRpcClient(), address, message);
-                final FilecoinSignedMessage signerFcSig =
-                    walletSignMessage(getSignerJsonRpcClient(), address, message);
-
-                assertThat(lotusFcSig.getMessage())
-                    .isEqualToComparingFieldByField(signerFcSig.getMessage());
-                assertThat(lotusFcSig.getSignature())
-                    .overridingErrorMessage("Signature Comparison failed from msg = " + jsonRequest)
-                    .isEqualToComparingFieldByField(signerFcSig.getSignature());
-              });
+  void compareRandomMessageSignaturesBetweenLotusAndEthSigner() {
+    final List<CompletableFuture<Void>> futures = Lists.newArrayList();
+    for (int i = 0; i < 500; i++) {
+      futures.add(CompletableFuture.runAsync(this::testRandomMessage));
     }
+    futures.forEach(CompletableFuture::join);
   }
 
   private Map<String, Object> createRandomMessage() {
@@ -100,5 +82,31 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
     final byte[] bytes = new byte[size];
     rand.nextBytes(bytes);
     return new BigInteger(bytes);
+  }
+
+  private void testRandomMessage() {
+    final Map<String, Object> message = createRandomMessage();
+    final String jsonRequest;
+    try {
+      jsonRequest = OBJECT_MAPPER.writeValueAsString(message);
+    } catch (JsonProcessingException e) {
+      return;
+    }
+    addressMap
+        .keySet()
+        .parallelStream()
+        .forEach(
+            address -> {
+              final FilecoinSignedMessage lotusFcSig =
+                  walletSignMessage(LOTUS_NODE.getJsonRpcClient(), address, message);
+              final FilecoinSignedMessage signerFcSig =
+                  walletSignMessage(getSignerJsonRpcClient(), address, message);
+
+              assertThat(lotusFcSig.getMessage())
+                  .isEqualToComparingFieldByField(signerFcSig.getMessage());
+              assertThat(lotusFcSig.getSignature())
+                  .overridingErrorMessage("Signature Comparison failed from msg = " + jsonRequest)
+                  .isEqualToComparingFieldByField(signerFcSig.getSignature());
+            });
   }
 }
