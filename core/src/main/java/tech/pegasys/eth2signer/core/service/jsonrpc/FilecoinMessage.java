@@ -24,7 +24,7 @@ import org.apache.tuweni.units.bigints.UInt64;
 public class FilecoinMessage {
 
   @JsonProperty("Version")
-  private final long version;
+  private final UInt64 version;
 
   @JsonProperty("To")
   private final String to;
@@ -55,7 +55,7 @@ public class FilecoinMessage {
 
   @JsonCreator
   public FilecoinMessage(
-      final @JsonProperty("Version") long version,
+      final @JsonProperty("Version") UInt64 version,
       final @JsonProperty("To") String to,
       final @JsonProperty("From") String from,
       final @JsonProperty("Nonce") UInt64 nonce,
@@ -78,7 +78,7 @@ public class FilecoinMessage {
     this.params = Bytes.fromBase64String(params);
   }
 
-  public long getVersion() {
+  public UInt64 getVersion() {
     return version;
   }
 
