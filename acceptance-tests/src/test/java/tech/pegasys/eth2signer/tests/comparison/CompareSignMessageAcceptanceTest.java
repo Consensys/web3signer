@@ -80,7 +80,7 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
   private Map<String, Object> createRandomMessage() {
     final Random rand = new Random();
 
-    final byte[] paramByteArray = new byte[Math.abs((rand.nextInt() + 1 ) % 50)];
+    final byte[] paramByteArray = new byte[Math.abs(rand.nextInt() % 50)];
     rand.nextBytes(paramByteArray);
     final Bytes params = Bytes.wrap(paramByteArray);
 
@@ -107,7 +107,7 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
 
   private BigInteger createRandomBigInt(final Random rand) {
     final int size = Math.abs(rand.nextInt(50));
-    if(size == 0) {
+    if (size == 0) {
       return BigInteger.ZERO;
     }
     final byte[] bytes = new byte[size];
