@@ -22,6 +22,7 @@ dependencies {
   testImplementation project(":core")
 
   testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-units'
 
   testRuntimeOnly 'javax.activation:activation'
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
