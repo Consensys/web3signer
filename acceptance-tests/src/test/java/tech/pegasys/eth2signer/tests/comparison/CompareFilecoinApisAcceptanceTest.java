@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.tests.comparison;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletHas;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletList;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletSign;
@@ -64,27 +65,34 @@ public class CompareFilecoinApisAcceptanceTest extends CompareApisAcceptanceTest
     Assertions.assertThat(lotusWalletList).containsAll(signerWalletList);
   }
 
-  @RepeatedTest(100)
-  void compareWalletSignAndVerifyResponses() {
+  @RepeatedTest(25)
+  void compareWalletSignAndVerifyResponsesWithRandomDataToSign() {
 
     addressMap.forEach(
         (address, key) -> {
           final Bytes dataToSign = Bytes.random(32);
-          final FilecoinSignature lotusFcSig =
-              walletSign(LOTUS_NODE.getJsonRpcClient(), address, dataToSign);
-          final FilecoinSignature signerFcSig =
-              walletSign(getSignerJsonRpcClient(), address, dataToSign);
 
-          assertThat(signerFcSig).isEqualTo(lotusFcSig);
+          assertThatCode(
+                  () -> {
+                    final FilecoinSignature lotusFcSig =
+                        walletSign(LOTUS_NODE.getJsonRpcClient(), address, dataToSign);
+                    final FilecoinSignature signerFcSig =
+                        walletSign(getSignerJsonRpcClient(), address, dataToSign);
 
-          // verify signatures
-          final Boolean lotusSigVerify =
-              walletVerify(LOTUS_NODE.getJsonRpcClient(), address, dataToSign, lotusFcSig);
-          final Boolean signerSigVerify =
-              walletVerify(getSignerJsonRpcClient(), address, dataToSign, signerFcSig);
+                    assertThat(signerFcSig).isEqualTo(lotusFcSig);
 
-          assertThat(lotusSigVerify).isTrue();
-          assertThat(signerSigVerify).isTrue();
+                    // verify signatures
+                    final Boolean lotusSigVerify =
+                        walletVerify(
+                            LOTUS_NODE.getJsonRpcClient(), address, dataToSign, lotusFcSig);
+                    final Boolean signerSigVerify =
+                        walletVerify(getSignerJsonRpcClient(), address, dataToSign, signerFcSig);
+
+                    assertThat(lotusSigVerify).isTrue();
+                    assertThat(signerSigVerify).isTrue();
+                  })
+              .as("Running with data %s for address %s", dataToSign, address)
+              .doesNotThrowAnyException();
         });
   }
 }
