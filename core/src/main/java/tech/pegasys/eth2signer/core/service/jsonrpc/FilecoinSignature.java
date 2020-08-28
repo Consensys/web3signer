@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -36,5 +38,18 @@ public class FilecoinSignature {
 
   public String getData() {
     return data;
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final FilecoinSignature that = (FilecoinSignature) o;
+    return type == that.type && data.equals(that.data);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(type, data);
   }
 }

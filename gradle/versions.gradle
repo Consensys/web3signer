@@ -91,6 +91,7 @@ dependencyManagement {
     dependency 'org.web3j:core:4.5.14'
 
     dependency 'com.github.arteam:simple-json-rpc-server:1.2'
+    dependency 'com.github.arteam:simple-json-rpc-client:1.2'
 
     dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
   }

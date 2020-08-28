@@ -43,6 +43,7 @@ dependencies {
   testImplementation 'org.web3j:core'
   testImplementation 'org.apache.tuweni:tuweni-bytes'
   testImplementation 'com.github.arteam:simple-json-rpc-server'
+  testImplementation 'com.github.arteam:simple-json-rpc-client'
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'keystorage-hashicorp', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'acceptance-tests', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'signing-secp256k1-impl', classifier: 'test-fixtures')

@@ -28,7 +28,7 @@ import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.SignForIdentifierHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FcJsonRpc;
-import tech.pegasys.eth2signer.core.service.jsonrpc.JsonRpcDecodingModule;
+import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.eth2signer.core.service.jsonrpc.SigningService;
 import tech.pegasys.eth2signer.core.service.operations.KeyIdentifiers;
 import tech.pegasys.eth2signer.core.service.operations.SignerForIdentifier;
@@ -261,7 +261,7 @@ public class Runner implements Runnable {
         new SigningService(ethKeyIdentifiers, signerForIdentifierList);
 
     final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners);
-    final ObjectMapper mapper = new ObjectMapper().registerModule(new JsonRpcDecodingModule());
+    final ObjectMapper mapper = new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
     final JsonRpcServer jsonRpcServer = JsonRpcServer.withMapper(mapper);
 
     router

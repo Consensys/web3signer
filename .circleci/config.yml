@@ -23,6 +23,21 @@ executors:
       JAVA_TOOL_OPTIONS: -Xmx4096m
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -Xmx4096m
 
+  executor_large_with_fc_devnet: # 4cpu, 8G ram
+    docker:
+      # Primary container
+      - image: circleci/openjdk:11.0.4-jdk-stretch
+      # Secondary container running lotus as devnet on port 7777
+      - image: textile/lotus-devnet
+        environment:
+          TEXLOTUSDEVNET_BIGSECTORS: false
+    resource_class: large
+    working_directory: ~/project
+    environment:
+      JAVA_TOOL_OPTIONS: -Xmx4096m
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -Xmx4096m
+      LOTUS_PORT: 7777
+
   executor_node:
     docker:
       - image: circleci/node:14-buster
@@ -46,16 +61,17 @@ commands:
           name: Gather test results
           when: always
           command: |
+            rm -rf build/test-output
             FILES=`find . -name test-results`
             for FILE in $FILES
             do
               MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/test-results@\1@'`
-              TARGET="build/test-results/$MODULE"
+              TARGET="build/test-output/$MODULE"
               mkdir -p "$TARGET"
               cp -rf ${FILE}/*/* "$TARGET"
             done
       - store_test_results:
-          path: build/test-results
+          path: build/test-output
 
   capture_test_reports:
     description: "Capture test reports"
@@ -64,6 +80,7 @@ commands:
           name: Gather test results
           when: always
           command: |
+            rm -rf build/test-reports
             FILES=`find . -name reports`
             for FILE in $FILES
             do
@@ -102,12 +119,7 @@ jobs:
           no_output_timeout: 20m
           command: |
             ./gradlew --no-daemon --parallel integrationTest --info
-      - run:
-          name: Acceptance Test
-          no_output_timeout: 20m
-          command: |
-            ./gradlew --no-daemon --parallel acceptanceTest
-      - notify      
+      - notify
       - capture_test_results
       - capture_test_reports
       - save_cache:
@@ -120,6 +132,24 @@ jobs:
           root: ~/project
           paths:
             - ./
+
+  acceptanceTests:
+    executor: executor_large_with_fc_devnet
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      # Wait for FC-DevNet to be up
+      - run: sleep 5 && nc -vz localhost 7777
+      - run:
+          name: Acceptance Tests
+          no_output_timeout: 20m
+          command: |
+            ./gradlew --no-daemon clean installDist
+            ./gradlew --no-daemon --parallel acceptanceTest
+      - notify
+      - capture_test_results
+      - capture_test_reports
 
   buildDocker:
     executor: executor_med
@@ -198,6 +228,9 @@ workflows:
   default:
     jobs:
       - build
+      - acceptanceTests:
+          requires:
+            - build
       - buildDocker:
           requires:
             - build
@@ -208,7 +241,7 @@ workflows:
                 - master
                 - /^release-.*/
           requires:
-            - build
+            - acceptanceTests
       - publish:
           filters:
             branches:
@@ -216,7 +249,7 @@ workflows:
                 - master
                 - /^release-.*/
           requires:
-            - build
+            - acceptanceTests
       - publishDocker:
           filters:
             branches:
@@ -224,5 +257,5 @@ workflows:
                 - master
                 - /^release-.*/
           requires:
-            - build
+            - acceptanceTests
             - buildDocker
