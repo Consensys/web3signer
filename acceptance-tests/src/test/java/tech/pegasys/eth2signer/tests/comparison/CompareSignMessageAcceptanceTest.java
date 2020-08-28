@@ -16,19 +16,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletSignMessage;
 import static tech.pegasys.eth2signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
+
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
 
 public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestBase {
 
