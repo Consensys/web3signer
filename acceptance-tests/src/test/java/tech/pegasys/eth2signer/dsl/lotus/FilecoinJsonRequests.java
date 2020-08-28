@@ -83,6 +83,20 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
+  public static Boolean walletVerify(
+      final JsonRpcClient jsonRpcClient,
+      final String address,
+      final Bytes data,
+      final FilecoinSignature signature) {
+    return jsonRpcClient
+        .createRequest()
+        .method("Filecoin.WalletVerify")
+        .id(202)
+        .params(address, data, signature)
+        .returnAs(Boolean.class)
+        .execute();
+  }
+
   public static String executeRawJsonRpcRequest(final String url, final String request)
       throws IOException {
     final HttpPost post = new HttpPost(url);
