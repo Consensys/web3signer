@@ -57,8 +57,8 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
 
     final Map<String, Object> messageMap = new HashMap<>();
     messageMap.put("Version", createRandomUInt64(rand));
-    messageMap.put("To", "t01234");
-    messageMap.put("From", "t01234");
+    messageMap.put("To", "t0" + String.format("%d", rand.nextInt(Integer.MAX_VALUE)));
+    messageMap.put("From", "t0" + String.format("%d", rand.nextInt(Integer.MAX_VALUE)));
     messageMap.put("Nonce", createRandomUInt64(rand));
     messageMap.put("Value", createRandomBigInt(rand));
     messageMap.put("GasLimit", rand.nextLong());
