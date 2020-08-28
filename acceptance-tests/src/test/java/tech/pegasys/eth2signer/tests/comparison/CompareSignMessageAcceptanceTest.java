@@ -41,35 +41,24 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
   }
 
   @Test
-  void signMessage() {
-
+  void compareRandomMessageSignaturesBetweenLotusAndEthSigner() throws JsonProcessingException {
     for (int i = 0; i < 50; i++) {
-      LOG.info("################### PERFORMING RUN {}", i);
+      final Map<String, Object> message = createRandomMessage();
+      final String jsonRequest = OBJECT_MAPPER.writeValueAsString(message);
       addressMap
-          .entrySet()
+          .keySet()
           .parallelStream()
           .forEach(
-              entry -> {
-                final String address = entry.getKey();
-
-                final Map<String, Object> message = createRandomMessage();
-
+              address -> {
                 final FilecoinSignedMessage lotusFcSig =
                     walletSignMessage(LOTUS_NODE.getJsonRpcClient(), address, message);
                 final FilecoinSignedMessage signerFcSig =
                     walletSignMessage(getSignerJsonRpcClient(), address, message);
 
-                final String jsonRequest;
-                try {
-                  jsonRequest = OBJECT_MAPPER.writeValueAsString(message);
-                } catch (JsonProcessingException e) {
-                  return;
-                }
-
                 assertThat(lotusFcSig.getMessage())
                     .isEqualToComparingFieldByField(signerFcSig.getMessage());
                 assertThat(lotusFcSig.getSignature())
-                    .overridingErrorMessage("Failed when comparing " + jsonRequest)
+                    .overridingErrorMessage("Signature Comparison failed from msg = " + jsonRequest)
                     .isEqualToComparingFieldByField(signerFcSig.getSignature());
               });
     }

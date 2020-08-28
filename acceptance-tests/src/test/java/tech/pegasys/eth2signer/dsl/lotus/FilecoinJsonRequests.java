@@ -117,9 +117,6 @@ public class FilecoinJsonRequests {
     final HttpPost post = new HttpPost(url);
     post.setEntity(new StringEntity(request, Charsets.UTF_8));
     post.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
-    post.setHeader(
-        "Authorization",
-        "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.1ywHr7H6j-4G5OMRJYJgmyE7I02A4gkxm7Ru8qI5EGA");
     try (final CloseableHttpClient httpClient = HttpClients.createDefault();
         final CloseableHttpResponse httpResponse = httpClient.execute(post)) {
       return EntityUtils.toString(httpResponse.getEntity(), Charsets.UTF_8);
