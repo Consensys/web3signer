@@ -92,7 +92,7 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
   }
 
   private String executableLocation() {
-    return "build/install/eth2signer/bin/eth2signer";
+    return "eth2signer/build/install/eth2signer/bin/eth2signer";
   }
 
   private void printOutput() {

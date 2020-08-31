@@ -14,6 +14,7 @@
 plugins {
   id "de.undercouch.download" version "4.1.0"
   id "com.google.osdetector" version "1.6.2"
+  id 'com.github.lkishalmi.gatling' version '3.3.4'
 }
 
 dependencies {
@@ -47,6 +48,26 @@ dependencies {
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'keystorage-hashicorp', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'acceptance-tests', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'signing-secp256k1-impl', classifier: 'test-fixtures')
+
+  gatlingImplementation project(":app")
+  gatlingImplementation project(":core")
+  gatlingImplementation 'org.junit.jupiter:junit-jupiter-api'
+  gatlingImplementation 'org.junit.jupiter:junit-jupiter-params'
+  gatlingImplementation 'io.vertx:vertx-core'
+  gatlingImplementation 'io.vertx:vertx-web'
+  gatlingImplementation 'io.vertx:vertx-web-client'
+  gatlingImplementation 'org.apache.logging.log4j:log4j-api'
+  gatlingImplementation 'org.assertj:assertj-core'
+  gatlingImplementation 'org.awaitility:awaitility'
+  gatlingImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+  gatlingImplementation 'tech.pegasys.signers.internal:bls-keystore'
+  gatlingImplementation 'tech.pegasys.teku.internal:bls'
+  gatlingImplementation 'com.atlassian.oai:swagger-request-validator-restassured'
+  gatlingImplementation 'org.web3j:core'
+  gatlingImplementation 'org.apache.tuweni:tuweni-bytes'
+  gatlingImplementation 'com.github.arteam:simple-json-rpc-server'
+  gatlingImplementation 'com.github.arteam:simple-json-rpc-client'
+  gatlingRuntimeOnly 'org.apache.logging.log4j:log4j-core'
 }
 
 test.enabled = false

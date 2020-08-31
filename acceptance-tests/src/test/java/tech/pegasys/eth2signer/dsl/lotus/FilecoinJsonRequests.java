@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.dsl.lotus;
 
+import static tech.pegasys.eth2signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
+
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignature;
 
 import java.io.IOException;
@@ -32,6 +34,10 @@ import org.apache.tuweni.bytes.Bytes;
 public class FilecoinJsonRequests {
   public static final int BLS_SIGTYPE = 1;
   public static final int SECP_SIGTYPE = 2;
+
+  public static JsonRpcClient createJsonRpcClient(final String baseUrl) {
+    return new JsonRpcClient(request -> executeRawJsonRpcRequest(baseUrl, request), OBJECT_MAPPER);
+  }
 
   public static String walletNew(final JsonRpcClient jsonRpcClient, int sigType) {
     return jsonRpcClient

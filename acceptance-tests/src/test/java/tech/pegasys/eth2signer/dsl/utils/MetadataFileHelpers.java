@@ -32,6 +32,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -47,13 +48,24 @@ public class MetadataFileHelpers {
   private static final Bytes IV = Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789");
 
   public void createUnencryptedYamlFileAt(
-      final Path metadataFilePath, final String keyContent, final KeyType keyType) {
+      final Path metadataFilePath, final String privateKey, final KeyType keyType) {
     final Map<String, String> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "file-raw");
-    signingMetadata.put("privateKey", keyContent);
+    signingMetadata.put("privateKey", privateKey);
     signingMetadata.put("keyType", keyType.name());
 
     createYamlFile(metadataFilePath, signingMetadata);
+  }
+
+  public void createRandomUnencryptedBlsKeys(final Path directory, final int numberOfKeys) {
+    final SecureRandom secureRandom = new SecureRandom();
+    final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+    for (int i = 0; i < numberOfKeys; i++) {
+      final BLSKeyPair keyPair = BLSKeyPair.random(secureRandom);
+      final String privateKey = keyPair.getSecretKey().toBytes().toHexString();
+      final Path filename = directory.resolve(keyPair.getPublicKey().toString() + ".yaml");
+      metadataFileHelpers.createUnencryptedYamlFileAt(filename, privateKey, KeyType.BLS);
+    }
   }
 
   public void createKeyStoreYamlFileAt(
