@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.dsl.lotus;
 
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.BLS_SIGTYPE;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.SECP_SIGTYPE;
+import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.createJsonRpcClient;
 
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 
@@ -36,17 +37,13 @@ import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 public class LotusNode {
   private static final String FC_URL_FORMAT = "http://%s:%d/rpc/v0";
 
-  private final String fcUrl;
   private final JsonRpcClient jsonRpcClient;
   public static final ObjectMapper OBJECT_MAPPER =
       new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
 
   public LotusNode(final String host, final int port) {
-    fcUrl = String.format(FC_URL_FORMAT, host, port);
-    jsonRpcClient =
-        new JsonRpcClient(
-            request -> FilecoinJsonRequests.executeRawJsonRpcRequest(fcUrl, request),
-            OBJECT_MAPPER);
+    final String fcUrl = String.format(FC_URL_FORMAT, host, port);
+    jsonRpcClient = createJsonRpcClient(fcUrl);
   }
 
   public LotusNode(final int port) {
