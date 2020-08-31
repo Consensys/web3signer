@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.core.signing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinProtocol;
@@ -87,6 +88,12 @@ class FilecoinAddressTest {
     assertThatThrownBy(() -> FilecoinAddress.decode("f1"))
         .isInstanceOf(InvalidAddressLengthException.class)
         .hasMessage("Invalid Address length");
+  }
+
+  @Test
+  void thinkThiIsBad() {
+    final FilecoinAddress addr = FilecoinAddress.decode("t0269911794");
+    final Bytes bytes = addr.getEncodedBytes();
   }
 
   private void verifyAddress(

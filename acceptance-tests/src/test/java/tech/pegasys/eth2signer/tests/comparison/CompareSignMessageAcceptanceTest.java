@@ -16,6 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletSignMessage;
 import static tech.pegasys.eth2signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
 
+import io.vertx.core.json.JsonObject;
+import tech.pegasys.eth2signer.core.service.jsonrpc.FcMessageEncoder;
+import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
 
 import java.math.BigInteger;
@@ -41,8 +44,11 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
 
   @Test
   void compareRandomMessageSignaturesBetweenLotusAndEthSigner() {
+    final int signatureCount =
+        Integer.parseInt(System.getenv().getOrDefault("ETH2SIGNER_SIGN_MESSAGE_COUNT", "500"));
+
     final List<CompletableFuture<Void>> futures = Lists.newArrayList();
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < signatureCount; i++) {
       futures.add(CompletableFuture.runAsync(this::testRandomMessage));
     }
     futures.forEach(CompletableFuture::join);
@@ -88,6 +94,10 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
 
   private void testRandomMessage() {
     final Map<String, Object> message = createRandomMessage();
+    testMessage(message);
+  }
+
+  private void testMessage(final Map<String, Object> message) {
     final String jsonRequest;
     try {
       jsonRequest = OBJECT_MAPPER.writeValueAsString(message);
@@ -107,8 +117,44 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
               assertThat(lotusFcSig.getMessage())
                   .isEqualToComparingFieldByField(signerFcSig.getMessage());
               assertThat(lotusFcSig.getSignature())
-                  .overridingErrorMessage("Signature Comparison failed from msg = " + jsonRequest)
+                  .overridingErrorMessage(
+                      "Signature Comparison failed from msg = " + jsonRequest + ". With addr = "
+                          + address)
                   .isEqualToComparingFieldByField(signerFcSig.getSignature());
             });
+  }
+
+
+  @Test
+  public void sendRawJsonMessage() throws JsonProcessingException {
+    final String RAW_MSG =
+        "{\"Nonce\":13117230712907131170,\"Version\":11213758133386406978,\"Value\":\"38164833859141271395520522612114109479178310324742244683413474\",\"Params\":\"G7omY+uWQuG6e/TLkSMzIywhushE/9F89AsXnE0P8dY=\",\"To\":\"t01157483643\",\"From\":\"t0269911794\",\"Method\":11918628191480157653,\"GasPremium\":\"-14648621342499321657422325578978005386855108954434874563422746186085866059298876960050856091161545992097\",\"GasLimit\":5168621066399406165,\"GasFeeCap\":\"16167912050521749707069396536\"}";
+
+    //9223372036854775807
+    //18446744073709551615
+
+    final JsonObject message = new JsonObject(RAW_MSG);
+    final FilecoinMessage fcMsg = OBJECT_MAPPER.readValue(RAW_MSG, FilecoinMessage.class);
+
+    final FcMessageEncoder enc = new FcMessageEncoder();
+    final Bytes b = enc.cborEncode(fcMsg);
+
+    addressMap
+        .keySet()
+        .parallelStream()
+        .forEach(
+            address -> {
+              final FilecoinSignedMessage lotusFcSig =
+                  walletSignMessage(LOTUS_NODE.getJsonRpcClient(), address, fcMsg);
+              final FilecoinSignedMessage signerFcSig =
+                  walletSignMessage(getSignerJsonRpcClient(), address, fcMsg);
+
+              assertThat(lotusFcSig.getMessage())
+                  .isEqualToComparingFieldByField(signerFcSig.getMessage());
+              assertThat(lotusFcSig.getSignature())
+                  .isEqualToComparingFieldByField(signerFcSig.getSignature());
+            });
+
+    //testMessage(message);
   }
 }

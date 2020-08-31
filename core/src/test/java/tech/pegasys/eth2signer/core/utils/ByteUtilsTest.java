@@ -58,7 +58,8 @@ class ByteUtilsTest {
     "1024,8008",
     "1729,c10d",
     "999999,bf843d",
-    "18446744073709551615,ffffffffffffffffff01"
+    "18446744073709551615,ffffffffffffffffff01",
+    "269911794,f28dda8001"
   })
   public void encodesUVariantToBytes(final String input, final String output) {
     assertThat(ByteUtils.putUVariant(new BigInteger(input)).toUnprefixedHexString())
