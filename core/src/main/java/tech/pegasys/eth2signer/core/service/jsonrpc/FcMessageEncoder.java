@@ -43,7 +43,7 @@ public class FcMessageEncoder {
     return createFilecoinCid(encodedHashAndCode);
   }
 
-  public Bytes cborEncode(final FilecoinMessage message) {
+  private Bytes cborEncode(final FilecoinMessage message) {
 
     final CBORFactory cborFactory = new CBORFactory();
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -53,13 +53,9 @@ public class FcMessageEncoder {
       outputStream.write(FILECOIN_MESSAGE_PREFIX);
       encodeUint64Value(message.getVersion(), gen);
       gen.writeBinary(FilecoinAddress.decode(message.getTo()).getEncodedBytes().toArrayUnsafe());
-      gen.flush();
       gen.writeBinary(FilecoinAddress.decode(message.getFrom()).getEncodedBytes().toArrayUnsafe());
-      gen.flush();
       encodeUint64Value(message.getNonce(), gen);
-      gen.flush();
       serialiseBigInteger(message.getValue(), gen);
-      gen.flush();
       gen.writeNumber(message.getGasLimit());
       serialiseBigInteger(message.getGasFeeCap(), gen);
       serialiseBigInteger(message.getGasPremium(), gen);
