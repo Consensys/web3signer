@@ -130,15 +130,12 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
     final String RAW_MSG =
         "{\"Nonce\":13117230712907131170,\"Version\":11213758133386406978,\"Value\":\"38164833859141271395520522612114109479178310324742244683413474\",\"Params\":\"G7omY+uWQuG6e/TLkSMzIywhushE/9F89AsXnE0P8dY=\",\"To\":\"t01157483643\",\"From\":\"t0269911794\",\"Method\":11918628191480157653,\"GasPremium\":\"-14648621342499321657422325578978005386855108954434874563422746186085866059298876960050856091161545992097\",\"GasLimit\":5168621066399406165,\"GasFeeCap\":\"16167912050521749707069396536\"}";
 
-    //9223372036854775807
-    //18446744073709551615
-
-    final JsonObject message = new JsonObject(RAW_MSG);
     final FilecoinMessage fcMsg = OBJECT_MAPPER.readValue(RAW_MSG, FilecoinMessage.class);
+    final Map<String, Object> msgMap = OBJECT_MAPPER.convertValue(fcMsg, Map.class);
 
-    final FcMessageEncoder enc = new FcMessageEncoder();
-    final Bytes b = enc.cborEncode(fcMsg);
+    final String jsonOutput = OBJECT_MAPPER.writeValueAsString(fcMsg);
 
+    /*
     addressMap
         .keySet()
         .parallelStream()
@@ -155,6 +152,6 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
                   .isEqualToComparingFieldByField(signerFcSig.getSignature());
             });
 
-    //testMessage(message);
+     */
   }
 }
