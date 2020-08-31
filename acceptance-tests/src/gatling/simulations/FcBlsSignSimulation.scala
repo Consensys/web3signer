@@ -47,6 +47,7 @@ class FcBlsSignSimulation extends Simulation {
   val constantTxRate = 10
   val burstTxRate = 100
   setUp(signing.inject(
+    nothingFor(10 seconds),
     constantUsersPerSec(constantTxRate) during (60 seconds),
     rampUsersPerSec(burstTxRate) to 0 during (5 seconds),
     constantUsersPerSec(constantTxRate) during (60 seconds),
