@@ -151,6 +151,21 @@ jobs:
       - capture_test_results
       - capture_test_reports
 
+  performanceTests:
+    executor: executor_large
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Performance Tests
+          no_output_timeout: 20m
+          command: |
+            ./gradlew --no-daemon clean installDist
+            ./gradlew --no-daemon gatlingRun
+      - notify
+      - capture_test_reports
+
   buildDocker:
     executor: executor_med
     steps:
@@ -231,6 +246,10 @@ workflows:
       - acceptanceTests:
           requires:
             - build
+      - performanceTests:
+          requires:
+            - build
+            - acceptanceTests
       - buildDocker:
           requires:
             - build
