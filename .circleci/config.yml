@@ -249,7 +249,6 @@ workflows:
       - performanceTests:
           requires:
             - build
-            - acceptanceTests
       - buildDocker:
           requires:
             - build
