@@ -36,7 +36,7 @@ public class FcMessageEncoder {
   private static final byte CID_VERSION = (byte) 1;
   private static final byte DagCBOR_CODEC_ID = (byte) 113;
 
-  final Bytes createFilecoinCid(final FilecoinMessage message) {
+  public Bytes createFilecoinCid(final FilecoinMessage message) {
     final Bytes cborEncodedBytes = cborEncode(message);
     final Bytes messageHash = Blake2b.sum256(cborEncodedBytes);
     final Bytes encodedHashAndCode = encodeHashWithCode(messageHash);
@@ -51,7 +51,7 @@ public class FcMessageEncoder {
       // need to ensure _cfgMinimalInts is set in cborgen ... no idea how.
       final CBORGenerator gen = cborFactory.createGenerator(outputStream);
       outputStream.write(FILECOIN_MESSAGE_PREFIX);
-      gen.writeNumber(message.getVersion());
+      encodeUint64Value(message.getVersion(), gen);
       gen.writeBinary(FilecoinAddress.decode(message.getTo()).getEncodedBytes().toArrayUnsafe());
       gen.writeBinary(FilecoinAddress.decode(message.getFrom()).getEncodedBytes().toArrayUnsafe());
       encodeUint64Value(message.getNonce(), gen);
@@ -79,13 +79,14 @@ public class FcMessageEncoder {
       gen.writeRaw((byte) (PREFIX_TYPE_INT_POS + SUFFIX_UINT64_ELEMENTS));
       final Bytes bytes = Bytes.wrap(bi.toByteArray());
       final int numericBytes = bytes.size() - 1;
+
+      // need to remove leasing 0 if it exists.
       gen.writeBytes(bytes.slice(1, numericBytes).toArrayUnsafe(), 0, numericBytes);
     }
   }
 
   // Roughly corresponds with filecoin:multhash:Encode
   private Bytes encodeHashWithCode(final Bytes hashBytes) {
-
     return Bytes.concatenate(
         ByteUtils.putUVariant(FC_HASHING_ALGO_CODE),
         ByteUtils.putUVariant(BigInteger.valueOf(hashBytes.size())),
@@ -102,11 +103,15 @@ public class FcMessageEncoder {
 
   private void serialiseBigInteger(final BigInteger value, final CBORGenerator gen)
       throws IOException {
-    if (value.equals(BigInteger.ZERO)) {
+    // This ensures BigIntegers are serialised/deserialised as per Filecoin CBOR encoder
+    if (value.signum() == 0) {
       gen.writeBinary(null, new byte[] {0}, 0, 0);
     } else {
-      final byte[] bigIntBytes = value.toByteArray();
-      gen.writeBinary(null, bigIntBytes, 0, bigIntBytes.length);
+      final byte signByte = value.signum() == 1 ? (byte) 0 : (byte) 1;
+      final Bytes magBytes = Bytes.wrap(value.abs().toByteArray());
+      final Bytes bytesToSerialise =
+          Bytes.concatenate(Bytes.wrap(new byte[] {signByte}), magBytes.trimLeadingZeros());
+      gen.writeBinary(null, bytesToSerialise.toArrayUnsafe(), 0, bytesToSerialise.size());
     }
   }
 }

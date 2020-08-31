@@ -65,7 +65,7 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
     setupSigner();
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
-    final ObjectMapper mapper = new ObjectMapper(); // .registerModule(new JsonRpcDecodingModule());
+    final ObjectMapper mapper = new ObjectMapper();
 
     final Map<String, Object> messageMap = new HashMap<>();
     messageMap.put("Version", 9);

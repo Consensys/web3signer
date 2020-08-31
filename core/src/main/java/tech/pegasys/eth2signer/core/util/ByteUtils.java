@@ -55,7 +55,7 @@ public class ByteUtils {
 
     Bytes output = Bytes.wrap();
     BigInteger x = input;
-    while (x.compareTo(highOrderBitValue) > 0) {
+    while (x.compareTo(highOrderBitValue) >= 0) {
       output = Bytes.concatenate(output, Bytes.of((byte) (x.byteValue() | 0x80)));
       x = x.shiftRight(7);
     }
