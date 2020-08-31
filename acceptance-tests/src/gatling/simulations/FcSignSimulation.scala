@@ -5,7 +5,7 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder
-import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerProcessRunner
+import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner
 import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
@@ -16,7 +16,7 @@ class FcSignSimulation extends Simulation {
   private val keyStoreDirectory: Path = Files.createTempDirectory("bls")
   new MetadataFileHelpers().createRandomUnencryptedBlsKeys(keyStoreDirectory, 1000)
 
-  private val runner = new Eth2SignerProcessRunner(new SignerConfigurationBuilder().withKeyStoreDirectory(keyStoreDirectory).build())
+  private val runner = Eth2SignerRunner.createRunner(new SignerConfigurationBuilder().withKeyStoreDirectory(keyStoreDirectory).build())
   runner.start()
   private val port: Int = runner.httpPort()
 
