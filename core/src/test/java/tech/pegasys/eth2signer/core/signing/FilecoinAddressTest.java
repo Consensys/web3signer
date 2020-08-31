@@ -15,7 +15,6 @@ package tech.pegasys.eth2signer.core.signing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinProtocol;
@@ -25,6 +24,7 @@ import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidAddressPa
 import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidFilecoinNetworkException;
 import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.InvalidFilecoinProtocolException;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
@@ -89,13 +89,7 @@ class FilecoinAddressTest {
         .isInstanceOf(InvalidAddressLengthException.class)
         .hasMessage("Invalid Address length");
   }
-
-  @Test
-  void thinkThiIsBad() {
-    final FilecoinAddress addr = FilecoinAddress.decode("t0269911794");
-    final Bytes bytes = addr.getEncodedBytes();
-  }
-
+  
   private void verifyAddress(
       final String address, final String payload, final FilecoinProtocol bls) {
     final FilecoinAddress filecoinAddress = FilecoinAddress.fromString(address);

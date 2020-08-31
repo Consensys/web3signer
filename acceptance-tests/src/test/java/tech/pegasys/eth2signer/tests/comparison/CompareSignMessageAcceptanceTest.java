@@ -16,15 +16,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.walletSignMessage;
 import static tech.pegasys.eth2signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
 
-import io.vertx.core.json.JsonObject;
-import tech.pegasys.eth2signer.core.service.jsonrpc.FcMessageEncoder;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
 
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
@@ -54,26 +50,24 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
     futures.forEach(CompletableFuture::join);
   }
 
-  private Map<String, Object> createRandomMessage() {
+  private FilecoinMessage createRandomMessage() {
     final Random rand = new Random();
 
     final byte[] paramByteArray = new byte[Math.abs(rand.nextInt(Integer.MAX_VALUE)) % 50];
     rand.nextBytes(paramByteArray);
     final Bytes params = Bytes.wrap(paramByteArray);
 
-    final Map<String, Object> messageMap = new HashMap<>();
-    messageMap.put("Version", createRandomUInt64(rand));
-    messageMap.put("To", "t0" + String.format("%d", rand.nextInt(Integer.MAX_VALUE)));
-    messageMap.put("From", "t0" + String.format("%d", rand.nextInt(Integer.MAX_VALUE)));
-    messageMap.put("Nonce", createRandomUInt64(rand));
-    messageMap.put("Value", createRandomBigInt(rand));
-    messageMap.put("GasLimit", rand.nextLong());
-    messageMap.put("GasFeeCap", createRandomBigInt(rand));
-    messageMap.put("GasPremium", createRandomBigInt(rand));
-    messageMap.put("Method", createRandomUInt64(rand));
-    messageMap.put("Params", params);
-
-    return messageMap;
+    return new FilecoinMessage(
+        createRandomUInt64(rand),
+        "t0" + String.format("%d", rand.nextInt(Integer.MAX_VALUE)),
+        "t0" + String.format("%d", rand.nextInt(Integer.MAX_VALUE)),
+        createRandomUInt64(rand),
+        createRandomBigInt(rand),
+        rand.nextLong(),
+        createRandomBigInt(rand),
+        createRandomBigInt(rand),
+        createRandomUInt64(rand),
+        params.toBase64String());
   }
 
   private UInt64 createRandomUInt64(final Random rand) {
@@ -93,11 +87,11 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
   }
 
   private void testRandomMessage() {
-    final Map<String, Object> message = createRandomMessage();
+    final FilecoinMessage message = createRandomMessage();
     testMessage(message);
   }
 
-  private void testMessage(final Map<String, Object> message) {
+  private void testMessage(final FilecoinMessage message) {
     final String jsonRequest;
     try {
       jsonRequest = OBJECT_MAPPER.writeValueAsString(message);
@@ -118,40 +112,19 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
                   .isEqualToComparingFieldByField(signerFcSig.getMessage());
               assertThat(lotusFcSig.getSignature())
                   .overridingErrorMessage(
-                      "Signature Comparison failed from msg = " + jsonRequest + ". With addr = "
+                      "Signature Comparison failed from msg = "
+                          + jsonRequest
+                          + ". With addr = "
                           + address)
                   .isEqualToComparingFieldByField(signerFcSig.getSignature());
             });
   }
 
-
   @Test
   public void sendRawJsonMessage() throws JsonProcessingException {
     final String RAW_MSG =
         "{\"Nonce\":13117230712907131170,\"Version\":11213758133386406978,\"Value\":\"38164833859141271395520522612114109479178310324742244683413474\",\"Params\":\"G7omY+uWQuG6e/TLkSMzIywhushE/9F89AsXnE0P8dY=\",\"To\":\"t01157483643\",\"From\":\"t0269911794\",\"Method\":11918628191480157653,\"GasPremium\":\"-14648621342499321657422325578978005386855108954434874563422746186085866059298876960050856091161545992097\",\"GasLimit\":5168621066399406165,\"GasFeeCap\":\"16167912050521749707069396536\"}";
-
-    final FilecoinMessage fcMsg = OBJECT_MAPPER.readValue(RAW_MSG, FilecoinMessage.class);
-    final Map<String, Object> msgMap = OBJECT_MAPPER.convertValue(fcMsg, Map.class);
-
-    final String jsonOutput = OBJECT_MAPPER.writeValueAsString(fcMsg);
-
-    /*
-    addressMap
-        .keySet()
-        .parallelStream()
-        .forEach(
-            address -> {
-              final FilecoinSignedMessage lotusFcSig =
-                  walletSignMessage(LOTUS_NODE.getJsonRpcClient(), address, fcMsg);
-              final FilecoinSignedMessage signerFcSig =
-                  walletSignMessage(getSignerJsonRpcClient(), address, fcMsg);
-
-              assertThat(lotusFcSig.getMessage())
-                  .isEqualToComparingFieldByField(signerFcSig.getMessage());
-              assertThat(lotusFcSig.getSignature())
-                  .isEqualToComparingFieldByField(signerFcSig.getSignature());
-            });
-
-     */
+    final FilecoinMessage msg = OBJECT_MAPPER.readValue(RAW_MSG, FilecoinMessage.class);
+    testMessage(msg);
   }
 }

@@ -12,14 +12,12 @@
  */
 package tech.pegasys.eth2signer.dsl.lotus;
 
-import io.vertx.core.json.JsonObject;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignature;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.google.common.net.MediaType;
@@ -102,30 +100,15 @@ public class FilecoinJsonRequests {
   }
 
   public static FilecoinSignedMessage walletSignMessage(
-      final JsonRpcClient jsonRpcClient,
-      final String address,
-      final Map<String, Object> messageMap) {
+      final JsonRpcClient jsonRpcClient, final String address, final FilecoinMessage message) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletSignMessage")
         .id(101)
-        .params(address, messageMap)
+        .params(address, message)
         .returnAs(FilecoinSignedMessage.class)
         .execute();
   }
-
-  public static FilecoinSignedMessage walletSignMessage(final JsonRpcClient jsonRpcClient,
-      final String address,
-      final FilecoinMessage object) {
-    return jsonRpcClient
-        .createRequest()
-        .method("Filecoin.WalletSignMessage")
-        .id(101)
-        .params(address, object)
-        .returnAs(FilecoinSignedMessage.class)
-        .execute();
-  }
-
 
   public static String executeRawJsonRpcRequest(final String url, final String request)
       throws IOException {
@@ -133,7 +116,7 @@ public class FilecoinJsonRequests {
     post.setEntity(new StringEntity(request, Charsets.UTF_8));
     post.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
     post.setHeader(
-    "Authorization",
+        "Authorization",
         "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.1ywHr7H6j-4G5OMRJYJgmyE7I02A4gkxm7Ru8qI5EGA");
     try (final CloseableHttpClient httpClient = HttpClients.createDefault();
         final CloseableHttpResponse httpResponse = httpClient.execute(post)) {
