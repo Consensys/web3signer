@@ -20,6 +20,7 @@ import static tech.pegasys.eth2signer.core.signing.KeyType.SECP256K1;
 import tech.pegasys.eth2signer.core.config.ClientAuthConstraints;
 import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
+import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
@@ -76,6 +77,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 public class Runner implements Runnable {
 
@@ -144,14 +146,19 @@ public class Runner implements Runnable {
           new FileCoinArtifactSignerProvider(fcBlsSignerProvider, fcSecpSignerProvider);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
-          createOpenApiRouterFactory(vertx, ethKeyIdentifiers, blsSigner, secpSigner);
+          createOpenApiRouterFactory(
+              vertx, ethKeyIdentifiers, metricsSystem, blsSigner, secpSigner);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
 
       // register non-
       registerOpenApiSpecRoute(router); // serve static openapi spec
       registerJsonRpcRoute(
-          router, ethKeyIdentifiers, fcArtifactSignerProvider, List.of(blsSigner, secpSigner));
+          router,
+          metricsSystem,
+          ethKeyIdentifiers,
+          fcArtifactSignerProvider,
+          List.of(blsSigner, secpSigner));
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -171,6 +178,7 @@ public class Runner implements Runnable {
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
       final Vertx vertx,
       final KeyIdentifiers keyIdentifiers,
+      final MetricsSystem metricsSystem,
       final SignerForIdentifier<BlsArtifactSignature> blsSigner,
       final SignerForIdentifier<SecpArtifactSignature> secpSigner)
       throws InterruptedException, ExecutionException {
@@ -192,10 +200,12 @@ public class Runner implements Runnable {
     // sign handler
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new BlockingHandlerDecorator(new SignForIdentifierHandler(blsSigner), false));
+        new BlockingHandlerDecorator(
+            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls_"), false));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new BlockingHandlerDecorator(new SignForIdentifierHandler(secpSigner), false));
+        new BlockingHandlerDecorator(
+            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp_"), false));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 
@@ -253,6 +263,7 @@ public class Runner implements Runnable {
 
   private void registerJsonRpcRoute(
       final Router router,
+      final MetricsSystem metricsSystem,
       final KeyIdentifiers ethKeyIdentifiers,
       final ArtifactSignerProvider fcSigners,
       final List<SignerForIdentifier<?>> signerForIdentifierList) {
@@ -260,12 +271,23 @@ public class Runner implements Runnable {
     final SigningService signingService =
         new SigningService(ethKeyIdentifiers, signerForIdentifierList);
 
-    final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners);
+    final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, metricsSystem);
     final ObjectMapper mapper = new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
     final JsonRpcServer jsonRpcServer = JsonRpcServer.withMapper(mapper);
 
+    final Counter totalFilecoinRequests =
+        metricsSystem.createCounter(
+            Eth2SignerMetricCategory.FILECOIN,
+            "allFilecoinRequestCount",
+            "Total number of Filecoin requests received");
+
     router
         .post(JSON_RPC_PATH + "/filecoin")
+        .handler(
+            rc -> {
+              totalFilecoinRequests.inc();
+              rc.next();
+            })
         .handler(BodyHandler.create())
         .blockingHandler(
             routingContext -> {

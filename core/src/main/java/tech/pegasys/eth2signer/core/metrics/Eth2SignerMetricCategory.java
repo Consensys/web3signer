@@ -22,7 +22,8 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 public enum Eth2SignerMetricCategory implements MetricCategory {
   HTTP("http"),
-  SIGNING("signing");
+  SIGNING("signing"),
+  FILECOIN("filecoin");
 
   private final String name;
 
