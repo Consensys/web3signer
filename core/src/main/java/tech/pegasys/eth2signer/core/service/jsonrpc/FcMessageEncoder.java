@@ -36,7 +36,7 @@ public class FcMessageEncoder {
   private static final byte CID_VERSION = (byte) 1;
   private static final byte DagCBOR_CODEC_ID = (byte) 113;
 
-  final Bytes createFilecoinCid(final FilecoinMessage message) {
+  public Bytes createFilecoinCid(final FilecoinMessage message) {
     final Bytes cborEncodedBytes = cborEncode(message);
     final Bytes messageHash = Blake2b.sum256(cborEncodedBytes);
     final Bytes encodedHashAndCode = encodeHashWithCode(messageHash);
@@ -55,9 +55,7 @@ public class FcMessageEncoder {
       gen.writeBinary(FilecoinAddress.decode(message.getTo()).getEncodedBytes().toArrayUnsafe());
       gen.writeBinary(FilecoinAddress.decode(message.getFrom()).getEncodedBytes().toArrayUnsafe());
       encodeUint64Value(message.getNonce(), gen);
-      gen.flush();
       serialiseBigInteger(message.getValue(), gen);
-      gen.flush();
       gen.writeNumber(message.getGasLimit());
       serialiseBigInteger(message.getGasFeeCap(), gen);
       serialiseBigInteger(message.getGasPremium(), gen);
