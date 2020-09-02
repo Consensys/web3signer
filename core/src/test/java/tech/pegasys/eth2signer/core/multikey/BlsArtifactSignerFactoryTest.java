@@ -34,6 +34,7 @@ import io.vertx.core.Vertx;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -73,6 +74,7 @@ class BlsArtifactSignerFactoryTest {
   }
 
   @Test
+  @Disabled("keystore contain 48 bytes private key")
   void createsArtifactSignerFromKeyStoreUsingRelativePaths() {
     final Path relativeKeystorePath = Path.of(KEYSTORE_FILE);
     final Path relativePasswordPath = Path.of(PASSWORD_FILE);
@@ -86,6 +88,7 @@ class BlsArtifactSignerFactoryTest {
   }
 
   @Test
+  @Disabled("keystore contain 48 bytes private key")
   void createsArtifactSignerFromKeyStoreUsingAbsolutePaths() {
     final ArtifactSigner artifactSigner =
         artifactSignerFactory.create(

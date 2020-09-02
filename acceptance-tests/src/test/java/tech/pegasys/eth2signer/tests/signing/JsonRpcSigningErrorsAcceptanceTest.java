@@ -24,6 +24,7 @@ import java.nio.file.Path;
 
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -33,7 +34,8 @@ public class JsonRpcSigningErrorsAcceptanceTest extends SigningAcceptanceTestBas
   private static final Bytes DATA = Bytes.wrap("Hello, world!".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-  private static final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
+  private static final BLSSecretKey key =
+      BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 

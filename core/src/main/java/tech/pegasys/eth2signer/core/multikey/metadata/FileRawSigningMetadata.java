@@ -35,6 +35,7 @@ public class FileRawSigningMetadata extends SigningMetadata {
   }
 
   public Bytes getPrivateKeyBytes() {
+    // TODO: Bytes32
     return privateKey;
   }
 }

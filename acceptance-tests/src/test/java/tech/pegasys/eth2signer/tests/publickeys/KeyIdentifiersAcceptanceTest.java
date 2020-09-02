@@ -28,7 +28,7 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import java.nio.file.Path;
 
 import io.restassured.response.Response;
-import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -169,7 +169,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final int keyCount = 10000;
     final String[] publicKeys = new String[keyCount];
     for (int i = 0; i < keyCount; i++) {
-      final Bytes bytes = Bytes.fromHexString(String.format("%064X", i + 1));
+      final Bytes32 bytes = Bytes32.fromHexString(String.format("%064X", i + 1));
       final BLSSecretKey key = BLSSecretKey.fromBytes(bytes);
       final BLSKeyPair keyPair = new BLSKeyPair(key);
       final BLSPublicKey publicKey = keyPair.getPublicKey();

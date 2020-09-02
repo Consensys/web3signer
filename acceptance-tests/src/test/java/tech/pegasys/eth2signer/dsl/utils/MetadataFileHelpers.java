@@ -39,6 +39,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class MetadataFileHelpers {
   private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
@@ -58,7 +59,7 @@ public class MetadataFileHelpers {
 
   public void createKeyStoreYamlFileAt(
       final Path metadataFilePath, final BLSKeyPair keyPair, final KdfFunction kdfFunctionType) {
-    final Bytes privateKeyBytes = keyPair.getSecretKey().getSecretKey().toBytes();
+    final Bytes32 privateKeyBytes = keyPair.getSecretKey().toBytes();
 
     final String password = "password";
 

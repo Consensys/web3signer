@@ -13,20 +13,19 @@
 package tech.pegasys.eth2signer.core.signing.filecoin;
 
 import static tech.pegasys.eth2signer.core.signing.FcBlsArtifactSigner.FC_DST;
-import static tech.pegasys.teku.bls.hashToG2.HashToCurve.hashToG2;
 
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.util.Blake2b;
-import tech.pegasys.teku.bls.mikuli.G2Point;
-import tech.pegasys.teku.bls.mikuli.PublicKey;
-import tech.pegasys.teku.bls.mikuli.Signature;
+import tech.pegasys.teku.bls.BLS;
+import tech.pegasys.teku.bls.BLSPublicKey;
 
 import java.math.BigInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes48;
 import org.web3j.crypto.ECDSASignature;
 import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
@@ -38,10 +37,10 @@ public class FilecoinVerify {
       final FilecoinAddress address,
       final Bytes message,
       final BlsArtifactSignature artifactSignature) {
-    final PublicKey blsPublicKey = PublicKey.fromBytesCompressed(address.getPayload());
-    final Signature signature = artifactSignature.getSignatureData().getSignature();
-    final G2Point hashInGroup2 = new G2Point(hashToG2(message, FC_DST));
-    return signature.verify(blsPublicKey, hashInGroup2);
+    // TODO: Check if its OK to use Bytes48.wrap contruct the public key
+    final BLSPublicKey blsPublicKey =
+        BLSPublicKey.fromBytesCompressed(Bytes48.wrap(address.getPayload()));
+    return BLS.verify(blsPublicKey, message, artifactSignature.getSignatureData(), FC_DST);
   }
 
   public static boolean verify(

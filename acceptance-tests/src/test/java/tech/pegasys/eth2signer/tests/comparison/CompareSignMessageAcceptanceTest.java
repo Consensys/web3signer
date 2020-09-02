@@ -31,7 +31,12 @@ import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 
+@EnabledIfEnvironmentVariables({
+  @EnabledIfEnvironmentVariable(named = "LOTUS_PORT", matches = ".*")
+})
 public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestBase {
 
   @BeforeEach

@@ -35,7 +35,8 @@ class FilecoinVerifyTest {
     final Bytes message = Bytes.fromBase64String(DATA);
 
     final BlsArtifactSignature artifactSignature =
-        new BlsArtifactSignature(BLSSignature.fromBytes(Bytes.fromBase64String(BLS_SIGNATURE)));
+        new BlsArtifactSignature(
+            BLSSignature.fromBytesCompressed(Bytes.fromBase64String(BLS_SIGNATURE)));
     final FilecoinAddress filecoinAddress =
         FilecoinAddress.fromString(
             "t3sjhgtrk5fdio52k5lzanh7yy4mj4rqbiowd6odddzprrxejgbjbl2irr3gmpbf7epigf45oy7asljj3v3lva");
