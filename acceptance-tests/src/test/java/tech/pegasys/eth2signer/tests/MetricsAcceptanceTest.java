@@ -15,13 +15,16 @@ package tech.pegasys.eth2signer.tests;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
+import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
-import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
@@ -36,14 +39,16 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder().withMetricsEnabled(true).build();
     startSigner(signerConfiguration);
 
-    final List<String> metricsOfInterest = List.of(
-        "http_secp_signingCounter", "http_bls_signingCounter",
-        "filecoin_secpSigningRequestCounter",
-        "filecoin_blsSigningRequestCounter",
-        "filecoin_totalRequestCount",
-        "filecoin_walletHasCounter",
-        "filecoin_walletListCounter",
-        "filecoin_walletSignMessageCounter");
+    final List<String> metricsOfInterest =
+        List.of(
+            "http_secp_signingCounter",
+            "http_bls_signingCounter",
+            "filecoin_secpSigningRequestCounter",
+            "filecoin_blsSigningRequestCounter",
+            "filecoin_totalRequestCount",
+            "filecoin_walletHasCounter",
+            "filecoin_walletListCounter",
+            "filecoin_walletSignMessageCounter");
 
     final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
@@ -52,9 +57,8 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     signer.walletHas("t01234");
     Set<String> reportedMetrics = getMetricsMatching(metricsOfInterest);
     reportedMetrics.removeAll(initialMetrics);
-    assertThat(reportedMetrics).containsOnly(
-        "filecoin_totalRequestCount 1.0",
-        "filecoin_walletHasCounter 1.0");
+    assertThat(reportedMetrics)
+        .containsOnly("filecoin_totalRequestCount 1.0", "filecoin_walletHasCounter 1.0");
 
     signer.walletList();
     reportedMetrics = getMetricsMatching(metricsOfInterest);
@@ -76,7 +80,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         Arrays.asList(response.getBody().asString().split(String.format("%n")).clone());
 
     return lines.stream()
-        .filter(line -> metricsOfInterest.contains(line.split(" ")[0]))
+        .filter(line -> metricsOfInterest.contains(Iterables.get(Splitter.on(' ').split(line), 0)))
         .collect(Collectors.toSet());
   }
 }

@@ -12,15 +12,11 @@
  */
 package tech.pegasys.eth2signer.dsl.lotus;
 
-import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinJsonRpcModule;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Lotus is expected to be running outside of acceptance test. It can be executed using following
@@ -35,7 +31,7 @@ public class LotusNode extends FilecoinJsonRpcEndpoint {
   private final String fcUrl;
 
   public LotusNode(final String host, final int port) {
-    super(new ObjectMapper().registerModule(new FilecoinJsonRpcModule()), "/rpc/v0");
+    super("/rpc/v0");
     fcUrl = String.format(FC_URL_FORMAT, host, port);
   }
 

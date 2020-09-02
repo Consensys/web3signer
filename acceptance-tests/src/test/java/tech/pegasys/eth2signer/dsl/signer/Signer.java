@@ -18,14 +18,12 @@ import static tech.pegasys.eth2signer.dsl.tls.TlsClientHelper.createRequestSpeci
 import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.eth2signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
-import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;
 import tech.pegasys.eth2signer.dsl.tls.ClientTlsConfig;
 
 import java.util.Optional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
@@ -42,9 +40,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   private final Optional<ClientTlsConfig> clientTlsConfig;
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
-    super(
-        new ObjectMapper().registerModule(new FilecoinJsonRpcModule()),
-        JSON_RPC_PATH + "/filecoin");
+    super(JSON_RPC_PATH + "/filecoin");
     this.runner = Eth2SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
     this.urlFormatting =

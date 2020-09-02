@@ -12,6 +12,7 @@
  */
 package tech.pegasys.eth2signer.dsl.lotus;
 
+import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignature;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
@@ -31,19 +32,21 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 
 public abstract class FilecoinJsonRpcEndpoint {
 
   public static final int BLS_SIGTYPE = 1;
   public static final int SECP_SIGTYPE = 2;
 
+  private static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
+
   // Cannot create this prior to starting the signer/lotus (And getting the URL)
   private final JsonRpcClient jsonRpcClient;
   private final String rpcPath;
 
-  public FilecoinJsonRpcEndpoint(final ObjectMapper objectMapper, final String rpcPath) {
-    jsonRpcClient = new JsonRpcClient(this::executeRawJsonRpcRequest, objectMapper);
+  public FilecoinJsonRpcEndpoint(final String rpcPath) {
+    jsonRpcClient = new JsonRpcClient(this::executeRawJsonRpcRequest, OBJECT_MAPPER);
     this.rpcPath = rpcPath;
   }
 
@@ -118,7 +121,7 @@ public abstract class FilecoinJsonRpcEndpoint {
         .execute();
   }
 
-  public @NotNull String executeRawJsonRpcRequest(final String request) throws IOException {
+  public String executeRawJsonRpcRequest(final String request) throws IOException {
     final String url = getUrl() + rpcPath;
     final HttpPost post = new HttpPost(url);
     post.setEntity(new StringEntity(request, Charsets.UTF_8));
