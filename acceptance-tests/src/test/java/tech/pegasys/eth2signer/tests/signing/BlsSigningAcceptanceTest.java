@@ -31,6 +31,7 @@ import java.nio.file.Path;
 
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -44,7 +45,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  private static final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
+  private static final BLSSecretKey key =
+      BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), DATA);
@@ -118,12 +120,12 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     // openapi
     final Response response = sign(keyPair.getPublicKey().toString(), DATA);
     final Bytes signature = verifyAndGetSignatureResponse(response);
-    assertThat(signature).isEqualTo(expectedSignature.toBytes());
+    assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
 
     // jsonrpc
     final Response jsonResponse =
         callJsonRpcSign(keyPair.getPublicKey().toString(), DATA.toHexString());
     final Bytes jsonResponseSignature = verifyAndGetJsonRpcSignatureResponse(jsonResponse);
-    assertThat(jsonResponseSignature).isEqualTo(expectedSignature.toBytes());
+    assertThat(jsonResponseSignature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 }

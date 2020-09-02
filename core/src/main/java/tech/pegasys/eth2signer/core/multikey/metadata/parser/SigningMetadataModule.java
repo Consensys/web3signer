@@ -24,16 +24,21 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class SigningMetadataModule extends SimpleModule {
 
   public SigningMetadataModule() {
     super("SigningMetadata");
-    addDeserializer(Bytes.class, new HexStringDeserialiser());
-    addSerializer(Bytes.class, new HexStringSerializer());
+
+    addDeserializer(Bytes32.class, new Bytes32Deserialiser());
+    addSerializer(Bytes32.class, new Bytes32Serializer());
+
+    addDeserializer(Bytes.class, new BytesDeserialiser());
+    addSerializer(Bytes.class, new BytesSerializer());
   }
 
-  public static class HexStringDeserialiser extends JsonDeserializer<Bytes> {
+  public static class BytesDeserialiser extends JsonDeserializer<Bytes> {
 
     @Override
     public Bytes deserialize(final JsonParser p, final DeserializationContext ctxt) {
@@ -45,11 +50,33 @@ public class SigningMetadataModule extends SimpleModule {
     }
   }
 
-  public static class HexStringSerializer extends JsonSerializer<Bytes> {
+  public static class BytesSerializer extends JsonSerializer<Bytes> {
 
     @Override
     public void serialize(
         final Bytes value, final JsonGenerator gen, final SerializerProvider serializers)
+        throws IOException {
+      gen.writeString(value.toString());
+    }
+  }
+
+  public static class Bytes32Deserialiser extends JsonDeserializer<Bytes32> {
+
+    @Override
+    public Bytes32 deserialize(final JsonParser p, final DeserializationContext ctxt) {
+      try {
+        return Bytes32.fromHexString(p.getValueAsString());
+      } catch (final Exception e) {
+        throw new SigningMetadataException("Invalid hex value for private key", e);
+      }
+    }
+  }
+
+  public static class Bytes32Serializer extends JsonSerializer<Bytes32> {
+
+    @Override
+    public void serialize(
+        final Bytes32 value, final JsonGenerator gen, final SerializerProvider serializers)
         throws IOException {
       gen.writeString(value.toString());
     }

@@ -16,14 +16,14 @@ import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.KeyType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class FileRawSigningMetadata extends SigningMetadata {
 
-  private final Bytes privateKey;
+  private final Bytes32 privateKey;
 
   public FileRawSigningMetadata(
-      @JsonProperty(value = "privateKey", required = true) final Bytes privateKey,
+      @JsonProperty(value = "privateKey", required = true) final Bytes32 privateKey,
       @JsonProperty(value = "keyType") final KeyType keyType) {
     super(keyType != null ? keyType : KeyType.BLS);
     this.privateKey = privateKey;
@@ -34,7 +34,7 @@ public class FileRawSigningMetadata extends SigningMetadata {
     return artifactSignerFactory.create(this);
   }
 
-  public Bytes getPrivateKeyBytes() {
+  public Bytes32 getPrivateKeyBytes() {
     return privateKey;
   }
 }

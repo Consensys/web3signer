@@ -19,6 +19,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,7 +34,7 @@ class FcBlsArtifactSignerTest {
   public void setup() {
     final Bytes fcPrivateKey = Bytes.fromBase64String(FC_BLS_PRIVATE_KEY);
     // Filecoin private keys are serialised in little endian so must convert to big endian
-    final Bytes privateKey = fcPrivateKey.reverse();
+    final Bytes32 privateKey = Bytes32.wrap(fcPrivateKey.reverse());
     final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
     fcBlsArtifactSigner = new FcBlsArtifactSigner(keyPair, FilecoinNetwork.TESTNET);
   }
@@ -55,7 +56,7 @@ class FcBlsArtifactSignerTest {
     final BlsArtifactSignature signature =
         fcBlsArtifactSigner.sign(Bytes.fromBase64String(message));
     assertThat(signature).isInstanceOf(BlsArtifactSignature.class);
-    assertThat(signature.getSignatureData().toBytes().toBase64String())
+    assertThat(signature.getSignatureData().toBytesCompressed().toBase64String())
         .isEqualTo(expectedSignature);
   }
 }

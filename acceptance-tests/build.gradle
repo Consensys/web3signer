@@ -28,6 +28,7 @@ dependencies {
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testRuntimeOnly 'org.zeroturnaround:zt-exec'
+  testRuntimeOnly 'tech.pegasys:jblst'
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'

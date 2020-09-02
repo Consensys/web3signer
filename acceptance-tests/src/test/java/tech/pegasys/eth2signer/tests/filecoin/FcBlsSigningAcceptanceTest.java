@@ -41,6 +41,7 @@ import com.github.arteam.simplejsonrpc.core.domain.Request;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
@@ -51,7 +52,8 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  private static final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
+  private static final BLSSecretKey key =
+      BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final FilecoinNetwork network = FilecoinNetwork.TESTNET;
@@ -60,7 +62,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final BlsArtifactSignature expectedSignature =
       signatureGenerator.sign(Bytes.fromBase64String(dataString));
 
-  final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytes());
+  final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
 
   @Test
   void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint() {
@@ -89,6 +91,6 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Map<String, Object> result = response.body().jsonPath().get("result");
     assertThat(result.get("Type")).isEqualTo(2);
     assertThat(result.get("Data"))
-        .isEqualTo(expectedSignature.getSignatureData().toBytes().toBase64String());
+        .isEqualTo(expectedSignature.getSignatureData().toBytesCompressed().toBase64String());
   }
 }
