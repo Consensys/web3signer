@@ -12,8 +12,6 @@
  */
 package tech.pegasys.eth2signer.dsl.lotus;
 
-import static tech.pegasys.eth2signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
-
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignature;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;

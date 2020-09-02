@@ -42,7 +42,9 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   private final Optional<ClientTlsConfig> clientTlsConfig;
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
-    super(new ObjectMapper().registerModule(new FilecoinJsonRpcModule()), JSON_RPC_PATH + "/filecoin");
+    super(
+        new ObjectMapper().registerModule(new FilecoinJsonRpcModule()),
+        JSON_RPC_PATH + "/filecoin");
     this.runner = Eth2SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
     this.urlFormatting =

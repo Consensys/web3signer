@@ -18,7 +18,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.collection.IsIn.in;
 
 import tech.pegasys.eth2signer.core.signing.KeyType;
@@ -103,7 +102,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String[] filecoinAddresses = filecoinAddresses(keyType);
 
     assertThat(signer.walletHas(filecoinAddresses[0])).isEqualTo(true);
-    assertThat(signer.walletHas(filecoinAddresses[1])).isEqualTo(true);
+    assertThat(signer.walletHas(filecoinAddresses[1])).isEqualTo(false);
   }
 
   @ParameterizedTest
