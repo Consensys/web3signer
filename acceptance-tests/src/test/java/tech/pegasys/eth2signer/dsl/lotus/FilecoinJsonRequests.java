@@ -116,8 +116,8 @@ public class FilecoinJsonRequests {
     post.setEntity(new StringEntity(request, Charsets.UTF_8));
     post.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
     final String authToken = System.getenv("ETH2SIGNER_BEARER_TOKEN");
-    if(authToken != null) {
-      post.setHeader("Authorization","Bearer " + authToken);
+    if (authToken != null) {
+      post.setHeader("Authorization", "Bearer " + authToken);
     }
     try (final CloseableHttpClient httpClient = HttpClients.createDefault();
         final CloseableHttpResponse httpResponse = httpClient.execute(post)) {

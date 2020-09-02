@@ -115,7 +115,8 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
                       "Signature Comparison failed from msg = "
                           + jsonRequest
                           + ". With Priv key = ("
-                          + addressMap.get(address).getType().toString() + ") "
+                          + addressMap.get(address).getType().toString()
+                          + ") "
                           + addressMap.get(address).getPrivateKeyHex())
                   .isEqualToComparingFieldByField(signerFcSig.getSignature());
             });
