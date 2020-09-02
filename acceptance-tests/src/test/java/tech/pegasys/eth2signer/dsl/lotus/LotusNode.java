@@ -12,9 +12,6 @@
  */
 package tech.pegasys.eth2signer.dsl.lotus;
 
-import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.BLS_SIGTYPE;
-import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.SECP_SIGTYPE;
-
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 
 import java.util.HashSet;
@@ -24,7 +21,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 
 /**
  * Lotus is expected to be running outside of acceptance test. It can be executed using following
@@ -33,20 +29,14 @@ import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
  * TEXLOTUSDEVNET_BIGSECTORS=false -p 1234:7777 \ -v /tmp/import:/tmp/import textile/lotus-devnet
  * </code>
  */
-public class LotusNode {
-  private static final String FC_URL_FORMAT = "http://%s:%d/rpc/v0";
+public class LotusNode extends FilecoinJsonRpcEndpoint {
+  private static final String FC_URL_FORMAT = "http://%s:%d";
 
   private final String fcUrl;
-  private final JsonRpcClient jsonRpcClient;
-  public static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
 
   public LotusNode(final String host, final int port) {
+    super(new ObjectMapper().registerModule(new FilecoinJsonRpcModule()), "/rpc/v0");
     fcUrl = String.format(FC_URL_FORMAT, host, port);
-    jsonRpcClient =
-        new JsonRpcClient(
-            request -> FilecoinJsonRequests.executeRawJsonRpcRequest(fcUrl, request),
-            OBJECT_MAPPER);
   }
 
   public LotusNode(final int port) {
@@ -57,24 +47,22 @@ public class LotusNode {
     final Set<String> addresses = new HashSet<>();
 
     for (int i = 0; i < blsKeysCount; i++) {
-      final String address = FilecoinJsonRequests.walletNew(jsonRpcClient, BLS_SIGTYPE);
+      final String address = walletNew(BLS_SIGTYPE);
       addresses.add(address);
     }
 
     for (int i = 0; i < secpKeysCount; i++) {
-      final String address = FilecoinJsonRequests.walletNew(jsonRpcClient, SECP_SIGTYPE);
+      final String address = walletNew(SECP_SIGTYPE);
       addresses.add(address);
     }
 
     return addresses
         .parallelStream()
-        .collect(
-            Collectors.toMap(
-                Function.identity(),
-                address -> FilecoinJsonRequests.walletExport(jsonRpcClient, address)));
+        .collect(Collectors.toMap(Function.identity(), address -> walletExport(address)));
   }
 
-  public JsonRpcClient getJsonRpcClient() {
-    return jsonRpcClient;
+  @Override
+  public String getUrl() {
+    return fcUrl;
   }
 }

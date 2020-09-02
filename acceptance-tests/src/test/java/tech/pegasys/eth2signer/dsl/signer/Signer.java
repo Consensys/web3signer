@@ -16,18 +16,22 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.eth2signer.dsl.tls.TlsClientHelper.createRequestSpecification;
 import static tech.pegasys.eth2signer.dsl.utils.WaitUtils.waitFor;
+import static tech.pegasys.eth2signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
+import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinJsonRpcModule;
+import tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner;
 import tech.pegasys.eth2signer.dsl.tls.ClientTlsConfig;
 
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.Vertx;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Signer {
+public class Signer extends FilecoinJsonRpcEndpoint {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -38,6 +42,7 @@ public class Signer {
   private final Optional<ClientTlsConfig> clientTlsConfig;
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
+    super(new ObjectMapper().registerModule(new FilecoinJsonRpcModule()), JSON_RPC_PATH + "/filecoin");
     this.runner = Eth2SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
     this.urlFormatting =
@@ -78,6 +83,7 @@ public class Signer {
     LOG.info("Signer is now responsive");
   }
 
+  @Override
   public String getUrl() {
     return String.format(urlFormatting, hostname, runner.httpPort());
   }

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.dsl.lotus;
 
+import static tech.pegasys.eth2signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
+
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignature;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
@@ -19,6 +21,7 @@ import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
 import java.io.IOException;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.google.common.net.MediaType;
 import org.apache.commons.codec.Charsets;
@@ -30,12 +33,23 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.tuweni.bytes.Bytes;
+import org.jetbrains.annotations.NotNull;
 
-public class FilecoinJsonRequests {
+public abstract class FilecoinJsonRpcEndpoint {
+
   public static final int BLS_SIGTYPE = 1;
   public static final int SECP_SIGTYPE = 2;
 
-  public static String walletNew(final JsonRpcClient jsonRpcClient, int sigType) {
+  // Cannot create this prior to starting the signer/lotus (And getting the URL)
+  private final JsonRpcClient jsonRpcClient;
+  private final String rpcPath;
+
+  public FilecoinJsonRpcEndpoint(final ObjectMapper objectMapper, final String rpcPath) {
+    jsonRpcClient = new JsonRpcClient(this::executeRawJsonRpcRequest, objectMapper);
+    this.rpcPath = rpcPath;
+  }
+
+  public String walletNew(int sigType) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletNew")
@@ -45,7 +59,7 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static FilecoinKey walletExport(final JsonRpcClient jsonRpcClient, final String address) {
+  public FilecoinKey walletExport(final String address) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletExport")
@@ -55,7 +69,7 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static Boolean walletHas(final JsonRpcClient jsonRpcClient, final String address) {
+  public Boolean walletHas(final String address) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletHas")
@@ -65,7 +79,7 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static List<String> walletList(final JsonRpcClient jsonRpcClient) {
+  public List<String> walletList() {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletList")
@@ -74,8 +88,7 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static FilecoinSignature walletSign(
-      final JsonRpcClient jsonRpcClient, final String address, final Bytes data) {
+  public FilecoinSignature walletSign(final String address, final Bytes data) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletSign")
@@ -85,11 +98,8 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static Boolean walletVerify(
-      final JsonRpcClient jsonRpcClient,
-      final String address,
-      final Bytes data,
-      final FilecoinSignature signature) {
+  public Boolean walletVerify(
+      final String address, final Bytes data, final FilecoinSignature signature) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletVerify")
@@ -99,8 +109,8 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static FilecoinSignedMessage walletSignMessage(
-      final JsonRpcClient jsonRpcClient, final String address, final FilecoinMessage message) {
+  public FilecoinSignedMessage walletSignMessage(
+      final String address, final FilecoinMessage message) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletSignMessage")
@@ -110,8 +120,8 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static String executeRawJsonRpcRequest(final String url, final String request)
-      throws IOException {
+  public @NotNull String executeRawJsonRpcRequest(final String request) throws IOException {
+    final String url = getUrl() + rpcPath;
     final HttpPost post = new HttpPost(url);
     post.setEntity(new StringEntity(request, Charsets.UTF_8));
     post.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -120,4 +130,6 @@ public class FilecoinJsonRequests {
       return EntityUtils.toString(httpResponse.getEntity(), Charsets.UTF_8);
     }
   }
+
+  public abstract String getUrl();
 }
