@@ -33,6 +33,7 @@ import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSPublicKey;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,6 +41,7 @@ import java.nio.file.Path;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes48;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -102,8 +104,8 @@ class BlsArtifactSignerFactoryTest {
 
     assertThat(relativeKeystorePath).isRelative();
     assertThat(relativePasswordPath).isRelative();
-    assertThat(artifactSigner.getIdentifier())
-        .isEqualToIgnoringCase(blsKeyPair.getPublicKey().toString());
+    assertThat(artifactSigner.getIdentifier()).startsWith("0x");
+    assertThat(fromIdentifier(artifactSigner.getIdentifier())).isEqualTo(blsKeyPair.getPublicKey());
   }
 
   @Test
@@ -114,8 +116,12 @@ class BlsArtifactSignerFactoryTest {
 
     assertThat(keystoreFile).isAbsolute();
     assertThat(passwordFile).isAbsolute();
-    assertThat(artifactSigner.getIdentifier())
-        .isEqualToIgnoringCase(blsKeyPair.getPublicKey().toString());
+    assertThat(artifactSigner.getIdentifier()).startsWith("0x");
+    assertThat(fromIdentifier(artifactSigner.getIdentifier())).isEqualTo(blsKeyPair.getPublicKey());
+  }
+
+  private BLSPublicKey fromIdentifier(final String identifier) {
+    return BLSPublicKey.fromBytesCompressedValidate(Bytes48.wrap(Bytes.fromHexString(identifier)));
   }
 
   @Test
