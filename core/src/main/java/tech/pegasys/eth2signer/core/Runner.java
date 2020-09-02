@@ -278,7 +278,7 @@ public class Runner implements Runnable {
     final Counter totalFilecoinRequests =
         metricsSystem.createCounter(
             Eth2SignerMetricCategory.FILECOIN,
-            "allFilecoinRequestCount",
+            "totalRequestCount",
             "Total number of Filecoin requests received");
 
     router
