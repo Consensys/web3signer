@@ -109,10 +109,21 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
               final FilecoinSignedMessage signerFcSig =
                   walletSignMessage(getSignerJsonRpcClient(), address, message);
 
+              final String lotusSigJson;
+              final String signerSigJson;
+              try {
+                lotusSigJson = OBJECT_MAPPER.writeValueAsString(lotusFcSig);
+                signerSigJson = OBJECT_MAPPER.writeValueAsString(signerFcSig);
+              } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+              }
+
               assertThat(lotusFcSig.getMessage())
                   .isEqualToComparingFieldByField(signerFcSig.getMessage());
               assertThat(lotusFcSig.getSignature())
-                  .overridingErrorMessage("Signature Comparison failed from msg = " + jsonRequest)
+                  .overridingErrorMessage(
+                      "Signature Comparison failed from msg %s %n. Lotus Signature: %s %n. Signer Signature: %s",
+                      jsonRequest, lotusSigJson, signerSigJson)
                   .isEqualToComparingFieldByField(signerFcSig.getSignature());
             });
   }

@@ -57,8 +57,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
       return signerFactory.apply(
-          new BLSKeyPair(
-              BLSSecretKey.fromBytes(Bytes32.wrap(fileRawSigningMetadata.getPrivateKeyBytes()))));
+          new BLSKeyPair(BLSSecretKey.fromBytes(fileRawSigningMetadata.getPrivateKeyBytes())));
     }
   }
 

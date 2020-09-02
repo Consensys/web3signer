@@ -39,7 +39,6 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -247,7 +246,7 @@ class YamlSignerParserTest {
   private FileRawSigningMetadata hasPrivateKey(final String privateKey) {
     return argThat(
         (FileRawSigningMetadata m) ->
-            m.getPrivateKeyBytes().equals(Bytes.fromHexString(privateKey)));
+            m.getPrivateKeyBytes().equals(Bytes32.fromHexString(privateKey)));
   }
 
   @Test
