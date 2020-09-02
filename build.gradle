@@ -122,13 +122,6 @@ allprojects {
     maven { url  "https://consensys.bintray.com/pegasys-repo" }
   }
 
-  // TODO: Remove before merge. Disable snapshot version caching
-  configurations.all {
-    resolutionStrategy {
-      cacheChangingModulesFor 0, 'seconds'
-    }
-  }
-
   dependencies { errorprone("com.google.errorprone:error_prone_core") }
 
   apply plugin: 'com.diffplug.gradle.spotless'
