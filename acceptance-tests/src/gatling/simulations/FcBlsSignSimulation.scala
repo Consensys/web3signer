@@ -22,6 +22,10 @@ class FcBlsSignSimulation extends Simulation {
   runner.start()
   private val port: Int = runner.httpPort()
 
+  after {
+    runner.shutdown()
+  }
+
   private val httpProtocol = http.baseUrl("http://localhost:" + port)
 
   private val baseUrl: String = "http://localhost:" + port
