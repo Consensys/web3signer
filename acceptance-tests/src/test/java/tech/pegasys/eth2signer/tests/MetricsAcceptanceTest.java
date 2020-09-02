@@ -63,9 +63,9 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     signer.walletList();
     reportedMetrics = getMetricsMatching(metricsOfInterest);
     reportedMetrics.removeAll(initialMetrics);
-    assertThat(reportedMetrics).contains("filecoin_totalRequestCount 2.0");
-    assertThat(reportedMetrics).contains("filecoin_walletHasCounter 1.0");
-    assertThat(reportedMetrics).contains("filecoin_walletListCounter 1.0");
+    assertThat(reportedMetrics)
+        .containsOnly("filecoin_totalRequestCount 2.0", "filecoin_walletHasCounter 1.0",
+            "filecoin_walletListCounter 1.0");
   }
 
   private Set<String> getMetricsMatching(final List<String> metricsOfInterest) {
