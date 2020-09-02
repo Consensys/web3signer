@@ -37,7 +37,6 @@ public class FilecoinVerify {
       final FilecoinAddress address,
       final Bytes message,
       final BlsArtifactSignature artifactSignature) {
-    // TODO: Check if its OK to use Bytes48.wrap contruct the public key
     final BLSPublicKey blsPublicKey =
         BLSPublicKey.fromBytesCompressed(Bytes48.wrap(address.getPayload()));
     return BLS.verify(blsPublicKey, message, artifactSignature.getSignatureData(), FC_DST);
