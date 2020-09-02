@@ -14,6 +14,7 @@ package tech.pegasys.eth2signer.core.multikey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
 import tech.pegasys.eth2signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.eth2signer.core.multikey.metadata.BlsArtifactSignerFactory;
@@ -23,42 +24,60 @@ import tech.pegasys.eth2signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.eth2signer.core.signing.ArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.eth2signer.core.signing.KeyType;
+import tech.pegasys.signers.bls.keystore.KeyStore;
+import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
+import tech.pegasys.signers.bls.keystore.model.Cipher;
+import tech.pegasys.signers.bls.keystore.model.CipherFunction;
+import tech.pegasys.signers.bls.keystore.model.KdfParam;
+import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
+import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.teku.bls.BLSKeyPair;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import com.google.common.io.Resources;
 import io.vertx.core.Vertx;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class BlsArtifactSignerFactoryTest {
+  private static final String PASSWORD = "testpassword";
+  private static final Bytes KEYSTORE_SALT =
+      Bytes.fromHexString("1f2b6d2bac495b05ec65f49e8d9def356b29b65a0b80260a884d6d393073ff7b");
+  private static final String KEYSTORE_FILE_NAME = "keystore.json";
+  private static final String PASSWORD_FILE_NAME = "keystore.password";
+  private static final BLSKeyPair blsKeyPair = BLSKeyPair.random(48);
 
-  private static final String PUBLIC_KEY =
-      "95e57532ede3c1dd879061153f9cfdcdefa9dc5fb9c954a6677bc6641b8d26e39f70b660bbaa732c47277c0096e11400";
-  private static final String KEYSTORE_FILE = "keystore.json";
-  private static final String PASSWORD_FILE = "keystore.password";
-
-  @TempDir Path configDir;
-  private Path keystoreFile;
-  private Path passwordFile;
+  @TempDir static Path configDir;
+  private static Path keystoreFile;
+  private static Path passwordFile;
   private ArtifactSignerFactory artifactSignerFactory;
 
   private Vertx vertx;
 
+  @BeforeAll
+  static void setupKeystoreFiles() throws IOException {
+    keystoreFile = configDir.resolve(KEYSTORE_FILE_NAME);
+    passwordFile = configDir.resolve(PASSWORD_FILE_NAME);
+
+    createKeyStoreFile(
+        keystoreFile,
+        PASSWORD,
+        blsKeyPair.getSecretKey().toBytes(),
+        blsKeyPair.getPublicKey().toBytesCompressed());
+    Files.writeString(passwordFile, "testpassword");
+  }
+
   @BeforeEach
   void setup() throws IOException {
     vertx = Vertx.vertx();
-    keystoreFile = configDir.resolve(KEYSTORE_FILE);
-    passwordFile = configDir.resolve(PASSWORD_FILE);
-    Files.copy(Path.of(Resources.getResource(KEYSTORE_FILE).getPath()), keystoreFile);
-    Files.copy(Path.of(Resources.getResource(PASSWORD_FILE).getPath()), passwordFile);
 
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
@@ -74,21 +93,20 @@ class BlsArtifactSignerFactoryTest {
   }
 
   @Test
-  @Disabled("keystore contain 48 bytes private key")
   void createsArtifactSignerFromKeyStoreUsingRelativePaths() {
-    final Path relativeKeystorePath = Path.of(KEYSTORE_FILE);
-    final Path relativePasswordPath = Path.of(PASSWORD_FILE);
+    final Path relativeKeystorePath = Path.of(KEYSTORE_FILE_NAME);
+    final Path relativePasswordPath = Path.of(PASSWORD_FILE_NAME);
     final ArtifactSigner artifactSigner =
         artifactSignerFactory.create(
             new FileKeyStoreMetadata(relativeKeystorePath, relativePasswordPath, KeyType.BLS));
 
     assertThat(relativeKeystorePath).isRelative();
     assertThat(relativePasswordPath).isRelative();
-    assertThat(artifactSigner.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    assertThat(artifactSigner.getIdentifier())
+        .isEqualToIgnoringCase(blsKeyPair.getPublicKey().toString());
   }
 
   @Test
-  @Disabled("keystore contain 48 bytes private key")
   void createsArtifactSignerFromKeyStoreUsingAbsolutePaths() {
     final ArtifactSigner artifactSigner =
         artifactSignerFactory.create(
@@ -96,7 +114,8 @@ class BlsArtifactSignerFactoryTest {
 
     assertThat(keystoreFile).isAbsolute();
     assertThat(passwordFile).isAbsolute();
-    assertThat(artifactSigner.getIdentifier()).isEqualTo("0x" + PUBLIC_KEY);
+    assertThat(artifactSigner.getIdentifier())
+        .isEqualToIgnoringCase(blsKeyPair.getPublicKey().toString());
   }
 
   @Test
@@ -162,5 +181,23 @@ class BlsArtifactSignerFactoryTest {
     assertThatThrownBy(() -> artifactSignerFactory.create(metaData))
         .isInstanceOf(SigningMetadataException.class)
         .hasMessage("Failed to fetch secret from hashicorp vault");
+  }
+
+  private static void createKeyStoreFile(
+      final Path keyStoreFilePath,
+      final String password,
+      final Bytes privateKey,
+      final Bytes publicKey) {
+    final KdfParam kdfParam = new SCryptParam(32, KEYSTORE_SALT);
+    final Cipher cipher =
+        new Cipher(
+            CipherFunction.AES_128_CTR, Bytes.fromHexString("e0f20a27d160f7cc92764579390e881a"));
+    final KeyStoreData keyStoreData =
+        KeyStore.encrypt(privateKey, publicKey, password, "", kdfParam, cipher);
+    try {
+      KeyStoreLoader.saveToFile(keyStoreFilePath, keyStoreData);
+    } catch (IOException e) {
+      fail("Unable to create keystore file", e);
+    }
   }
 }
