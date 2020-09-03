@@ -56,9 +56,14 @@ public class Eth2SignerProcessRunner extends Eth2SignerRunner {
     final String[] paramsAsArray = params.toArray(new String[0]);
     final List<String> paramsWithCmd = Lists.asList(executableLocation(), paramsAsArray);
 
+    final String userDir = System.getProperty("user.dir");
+    // For gatling the pwd is actually the eth2signer directory for other tasks this a lower dir
+    final File eth2SignerDirectory =
+        userDir.endsWith("eth2signer") ? new File(userDir) : new File(userDir).getParentFile();
+
     final ProcessBuilder processBuilder =
         new ProcessBuilder(paramsWithCmd)
-            .directory(new File(System.getProperty("user.dir")).getParentFile())
+            .directory(eth2SignerDirectory)
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
 

@@ -12,10 +12,9 @@
  */
 package tech.pegasys.eth2signer.tests.comparison;
 
-import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.executeRawJsonRpcRequest;
+import static tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests.createJsonRpcClient;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinKeyType.BLS;
 import static tech.pegasys.eth2signer.dsl.lotus.FilecoinKeyType.SECP256K1;
-import static tech.pegasys.eth2signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
 
 import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.dsl.lotus.FilecoinKey;
@@ -68,8 +67,7 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   protected JsonRpcClient getSignerJsonRpcClient() {
-    return new JsonRpcClient(
-        request -> executeRawJsonRpcRequest(signer.getUrl() + FC_RPC_PATH, request), OBJECT_MAPPER);
+    return createJsonRpcClient(signer.getUrl() + FC_RPC_PATH);
   }
 
   private void initSignerKeystoreDirectory() {

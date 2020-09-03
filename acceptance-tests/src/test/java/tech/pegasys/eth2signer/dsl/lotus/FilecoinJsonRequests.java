@@ -12,6 +12,8 @@
  */
 package tech.pegasys.eth2signer.dsl.lotus;
 
+import static tech.pegasys.eth2signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
+
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignature;
 import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
@@ -39,6 +41,10 @@ public class FilecoinJsonRequests {
   // This is required to be set if operating against a full Lotus node (as opposed to dev-lotus).
   private static final Optional<String> authToken =
       Optional.ofNullable(System.getenv("ETH2SIGNER_BEARER_TOKEN"));
+
+  public static JsonRpcClient createJsonRpcClient(final String baseUrl) {
+    return new JsonRpcClient(request -> executeRawJsonRpcRequest(baseUrl, request), OBJECT_MAPPER);
+  }
 
   public static String walletNew(final JsonRpcClient jsonRpcClient, int sigType) {
     return jsonRpcClient
