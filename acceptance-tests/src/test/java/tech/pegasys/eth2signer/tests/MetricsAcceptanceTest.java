@@ -15,7 +15,6 @@ package tech.pegasys.eth2signer.tests;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 
@@ -28,6 +27,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 public class MetricsAcceptanceTest extends AcceptanceTestBase {
@@ -42,14 +42,14 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final List<String> metricsOfInterest =
         List.of(
-            "http_secp_signingCounter",
-            "http_bls_signingCounter",
-            "filecoin_secpSigningRequestCounter",
-            "filecoin_blsSigningRequestCounter",
-            "filecoin_totalRequestCount",
-            "filecoin_walletHasCounter",
-            "filecoin_walletListCounter",
-            "filecoin_walletSignMessageCounter");
+            "signing_secp_signing_duration_count",
+            "signing_bls_signing_duration_count",
+            "filecoin_secp_signing_request_count",
+            "filecoin_bls_signing_request_count",
+            "filecoin_total_request_count",
+            "filecoin_wallet_has_count",
+            "filecoin_wallet_list_count",
+            "filecoin_wallet_sign_message_count");
 
     final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
@@ -59,27 +59,25 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     final Set<String> metricsAfterWalletHas = getMetricsMatching(metricsOfInterest);
     metricsAfterWalletHas.removeAll(initialMetrics);
     assertThat(metricsAfterWalletHas)
-        .containsOnly("filecoin_totalRequestCount 1.0", "filecoin_walletHasCounter 1.0");
+        .containsOnly("filecoin_total_request_count 1.0", "filecoin_wallet_has_count 1.0");
 
     signer.walletList();
     final Set<String> metricsAfterWalletList = getMetricsMatching(metricsOfInterest);
     metricsAfterWalletList.removeAll(initialMetrics);
     metricsAfterWalletList.removeAll(metricsAfterWalletHas);
     assertThat(metricsAfterWalletList)
-        .containsOnly(
-            "filecoin_totalRequestCount 2.0",
-            "filecoin_walletListCounter 1.0");
+        .containsOnly("filecoin_total_request_count 2.0", "filecoin_wallet_list_count 1.0");
 
     try {
       signer.walletSign("t01234", Bytes.fromHexString("0x1234"));
-    } catch(final Exception e) {
-      //it is known that the signing will fail.
+    } catch (final Exception e) {
+      // it is known that the signing will fail.
     }
     final Set<String> metricsAfterWalletSign = getMetricsMatching(metricsOfInterest);
     metricsAfterWalletSign.removeAll(initialMetrics);
     metricsAfterWalletSign.removeAll(metricsAfterWalletList);
     metricsAfterWalletSign.removeAll(metricsAfterWalletHas);
-    assertThat(metricsAfterWalletSign).containsOnly("filecoin_totalRequestCount 3.0");
+    assertThat(metricsAfterWalletSign).containsOnly("filecoin_total_request_count 3.0");
   }
 
   private Set<String> getMetricsMatching(final List<String> metricsOfInterest) {

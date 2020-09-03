@@ -22,7 +22,6 @@ import tech.pegasys.eth2signer.core.config.Config;
 import tech.pegasys.eth2signer.core.config.TlsOptions;
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.metrics.MetricsEndpoint;
-import tech.pegasys.eth2signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.eth2signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.eth2signer.core.service.http.handlers.LogErrorHandler;
@@ -59,13 +58,11 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
@@ -117,15 +114,16 @@ public class Runner implements Runnable {
             config.getMetricsHostAllowList());
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
-    final MetricsOptions metricsOptions =
-        new MetricsOptions()
-            .setEnabled(true)
-            .setFactory(new VertxMetricsAdapterFactory(metricsSystem));
-    final VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
-    final Vertx vertx = Vertx.vertx(vertxOptions);
+    final Vertx vertx = Vertx.vertx();
 
     try {
       metricsEndpoint.start(vertx);
+
+      final Counter signersLoaded =
+          metricsSystem.createCounter(
+              Eth2SignerMetricCategory.SIGNING,
+              "signers_loaded_count",
+              "Number of keys loaded (combining SECP256k1 and BLS12-381");
 
       final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
 
@@ -133,6 +131,10 @@ public class Runner implements Runnable {
       final ArtifactSignerProvider ethSecpSignerProvider = signers.getEthSignerProvider();
       final ArtifactSignerProvider fcSecpSignerProvider = signers.getFcSecpSignerProvider();
       final ArtifactSignerProvider fcBlsSignerProvider = signers.getFcBlsSignerProvider();
+
+      signersLoaded.inc(
+          blsSignerProvider.availableIdentifiers().size()
+              + ethSecpSignerProvider.availableIdentifiers().size());
 
       final KeyIdentifiers ethKeyIdentifiers =
           new KeyIdentifiers(blsSignerProvider, ethSecpSignerProvider);
@@ -201,11 +203,11 @@ public class Runner implements Runnable {
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls_"), false));
+            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls"), false));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp_"), false));
+            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp"), false));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 
@@ -278,8 +280,14 @@ public class Runner implements Runnable {
     final Counter totalFilecoinRequests =
         metricsSystem.createCounter(
             Eth2SignerMetricCategory.FILECOIN,
-            "totalRequestCount",
+            "total_request_count",
             "Total number of Filecoin requests received");
+
+    final Counter totalEthereumJsonRpcRequests =
+        metricsSystem.createCounter(
+            Eth2SignerMetricCategory.HTTP,
+            "total_json_rpc_request_count",
+            "Total number of Json RPC requests received");
 
     router
         .post(JSON_RPC_PATH + "/filecoin")
@@ -299,6 +307,11 @@ public class Runner implements Runnable {
 
     router
         .post(JSON_RPC_PATH)
+        .handler(
+            rc -> {
+              totalEthereumJsonRpcRequests.inc();
+              rc.next();
+            })
         .handler(BodyHandler.create())
         .blockingHandler(
             routingContext -> {

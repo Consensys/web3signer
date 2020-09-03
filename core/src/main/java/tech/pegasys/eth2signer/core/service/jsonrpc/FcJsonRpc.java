@@ -36,53 +36,63 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 @JsonRpcService
 public class FcJsonRpc {
+
   public static final int SECP_VALUE = 1;
   public static final int BLS_VALUE = 2;
 
   private static final Logger LOG = LogManager.getLogger();
 
   private final ArtifactSignerProvider fcSigners;
-  private final Counter secpSigningRequests;
-  private final Counter blsSigningRequests;
-  private final Counter wallestListRequests;
-  private final Counter wallestHasRequests;
-  private final Counter walletSignMessageRequests;
+  private final Counter secpSigningRequestCounter;
+  private final Counter blsSigningRequestCounter;
+  private final Counter wallestListRequestCounter;
+  private final Counter wallestHasRequestCounter;
+  private final Counter walletSignMessageRequestCounter;
+  private final LabelledMetric<OperationTimer> signingTimer;
 
   public FcJsonRpc(final ArtifactSignerProvider fcSigners, final MetricsSystem metricsSystem) {
     this.fcSigners = fcSigners;
-    this.secpSigningRequests =
+    this.secpSigningRequestCounter =
         metricsSystem.createCounter(
             Eth2SignerMetricCategory.FILECOIN,
-            "secpSigningRequestCounter",
+            "secp_signing_request_count",
             "Number of signing requests made for SECP256k1 keys");
-    this.blsSigningRequests =
+    this.blsSigningRequestCounter =
         metricsSystem.createCounter(
             Eth2SignerMetricCategory.FILECOIN,
-            "blsSigningRequestCounter",
+            "bls_signing_request_count",
             "Number of signing requests made for BLS keys");
-    this.wallestListRequests =
+    this.wallestListRequestCounter =
         metricsSystem.createCounter(
             Eth2SignerMetricCategory.FILECOIN,
-            "walletListCounter",
+            "wallet_list_count",
             "Number of times a Filecoin.WalletList request has been received");
-    this.wallestHasRequests =
+    this.wallestHasRequestCounter =
         metricsSystem.createCounter(
             Eth2SignerMetricCategory.FILECOIN,
-            "walletHasCounter",
+            "wallet_has_count",
             "Number of times a Filecoin.WalletHas request has been received");
-    this.walletSignMessageRequests =
+    this.walletSignMessageRequestCounter =
         metricsSystem.createCounter(
             Eth2SignerMetricCategory.FILECOIN,
-            "walletSignMessageCounter",
+            "wallet_sign_message_count",
             "Number of times a Filecoin.WalletSignMessage request has been received");
+
+    this.signingTimer =
+        metricsSystem.createLabelledTimer(
+            Eth2SignerMetricCategory.FILECOIN,
+            "wallet_sign_timer",
+            "The duration for a signing operation");
   }
 
   @JsonRpcMethod("Filecoin.WalletList")
   public Set<String> filecoinWalletList() {
-    wallestListRequests.inc();
+    wallestListRequestCounter.inc();
     return fcSigners.availableIdentifiers();
   }
 
@@ -101,25 +111,28 @@ public class FcJsonRpc {
       throw new FilecoinSignerNotFoundException();
     }
 
-    switch (signature.getType()) {
-      case SECP256K1:
-        secpSigningRequests.inc();
-        final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
-        return new FilecoinSignature(
-            SECP_VALUE, SecpArtifactSignature.toBytes(secpSig).toBase64String());
-      case BLS:
-        blsSigningRequests.inc();
-        final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
-        return new FilecoinSignature(
-            BLS_VALUE, blsSig.getSignatureData().toBytes().toBase64String());
-      default:
-        throw new IllegalArgumentException("Invalid Signature type created.");
+    try (final OperationTimer.TimingContext ignored =
+        signingTimer.labels(signature.getType().name()).startTimer()) {
+      switch (signature.getType()) {
+        case SECP256K1:
+          secpSigningRequestCounter.inc();
+          final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
+          return new FilecoinSignature(
+              SECP_VALUE, SecpArtifactSignature.toBytes(secpSig).toBase64String());
+        case BLS:
+          blsSigningRequestCounter.inc();
+          final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
+          return new FilecoinSignature(
+              BLS_VALUE, blsSig.getSignatureData().toBytes().toBase64String());
+        default:
+          throw new IllegalArgumentException("Invalid Signature type created.");
+      }
     }
   }
 
   @JsonRpcMethod("Filecoin.WalletHas")
   public boolean filecoinWalletHas(@JsonRpcParam("address") final String address) {
-    wallestHasRequests.inc();
+    wallestHasRequestCounter.inc();
     return fcSigners.availableIdentifiers().contains(address);
   }
 
@@ -127,7 +140,7 @@ public class FcJsonRpc {
   public FilecoinSignedMessage filecoinSignMessage(
       @JsonRpcParam("identifier") final String identifier,
       @JsonRpcParam("message") final FilecoinMessage message) {
-    walletSignMessageRequests.inc();
+    walletSignMessageRequestCounter.inc();
     final FcMessageEncoder encoder = new FcMessageEncoder();
     final Bytes fcCid = encoder.createFilecoinCid(message);
 
