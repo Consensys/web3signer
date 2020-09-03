@@ -35,7 +35,7 @@ public class SwaggerUIAcceptanceTest extends AcceptanceTestBase {
         .then()
         .assertThat()
         .statusCode(200)
-        .body(StringContains.containsString("<title>web3signer Service OpenApi</title>"));
+        .body(StringContains.containsString("<title>Web3Signer Service OpenApi</title>"));
   }
 
   @Test
@@ -50,7 +50,7 @@ public class SwaggerUIAcceptanceTest extends AcceptanceTestBase {
         .then()
         .assertThat()
         .statusCode(200)
-        .body(StringContains.containsString("<title>web3signer Service OpenApi</title>"));
+        .body(StringContains.containsString("<title>Web3Signer Service OpenApi</title>"));
   }
 
   @Test

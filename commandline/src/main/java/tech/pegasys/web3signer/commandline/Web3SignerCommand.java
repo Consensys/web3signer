@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -50,7 +50,7 @@ import picocli.CommandLine.TypeConversionException;
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
 @Command(
     description =
-        "This command runs the web3signer.\n"
+        "This command runs the Web3Signer.\n"
             + "Documentation can be found at https://docs.web3signer.pegasys.tech.",
     abbreviateSynopsis = true,
     name = "web3signer",
@@ -63,7 +63,7 @@ import picocli.CommandLine.TypeConversionException;
     optionListHeading = "%nOptions:%n",
     footerHeading = "%n",
     subcommands = {HelpCommand.class},
-    footer = "web3signer is licensed under the Apache License 2.0")
+    footer = "Web3Signer is licensed under the Apache License 2.0")
 public class Web3SignerCommand implements Config, Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
@@ -146,7 +146,7 @@ public class Web3SignerCommand implements Config, Runnable {
       arity = "1..*",
       description =
           "Comma separated list of categories to track metrics for (default: ${DEFAULT-VALUE}),",
-      converter = web3signerMetricCategoryConverter.class)
+      converter = Web3signerMetricCategoryConverter.class)
   private final Set<MetricCategory> metricCategories = DEFAULT_METRIC_CATEGORIES;
 
   @Option(
@@ -273,9 +273,9 @@ public class Web3SignerCommand implements Config, Runnable {
     runner.run();
   }
 
-  public static class web3signerMetricCategoryConverter extends MetricCategoryConverter {
+  public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {
 
-    public web3signerMetricCategoryConverter() {
+    public Web3signerMetricCategoryConverter() {
       addCategories(Web3SignerMetricCategory.class);
       addCategories(StandardMetricCategory.class);
     }

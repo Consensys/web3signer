@@ -15,7 +15,7 @@ ARG BUILD_DATE
 ARG VCS_REF
 ARG VERSION
 LABEL org.label-schema.build-date=$BUILD_DATE \
-      org.label-schema.name="web3signer" \
+      org.label-schema.name="Web3Signer" \
       org.label-schema.description="Ethereum2 artefact signing application" \
       org.label-schema.url="https://docs.web3signer.pegasys.tech/" \
       org.label-schema.vcs-ref=$VCS_REF \

@@ -46,7 +46,7 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
   @Test
   void compareRandomMessageSignaturesBetweenLotusAndEthSigner() {
     final int signatureCount =
-        Integer.parseInt(System.getenv().getOrDefault("web3signer_SIGN_MESSAGE_COUNT", "500"));
+        Integer.parseInt(System.getenv().getOrDefault("WEB3SIGNER_SIGN_MESSAGE_COUNT", "500"));
 
     final List<CompletableFuture<Void>> futures = Lists.newArrayList();
     for (int i = 0; i < signatureCount; i++) {

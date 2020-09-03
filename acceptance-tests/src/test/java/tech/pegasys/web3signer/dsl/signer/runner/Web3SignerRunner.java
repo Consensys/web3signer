@@ -51,13 +51,13 @@ public abstract class Web3SignerRunner {
   private static final String METRICS_PORT_KEY = "metrics-port";
 
   public static Web3SignerRunner createRunner(final SignerConfiguration signerConfig) {
-    //    if (Boolean.getBoolean("acctests.runweb3signerAsProcess")) {
-    LOG.info("web3signer running as a process.");
-    return new Web3SignerProcessRunner(signerConfig);
-    //    } else {
-    //      LOG.info("web3signer running in a thread.");
-    //      return new Web3SignerThreadRunner(signerConfig);
-    //    }
+    if (Boolean.getBoolean("acctests.runWeb3SignerAsProcess")) {
+      LOG.info("web3signer running as a process.");
+      return new Web3SignerProcessRunner(signerConfig);
+    } else {
+      LOG.info("web3signer running in a thread.");
+      return new Web3SignerThreadRunner(signerConfig);
+    }
   }
 
   public Web3SignerRunner(final SignerConfiguration signerConfig) {

@@ -4,7 +4,7 @@ An application able to sign Eth2 artefacts (attestations and blocks) using BLS12
 
 ## Issues
 
-web3signer issues are tracked in GitHub.
+Web3Signer issues are tracked in GitHub.
 
 See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching and creating issues.
 

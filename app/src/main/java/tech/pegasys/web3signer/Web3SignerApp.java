@@ -27,7 +27,7 @@ public class Web3SignerApp {
   private static final Logger LOG = LogManager.getLogger();
 
   public static void main(final String... args) {
-    LOG.info("web3signer has started with args " + String.join(",", args));
+    LOG.info("Web3Signer has started with args " + String.join(",", args));
 
     final Web3SignerCommand command = new Web3SignerCommand();
     final PrintWriter outputWriter = new PrintWriter(System.out, true, UTF_8);

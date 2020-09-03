@@ -38,7 +38,7 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 
-/** Yaml Configuration which is specifically written for web3signerCommand. */
+/** Yaml Configuration which is specifically written for Web3SignerCommand. */
 public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
 
   private final CommandLine commandLine;

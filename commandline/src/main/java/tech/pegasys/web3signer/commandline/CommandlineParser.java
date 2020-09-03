@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright 2019 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -130,7 +130,7 @@ public class CommandlineParser {
       final CommandLine commandLine,
       final CommandLine.ParseResult parseResult) {
     if (ex instanceof InitializationException) {
-      errorWriter.println("Failed to initialize web3signer");
+      errorWriter.println("Failed to initialize Web3Signer");
       errorWriter.println("Cause: " + ex.getMessage());
     }
     commandLine.usage(outputWriter);

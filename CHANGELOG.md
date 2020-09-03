@@ -2,7 +2,7 @@
 
 ## 0.1.0
 
-Initial release of web3signer
+Initial release of Eth2Signer
 
 ### Features Added
 - Signing of data using a BLS key. Supports BLS private keys in unencrypted files, BLS12-381 keystore files and keys in Hashicorp 

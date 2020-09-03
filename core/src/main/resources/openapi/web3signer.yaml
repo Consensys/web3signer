@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: 'web3signer'
+  title: 'Web3Signer'
   description: 'Sign Eth2 Artifacts'
   version: '@VERSION@'
   license:
@@ -55,14 +55,14 @@ paths:
         '400':
           description: 'Bad request format'
         '500':
-          description: 'Internal web3signer server error'
+          description: 'Internal Web3Signer server error'
 
   /signer/publicKeys/{keyType}:
     get:
       tags:
         - 'Public Key'
       summary: 'List of available Public Keys'
-      description: 'Returns the public keys for the private keys that have been loaded into web3signer'
+      description: 'Returns the public keys for the private keys that have been loaded into Web3Signer'
       operationId: 'getPublicKeys'
       parameters:
         - name: 'keyType'
@@ -86,14 +86,14 @@ paths:
         '400':
           description: 'Bad request format'
         '500':
-          description: 'Internal web3signer server error'
+          description: 'Internal Web3Signer server error'
 
   /upcheck:
     get:
       tags:
         - 'Server Status'
       summary: 'Server Status'
-      description: 'web3signer server status'
+      description: 'Web3Signer server status'
       operationId: 'upcheck'
       responses:
         '200':
@@ -104,8 +104,8 @@ paths:
                 type: string
               example: 'OK'
         '500':
-          description: 'Internal web3signer server error'
+          description: 'Internal Web3Signer server error'
 
 externalDocs:
-  description: 'web3signer User Documentation'
+  description: 'Web3Signer User Documentation'
   url: 'https://doc.web3signer.pegasys.tech/'

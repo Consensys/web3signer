@@ -40,7 +40,7 @@ public class FilecoinJsonRequests {
 
   // This is required to be set if operating against a full Lotus node (as opposed to dev-lotus).
   private static final Optional<String> authToken =
-      Optional.ofNullable(System.getenv("web3signer_BEARER_TOKEN"));
+      Optional.ofNullable(System.getenv("WEB3SIGNER_BEARER_TOKEN"));
 
   public static JsonRpcClient createJsonRpcClient(final String baseUrl) {
     return new JsonRpcClient(request -> executeRawJsonRpcRequest(baseUrl, request), OBJECT_MAPPER);

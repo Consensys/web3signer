@@ -1,12 +1,12 @@
 # web3signer OpenAPI Spec Publish
 
-This directory contains NodeJS project which publishes web3signer OpenAPI specifications to 
+This directory contains NodeJS project which publishes Web3Signer OpenAPI specifications to 
 [`gh-pages`](https://github.com/PegaSysEng/web3signer/tree/gh-pages) branch via CI job after build and acceptanceTests. 
 See `publishOpenApiSpec` job in `.circleci/config.yml`.
 
 ## Prerequisite 
 The script assumes that the `gradle build` (from the root directory) has already been executed which prepares the 
-web3signer spec at `core/build/resources/main/openapi/web3signer.yaml` (refered as `spec` in this document). 
+Web3Signer spec at `core/build/resources/main/openapi/web3signer.yaml` (refered as `spec` in this document). 
 
 ## Procedure
 The script performs following tasks:

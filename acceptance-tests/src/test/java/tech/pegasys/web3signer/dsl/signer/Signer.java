@@ -47,14 +47,14 @@ public class Signer {
   }
 
   public void start() {
-    LOG.info("Starting web3signer");
+    LOG.info("Starting Web3Signer");
     runner.start();
     final String httpUrl = getUrl();
     LOG.info("Http requests being submitted to : {} ", httpUrl);
   }
 
   public void shutdown() {
-    LOG.info("Shutting down web3signer");
+    LOG.info("Shutting down Web3Signer");
     vertx.close();
     runner.shutdown();
   }

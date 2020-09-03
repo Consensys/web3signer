@@ -30,7 +30,7 @@ plugins {
 }
 
 if (!JavaVersion.current().java11Compatible) {
-  throw new GradleException("Java 11 or later is required to build web3signer.\n" +
+  throw new GradleException("Java 11 or later is required to build Web3Signer.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -335,7 +335,7 @@ subprojects {
 
   task integrationTest(type: Test, dependsOn:["compileTestJava"]){
     group = "verification"
-    description = "Runs the web3signer integration tests"
+    description = "Runs the Web3Signer integration tests"
 
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
@@ -383,7 +383,7 @@ applicationDefaultJvmArgs = [
 run {
   args project.hasProperty("web3signer.run.args") ? project.property("web3signer.run.args").toString().split("\\s+") : []
   doFirst {
-    applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect{it.replace('web3signer_HOME', "$buildDir/web3signer")}
+    applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect{it.replace('WEB3SIGNER_HOME', "$buildDir/web3signer")}
   }
 }
 
@@ -394,8 +394,8 @@ startScripts {
   }
 
   doLast {
-    unixScript.text = unixScript.text.replace('web3signer_HOME', '\$APP_HOME')
-    windowsScript.text = windowsScript.text.replace('web3signer_HOME', '%~dp0..')
+    unixScript.text = unixScript.text.replace('WEB3SIGNER_HOME', '\$APP_HOME')
+    windowsScript.text = windowsScript.text.replace('WEB3SIGNER_HOME', '%~dp0..')
 
     // Prevent the error originating from the 8191 chars limit on Windows
     windowsScript.text =

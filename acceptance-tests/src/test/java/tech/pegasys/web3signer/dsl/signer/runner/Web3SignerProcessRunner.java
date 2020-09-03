@@ -58,12 +58,14 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
 
     final String userDir = System.getProperty("user.dir");
     // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
-    final File web3signerDirectory =
-        userDir.endsWith("web3signer") ? new File(userDir) : new File(userDir).getParentFile();
+    final File web3SignerDirectory =
+        userDir.toLowerCase().endsWith("web3signer")
+            ? new File(userDir)
+            : new File(userDir).getParentFile();
 
     final ProcessBuilder processBuilder =
         new ProcessBuilder(paramsWithCmd)
-            .directory(web3signerDirectory)
+            .directory(web3SignerDirectory)
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
 
@@ -79,7 +81,7 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
       outputProcessorExecutor.submit(this::printOutput);
     } catch (final IOException e) {
       LOG.error("Error starting Web3Signer process", e);
-      throw new UncheckedIOException("Failed to start the Ethsigner process", e);
+      throw new UncheckedIOException("Failed to start the Web3Signer process", e);
     }
   }
 
@@ -105,7 +107,7 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
       String line = in.readLine();
       while (line != null) {
-        PROCESS_LOG.info("web3signerProc: {}", line);
+        PROCESS_LOG.info("Web3SignerProc: {}", line);
         line = in.readLine();
       }
     } catch (final IOException e) {

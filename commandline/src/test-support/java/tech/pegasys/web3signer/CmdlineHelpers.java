@@ -33,13 +33,13 @@ public class CmdlineHelpers {
 
   public static Map<String, String> validBaseEnvironmentVariableOptions() {
     return Map.of(
-        "web3signer_HTTP_LISTEN_PORT",
+        "WEB3SIGNER_HTTP_LISTEN_PORT",
         "7001",
-        "web3signer_HTTP_LISTEN_HOST",
+        "WEB3SIGNER_HTTP_LISTEN_HOST",
         "localhost",
-        "web3signer_KEY_STORE_PATH",
+        "WEB3SIGNER_KEY_STORE_PATH",
         "./keys_env",
-        "web3signer_LOGGING",
+        "WEB3SIGNER_LOGGING",
         "INFO");
   }
 

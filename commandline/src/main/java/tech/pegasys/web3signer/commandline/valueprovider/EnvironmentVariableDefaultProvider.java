@@ -23,7 +23,7 @@ import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
 public class EnvironmentVariableDefaultProvider implements IDefaultValueProvider {
-  private static final String ENV_VAR_PREFIX = "web3signer_";
+  private static final String ENV_VAR_PREFIX = "WEB3SIGNER_";
 
   private final Map<String, String> environment;
 
