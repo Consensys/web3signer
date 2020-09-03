@@ -40,6 +40,7 @@ import com.github.arteam.simplejsonrpc.core.domain.Request;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 
@@ -49,18 +50,18 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
   private static final BLSSecretKey key =
-      BLSSecretKey.fromBytes(Bytes.fromBase64String(PRIVATE_KEY).reverse());
+      BLSSecretKey.fromBytes(Bytes32.wrap(Bytes.fromBase64String(PRIVATE_KEY).reverse()));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final FilecoinNetwork network = FilecoinNetwork.TESTNET;
-  private final FilecoinAddress sender = FilecoinAddress.blsAddress(publicKey.toBytes());
+  private final FilecoinAddress sender = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
 
   @Test
   void fcSignMessageReturnsASignedMessage() {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(
-        keyConfigFile, key.getSecretKey().toBytes().toUnprefixedHexString(), KeyType.BLS);
+        keyConfigFile, key.toBytes().toUnprefixedHexString(), KeyType.BLS);
 
     setupSigner();
 

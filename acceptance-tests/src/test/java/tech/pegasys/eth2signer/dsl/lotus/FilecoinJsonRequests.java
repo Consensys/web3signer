@@ -20,6 +20,7 @@ import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.google.common.net.MediaType;
@@ -36,6 +37,10 @@ import org.apache.tuweni.bytes.Bytes;
 public class FilecoinJsonRequests {
   public static final int BLS_SIGTYPE = 1;
   public static final int SECP_SIGTYPE = 2;
+
+  // This is required to be set if operating against a full Lotus node (as opposed to dev-lotus).
+  private static final Optional<String> authToken =
+      Optional.ofNullable(System.getenv("ETH2SIGNER_BEARER_TOKEN"));
 
   public static JsonRpcClient createJsonRpcClient(final String baseUrl) {
     return new JsonRpcClient(request -> executeRawJsonRpcRequest(baseUrl, request), OBJECT_MAPPER);
@@ -121,6 +126,7 @@ public class FilecoinJsonRequests {
     final HttpPost post = new HttpPost(url);
     post.setEntity(new StringEntity(request, Charsets.UTF_8));
     post.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
+    authToken.ifPresent(token -> post.setHeader("Authorization", "Bearer " + token));
     try (final CloseableHttpClient httpClient = HttpClients.createDefault();
         final CloseableHttpResponse httpResponse = httpClient.execute(post)) {
       return EntityUtils.toString(httpResponse.getEntity(), Charsets.UTF_8);

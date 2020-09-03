@@ -76,7 +76,8 @@ dependencyManagement {
     dependency 'org.hyperledger.besu.internal:metrics-core:1.4.0'
     dependency 'org.hyperledger.besu:plugin-api:1.4.0'
 
-    dependency 'tech.pegasys.teku.internal:bls:0.12.1-SNAPSHOT'
+    dependency 'tech.pegasys.teku.internal:bls:0.12.6-SNAPSHOT'
+    dependency 'tech.pegasys:jblst:0.1.0-RELEASE'
 
     dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.4') {
       entry 'bls-keystore'

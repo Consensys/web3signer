@@ -36,6 +36,7 @@ import com.github.arteam.simplejsonrpc.core.domain.Request;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.io.TempDir;
 import org.web3j.crypto.ECKeyPair;
@@ -97,7 +98,7 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
         .map(
             privateKey -> {
               final BLSKeyPair keyPair =
-                  new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey)));
+                  new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(privateKey)));
               final Path keyConfigFile = blsConfigFileName(keyPair.getPublicKey());
               if (isValid) {
                 metadataFileHelpers.createUnencryptedYamlFileAt(

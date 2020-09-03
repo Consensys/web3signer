@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
-import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -284,6 +284,6 @@ class SignerLoaderTest {
   private List<ArtifactSigner> createArtifactSigner(final String privateKey) {
     return List.of(
         new BlsArtifactSigner(
-            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes.fromHexString(privateKey)))));
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(privateKey)))));
   }
 }

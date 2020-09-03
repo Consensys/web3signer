@@ -40,6 +40,7 @@ import com.github.arteam.simplejsonrpc.core.domain.Request;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
@@ -48,7 +49,8 @@ public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
   private static final String PRIVATE_KEY =
       "5abc1334d98d1432150df310f9d2fd51780a2b8a7489891f5d4ab9e77e6fb169";
 
-  private static final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes.fromHexString(PRIVATE_KEY));
+  private static final BLSSecretKey key =
+      BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final FilecoinNetwork network = FilecoinNetwork.TESTNET;
@@ -57,7 +59,7 @@ public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
   private static final BlsArtifactSignature expectedSignature =
       signatureGenerator.sign(Bytes.fromBase64String(dataString));
 
-  final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytes());
+  final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
 
   @Test
   void receiveTrueResponseWhenSubmitValidVerifyRequestToFilecoinEndpoint() {
@@ -68,7 +70,8 @@ public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
 
     final FilecoinSignature filecoinSignature =
         new FilecoinSignature(
-            FcJsonRpc.BLS_VALUE, expectedSignature.getSignatureData().toBytes().toBase64String());
+            FcJsonRpc.BLS_VALUE,
+            expectedSignature.getSignatureData().toBytesCompressed().toBase64String());
     final JsonNode params =
         mapper.convertValue(
             List.of(identifier.encode(network), dataString, filecoinSignature), JsonNode.class);

@@ -75,7 +75,7 @@ public class FcJsonRpc {
       case BLS:
         final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
         return new FilecoinSignature(
-            BLS_VALUE, blsSig.getSignatureData().toBytes().toBase64String());
+            BLS_VALUE, blsSig.getSignatureData().toBytesCompressed().toBase64String());
       default:
         throw new IllegalArgumentException("Invalid Signature type created.");
     }
@@ -115,7 +115,9 @@ public class FcJsonRpc {
       case BLS:
         checkArgument(filecoinSignature.getType() == BLS_VALUE, "Invalid signature type");
         return FilecoinVerify.verify(
-            address, dataToVerify, new BlsArtifactSignature(BLSSignature.fromBytes(signature)));
+            address,
+            dataToVerify,
+            new BlsArtifactSignature(BLSSignature.fromBytesCompressed(signature)));
       default:
         throw new IllegalArgumentException("Invalid address protocol type");
     }

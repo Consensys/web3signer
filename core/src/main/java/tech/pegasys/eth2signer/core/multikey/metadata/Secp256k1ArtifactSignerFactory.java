@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
@@ -50,7 +51,7 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
 
   @Override
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
-    final Bytes privateKeyBytes = fileRawSigningMetadata.getPrivateKeyBytes();
+    final Bytes32 privateKeyBytes = fileRawSigningMetadata.getPrivateKeyBytes();
     final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
     return createCredentialSigner(credentials);
   }
