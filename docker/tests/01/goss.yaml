@@ -1,5 +1,5 @@
 file:
-  /opt/eth2signer/bin/eth2signer:
+  /opt/web3signer/bin/web3signer:
     exists: true
     mode: "0755"
     owner: root

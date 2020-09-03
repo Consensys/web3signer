@@ -4,10 +4,10 @@ import java.util
 import io.gatling.core.Predef.{rampUsersPerSec, _}
 import io.gatling.http.Predef._
 import org.apache.tuweni.bytes.Bytes
-import tech.pegasys.eth2signer.dsl.lotus.FilecoinJsonRequests
-import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder
-import tech.pegasys.eth2signer.dsl.signer.runner.Eth2SignerRunner
-import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers
+import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests
+import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder
+import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner
+import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.concurrent.duration.DurationInt
@@ -17,7 +17,7 @@ class FcBlsSignSimulation extends Simulation {
   private val keyStoreDirectory: Path = Files.createTempDirectory("bls")
   new MetadataFileHelpers().createRandomUnencryptedBlsKeys(keyStoreDirectory, 1000)
 
-  private val runner = Eth2SignerRunner.createRunner(new SignerConfigurationBuilder()
+  private val runner = Web3SignerRunner.createRunner(new SignerConfigurationBuilder()
     .withKeyStoreDirectory(keyStoreDirectory).build())
   runner.start()
   private val port: Int = runner.httpPort()

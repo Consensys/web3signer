@@ -1,13 +1,13 @@
 {
   "name": "openapidoc",
   "version": "1.0.0",
-  "description": "Prepare Eth2Signer OpenAPI spec to be pusged to gh-pages branch",
+  "description": "Prepare web3signer OpenAPI spec to be pusged to gh-pages branch",
   "repository": {
     "type": "git",
-    "url": "git://github.com/PegaSysEng/eth2signer.git"
+    "url": "git://github.com/PegaSysEng/web3signer.git"
   },
   "bugs": {
-    "url": "https://github.com/PegaSysEng/eth2signer/issues"
+    "url": "https://github.com/PegaSysEng/web3signer/issues"
   },
   "main": "./publish.js",
   "dependencies": {

@@ -100,10 +100,10 @@ task acceptanceTest(dependsOn: [
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
 
   mustRunAfter rootProject.subprojects*.test
-  description = 'Runs Eth2Signer acceptance tests.'
+  description = 'Runs web3signer acceptance tests.'
   group = 'verification'
 
-  systemProperty 'acctests.runEth2SignerAsProcess', 'true'
+  systemProperty 'acctests.runweb3signerAsProcess', 'true'
   systemProperty 'vaultBinary', vaultBinary()
 
   useJUnitPlatform()

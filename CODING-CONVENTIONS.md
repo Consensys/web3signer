@@ -30,13 +30,13 @@ Simple does not mean the fewest lines of code. Simple code is:
 * Usually the most performant. Without data showing another approach is faster, stick with the simple design 
 * Not simplistic:
 
-  - Ethereum is complex and Eth2Signer must handle this complexity and operate correctly and securely 
-  - Eth2Signer code should align with well-established Ethereum abstractions and terminology used in Ethereum specifications 
+  - Ethereum is complex and web3signer must handle this complexity and operate correctly and securely 
+  - web3signer code should align with well-established Ethereum abstractions and terminology used in Ethereum specifications 
   - Aim to make the code as simple as possible but no simpler
   
 ## 2.2 Idiomatic Java 
 
-Eth2Signer embraces typical Java idioms including using an Object Oriented approach to design. This includes:   
+web3signer embraces typical Java idioms including using an Object Oriented approach to design. This includes:   
 * Providing alternate behaviours via polymorphism instead of having conditional logic scattered through the codebase. For example, `TransactionSigner` provides a standard interface to signing operations. 
 * Encapsulating behaviour and data together in classes. 
 * Embracing modern Java features like Optional, Streams and lambdas when they make code simpler and clearer. 
@@ -49,7 +49,7 @@ Eth2Signer embraces typical Java idioms including using an Object Oriented appro
 
 ## 2.3 You Ain't Gonna Need It (YAGNI)
 
-The Eth2Signer design prioritizes meeting current requirements in the simplest, clearest way over attempting to anticipate future functionality. As a result, Eth2Signer’s design:
+The web3signer design prioritizes meeting current requirements in the simplest, clearest way over attempting to anticipate future functionality. As a result, web3signer’s design:
 * Is not set in stone as a big upfront design. The design is adjusted through constant refactoring as new requirements are added and understood.
 * Uses abstraction only where it aids understanding of the current code. Abstraction is not used where it only supports future needs.
 * Avoids over-engineering.
@@ -95,7 +95,7 @@ So the code can cope with constant refactoring and evolving design, write code t
 
 * Uses dependency injection
   - Constructors should be simple, with dependencies passed in rather than built in the constructor
-  - Eth2Signer does not use a dependency injection framework
+  - web3signer does not use a dependency injection framework
 
 * Validates method parameters for public methods using the Guava `Preconditions` class. Avoid validating parameters in private methods
 
@@ -108,7 +108,7 @@ So the code can cope with constant refactoring and evolving design, write code t
 
 * Use Optional rather than returning null when not having a value is a normal case
 
-* Consider exception and error handling as part of the overall design.  Eth2Signer avoids checked exceptions
+* Consider exception and error handling as part of the overall design.  web3signer avoids checked exceptions
 
 * Give threads meaningful names. For example:
  `Executors.newFixedThreadPool(1, new ThreadFactoryBuilder().setNameFormat(“Ibft”).build())`
@@ -118,7 +118,7 @@ So the code can cope with constant refactoring and evolving design, write code t
 
 ## 4.1 Style Guide 
 
-Eth2Signer follows the [Google code style](https://google.github.io/styleguide/javaguide.html) and uses spotless to ensure consistency of formatting. 
+web3signer follows the [Google code style](https://google.github.io/styleguide/javaguide.html) and uses spotless to ensure consistency of formatting. 
 
 To automatically reformat the code before creating a pull request, run: 
 
@@ -175,7 +175,7 @@ Method parameters must be final.  Class level and local fields should be final w
 
 # 5 Logging
 
-Logging is important for understanding what Eth2Signer is doing at any given time (for example, progress while synchronizing) and investigating defects.  During development, add logging to aid in these cases. 
+Logging is important for understanding what web3signer is doing at any given time (for example, progress while synchronizing) and investigating defects.  During development, add logging to aid in these cases. 
 
 ## 5.1 Log Messages
 
@@ -206,12 +206,12 @@ Make log messages:
 
 * _Warn_ 
 
-  Anything that can potentially cause application oddities but from which Eth2Signer automatically recovers
+  Anything that can potentially cause application oddities but from which web3signer automatically recovers
 
 * _Error_ 
 
-  Any error which is fatal to the operation, but not Eth2Signer itself (for example, missing data)
+  Any error which is fatal to the operation, but not web3signer itself (for example, missing data)
 
 * _Fatal_  
 
-  An error that forces a shutdown of Eth2Signer 
+  An error that forces a shutdown of web3signer 

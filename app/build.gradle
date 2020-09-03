@@ -13,7 +13,7 @@
 
 
 jar {
-  archiveBaseName = 'eth2signer-app'
+  archiveBaseName = 'web3signer-app'
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,

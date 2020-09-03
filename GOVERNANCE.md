@@ -10,7 +10,7 @@ decisions of the benevolent dictator through active engagement and contribution.
 # Principles
 
 The community adheres to the following principles:
-* Open: Eth2Signer is open source. See repository guidelines and CLA, below.
+* Open: web3signer is open source. See repository guidelines and CLA, below.
 * Welcoming and respectful: See Code of Conduct, below.
 * Transparent and accessible: Work and collaboration should be done in public. 
 * Merit: Ideas and contributions are accepted according to their technical merit and alignment with
