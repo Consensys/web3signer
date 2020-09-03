@@ -15,6 +15,7 @@ package tech.pegasys.eth2signer.tests;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 
@@ -55,19 +56,30 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
     signer.walletHas("t01234");
-    Set<String> reportedMetrics = getMetricsMatching(metricsOfInterest);
-    reportedMetrics.removeAll(initialMetrics);
-    assertThat(reportedMetrics)
+    final Set<String> metricsAfterWalletHas = getMetricsMatching(metricsOfInterest);
+    metricsAfterWalletHas.removeAll(initialMetrics);
+    assertThat(metricsAfterWalletHas)
         .containsOnly("filecoin_totalRequestCount 1.0", "filecoin_walletHasCounter 1.0");
 
     signer.walletList();
-    reportedMetrics = getMetricsMatching(metricsOfInterest);
-    reportedMetrics.removeAll(initialMetrics);
-    assertThat(reportedMetrics)
+    final Set<String> metricsAfterWalletList = getMetricsMatching(metricsOfInterest);
+    metricsAfterWalletList.removeAll(initialMetrics);
+    metricsAfterWalletList.removeAll(metricsAfterWalletHas);
+    assertThat(metricsAfterWalletList)
         .containsOnly(
             "filecoin_totalRequestCount 2.0",
-            "filecoin_walletHasCounter 1.0",
             "filecoin_walletListCounter 1.0");
+
+    try {
+      signer.walletSign("t01234", Bytes.fromHexString("0x1234"));
+    } catch(final Exception e) {
+      //it is known that the signing will fail.
+    }
+    final Set<String> metricsAfterWalletSign = getMetricsMatching(metricsOfInterest);
+    metricsAfterWalletSign.removeAll(initialMetrics);
+    metricsAfterWalletSign.removeAll(metricsAfterWalletList);
+    metricsAfterWalletSign.removeAll(metricsAfterWalletHas);
+    assertThat(metricsAfterWalletSign).containsOnly("filecoin_totalRequestCount 3.0");
   }
 
   private Set<String> getMetricsMatching(final List<String> metricsOfInterest) {
