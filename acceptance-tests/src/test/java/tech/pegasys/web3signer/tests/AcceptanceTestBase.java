@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.tests;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 
-import com.atlassian.oai.validator.restassured.OpenApiValidationFilter;
 import org.junit.jupiter.api.AfterEach;
 
 public class AcceptanceTestBase {

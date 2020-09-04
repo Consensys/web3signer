@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.core.service.jsonrpc;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import tech.pegasys.teku.bls.BLSSignature;
+import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.signing.ArtifactSignature;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
@@ -58,33 +59,33 @@ public class FcJsonRpc {
     this.fcSigners = fcSigners;
     this.secpSigningRequestCounter =
         metricsSystem.createCounter(
-            Eth2SignerMetricCategory.FILECOIN,
+            Web3SignerMetricCategory.FILECOIN,
             "secp_signing_request_count",
             "Number of signing requests made for SECP256k1 keys");
     this.blsSigningRequestCounter =
         metricsSystem.createCounter(
-            Eth2SignerMetricCategory.FILECOIN,
+            Web3SignerMetricCategory.FILECOIN,
             "bls_signing_request_count",
             "Number of signing requests made for BLS keys");
     this.wallestListRequestCounter =
         metricsSystem.createCounter(
-            Eth2SignerMetricCategory.FILECOIN,
+            Web3SignerMetricCategory.FILECOIN,
             "wallet_list_count",
             "Number of times a Filecoin.WalletList request has been received");
     this.wallestHasRequestCounter =
         metricsSystem.createCounter(
-            Eth2SignerMetricCategory.FILECOIN,
+            Web3SignerMetricCategory.FILECOIN,
             "wallet_has_count",
             "Number of times a Filecoin.WalletHas request has been received");
     this.walletSignMessageRequestCounter =
         metricsSystem.createCounter(
-            Eth2SignerMetricCategory.FILECOIN,
+            Web3SignerMetricCategory.FILECOIN,
             "wallet_sign_message_count",
             "Number of times a Filecoin.WalletSignMessage request has been received");
 
     this.signingTimer =
         metricsSystem.createLabelledTimer(
-            Eth2SignerMetricCategory.FILECOIN,
+            Web3SignerMetricCategory.FILECOIN,
             "wallet_sign_timer",
             "The duration for a signing operation",
             "curve");

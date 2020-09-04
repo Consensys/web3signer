@@ -10,12 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.eth2signer.dsl.lotus;
+package tech.pegasys.web3signer.dsl.lotus;
 
-import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinJsonRpcModule;
-import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinMessage;
-import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignature;
-import tech.pegasys.eth2signer.core.service.jsonrpc.FilecoinSignedMessage;
+import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
+import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinMessage;
+import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignature;
+import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignedMessage;
 
 import java.io.IOException;
 import java.util.List;

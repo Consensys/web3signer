@@ -21,7 +21,7 @@ import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
-import tech.pegasys.web3signer.core.metrics.VertxMetricsAdapterFactory;
+import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
@@ -121,7 +121,7 @@ public class Runner implements Runnable {
 
       final Counter signersLoaded =
           metricsSystem.createCounter(
-              Eth2SignerMetricCategory.SIGNING,
+              Web3SignerMetricCategory.SIGNING,
               "signers_loaded_count",
               "Number of keys loaded (combining SECP256k1 and BLS12-381");
 
@@ -202,7 +202,7 @@ public class Runner implements Runnable {
     // sign handler
     final Counter missingSignerCounter =
         metricsSystem.createCounter(
-            Eth2SignerMetricCategory.SIGNING,
+            Web3SignerMetricCategory.SIGNING,
             "missing_identifier_count",
             "Number of signing operations requested, for keys which are not available");
 
@@ -216,7 +216,10 @@ public class Runner implements Runnable {
             new SignForIdentifierHandler(secpSigner, metricsSystem, "secp"), true));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        rc -> { missingSignerCounter.inc(); rc.next(); });
+        rc -> {
+          missingSignerCounter.inc();
+          rc.next();
+        });
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 
@@ -260,7 +263,7 @@ public class Runner implements Runnable {
     final String openApiSpecYaml = Resources.toString(openApiSpecUrl, Charsets.UTF_8);
 
     router
-        .route(HttpMethod.GET, SWAGGER_ENDPOINT + "/eth2signer.yaml")
+        .route(HttpMethod.GET, SWAGGER_ENDPOINT + "/web3signer.yaml")
         .produces(CONTENT_TYPE_YAML)
         .handler(ResponseContentTypeHandler.create())
         .handler(routingContext -> routingContext.response().end(openApiSpecYaml));
@@ -288,13 +291,13 @@ public class Runner implements Runnable {
 
     final Counter totalFilecoinRequests =
         metricsSystem.createCounter(
-            Eth2SignerMetricCategory.FILECOIN,
+            Web3SignerMetricCategory.FILECOIN,
             "total_request_count",
             "Total number of Filecoin requests received");
 
     final Counter totalEthereumJsonRpcRequests =
         metricsSystem.createCounter(
-            Eth2SignerMetricCategory.HTTP,
+            Web3SignerMetricCategory.HTTP,
             "total_json_rpc_request_count",
             "Total number of Json RPC requests received");
 

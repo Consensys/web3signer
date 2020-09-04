@@ -13,9 +13,8 @@
 package tech.pegasys.web3signer.tests.comparison;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.walletSignMessage;
-import static tech.pegasys.web3signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
 
+import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignedMessage;
 

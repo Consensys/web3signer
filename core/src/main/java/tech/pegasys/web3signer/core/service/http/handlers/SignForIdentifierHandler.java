@@ -17,6 +17,7 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TE
 import static tech.pegasys.web3signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
 import static tech.pegasys.web3signer.core.service.operations.SignerForIdentifier.toBytes;
 
+import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.service.operations.SignerForIdentifier;
 
 import io.vertx.core.Handler;
@@ -48,12 +49,12 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
 
     malformedRequestCounter =
         metrics.createCounter(
-            Eth2SignerMetricCategory.HTTP,
+            Web3SignerMetricCategory.HTTP,
             metricsPrefix + "_malformed_request_count",
             "Number of requests received which had illegally formatted body.");
     signingDuration =
         metrics.createTimer(
-            Eth2SignerMetricCategory.SIGNING,
+            Web3SignerMetricCategory.SIGNING,
             metricsPrefix + "_signing_duration",
             "Duration of a signing event");
   }
@@ -86,16 +87,6 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
                 routingContext.next();
               });
     }
-
-    signerForIdentifier
-        .sign(normaliseIdentifier(identifier), data)
-        .ifPresentOrElse(
-            signature ->
-                routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature),
-            () -> {
-              LOG.trace("Unsuitable handler for {}, invoking next handler", identifier);
-              routingContext.next();
-            });
   }
 
   private Bytes getDataToSign(final RequestParameters params) {

@@ -16,7 +16,9 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpecification;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
+import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
+import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
 import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
 
@@ -113,7 +115,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   }
 
   public OpenApiValidationFilter getOpenApiValidationFilter() {
-    final String swaggerUrl = getUrl() + "/swagger-ui/eth2signer.yaml";
+    final String swaggerUrl = getUrl() + "/swagger-ui/web3signer.yaml";
     return new OpenApiValidationFilter(swaggerUrl);
   }
 }

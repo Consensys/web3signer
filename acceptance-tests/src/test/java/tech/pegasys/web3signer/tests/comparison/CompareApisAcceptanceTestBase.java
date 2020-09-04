@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.tests.comparison;
 
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.createJsonRpcClient;
 import static tech.pegasys.web3signer.dsl.lotus.FilecoinKeyType.BLS;
 import static tech.pegasys.web3signer.dsl.lotus.FilecoinKeyType.SECP256K1;
 

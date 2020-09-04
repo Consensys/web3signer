@@ -16,20 +16,21 @@ import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
-import tech.pegasys.web3signer.core.signing.KeyType;
-import tech.pegasys.web3signer.dsl.signer.Signer;
-import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
+import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.dsl.signer.Signer;
+import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.nio.file.Path;
 
 import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;

@@ -14,10 +14,6 @@ package tech.pegasys.web3signer.tests.comparison;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.walletHas;
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.walletList;
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.walletSign;
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.walletVerify;
 
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignature;
 
