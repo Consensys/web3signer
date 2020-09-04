@@ -170,7 +170,7 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
 
   protected Response callApiPublicKeys(final String keyType) {
     return given()
-        .filter(getOpenApiValidationFilter())
+        .filter(signer.getOpenApiValidationFilter())
         .baseUri(signer.getUrl())
         .get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
   }

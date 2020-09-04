@@ -200,14 +200,24 @@ public class Runner implements Runnable {
         GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
 
     // sign handler
+    final Counter missingSignerCounter =
+        metricsSystem.createCounter(
+            Eth2SignerMetricCategory.SIGNING,
+            "missing_identifier_count",
+            "Number of signing operations requested, for keys which are not available");
+
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls"), false));
+            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls"), true));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp"), false));
+            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp"), true));
+    openAPI3RouterFactory.addHandlerByOperationId(
+        SIGN_FOR_IDENTIFIER_OPERATION_ID,
+        new BlockingHandlerDecorator(
+        rc -> { missingSignerCounter.inc(); rc.next(); }, true));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 

@@ -15,6 +15,17 @@ package tech.pegasys.eth2signer.tests;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.math.BigInteger;
+import java.nio.file.Path;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.io.TempDir;
+import org.web3j.crypto.ECKeyPair;
+import org.web3j.crypto.Keys;
+import org.web3j.utils.Numeric;
+import tech.pegasys.eth2signer.core.signing.KeyType;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfigurationBuilder;
 
@@ -29,6 +40,8 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
+import tech.pegasys.eth2signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.eth2signer.tests.signing.SigningAcceptanceTestBase;
 
 public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
@@ -80,6 +93,65 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(metricsAfterWalletSign).containsOnly("filecoin_total_request_count 3.0");
   }
 
+  @Test
+  void missingSignerMetricIncreasesWhenUnmatchedRequestReceived() {
+    final SignerConfiguration signerConfiguration =
+        new SignerConfigurationBuilder().withMetricsEnabled(true).build();
+    startSigner(signerConfiguration);
+
+    final List<String> metricsOfInterest = List.of("signing_missing_identifier_count");
+
+    final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
+    assertThat(initialMetrics).hasSize(metricsOfInterest.size());
+    assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
+
+    signer.sign("12345", Bytes.fromHexString("0011"));
+    final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
+    assertThat(metricsAfterSign).containsOnly("signing_missing_identifier_count 1.0");
+  }
+
+  @Test
+  void signMetricIncrementsWhenSecpSignRequestReceived(@TempDir Path testDirectory)
+      throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
+    final MetadataFileHelpers fileHelpers = new MetadataFileHelpers();
+    final ECKeyPair keyPair = Keys.createEcKeyPair();
+
+    fileHelpers.createUnencryptedYamlFileAt(
+        testDirectory.resolve(keyPair.getPublicKey().toString() + ".yaml"),
+        Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPrivateKey(), 64),
+        KeyType.SECP256K1);
+
+    final SignerConfiguration signerConfiguration =
+        new SignerConfigurationBuilder().withMetricsEnabled(true)
+            .withKeyStoreDirectory(testDirectory).build();
+
+    startSigner(signerConfiguration);
+
+    final List<String> metricsOfInterest =
+        List.of("signing_secp_signing_duration_count", "signing_missing_identifier_count");
+    final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
+    assertThat(initialMetrics).hasSize(metricsOfInterest.size());
+    assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
+
+    final Response signResponse =
+        signer.sign(Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPublicKey(), 128),
+            Bytes.fromHexString("1122"));
+    final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
+
+    final Response keys = signer.callApiPublicKeys(KeyType.SECP256K1.name());
+    assertThat(keys.getBody().asString())
+        .contains(Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPublicKey(), 128));
+
+    assertThat(metricsAfterSign).containsOnly("signing_secp_signing_duration_count 1.0",
+        "signing_missing_identifier_count 0.0");
+
+  }
+
+  @Test
+  void signMetricIncrementsWhenBlsSignRequestReceived() {
+
+  }
+
   private Set<String> getMetricsMatching(final List<String> metricsOfInterest) {
     final Response response =
         given()
@@ -95,4 +167,15 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         .filter(line -> metricsOfInterest.contains(Iterables.get(Splitter.on(' ').split(line), 0)))
         .collect(Collectors.toSet());
   }
+//
+//
+//  @Test
+//  void myRandomTest() {
+//    final String input = "0xb1eefe4e08d37d5d8acbf12ce1b141dc6dc4b282e7e918d14aafe499ed2217e9a60445812717195f7ebd64a1e7bc1969b1e9889cec0894e1ee08c834510e82";
+//    final Bytes bytes = Bytes.fromHexString(input);
+//    final BigInteger bi = new BigInteger(input.substring(2), 16);
+//
+//    final String output = bigIntToHexString(bi);
+//    assertThat(output).isEqualTo(input);
+//  }
 }

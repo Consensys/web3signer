@@ -13,6 +13,7 @@
 package tech.pegasys.eth2signer.core.service.jsonrpc;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static tech.pegasys.eth2signer.core.signing.KeyType.SECP256K1;
 
 import tech.pegasys.eth2signer.core.metrics.Eth2SignerMetricCategory;
 import tech.pegasys.eth2signer.core.signing.ArtifactSignature;
@@ -23,6 +24,7 @@ import tech.pegasys.eth2signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.eth2signer.core.signing.filecoin.FilecoinVerify;
 import tech.pegasys.eth2signer.core.signing.filecoin.exceptions.FilecoinSignerNotFoundException;
+import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSSignature;
 
 import java.util.Optional;
@@ -87,7 +89,8 @@ public class FcJsonRpc {
         metricsSystem.createLabelledTimer(
             Eth2SignerMetricCategory.FILECOIN,
             "wallet_sign_timer",
-            "The duration for a signing operation");
+            "The duration for a signing operation",
+            "curve");
   }
 
   @JsonRpcMethod("Filecoin.WalletList")

@@ -24,14 +24,21 @@ import tech.pegasys.eth2signer.dsl.tls.ClientTlsConfig;
 
 import java.util.Optional;
 
+import com.atlassian.oai.validator.restassured.OpenApiValidationFilter;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class Signer extends FilecoinJsonRpcEndpoint {
 
   private static final Logger LOG = LogManager.getLogger();
+  public static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
+  static final String SIGNER_PUBLIC_KEYS_PATH = "/signer/publicKeys";
 
   private final Eth2SignerRunner runner;
   private final String hostname;
@@ -88,5 +95,27 @@ public class Signer extends FilecoinJsonRpcEndpoint {
 
   public String getMetricsUrl() {
     return String.format(urlFormatting, hostname, runner.metricsPort());
+  }
+
+  public Response sign(final String publicKey, final Bytes dataToSign) {
+    return given()
+        .baseUri(getUrl())
+        .filter(getOpenApiValidationFilter())
+        .contentType(ContentType.JSON)
+        .pathParam("identifier", publicKey)
+        .body(new JsonObject().put("data", dataToSign.toHexString()).toString())
+        .post(SIGN_ENDPOINT);
+  }
+
+  public Response callApiPublicKeys(final String keyType) {
+    return given()
+        .filter(getOpenApiValidationFilter())
+        .baseUri(getUrl())
+        .get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
+  }
+
+  public OpenApiValidationFilter getOpenApiValidationFilter() {
+    final String swaggerUrl = getUrl() + "/swagger-ui/eth2signer.yaml";
+    return new OpenApiValidationFilter(swaggerUrl);
   }
 }

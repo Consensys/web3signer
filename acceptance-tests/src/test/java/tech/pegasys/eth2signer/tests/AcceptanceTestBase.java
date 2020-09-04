@@ -15,24 +15,17 @@ package tech.pegasys.eth2signer.tests;
 import tech.pegasys.eth2signer.dsl.signer.Signer;
 import tech.pegasys.eth2signer.dsl.signer.SignerConfiguration;
 
-import com.atlassian.oai.validator.restassured.OpenApiValidationFilter;
 import org.junit.jupiter.api.AfterEach;
 
 public class AcceptanceTestBase {
 
   protected Signer signer;
   public static final String JSON_RPC_PATH = "/rpc/v1";
-  public static final String FC_RPC_PATH = JSON_RPC_PATH + "/filecoin";
 
   protected void startSigner(final SignerConfiguration config) {
     signer = new Signer(config, null);
     signer.start();
     signer.awaitStartupCompletion();
-  }
-
-  protected OpenApiValidationFilter getOpenApiValidationFilter() {
-    final String swaggerUrl = signer.getUrl() + "/swagger-ui/eth2signer.yaml";
-    return new OpenApiValidationFilter(swaggerUrl);
   }
 
   @AfterEach

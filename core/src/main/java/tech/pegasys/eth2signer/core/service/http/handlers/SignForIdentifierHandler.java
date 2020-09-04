@@ -37,8 +37,7 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final SignerForIdentifier<?> signerForIdentifier;
-  private final Counter totalCounter;
-  private final Counter missingSignerCounter;
+
   private final Counter malformedRequestCounter;
   private final OperationTimer signingDuration;
 
@@ -47,16 +46,7 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
       final MetricsSystem metrics,
       final String metricsPrefix) {
     this.signerForIdentifier = signerForIdentifier;
-    totalCounter =
-        metrics.createCounter(
-            Eth2SignerMetricCategory.HTTP,
-            metricsPrefix + "_signing_count",
-            "Total number of signings requested");
-    missingSignerCounter =
-        metrics.createCounter(
-            Eth2SignerMetricCategory.HTTP,
-            metricsPrefix + "_missing_identifier_count",
-            "Number of signing operations requested, for keys which are not available");
+
     malformedRequestCounter =
         metrics.createCounter(
             Eth2SignerMetricCategory.HTTP,
@@ -72,9 +62,7 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext routingContext) {
 
-    try (final TimingContext context = signingDuration.startTimer()) {
-      context.close();
-      totalCounter.inc();
+    try (final TimingContext ignored = signingDuration.startTimer()) {
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
       final Bytes data;
@@ -96,7 +84,6 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
                       .end(signature),
               () -> {
                 LOG.trace("Unsuitable handler for {}, invoking next handler", identifier);
-                missingSignerCounter.inc();
                 routingContext.next();
               });
     }
