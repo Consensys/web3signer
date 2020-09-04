@@ -14,6 +14,7 @@
 plugins {
   id "de.undercouch.download" version "4.1.0"
   id "com.google.osdetector" version "1.6.2"
+  id 'com.github.lkishalmi.gatling' version '3.3.4'
 }
 
 dependencies {
@@ -28,6 +29,7 @@ dependencies {
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testRuntimeOnly 'org.zeroturnaround:zt-exec'
+  testRuntimeOnly 'tech.pegasys:jblst'
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
@@ -48,6 +50,8 @@ dependencies {
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'keystorage-hashicorp', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'acceptance-tests', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'signing-secp256k1-impl', classifier: 'test-fixtures')
+
+  gatlingImplementation configurations.getByName("testImplementation")
 }
 
 test.enabled = false
@@ -96,10 +100,10 @@ task acceptanceTest(dependsOn: [
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
 
   mustRunAfter rootProject.subprojects*.test
-  description = 'Runs Eth2Signer acceptance tests.'
+  description = 'Runs Web3Signer acceptance tests.'
   group = 'verification'
 
-  systemProperty 'acctests.runEth2SignerAsProcess', 'true'
+  systemProperty 'acctests.runWeb3SignerAsProcess', 'true'
   systemProperty 'vaultBinary', vaultBinary()
 
   useJUnitPlatform()

@@ -1,7 +1,7 @@
-# Contributing to Eth2Signer
+# Contributing to Web3Signer
 :+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
 
-Welcome to the Eth2Signer repository!  The following is a set of guidelines for contributing to this 
+Welcome to the Web3Signer repository!  The following is a set of guidelines for contributing to this 
 repo and its packages. These are mostly guidelines, not rules. Use your best judgment, 
 and feel free to propose changes to this document in a pull request.
 
@@ -26,14 +26,14 @@ and feel free to propose changes to this document in a pull request.
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the [Eth2Signer Code of Conduct](CODE-OF-CONDUCT.md).
+This project and everyone participating in it is governed by the [Web3Signer Code of Conduct](CODE-OF-CONDUCT.md).
 By participating, you are expected to uphold this code. Please report unacceptable behavior to [private@pegasys.tech].
 
 ## I just have a quick question
 
 > **Note:** Please don't file an issue to ask a question.  You'll get faster results by using the resources below.
 
-* [Eth2Signer documentation]
+* [Web3Signer documentation]
 * [Gitter]
 
 ## How To Contribute
@@ -51,7 +51,7 @@ open a new issue and include a link to the original issue in the body of your ne
 
 #### Before Submitting A Bug Report
 * **Confirm the problem** is reproducible in the latest version of the software.
-* **Check [Eth2Signer documentation]**. You might be able to find the cause of the problem and fix things yourself. 
+* **Check [Web3Signer documentation]**. You might be able to find the cause of the problem and fix things yourself. 
 * **Perform a cursory search of project issues in [GitHub]** 
 to see if the problem has already been reported. If it has **and the issue is still open**, add a comment 
 to the existing issue instead of opening a new one.
@@ -63,7 +63,7 @@ Explain the problem and include additional details to help maintainers reproduce
 
 * **Use a clear and descriptive summary** for the issue to identify the problem.
 * **Describe the exact steps which reproduce the problem** in as many details as possible. For example, 
-start by explaining how you started Eth2Signer, e.g. which command exactly you used in the terminal, 
+start by explaining how you started Web3Signer, e.g. which command exactly you used in the terminal, 
 or how you started it otherwise. 
 * **Provide specific examples to demonstrate the steps**. Include links to files or GitHub projects, 
 or copy/pasteable snippets, which you use in those examples. If you're providing snippets in the issue, 
@@ -84,14 +84,14 @@ and under which conditions it normally happens.
 
 Include details about your configuration and environment:
 
-* **Which version of the software are you using?** You can get the exact version by running `Eth2Signer -v` in your terminal.
+* **Which version of the software are you using?** You can get the exact version by running `Web3Signer -v` in your terminal.
 * **What OS & Version are you running?**
   * **For Linux - What kernel are you running?** You can get the exact version by running `uname -a` in your terminal.
 * **Are you running in a virtual machine?** If so, which VM software are you using and which operating 
 systems and versions are used for the host and the guest?
 * **Are you running in a docker container?** If so, what version of docker?
 * **Are you running in a Cloud?** If so, which one, and what type/size of VM is it?
-* **What version of Java are you running?** You can get the exact version by looking at the Eth2Signer 
+* **What version of Java are you running?** You can get the exact version by looking at the Web3Signer 
 logfile during startup.
 
 ### Suggesting Enhancements
@@ -110,7 +110,7 @@ When you are creating an enhancement suggestion, please
 
 #### Before Submitting An Enhancement Suggestion
 
-* **Check the [Eth2Signer documentation].** You might be able to find the cause of the problem and fix things yourself. 
+* **Check the [Web3Signer documentation].** You might be able to find the cause of the problem and fix things yourself. 
 * **Perform a cursory search of project issues in [GitHub]** 
 to see if the problem has already been reported. If it has **and the issue is still open**, add a comment 
 to the existing issue instead of opening a new one.
@@ -129,7 +129,7 @@ Provide the following information:
 * **Explain why this enhancement would be useful** to most users.
 * **Does this enhancement exist in other clients?**
 * **Specify which version of the software you're using.** You can get the exact version by running 
-`Eth2Signer -v` in your terminal.
+`Web3Signer -v` in your terminal.
 * **Specify the name and version of the OS you're using.**
 
 ## Your First Contribution
@@ -148,7 +148,7 @@ This facilitates social contribution, easy testing, and peer review.
 
 To contribute changes, use the following workflow:
 
-1. [**Fork the repository**](https://github.com/PegaSysEng/Eth2Signer/fork).
+1. [**Fork the repository**](https://github.com/PegaSysEng/web3signer/fork).
 1. **Clone your fork** to your computer.
 1. **Create a topic branch** and name it appropriately.
 Starting the branch name with the issue number is a good practice and a reminder to fix only one issue in a 
@@ -161,7 +161,7 @@ For this reason do not mix any formatting fixes or code moves with actual code c
 another part of the software. Running the `./gradlew clean check test` command locally will help you
 to be confident that your changes will pass CI tests once pushed as a Pull Request.
 1. **Push your changes** to your remote fork (usually labeled as `origin`).
-1. **Create a pull-request** (PR) on the Eth2Signer repository. If the PR addresses an existing Jira issue, 
+1. **Create a pull-request** (PR) on the Web3Signer repository. If the PR addresses an existing Jira issue, 
 include the issue number in the PR title in square brackets (for example, `[ES-2374]`). 
 1. **Add labels** to identify the type of your PR. _For example, if your PR is not ready to validate,
 add the "work-in-progress" label. If it fixes a bug, add the "bug" label._
@@ -172,7 +172,7 @@ If you don't know who to choose, simply select the reviewers proposed by GitHub 
 1. **Make any required changes** on your contribution from the reviewers feedback.
 _Make the changes, commit to your branch, and push to your remote fork._
 1. **When your PR is validated**, all tests passed and your branch has no conflicts with the target branch,
-you can **"squash and merge"** your PR and you're done. You contributed to Eth2Signer! Thanks !
+you can **"squash and merge"** your PR and you're done. You contributed to Web3Signer! Thanks !
 
 ### Architectural Best Practices
 
@@ -243,9 +243,9 @@ These are not strictly enforced during the build, but should be adhered to and c
 | [`needs engineering approval`][search-label-needs-engineering-approval] | Pull requests which need to be approved from a technical person, mainly documentation PRs. |
 
 [private@pegasys.tech]: mailto:private@pegasys.tech
-[Gitter]: https://gitter.im/PegaSysEng/Eth2Signer
-[GitHub]: https://github.com/PegaSysEng/eth2signer
-[Eth2Signer documentation]: https://docs.Eth2Signer.pegasys.tech/
+[Gitter]: https://gitter.im/PegaSysEng/web3signer
+[GitHub]: https://github.com/PegaSysEng/web3signer
+[Web3Signer documentation]: https://docs.web3signer.pegasys.tech/
 [CLA.md]: /CLA.md
 [Code Reviews]: /community/code-reviews.md
 [MkDocs]: https://www.mkdocs.org/

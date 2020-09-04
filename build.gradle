@@ -30,7 +30,7 @@ plugins {
 }
 
 if (!JavaVersion.current().java11Compatible) {
-  throw new GradleException("Java 11 or later is required to build Eth2Signer.\n" +
+  throw new GradleException("Java 11 or later is required to build Web3Signer.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -38,12 +38,12 @@ def bintrayUser = project.hasProperty('bintrayUser') ? project.property('bintray
 def bintrayKey = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_KEY')
 def bintrayPackage = bintray.pkg {
   repo = 'pegasys-repo'
-  name = 'eth2signer'
+  name = 'web3signer'
   userOrg = 'consensys'
   licenses = ['Apache-2.0']
-  websiteUrl = 'https://github.com/PegaSysEng/eth2signer'
-  issueTrackerUrl = 'https://github.com/PegaSysEng/eth2signer/issues'
-  vcsUrl = 'https://github.com/PegaSysEng/eth2signer.git'
+  websiteUrl = 'https://github.com/PegaSysEng/web3signer'
+  issueTrackerUrl = 'https://github.com/PegaSysEng/web3signer/issues'
+  vcsUrl = 'https://github.com/PegaSysEng/web3signer.git'
 
   version {
     name = project.version
@@ -52,7 +52,7 @@ def bintrayPackage = bintray.pkg {
 }
 
 
-group = 'tech.pegasys.eth2signer'
+group = 'tech.pegasys.web3signer'
 
 defaultTasks 'build', 'checkLicenses', 'javadoc'
 
@@ -246,7 +246,7 @@ subprojects {
     publishing {
       publications {
         mavenJava(MavenPublication) {
-          groupId "tech.pegasys.eth2signer.internal"
+          groupId "tech.pegasys.web3signer.internal"
           version "${project.version}"
           from components.java
           artifact sourcesJar
@@ -256,8 +256,8 @@ subprojects {
             usage('java-runtime') { fromResolutionResult() }
           }
           pom {
-            name = "eth2signer - ${project.name}"
-            url = 'http://github.com/PegaSysEng/eth2signer'
+            name = "web3signer - ${project.name}"
+            url = 'http://github.com/PegaSysEng/web3signer'
             licenses {
               license {
                 name = 'The Apache License, Version 2.0'
@@ -265,9 +265,9 @@ subprojects {
               }
             }
             scm {
-              connection = 'scm:git:git://github.com/PegaSysEng/eth2signer.git'
-              developerConnection = 'scm:git:ssh://github.com/PegaSysEng/eth2signer.git'
-              url = 'https://github.com/PegaSysEng/eth2signer'
+              connection = 'scm:git:git://github.com/PegaSysEng/web3signer.git'
+              developerConnection = 'scm:git:ssh://github.com/PegaSysEng/web3signer.git'
+              url = 'https://github.com/PegaSysEng/web3signer'
             }
           }
         }
@@ -335,7 +335,7 @@ subprojects {
 
   task integrationTest(type: Test, dependsOn:["compileTestJava"]){
     group = "verification"
-    description = "Runs the Eth2Signer integration tests"
+    description = "Runs the Web3Signer integration tests"
 
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
@@ -372,7 +372,7 @@ subprojects {
 jar { enabled = false }
 
 apply plugin: 'application'
-mainClassName = "tech.pegasys.eth2signer.Eth2SignerApp"
+mainClassName = "tech.pegasys.web3signer.Web3SignerApp"
 applicationDefaultJvmArgs = [
   "-Dvertx.disableFileCPResolving=true",
   // We shutdown log4j ourselves, as otherwise his shutdown hook runs before our own and whatever
@@ -381,9 +381,9 @@ applicationDefaultJvmArgs = [
 ]
 
 run {
-  args project.hasProperty("eth2signer.run.args") ? project.property("eth2signer.run.args").toString().split("\\s+") : []
+  args project.hasProperty("web3signer.run.args") ? project.property("web3signer.run.args").toString().split("\\s+") : []
   doFirst {
-    applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect{it.replace('ETH2SIGNER_HOME', "$buildDir/eth2signer")}
+    applicationDefaultJvmArgs = applicationDefaultJvmArgs.collect{it.replace('WEB3SIGNER_HOME', "$buildDir/web3signer")}
   }
 }
 
@@ -394,8 +394,8 @@ startScripts {
   }
 
   doLast {
-    unixScript.text = unixScript.text.replace('ETH2SIGNER_HOME', '\$APP_HOME')
-    windowsScript.text = windowsScript.text.replace('ETH2SIGNER_HOME', '%~dp0..')
+    unixScript.text = unixScript.text.replace('WEB3SIGNER_HOME', '\$APP_HOME')
+    windowsScript.text = windowsScript.text.replace('WEB3SIGNER_HOME', '%~dp0..')
 
     // Prevent the error originating from the 8191 chars limit on Windows
     windowsScript.text =
@@ -440,12 +440,12 @@ distZip {
   }
 }
 
-// rename the top level dir from eth2signer-<version> to eth2signer and this makes it really
+// rename the top level dir from web3signer-<version> to web3signer and this makes it really
 // simple for use in docker
 tasks.register("dockerDistUntar") {
   dependsOn distTar
   dependsOn distZip
-  def dockerBuildDir = "build/docker-eth2signer/"
+  def dockerBuildDir = "build/docker-web3signer/"
   def distTarFile = distTar.outputs.files.singleFile
   def distTarFileName = distTar.outputs.files.singleFile.name.replace(".tar.gz", "")
 
@@ -455,16 +455,16 @@ tasks.register("dockerDistUntar") {
       from tarTree(distTarFile)
       into(dockerBuildDir)
     }
-    file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/eth2signer")
+    file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/web3signer")
   }
 }
 
 task distDocker(type: Exec) {
   dependsOn dockerDistUntar
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def imageName = "pegasyseng/eth2signer"
+  def imageName = "pegasyseng/web3signer"
   def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
-  def dockerBuildDir = "build/docker-eth2signer/"
+  def dockerBuildDir = "build/docker-web3signer/"
   workingDir "${dockerBuildDir}"
 
   doFirst {
@@ -481,7 +481,7 @@ task distDocker(type: Exec) {
 task testDocker(type: Exec) {
   dependsOn distDocker
   def dockerReportsDir = "docker/reports/"
-  def imageName = "pegasyseng/eth2signer"
+  def imageName = "pegasyseng/web3signer"
   def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
   workingDir "docker"
 
@@ -495,7 +495,7 @@ task testDocker(type: Exec) {
 
 task dockerUpload(type: Exec) {
   dependsOn distDocker
-  def imageName = "pegasyseng/eth2signer"
+  def imageName = "pegasyseng/web3signer"
   def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
   def cmd = "docker push '${image}'"
   def additionalTags = []
