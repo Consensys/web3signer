@@ -167,8 +167,8 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
-    signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(),
-        Bytes.fromHexString("1122"));
+    signer.sign(
+        keyPair.getPublicKey().toBytesCompressed().toHexString(), Bytes.fromHexString("1122"));
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)
