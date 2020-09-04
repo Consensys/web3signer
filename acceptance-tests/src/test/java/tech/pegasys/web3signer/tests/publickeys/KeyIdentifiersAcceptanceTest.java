@@ -42,7 +42,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   public void noLoadedKeysReturnsEmptyPublicKeyResponse(final String keyType) {
     initAndStartSigner();
 
-    validateApiResponse(callApiPublicKeys(keyType), empty());
+    validateApiResponse(signer.callApiPublicKeys(keyType), empty());
     validateRpcResponse(callRpcPublicKeys(keyType), empty());
     assertThat(signer.walletList()).isEmpty();
   }
@@ -53,7 +53,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     createKeys(keyType, false, privateKeys(keyType));
     initAndStartSigner();
 
-    validateApiResponse(callApiPublicKeys(keyType), empty());
+    validateApiResponse(signer.callApiPublicKeys(keyType), empty());
     validateRpcResponse(callRpcPublicKeys(keyType), empty());
     assertThat(signer.walletList()).isEmpty();
   }
@@ -67,7 +67,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
 
     initAndStartSigner();
 
-    final Response response = callApiPublicKeys(keyType);
+    final Response response = signer.callApiPublicKeys(keyType);
     validateApiResponse(response, contains(keys));
     validateApiResponse(response, everyItem(not(in(invalidKeys))));
 
@@ -111,7 +111,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String[] keys = createKeys(keyType, true, privateKeys(keyType));
     initAndStartSigner();
 
-    validateApiResponse(callApiPublicKeys(keyType), containsInAnyOrder(keys));
+    validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
     validateRpcResponse(callRpcPublicKeys(keyType), containsInAnyOrder(keys));
 
     final String[] filecoinAddresses = filecoinAddresses(keyType);
@@ -173,7 +173,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     }
 
     initAndStartSigner();
-    validateApiResponse(callApiPublicKeys(BLS), containsInAnyOrder(publicKeys));
+    validateApiResponse(signer.callApiPublicKeys(BLS), containsInAnyOrder(publicKeys));
   }
 
   @ParameterizedTest
@@ -186,7 +186,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     initAndStartSigner();
 
     final String publicKey = keyType.equals(BLS) ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
-    validateApiResponse(callApiPublicKeys(keyType), contains(publicKey));
+    validateApiResponse(signer.callApiPublicKeys(keyType), contains(publicKey));
     validateRpcResponse(callRpcPublicKeys(keyType), contains(publicKey));
   }
 }

@@ -30,7 +30,12 @@ import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 
+@EnabledIfEnvironmentVariables({
+  @EnabledIfEnvironmentVariable(named = "LOTUS_PORT", matches = ".*")
+})
 public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestBase {
 
   private static final ObjectMapper OBJECT_MAPPER =
@@ -44,7 +49,7 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
   @Test
   void compareRandomMessageSignaturesBetweenLotusAndEthSigner() {
     final int signatureCount =
-        Integer.parseInt(System.getenv().getOrDefault("ETH2SIGNER_SIGN_MESSAGE_COUNT", "500"));
+        Integer.parseInt(System.getenv().getOrDefault("WEB3SIGNER_SIGN_MESSAGE_COUNT", "500"));
 
     final List<CompletableFuture<Void>> futures = Lists.newArrayList();
     for (int i = 0; i < signatureCount; i++) {

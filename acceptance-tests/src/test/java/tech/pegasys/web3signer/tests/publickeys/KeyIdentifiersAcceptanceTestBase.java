@@ -169,13 +169,6 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected Response callApiPublicKeys(final String keyType) {
-    return given()
-        .filter(signer.getOpenApiValidationFilter())
-        .baseUri(signer.getUrl())
-        .get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
-  }
-
   protected Response callApiPublicKeysWithoutOpenApiClientSideFilter(final String keyType) {
     return given().baseUri(signer.getUrl()).accept("").get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
   }

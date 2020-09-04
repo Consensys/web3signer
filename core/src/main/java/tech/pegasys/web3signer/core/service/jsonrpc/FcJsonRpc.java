@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.core.service.jsonrpc;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import tech.pegasys.teku.bls.BLSSignature;
-import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.signing.ArtifactSignature;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
@@ -35,8 +34,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 @JsonRpcService
@@ -48,52 +45,16 @@ public class FcJsonRpc {
   private static final Logger LOG = LogManager.getLogger();
 
   private final ArtifactSignerProvider fcSigners;
-  private final Counter secpSigningRequestCounter;
-  private final Counter blsSigningRequestCounter;
-  private final Counter wallestListRequestCounter;
-  private final Counter wallestHasRequestCounter;
-  private final Counter walletSignMessageRequestCounter;
-  private final LabelledMetric<OperationTimer> signingTimer;
+  private final FcJsonRpcMetrics metrics;
 
   public FcJsonRpc(final ArtifactSignerProvider fcSigners, final MetricsSystem metricsSystem) {
     this.fcSigners = fcSigners;
-    this.secpSigningRequestCounter =
-        metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
-            "secp_signing_request_count",
-            "Number of signing requests made for SECP256k1 keys");
-    this.blsSigningRequestCounter =
-        metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
-            "bls_signing_request_count",
-            "Number of signing requests made for BLS keys");
-    this.wallestListRequestCounter =
-        metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
-            "wallet_list_count",
-            "Number of times a Filecoin.WalletList request has been received");
-    this.wallestHasRequestCounter =
-        metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
-            "wallet_has_count",
-            "Number of times a Filecoin.WalletHas request has been received");
-    this.walletSignMessageRequestCounter =
-        metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
-            "wallet_sign_message_count",
-            "Number of times a Filecoin.WalletSignMessage request has been received");
-
-    this.signingTimer =
-        metricsSystem.createLabelledTimer(
-            Web3SignerMetricCategory.FILECOIN,
-            "wallet_sign_timer",
-            "The duration for a signing operation",
-            "curve");
+    this.metrics = new FcJsonRpcMetrics(metricsSystem);
   }
 
   @JsonRpcMethod("Filecoin.WalletList")
   public Set<String> filecoinWalletList() {
-    wallestListRequestCounter.inc();
+    metrics.incWalletListRequestCounter();
     return fcSigners.availableIdentifiers();
   }
 
@@ -113,15 +74,15 @@ public class FcJsonRpc {
     }
 
     try (final OperationTimer.TimingContext ignored =
-        signingTimer.labels(signature.getType().name()).startTimer()) {
+        metrics.getSigningTimer().labels(signature.getType().name()).startTimer()) {
       switch (signature.getType()) {
         case SECP256K1:
-          secpSigningRequestCounter.inc();
+          metrics.incSecpSigningRequestCounter();
           final SecpArtifactSignature secpSig = (SecpArtifactSignature) signature;
           return new FilecoinSignature(
               SECP_VALUE, SecpArtifactSignature.toBytes(secpSig).toBase64String());
         case BLS:
-          blsSigningRequestCounter.inc();
+          metrics.incBlsSigningRequestCounter();
           final BlsArtifactSignature blsSig = (BlsArtifactSignature) signature;
           return new FilecoinSignature(
               BLS_VALUE, blsSig.getSignatureData().toBytesCompressed().toBase64String());
@@ -133,7 +94,7 @@ public class FcJsonRpc {
 
   @JsonRpcMethod("Filecoin.WalletHas")
   public boolean filecoinWalletHas(@JsonRpcParam("address") final String address) {
-    wallestHasRequestCounter.inc();
+    metrics.incWalletHasRequestCounter();
     return fcSigners.availableIdentifiers().contains(address);
   }
 
@@ -141,7 +102,7 @@ public class FcJsonRpc {
   public FilecoinSignedMessage filecoinSignMessage(
       @JsonRpcParam("identifier") final String identifier,
       @JsonRpcParam("message") final FilecoinMessage message) {
-    walletSignMessageRequestCounter.inc();
+    metrics.incwWalletSignMessageRequestCounter();
     final FcMessageEncoder encoder = new FcMessageEncoder();
     final Bytes fcCid = encoder.createFilecoinCid(message);
 
