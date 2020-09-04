@@ -52,10 +52,10 @@ public abstract class Web3SignerRunner {
 
   public static Web3SignerRunner createRunner(final SignerConfiguration signerConfig) {
     if (Boolean.getBoolean("acctests.runWeb3SignerAsProcess")) {
-      LOG.info("web3signer running as a process.");
+      LOG.info("Web3Signer running as a process.");
       return new Web3SignerProcessRunner(signerConfig);
     } else {
-      LOG.info("web3signer running in a thread.");
+      LOG.info("Web3Signer running in a thread.");
       return new Web3SignerThreadRunner(signerConfig);
     }
   }
