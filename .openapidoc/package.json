@@ -1,7 +1,7 @@
 {
   "name": "openapidoc",
   "version": "1.0.0",
-  "description": "Prepare web3signer OpenAPI spec to be pusged to gh-pages branch",
+  "description": "Prepare Web3Signer OpenAPI spec to be pusged to gh-pages branch",
   "repository": {
     "type": "git",
     "url": "git://github.com/PegaSysEng/web3signer.git"

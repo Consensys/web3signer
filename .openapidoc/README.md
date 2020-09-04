@@ -1,4 +1,4 @@
-# web3signer OpenAPI Spec Publish
+# Web3Signer OpenAPI Spec Publish
 
 This directory contains NodeJS project which publishes Web3Signer OpenAPI specifications to 
 [`gh-pages`](https://github.com/PegaSysEng/web3signer/tree/gh-pages) branch via CI job after build and acceptanceTests. 
