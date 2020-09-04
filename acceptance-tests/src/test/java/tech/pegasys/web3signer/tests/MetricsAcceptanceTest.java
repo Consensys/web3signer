@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.tests;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
@@ -137,17 +138,43 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         Bytes.fromHexString("1122"));
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
 
-    final Response keys = signer.callApiPublicKeys(KeyType.SECP256K1.name());
-    assertThat(keys.getBody().asString())
-        .contains(Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPublicKey(), 128));
-
     assertThat(metricsAfterSign)
         .containsOnly(
             "signing_secp_signing_duration_count 1.0", "signing_missing_identifier_count 0.0");
   }
 
   @Test
-  void signMetricIncrementsWhenBlsSignRequestReceived() {}
+  void signMetricIncrementsWhenBlsSignRequestReceived(@TempDir Path testDirectory) {
+    final MetadataFileHelpers fileHelpers = new MetadataFileHelpers();
+    final BLSKeyPair keyPair = BLSKeyPair.random(1);
+
+    fileHelpers.createUnencryptedYamlFileAt(
+        testDirectory.resolve(keyPair.getPublicKey().toBytesCompressed().toHexString() + ".yaml"),
+        keyPair.getSecretKey().toBytes().toHexString(),
+        KeyType.BLS);
+
+    final SignerConfiguration signerConfiguration =
+        new SignerConfigurationBuilder()
+            .withMetricsEnabled(true)
+            .withKeyStoreDirectory(testDirectory)
+            .build();
+
+    startSigner(signerConfiguration);
+
+    final List<String> metricsOfInterest =
+        List.of("signing_bls_signing_duration_count", "signing_missing_identifier_count");
+    final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
+    assertThat(initialMetrics).hasSize(metricsOfInterest.size());
+    assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
+
+    signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(),
+        Bytes.fromHexString("1122"));
+    final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
+
+    assertThat(metricsAfterSign)
+        .containsOnly(
+            "signing_bls_signing_duration_count 1.0", "signing_missing_identifier_count 0.0");
+  }
 
   private Set<String> getMetricsMatching(final List<String> metricsOfInterest) {
     final Response response =
