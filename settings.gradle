@@ -11,7 +11,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-rootProject.name='eth2signer'
+rootProject.name='web3signer'
 include 'app'
 include 'acceptance-tests'
 include 'commandline'

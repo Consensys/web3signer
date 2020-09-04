@@ -1,6 +1,6 @@
 
 jar {
-  archiveBaseName = 'eth2signer-commandline'
+  archiveBaseName = 'web3signer-commandline'
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,

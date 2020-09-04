@@ -9,14 +9,14 @@ const log = (...args) => console.log(...args); // eslint-disable-line no-console
 
 function getConfig() {
   const repo = GitUrlParse(
-    process.env.OA_GIT_URL || "git@github.com:PegaSysEng/eth2signer.git"
+    process.env.OA_GIT_URL || "git@github.com:PegaSysEng/web3signer.git"
   );
   const branch = process.env.OA_GH_PAGES_BRANCH || "gh-pages";
   const gitUserName = process.env.OA_GIT_USERNAME || "CircleCI Build";
   const gitUserEmail = process.env.OA_GIT_EMAIL || "ci-build@consensys.net";
   const specPath =
     process.env.OA_SPEC_PATH ||
-    "../core/build/resources/main/openapi/eth2signer.yaml";
+    "../core/build/resources/main/openapi/web3signer.yaml";
   const specVersion = yaml.safeLoad(fs.readFileSync(specPath, "utf8")).info
     .version;
   const isReleaseVersion = !specVersion.includes("-dev-"); // gradle build puts -dev- for snapshot version

@@ -3,7 +3,7 @@ apply plugin: 'java-library'
 apply plugin: 'java-test-fixtures'
 
 jar {
-  archiveBaseName = 'eth2signer-core'
+  archiveBaseName = 'web3signer-core'
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -81,7 +81,7 @@ artifacts {
 }
 
 processResources {
-  filesMatching('openapi/eth2signer.yaml') {
+  filesMatching('openapi/web3signer.yaml') {
     filter {
       it.replace('@VERSION@', calculateVersion())
     }
