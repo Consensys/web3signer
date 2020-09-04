@@ -216,8 +216,7 @@ public class Runner implements Runnable {
             new SignForIdentifierHandler(secpSigner, metricsSystem, "secp"), true));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new BlockingHandlerDecorator(
-        rc -> { missingSignerCounter.inc(); rc.next(); }, true));
+        rc -> { missingSignerCounter.inc(); rc.next(); });
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 
