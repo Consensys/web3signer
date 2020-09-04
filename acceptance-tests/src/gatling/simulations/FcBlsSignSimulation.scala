@@ -4,9 +4,8 @@ import java.util
 import io.gatling.core.Predef.{rampUsersPerSec, _}
 import io.gatling.http.Predef._
 import org.apache.tuweni.bytes.Bytes
-import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder
-import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner
+import tech.pegasys.web3signer.dsl.signer.Signer
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
@@ -17,20 +16,16 @@ class FcBlsSignSimulation extends Simulation {
   private val keyStoreDirectory: Path = Files.createTempDirectory("bls")
   new MetadataFileHelpers().createRandomUnencryptedBlsKeys(keyStoreDirectory, 1000)
 
-  private val runner = Web3SignerRunner.createRunner(new SignerConfigurationBuilder()
-    .withKeyStoreDirectory(keyStoreDirectory).build())
+  private val runner = new Signer(new SignerConfigurationBuilder()
+    .withKeyStoreDirectory(keyStoreDirectory).build(), null)
   runner.start()
-  private val port: Int = runner.httpPort()
 
   after {
     runner.shutdown()
   }
 
-  private val httpProtocol = http.baseUrl("http://localhost:" + port)
-
-  private val baseUrl: String = "http://localhost:" + port
-  private val jsonRpcClient = FilecoinJsonRequests.createJsonRpcClient(baseUrl + "/rpc/v1/filecoin")
-  private val addresses: util.List[String] = FilecoinJsonRequests.walletList(jsonRpcClient)
+  private val httpProtocol = http.baseUrl(runner.getUrl())
+  private val addresses: util.List[String] = runner.walletList()
   private val feeder = addresses.asScala.map(a => Map("address" -> a,
     "data" -> Bytes.random(64).toHexString)).toArray.random
 
