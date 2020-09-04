@@ -39,7 +39,7 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
   private final SignerForIdentifier<?> signerForIdentifier;
 
   private final Counter malformedRequestCounter;
-  private final OperationTimer signingDuration;
+  private final OperationTimer signingTimer;
 
   public SignForIdentifierHandler(
       final SignerForIdentifier<?> signerForIdentifier,
@@ -52,7 +52,7 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
             Web3SignerMetricCategory.HTTP,
             metricsPrefix + "_malformed_request_count",
             "Number of requests received which had illegally formatted body.");
-    signingDuration =
+    signingTimer =
         metrics.createTimer(
             Web3SignerMetricCategory.SIGNING,
             metricsPrefix + "_signing_duration",
@@ -62,7 +62,7 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext routingContext) {
 
-    try (final TimingContext ignored = signingDuration.startTimer()) {
+    try (final TimingContext ignored = signingTimer.startTimer()) {
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
       final Bytes data;
