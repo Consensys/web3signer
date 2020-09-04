@@ -15,17 +15,17 @@ paths:
   /signer/sign/{identifier}:
     post:
       tags:
-      - 'Signing'
+        - 'Signing'
       summary: 'Signs data for key'
       description: 'Signs data for the public key specified as part of the URL and returns the signature'
       operationId: 'signForIdentifier'
       parameters:
-      - name: 'identifier'
-        in: 'path'
-        required: true
-        description: 'Key for which data to sign'
-        schema:
-          type: 'string'
+        - name: 'identifier'
+          in: 'path'
+          required: true
+          description: 'Key for which data to sign'
+          schema:
+            type: 'string'
       requestBody:
         required: true
         content:
@@ -35,6 +35,14 @@ paths:
               properties:
                 data:
                   type: string
+                artifactType:
+                  type: string
+                slot:
+                  type: int
+                sourceEpoch:
+                  type: int
+                targeteEpoch:
+                  type: int
               required:
                 - data
               additionalProperties:

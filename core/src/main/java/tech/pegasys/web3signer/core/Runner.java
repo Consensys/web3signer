@@ -17,9 +17,14 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JS
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
+import tech.pegasys.web3signer.core.eth2slashingprotection.DbBackedSlashingProtection;
+import tech.pegasys.web3signer.core.eth2slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
@@ -124,6 +129,15 @@ public class Runner implements Runnable {
 
     try {
       metricsEndpoint.start(vertx);
+
+      final SlashingProtection slashingProtection;
+      try {
+        final String url = config.getSlashingStorage();
+        final Connection slashingDatastoreConnection = DriverManager.getConnection(url);
+        slashingProtection = new DbBackedSlashingProtection(slashingDatastoreConnection);
+      } catch(final SQLException e) {
+        LOG.error("Failed to connect/create slashing storage at {}", config.getSlashingStorage());
+      }
 
       final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
 
