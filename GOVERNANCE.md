@@ -1,5 +1,5 @@
 # Overview
-This project is led by a benevolent dictator (PegaSys) and managed by the community. That is, the
+This project is led by a benevolent dictator (ConsenSys) and managed by the community. That is, the
 community actively contributes to the day-to-day maintenance of the project, but the general
 strategic line is drawn by the benevolent dictator. In case of disagreement, they have the last word.
 It is the benevolent dictator’s job to resolve disputes within the community and to ensure that the
@@ -27,7 +27,6 @@ See [community membership]
 Decision making will be handled by the Approvers (see [community membership]).  If consensus cannot 
 be reached, the Benevolent Dictator will provide the final word on the decision.
 
-
 # CLA
 
 All contributors must sign the CLA, as described in [CLA.md].
@@ -40,6 +39,7 @@ This document was influenced by the following:
 
 [CLA.md]: /CLA.md
 [code of conduct]: /CODE-OF-CONDUCT.md
+[community membership]: /COMMUNITY_MEMBERSHIP.md
 [oss watch benevolent dictator]: http://oss-watch.ac.uk/resources/benevolentdictatorgovernancemodel
 [kub community membership]: https://raw.githubusercontent.com/kubernetes/community/master/community-membership.md
 [kub governance]:https://github.com/kubernetes/community/blob/master/governance.md

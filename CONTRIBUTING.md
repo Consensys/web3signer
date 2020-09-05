@@ -27,14 +27,14 @@ and feel free to propose changes to this document in a pull request.
 ## Code of Conduct
 
 This project and everyone participating in it is governed by the [Web3Signer Code of Conduct](CODE-OF-CONDUCT.md).
-By participating, you are expected to uphold this code. Please report unacceptable behavior to [private@pegasys.tech].
+By participating, you are expected to uphold this code. Please report unacceptable behavior to [private-quorum@consensys.net].
 
 ## I just have a quick question
 
 > **Note:** Please don't file an issue to ask a question.  You'll get faster results by using the resources below.
 
 * [Web3Signer documentation]
-* [Gitter]
+* [Discord]
 
 ## How To Contribute
 ### Reporting Bugs
@@ -242,10 +242,10 @@ These are not strictly enforced during the build, but should be adhered to and c
 | [`requires-changes`][search-label-requires-changes]                     | Pull requests which need to be updated based on review comments and then reviewed again.   |
 | [`needs engineering approval`][search-label-needs-engineering-approval] | Pull requests which need to be approved from a technical person, mainly documentation PRs. |
 
-[private@pegasys.tech]: mailto:private@pegasys.tech
-[Gitter]: https://gitter.im/PegaSysEng/web3signer
+[private-quorum@consensys.net]: mailto:private-quorum@consensys.net
+[Discord]: https://discord.gg/KMh2Mjh
 [GitHub]: https://github.com/PegaSysEng/web3signer
-[Web3Signer documentation]: https://docs.web3signer.pegasys.tech/
+[Web3Signer documentation]: https://doc.eth2signer.pegasys.tech/en/latest/
 [CLA.md]: /CLA.md
 [Code Reviews]: /community/code-reviews.md
 [MkDocs]: https://www.mkdocs.org/
