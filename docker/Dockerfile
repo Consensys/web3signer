@@ -1,5 +1,5 @@
 
-FROM openjdk:11.0.3-jre-slim-stretch
+FROM openjdk:11.0.8-jre-slim-buster
 
 COPY web3signer /opt/web3signer/
 WORKDIR /opt/web3signer
