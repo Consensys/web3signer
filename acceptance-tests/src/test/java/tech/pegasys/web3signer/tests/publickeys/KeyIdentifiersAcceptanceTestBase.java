@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.tests.publickeys;
 
 import static io.restassured.RestAssured.given;
+import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -40,9 +41,6 @@ import org.web3j.crypto.WalletUtils;
 import org.web3j.utils.Numeric;
 
 public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
-  static final String BLS = "BLS";
-  static final String SECP256K1 = "SECP256K1";
-
   private static final String BLS_PRIVATE_KEY_1 =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
   private static final String BLS_PRIVATE_KEY_2 =
@@ -69,21 +67,21 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
 
   @TempDir Path testDirectory;
 
-  protected String[] privateKeys(final String keyType) {
-    return keyType.equals(BLS)
+  protected String[] privateKeys(final KeyType keyType) {
+    return keyType == BLS
         ? new String[] {BLS_PRIVATE_KEY_1, BLS_PRIVATE_KEY_2}
         : new String[] {SECP_PRIVATE_KEY_1, SECP_PRIVATE_KEY_2};
   }
 
   protected String[] createKeys(
-      final String keyType, boolean isValid, final String... privateKeys) {
-    return keyType.equals(BLS)
+      final KeyType keyType, boolean isValid, final String... privateKeys) {
+    return keyType == BLS
         ? createBlsKeys(isValid, privateKeys)
         : createSecpKeys(isValid, privateKeys);
   }
 
-  protected String[] filecoinAddresses(final String keyType) {
-    return keyType.equals(BLS)
+  protected String[] filecoinAddresses(final KeyType keyType) {
+    return keyType == BLS
         ? new String[] {BLS_FC_ADDRESS_1, BLS_FC_ADDRESS_2}
         : new String[] {SECP_FC_ADDRESS_1, SECP_FC_ADDRESS_2};
   }
@@ -96,8 +94,7 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
                   new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(privateKey)));
               final Path keyConfigFile = blsConfigFileName(keyPair.getPublicKey());
               if (isValid) {
-                metadataFileHelpers.createUnencryptedYamlFileAt(
-                    keyConfigFile, privateKey, KeyType.BLS);
+                metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKey, BLS);
               } else {
                 createInvalidFile(keyConfigFile);
               }
@@ -164,7 +161,7 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected Response callApiPublicKeysWithoutOpenApiClientSideFilter(final String keyType) {
+  protected Response callApiPublicKeysWithoutOpenApiClientSideFilter(final KeyType keyType) {
     return given().baseUri(signer.getUrl()).accept("").get(Signer.publicKeysPath(keyType));
   }
 

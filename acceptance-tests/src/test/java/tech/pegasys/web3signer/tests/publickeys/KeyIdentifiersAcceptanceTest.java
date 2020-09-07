@@ -19,6 +19,8 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.collection.IsIn.in;
+import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -33,13 +35,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
 public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
 
   @ParameterizedTest
-  @ValueSource(strings = {BLS, SECP256K1})
-  public void noLoadedKeysReturnsEmptyPublicKeyResponse(final String keyType) {
+  @EnumSource(value = KeyType.class)
+  public void noLoadedKeysReturnsEmptyPublicKeyResponse(final KeyType keyType) {
     initAndStartSigner();
 
     validateApiResponse(signer.callApiPublicKeys(keyType), empty());
@@ -47,8 +49,8 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {BLS, SECP256K1})
-  public void invalidKeysReturnsEmptyPublicKeyResponse(final String keyType) {
+  @EnumSource(value = KeyType.class)
+  public void invalidKeysReturnsEmptyPublicKeyResponse(final KeyType keyType) {
     createKeys(keyType, false, privateKeys(keyType));
     initAndStartSigner();
 
@@ -57,8 +59,8 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {BLS, SECP256K1})
-  public void onlyValidKeysAreReturnedInPublicKeyResponse(final String keyType) {
+  @EnumSource(value = KeyType.class)
+  public void onlyValidKeysAreReturnedInPublicKeyResponse(final KeyType keyType) {
     final String[] prvKeys = privateKeys(keyType);
     final String[] keys = createKeys(keyType, true, prvKeys[0]);
     final String[] invalidKeys = createKeys(keyType, false, prvKeys[1]);
@@ -74,8 +76,8 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {BLS, SECP256K1})
-  public void filecoinWalletHasReturnFalseWhenKeysAreNotLoaded(final String keyType) {
+  @EnumSource(value = KeyType.class)
+  public void filecoinWalletHasReturnFalseWhenKeysAreNotLoaded(final KeyType keyType) {
     initAndStartSigner();
 
     final String[] filecoinAddresses = filecoinAddresses(keyType);
@@ -85,8 +87,8 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {BLS, SECP256K1})
-  public void filecoinWalletHasReturnsValidResponse(final String keyType) {
+  @EnumSource(value = KeyType.class)
+  public void filecoinWalletHasReturnsValidResponse(final KeyType keyType) {
     final String[] prvKeys = privateKeys(keyType);
     createKeys(keyType, true, prvKeys[0]);
     createKeys(keyType, false, prvKeys[1]);
@@ -100,8 +102,8 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {BLS, SECP256K1})
-  public void allLoadedKeysAreReturnedInPublicKeyResponse(final String keyType) {
+  @EnumSource(value = KeyType.class)
+  public void allLoadedKeysAreReturnedInPublicKeyResponse(final KeyType keyType) {
     final String[] keys = createKeys(keyType, true, privateKeys(keyType));
     initAndStartSigner();
 
@@ -112,8 +114,8 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {BLS, SECP256K1})
-  public void allLoadedKeysAreReturnedPublicKeyResponseWithEmptyAccept(final String keyType) {
+  @EnumSource(value = KeyType.class)
+  public void allLoadedKeysAreReturnedPublicKeyResponseWithEmptyAccept(final KeyType keyType) {
     final String[] keys = createKeys(keyType, true, privateKeys(keyType));
     initAndStartSigner();
 
@@ -162,7 +164,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
       publicKeys[i] = publicKey.toString();
       final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
       metadataFileHelpers.createUnencryptedYamlFileAt(
-          keyConfigFile, bytes.toUnprefixedHexString(), KeyType.BLS);
+          keyConfigFile, bytes.toUnprefixedHexString(), BLS);
     }
 
     initAndStartSigner();
@@ -170,15 +172,15 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {BLS, SECP256K1})
-  public void keysWithArbitraryFilenamesAreLoaded(final String keyType) {
+  @EnumSource(value = KeyType.class)
+  public void keysWithArbitraryFilenamesAreLoaded(final KeyType keyType) {
     final String privateKey = privateKeys(keyType)[0];
     final String filename = "foo" + "_" + keyType + ".yaml";
     metadataFileHelpers.createUnencryptedYamlFileAt(
-        testDirectory.resolve(filename), privateKey, KeyType.valueOf(keyType));
+        testDirectory.resolve(filename), privateKey, keyType);
     initAndStartSigner();
 
-    final String publicKey = keyType.equals(BLS) ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
+    final String publicKey = keyType == BLS ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
     validateApiResponse(signer.callApiPublicKeys(keyType), contains(publicKey));
   }
 }

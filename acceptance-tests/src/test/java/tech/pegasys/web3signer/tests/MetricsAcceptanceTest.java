@@ -14,9 +14,10 @@ package tech.pegasys.web3signer.tests;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -103,7 +104,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
-    signer.sign("12345", Bytes.fromHexString("0011"));
+    signer.sign("12345", Bytes.fromHexString("0011"), BLS);
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
     assertThat(metricsAfterSign).containsOnly("signing_missing_identifier_count 1.0");
   }
@@ -117,7 +118,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     fileHelpers.createUnencryptedYamlFileAt(
         testDirectory.resolve(keyPair.getPublicKey().toString() + ".yaml"),
         Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPrivateKey(), 64),
-        KeyType.SECP256K1);
+        SECP256K1);
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
@@ -135,7 +136,8 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     signer.sign(
         Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPublicKey(), 128),
-        Bytes.fromHexString("1122"));
+        Bytes.fromHexString("1122"),
+        SECP256K1);
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)
@@ -151,7 +153,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     fileHelpers.createUnencryptedYamlFileAt(
         testDirectory.resolve(keyPair.getPublicKey().toBytesCompressed().toHexString() + ".yaml"),
         keyPair.getSecretKey().toBytes().toHexString(),
-        KeyType.BLS);
+        BLS);
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
@@ -168,7 +170,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
     signer.sign(
-        keyPair.getPublicKey().toBytesCompressed().toHexString(), Bytes.fromHexString("1122"));
+        keyPair.getPublicKey().toBytesCompressed().toHexString(), Bytes.fromHexString("1122"), BLS);
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)

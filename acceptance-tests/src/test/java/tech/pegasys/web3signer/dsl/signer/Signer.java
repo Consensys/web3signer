@@ -14,10 +14,12 @@ package tech.pegasys.web3signer.dsl.signer;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpecification;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
+import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
 import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
@@ -37,7 +39,11 @@ import org.apache.tuweni.bytes.Bytes;
 public class Signer extends FilecoinJsonRpcEndpoint {
 
   private static final Logger LOG = LogManager.getLogger();
-  public static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
+  // public static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
+  public static final String ETH1_SIGN_ENDPOINT =
+      "/api/v1/eth1/sign/{identifier}"; // using secp keys
+  public static final String ETH2_SIGN_ENDPOINT =
+      "/api/v1/eth2/sign/{identifier}"; // using bls keys
   public static final String ETH1_PUBLIC_KEYS = "/api/v1/eth1/publicKeys"; // secp keys
   public static final String ETH2_PUBLIC_KEYS = "/api/v1/eth2/publicKeys"; // bls keys
 
@@ -98,25 +104,29 @@ public class Signer extends FilecoinJsonRpcEndpoint {
     return String.format(urlFormatting, hostname, runner.metricsPort());
   }
 
-  public Response sign(final String publicKey, final Bytes dataToSign) {
+  public Response sign(final String publicKey, final Bytes dataToSign, final KeyType keyType) {
     return given()
         .baseUri(getUrl())
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
         .body(new JsonObject().put("data", dataToSign.toHexString()).toString())
-        .post(SIGN_ENDPOINT);
+        .post(signPath(keyType));
   }
 
-  public Response callApiPublicKeys(final String keyType) {
+  public Response callApiPublicKeys(final KeyType keyType) {
     return given()
         .filter(getOpenApiValidationFilter())
         .baseUri(getUrl())
         .get(publicKeysPath(keyType));
   }
 
-  public static String publicKeysPath(final String keyType) {
-    return "BLS".equalsIgnoreCase(keyType) ? ETH2_PUBLIC_KEYS : ETH1_PUBLIC_KEYS;
+  public static String publicKeysPath(final KeyType keyType) {
+    return keyType == BLS ? ETH2_PUBLIC_KEYS : ETH1_PUBLIC_KEYS;
+  }
+
+  public static String signPath(final KeyType keyType) {
+    return keyType == BLS ? ETH2_SIGN_ENDPOINT : ETH1_SIGN_ENDPOINT;
   }
 
   public OpenApiValidationFilter getOpenApiValidationFilter() {
