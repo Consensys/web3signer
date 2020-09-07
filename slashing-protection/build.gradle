@@ -3,7 +3,7 @@ apply plugin: 'java-library'
 apply plugin: 'java-test-fixtures'
 
 jar {
-  archiveBaseName = 'web3signer-core'
+  archiveBaseName = 'web3signer-slashing-protection'
   manifest {
     attributes(
       'Specification-Title': archiveBaseName,
@@ -16,61 +16,33 @@ jar {
 
 dependencies {
 
-  implementation project(':slashing-protection')
-  implementation 'info.picocli:picocli'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'commons-io:commons-io'
   implementation 'commons-lang:commons-lang'
 
+  implementation 'com.mchange:c3p0'
+  implementation 'org.xerial:sqlite-jdbc'
+  implementation 'org.flywaydb:flyway-core'
+
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-net'
-  implementation 'org.web3j:core'
 
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 
-  implementation 'io.vertx:vertx-core'
-  implementation 'io.vertx:vertx-web'
-  implementation 'io.vertx:vertx-web-client'
-  implementation 'io.vertx:vertx-web-api-contract'
-
   implementation 'org.hyperledger.besu.internal:metrics-core'
-  implementation 'org.hyperledger.besu:plugin-api'
-
-  implementation 'tech.pegasys.signers.internal:bls-keystore'
-
-  implementation 'tech.pegasys.teku.internal:bls'
-
-  implementation 'tech.pegasys.signers.internal:keystorage-hashicorp'
-  implementation 'tech.pegasys.signers.internal:keystorage-azure'
-  implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
-  implementation 'tech.pegasys.signers.internal:signing-secp256k1-impl'
-
-  implementation 'com.github.arteam:simple-json-rpc-server'
-
-  implementation 'org.miracl.milagro.amcl:milagro-crypto-java'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
-  runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
-
-  runtimeOnly 'tech.pegasys:jblst'
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.assertj:assertj-db'
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-
-  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
-  integrationTestImplementation 'org.assertj:assertj-core'
-  integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
-  integrationTestImplementation 'org.apache.logging.log4j:log4j-core'
-  integrationTestImplementation 'org.apache.logging.log4j:log4j'
-  integrationTestImplementation sourceSets.testFixtures.output
 
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'

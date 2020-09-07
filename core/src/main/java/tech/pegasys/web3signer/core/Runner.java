@@ -38,6 +38,8 @@ import tech.pegasys.web3signer.core.signing.FileCoinArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.LoadedSigners;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.core.util.FileUtil;
+import tech.pegasys.web3signer.slashingprotection.DbBackedSlashingProtectionFactory;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -125,6 +127,17 @@ public class Runner implements Runnable {
               "signers_loaded_count",
               "Number of keys loaded (combining SECP256k1 and BLS12-381");
 
+      final SlashingProtection slashingProtection;
+      if (config.isSlashingProtectionEnabled()) {
+        slashingProtection =
+            DbBackedSlashingProtectionFactory.createDbBackedSlashingProtection(
+                config.getSlashingStorageUrl(),
+                config.getSlashingStorageUsername(),
+                config.getSlashingStoragePassword());
+      } else {
+        slashingProtection = null;
+      }
+
       final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
 
       final ArtifactSignerProvider blsSignerProvider = signers.getBlsSignerProvider();
@@ -149,7 +162,7 @@ public class Runner implements Runnable {
 
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(
-              vertx, ethKeyIdentifiers, metricsSystem, blsSigner, secpSigner);
+              vertx, ethKeyIdentifiers, metricsSystem, blsSigner, secpSigner, slashingProtection);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
 
@@ -182,7 +195,8 @@ public class Runner implements Runnable {
       final KeyIdentifiers keyIdentifiers,
       final MetricsSystem metricsSystem,
       final SignerForIdentifier<BlsArtifactSignature> blsSigner,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner)
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
+      final SlashingProtection slashingProtection)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
@@ -209,11 +223,12 @@ public class Runner implements Runnable {
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls"), true));
+            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls", slashingProtection),
+            false));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp"), true));
+            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp", null), false));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         rc -> {

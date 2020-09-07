@@ -51,4 +51,12 @@ public interface Config {
   int getIdleConnectionTimeoutSeconds();
 
   FilecoinNetwork getFilecoinNetwork();
+
+  String getSlashingStorageUrl();
+
+  boolean isSlashingProtectionEnabled();
+
+  String getSlashingStorageUsername();
+
+  String getSlashingStoragePassword();
 }
