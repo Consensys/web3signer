@@ -74,7 +74,7 @@ import tech.pegasys.web3signer.core.signing.FileCoinArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.LoadedSigners;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.core.util.FileUtil;
-import tech.pegasys.web3signer.slashingprotection.Database;
+import tech.pegasys.web3signer.slashingprotection.DbBackedSlashingProtectionFactory;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 public class Runner implements Runnable {
@@ -127,7 +127,7 @@ public class Runner implements Runnable {
 
       final SlashingProtection slashingProtection;
       if (config.isSlashingProtectionEnabled()) {
-        slashingProtection = Database.createDbBackedSlashingProtection(config.getSlashingStorageUrl(),
+        slashingProtection = DbBackedSlashingProtectionFactory.createDbBackedSlashingProtection(config.getSlashingStorageUrl(),
             config.getSlashingStorageUsername(), config.getSlashingStoragePassword());
       } else {
         slashingProtection = null;

@@ -21,7 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.flywaydb.core.Flyway;
 
-public class Database {
+public class DbBackedSlashingProtectionFactory {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -44,12 +44,12 @@ public class Database {
   }
 
 
-  public static void migrateToLatestSchema(final DataSource datasource) {
+  private static void migrateToLatestSchema(final DataSource datasource) {
     final Flyway flyway = Flyway.configure().dataSource(datasource).load();
     flyway.migrate();
   }
 
-  public static SlashingProtection createSlashingProtection(final DataSource datasource)
+  private static SlashingProtection createSlashingProtection(final DataSource datasource)
       throws SQLException {
 
     final Connection conn = datasource.getConnection();

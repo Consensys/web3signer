@@ -121,6 +121,13 @@ public abstract class Web3SignerRunner {
       params.add(dataPath.toAbsolutePath().toString());
     }
 
+    if (signerConfig.getSlashingProtectionDb() != null) {
+      params.add("--slashing-protection-enabled=true");
+      params.add("--slashing-storage-url=jdbc:sqlite:" + signerConfig.getSlashingProtectionDb()
+          .toString());
+      //no need for username and password
+    }
+
     params.addAll(createServerTlsArgs());
 
     return params;

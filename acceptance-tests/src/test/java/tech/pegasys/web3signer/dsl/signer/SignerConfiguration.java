@@ -32,6 +32,7 @@ public class SignerConfiguration {
   private Optional<TlsOptions> serverTlsOptions;
   private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
+  private final Path slashingProtectionDb;
 
   public SignerConfiguration(
       final String hostname,
@@ -42,7 +43,8 @@ public class SignerConfiguration {
       final List<String> metricsHostAllowList,
       final boolean metricsEnabled,
       final Optional<TlsOptions> serverTlsOptions,
-      final Optional<TlsCertificateDefinition> overriddenCaTrustStore) {
+      final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
+      final Path slashingProtectionDb) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
     this.httpHostAllowList = httpHostAllowList;
@@ -52,6 +54,7 @@ public class SignerConfiguration {
     this.metricsEnabled = metricsEnabled;
     this.serverTlsOptions = serverTlsOptions;
     this.overriddenCaTrustStore = overriddenCaTrustStore;
+    this.slashingProtectionDb = slashingProtectionDb;
   }
 
   public String hostname() {
@@ -96,5 +99,9 @@ public class SignerConfiguration {
 
   public boolean isMetricsDynamicPortAllocation() {
     return metricsPort == UNASSIGNED_PORT;
+  }
+
+  public Path getSlashingProtectionDb() {
+    return slashingProtectionDb;
   }
 }
