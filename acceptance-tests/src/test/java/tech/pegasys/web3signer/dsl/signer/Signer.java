@@ -39,7 +39,6 @@ import org.apache.tuweni.bytes.Bytes;
 public class Signer extends FilecoinJsonRpcEndpoint {
 
   private static final Logger LOG = LogManager.getLogger();
-  // public static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
   public static final String ETH1_SIGN_ENDPOINT =
       "/api/v1/eth1/sign/{identifier}"; // using secp keys
   public static final String ETH2_SIGN_ENDPOINT =
