@@ -19,6 +19,7 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
+import static tech.pegasys.web3signer.core.service.http.metrics.OpenApiOperationsMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
@@ -26,18 +27,16 @@ import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
-import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SignForIdentifierHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.OpenApiOperationsMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
+import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
-import tech.pegasys.web3signer.core.service.jsonrpc.SigningService;
-import tech.pegasys.web3signer.core.service.operations.KeyIdentifiers;
-import tech.pegasys.web3signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.FileCoinArtifactSignerProvider;
@@ -51,9 +50,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -80,7 +79,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 public class Runner implements Runnable {
 
@@ -92,12 +90,9 @@ public class Runner implements Runnable {
   public static final String OPENAPI_INDEX_RESOURCE = "openapi/index.html";
   public static final String OPENAPI_SPEC_RESOURCE = "openapi/web3signer.yaml";
 
-  // operationId as defined in web3signer.yaml
-  private static final String UPCHECK_OPERATION_ID = "upcheck";
-  private static final String GET_PUBLIC_KEYS_OPERATION_ID = "getPublicKeys";
-  private static final String SIGN_FOR_IDENTIFIER_OPERATION_ID = "signForIdentifier";
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
   private static final String JSON_RPC_PATH = "/rpc/v1";
+  private static final String FC_JSON_RPC_PATH = JSON_RPC_PATH + "/filecoin";
 
   private final Config config;
 
@@ -132,13 +127,10 @@ public class Runner implements Runnable {
       final ArtifactSignerProvider fcSecpSignerProvider = signers.getFcSecpSignerProvider();
       final ArtifactSignerProvider fcBlsSignerProvider = signers.getFcBlsSignerProvider();
 
-      OpenApiOperationsMetrics.incSignerLoadCount(
-          metricsSystem,
-          blsSignerProvider.availableIdentifiers().size()
-              + ethSecpSignerProvider.availableIdentifiers().size());
-
-      final KeyIdentifiers ethKeyIdentifiers =
-          new KeyIdentifiers(blsSignerProvider, ethSecpSignerProvider);
+      final Set<String> blsIdentifiers = blsSignerProvider.availableIdentifiers();
+      final Set<String> secpIdentifiers = ethSecpSignerProvider.availableIdentifiers();
+      final int totalKeysLoaded = blsIdentifiers.size() + secpIdentifiers.size();
+      incSignerLoadCount(metricsSystem, totalKeysLoaded);
 
       final SignerForIdentifier<BlsArtifactSignature> blsSigner =
           new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
@@ -151,18 +143,13 @@ public class Runner implements Runnable {
       // create router from OpenApi spec - web3signer.yaml
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(
-              vertx, ethKeyIdentifiers, metricsSystem, blsSigner, secpSigner);
+              vertx, blsIdentifiers, secpIdentifiers, metricsSystem, blsSigner, secpSigner);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
 
       // register routes which are not available from web3signer.yaml
-      registerOpenApiSpecRoute(router); // serve static openapi spec
-      registerJsonRpcRoute(
-          router,
-          metricsSystem,
-          ethKeyIdentifiers,
-          fcArtifactSignerProvider,
-          List.of(blsSigner, secpSigner));
+      registerSwaggerUIRoute(router); // serve static openapi spec
+      registerFilecoinJsonRpcRoute(router, metricsSystem, fcArtifactSignerProvider);
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -181,7 +168,8 @@ public class Runner implements Runnable {
 
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
       final Vertx vertx,
-      final KeyIdentifiers keyIdentifiers,
+      final Set<String> blsIdentifiers,
+      final Set<String> secpIdentifiers,
       final MetricsSystem metricsSystem,
       final SignerForIdentifier<BlsArtifactSignature> blsSigner,
       final SignerForIdentifier<SecpArtifactSignature> secpSigner)
@@ -189,13 +177,13 @@ public class Runner implements Runnable {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
 
-    // public key handler
-    addEth1PublicKeysListHandler(openAPI3RouterFactory, keyIdentifiers, errorHandler);
-    addEth2PublicKeysListHandler(openAPI3RouterFactory, keyIdentifiers, errorHandler);
+    // public key list handler
+    addEth1PublicKeysListHandler(openAPI3RouterFactory, secpIdentifiers, errorHandler);
+    addEth2PublicKeysListHandler(openAPI3RouterFactory, blsIdentifiers, errorHandler);
 
     // sign handler
-    addEth2SignHandler(openAPI3RouterFactory, blsSigner, metricsSystem, errorHandler);
     addEth1SignHandler(openAPI3RouterFactory, secpSigner, metricsSystem, errorHandler);
+    addEth2SignHandler(openAPI3RouterFactory, blsSigner, metricsSystem, errorHandler);
 
     // upcheck handler
     addUpcheckHandler(openAPI3RouterFactory, errorHandler);
@@ -233,22 +221,21 @@ public class Runner implements Runnable {
 
   private void addEth1PublicKeysListHandler(
       final OpenAPI3RouterFactory openAPI3RouterFactory,
-      final KeyIdentifiers keyIdentifiers,
+      final Set<String> secpIdentifiers,
       final LogErrorHandler errorHandler) {
     openAPI3RouterFactory.addHandlerByOperationId(
         ETH1_LIST.name(),
-        new BlockingHandlerDecorator(
-            new PublicKeysListHandler(keyIdentifiers.list(SECP256K1)), false));
+        new BlockingHandlerDecorator(new PublicKeysListHandler(secpIdentifiers), false));
     openAPI3RouterFactory.addFailureHandlerByOperationId(ETH1_LIST.name(), errorHandler);
   }
 
   private void addEth2PublicKeysListHandler(
       final OpenAPI3RouterFactory openAPI3RouterFactory,
-      final KeyIdentifiers keyIdentifiers,
+      final Set<String> blsIdentifiers,
       final LogErrorHandler errorHandler) {
     openAPI3RouterFactory.addHandlerByOperationId(
         ETH2_LIST.name(),
-        new BlockingHandlerDecorator(new PublicKeysListHandler(keyIdentifiers.list(BLS)), false));
+        new BlockingHandlerDecorator(new PublicKeysListHandler(blsIdentifiers), false));
     openAPI3RouterFactory.addFailureHandlerByOperationId(ETH2_LIST.name(), errorHandler);
   }
 
@@ -256,7 +243,7 @@ public class Runner implements Runnable {
       final OpenAPI3RouterFactory openAPI3RouterFactory, final LogErrorHandler errorHandler) {
     openAPI3RouterFactory.addHandlerByOperationId(
         UPCHECK.name(), new BlockingHandlerDecorator(new UpcheckHandler(), false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK_OPERATION_ID, errorHandler);
+    openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK.name(), errorHandler);
   }
 
   private String formatBlsSignature(final BlsArtifactSignature signature) {
@@ -289,7 +276,7 @@ public class Runner implements Runnable {
     return openAPI3RouterFactory;
   }
 
-  private void registerOpenApiSpecRoute(final Router router) throws IOException {
+  private void registerSwaggerUIRoute(final Router router) throws IOException {
     final URL indexResourceUrl = Resources.getResource(OPENAPI_INDEX_RESOURCE);
     final URL openApiSpecUrl = Resources.getResource(OPENAPI_SPEC_RESOURCE);
     final String indexHtml = Resources.toString(indexResourceUrl, Charsets.UTF_8);
@@ -308,60 +295,23 @@ public class Runner implements Runnable {
         .handler(routingContext -> routingContext.response().end(indexHtml));
   }
 
-  private void registerJsonRpcRoute(
+  private void registerFilecoinJsonRpcRoute(
       final Router router,
       final MetricsSystem metricsSystem,
-      final KeyIdentifiers ethKeyIdentifiers,
-      final ArtifactSignerProvider fcSigners,
-      final List<SignerForIdentifier<?>> signerForIdentifierList) {
-    // Handles JSON-RPC calls on /rpc/v1
-    final SigningService signingService =
-        new SigningService(ethKeyIdentifiers, signerForIdentifierList);
-
-    final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, metricsSystem);
+      final ArtifactSignerProvider fcSigners) {
+    final FcJsonRpcMetrics fcJsonRpcMetrics = new FcJsonRpcMetrics(metricsSystem);
+    final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, fcJsonRpcMetrics);
     final ObjectMapper mapper = new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
     final JsonRpcServer jsonRpcServer = JsonRpcServer.withMapper(mapper);
 
-    final Counter totalFilecoinRequests =
-        metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
-            "total_request_count",
-            "Total number of Filecoin requests received");
-
-    final Counter totalEthereumJsonRpcRequests =
-        metricsSystem.createCounter(
-            Web3SignerMetricCategory.HTTP,
-            "total_json_rpc_request_count",
-            "Total number of Json RPC requests received");
-
     router
-        .post(JSON_RPC_PATH + "/filecoin")
-        .handler(
-            rc -> {
-              totalFilecoinRequests.inc();
-              rc.next();
-            })
+        .post(FC_JSON_RPC_PATH)
+        .handler(fcJsonRpcMetrics::incTotalFilecoinRequests)
         .handler(BodyHandler.create())
         .blockingHandler(
             routingContext -> {
               final String body = routingContext.getBodyAsString();
               final String jsonRpcResponse = jsonRpcServer.handle(body, fileCoinJsonRpc);
-              routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
-            },
-            false);
-
-    router
-        .post(JSON_RPC_PATH)
-        .handler(
-            rc -> {
-              totalEthereumJsonRpcRequests.inc();
-              rc.next();
-            })
-        .handler(BodyHandler.create())
-        .blockingHandler(
-            routingContext -> {
-              final String body = routingContext.getBodyAsString();
-              final String jsonRpcResponse = jsonRpcServer.handle(body, signingService);
               routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
             },
             false);

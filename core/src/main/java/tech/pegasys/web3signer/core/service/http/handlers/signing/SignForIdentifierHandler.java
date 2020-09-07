@@ -10,15 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http.handlers;
+package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
-import static tech.pegasys.web3signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
-import static tech.pegasys.web3signer.core.service.operations.SignerForIdentifier.toBytes;
+import static tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier.toBytes;
+import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.http.metrics.OpenApiOperationsMetrics;
-import tech.pegasys.web3signer.core.service.operations.SignerForIdentifier;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;

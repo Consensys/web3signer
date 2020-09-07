@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.http;
 
+/** Operation IDs as defined in web3signer.yaml */
 public enum OpenApiOperationsId {
   ETH2_SIGN,
   ETH1_SIGN,

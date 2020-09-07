@@ -20,6 +20,8 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 public class OpenApiOperationsMetrics {
+  private static Counter signersLoadedCounter;
+
   private final Counter malformedRequestCounter;
   private final OperationTimer signingTimer;
   private final Counter missingSignerCounter;
@@ -56,10 +58,13 @@ public class OpenApiOperationsMetrics {
   }
 
   public static void incSignerLoadCount(final MetricsSystem metricsSystem, final int count) {
-    final Counter signersLoaded =
-        metricsSystem.createCounter(
-            Web3SignerMetricCategory.SIGNING,
-            "signers_loaded_count",
-            "Number of keys loaded (combining SECP256k1 and BLS12-381");
+    if (signersLoadedCounter == null) {
+      signersLoadedCounter =
+          metricsSystem.createCounter(
+              Web3SignerMetricCategory.SIGNING,
+              "signers_loaded_count",
+              "Number of keys loaded (combining SECP256k1 and BLS12-381");
+    }
+    signersLoadedCounter.inc(count);
   }
 }

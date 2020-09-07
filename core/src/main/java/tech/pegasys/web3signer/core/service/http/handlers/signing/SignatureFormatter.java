@@ -10,12 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.operations;
+package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
-public class IdentifierUtils {
+import tech.pegasys.web3signer.core.signing.ArtifactSignature;
 
-  public static String normaliseIdentifier(final String signerIdentifier) {
-    final String lowerCaseIdentifier = signerIdentifier.toLowerCase();
-    return lowerCaseIdentifier.startsWith("0x") ? lowerCaseIdentifier : "0x" + lowerCaseIdentifier;
-  }
+@FunctionalInterface
+public interface SignatureFormatter<T extends ArtifactSignature> {
+
+  String format(T signature);
 }

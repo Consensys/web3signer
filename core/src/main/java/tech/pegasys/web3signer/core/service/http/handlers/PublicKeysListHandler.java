@@ -15,7 +15,8 @@ package tech.pegasys.web3signer.core.service.http.handlers;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
@@ -24,8 +25,8 @@ import io.vertx.ext.web.RoutingContext;
 public class PublicKeysListHandler implements Handler<RoutingContext> {
   final String jsonEncodedKeys;
 
-  public PublicKeysListHandler(final List<String> keys) {
-    jsonEncodedKeys = new JsonArray(keys).encode();
+  public PublicKeysListHandler(final Set<String> keys) {
+    jsonEncodedKeys = new JsonArray(new ArrayList<>(keys)).encode();
   }
 
   @Override

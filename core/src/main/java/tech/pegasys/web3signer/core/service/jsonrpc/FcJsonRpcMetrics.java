@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.service.jsonrpc;
 
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
 
+import io.vertx.ext.web.RoutingContext;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
@@ -27,6 +28,7 @@ public class FcJsonRpcMetrics {
   private final Counter walletHasRequestCounter;
   private final Counter walletSignMessageRequestCounter;
   private final LabelledMetric<OperationTimer> signingTimer;
+  private final Counter totalFilecoinRequests;
 
   public FcJsonRpcMetrics(final MetricsSystem metricsSystem) {
     this.secpSigningRequestCounter =
@@ -61,6 +63,12 @@ public class FcJsonRpcMetrics {
             "wallet_sign_duration",
             "The duration for a signing operation",
             "keyType");
+
+    this.totalFilecoinRequests =
+        metricsSystem.createCounter(
+            Web3SignerMetricCategory.FILECOIN,
+            "total_request_count",
+            "Total number of Filecoin requests received");
   }
 
   public void incSecpSigningRequestCounter() {
@@ -79,11 +87,16 @@ public class FcJsonRpcMetrics {
     walletHasRequestCounter.inc();
   }
 
-  public void incwWalletSignMessageRequestCounter() {
+  public void incWalletSignMessageRequestCounter() {
     walletSignMessageRequestCounter.inc();
   }
 
   public LabelledMetric<OperationTimer> getSigningTimer() {
     return signingTimer;
+  }
+
+  public void incTotalFilecoinRequests(final RoutingContext rc) {
+    totalFilecoinRequests.inc();
+    rc.next();
   }
 }
