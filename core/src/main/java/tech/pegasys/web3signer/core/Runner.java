@@ -17,6 +17,42 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JS
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
+import com.google.common.base.Charsets;
+import com.google.common.io.Resources;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
+import io.vertx.core.http.ClientAuth;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.core.net.PfxOptions;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.ResponseContentTypeHandler;
+import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.tuweni.net.tls.VertxTrustOptions;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -38,46 +74,6 @@ import tech.pegasys.web3signer.core.signing.FileCoinArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.LoadedSigners;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.core.util.FileUtil;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.NoSuchFileException;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
-import io.vertx.core.http.ClientAuth;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.HttpServer;
-import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.metrics.MetricsOptions;
-import io.vertx.core.net.PfxOptions;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.ResponseContentTypeHandler;
-import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.tuweni.net.tls.VertxTrustOptions;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import tech.pegasys.web3signer.slashingprotection.Database;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
@@ -129,20 +125,12 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      SlashingProtection slashingProtection = null;
-      if(config.isSlashingProtectionEnabled()) {
-        try {
-          final ComboPooledDataSource dataSource = new ComboPooledDataSource();
-          dataSource.setUser(config.getSlashingStorageUsername());
-          dataSource.setPassword(config.getSlashingStoragePassword());
-          dataSource.setJdbcUrl(config.getSlashingStorageUrl());
-          Database.createTables(dataSource);
-          slashingProtection = Database.createSlashingProtection(dataSource);
-        } catch (final SQLException e) {
-          LOG.error(
-              "Failed to connect/create slashing storage at {}", config.getSlashingStorageUrl());
-          throw new RuntimeException("OH NOES");
-        }
+      final SlashingProtection slashingProtection;
+      if (config.isSlashingProtectionEnabled()) {
+        slashingProtection = Database.createDbBackedSlashingProtection(config.getSlashingStorageUrl(),
+            config.getSlashingStorageUsername(), config.getSlashingStoragePassword());
+      } else {
+        slashingProtection = null;
       }
 
       final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);

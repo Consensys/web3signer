@@ -37,7 +37,6 @@ dependencyManagement {
       entry 'vertx-web-client'
       entry 'vertx-web'
       entry 'vertx-web-api-contract'
-      entry 'vertx-jdbc-client'
     }
 
     dependency 'javax.activation:activation:1.1.1'
@@ -98,6 +97,8 @@ dependencyManagement {
 
     dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
 
+    dependency 'com.mchange:c3p0:0.9.5.5'
+    dependency 'org.flywaydb:flyway-core:6.5.5'
     dependency 'org.xerial:sqlite-jdbc:3.32.3.2'
   }
 }

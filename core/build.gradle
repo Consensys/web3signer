@@ -35,7 +35,6 @@ dependencies {
   implementation 'io.vertx:vertx-web'
   implementation 'io.vertx:vertx-web-client'
   implementation 'io.vertx:vertx-web-api-contract'
-  implementation 'io.vertx:vertx-jdbc-client'
 
   implementation 'org.hyperledger.besu.internal:metrics-core'
   implementation 'org.hyperledger.besu:plugin-api'
