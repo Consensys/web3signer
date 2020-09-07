@@ -12,12 +12,12 @@
  */
 package tech.pegasys.web3signer.tests.publickeys;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.collection.IsIn.in;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -42,9 +42,9 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   public void noLoadedKeysReturnsEmptyPublicKeyResponse(final String keyType) {
     initAndStartSigner();
 
-    validateApiResponse(callApiPublicKeys(keyType), empty());
+    validateApiResponse(signer.callApiPublicKeys(keyType), empty());
     validateRpcResponse(callRpcPublicKeys(keyType), empty());
-    validateRpcResponse(callFilecoinRpcWalletList(), empty());
+    assertThat(signer.walletList()).isEmpty();
   }
 
   @ParameterizedTest
@@ -53,9 +53,9 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     createKeys(keyType, false, privateKeys(keyType));
     initAndStartSigner();
 
-    validateApiResponse(callApiPublicKeys(keyType), empty());
+    validateApiResponse(signer.callApiPublicKeys(keyType), empty());
     validateRpcResponse(callRpcPublicKeys(keyType), empty());
-    validateRpcResponse(callFilecoinRpcWalletList(), empty());
+    assertThat(signer.walletList()).isEmpty();
   }
 
   @ParameterizedTest
@@ -67,7 +67,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
 
     initAndStartSigner();
 
-    final Response response = callApiPublicKeys(keyType);
+    final Response response = signer.callApiPublicKeys(keyType);
     validateApiResponse(response, contains(keys));
     validateApiResponse(response, everyItem(not(in(invalidKeys))));
 
@@ -75,10 +75,8 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     validateRpcResponse(rpcResponse, contains(keys));
     validateRpcResponse(rpcResponse, everyItem(not(in(invalidKeys))));
 
-    final Response fcResponse = callFilecoinRpcWalletList();
     final String[] filecoinAddresses = filecoinAddresses(keyType);
-    validateRpcResponse(fcResponse, contains(filecoinAddresses[0]));
-    validateRpcResponse(fcResponse, everyItem((not(filecoinAddresses[1]))));
+    assertThat(signer.walletList()).containsExactly(filecoinAddresses[0]);
   }
 
   @ParameterizedTest
@@ -88,11 +86,8 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
 
     final String[] filecoinAddresses = filecoinAddresses(keyType);
 
-    final Response fcHasWalletHasTrueResponse = callFilecoinRpcWalletHas(filecoinAddresses[0]);
-    validateRpcResponse(fcHasWalletHasTrueResponse, equalTo(false));
-
-    final Response fcHasWalletHasFalseResponse = callFilecoinRpcWalletHas(filecoinAddresses[1]);
-    validateRpcResponse(fcHasWalletHasFalseResponse, equalTo(false));
+    assertThat(signer.walletHas(filecoinAddresses[0])).isEqualTo(false);
+    assertThat(signer.walletHas(filecoinAddresses[1])).isEqualTo(false);
   }
 
   @ParameterizedTest
@@ -106,11 +101,8 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
 
     final String[] filecoinAddresses = filecoinAddresses(keyType);
 
-    final Response fcHasWalletHasTrueResponse = callFilecoinRpcWalletHas(filecoinAddresses[0]);
-    validateRpcResponse(fcHasWalletHasTrueResponse, equalTo(true));
-
-    final Response fcHasWalletHasFalseResponse = callFilecoinRpcWalletHas(filecoinAddresses[1]);
-    validateRpcResponse(fcHasWalletHasFalseResponse, equalTo(false));
+    assertThat(signer.walletHas(filecoinAddresses[0])).isEqualTo(true);
+    assertThat(signer.walletHas(filecoinAddresses[1])).isEqualTo(false);
   }
 
   @ParameterizedTest
@@ -119,11 +111,11 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String[] keys = createKeys(keyType, true, privateKeys(keyType));
     initAndStartSigner();
 
-    validateApiResponse(callApiPublicKeys(keyType), containsInAnyOrder(keys));
+    validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
     validateRpcResponse(callRpcPublicKeys(keyType), containsInAnyOrder(keys));
 
     final String[] filecoinAddresses = filecoinAddresses(keyType);
-    validateRpcResponse(callFilecoinRpcWalletList(), containsInAnyOrder(filecoinAddresses));
+    assertThat(signer.walletList()).containsOnly(filecoinAddresses);
   }
 
   @ParameterizedTest
@@ -135,7 +127,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(keyType);
     validateApiResponse(response, containsInAnyOrder(keys));
     final String[] filecoinAddresses = filecoinAddresses(keyType);
-    validateRpcResponse(callFilecoinRpcWalletList(), containsInAnyOrder(filecoinAddresses));
+    assertThat(signer.walletList()).containsOnly(filecoinAddresses);
   }
 
   @Test
@@ -181,7 +173,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     }
 
     initAndStartSigner();
-    validateApiResponse(callApiPublicKeys(BLS), containsInAnyOrder(publicKeys));
+    validateApiResponse(signer.callApiPublicKeys(BLS), containsInAnyOrder(publicKeys));
   }
 
   @ParameterizedTest
@@ -194,7 +186,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     initAndStartSigner();
 
     final String publicKey = keyType.equals(BLS) ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
-    validateApiResponse(callApiPublicKeys(keyType), contains(publicKey));
+    validateApiResponse(signer.callApiPublicKeys(keyType), contains(publicKey));
     validateRpcResponse(callRpcPublicKeys(keyType), contains(publicKey));
   }
 }

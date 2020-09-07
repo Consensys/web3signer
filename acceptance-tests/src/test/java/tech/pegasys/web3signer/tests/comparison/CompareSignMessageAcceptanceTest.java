@@ -13,9 +13,8 @@
 package tech.pegasys.web3signer.tests.comparison;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.walletSignMessage;
-import static tech.pegasys.web3signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
 
+import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignedMessage;
 
@@ -25,6 +24,7 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.assertj.core.util.Lists;
@@ -37,6 +37,9 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
   @EnabledIfEnvironmentVariable(named = "LOTUS_PORT", matches = ".*")
 })
 public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestBase {
+
+  private static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
 
   @BeforeEach
   void initSigner() {
@@ -109,9 +112,8 @@ public class CompareSignMessageAcceptanceTest extends CompareApisAcceptanceTestB
         .forEach(
             address -> {
               final FilecoinSignedMessage lotusFcSig =
-                  walletSignMessage(LOTUS_NODE.getJsonRpcClient(), address, message);
-              final FilecoinSignedMessage signerFcSig =
-                  walletSignMessage(getSignerJsonRpcClient(), address, message);
+                  LOTUS_NODE.walletSignMessage(address, message);
+              final FilecoinSignedMessage signerFcSig = signer.walletSignMessage(address, message);
 
               assertThat(lotusFcSig.getMessage())
                   .isEqualToComparingFieldByField(signerFcSig.getMessage());

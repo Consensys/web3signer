@@ -24,28 +24,16 @@ import java.nio.file.Path;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
-import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.io.TempDir;
 
 public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   protected @TempDir Path testDirectory;
-  static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
 
   protected void setupSigner() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
-  }
-
-  protected Response sign(final String publicKey, final Bytes dataToSign) {
-    return given()
-        .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
-        .contentType(ContentType.JSON)
-        .pathParam("identifier", publicKey)
-        .body(new JsonObject().put("data", dataToSign.toHexString()).toString())
-        .post(SIGN_ENDPOINT);
   }
 
   protected Bytes verifyAndGetSignatureResponse(final Response response) {

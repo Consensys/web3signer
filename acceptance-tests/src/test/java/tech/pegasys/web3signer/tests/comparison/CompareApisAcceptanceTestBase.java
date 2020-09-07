@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.tests.comparison;
 
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.createJsonRpcClient;
 import static tech.pegasys.web3signer.dsl.lotus.FilecoinKeyType.BLS;
 import static tech.pegasys.web3signer.dsl.lotus.FilecoinKeyType.SECP256K1;
 
@@ -26,7 +25,6 @@ import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 import java.nio.file.Path;
 import java.util.Map;
 
-import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -64,10 +62,6 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory);
     startSigner(builder.build());
-  }
-
-  protected JsonRpcClient getSignerJsonRpcClient() {
-    return createJsonRpcClient(signer.getUrl() + FC_RPC_PATH);
   }
 
   private void initSignerKeystoreDirectory() {

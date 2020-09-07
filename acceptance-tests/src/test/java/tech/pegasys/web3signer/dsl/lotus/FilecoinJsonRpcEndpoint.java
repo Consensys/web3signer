@@ -12,8 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.lotus;
 
-import static tech.pegasys.web3signer.dsl.lotus.LotusNode.OBJECT_MAPPER;
-
+import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignature;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignedMessage;
@@ -22,6 +21,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.google.common.net.MediaType;
 import org.apache.commons.codec.Charsets;
@@ -34,7 +34,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.tuweni.bytes.Bytes;
 
-public class FilecoinJsonRequests {
+public abstract class FilecoinJsonRpcEndpoint {
+
   public static final int BLS_SIGTYPE = 1;
   public static final int SECP_SIGTYPE = 2;
 
@@ -42,11 +43,18 @@ public class FilecoinJsonRequests {
   private static final Optional<String> authToken =
       Optional.ofNullable(System.getenv("WEB3SIGNER_BEARER_TOKEN"));
 
-  public static JsonRpcClient createJsonRpcClient(final String baseUrl) {
-    return new JsonRpcClient(request -> executeRawJsonRpcRequest(baseUrl, request), OBJECT_MAPPER);
+  private static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
+
+  private final JsonRpcClient jsonRpcClient;
+  private final String rpcPath;
+
+  public FilecoinJsonRpcEndpoint(final String rpcPath) {
+    jsonRpcClient = new JsonRpcClient(this::executeRawJsonRpcRequest, OBJECT_MAPPER);
+    this.rpcPath = rpcPath;
   }
 
-  public static String walletNew(final JsonRpcClient jsonRpcClient, int sigType) {
+  public String walletNew(int sigType) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletNew")
@@ -56,7 +64,7 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static FilecoinKey walletExport(final JsonRpcClient jsonRpcClient, final String address) {
+  public FilecoinKey walletExport(final String address) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletExport")
@@ -66,7 +74,7 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static Boolean walletHas(final JsonRpcClient jsonRpcClient, final String address) {
+  public Boolean walletHas(final String address) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletHas")
@@ -76,7 +84,7 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static List<String> walletList(final JsonRpcClient jsonRpcClient) {
+  public List<String> walletList() {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletList")
@@ -85,8 +93,7 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static FilecoinSignature walletSign(
-      final JsonRpcClient jsonRpcClient, final String address, final Bytes data) {
+  public FilecoinSignature walletSign(final String address, final Bytes data) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletSign")
@@ -96,11 +103,8 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static Boolean walletVerify(
-      final JsonRpcClient jsonRpcClient,
-      final String address,
-      final Bytes data,
-      final FilecoinSignature signature) {
+  public Boolean walletVerify(
+      final String address, final Bytes data, final FilecoinSignature signature) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletVerify")
@@ -110,8 +114,8 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static FilecoinSignedMessage walletSignMessage(
-      final JsonRpcClient jsonRpcClient, final String address, final FilecoinMessage message) {
+  public FilecoinSignedMessage walletSignMessage(
+      final String address, final FilecoinMessage message) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletSignMessage")
@@ -121,8 +125,8 @@ public class FilecoinJsonRequests {
         .execute();
   }
 
-  public static String executeRawJsonRpcRequest(final String url, final String request)
-      throws IOException {
+  public String executeRawJsonRpcRequest(final String request) throws IOException {
+    final String url = getUrl() + rpcPath;
     final HttpPost post = new HttpPost(url);
     post.setEntity(new StringEntity(request, Charsets.UTF_8));
     post.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
@@ -132,4 +136,6 @@ public class FilecoinJsonRequests {
       return EntityUtils.toString(httpResponse.getEntity(), Charsets.UTF_8);
     }
   }
+
+  public abstract String getUrl();
 }

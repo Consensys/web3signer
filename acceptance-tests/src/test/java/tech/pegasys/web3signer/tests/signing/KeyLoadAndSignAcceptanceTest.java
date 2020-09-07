@@ -22,6 +22,7 @@ import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.nio.file.Path;
@@ -53,12 +54,12 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     setupSigner();
     given()
         .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
+        .filter(signer.getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(new JsonObject().put("data", DATA.toHexString()).toString())
         .when()
-        .post(SIGN_ENDPOINT)
+        .post(Signer.SIGN_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(404);
@@ -81,7 +82,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(new JsonObject().put("data", data).toString())
         .when()
-        .post(SIGN_ENDPOINT)
+        .post(Signer.SIGN_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(400);
@@ -102,7 +103,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body("{\"invalid\": \"json body\"}")
         .when()
-        .post(SIGN_ENDPOINT)
+        .post(Signer.SIGN_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(400);
@@ -123,7 +124,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body("not a json body")
         .when()
-        .post(SIGN_ENDPOINT)
+        .post(Signer.SIGN_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(400);
@@ -139,7 +140,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
 
     given()
         .baseUri(signer.getUrl())
-        .filter(getOpenApiValidationFilter())
+        .filter(signer.getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(
@@ -148,7 +149,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
                 .put("unknownField", "someValue")
                 .toString())
         .when()
-        .post(SIGN_ENDPOINT)
+        .post(Signer.SIGN_ENDPOINT)
         .then()
         .assertThat()
         .statusCode(200)

@@ -14,10 +14,6 @@ package tech.pegasys.web3signer.tests.comparison;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.walletHas;
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.walletList;
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.walletSign;
-import static tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRequests.walletVerify;
 
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignature;
 
@@ -45,21 +41,21 @@ public class CompareFilecoinApisAcceptanceTest extends CompareApisAcceptanceTest
   void compareWalletHasResponses() {
     addressMap.forEach(
         (address, key) -> {
-          assertThat(walletHas(LOTUS_NODE.getJsonRpcClient(), address)).isTrue();
-          assertThat(walletHas(getSignerJsonRpcClient(), address)).isTrue();
+          assertThat(LOTUS_NODE.walletHas(address)).isTrue();
+          assertThat(signer.walletHas(address)).isTrue();
         });
 
     nonExistentAddressMap.forEach(
         (address, key) -> {
-          assertThat(walletHas(LOTUS_NODE.getJsonRpcClient(), address)).isFalse();
-          assertThat(walletHas(getSignerJsonRpcClient(), address)).isFalse();
+          assertThat(LOTUS_NODE.walletHas(address)).isFalse();
+          assertThat(signer.walletHas(address)).isFalse();
         });
   }
 
   @Test
   void compareWalletListResponses() {
-    final List<String> lotusWalletList = walletList(LOTUS_NODE.getJsonRpcClient());
-    final List<String> signerWalletList = walletList(getSignerJsonRpcClient());
+    final List<String> lotusWalletList = LOTUS_NODE.walletList();
+    final List<String> signerWalletList = signer.walletList();
 
     // note: lotus node may have additional miner addresses which aren't loaded in Signer.
     Assertions.assertThat(lotusWalletList).containsAll(signerWalletList);
@@ -78,19 +74,17 @@ public class CompareFilecoinApisAcceptanceTest extends CompareApisAcceptanceTest
               assertThatCode(
                       () -> {
                         final FilecoinSignature lotusFcSig =
-                            walletSign(LOTUS_NODE.getJsonRpcClient(), address, dataToSign);
+                            LOTUS_NODE.walletSign(address, dataToSign);
                         final FilecoinSignature signerFcSig =
-                            walletSign(getSignerJsonRpcClient(), address, dataToSign);
+                            signer.walletSign(address, dataToSign);
 
                         assertThat(signerFcSig).isEqualTo(lotusFcSig);
 
                         // verify signatures
                         final Boolean lotusSigVerify =
-                            walletVerify(
-                                LOTUS_NODE.getJsonRpcClient(), address, dataToSign, lotusFcSig);
+                            LOTUS_NODE.walletVerify(address, dataToSign, lotusFcSig);
                         final Boolean signerSigVerify =
-                            walletVerify(
-                                getSignerJsonRpcClient(), address, dataToSign, signerFcSig);
+                            signer.walletVerify(address, dataToSign, signerFcSig);
 
                         assertThat(lotusSigVerify).isTrue();
                         assertThat(signerSigVerify).isTrue();

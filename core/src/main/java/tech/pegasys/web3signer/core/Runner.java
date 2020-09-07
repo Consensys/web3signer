@@ -21,7 +21,7 @@ import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
-import tech.pegasys.web3signer.core.metrics.VertxMetricsAdapterFactory;
+import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
@@ -58,13 +58,11 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
@@ -76,6 +74,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 public class Runner implements Runnable {
 
@@ -115,15 +114,16 @@ public class Runner implements Runnable {
             config.getMetricsHostAllowList());
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
-    final MetricsOptions metricsOptions =
-        new MetricsOptions()
-            .setEnabled(true)
-            .setFactory(new VertxMetricsAdapterFactory(metricsSystem));
-    final VertxOptions vertxOptions = new VertxOptions().setMetricsOptions(metricsOptions);
-    final Vertx vertx = Vertx.vertx(vertxOptions);
+    final Vertx vertx = Vertx.vertx();
 
     try {
       metricsEndpoint.start(vertx);
+
+      final Counter signersLoaded =
+          metricsSystem.createCounter(
+              Web3SignerMetricCategory.SIGNING,
+              "signers_loaded_count",
+              "Number of keys loaded (combining SECP256k1 and BLS12-381");
 
       final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
 
@@ -131,6 +131,10 @@ public class Runner implements Runnable {
       final ArtifactSignerProvider ethSecpSignerProvider = signers.getEthSignerProvider();
       final ArtifactSignerProvider fcSecpSignerProvider = signers.getFcSecpSignerProvider();
       final ArtifactSignerProvider fcBlsSignerProvider = signers.getFcBlsSignerProvider();
+
+      signersLoaded.inc(
+          blsSignerProvider.availableIdentifiers().size()
+              + ethSecpSignerProvider.availableIdentifiers().size());
 
       final KeyIdentifiers ethKeyIdentifiers =
           new KeyIdentifiers(blsSignerProvider, ethSecpSignerProvider);
@@ -144,14 +148,19 @@ public class Runner implements Runnable {
           new FileCoinArtifactSignerProvider(fcBlsSignerProvider, fcSecpSignerProvider);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
-          createOpenApiRouterFactory(vertx, ethKeyIdentifiers, blsSigner, secpSigner);
+          createOpenApiRouterFactory(
+              vertx, ethKeyIdentifiers, metricsSystem, blsSigner, secpSigner);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
 
       // register non-
       registerOpenApiSpecRoute(router); // serve static openapi spec
       registerJsonRpcRoute(
-          router, ethKeyIdentifiers, fcArtifactSignerProvider, List.of(blsSigner, secpSigner));
+          router,
+          metricsSystem,
+          ethKeyIdentifiers,
+          fcArtifactSignerProvider,
+          List.of(blsSigner, secpSigner));
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -171,6 +180,7 @@ public class Runner implements Runnable {
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
       final Vertx vertx,
       final KeyIdentifiers keyIdentifiers,
+      final MetricsSystem metricsSystem,
       final SignerForIdentifier<BlsArtifactSignature> blsSigner,
       final SignerForIdentifier<SecpArtifactSignature> secpSigner)
       throws InterruptedException, ExecutionException {
@@ -190,12 +200,26 @@ public class Runner implements Runnable {
         GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
 
     // sign handler
+    final Counter missingSignerCounter =
+        metricsSystem.createCounter(
+            Web3SignerMetricCategory.SIGNING,
+            "missing_identifier_count",
+            "Number of signing operations requested, for keys which are not available");
+
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new BlockingHandlerDecorator(new SignForIdentifierHandler(blsSigner), false));
+        new BlockingHandlerDecorator(
+            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls"), true));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new BlockingHandlerDecorator(new SignForIdentifierHandler(secpSigner), false));
+        new BlockingHandlerDecorator(
+            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp"), true));
+    openAPI3RouterFactory.addHandlerByOperationId(
+        SIGN_FOR_IDENTIFIER_OPERATION_ID,
+        rc -> {
+          missingSignerCounter.inc();
+          rc.next();
+        });
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 
@@ -253,6 +277,7 @@ public class Runner implements Runnable {
 
   private void registerJsonRpcRoute(
       final Router router,
+      final MetricsSystem metricsSystem,
       final KeyIdentifiers ethKeyIdentifiers,
       final ArtifactSignerProvider fcSigners,
       final List<SignerForIdentifier<?>> signerForIdentifierList) {
@@ -260,12 +285,29 @@ public class Runner implements Runnable {
     final SigningService signingService =
         new SigningService(ethKeyIdentifiers, signerForIdentifierList);
 
-    final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners);
+    final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, metricsSystem);
     final ObjectMapper mapper = new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
     final JsonRpcServer jsonRpcServer = JsonRpcServer.withMapper(mapper);
 
+    final Counter totalFilecoinRequests =
+        metricsSystem.createCounter(
+            Web3SignerMetricCategory.FILECOIN,
+            "total_request_count",
+            "Total number of Filecoin requests received");
+
+    final Counter totalEthereumJsonRpcRequests =
+        metricsSystem.createCounter(
+            Web3SignerMetricCategory.HTTP,
+            "total_json_rpc_request_count",
+            "Total number of Json RPC requests received");
+
     router
         .post(JSON_RPC_PATH + "/filecoin")
+        .handler(
+            rc -> {
+              totalFilecoinRequests.inc();
+              rc.next();
+            })
         .handler(BodyHandler.create())
         .blockingHandler(
             routingContext -> {
@@ -277,6 +319,11 @@ public class Runner implements Runnable {
 
     router
         .post(JSON_RPC_PATH)
+        .handler(
+            rc -> {
+              totalEthereumJsonRpcRequests.inc();
+              rc.next();
+            })
         .handler(BodyHandler.create())
         .blockingHandler(
             routingContext -> {

@@ -128,7 +128,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     setupSigner();
 
     // openapi
-    final Response response = sign(PUBLIC_KEY_HEX_STRING, DATA);
+    final Response response = signer.sign(PUBLIC_KEY_HEX_STRING, DATA);
     final Bytes signature = verifyAndGetSignatureResponse(response);
     verifySignature(signature);
 

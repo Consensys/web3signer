@@ -169,13 +169,6 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected Response callApiPublicKeys(final String keyType) {
-    return given()
-        .filter(getOpenApiValidationFilter())
-        .baseUri(signer.getUrl())
-        .get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
-  }
-
   protected Response callApiPublicKeysWithoutOpenApiClientSideFilter(final String keyType) {
     return given().baseUri(signer.getUrl()).accept("").get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
   }
@@ -197,19 +190,5 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
         .statusCode(200)
         .contentType(ContentType.JSON)
         .body("jsonrpc", equalTo("2.0"), "id", equalTo(1), "result", resultMatcher);
-  }
-
-  protected Response callFilecoinRpcWalletList() {
-    final JsonNode params = JsonNodeFactory.instance.objectNode();
-    final ValueNode id = JsonNodeFactory.instance.numberNode(1);
-    final Request request = new Request("2.0", "Filecoin.WalletList", params, id);
-    return given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH + "/filecoin");
-  }
-
-  protected Response callFilecoinRpcWalletHas(final String address) {
-    final JsonNode params = JsonNodeFactory.instance.objectNode().put("address", address);
-    final ValueNode id = JsonNodeFactory.instance.numberNode(1);
-    final Request request = new Request("2.0", "Filecoin.WalletHas", params, id);
-    return given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH + "/filecoin");
   }
 }
