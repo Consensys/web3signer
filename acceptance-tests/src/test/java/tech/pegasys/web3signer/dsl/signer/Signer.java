@@ -38,7 +38,8 @@ public class Signer extends FilecoinJsonRpcEndpoint {
 
   private static final Logger LOG = LogManager.getLogger();
   public static final String SIGN_ENDPOINT = "/signer/sign/{identifier}";
-  static final String SIGNER_PUBLIC_KEYS_PATH = "/signer/publicKeys";
+  public static final String ETH1_PUBLIC_KEYS = "/api/v1/eth1/publicKeys"; // secp keys
+  public static final String ETH2_PUBLIC_KEYS = "/api/v1/eth2/publicKeys"; // bls keys
 
   private final Web3SignerRunner runner;
   private final String hostname;
@@ -111,7 +112,11 @@ public class Signer extends FilecoinJsonRpcEndpoint {
     return given()
         .filter(getOpenApiValidationFilter())
         .baseUri(getUrl())
-        .get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
+        .get(publicKeysPath(keyType));
+  }
+
+  public static String publicKeysPath(final String keyType) {
+    return "BLS".equalsIgnoreCase(keyType) ? ETH2_PUBLIC_KEYS : ETH1_PUBLIC_KEYS;
   }
 
   public OpenApiValidationFilter getOpenApiValidationFilter() {

@@ -43,7 +43,6 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     initAndStartSigner();
 
     validateApiResponse(signer.callApiPublicKeys(keyType), empty());
-    validateRpcResponse(callRpcPublicKeys(keyType), empty());
     assertThat(signer.walletList()).isEmpty();
   }
 
@@ -54,7 +53,6 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     initAndStartSigner();
 
     validateApiResponse(signer.callApiPublicKeys(keyType), empty());
-    validateRpcResponse(callRpcPublicKeys(keyType), empty());
     assertThat(signer.walletList()).isEmpty();
   }
 
@@ -70,10 +68,6 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final Response response = signer.callApiPublicKeys(keyType);
     validateApiResponse(response, contains(keys));
     validateApiResponse(response, everyItem(not(in(invalidKeys))));
-
-    final Response rpcResponse = callRpcPublicKeys(keyType);
-    validateRpcResponse(rpcResponse, contains(keys));
-    validateRpcResponse(rpcResponse, everyItem(not(in(invalidKeys))));
 
     final String[] filecoinAddresses = filecoinAddresses(keyType);
     assertThat(signer.walletList()).containsExactly(filecoinAddresses[0]);
@@ -112,7 +106,6 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     initAndStartSigner();
 
     validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
-    validateRpcResponse(callRpcPublicKeys(keyType), containsInAnyOrder(keys));
 
     final String[] filecoinAddresses = filecoinAddresses(keyType);
     assertThat(signer.walletList()).containsOnly(filecoinAddresses);
@@ -187,6 +180,5 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
 
     final String publicKey = keyType.equals(BLS) ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
     validateApiResponse(signer.callApiPublicKeys(keyType), contains(publicKey));
-    validateRpcResponse(callRpcPublicKeys(keyType), contains(publicKey));
   }
 }

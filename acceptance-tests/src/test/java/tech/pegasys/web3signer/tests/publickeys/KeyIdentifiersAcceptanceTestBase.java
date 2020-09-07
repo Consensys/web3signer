@@ -13,12 +13,12 @@
 package tech.pegasys.web3signer.tests.publickeys;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
@@ -29,10 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ValueNode;
-import com.github.arteam.simplejsonrpc.core.domain.Request;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
@@ -44,7 +40,6 @@ import org.web3j.crypto.WalletUtils;
 import org.web3j.utils.Numeric;
 
 public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
-  static final String SIGNER_PUBLIC_KEYS_PATH = "/signer/publicKeys";
   static final String BLS = "BLS";
   static final String SECP256K1 = "SECP256K1";
 
@@ -170,25 +165,10 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   protected Response callApiPublicKeysWithoutOpenApiClientSideFilter(final String keyType) {
-    return given().baseUri(signer.getUrl()).accept("").get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
+    return given().baseUri(signer.getUrl()).accept("").get(Signer.publicKeysPath(keyType));
   }
 
   protected void validateApiResponse(final Response response, final Matcher<?> matcher) {
     response.then().statusCode(200).contentType(ContentType.JSON).body("", matcher);
-  }
-
-  protected Response callRpcPublicKeys(final String keyType) {
-    final JsonNode params = JsonNodeFactory.instance.objectNode().put("keyType", keyType);
-    final ValueNode id = JsonNodeFactory.instance.numberNode(1);
-    final Request request = new Request("2.0", "public_keys", params, id);
-    return given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);
-  }
-
-  protected void validateRpcResponse(final Response response, final Matcher<?> resultMatcher) {
-    response
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.JSON)
-        .body("jsonrpc", equalTo("2.0"), "id", equalTo(1), "result", resultMatcher);
   }
 }
