@@ -18,6 +18,7 @@ import static tech.pegasys.web3signer.core.service.operations.IdentifierUtils.no
 import static tech.pegasys.web3signer.core.service.operations.SignerForIdentifier.toBytes;
 
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.core.service.http.SignRequestBody;
 import tech.pegasys.web3signer.core.service.operations.SignerForIdentifier;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
@@ -36,15 +37,15 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
-@SuppressWarnings("UnusedVariable")
 public class SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
+
   private final SignerForIdentifier<?> signerForIdentifier;
+  private final Optional<SlashingProtection> slashingProtection;
 
   private final Counter malformedRequestCounter;
   private final OperationTimer signingTimer;
-  private final Optional<SlashingProtection> slashingProtection;
 
   public SignForIdentifierHandler(
       final SignerForIdentifier<?> signerForIdentifier,
@@ -68,27 +69,28 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(final RoutingContext routingContext) {
-
     try (final TimingContext ignored = signingTimer.startTimer()) {
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
-      final Bytes data;
+      final SignRequestBody requestBody;
       try {
-        data = getDataToSign(params);
+        requestBody = deserialiseBody(params);
       } catch (final IllegalArgumentException e) {
         malformedRequestCounter.inc();
         routingContext.fail(400);
         return;
       }
 
+      final String normalisedIdentifier = normaliseIdentifier(identifier);
       signerForIdentifier
-          .sign(normaliseIdentifier(identifier), data)
+          .sign(normalisedIdentifier, requestBody.getDataToSign())
           .ifPresentOrElse(
-              signature ->
-                  routingContext
-                      .response()
-                      .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
-                      .end(signature),
+              signature -> {
+                if (isSigningLegal(normalisedIdentifier, requestBody)) {
+                  routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
+                      .end(signature);
+                }
+              },
               () -> {
                 LOG.trace("Unsuitable handler for {}, invoking next handler", identifier);
                 routingContext.next();
@@ -96,9 +98,26 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
     }
   }
 
-  private Bytes getDataToSign(final RequestParameters params) {
+  private boolean isSigningLegal(
+      final String identifier,
+      final SignRequestBody requestBody) {
+    if(slashingProtection.isEmpty()) {
+      return true;
+    }
+
+    if (requestBody.getArtifactType().equals("Block")) {
+      return slashingProtection.get().maySignBlock(identifier, requestBody.getBlockSlot());
+    } else if (requestBody.getArtifactType().equals("Attestation")) {
+      return slashingProtection.get().maySignAttestation(
+          identifier, requestBody.getSourceEpoch(), requestBody.getTargetEpoch());
+    } else {
+      throw new RuntimeException("ILLEGAL SIGN TYPE");
+    }
+  }
+
+  private SignRequestBody deserialiseBody(final RequestParameters params) {
     final RequestParameter body = params.body();
     final JsonObject jsonObject = body.getJsonObject();
-    return toBytes(jsonObject.getString("data"));
+    return jsonObject.mapTo(SignRequestBody.class); // what ObjectMapper does this use?!
   }
 }
