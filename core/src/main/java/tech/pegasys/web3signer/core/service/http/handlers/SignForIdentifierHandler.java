@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.core.service.http.handlers;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
-import static tech.pegasys.web3signer.core.service.operations.SignerForIdentifier.toBytes;
 
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.service.http.SignRequestBody;
@@ -31,7 +30,6 @@ import io.vertx.ext.web.api.RequestParameter;
 import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -87,7 +85,9 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
           .ifPresentOrElse(
               signature -> {
                 if (isSigningLegal(normalisedIdentifier, requestBody)) {
-                  routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
+                  routingContext
+                      .response()
+                      .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
                       .end(signature);
                 }
               },
@@ -98,18 +98,18 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
     }
   }
 
-  private boolean isSigningLegal(
-      final String identifier,
-      final SignRequestBody requestBody) {
-    if(slashingProtection.isEmpty()) {
+  private boolean isSigningLegal(final String identifier, final SignRequestBody requestBody) {
+    if (slashingProtection.isEmpty()) {
       return true;
     }
 
     if (requestBody.getArtifactType().equals("Block")) {
       return slashingProtection.get().maySignBlock(identifier, requestBody.getBlockSlot());
     } else if (requestBody.getArtifactType().equals("Attestation")) {
-      return slashingProtection.get().maySignAttestation(
-          identifier, requestBody.getSourceEpoch(), requestBody.getTargetEpoch());
+      return slashingProtection
+          .get()
+          .maySignAttestation(
+              identifier, requestBody.getSourceEpoch(), requestBody.getTargetEpoch());
     } else {
       throw new RuntimeException("ILLEGAL SIGN TYPE");
     }
