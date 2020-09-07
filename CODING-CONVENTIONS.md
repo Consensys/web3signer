@@ -45,7 +45,7 @@ Web3Signer embraces typical Java idioms including using an Object Oriented appro
    - Don't pass lambdas into executors because it makes it harder to identify the threading interactions. The lambda makes the code shorter but not clearer. Instead use a separate class or extract a method. 
 * For good examples, refer to the APIs the JDK itself exposes. 
 
->**Note** If you're not sure what idiomatic Java looks like, start by following the typical patterns and naming used in this or other PegaSys codebases.
+>**Note** If you're not sure what idiomatic Java looks like, start by following the typical patterns and naming used in this or other ConsenSys codebases.
 
 ## 2.3 You Ain't Gonna Need It (YAGNI)
 

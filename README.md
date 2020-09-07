@@ -14,11 +14,12 @@ See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching 
 ## Users
 * [User documentation](https://docs.web3signer.pegasys.tech/)
 
+## Chat
+* [Discord server](https://discord.gg/KMh2Mjh)
+
 ## Developers
 * [Contribution Guidelines](CONTRIBUTING.md)
 * [Coding Conventions](CODING-CONVENTIONS.md)
 
 ## Release Notes
 * [Release Notes](CHANGELOG.md)
-
-[Gitter]: https://gitter.im/PegaSysEng/web3signer
