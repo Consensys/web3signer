@@ -46,6 +46,7 @@ public class DbBackedSlashingProtectionFactory {
     dataSource.setUser(username);
     dataSource.setPassword(password);
     dataSource.setJdbcUrl(url);
+    dataSource.setAcquireRetryAttempts(3);
 
     return dataSource;
   }

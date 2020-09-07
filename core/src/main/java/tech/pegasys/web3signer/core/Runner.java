@@ -190,6 +190,7 @@ public class Runner implements Runnable {
     openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
   }
 
+  @SuppressWarnings("UnusedVariable")
   private OpenAPI3RouterFactory createOpenApiRouterFactory(
       final Vertx vertx,
       final KeyIdentifiers keyIdentifiers,
@@ -223,12 +224,11 @@ public class Runner implements Runnable {
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls", slashingProtection),
-            false));
+            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls"), false));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp", null), false));
+            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp"), false));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         rc -> {
