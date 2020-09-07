@@ -173,11 +173,29 @@ public class Web3SignerCommand implements Config, Runnable {
   private final FilecoinNetwork filecoinNetwork = FilecoinNetwork.TESTNET;
 
   @Option(
-      names = {"--slashing-storage"},
-      description = "A string defining the storage mechanis for slashing data eg. sql:jdbcurl",
+      names = {"--slashing-storage-url"},
+      description = "A string defining the storage mechanism for slashing data eg. sql:jdbcurl",
       paramLabel = "<storage label>",
-      arity = 1)
-  private String slashingStorage = "lebeldb";
+      arity = "1")
+  private String slashingStorageUrl = "leveldb"; // not sure on default - not Level!
+
+  @Option(
+      names = {"--slashing-protection-enabled"},
+      description =
+          "Set to true if all signing operations should be validated against historic data, prior to producing signature"
+              + "(default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private boolean slashingProtectectionEnabled = true;
+
+  @Option(
+      names = {"--slashing-storage-username"},
+      description = "The username to use to connect to the slashing storage database")
+  private String slashingStorageUsername;
+
+  @Option(
+      names = {"--slashing-storage-password"},
+      description = "The password to use when connecting to the slashing storage database")
+  private String slashingStoragePassword;
 
   @ArgGroup(exclusive = false)
   private PicoCliTlsServerOptions picoCliTlsServerOptions;
@@ -253,7 +271,24 @@ public class Web3SignerCommand implements Config, Runnable {
   }
 
   @Override
-  public String getSlashingStorage() { return slashingStorage; }
+  public String getSlashingStorageUrl() {
+    return slashingStorageUrl;
+  }
+
+  @Override
+  public boolean isSlashingProtectionEnabled() {
+    return slashingProtectectionEnabled;
+  }
+
+  @Override
+  public String getSlashingStorageUsername() {
+    return slashingStorageUsername;
+  }
+
+  @Override
+  public String getSlashingStoragePassword() {
+    return slashingStoragePassword;
+  }
 
   @Override
   public String toString() {
@@ -273,7 +308,10 @@ public class Web3SignerCommand implements Config, Runnable {
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
         .add("filecoinNetwork", filecoinNetwork)
-        .add("slashingStorage", slashingStorage)
+        .add("slashingStorage", slashingStorageUrl)
+        .add("slashingStorageUsername", slashingStorageUsername)
+        .add("slashingStoragePassword", slashingStoragePassword)
+        .add("slashingProtectionEnabled", slashingProtectectionEnabled)
         .toString();
   }
 

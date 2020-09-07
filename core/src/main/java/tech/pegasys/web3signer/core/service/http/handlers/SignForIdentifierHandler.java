@@ -15,9 +15,11 @@ package tech.pegasys.web3signer.core.service.http.handlers;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
-import static tech.pegasys.web3signer.core.service.operations.SignerForIdentifier.toBytes;
 
+import tech.pegasys.web3signer.core.service.http.SignRequestBody;
 import tech.pegasys.web3signer.core.service.operations.SignerForIdentifier;
+
+import java.util.Optional;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -27,27 +29,42 @@ import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 public class SignForIdentifierHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
   private final SignerForIdentifier<?> signerForIdentifier;
+  private final Optional<SlashingProtection> slashingProtection;
 
-  public SignForIdentifierHandler(final SignerForIdentifier<?> signerForIdentifier) {
+  public SignForIdentifierHandler(
+      final SignerForIdentifier<?> signerForIdentifier,
+      final SlashingProtection slashingProtection) {
     this.signerForIdentifier = signerForIdentifier;
+    this.slashingProtection = Optional.ofNullable(slashingProtection);
   }
 
   @Override
   public void handle(final RoutingContext routingContext) {
     final RequestParameters params = routingContext.get("parsedParameters");
     final String identifier = params.pathParameter("identifier").toString();
-    final Bytes data;
+    final SignRequestBody requestBody;
     try {
-      data = getDataToSign(params);
+      requestBody = deserialiseBody(params);
     } catch (final IllegalArgumentException e) {
       routingContext.fail(400);
       return;
     }
 
+    if (slashingProtection.isPresent()) {
+      if (isSigningLegal(slashingProtection.get(), normaliseIdentifier(identifier), requestBody)) {
+        doSigning(routingContext, identifier, requestBody.getDataToSign());
+      }
+    }
+    doSigning(routingContext, identifier, requestBody.getDataToSign());
+  }
+
+  private void doSigning(
+      final RoutingContext routingContext, final String identifier, final Bytes data) {
     signerForIdentifier
         .sign(normaliseIdentifier(identifier), data)
         .ifPresentOrElse(
@@ -59,9 +76,23 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
             });
   }
 
-  private Bytes getDataToSign(final RequestParameters params) {
+  private boolean isSigningLegal(
+      final SlashingProtection slashingProt,
+      final String identifier,
+      final SignRequestBody requestBody) {
+    if (requestBody.getArtifactType().equals("Block")) {
+      return slashingProt.maySignBlock(identifier, requestBody.getBlockSlot());
+    } else if (requestBody.getArtifactType().equals("Attestation")) {
+      return slashingProt.maySignAttestation(
+          identifier, requestBody.getSourceEpoch(), requestBody.getTargetEpoch());
+    } else {
+      throw new RuntimeException("ILLEGAL SIGN TYPE");
+    }
+  }
+
+  private SignRequestBody deserialiseBody(final RequestParameters params) {
     final RequestParameter body = params.body();
     final JsonObject jsonObject = body.getJsonObject();
-    return toBytes(jsonObject.getString("data"));
+    return jsonObject.mapTo(SignRequestBody.class); // what ObjectMapper does this use?!
   }
 }

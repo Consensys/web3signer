@@ -27,7 +27,7 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
   private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
   private final SignatureFormatter<T> signatureFormatter;
-  private final KeyType type;
+  private final KeyType type;;
 
   public SignerForIdentifier(
       final ArtifactSignerProvider signerProvider,

@@ -37,6 +37,7 @@ dependencyManagement {
       entry 'vertx-web-client'
       entry 'vertx-web'
       entry 'vertx-web-api-contract'
+      entry 'vertx-jdbc-client'
     }
 
     dependency 'javax.activation:activation:1.1.1'
@@ -96,5 +97,7 @@ dependencyManagement {
     dependency 'com.github.arteam:simple-json-rpc-client:1.2'
 
     dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
+
+    dependency 'org.xerial:sqlite-jdbc:3.32.3.2'
   }
 }

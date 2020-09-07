@@ -16,6 +16,7 @@ jar {
 
 dependencies {
 
+  implementation project(':slashing-protection')
   implementation 'info.picocli:picocli'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
@@ -34,6 +35,7 @@ dependencies {
   implementation 'io.vertx:vertx-web'
   implementation 'io.vertx:vertx-web-client'
   implementation 'io.vertx:vertx-web-api-contract'
+  implementation 'io.vertx:vertx-jdbc-client'
 
   implementation 'org.hyperledger.besu.internal:metrics-core'
   implementation 'org.hyperledger.besu:plugin-api'

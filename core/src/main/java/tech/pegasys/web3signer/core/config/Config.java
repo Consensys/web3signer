@@ -52,5 +52,11 @@ public interface Config {
 
   FilecoinNetwork getFilecoinNetwork();
 
-  String getSlashingStorage();
+  String getSlashingStorageUrl();
+
+  boolean isSlashingProtectionEnabled();
+
+  String getSlashingStorageUsername();
+
+  String getSlashingStoragePassword();
 }

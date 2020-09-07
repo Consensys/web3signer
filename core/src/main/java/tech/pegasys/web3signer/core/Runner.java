@@ -17,14 +17,9 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JS
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
-import tech.pegasys.web3signer.core.eth2slashingprotection.DbBackedSlashingProtection;
-import tech.pegasys.web3signer.core.eth2slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.VertxMetricsAdapterFactory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
@@ -50,6 +45,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -61,6 +57,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -81,6 +78,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import tech.pegasys.web3signer.slashingprotection.Database;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 public class Runner implements Runnable {
 
@@ -130,13 +129,20 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final SlashingProtection slashingProtection;
-      try {
-        final String url = config.getSlashingStorage();
-        final Connection slashingDatastoreConnection = DriverManager.getConnection(url);
-        slashingProtection = new DbBackedSlashingProtection(slashingDatastoreConnection);
-      } catch(final SQLException e) {
-        LOG.error("Failed to connect/create slashing storage at {}", config.getSlashingStorage());
+      SlashingProtection slashingProtection = null;
+      if(config.isSlashingProtectionEnabled()) {
+        try {
+          final ComboPooledDataSource dataSource = new ComboPooledDataSource();
+          dataSource.setUser(config.getSlashingStorageUsername());
+          dataSource.setPassword(config.getSlashingStoragePassword());
+          dataSource.setJdbcUrl(config.getSlashingStorageUrl());
+          Database.createTables(dataSource);
+          slashingProtection = Database.createSlashingProtection(dataSource);
+        } catch (final SQLException e) {
+          LOG.error(
+              "Failed to connect/create slashing storage at {}", config.getSlashingStorageUrl());
+          throw new RuntimeException("OH NOES");
+        }
       }
 
       final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
@@ -158,7 +164,8 @@ public class Runner implements Runnable {
           new FileCoinArtifactSignerProvider(fcBlsSignerProvider, fcSecpSignerProvider);
 
       final OpenAPI3RouterFactory openApiRouterFactory =
-          createOpenApiRouterFactory(vertx, ethKeyIdentifiers, blsSigner, secpSigner);
+          createOpenApiRouterFactory(
+              vertx, ethKeyIdentifiers, blsSigner, secpSigner, slashingProtection);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
 
@@ -186,7 +193,8 @@ public class Runner implements Runnable {
       final Vertx vertx,
       final KeyIdentifiers keyIdentifiers,
       final SignerForIdentifier<BlsArtifactSignature> blsSigner,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner)
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
+      final SlashingProtection slashingProtection)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
@@ -206,10 +214,11 @@ public class Runner implements Runnable {
     // sign handler
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new BlockingHandlerDecorator(new SignForIdentifierHandler(blsSigner), false));
+        new BlockingHandlerDecorator(
+            new SignForIdentifierHandler(blsSigner, slashingProtection), false));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new BlockingHandlerDecorator(new SignForIdentifierHandler(secpSigner), false));
+        new BlockingHandlerDecorator(new SignForIdentifierHandler(secpSigner, null), false));
     openAPI3RouterFactory.addFailureHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
 

@@ -9,18 +9,16 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
-package tech.pegasys.web3signer.core.eth2slashingprotection;
+package tech.pegasys.web3signer.slashingprotection;
 
 import org.apache.tuweni.units.bigints.UInt64;
 
 // One of these exists per key
 public interface SlashingProtection {
 
-  boolean maySignAttestation(final String keyIdentifier, final UInt64 sourceEpoch, final UInt64 targetEpoch);
+  boolean maySignAttestation(
+      final String keyIdentifier, final UInt64 sourceEpoch, final UInt64 targetEpoch);
 
   boolean maySignBlock(final String keyIdentifier, final UInt64 blockSlot);
-
 }
