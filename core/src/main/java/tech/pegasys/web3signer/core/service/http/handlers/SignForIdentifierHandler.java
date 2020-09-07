@@ -19,6 +19,9 @@ import static tech.pegasys.web3signer.core.service.operations.SignerForIdentifie
 
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.service.operations.SignerForIdentifier;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+
+import java.util.Optional;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -33,6 +36,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
+@SuppressWarnings("UnusedVariable")
 public class SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
@@ -40,12 +44,15 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private final Counter malformedRequestCounter;
   private final OperationTimer signingTimer;
+  private final Optional<SlashingProtection> slashingProtection;
 
   public SignForIdentifierHandler(
       final SignerForIdentifier<?> signerForIdentifier,
       final MetricsSystem metrics,
-      final String metricsPrefix) {
+      final String metricsPrefix,
+      final SlashingProtection slashingProtection) {
     this.signerForIdentifier = signerForIdentifier;
+    this.slashingProtection = Optional.ofNullable(slashingProtection);
 
     malformedRequestCounter =
         metrics.createCounter(
