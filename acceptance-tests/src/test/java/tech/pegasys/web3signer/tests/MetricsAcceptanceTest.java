@@ -54,10 +54,10 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final List<String> metricsOfInterest =
         List.of(
-            "signing_secp_signing_duration_count",
-            "signing_bls_signing_duration_count",
-            "filecoin_secp_signing_request_count",
-            "filecoin_bls_signing_request_count",
+            "signing_" + SECP256K1.name().toLowerCase() + "_signing_duration_count",
+            "signing_" + BLS.name().toLowerCase() + "_signing_duration_count",
+            "filecoin_" + SECP256K1.name().toLowerCase() + "_signing_request_count",
+            "filecoin_" + BLS.name().toLowerCase() + "_signing_request_count",
             "filecoin_total_request_count",
             "filecoin_wallet_has_count",
             "filecoin_wallet_list_count",
@@ -98,7 +98,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder().withMetricsEnabled(true).build();
     startSigner(signerConfiguration);
 
-    final List<String> metricsOfInterest = List.of("signing_missing_identifier_count");
+    final List<String> metricsOfInterest = List.of("signing_bls_missing_identifier_count");
 
     final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
@@ -106,7 +106,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     signer.sign("12345", Bytes.fromHexString("0011"), BLS);
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
-    assertThat(metricsAfterSign).containsOnly("signing_missing_identifier_count 1.0");
+    assertThat(metricsAfterSign).containsOnly("signing_bls_missing_identifier_count 1.0");
   }
 
   @Test
@@ -129,7 +129,9 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest =
-        List.of("signing_secp_signing_duration_count", "signing_missing_identifier_count");
+        List.of(
+            "signing_" + SECP256K1.name().toLowerCase() + "_signing_duration_count",
+            "signing_" + SECP256K1.name().toLowerCase() + "_missing_identifier_count");
     final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
@@ -142,7 +144,8 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     assertThat(metricsAfterSign)
         .containsOnly(
-            "signing_secp_signing_duration_count 1.0", "signing_missing_identifier_count 0.0");
+            "signing_" + SECP256K1.name().toLowerCase() + "_signing_duration_count 1.0",
+            "signing_" + SECP256K1.name().toLowerCase() + "_missing_identifier_count 0.0");
   }
 
   @Test
@@ -164,7 +167,9 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest =
-        List.of("signing_bls_signing_duration_count", "signing_missing_identifier_count");
+        List.of(
+            "signing_" + BLS.name().toLowerCase() + "_signing_duration_count",
+            "signing_" + BLS.name().toLowerCase() + "_missing_identifier_count");
     final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
@@ -175,7 +180,8 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     assertThat(metricsAfterSign)
         .containsOnly(
-            "signing_bls_signing_duration_count 1.0", "signing_missing_identifier_count 0.0");
+            "signing_" + BLS.name().toLowerCase() + "_signing_duration_count 1.0",
+            "signing_" + BLS.name().toLowerCase() + "_missing_identifier_count 0.0");
   }
 
   private Set<String> getMetricsMatching(final List<String> metricsOfInterest) {
