@@ -20,7 +20,7 @@ GOSS_FILES_PATH=tests/01 \
 bash tests/dgoss \
 run ${DOCKER_TEST_IMAGE} \
 --http-listen-host=0.0.0.0 \
---slashing-enabled=false \
+--slashing-protection-enabled=false \
 > ./reports/01.xml || i=`expr $i + 1`
 
 docker image rm ${DOCKER_TEST_IMAGE}
