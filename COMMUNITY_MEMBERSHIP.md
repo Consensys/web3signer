@@ -6,7 +6,7 @@ this project.
 | Role                | Responsibilities                             | Defined by                  |
 |---------------------|----------------------------------------------|-----------------------------|
 | Everyone            | none                                         | anybody with a belly button |
-| Member              | everyone who contributes - code or otherwise | Orion GitHub org member     |
+| Member              | everyone who contributes - code or otherwise | Web3Signer GitHub org member     |
 | Approver            | approve accepting contributions              | write permissions on master |
 | Project Manager     | management of the project                    | ConsenSys                     |
 | Project Sponsor     | contribute developer resources               | ConsenSys                     |
