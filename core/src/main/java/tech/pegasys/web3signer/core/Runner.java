@@ -13,6 +13,11 @@
 package tech.pegasys.web3signer.core;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_LIST;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
@@ -23,10 +28,11 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.GetPublicKeysHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
+import tech.pegasys.web3signer.core.service.http.metrics.OpenApiOperationsMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.web3signer.core.service.jsonrpc.SigningService;
@@ -119,12 +125,6 @@ public class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final Counter signersLoaded =
-          metricsSystem.createCounter(
-              Web3SignerMetricCategory.SIGNING,
-              "signers_loaded_count",
-              "Number of keys loaded (combining SECP256k1 and BLS12-381");
-
       final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
 
       final ArtifactSignerProvider blsSignerProvider = signers.getBlsSignerProvider();
@@ -132,7 +132,8 @@ public class Runner implements Runnable {
       final ArtifactSignerProvider fcSecpSignerProvider = signers.getFcSecpSignerProvider();
       final ArtifactSignerProvider fcBlsSignerProvider = signers.getFcBlsSignerProvider();
 
-      signersLoaded.inc(
+      OpenApiOperationsMetrics.incSignerLoadCount(
+          metricsSystem,
           blsSignerProvider.availableIdentifiers().size()
               + ethSecpSignerProvider.availableIdentifiers().size());
 
@@ -147,13 +148,14 @@ public class Runner implements Runnable {
       final FileCoinArtifactSignerProvider fcArtifactSignerProvider =
           new FileCoinArtifactSignerProvider(fcBlsSignerProvider, fcSecpSignerProvider);
 
+      // create router from OpenApi spec - web3signer.yaml
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(
               vertx, ethKeyIdentifiers, metricsSystem, blsSigner, secpSigner);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
 
-      // register non-
+      // register routes which are not available from web3signer.yaml
       registerOpenApiSpecRoute(router); // serve static openapi spec
       registerJsonRpcRoute(
           router,
@@ -187,43 +189,74 @@ public class Runner implements Runnable {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
 
-    // upcheck handler
-    openAPI3RouterFactory.addHandlerByOperationId(
-        UPCHECK_OPERATION_ID, new BlockingHandlerDecorator(new UpcheckHandler(), false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK_OPERATION_ID, errorHandler);
-
     // public key handler
-    openAPI3RouterFactory.addHandlerByOperationId(
-        GET_PUBLIC_KEYS_OPERATION_ID,
-        new BlockingHandlerDecorator(new GetPublicKeysHandler(keyIdentifiers), false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(
-        GET_PUBLIC_KEYS_OPERATION_ID, errorHandler);
+    addEth1PublicKeysListHandler(openAPI3RouterFactory, keyIdentifiers, errorHandler);
+    addEth2PublicKeysListHandler(openAPI3RouterFactory, keyIdentifiers, errorHandler);
 
     // sign handler
-    final Counter missingSignerCounter =
-        metricsSystem.createCounter(
-            Web3SignerMetricCategory.SIGNING,
-            "missing_identifier_count",
-            "Number of signing operations requested, for keys which are not available");
+    addEth2SignHandler(openAPI3RouterFactory, blsSigner, metricsSystem, errorHandler);
+    addEth1SignHandler(openAPI3RouterFactory, secpSigner, metricsSystem, errorHandler);
 
-    openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls"), true));
-    openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp"), true));
-    openAPI3RouterFactory.addHandlerByOperationId(
-        SIGN_FOR_IDENTIFIER_OPERATION_ID,
-        rc -> {
-          missingSignerCounter.inc();
-          rc.next();
-        });
-    openAPI3RouterFactory.addFailureHandlerByOperationId(
-        SIGN_FOR_IDENTIFIER_OPERATION_ID, errorHandler);
+    // upcheck handler
+    addUpcheckHandler(openAPI3RouterFactory, errorHandler);
 
     return openAPI3RouterFactory;
+  }
+
+  private void addEth2SignHandler(
+      final OpenAPI3RouterFactory openAPI3RouterFactory,
+      final SignerForIdentifier<BlsArtifactSignature> blsSigner,
+      final MetricsSystem metricsSystem,
+      final LogErrorHandler errorHandler) {
+    openAPI3RouterFactory.addHandlerByOperationId(
+        ETH2_SIGN.name(),
+        new BlockingHandlerDecorator(
+            new SignForIdentifierHandler(
+                blsSigner, new OpenApiOperationsMetrics(metricsSystem, BLS)),
+            false));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
+  }
+
+  private void addEth1SignHandler(
+      final OpenAPI3RouterFactory openAPI3RouterFactory,
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
+      final MetricsSystem metricsSystem,
+      final LogErrorHandler errorHandler) {
+    openAPI3RouterFactory.addHandlerByOperationId(
+        ETH1_SIGN.name(),
+        new BlockingHandlerDecorator(
+            new SignForIdentifierHandler(
+                secpSigner, new OpenApiOperationsMetrics(metricsSystem, SECP256K1)),
+            false));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(ETH1_SIGN.name(), errorHandler);
+  }
+
+  private void addEth1PublicKeysListHandler(
+      final OpenAPI3RouterFactory openAPI3RouterFactory,
+      final KeyIdentifiers keyIdentifiers,
+      final LogErrorHandler errorHandler) {
+    openAPI3RouterFactory.addHandlerByOperationId(
+        ETH1_LIST.name(),
+        new BlockingHandlerDecorator(
+            new PublicKeysListHandler(keyIdentifiers.list(SECP256K1)), false));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(ETH1_LIST.name(), errorHandler);
+  }
+
+  private void addEth2PublicKeysListHandler(
+      final OpenAPI3RouterFactory openAPI3RouterFactory,
+      final KeyIdentifiers keyIdentifiers,
+      final LogErrorHandler errorHandler) {
+    openAPI3RouterFactory.addHandlerByOperationId(
+        ETH2_LIST.name(),
+        new BlockingHandlerDecorator(new PublicKeysListHandler(keyIdentifiers.list(BLS)), false));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(ETH2_LIST.name(), errorHandler);
+  }
+
+  private void addUpcheckHandler(
+      final OpenAPI3RouterFactory openAPI3RouterFactory, final LogErrorHandler errorHandler) {
+    openAPI3RouterFactory.addHandlerByOperationId(
+        UPCHECK.name(), new BlockingHandlerDecorator(new UpcheckHandler(), false));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK_OPERATION_ID, errorHandler);
   }
 
   private String formatBlsSignature(final BlsArtifactSignature signature) {
