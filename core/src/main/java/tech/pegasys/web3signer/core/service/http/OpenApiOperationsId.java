@@ -10,12 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.operations;
+package tech.pegasys.web3signer.core.service.http;
 
-public class IdentifierUtils {
-
-  public static String normaliseIdentifier(final String signerIdentifier) {
-    final String lowerCaseIdentifier = signerIdentifier.toLowerCase();
-    return lowerCaseIdentifier.startsWith("0x") ? lowerCaseIdentifier : "0x" + lowerCaseIdentifier;
-  }
+/** Operation IDs as defined in web3signer.yaml */
+public enum OpenApiOperationsId {
+  ETH2_SIGN,
+  ETH1_SIGN,
+  ETH2_LIST,
+  ETH1_LIST,
+  UPCHECK,
 }

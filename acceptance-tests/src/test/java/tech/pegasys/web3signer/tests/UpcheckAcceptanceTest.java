@@ -13,13 +13,11 @@
 package tech.pegasys.web3signer.tests;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 
 import io.restassured.http.ContentType;
-import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 
 public class UpcheckAcceptanceTest extends AcceptanceTestBase {
@@ -36,27 +34,5 @@ public class UpcheckAcceptanceTest extends AcceptanceTestBase {
         .statusCode(200)
         .contentType(ContentType.TEXT)
         .body(equalToIgnoringCase("OK"));
-  }
-
-  @Test
-  void jsonRpcUpCheckReturnsOK() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    startSigner(builder.build());
-
-    final Response response =
-        given()
-            .baseUri(signer.getUrl())
-            .body("{\"jsonrpc\":\"2.0\",\"method\":\"upcheck\",\"params\":[],\"id\":1}")
-            .post(JSON_RPC_PATH);
-
-    validateJsonRpcUpcheckResponse(response);
-  }
-
-  private void validateJsonRpcUpcheckResponse(final Response response) {
-    response
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.JSON)
-        .body("jsonrpc", equalTo("2.0"), "id", equalTo(1), "result", equalTo("OK"));
   }
 }

@@ -15,16 +15,12 @@ package tech.pegasys.web3signer.core.service.http.handlers;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 
-import tech.pegasys.web3signer.core.service.operations.Upcheck;
-
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
 public class UpcheckHandler implements Handler<RoutingContext> {
-  final Upcheck upcheck = new Upcheck();
-
   @Override
   public void handle(final RoutingContext routingContext) {
-    routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(upcheck.status());
+    routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end("OK");
   }
 }

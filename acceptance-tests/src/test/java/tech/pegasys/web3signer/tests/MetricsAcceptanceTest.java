@@ -14,9 +14,10 @@ package tech.pegasys.web3signer.tests;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -53,10 +54,10 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final List<String> metricsOfInterest =
         List.of(
-            "signing_secp_signing_duration_count",
-            "signing_bls_signing_duration_count",
-            "filecoin_secp_signing_request_count",
-            "filecoin_bls_signing_request_count",
+            "signing_" + SECP256K1.name().toLowerCase() + "_signing_duration_count",
+            "signing_" + BLS.name().toLowerCase() + "_signing_duration_count",
+            "filecoin_" + SECP256K1.name().toLowerCase() + "_signing_request_count",
+            "filecoin_" + BLS.name().toLowerCase() + "_signing_request_count",
             "filecoin_total_request_count",
             "filecoin_wallet_has_count",
             "filecoin_wallet_list_count",
@@ -97,15 +98,15 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder().withMetricsEnabled(true).build();
     startSigner(signerConfiguration);
 
-    final List<String> metricsOfInterest = List.of("signing_missing_identifier_count");
+    final List<String> metricsOfInterest = List.of("signing_bls_missing_identifier_count");
 
     final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
-    signer.sign("12345", Bytes.fromHexString("0011"));
+    signer.sign("12345", Bytes.fromHexString("0011"), BLS);
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
-    assertThat(metricsAfterSign).containsOnly("signing_missing_identifier_count 1.0");
+    assertThat(metricsAfterSign).containsOnly("signing_bls_missing_identifier_count 1.0");
   }
 
   @Test
@@ -117,7 +118,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     fileHelpers.createUnencryptedYamlFileAt(
         testDirectory.resolve(keyPair.getPublicKey().toString() + ".yaml"),
         Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPrivateKey(), 64),
-        KeyType.SECP256K1);
+        SECP256K1);
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
@@ -128,19 +129,23 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest =
-        List.of("signing_secp_signing_duration_count", "signing_missing_identifier_count");
+        List.of(
+            "signing_" + SECP256K1.name().toLowerCase() + "_signing_duration_count",
+            "signing_" + SECP256K1.name().toLowerCase() + "_missing_identifier_count");
     final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
     signer.sign(
         Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPublicKey(), 128),
-        Bytes.fromHexString("1122"));
+        Bytes.fromHexString("1122"),
+        SECP256K1);
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)
         .containsOnly(
-            "signing_secp_signing_duration_count 1.0", "signing_missing_identifier_count 0.0");
+            "signing_" + SECP256K1.name().toLowerCase() + "_signing_duration_count 1.0",
+            "signing_" + SECP256K1.name().toLowerCase() + "_missing_identifier_count 0.0");
   }
 
   @Test
@@ -151,7 +156,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     fileHelpers.createUnencryptedYamlFileAt(
         testDirectory.resolve(keyPair.getPublicKey().toBytesCompressed().toHexString() + ".yaml"),
         keyPair.getSecretKey().toBytes().toHexString(),
-        KeyType.BLS);
+        BLS);
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
@@ -162,18 +167,21 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest =
-        List.of("signing_bls_signing_duration_count", "signing_missing_identifier_count");
+        List.of(
+            "signing_" + BLS.name().toLowerCase() + "_signing_duration_count",
+            "signing_" + BLS.name().toLowerCase() + "_missing_identifier_count");
     final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
     signer.sign(
-        keyPair.getPublicKey().toBytesCompressed().toHexString(), Bytes.fromHexString("1122"));
+        keyPair.getPublicKey().toBytesCompressed().toHexString(), Bytes.fromHexString("1122"), BLS);
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)
         .containsOnly(
-            "signing_bls_signing_duration_count 1.0", "signing_missing_identifier_count 0.0");
+            "signing_" + BLS.name().toLowerCase() + "_signing_duration_count 1.0",
+            "signing_" + BLS.name().toLowerCase() + "_missing_identifier_count 0.0");
   }
 
   private Set<String> getMetricsMatching(final List<String> metricsOfInterest) {

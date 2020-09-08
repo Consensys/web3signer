@@ -118,14 +118,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     setupSigner();
 
     // openapi
-    final Response response = signer.sign(keyPair.getPublicKey().toString(), DATA);
+    final Response response = signer.sign(keyPair.getPublicKey().toString(), DATA, KeyType.BLS);
     final Bytes signature = verifyAndGetSignatureResponse(response);
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
-
-    // jsonrpc
-    final Response jsonResponse =
-        callJsonRpcSign(keyPair.getPublicKey().toString(), DATA.toHexString());
-    final Bytes jsonResponseSignature = verifyAndGetJsonRpcSignatureResponse(jsonResponse);
-    assertThat(jsonResponseSignature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 }

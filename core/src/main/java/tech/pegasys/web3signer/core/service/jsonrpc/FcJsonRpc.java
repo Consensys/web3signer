@@ -33,7 +33,6 @@ import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 @JsonRpcService
@@ -47,9 +46,9 @@ public class FcJsonRpc {
   private final ArtifactSignerProvider fcSigners;
   private final FcJsonRpcMetrics metrics;
 
-  public FcJsonRpc(final ArtifactSignerProvider fcSigners, final MetricsSystem metricsSystem) {
+  public FcJsonRpc(final ArtifactSignerProvider fcSigners, final FcJsonRpcMetrics metrics) {
     this.fcSigners = fcSigners;
-    this.metrics = new FcJsonRpcMetrics(metricsSystem);
+    this.metrics = metrics;
   }
 
   @JsonRpcMethod("Filecoin.WalletList")
@@ -102,7 +101,7 @@ public class FcJsonRpc {
   public FilecoinSignedMessage filecoinSignMessage(
       @JsonRpcParam("identifier") final String identifier,
       @JsonRpcParam("message") final FilecoinMessage message) {
-    metrics.incwWalletSignMessageRequestCounter();
+    metrics.incWalletSignMessageRequestCounter();
     final FcMessageEncoder encoder = new FcMessageEncoder();
     final Bytes fcCid = encoder.createFilecoinCid(message);
 
