@@ -14,22 +14,23 @@ package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
-import static tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier.toBytes;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
+import tech.pegasys.web3signer.core.service.http.SignRequest;
+import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.Optional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.api.RequestParameter;
 import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
 @SuppressWarnings("UnusedVariable")
@@ -39,6 +40,7 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
   private final SignerForIdentifier<?> signerForIdentifier;
   private final HttpApiMetrics metrics;
   private final Optional<SlashingProtection> slashingProtection;
+  private final ObjectMapper objectMapper;
 
   public SignForIdentifierHandler(
       final SignerForIdentifier<?> signerForIdentifier,
@@ -47,32 +49,33 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
     this.signerForIdentifier = signerForIdentifier;
     this.metrics = metrics;
     this.slashingProtection = Optional.ofNullable(slashingProtection);
+    this.objectMapper =
+        new ObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
+            .registerModule(new SigningJsonRpcModule());
   }
 
   @Override
   public void handle(final RoutingContext routingContext) {
-
     try (final TimingContext ignored = metrics.getSigningTimer().startTimer()) {
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
-      final Bytes data;
+      final SignRequest signRequest;
       try {
-        data = getDataToSign(params);
-      } catch (final IllegalArgumentException e) {
+        signRequest = getSigningRequest(params);
+      } catch (final IllegalArgumentException | JsonProcessingException e) {
         metrics.getMalformedRequestCounter().inc();
         routingContext.fail(400);
         return;
       }
 
       signerForIdentifier
-          .sign(normaliseIdentifier(identifier), data)
+          .sign(normaliseIdentifier(identifier), signRequest.getSigningRoot())
           .ifPresentOrElse(
               signature -> {
                 if (slashingProtection.isPresent()) {
-                  if (slashingProtection.get().maySignAttestation(null, null, null)) {
+                  if (maySign(identifier, signRequest)) {
                     respondWithSignature(routingContext, signature);
-                  } else {
-                    // TODO: track error with appropriate response and metrics.
                   }
                 } else {
                   respondWithSignature(routingContext, signature);
@@ -86,13 +89,32 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
     }
   }
 
+  private boolean maySign(final String publicKey, final SignRequest signRequest) {
+    switch (signRequest.getType()) {
+      case "block":
+        return slashingProtection
+            .get()
+            .maySignBlock(publicKey, signRequest.getSigningRoot(), signRequest.getSlot());
+      case "attestation":
+        return slashingProtection
+            .get()
+            .maySignAttestation(
+                publicKey,
+                signRequest.getSigningRoot(),
+                signRequest.getSourceEpoch(),
+                signRequest.getTargetEpoch());
+      default:
+        return true;
+    }
+  }
+
   private void respondWithSignature(final RoutingContext routingContext, final String signature) {
     routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature);
   }
 
-  private Bytes getDataToSign(final RequestParameters params) {
-    final RequestParameter body = params.body();
-    final JsonObject jsonObject = body.getJsonObject();
-    return toBytes(jsonObject.getString("data"));
+  private SignRequest getSigningRequest(final RequestParameters params)
+      throws JsonProcessingException {
+    final String body = params.body().toString();
+    return objectMapper.readValue(body, SignRequest.class);
   }
 }

@@ -12,11 +12,13 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public interface SlashingProtection {
 
-  boolean maySignAttestation(String keyIdentifier, UInt64 sourceEpoch, UInt64 targetEpoch);
+  boolean maySignAttestation(
+      String publicKey, final Bytes signingRoot, UInt64 sourceEpoch, UInt64 targetEpoch);
 
-  boolean maySignBlock(String keyIdentifier, UInt64 blockSlot);
+  boolean maySignBlock(String publicKey, final Bytes signingRoot, UInt64 blockSlot);
 }

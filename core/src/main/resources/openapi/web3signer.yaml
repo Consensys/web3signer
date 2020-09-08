@@ -33,10 +33,13 @@ paths:
             schema:
               type: object
               properties:
-                data:
+                signingRoot:
+                  type: string
+                type:
                   type: string
               required:
-                - data
+                - signingRoot
+                - type
               additionalProperties:
                 type: string
             example:
