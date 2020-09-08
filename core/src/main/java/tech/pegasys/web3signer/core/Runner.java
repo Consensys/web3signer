@@ -43,6 +43,7 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.core.signing.LoadedSigners;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.core.util.FileUtil;
+import tech.pegasys.web3signer.slashingprotection.NoOpSlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
@@ -122,7 +123,7 @@ public class Runner implements Runnable {
     if (config.isSlashingProtectionEnabled()) {
       slashingProtection = SlashingProtectionFactory.createSlashingProtection();
     } else {
-      slashingProtection = null;
+      slashingProtection = new NoOpSlashingProtection();
     }
 
     final Vertx vertx = Vertx.vertx();

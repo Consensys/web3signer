@@ -70,16 +70,12 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
               signature -> {
                 if (slashingProtection.isPresent()) {
                   if (slashingProtection.get().maySignAttestation(null, null, null)) {
-                    routingContext
-                        .response()
-                        .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
-                        .end(signature);
+                    respondWithSignature(routingContext, signature);
+                  } else {
+                    // TODO: track error with appropriate response and metrics.
                   }
                 } else {
-                  routingContext
-                      .response()
-                      .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
-                      .end(signature);
+                  respondWithSignature(routingContext, signature);
                 }
               },
               () -> {
@@ -88,6 +84,10 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
                 routingContext.fail(404);
               });
     }
+  }
+
+  private void respondWithSignature(final RoutingContext routingContext, final String signature) {
+    routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature);
   }
 
   private Bytes getDataToSign(final RequestParameters params) {

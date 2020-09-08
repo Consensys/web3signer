@@ -175,8 +175,10 @@ public class Web3SignerCommand implements Config, Runnable {
   @Option(
       names = {"--slashing-protection-enabled"},
       description =
-          "Set to true if all signing operations should be validated against historic data, prior to producing signature"
+          "Set to true if all Eth2 signing operations should be validated against historic data, "
+              + "prior to responding with signatures"
               + "(default: ${DEFAULT-VALUE})",
+      paramLabel = "<BOOL>",
       arity = "1")
   private boolean slashingProtectionEnabled = true;
 
