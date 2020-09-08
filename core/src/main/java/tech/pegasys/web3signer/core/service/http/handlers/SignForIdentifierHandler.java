@@ -84,11 +84,21 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
       signerForIdentifier
           .sign(normaliseIdentifier(identifier), data)
           .ifPresentOrElse(
-              signature ->
+              signature -> {
+                if (slashingProtection.isPresent()) {
+                  if (slashingProtection.get().maySignAttestation(null, null, null)) {
+                    routingContext
+                        .response()
+                        .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
+                        .end(signature);
+                  }
+                } else {
                   routingContext
                       .response()
                       .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
-                      .end(signature),
+                      .end(signature);
+                }
+              },
               () -> {
                 LOG.trace("Unsuitable handler for {}, invoking next handler", identifier);
                 routingContext.next();

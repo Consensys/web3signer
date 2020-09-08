@@ -15,6 +15,6 @@ package tech.pegasys.web3signer.slashingprotection;
 public class SlashingProtectionFactory {
 
   public static SlashingProtection createSlashingProtection() {
-      return new NoOpSlashingProtection();
+    return new NoOpSlashingProtection();
   }
 }

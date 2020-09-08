@@ -38,6 +38,8 @@ import tech.pegasys.web3signer.core.signing.FileCoinArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.LoadedSigners;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.core.util.FileUtil;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -75,8 +77,6 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
 public class Runner implements Runnable {
 
@@ -124,7 +124,7 @@ public class Runner implements Runnable {
     }
 
     final Vertx vertx = Vertx.vertx();
-    
+
     try {
       metricsEndpoint.start(vertx);
 

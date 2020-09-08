@@ -17,8 +17,8 @@ import org.apache.tuweni.units.bigints.UInt64;
 public class NoOpSlashingProtection implements SlashingProtection {
 
   @Override
-  public boolean maySignAttestation(final String keyIdentifier, final UInt64 sourceEpoch,
-      UInt64 targetEpoch) {
+  public boolean maySignAttestation(
+      final String keyIdentifier, final UInt64 sourceEpoch, UInt64 targetEpoch) {
     return true;
   }
 

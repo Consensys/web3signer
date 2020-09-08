@@ -178,7 +178,7 @@ public class Web3SignerCommand implements Config, Runnable {
           "Set to true if all signing operations should be validated against historic data, prior to producing signature"
               + "(default: ${DEFAULT-VALUE})",
       arity = "1")
-  private boolean slashingProtectectionEnabled = true;
+  private boolean slashingProtectionEnabled = true;
 
   @ArgGroup(exclusive = false)
   private PicoCliTlsServerOptions picoCliTlsServerOptions;
@@ -255,7 +255,7 @@ public class Web3SignerCommand implements Config, Runnable {
 
   @Override
   public boolean isSlashingProtectionEnabled() {
-    return slashingProtectectionEnabled;
+    return slashingProtectionEnabled;
   }
 
   @Override
@@ -276,7 +276,7 @@ public class Web3SignerCommand implements Config, Runnable {
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
         .add("filecoinNetwork", filecoinNetwork)
-        .add("slashingProtectionEnabled", slashingProtectectionEnabled)
+        .add("slashingProtectionEnabled", slashingProtectionEnabled)
         .toString();
   }
 
