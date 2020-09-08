@@ -1,0 +1,62 @@
+
+apply plugin: 'java-library'
+apply plugin: 'java-test-fixtures'
+
+jar {
+  archiveBaseName = 'web3signer-slashing-protection'
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
+}
+
+dependencies {
+
+  implementation 'com.google.guava:guava'
+  implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.logging.log4j:log4j-core'
+  implementation 'commons-io:commons-io'
+  implementation 'commons-lang:commons-lang'
+
+  implementation 'com.mchange:c3p0'
+  implementation 'org.xerial:sqlite-jdbc'
+  implementation 'org.flywaydb:flyway-core'
+
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-net'
+
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+
+  implementation 'org.hyperledger.besu.internal:metrics-core'
+
+  runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
+
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.assertj:assertj-db'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
+
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+
+  testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
+  testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
+  testFixturesImplementation 'commons-lang:commons-lang'
+}
+
+artifacts {
+  testSupportArtifacts testSupportJar
+}
+
+processResources {
+  filesMatching('openapi/web3signer.yaml') {
+    filter {
+      it.replace('@VERSION@', calculateVersion())
+    }
+  }
+}
