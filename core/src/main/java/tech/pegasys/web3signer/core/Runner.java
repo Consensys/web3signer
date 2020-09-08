@@ -127,9 +127,9 @@ public class Runner implements Runnable {
       final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
 
       registerEth1Routes(
-          routerFactory, signers.getBlsSignerProvider(), errorHandler, metricsSystem);
-      registerEth2Routes(
           routerFactory, signers.getEthSignerProvider(), errorHandler, metricsSystem);
+      registerEth2Routes(
+          routerFactory, signers.getBlsSignerProvider(), errorHandler, metricsSystem);
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
@@ -171,29 +171,31 @@ public class Runner implements Runnable {
     return openAPI3RouterFactory;
   }
 
-  private void registerEth1Routes(
+  private void registerEth2Routes(
       final OpenAPI3RouterFactory routerFactory,
       final ArtifactSignerProvider blsSignerProvider,
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem) {
+    addPublicKeysListHandler(
+        routerFactory, blsSignerProvider.availableIdentifiers(), ETH2_LIST.name(), errorHandler);
+
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    final Set<String> blsIdentifiers = blsSignerProvider.availableIdentifiers();
-    addPublicKeysListHandler(routerFactory, blsIdentifiers, ETH1_LIST.name(), errorHandler);
-    addSignHandler(routerFactory, ETH1_SIGN.name(), blsSigner, metricsSystem, BLS, errorHandler);
+    addSignHandler(routerFactory, ETH2_SIGN.name(), blsSigner, metricsSystem, BLS, errorHandler);
   }
 
-  private void registerEth2Routes(
+  private void registerEth1Routes(
       final OpenAPI3RouterFactory routerFactory,
-      final ArtifactSignerProvider ethSecpSignerProvider,
+      final ArtifactSignerProvider secpSignerProvider,
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem) {
+    addPublicKeysListHandler(
+        routerFactory, secpSignerProvider.availableIdentifiers(), ETH1_LIST.name(), errorHandler);
+
     final SignerForIdentifier<SecpArtifactSignature> secpSigner =
-        new SignerForIdentifier<>(ethSecpSignerProvider, this::formatSecpSignature, SECP256K1);
-    final Set<String> secpIdentifiers = ethSecpSignerProvider.availableIdentifiers();
-    addPublicKeysListHandler(routerFactory, secpIdentifiers, ETH2_LIST.name(), errorHandler);
+        new SignerForIdentifier<>(secpSignerProvider, this::formatSecpSignature, SECP256K1);
     addSignHandler(
-        routerFactory, ETH2_SIGN.name(), secpSigner, metricsSystem, SECP256K1, errorHandler);
+        routerFactory, ETH1_SIGN.name(), secpSigner, metricsSystem, SECP256K1, errorHandler);
   }
 
   private void addSignHandler(
