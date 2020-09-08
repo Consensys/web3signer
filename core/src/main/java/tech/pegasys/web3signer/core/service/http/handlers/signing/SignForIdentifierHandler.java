@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
@@ -92,10 +93,13 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
   private boolean maySign(final String publicKey, final SignRequest signRequest) {
     switch (signRequest.getType()) {
       case "block":
+        checkArgument(signRequest.getSlot() != null, "Slot must be specified");
         return slashingProtection
             .get()
             .maySignBlock(publicKey, signRequest.getSigningRoot(), signRequest.getSlot());
       case "attestation":
+        checkArgument(signRequest.getSourceEpoch() != null, "Source epoch must be specified");
+        checkArgument(signRequest.getTargetEpoch() != null, "Target epoch must be specified");
         return slashingProtection
             .get()
             .maySignAttestation(
