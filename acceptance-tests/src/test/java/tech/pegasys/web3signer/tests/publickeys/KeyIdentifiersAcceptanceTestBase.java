@@ -13,12 +13,13 @@
 package tech.pegasys.web3signer.tests.publickeys;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
+import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
@@ -29,10 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ValueNode;
-import com.github.arteam.simplejsonrpc.core.domain.Request;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
@@ -44,10 +41,6 @@ import org.web3j.crypto.WalletUtils;
 import org.web3j.utils.Numeric;
 
 public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
-  static final String SIGNER_PUBLIC_KEYS_PATH = "/signer/publicKeys";
-  static final String BLS = "BLS";
-  static final String SECP256K1 = "SECP256K1";
-
   private static final String BLS_PRIVATE_KEY_1 =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
   private static final String BLS_PRIVATE_KEY_2 =
@@ -74,21 +67,21 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
 
   @TempDir Path testDirectory;
 
-  protected String[] privateKeys(final String keyType) {
-    return keyType.equals(BLS)
+  protected String[] privateKeys(final KeyType keyType) {
+    return keyType == BLS
         ? new String[] {BLS_PRIVATE_KEY_1, BLS_PRIVATE_KEY_2}
         : new String[] {SECP_PRIVATE_KEY_1, SECP_PRIVATE_KEY_2};
   }
 
   protected String[] createKeys(
-      final String keyType, boolean isValid, final String... privateKeys) {
-    return keyType.equals(BLS)
+      final KeyType keyType, boolean isValid, final String... privateKeys) {
+    return keyType == BLS
         ? createBlsKeys(isValid, privateKeys)
         : createSecpKeys(isValid, privateKeys);
   }
 
-  protected String[] filecoinAddresses(final String keyType) {
-    return keyType.equals(BLS)
+  protected String[] filecoinAddresses(final KeyType keyType) {
+    return keyType == BLS
         ? new String[] {BLS_FC_ADDRESS_1, BLS_FC_ADDRESS_2}
         : new String[] {SECP_FC_ADDRESS_1, SECP_FC_ADDRESS_2};
   }
@@ -101,8 +94,7 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
                   new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(privateKey)));
               final Path keyConfigFile = blsConfigFileName(keyPair.getPublicKey());
               if (isValid) {
-                metadataFileHelpers.createUnencryptedYamlFileAt(
-                    keyConfigFile, privateKey, KeyType.BLS);
+                metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKey, BLS);
               } else {
                 createInvalidFile(keyConfigFile);
               }
@@ -169,26 +161,11 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected Response callApiPublicKeysWithoutOpenApiClientSideFilter(final String keyType) {
-    return given().baseUri(signer.getUrl()).accept("").get(SIGNER_PUBLIC_KEYS_PATH + "/" + keyType);
+  protected Response callApiPublicKeysWithoutOpenApiClientSideFilter(final KeyType keyType) {
+    return given().baseUri(signer.getUrl()).accept("").get(Signer.publicKeysPath(keyType));
   }
 
   protected void validateApiResponse(final Response response, final Matcher<?> matcher) {
     response.then().statusCode(200).contentType(ContentType.JSON).body("", matcher);
-  }
-
-  protected Response callRpcPublicKeys(final String keyType) {
-    final JsonNode params = JsonNodeFactory.instance.objectNode().put("keyType", keyType);
-    final ValueNode id = JsonNodeFactory.instance.numberNode(1);
-    final Request request = new Request("2.0", "public_keys", params, id);
-    return given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);
-  }
-
-  protected void validateRpcResponse(final Response response, final Matcher<?> resultMatcher) {
-    response
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.JSON)
-        .body("jsonrpc", equalTo("2.0"), "id", equalTo(1), "result", resultMatcher);
   }
 }

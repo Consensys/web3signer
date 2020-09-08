@@ -33,6 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -49,8 +50,9 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
   private static final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), DATA);
 
-  @Test
-  public void receiveA404IfRequestedKeyDoesNotExist() {
+  @ParameterizedTest
+  @EnumSource(value = KeyType.class)
+  public void receiveA404IfRequestedKeyDoesNotExist(final KeyType keyType) {
     setupSigner();
     given()
         .baseUri(signer.getUrl())
@@ -59,7 +61,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(new JsonObject().put("data", DATA.toHexString()).toString())
         .when()
-        .post(Signer.SIGN_ENDPOINT)
+        .post(Signer.signPath(keyType))
         .then()
         .assertThat()
         .statusCode(404);
@@ -82,7 +84,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(new JsonObject().put("data", data).toString())
         .when()
-        .post(Signer.SIGN_ENDPOINT)
+        .post(Signer.signPath(KeyType.BLS))
         .then()
         .assertThat()
         .statusCode(400);
@@ -103,7 +105,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body("{\"invalid\": \"json body\"}")
         .when()
-        .post(Signer.SIGN_ENDPOINT)
+        .post(Signer.signPath(KeyType.BLS))
         .then()
         .assertThat()
         .statusCode(400);
@@ -124,7 +126,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body("not a json body")
         .when()
-        .post(Signer.SIGN_ENDPOINT)
+        .post(Signer.signPath(KeyType.BLS))
         .then()
         .assertThat()
         .statusCode(400);
@@ -149,7 +151,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
                 .put("unknownField", "someValue")
                 .toString())
         .when()
-        .post(Signer.SIGN_ENDPOINT)
+        .post(Signer.signPath(KeyType.BLS))
         .then()
         .assertThat()
         .statusCode(200)

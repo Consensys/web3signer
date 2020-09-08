@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.core.signing;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
+import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;

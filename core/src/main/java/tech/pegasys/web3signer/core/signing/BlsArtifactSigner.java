@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.core.signing;
 
-import static tech.pegasys.web3signer.core.service.operations.IdentifierUtils.normaliseIdentifier;
+import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;

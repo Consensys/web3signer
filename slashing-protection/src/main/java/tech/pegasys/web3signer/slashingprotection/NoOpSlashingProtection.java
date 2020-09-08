@@ -18,7 +18,7 @@ public class NoOpSlashingProtection implements SlashingProtection {
 
   @Override
   public boolean maySignAttestation(
-      final String keyIdentifier, final UInt64 sourceEpoch, UInt64 targetEpoch) {
+      final String keyIdentifier, final UInt64 sourceEpoch, final UInt64 targetEpoch) {
     return true;
   }
 

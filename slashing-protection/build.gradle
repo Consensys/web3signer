@@ -45,11 +45,3 @@ dependencies {
 artifacts {
   testSupportArtifacts testSupportJar
 }
-
-processResources {
-  filesMatching('openapi/web3signer.yaml') {
-    filter {
-      it.replace('@VERSION@', calculateVersion())
-    }
-  }
-}
