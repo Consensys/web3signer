@@ -23,7 +23,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
 
 public class PublicKeysListHandler implements Handler<RoutingContext> {
-  final String jsonEncodedKeys;
+  private final String jsonEncodedKeys;
 
   public PublicKeysListHandler(final Set<String> keys) {
     jsonEncodedKeys = new JsonArray(new ArrayList<>(keys)).encode();
