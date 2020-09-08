@@ -19,7 +19,7 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
-import static tech.pegasys.web3signer.core.service.http.metrics.OpenApiOperationsMetrics.incSignerLoadCount;
+import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
@@ -33,12 +33,13 @@ import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
-import tech.pegasys.web3signer.core.service.http.metrics.OpenApiOperationsMetrics;
+import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
+import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.core.signing.LoadedSigners;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.core.util.FileUtil;
@@ -148,87 +149,6 @@ public class Runner implements Runnable {
     }
   }
 
-  private void registerEth1Routes(
-      final OpenAPI3RouterFactory routerFactory,
-      final ArtifactSignerProvider blsSignerProvider,
-      final LogErrorHandler errorHandler,
-      final MetricsSystem metricsSystem) {
-    final SignerForIdentifier<BlsArtifactSignature> blsSigner =
-        new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    final Set<String> blsIdentifiers = blsSignerProvider.availableIdentifiers();
-    addPublicKeysListHandler(routerFactory, blsIdentifiers, ETH1_LIST.name(), errorHandler);
-    addEth2SignHandler(routerFactory, blsSigner, metricsSystem, errorHandler);
-  }
-
-  private void registerEth2Routes(
-      final OpenAPI3RouterFactory routerFactory,
-      final ArtifactSignerProvider ethSecpSignerProvider,
-      final LogErrorHandler errorHandler,
-      final MetricsSystem metricsSystem) {
-    final SignerForIdentifier<SecpArtifactSignature> secpSigner =
-        new SignerForIdentifier<>(ethSecpSignerProvider, this::formatSecpSignature, SECP256K1);
-    final Set<String> secpIdentifiers = ethSecpSignerProvider.availableIdentifiers();
-    addPublicKeysListHandler(routerFactory, secpIdentifiers, ETH2_LIST.name(), errorHandler);
-    addEth1SignHandler(routerFactory, secpSigner, metricsSystem, errorHandler);
-  }
-
-  private void registerHttpHostAllowListHandler(final OpenAPI3RouterFactory openApiRouterFactory) {
-    openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
-  }
-
-  private void addEth2SignHandler(
-      final OpenAPI3RouterFactory openAPI3RouterFactory,
-      final SignerForIdentifier<BlsArtifactSignature> blsSigner,
-      final MetricsSystem metricsSystem,
-      final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory.addHandlerByOperationId(
-        ETH2_SIGN.name(),
-        new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(
-                blsSigner, new OpenApiOperationsMetrics(metricsSystem, BLS)),
-            false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
-  }
-
-  private void addEth1SignHandler(
-      final OpenAPI3RouterFactory openAPI3RouterFactory,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
-      final MetricsSystem metricsSystem,
-      final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory.addHandlerByOperationId(
-        ETH1_SIGN.name(),
-        new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(
-                secpSigner, new OpenApiOperationsMetrics(metricsSystem, SECP256K1)),
-            false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(ETH1_SIGN.name(), errorHandler);
-  }
-
-  private void addPublicKeysListHandler(
-      final OpenAPI3RouterFactory openAPI3RouterFactory,
-      final Set<String> identifiers,
-      final String operationId,
-      final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory.addHandlerByOperationId(
-        operationId, new BlockingHandlerDecorator(new PublicKeysListHandler(identifiers), false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(operationId, errorHandler);
-  }
-
-  private void registerUpcheckRoute(
-      final OpenAPI3RouterFactory openAPI3RouterFactory, final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory.addHandlerByOperationId(
-        UPCHECK.name(), new BlockingHandlerDecorator(new UpcheckHandler(), false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK.name(), errorHandler);
-  }
-
-  private String formatBlsSignature(final BlsArtifactSignature signature) {
-    return signature.getSignatureData().toString();
-  }
-
-  private String formatSecpSignature(final SecpArtifactSignature signature) {
-    return SecpArtifactSignature.toBytes(signature).toHexString();
-  }
-
   private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)
       throws InterruptedException, ExecutionException {
     final CompletableFuture<OpenAPI3RouterFactory> completableFuture = new CompletableFuture<>();
@@ -249,6 +169,75 @@ public class Runner implements Runnable {
     // Our handlers must set content type header manually.
     openAPI3RouterFactory.getOptions().setMountResponseContentTypeHandler(false);
     return openAPI3RouterFactory;
+  }
+
+  private void registerEth1Routes(
+      final OpenAPI3RouterFactory routerFactory,
+      final ArtifactSignerProvider blsSignerProvider,
+      final LogErrorHandler errorHandler,
+      final MetricsSystem metricsSystem) {
+    final SignerForIdentifier<BlsArtifactSignature> blsSigner =
+        new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
+    final Set<String> blsIdentifiers = blsSignerProvider.availableIdentifiers();
+    addPublicKeysListHandler(routerFactory, blsIdentifiers, ETH1_LIST.name(), errorHandler);
+    addSignHandler(routerFactory, ETH1_SIGN.name(), blsSigner, metricsSystem, BLS, errorHandler);
+  }
+
+  private void registerEth2Routes(
+      final OpenAPI3RouterFactory routerFactory,
+      final ArtifactSignerProvider ethSecpSignerProvider,
+      final LogErrorHandler errorHandler,
+      final MetricsSystem metricsSystem) {
+    final SignerForIdentifier<SecpArtifactSignature> secpSigner =
+        new SignerForIdentifier<>(ethSecpSignerProvider, this::formatSecpSignature, SECP256K1);
+    final Set<String> secpIdentifiers = ethSecpSignerProvider.availableIdentifiers();
+    addPublicKeysListHandler(routerFactory, secpIdentifiers, ETH2_LIST.name(), errorHandler);
+    addSignHandler(
+        routerFactory, ETH2_SIGN.name(), secpSigner, metricsSystem, SECP256K1, errorHandler);
+  }
+
+  private void addSignHandler(
+      final OpenAPI3RouterFactory routerFactory,
+      final String operationId,
+      final SignerForIdentifier<?> signer,
+      final MetricsSystem metricsSystem,
+      final KeyType keyType,
+      final LogErrorHandler errorHandler) {
+    routerFactory.addHandlerByOperationId(
+        operationId,
+        new BlockingHandlerDecorator(
+            new SignForIdentifierHandler(signer, new HttpApiMetrics(metricsSystem, keyType)),
+            false));
+    routerFactory.addFailureHandlerByOperationId(operationId, errorHandler);
+  }
+
+  private void addPublicKeysListHandler(
+      final OpenAPI3RouterFactory openAPI3RouterFactory,
+      final Set<String> identifiers,
+      final String operationId,
+      final LogErrorHandler errorHandler) {
+    openAPI3RouterFactory.addHandlerByOperationId(
+        operationId, new BlockingHandlerDecorator(new PublicKeysListHandler(identifiers), false));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(operationId, errorHandler);
+  }
+
+  private void registerUpcheckRoute(
+      final OpenAPI3RouterFactory openAPI3RouterFactory, final LogErrorHandler errorHandler) {
+    openAPI3RouterFactory.addHandlerByOperationId(
+        UPCHECK.name(), new BlockingHandlerDecorator(new UpcheckHandler(), false));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK.name(), errorHandler);
+  }
+
+  private void registerHttpHostAllowListHandler(final OpenAPI3RouterFactory openApiRouterFactory) {
+    openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
+  }
+
+  private String formatBlsSignature(final BlsArtifactSignature signature) {
+    return signature.getSignatureData().toString();
+  }
+
+  private String formatSecpSignature(final SecpArtifactSignature signature) {
+    return SecpArtifactSignature.toBytes(signature).toHexString();
   }
 
   private void registerSwaggerUIRoute(final Router router) throws IOException {

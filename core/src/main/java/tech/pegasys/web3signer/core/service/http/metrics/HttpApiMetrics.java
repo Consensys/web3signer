@@ -19,14 +19,14 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-public class OpenApiOperationsMetrics {
+public class HttpApiMetrics {
   private static Counter signersLoadedCounter;
 
   private final Counter malformedRequestCounter;
   private final OperationTimer signingTimer;
   private final Counter missingSignerCounter;
 
-  public OpenApiOperationsMetrics(final MetricsSystem metricsSystem, final KeyType keyType) {
+  public HttpApiMetrics(final MetricsSystem metricsSystem, final KeyType keyType) {
 
     malformedRequestCounter =
         metricsSystem.createCounter(

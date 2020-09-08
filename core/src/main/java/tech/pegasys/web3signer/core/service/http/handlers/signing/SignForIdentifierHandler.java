@@ -17,7 +17,7 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TE
 import static tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier.toBytes;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
-import tech.pegasys.web3signer.core.service.http.metrics.OpenApiOperationsMetrics;
+import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -33,10 +33,10 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final SignerForIdentifier<?> signerForIdentifier;
-  private final OpenApiOperationsMetrics metrics;
+  private final HttpApiMetrics metrics;
 
   public SignForIdentifierHandler(
-      final SignerForIdentifier<?> signerForIdentifier, final OpenApiOperationsMetrics metrics) {
+      final SignerForIdentifier<?> signerForIdentifier, final HttpApiMetrics metrics) {
     this.signerForIdentifier = signerForIdentifier;
     this.metrics = metrics;
   }
