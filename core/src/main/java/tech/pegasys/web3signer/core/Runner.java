@@ -75,6 +75,8 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
 public class Runner implements Runnable {
 
@@ -112,10 +114,17 @@ public class Runner implements Runnable {
             config.getMetricsNetworkInterface(),
             config.getMetricCategories(),
             config.getMetricsHostAllowList());
-
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
-    final Vertx vertx = Vertx.vertx();
 
+    final SlashingProtection slashingProtection;
+    if (config.isSlashingProtectionEnabled()) {
+      slashingProtection = SlashingProtectionFactory.createSlashingProtection();
+    } else {
+      slashingProtection = null;
+    }
+
+    final Vertx vertx = Vertx.vertx();
+    
     try {
       metricsEndpoint.start(vertx);
 
@@ -149,7 +158,7 @@ public class Runner implements Runnable {
 
       final OpenAPI3RouterFactory openApiRouterFactory =
           createOpenApiRouterFactory(
-              vertx, ethKeyIdentifiers, metricsSystem, blsSigner, secpSigner);
+              vertx, ethKeyIdentifiers, metricsSystem, blsSigner, secpSigner, slashingProtection);
       registerHttpHostAllowListHandler(openApiRouterFactory);
       final Router router = openApiRouterFactory.getRouter();
 
@@ -182,7 +191,8 @@ public class Runner implements Runnable {
       final KeyIdentifiers keyIdentifiers,
       final MetricsSystem metricsSystem,
       final SignerForIdentifier<BlsArtifactSignature> blsSigner,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner)
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
+      final SlashingProtection slashingProtection)
       throws InterruptedException, ExecutionException {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
@@ -209,11 +219,12 @@ public class Runner implements Runnable {
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls"), true));
+            new SignForIdentifierHandler(blsSigner, metricsSystem, "bls", slashingProtection),
+            false));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp"), true));
+            new SignForIdentifierHandler(secpSigner, metricsSystem, "secp", null), false));
     openAPI3RouterFactory.addHandlerByOperationId(
         SIGN_FOR_IDENTIFIER_OPERATION_ID,
         rc -> {

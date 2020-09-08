@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright 2020 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,10 +10,20 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
+package tech.pegasys.web3signer.slashingprotection;
 
-rootProject.name='web3signer'
-include 'app'
-include 'acceptance-tests'
-include 'commandline'
-include 'core'
-include 'slashing-protection'
+import org.apache.tuweni.units.bigints.UInt64;
+
+public class NoOpSlashingProtection implements SlashingProtection {
+
+  @Override
+  public boolean maySignAttestation(final String keyIdentifier, final UInt64 sourceEpoch,
+      UInt64 targetEpoch) {
+    return true;
+  }
+
+  @Override
+  public boolean maySignBlock(final String keyIdentifier, final UInt64 blockSlot) {
+    return true;
+  }
+}

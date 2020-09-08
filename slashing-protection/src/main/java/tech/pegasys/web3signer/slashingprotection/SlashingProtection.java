@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import org.apache.tuweni.units.bigints.UInt64;
 
-// One of these exists per key
 public interface SlashingProtection {
 
   boolean maySignAttestation(

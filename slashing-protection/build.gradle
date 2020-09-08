@@ -22,15 +22,9 @@ dependencies {
   implementation 'commons-io:commons-io'
   implementation 'commons-lang:commons-lang'
 
-  implementation 'com.mchange:c3p0'
-  implementation 'org.xerial:sqlite-jdbc'
-  implementation 'org.flywaydb:flyway-core'
-
-  implementation 'org.apache.tuweni:tuweni-bytes'
-  implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'org.apache.tuweni:tuweni-units'
 
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
-  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 
   implementation 'org.hyperledger.besu.internal:metrics-core'
 
@@ -39,7 +33,6 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.assertj:assertj-core'
-  testImplementation 'org.assertj:assertj-db'
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
