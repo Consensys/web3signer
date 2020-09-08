@@ -57,7 +57,7 @@ public class OpenApiOperationsMetrics {
     return missingSignerCounter;
   }
 
-  public static void incSignerLoadCount(final MetricsSystem metricsSystem, final int count) {
+  public static void incSignerLoadCount(final MetricsSystem metricsSystem, final long count) {
     if (signersLoadedCounter == null) {
       signersLoadedCounter =
           metricsSystem.createCounter(

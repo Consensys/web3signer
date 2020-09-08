@@ -39,7 +39,6 @@ import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
-import tech.pegasys.web3signer.core.signing.FileCoinArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.LoadedSigners;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.core.util.FileUtil;
@@ -116,40 +115,27 @@ public class Runner implements Runnable {
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
     final Vertx vertx = Vertx.vertx();
+    final LogErrorHandler errorHandler = new LogErrorHandler();
 
     try {
       metricsEndpoint.start(vertx);
 
       final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
+      incSignerLoadCount(metricsSystem, signers.getAvailableIdentifiersCount());
 
-      final ArtifactSignerProvider blsSignerProvider = signers.getBlsSignerProvider();
-      final ArtifactSignerProvider ethSecpSignerProvider = signers.getEthSignerProvider();
-      final ArtifactSignerProvider fcSecpSignerProvider = signers.getFcSecpSignerProvider();
-      final ArtifactSignerProvider fcBlsSignerProvider = signers.getFcBlsSignerProvider();
+      final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
 
-      final Set<String> blsIdentifiers = blsSignerProvider.availableIdentifiers();
-      final Set<String> secpIdentifiers = ethSecpSignerProvider.availableIdentifiers();
-      final int totalKeysLoaded = blsIdentifiers.size() + secpIdentifiers.size();
-      incSignerLoadCount(metricsSystem, totalKeysLoaded);
+      registerEth1Routes(
+          routerFactory, signers.getBlsSignerProvider(), errorHandler, metricsSystem);
+      registerEth2Routes(
+          routerFactory, signers.getEthSignerProvider(), errorHandler, metricsSystem);
+      registerUpcheckRoute(routerFactory, errorHandler);
+      registerHttpHostAllowListHandler(routerFactory);
 
-      final SignerForIdentifier<BlsArtifactSignature> blsSigner =
-          new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner =
-          new SignerForIdentifier<>(ethSecpSignerProvider, this::formatSecpSignature, SECP256K1);
-
-      final FileCoinArtifactSignerProvider fcArtifactSignerProvider =
-          new FileCoinArtifactSignerProvider(fcBlsSignerProvider, fcSecpSignerProvider);
-
-      // create router from OpenApi spec - web3signer.yaml
-      final OpenAPI3RouterFactory openApiRouterFactory =
-          createOpenApiRouterFactory(
-              vertx, blsIdentifiers, secpIdentifiers, metricsSystem, blsSigner, secpSigner);
-      registerHttpHostAllowListHandler(openApiRouterFactory);
-      final Router router = openApiRouterFactory.getRouter();
-
-      // register routes which are not available from web3signer.yaml
+      // non-openapi routes are registered against Router instead of RouterFactory
+      final Router router = routerFactory.getRouter();
       registerSwaggerUIRoute(router); // serve static openapi spec
-      registerFilecoinJsonRpcRoute(router, metricsSystem, fcArtifactSignerProvider);
+      registerFilecoinJsonRpcRoute(router, metricsSystem, signers.getFcSignerProvider());
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -162,33 +148,32 @@ public class Runner implements Runnable {
     }
   }
 
-  private void registerHttpHostAllowListHandler(final OpenAPI3RouterFactory openApiRouterFactory) {
-    openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
+  private void registerEth1Routes(
+      final OpenAPI3RouterFactory routerFactory,
+      final ArtifactSignerProvider blsSignerProvider,
+      final LogErrorHandler errorHandler,
+      final MetricsSystem metricsSystem) {
+    final SignerForIdentifier<BlsArtifactSignature> blsSigner =
+        new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
+    final Set<String> blsIdentifiers = blsSignerProvider.availableIdentifiers();
+    addPublicKeysListHandler(routerFactory, blsIdentifiers, ETH1_LIST.name(), errorHandler);
+    addEth2SignHandler(routerFactory, blsSigner, metricsSystem, errorHandler);
   }
 
-  private OpenAPI3RouterFactory createOpenApiRouterFactory(
-      final Vertx vertx,
-      final Set<String> blsIdentifiers,
-      final Set<String> secpIdentifiers,
-      final MetricsSystem metricsSystem,
-      final SignerForIdentifier<BlsArtifactSignature> blsSigner,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner)
-      throws InterruptedException, ExecutionException {
-    final LogErrorHandler errorHandler = new LogErrorHandler();
-    final OpenAPI3RouterFactory openAPI3RouterFactory = getOpenAPI3RouterFactory(vertx);
+  private void registerEth2Routes(
+      final OpenAPI3RouterFactory routerFactory,
+      final ArtifactSignerProvider ethSecpSignerProvider,
+      final LogErrorHandler errorHandler,
+      final MetricsSystem metricsSystem) {
+    final SignerForIdentifier<SecpArtifactSignature> secpSigner =
+        new SignerForIdentifier<>(ethSecpSignerProvider, this::formatSecpSignature, SECP256K1);
+    final Set<String> secpIdentifiers = ethSecpSignerProvider.availableIdentifiers();
+    addPublicKeysListHandler(routerFactory, secpIdentifiers, ETH2_LIST.name(), errorHandler);
+    addEth1SignHandler(routerFactory, secpSigner, metricsSystem, errorHandler);
+  }
 
-    // public key list handler
-    addEth1PublicKeysListHandler(openAPI3RouterFactory, secpIdentifiers, errorHandler);
-    addEth2PublicKeysListHandler(openAPI3RouterFactory, blsIdentifiers, errorHandler);
-
-    // sign handler
-    addEth1SignHandler(openAPI3RouterFactory, secpSigner, metricsSystem, errorHandler);
-    addEth2SignHandler(openAPI3RouterFactory, blsSigner, metricsSystem, errorHandler);
-
-    // upcheck handler
-    addUpcheckHandler(openAPI3RouterFactory, errorHandler);
-
-    return openAPI3RouterFactory;
+  private void registerHttpHostAllowListHandler(final OpenAPI3RouterFactory openApiRouterFactory) {
+    openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
   }
 
   private void addEth2SignHandler(
@@ -219,27 +204,17 @@ public class Runner implements Runnable {
     openAPI3RouterFactory.addFailureHandlerByOperationId(ETH1_SIGN.name(), errorHandler);
   }
 
-  private void addEth1PublicKeysListHandler(
+  private void addPublicKeysListHandler(
       final OpenAPI3RouterFactory openAPI3RouterFactory,
-      final Set<String> secpIdentifiers,
+      final Set<String> identifiers,
+      final String operationId,
       final LogErrorHandler errorHandler) {
     openAPI3RouterFactory.addHandlerByOperationId(
-        ETH1_LIST.name(),
-        new BlockingHandlerDecorator(new PublicKeysListHandler(secpIdentifiers), false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(ETH1_LIST.name(), errorHandler);
+        operationId, new BlockingHandlerDecorator(new PublicKeysListHandler(identifiers), false));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(operationId, errorHandler);
   }
 
-  private void addEth2PublicKeysListHandler(
-      final OpenAPI3RouterFactory openAPI3RouterFactory,
-      final Set<String> blsIdentifiers,
-      final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory.addHandlerByOperationId(
-        ETH2_LIST.name(),
-        new BlockingHandlerDecorator(new PublicKeysListHandler(blsIdentifiers), false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(ETH2_LIST.name(), errorHandler);
-  }
-
-  private void addUpcheckHandler(
+  private void registerUpcheckRoute(
       final OpenAPI3RouterFactory openAPI3RouterFactory, final LogErrorHandler errorHandler) {
     openAPI3RouterFactory.addHandlerByOperationId(
         UPCHECK.name(), new BlockingHandlerDecorator(new UpcheckHandler(), false));
@@ -299,6 +274,7 @@ public class Runner implements Runnable {
       final Router router,
       final MetricsSystem metricsSystem,
       final ArtifactSignerProvider fcSigners) {
+
     final FcJsonRpcMetrics fcJsonRpcMetrics = new FcJsonRpcMetrics(metricsSystem);
     final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, fcJsonRpcMetrics);
     final ObjectMapper mapper = new ObjectMapper().registerModule(new FilecoinJsonRpcModule());

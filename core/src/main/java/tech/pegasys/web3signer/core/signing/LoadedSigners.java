@@ -116,15 +116,16 @@ public class LoadedSigners {
     return getSignerProvider(SignerTypes.ETH_SECP);
   }
 
-  public ArtifactSignerProvider getFcSecpSignerProvider() {
-    return getSignerProvider(SignerTypes.FC_SECP);
-  }
-
-  public ArtifactSignerProvider getFcBlsSignerProvider() {
-    return getSignerProvider(SignerTypes.FC_BLS);
+  public ArtifactSignerProvider getFcSignerProvider() {
+    return new FileCoinArtifactSignerProvider(
+        getSignerProvider(SignerTypes.FC_BLS), getSignerProvider(SignerTypes.FC_SECP));
   }
 
   public ArtifactSignerProvider getSignerProvider(final SignerTypes type) {
     return DefaultArtifactSignerProvider.create(signersByType.getOrDefault(type, emptyList()));
+  }
+
+  public long getAvailableIdentifiersCount() {
+    return signersByType.values().stream().mapToLong(List::size).sum();
   }
 }
