@@ -27,8 +27,8 @@ public class SignRequest {
 
   @JsonCreator
   public SignRequest(
-      @JsonProperty("type") final String type,
-      @JsonProperty("signingRoot") final Bytes signingRoot) {
+      @JsonProperty(value = "type", required = true) final String type,
+      @JsonProperty(value = "signingRoot", required = true) final Bytes signingRoot) {
     this.type = type;
     this.signingRoot = signingRoot;
   }
