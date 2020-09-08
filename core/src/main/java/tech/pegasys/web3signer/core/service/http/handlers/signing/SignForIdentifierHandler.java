@@ -18,18 +18,19 @@ import static tech.pegasys.web3signer.core.service.http.handlers.signing.SignerF
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+
+import java.util.Optional;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.RequestParameter;
 import io.vertx.ext.web.api.RequestParameters;
-import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 @SuppressWarnings("UnusedVariable")
 public class SignForIdentifierHandler implements Handler<RoutingContext> {
@@ -40,7 +41,8 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
   private final Optional<SlashingProtection> slashingProtection;
 
   public SignForIdentifierHandler(
-      final SignerForIdentifier<?> signerForIdentifier, final HttpApiMetrics metrics,
+      final SignerForIdentifier<?> signerForIdentifier,
+      final HttpApiMetrics metrics,
       final SlashingProtection slashingProtection) {
     this.signerForIdentifier = signerForIdentifier;
     this.metrics = metrics;

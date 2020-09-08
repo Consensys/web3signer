@@ -16,8 +16,7 @@ import org.apache.tuweni.units.bigints.UInt64;
 
 public interface SlashingProtection {
 
-  boolean maySignAttestation(
-      String keyIdentifier, UInt64 sourceEpoch, UInt64 targetEpoch);
+  boolean maySignAttestation(String keyIdentifier, UInt64 sourceEpoch, UInt64 targetEpoch);
 
   boolean maySignBlock(String keyIdentifier, UInt64 blockSlot);
 }

@@ -139,7 +139,11 @@ public class Runner implements Runnable {
       registerEth1Routes(
           routerFactory, signers.getEthSignerProvider(), errorHandler, metricsSystem);
       registerEth2Routes(
-          routerFactory, signers.getBlsSignerProvider(), errorHandler, metricsSystem, slashingProtection);
+          routerFactory,
+          signers.getBlsSignerProvider(),
+          errorHandler,
+          metricsSystem,
+          slashingProtection);
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
@@ -192,7 +196,14 @@ public class Runner implements Runnable {
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    addSignHandler(routerFactory, ETH2_SIGN.name(), blsSigner, metricsSystem, BLS, errorHandler, slashingProtection);
+    addSignHandler(
+        routerFactory,
+        ETH2_SIGN.name(),
+        blsSigner,
+        metricsSystem,
+        BLS,
+        errorHandler,
+        slashingProtection);
   }
 
   private void registerEth1Routes(
@@ -220,7 +231,8 @@ public class Runner implements Runnable {
     routerFactory.addHandlerByOperationId(
         operationId,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(signer, new HttpApiMetrics(metricsSystem, keyType), slashingProtection),
+            new SignForIdentifierHandler(
+                signer, new HttpApiMetrics(metricsSystem, keyType), slashingProtection),
             false));
     routerFactory.addFailureHandlerByOperationId(operationId, errorHandler);
   }
