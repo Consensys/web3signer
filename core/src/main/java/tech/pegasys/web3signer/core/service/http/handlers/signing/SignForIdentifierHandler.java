@@ -18,6 +18,9 @@ import static tech.pegasys.web3signer.core.service.http.handlers.signing.SignerF
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+
+import java.util.Optional;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -29,16 +32,21 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
+@SuppressWarnings("UnusedVariable")
 public class SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final SignerForIdentifier<?> signerForIdentifier;
   private final HttpApiMetrics metrics;
+  private final Optional<SlashingProtection> slashingProtection;
 
   public SignForIdentifierHandler(
-      final SignerForIdentifier<?> signerForIdentifier, final HttpApiMetrics metrics) {
+      final SignerForIdentifier<?> signerForIdentifier,
+      final HttpApiMetrics metrics,
+      final SlashingProtection slashingProtection) {
     this.signerForIdentifier = signerForIdentifier;
     this.metrics = metrics;
+    this.slashingProtection = Optional.ofNullable(slashingProtection);
   }
 
   @Override
@@ -59,17 +67,27 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
       signerForIdentifier
           .sign(normaliseIdentifier(identifier), data)
           .ifPresentOrElse(
-              signature ->
-                  routingContext
-                      .response()
-                      .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
-                      .end(signature),
+              signature -> {
+                if (slashingProtection.isPresent()) {
+                  if (slashingProtection.get().maySignAttestation(null, null, null)) {
+                    respondWithSignature(routingContext, signature);
+                  } else {
+                    // TODO: track error with appropriate response and metrics.
+                  }
+                } else {
+                  respondWithSignature(routingContext, signature);
+                }
+              },
               () -> {
                 LOG.trace("Identifier not found {}", identifier);
                 metrics.getMissingSignerCounter().inc();
                 routingContext.fail(404);
               });
     }
+  }
+
+  private void respondWithSignature(final RoutingContext routingContext, final String signature) {
+    routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature);
   }
 
   private Bytes getDataToSign(final RequestParameters params) {

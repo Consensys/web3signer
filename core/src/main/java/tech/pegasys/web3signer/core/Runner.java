@@ -43,6 +43,9 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.core.signing.LoadedSigners;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.core.util.FileUtil;
+import tech.pegasys.web3signer.slashingprotection.NoOpSlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -115,6 +118,14 @@ public class Runner implements Runnable {
             config.getMetricsHostAllowList());
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
+
+    final SlashingProtection slashingProtection;
+    if (config.isSlashingProtectionEnabled()) {
+      slashingProtection = SlashingProtectionFactory.createSlashingProtection();
+    } else {
+      slashingProtection = new NoOpSlashingProtection();
+    }
+
     final Vertx vertx = Vertx.vertx();
     final LogErrorHandler errorHandler = new LogErrorHandler();
 
@@ -129,7 +140,11 @@ public class Runner implements Runnable {
       registerEth1Routes(
           routerFactory, signers.getEthSignerProvider(), errorHandler, metricsSystem);
       registerEth2Routes(
-          routerFactory, signers.getBlsSignerProvider(), errorHandler, metricsSystem);
+          routerFactory,
+          signers.getBlsSignerProvider(),
+          errorHandler,
+          metricsSystem,
+          slashingProtection);
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
@@ -175,13 +190,21 @@ public class Runner implements Runnable {
       final OpenAPI3RouterFactory routerFactory,
       final ArtifactSignerProvider blsSignerProvider,
       final LogErrorHandler errorHandler,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SlashingProtection slashingProtection) {
     addPublicKeysListHandler(
         routerFactory, blsSignerProvider.availableIdentifiers(), ETH2_LIST.name(), errorHandler);
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    addSignHandler(routerFactory, ETH2_SIGN.name(), blsSigner, metricsSystem, BLS, errorHandler);
+    addSignHandler(
+        routerFactory,
+        ETH2_SIGN.name(),
+        blsSigner,
+        metricsSystem,
+        BLS,
+        errorHandler,
+        slashingProtection);
   }
 
   private void registerEth1Routes(
@@ -195,7 +218,7 @@ public class Runner implements Runnable {
     final SignerForIdentifier<SecpArtifactSignature> secpSigner =
         new SignerForIdentifier<>(secpSignerProvider, this::formatSecpSignature, SECP256K1);
     addSignHandler(
-        routerFactory, ETH1_SIGN.name(), secpSigner, metricsSystem, SECP256K1, errorHandler);
+        routerFactory, ETH1_SIGN.name(), secpSigner, metricsSystem, SECP256K1, errorHandler, null);
   }
 
   private void addSignHandler(
@@ -204,11 +227,13 @@ public class Runner implements Runnable {
       final SignerForIdentifier<?> signer,
       final MetricsSystem metricsSystem,
       final KeyType keyType,
-      final LogErrorHandler errorHandler) {
+      final LogErrorHandler errorHandler,
+      final SlashingProtection slashingProtection) {
     routerFactory.addHandlerByOperationId(
         operationId,
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(signer, new HttpApiMetrics(metricsSystem, keyType)),
+            new SignForIdentifierHandler(
+                signer, new HttpApiMetrics(metricsSystem, keyType), slashingProtection),
             false));
     routerFactory.addFailureHandlerByOperationId(operationId, errorHandler);
   }

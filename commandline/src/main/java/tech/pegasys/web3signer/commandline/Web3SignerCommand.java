@@ -172,6 +172,16 @@ public class Web3SignerCommand implements Config, Runnable {
       arity = "1")
   private final FilecoinNetwork filecoinNetwork = FilecoinNetwork.TESTNET;
 
+  @Option(
+      names = {"--slashing-protection-enabled"},
+      description =
+          "Set to true if all Eth2 signing operations should be validated against historic data, "
+              + "prior to responding with signatures"
+              + "(default: ${DEFAULT-VALUE})",
+      paramLabel = "<BOOL>",
+      arity = "1")
+  private boolean slashingProtectionEnabled = true;
+
   @ArgGroup(exclusive = false)
   private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
@@ -246,6 +256,11 @@ public class Web3SignerCommand implements Config, Runnable {
   }
 
   @Override
+  public boolean isSlashingProtectionEnabled() {
+    return slashingProtectionEnabled;
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -263,6 +278,7 @@ public class Web3SignerCommand implements Config, Runnable {
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
         .add("filecoinNetwork", filecoinNetwork)
+        .add("slashingProtectionEnabled", slashingProtectionEnabled)
         .toString();
   }
 
