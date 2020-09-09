@@ -18,6 +18,8 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
 import static tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Spec;
 import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
@@ -67,6 +69,9 @@ import picocli.CommandLine.TypeConversionException;
 public class Web3SignerCommand implements Config, Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
+
+  @Spec
+  private CommandLine.Model.CommandSpec spec; // injected by picocli
 
   @SuppressWarnings("UnusedVariable")
   @CommandLine.Option(
@@ -284,9 +289,7 @@ public class Web3SignerCommand implements Config, Runnable {
 
   @Override
   public void run() {
-    LOG.debug("Commandline has been parsed with: " + toString());
-    final Runner runner = new Runner(this);
-    runner.run();
+    throw new ParameterException(spec.commandLine(), "Missing required subcommand");
   }
 
   public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {

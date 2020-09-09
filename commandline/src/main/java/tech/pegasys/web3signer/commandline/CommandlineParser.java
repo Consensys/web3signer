@@ -14,6 +14,9 @@ package tech.pegasys.web3signer.commandline;
 
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 
+import com.google.common.collect.Lists;
+import java.util.Arrays;
+import tech.pegasys.web3signer.commandline.subcommands.ModeSubCommand;
 import tech.pegasys.web3signer.commandline.valueprovider.CascadingDefaultProvider;
 import tech.pegasys.web3signer.commandline.valueprovider.EnvironmentVariableDefaultProvider;
 import tech.pegasys.web3signer.commandline.valueprovider.YamlConfigFileDefaultProvider;
@@ -41,6 +44,8 @@ public class CommandlineParser {
   private final PrintWriter errorWriter;
   private final Map<String, String> environment;
 
+  private final List<ModeSubCommand> modes = Lists.newArrayList();
+
   // Allows to obtain config file by PicoCLI using two pass approach.
   @Command(mixinStandardHelpOptions = true)
   static class ConfigFileCommand {
@@ -63,10 +68,15 @@ public class CommandlineParser {
     this.environment = environment;
   }
 
+  public void registerSubCommands(final ModeSubCommand... subCommands) {
+    modes.addAll(Arrays.asList(subCommands));
+  }
+
   public int parseCommandLine(final String... args) {
     // first pass to obtain config file if specified
     final ConfigFileCommand configFileCommand = new ConfigFileCommand();
     final CommandLine configFileCommandLine = new CommandLine(configFileCommand);
+
     configFileCommandLine.parseArgs(args);
     if (configFileCommandLine.isUsageHelpRequested()) {
       return executeCommandUsageHelp();
@@ -84,6 +94,11 @@ public class CommandlineParser {
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);
     commandLine.setParameterExceptionHandler(this::handleParseException);
     commandLine.setDefaultValueProvider(defaultValueProvider(commandLine, configFile));
+
+    for (final ModeSubCommand subcommand : modes) {
+      commandLine.addSubcommand(subcommand.getCommandName(), subcommand);
+    }
+
     return commandLine.execute(args);
   }
 
