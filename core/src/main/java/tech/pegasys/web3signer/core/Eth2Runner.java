@@ -17,16 +17,23 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
+import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.slashingprotection.NoOpSlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
+import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
@@ -60,19 +67,27 @@ public class Eth2Runner extends Runner {
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
       final SlashingProtection slashingProtection) {
+    final ObjectMapper objectMapper =
+        new ObjectMapper()
+            .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .registerModule(new SigningJsonRpcModule());
+
     addPublicKeysListHandler(
         routerFactory, blsSignerProvider.availableIdentifiers(), ETH2_LIST.name(), errorHandler);
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    addSignHandler(
-        routerFactory,
+    routerFactory.addHandlerByOperationId(
         ETH2_SIGN.name(),
-        blsSigner,
-        metricsSystem,
-        BLS,
-        errorHandler,
-        slashingProtection);
+        new BlockingHandlerDecorator(
+            new Eth2SignForIdentifierHandler(
+                blsSigner,
+                new HttpApiMetrics(metricsSystem, BLS),
+                slashingProtection,
+                objectMapper),
+            false));
+    routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
   }
 
   private String formatBlsSignature(final BlsArtifactSignature signature) {
