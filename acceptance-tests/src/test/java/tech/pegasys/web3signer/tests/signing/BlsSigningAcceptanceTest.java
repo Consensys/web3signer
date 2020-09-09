@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.tests.signing;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATION_SLOT;
 
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
@@ -118,7 +119,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     setupSigner();
 
     // openapi
-    final Response response = signer.sign(keyPair.getPublicKey().toString(), DATA, KeyType.BLS);
+    final Response response =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), DATA, AGGREGATION_SLOT);
     final Bytes signature = verifyAndGetSignatureResponse(response);
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
