@@ -17,7 +17,7 @@ class FcBlsSignSimulation extends Simulation {
   new MetadataFileHelpers().createRandomUnencryptedBlsKeys(keyStoreDirectory, 1000)
 
   private val runner = new Signer(new SignerConfigurationBuilder()
-    .withKeyStoreDirectory(keyStoreDirectory).withMode("eth2").build(), null)
+    .withKeyStoreDirectory(keyStoreDirectory).withMode("filecoin").build(), null)
   runner.start()
 
   after {
