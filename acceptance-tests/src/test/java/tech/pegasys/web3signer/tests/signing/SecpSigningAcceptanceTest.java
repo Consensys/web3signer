@@ -17,7 +17,6 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.crypto.Sign.publicKeyFromPrivate;
 import static org.web3j.crypto.Sign.signedMessageToKey;
-import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATION_SLOT;
 
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -129,8 +128,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     setupSigner();
 
     // openapi
-    final Response response =
-        signer.sign(PUBLIC_KEY_HEX_STRING, DATA, KeyType.SECP256K1, AGGREGATION_SLOT);
+    final Response response = signer.eth1Sign(PUBLIC_KEY_HEX_STRING, DATA);
     final Bytes signature = verifyAndGetSignatureResponse(response);
     verifySignature(signature);
   }

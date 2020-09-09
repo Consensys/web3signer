@@ -14,13 +14,15 @@ package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
+import static tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier.toBytes;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
-import io.vertx.core.json.JsonObject;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.api.RequestParameter;
 import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,7 +48,7 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
       final String identifier = params.pathParameter("identifier").toString();
       final Bytes data;
       try {
-        data = getData(params);
+        data = getDataToSign(params);
       } catch (final IllegalArgumentException e) {
         metrics.getMalformedRequestCounter().inc();
         LOG.debug("Invalid signing request", e);
@@ -72,9 +74,9 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
     routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature);
   }
 
-  private Bytes getData(final RequestParameters params) {
-    final JsonObject body = params.body().getJsonObject();
-    final String data = body.getString("data");
-    return Bytes.fromHexString(data);
+  private Bytes getDataToSign(final RequestParameters params) {
+    final RequestParameter body = params.body();
+    final JsonObject jsonObject = body.getJsonObject();
+    return toBytes(jsonObject.getString("data"));
   }
 }

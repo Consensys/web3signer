@@ -27,36 +27,37 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
+// TODO put common jackson seraliser/deserializers somewhere
 public class SigningJsonRpcModule extends SimpleModule {
 
   public SigningJsonRpcModule() {
     super("SigningJsonRpcModule");
-    addDeserializer(Bytes.class, new Base64Deserialiser());
-    addSerializer(Bytes.class, new Base64Serialiser());
+    addDeserializer(Bytes.class, new HexDeserialiser());
+    addSerializer(Bytes.class, new HexSerialiser());
     addDeserializer(UInt64.class, new UInt64Deserializer());
     addSerializer(UInt64.class, new UInt64Serialiser());
     addDeserializer(BigInteger.class, new BigIntegerDecimalStringDeserialiser());
     addSerializer(BigInteger.class, new BigIntegerDecimalStringSerialiser());
   }
 
-  public static class Base64Deserialiser extends JsonDeserializer<Bytes> {
+  public static class HexDeserialiser extends JsonDeserializer<Bytes> {
 
     @Override
     public Bytes deserialize(final JsonParser p, final DeserializationContext ctxt) {
       try {
-        return Bytes.fromBase64String(p.getValueAsString());
+        return Bytes.fromHexString(p.getValueAsString());
       } catch (final Exception e) {
         throw new SigningMetadataException("Invalid hex value for private key", e);
       }
     }
   }
 
-  public static class Base64Serialiser extends JsonSerializer<Bytes> {
+  public static class HexSerialiser extends JsonSerializer<Bytes> {
     @Override
     public void serialize(
         final Bytes value, final JsonGenerator gen, final SerializerProvider serializers)
         throws IOException {
-      gen.writeString(value.toBase64String());
+      gen.writeString(value.toHexString());
     }
   }
 

@@ -104,11 +104,18 @@ public class Signer extends FilecoinJsonRpcEndpoint {
     return String.format(urlFormatting, hostname, runner.metricsPort());
   }
 
-  public Response sign(
-      final String publicKey,
-      final Bytes dataToSign,
-      final KeyType keyType,
-      final ArtifactType type) {
+  public Response eth1Sign(final String publicKey, final Bytes dataToSign) {
+    return given()
+        .baseUri(getUrl())
+        .filter(getOpenApiValidationFilter())
+        .contentType(ContentType.JSON)
+        .pathParam("identifier", publicKey)
+        .body(new JsonObject().put("data", dataToSign.toHexString()).toString())
+        .post(signPath(KeyType.SECP256K1));
+  }
+
+  public Response eth2Sign(
+      final String publicKey, final Bytes dataToSign, final ArtifactType type) {
     return given()
         .baseUri(getUrl())
         .filter(getOpenApiValidationFilter())
@@ -119,7 +126,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
                 .put("signingRoot", dataToSign.toHexString())
                 .put("type", type)
                 .toString())
-        .post(signPath(keyType));
+        .post(signPath(KeyType.BLS));
   }
 
   public Response callApiPublicKeys(final KeyType keyType) {

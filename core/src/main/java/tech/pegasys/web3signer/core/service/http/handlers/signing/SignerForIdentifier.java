@@ -18,9 +18,13 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 public class SignerForIdentifier<T extends ArtifactSignature> {
+  private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
   private final SignatureFormatter<T> signatureFormatter;
   private final KeyType type;
@@ -45,6 +49,27 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
    */
   public Optional<String> sign(final String identifier, final Bytes data) {
     return signerProvider.getSigner(identifier).map(signer -> formatSignature(signer.sign(data)));
+  }
+
+  /**
+   * Converts hex string to bytes
+   *
+   * @param data hex string
+   * @return Bytes
+   * @throws IllegalArgumentException if data is invalid i.e. not a valid hex string, null or empty
+   */
+  public static Bytes toBytes(final String data) {
+    final Bytes dataToSign;
+    try {
+      if (StringUtils.isBlank(data)) {
+        throw new IllegalArgumentException("Blank data");
+      }
+      dataToSign = Bytes.fromHexString(data);
+    } catch (final IllegalArgumentException e) {
+      LOG.debug("Invalid hex string {}", data, e);
+      throw e;
+    }
+    return dataToSign;
   }
 
   @SuppressWarnings("unchecked")

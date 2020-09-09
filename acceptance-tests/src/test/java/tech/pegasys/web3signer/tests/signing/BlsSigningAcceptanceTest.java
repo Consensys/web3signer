@@ -120,7 +120,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     // openapi
     final Response response =
-        signer.sign(keyPair.getPublicKey().toString(), DATA, KeyType.BLS, AGGREGATION_SLOT);
+        signer.eth2Sign(keyPair.getPublicKey().toString(), DATA, AGGREGATION_SLOT);
     final Bytes signature = verifyAndGetSignatureResponse(response);
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }

@@ -16,7 +16,6 @@ import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
-import org.mozilla.javascript.ast.Block;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;

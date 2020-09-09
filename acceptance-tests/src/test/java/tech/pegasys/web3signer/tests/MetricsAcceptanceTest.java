@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.tests;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATE_AND_PROOF;
 import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATION_SLOT;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
@@ -105,7 +106,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
-    signer.sign("12345", Bytes.fromHexString("0011"), BLS, AGGREGATION_SLOT);
+    signer.eth2Sign("12345", Bytes.fromHexString("0011"), AGGREGATE_AND_PROOF);
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
     assertThat(metricsAfterSign).containsOnly("signing_bls_missing_identifier_count 1.0");
   }
@@ -137,11 +138,9 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
-    signer.sign(
+    signer.eth1Sign(
         Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPublicKey(), 128),
-        Bytes.fromHexString("1122"),
-        SECP256K1,
-        AGGREGATION_SLOT);
+        Bytes.fromHexString("1122"));
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)
@@ -176,10 +175,9 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
-    signer.sign(
+    signer.eth2Sign(
         keyPair.getPublicKey().toBytesCompressed().toHexString(),
         Bytes.fromHexString("1122"),
-        BLS,
         AGGREGATION_SLOT);
     final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
 
