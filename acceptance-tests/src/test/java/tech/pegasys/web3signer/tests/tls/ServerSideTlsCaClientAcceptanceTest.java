@@ -63,9 +63,11 @@ public class ServerSideTlsCaClientAcceptanceTest {
             passwordPath.toFile(),
             Optional.of(BasicClientAuthConstraints.caOnly()));
 
-    final SignerConfigurationBuilder configBuilder = new SignerConfigurationBuilder();
-    configBuilder.withServerTlsOptions(serverOptions);
-    configBuilder.withOverriddenCA(certInCa);
+    final SignerConfigurationBuilder configBuilder =
+        new SignerConfigurationBuilder()
+            .withServerTlsOptions(serverOptions)
+            .withOverriddenCA(certInCa)
+            .withMode("eth2");
 
     final ClientTlsConfig clientTlsConfig = new ClientTlsConfig(serverCert, clientCert);
 

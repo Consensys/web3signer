@@ -27,7 +27,8 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void httpEndpointWithDefaultAllowHostsRespondsWithOkResponse() {
-    final SignerConfiguration signerConfiguration = new SignerConfigurationBuilder().withMode("eth2").build();
+    final SignerConfiguration signerConfiguration =
+        new SignerConfigurationBuilder().withMode("eth2").build();
     startSigner(signerConfiguration);
 
     given()

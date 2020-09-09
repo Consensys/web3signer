@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.tests.publickeys;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;

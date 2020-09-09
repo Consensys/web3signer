@@ -9,19 +9,17 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.tests.publickeys;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
-public class FilecoinKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
+public class FilecoinKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
 
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
@@ -41,6 +39,9 @@ public class FilecoinKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptan
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
   public void onlyValidKeysAreReturnedInPublicKeyResponse(final KeyType keyType) {
+    final String[] prvKeys = privateKeys(keyType);
+    createKeys(keyType, true, prvKeys[0]);
+    createKeys(keyType, false, prvKeys[1]);
     initAndStartSigner("filecoin");
 
     final String[] filecoinAddresses = filecoinAddresses(keyType);
@@ -82,5 +83,4 @@ public class FilecoinKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptan
     final String[] filecoinAddresses = filecoinAddresses(keyType);
     assertThat(signer.walletList()).containsOnly(filecoinAddresses);
   }
-
 }
