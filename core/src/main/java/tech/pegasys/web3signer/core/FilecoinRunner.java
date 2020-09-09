@@ -9,24 +9,24 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.core;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.BodyHandler;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
+import io.vertx.ext.web.handler.BodyHandler;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
 
@@ -37,18 +37,19 @@ public class FilecoinRunner extends Runner {
   }
 
   @Override
-  protected void createHandler(final Context context) {
-    registerFilecoinJsonRpcRoute(
-        context.getRouterFactory().getRouter(),
+  protected Router populateRouter(final Context context) {
+    return registerFilecoinJsonRpcRoute(
+        context.getRouterFactory(),
         context.getMetricsSystem(),
-        context.getSigners().getFcSignerProvider()
-    );
+        context.getSigners().getFcSignerProvider());
   }
 
-  private void registerFilecoinJsonRpcRoute(
-      final Router router,
+  private Router registerFilecoinJsonRpcRoute(
+      final OpenAPI3RouterFactory routerFactory,
       final MetricsSystem metricsSystem,
       final ArtifactSignerProvider fcSigners) {
+
+    final Router router = routerFactory.getRouter();
 
     final FcJsonRpcMetrics fcJsonRpcMetrics = new FcJsonRpcMetrics(metricsSystem);
     final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, fcJsonRpcMetrics);
@@ -66,5 +67,7 @@ public class FilecoinRunner extends Runner {
               routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
             },
             false);
+
+    return router;
   }
 }

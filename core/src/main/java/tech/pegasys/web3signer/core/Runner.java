@@ -12,11 +12,37 @@
  */
 package tech.pegasys.web3signer.core;
 
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_LIST;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
-import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
+
+import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
+import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.config.TlsOptions;
+import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
+import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SignForIdentifierHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
+import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.core.signing.LoadedSigners;
+import tech.pegasys.web3signer.core.util.FileUtil;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -32,40 +58,11 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.NoSuchFileException;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
-import tech.pegasys.web3signer.core.config.Config;
-import tech.pegasys.web3signer.core.config.TlsOptions;
-import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
-import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.SignForIdentifierHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
-import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.core.signing.KeyType;
-import tech.pegasys.web3signer.core.signing.LoadedSigners;
-import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
-import tech.pegasys.web3signer.core.util.FileUtil;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 public abstract class Runner implements Runnable {
 
@@ -108,22 +105,17 @@ public abstract class Runner implements Runnable {
     try {
       // General work
       metricsEndpoint.start(vertx);
-      final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
-
-      final Router router = routerFactory.getRouter();
-      registerSwaggerUIRoute(router); // serve static openapi spec
-      registerUpcheckRoute(routerFactory, errorHandler);
-      registerHttpHostAllowListHandler(routerFactory);
 
       final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
       incSignerLoadCount(metricsSystem, signers.getAvailableIdentifiersCount());
 
-      final Context context = new Context(
-          routerFactory,
-          metricsSystem,
-          signers,
-          errorHandler);
-      createHandler(context);
+      final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
+      registerUpcheckRoute(routerFactory, errorHandler);
+      registerHttpHostAllowListHandler(routerFactory);
+
+      final Context context = new Context(routerFactory, metricsSystem, signers, errorHandler);
+      final Router router = populateRouter(context);
+      registerSwaggerUIRoute(router); // serve static openapi spec
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
@@ -136,7 +128,7 @@ public abstract class Runner implements Runnable {
     }
   }
 
-  protected abstract void createHandler(final Context context);
+  protected abstract Router populateRouter(final Context context);
 
   private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)
       throws InterruptedException, ExecutionException {

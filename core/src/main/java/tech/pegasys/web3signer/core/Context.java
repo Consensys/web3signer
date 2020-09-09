@@ -9,16 +9,14 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.core;
 
+import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
+import tech.pegasys.web3signer.core.signing.LoadedSigners;
+
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.core.signing.LoadedSigners;
 
 public class Context {
   private final OpenAPI3RouterFactory routerFactory;
@@ -26,7 +24,8 @@ public class Context {
   private final LoadedSigners signers;
   private final LogErrorHandler errorHandler;
 
-  public Context(final OpenAPI3RouterFactory routerFactory,
+  public Context(
+      final OpenAPI3RouterFactory routerFactory,
       final MetricsSystem metricsSystem,
       final LoadedSigners signers,
       final LogErrorHandler errorHandler) {

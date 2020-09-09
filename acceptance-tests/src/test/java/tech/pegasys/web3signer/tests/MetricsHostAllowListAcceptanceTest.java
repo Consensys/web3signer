@@ -29,7 +29,7 @@ public class MetricsHostAllowListAcceptanceTest extends AcceptanceTestBase {
   @Test
   void metricsWithDefaultAllowHostsRespondsWithOkResponse() {
     final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMetricsEnabled(true).build();
+        new SignerConfigurationBuilder().withMetricsEnabled(true).withMode("eth1").build();
     startSigner(signerConfiguration);
 
     given()
@@ -48,6 +48,7 @@ public class MetricsHostAllowListAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withMetricsHostAllowList(Collections.singletonList("foo"))
             .withMetricsEnabled(true)
+            .withMode("eth1")
             .build();
     startSigner(signerConfiguration);
 
@@ -68,6 +69,7 @@ public class MetricsHostAllowListAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withMetricsHostAllowList(Collections.singletonList("foo"))
             .withMetricsEnabled(true)
+            .withMode("eth1")
             .build();
     startSigner(signerConfiguration);
 

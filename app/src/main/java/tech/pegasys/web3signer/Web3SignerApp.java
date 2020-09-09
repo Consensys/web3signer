@@ -16,14 +16,14 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import tech.pegasys.web3signer.commandline.CommandlineParser;
 import tech.pegasys.web3signer.commandline.Web3SignerCommand;
+import tech.pegasys.web3signer.commandline.subcommands.Eth1SubCommand;
+import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
+import tech.pegasys.web3signer.commandline.subcommands.FilecoinSubCommand;
 
 import java.io.PrintWriter;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import tech.pegasys.web3signer.commandline.subcommands.Eth1SubCommand;
-import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
-import tech.pegasys.web3signer.commandline.subcommands.FilecoinSubCommand;
 
 public class Web3SignerApp {
 
@@ -37,8 +37,8 @@ public class Web3SignerApp {
     final PrintWriter errorWriter = new PrintWriter(System.err, true, UTF_8);
     final CommandlineParser cmdLineParser =
         new CommandlineParser(baseCommand, outputWriter, errorWriter, System.getenv());
-    cmdLineParser
-        .registerSubCommands(new Eth2SubCommand(), new Eth1SubCommand(), new FilecoinSubCommand());
+    cmdLineParser.registerSubCommands(
+        new Eth2SubCommand(), new Eth1SubCommand(), new FilecoinSubCommand());
     final int result = cmdLineParser.parseCommandLine(args);
 
     if (result != 0) {

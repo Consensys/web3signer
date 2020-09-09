@@ -9,14 +9,13 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
-import picocli.CommandLine.Command;
 import tech.pegasys.web3signer.core.FilecoinRunner;
 import tech.pegasys.web3signer.core.Runner;
+
+import picocli.CommandLine.Command;
 
 @Command(
     name = FilecoinSubCommand.COMMAND_NAME,
@@ -31,5 +30,8 @@ public class FilecoinSubCommand extends ModeSubCommand {
     return new FilecoinRunner(config);
   }
 
-  public String getCommandName() { return COMMAND_NAME; }
+  @Override
+  public String getCommandName() {
+    return COMMAND_NAME;
+  }
 }

@@ -9,8 +9,6 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.core;
 
@@ -23,14 +21,16 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 
+import io.vertx.ext.web.Router;
+
 public class Eth1Runner extends Runner {
 
-  public Eth1Runner(Config config) {
+  public Eth1Runner(final Config config) {
     super(config);
   }
 
   @Override
-  protected void createHandler(Context context) {
+  protected Router populateRouter(final Context context) {
     final ArtifactSignerProvider secpSignerProvider = context.getSigners().getEthSignerProvider();
     addPublicKeysListHandler(
         context.getRouterFactory(),
@@ -42,10 +42,16 @@ public class Eth1Runner extends Runner {
         new SignerForIdentifier<>(secpSignerProvider, this::formatSecpSignature, SECP256K1);
 
     addSignHandler(
-        context.getRouterFactory(), ETH1_SIGN.name(), secpSigner, context.getMetricsSystem(),
-        SECP256K1, context.getErrorHandler(), null);
-  }
+        context.getRouterFactory(),
+        ETH1_SIGN.name(),
+        secpSigner,
+        context.getMetricsSystem(),
+        SECP256K1,
+        context.getErrorHandler(),
+        null);
 
+    return context.getRouterFactory().getRouter();
+  }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {
     return SecpArtifactSignature.toBytes(signature).toHexString();

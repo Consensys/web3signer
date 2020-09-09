@@ -101,7 +101,7 @@ class ServerSideTlsAcceptanceTest {
 
     try {
       final SignerConfigurationBuilder configBuilder =
-          new SignerConfigurationBuilder().withHttpPort(fixedListenPort);
+          new SignerConfigurationBuilder().withHttpPort(fixedListenPort).withMode("eth1");
 
       final ClientAuthConstraints clientAuthConstraints;
       if (clientCertInServerWhitelist != null) {

@@ -63,7 +63,7 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
     metadataFileHelpers.createUnencryptedYamlFileAt(
         keyConfigFile, key.toBytes().toUnprefixedHexString(), KeyType.BLS);
 
-    setupSigner();
+    setupSigner("filecoin");
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final ObjectMapper mapper = new ObjectMapper();

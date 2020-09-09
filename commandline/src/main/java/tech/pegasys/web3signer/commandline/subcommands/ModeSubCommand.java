@@ -9,18 +9,17 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.commandline.subcommands;
+
+import tech.pegasys.web3signer.commandline.ApplicationInfo;
+import tech.pegasys.web3signer.commandline.Web3SignerCommand;
+import tech.pegasys.web3signer.core.Runner;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine;
-import tech.pegasys.web3signer.commandline.ApplicationInfo;
-import tech.pegasys.web3signer.commandline.Web3SignerCommand;
-import tech.pegasys.web3signer.core.Runner;
 
 public abstract class ModeSubCommand implements Runnable {
 
@@ -28,6 +27,7 @@ public abstract class ModeSubCommand implements Runnable {
 
   @CommandLine.ParentCommand protected Web3SignerCommand config;
 
+  @Override
   public void run() {
     // set log level per CLI flags
     System.out.println("Setting logging level to " + config.getLogLevel().name());
@@ -43,5 +43,4 @@ public abstract class ModeSubCommand implements Runnable {
   public abstract Runner createRunner();
 
   public abstract String getCommandName();
-
 }

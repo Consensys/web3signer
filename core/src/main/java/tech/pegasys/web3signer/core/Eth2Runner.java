@@ -9,8 +9,6 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.core;
 
@@ -18,8 +16,6 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
-import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
@@ -29,6 +25,10 @@ import tech.pegasys.web3signer.slashingprotection.NoOpSlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+
 public class Eth2Runner extends Runner {
 
   public Eth2Runner(final Config config) {
@@ -36,7 +36,7 @@ public class Eth2Runner extends Runner {
   }
 
   @Override
-  public void createHandler(final Context context) {
+  public Router populateRouter(final Context context) {
     final SlashingProtection slashingProtection;
     if (config.isSlashingProtectionEnabled()) {
       slashingProtection = SlashingProtectionFactory.createSlashingProtection();
@@ -50,6 +50,8 @@ public class Eth2Runner extends Runner {
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtection);
+
+    return context.getRouterFactory().getRouter();
   }
 
   private void registerEth2Routes(
