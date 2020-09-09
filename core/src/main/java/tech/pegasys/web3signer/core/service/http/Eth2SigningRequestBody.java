@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class Eth2SignRequest {
+public class Eth2SigningRequestBody {
 
   private final ArtifactType type;
   private final Bytes signingRoot;
@@ -26,7 +26,7 @@ public class Eth2SignRequest {
   private final UInt64 targetEpoch;
 
   @JsonCreator
-  public Eth2SignRequest(
+  public Eth2SigningRequestBody(
       @JsonProperty(value = "signingRoot", required = true) final Bytes signingRoot,
       @JsonProperty(value = "type", required = true) final ArtifactType type,
       @JsonProperty(value = "slot") final UInt64 slot,

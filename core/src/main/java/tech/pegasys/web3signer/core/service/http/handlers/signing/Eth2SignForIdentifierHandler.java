@@ -17,7 +17,7 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
-import tech.pegasys.web3signer.core.service.http.Eth2SignRequest;
+import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
@@ -56,9 +56,9 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     try (final TimingContext ignored = metrics.getSigningTimer().startTimer()) {
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
-      final Eth2SignRequest eth2SignRequest;
+      final Eth2SigningRequestBody eth2SigningRequestBody;
       try {
-        eth2SignRequest = getSigningRequest(params);
+        eth2SigningRequestBody = getSigningRequest(params);
       } catch (final IllegalArgumentException | JsonProcessingException e) {
         metrics.getMalformedRequestCounter().inc();
         LOG.debug("Invalid signing request", e);
@@ -67,11 +67,11 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       }
 
       signerForIdentifier
-          .sign(normaliseIdentifier(identifier), eth2SignRequest.getSigningRoot())
+          .sign(normaliseIdentifier(identifier), eth2SigningRequestBody.getSigningRoot())
           .ifPresentOrElse(
               signature -> {
                 if (slashingProtection.isPresent()) {
-                  if (maySign(identifier, eth2SignRequest)) {
+                  if (maySign(identifier, eth2SigningRequestBody)) {
                     respondWithSignature(routingContext, signature);
                   }
                 } else {
@@ -86,23 +86,29 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     }
   }
 
-  private boolean maySign(final String publicKey, final Eth2SignRequest eth2SignRequest) {
-    switch (eth2SignRequest.getType()) {
+  private boolean maySign(
+      final String publicKey, final Eth2SigningRequestBody eth2SigningRequestBody) {
+    switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
-        checkArgument(eth2SignRequest.getSlot() != null, "Slot must be specified");
+        checkArgument(eth2SigningRequestBody.getSlot() != null, "Slot must be specified");
         return slashingProtection
             .get()
-            .maySignBlock(publicKey, eth2SignRequest.getSigningRoot(), eth2SignRequest.getSlot());
+            .maySignBlock(
+                publicKey,
+                eth2SigningRequestBody.getSigningRoot(),
+                eth2SigningRequestBody.getSlot());
       case ATTESTATION:
-        checkArgument(eth2SignRequest.getSourceEpoch() != null, "Source epoch must be specified");
-        checkArgument(eth2SignRequest.getTargetEpoch() != null, "Target epoch must be specified");
+        checkArgument(
+            eth2SigningRequestBody.getSourceEpoch() != null, "Source epoch must be specified");
+        checkArgument(
+            eth2SigningRequestBody.getTargetEpoch() != null, "Target epoch must be specified");
         return slashingProtection
             .get()
             .maySignAttestation(
                 publicKey,
-                eth2SignRequest.getSigningRoot(),
-                eth2SignRequest.getSourceEpoch(),
-                eth2SignRequest.getTargetEpoch());
+                eth2SigningRequestBody.getSigningRoot(),
+                eth2SigningRequestBody.getSourceEpoch(),
+                eth2SigningRequestBody.getTargetEpoch());
       default:
         return true;
     }
@@ -112,9 +118,9 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature);
   }
 
-  private Eth2SignRequest getSigningRequest(final RequestParameters params)
+  private Eth2SigningRequestBody getSigningRequest(final RequestParameters params)
       throws JsonProcessingException {
     final String body = params.body().toString();
-    return objectMapper.readValue(body, Eth2SignRequest.class);
+    return objectMapper.readValue(body, Eth2SigningRequestBody.class);
   }
 }
