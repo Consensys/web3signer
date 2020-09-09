@@ -53,17 +53,15 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
 
   protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
-  @TempDir
-  protected Path testDirectory;
+  @TempDir protected Path testDirectory;
 
   protected void initAndStartSigner(final boolean initKeystoreDirectory) {
     if (initKeystoreDirectory) {
       initSignerKeystoreDirectory();
     }
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder()
-        .withKeyStoreDirectory(testDirectory)
-        .withMode("filecoin");
+    final SignerConfigurationBuilder builder =
+        new SignerConfigurationBuilder().withKeyStoreDirectory(testDirectory).withMode("filecoin");
     startSigner(builder.build());
   }
 
