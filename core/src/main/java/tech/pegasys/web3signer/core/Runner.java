@@ -12,8 +12,16 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_LIST;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
+import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
+import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
@@ -26,10 +34,18 @@ import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
+import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
+import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
+import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.core.signing.LoadedSigners;
+import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.core.util.FileUtil;
+import tech.pegasys.web3signer.slashingprotection.NoOpSlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -44,6 +60,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.Handler;
@@ -56,6 +74,7 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.apache.logging.log4j.LogManager;
@@ -64,7 +83,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-public abstract class Runner implements Runnable {
+public class Runner implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -75,9 +94,10 @@ public abstract class Runner implements Runnable {
   public static final String OPENAPI_SPEC_RESOURCE = "openapi/web3signer.yaml";
 
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
-  protected static final String JSON_RPC_PATH = "/rpc/v1";
+  private static final String JSON_RPC_PATH = "/rpc/v1";
+  private static final String FC_JSON_RPC_PATH = JSON_RPC_PATH + "/filecoin";
 
-  protected final Config config;
+  private final Config config;
 
   public Runner(final Config config) {
     this.config = config;
@@ -99,11 +119,10 @@ public abstract class Runner implements Runnable {
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
 
-    final LogErrorHandler errorHandler = new LogErrorHandler();
     final Vertx vertx = Vertx.vertx();
+    final LogErrorHandler errorHandler = new LogErrorHandler();
 
     try {
-      // General work
       metricsEndpoint.start(vertx);
 
       final LoadedSigners signers = LoadedSigners.loadFrom(config, vertx, metricsSystem);
@@ -113,8 +132,8 @@ public abstract class Runner implements Runnable {
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
-      final Context context = new Context(routerFactory, metricsSystem, signers, errorHandler);
-      final Router router = populateRouter(context);
+      // non-openapi routes are registered against Router instead of RouterFactory
+      final Router router = routerFactory.getRouter();
       registerSwaggerUIRoute(router); // serve static openapi spec
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
@@ -152,14 +171,6 @@ public abstract class Runner implements Runnable {
     return openAPI3RouterFactory;
   }
 
-  protected void addSignHandler(
-      final OpenAPI3RouterFactory routerFactory,
-      final String operationId,
-      final SignerForIdentifier<?> signer,
-      final MetricsSystem metricsSystem,
-      final KeyType keyType,
-      final LogErrorHandler errorHandler,
-      final SlashingProtection slashingProtection) {
     routerFactory.addHandlerByOperationId(
         operationId,
         new BlockingHandlerDecorator(
