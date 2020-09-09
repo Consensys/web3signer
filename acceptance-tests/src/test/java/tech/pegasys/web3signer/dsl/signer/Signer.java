@@ -19,6 +19,7 @@ import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpeci
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
+import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
@@ -103,13 +104,21 @@ public class Signer extends FilecoinJsonRpcEndpoint {
     return String.format(urlFormatting, hostname, runner.metricsPort());
   }
 
-  public Response sign(final String publicKey, final Bytes dataToSign, final KeyType keyType) {
+  public Response sign(
+      final String publicKey,
+      final Bytes dataToSign,
+      final KeyType keyType,
+      final ArtifactType type) {
     return given()
         .baseUri(getUrl())
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
-        .body(new JsonObject().put("data", dataToSign.toHexString()).toString())
+        .body(
+            new JsonObject()
+                .put("signingRoot", dataToSign.toHexString())
+                .put("type", type)
+                .toString())
         .post(signPath(keyType));
   }
 

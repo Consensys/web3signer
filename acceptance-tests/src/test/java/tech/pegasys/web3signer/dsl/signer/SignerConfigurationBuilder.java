@@ -33,6 +33,7 @@ public class SignerConfigurationBuilder {
   private List<String> httpHostAllowList = emptyList();
   private TlsOptions serverTlsOptions;
   private TlsCertificateDefinition overriddenCaTrustStore;
+  private boolean slashingProtectionEnabled;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -83,6 +84,7 @@ public class SignerConfigurationBuilder {
         metricsHostAllowList,
         metricsEnabled,
         Optional.ofNullable(serverTlsOptions),
-        Optional.ofNullable(overriddenCaTrustStore));
+        Optional.ofNullable(overriddenCaTrustStore),
+        slashingProtectionEnabled);
   }
 }

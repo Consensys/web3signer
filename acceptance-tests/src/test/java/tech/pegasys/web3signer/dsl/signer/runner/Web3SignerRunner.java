@@ -120,6 +120,8 @@ public abstract class Web3SignerRunner {
       params.add("--data-path");
       params.add(dataPath.toAbsolutePath().toString());
     }
+    params.add("--slashing-protection-enabled");
+    params.add(Boolean.toString(signerConfig.isSlashingProtectionEnabled()));
 
     params.addAll(createServerTlsArgs());
 

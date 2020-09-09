@@ -17,23 +17,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class SignRequest {
+public class Eth2SignRequest {
 
-  private final String type;
+  private final ArtifactType type;
   private final Bytes signingRoot;
   private UInt64 slot;
   private UInt64 sourceEpoch;
   private UInt64 targetEpoch;
 
   @JsonCreator
-  public SignRequest(
-      @JsonProperty(value = "type", required = true) final String type,
-      @JsonProperty(value = "signingRoot", required = true) final Bytes signingRoot) {
+  public Eth2SignRequest(
+      @JsonProperty(value = "signingRoot", required = true) final Bytes signingRoot,
+      @JsonProperty(value = "type", required = true) final ArtifactType type) {
     this.type = type;
     this.signingRoot = signingRoot;
   }
 
-  public String getType() {
+  public ArtifactType getType() {
     return type;
   }
 

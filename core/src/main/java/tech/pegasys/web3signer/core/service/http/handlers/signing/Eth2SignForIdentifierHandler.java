@@ -17,15 +17,13 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
-import tech.pegasys.web3signer.core.service.http.SignRequest;
-import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
+import tech.pegasys.web3signer.core.service.http.Eth2SignRequest;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
@@ -34,8 +32,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
-@SuppressWarnings("UnusedVariable")
-public class SignForIdentifierHandler implements Handler<RoutingContext> {
+public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final SignerForIdentifier<?> signerForIdentifier;
@@ -43,17 +40,15 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
   private final Optional<SlashingProtection> slashingProtection;
   private final ObjectMapper objectMapper;
 
-  public SignForIdentifierHandler(
+  public Eth2SignForIdentifierHandler(
       final SignerForIdentifier<?> signerForIdentifier,
       final HttpApiMetrics metrics,
-      final SlashingProtection slashingProtection) {
+      final SlashingProtection slashingProtection,
+      final ObjectMapper objectMapper) {
     this.signerForIdentifier = signerForIdentifier;
     this.metrics = metrics;
     this.slashingProtection = Optional.ofNullable(slashingProtection);
-    this.objectMapper =
-        new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, false)
-            .registerModule(new SigningJsonRpcModule());
+    this.objectMapper = objectMapper;
   }
 
   @Override
@@ -61,21 +56,22 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
     try (final TimingContext ignored = metrics.getSigningTimer().startTimer()) {
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
-      final SignRequest signRequest;
+      final Eth2SignRequest eth2SignRequest;
       try {
-        signRequest = getSigningRequest(params);
+        eth2SignRequest = getSigningRequest(params);
       } catch (final IllegalArgumentException | JsonProcessingException e) {
         metrics.getMalformedRequestCounter().inc();
+        LOG.debug("Invalid signing request", e);
         routingContext.fail(400);
         return;
       }
 
       signerForIdentifier
-          .sign(normaliseIdentifier(identifier), signRequest.getSigningRoot())
+          .sign(normaliseIdentifier(identifier), eth2SignRequest.getSigningRoot())
           .ifPresentOrElse(
               signature -> {
                 if (slashingProtection.isPresent()) {
-                  if (maySign(identifier, signRequest)) {
+                  if (maySign(identifier, eth2SignRequest)) {
                     respondWithSignature(routingContext, signature);
                   }
                 } else {
@@ -90,23 +86,23 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
     }
   }
 
-  private boolean maySign(final String publicKey, final SignRequest signRequest) {
-    switch (signRequest.getType()) {
-      case "block":
-        checkArgument(signRequest.getSlot() != null, "Slot must be specified");
+  private boolean maySign(final String publicKey, final Eth2SignRequest eth2SignRequest) {
+    switch (eth2SignRequest.getType()) {
+      case BLOCK:
+        checkArgument(eth2SignRequest.getSlot() != null, "Slot must be specified");
         return slashingProtection
             .get()
-            .maySignBlock(publicKey, signRequest.getSigningRoot(), signRequest.getSlot());
-      case "attestation":
-        checkArgument(signRequest.getSourceEpoch() != null, "Source epoch must be specified");
-        checkArgument(signRequest.getTargetEpoch() != null, "Target epoch must be specified");
+            .maySignBlock(publicKey, eth2SignRequest.getSigningRoot(), eth2SignRequest.getSlot());
+      case ATTESTATION:
+        checkArgument(eth2SignRequest.getSourceEpoch() != null, "Source epoch must be specified");
+        checkArgument(eth2SignRequest.getTargetEpoch() != null, "Target epoch must be specified");
         return slashingProtection
             .get()
             .maySignAttestation(
                 publicKey,
-                signRequest.getSigningRoot(),
-                signRequest.getSourceEpoch(),
-                signRequest.getTargetEpoch());
+                eth2SignRequest.getSigningRoot(),
+                eth2SignRequest.getSourceEpoch(),
+                eth2SignRequest.getTargetEpoch());
       default:
         return true;
     }
@@ -116,9 +112,9 @@ public class SignForIdentifierHandler implements Handler<RoutingContext> {
     routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature);
   }
 
-  private SignRequest getSigningRequest(final RequestParameters params)
+  private Eth2SignRequest getSigningRequest(final RequestParameters params)
       throws JsonProcessingException {
     final String body = params.body().toString();
-    return objectMapper.readValue(body, SignRequest.class);
+    return objectMapper.readValue(body, Eth2SignRequest.class);
   }
 }

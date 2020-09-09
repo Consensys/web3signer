@@ -28,10 +28,12 @@ import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
+import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.SignForIdentifierHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
@@ -39,7 +41,6 @@ import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.core.signing.LoadedSigners;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.core.util.FileUtil;
@@ -60,6 +61,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import com.google.common.base.Charsets;
@@ -192,19 +195,27 @@ public class Runner implements Runnable {
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
       final SlashingProtection slashingProtection) {
+    final ObjectMapper objectMapper =
+        new ObjectMapper()
+            .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .registerModule(new SigningJsonRpcModule());
+
     addPublicKeysListHandler(
         routerFactory, blsSignerProvider.availableIdentifiers(), ETH2_LIST.name(), errorHandler);
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    addSignHandler(
-        routerFactory,
+    routerFactory.addHandlerByOperationId(
         ETH2_SIGN.name(),
-        blsSigner,
-        metricsSystem,
-        BLS,
-        errorHandler,
-        slashingProtection);
+        new BlockingHandlerDecorator(
+            new Eth2SignForIdentifierHandler(
+                blsSigner,
+                new HttpApiMetrics(metricsSystem, BLS),
+                slashingProtection,
+                objectMapper),
+            false));
+    routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
   }
 
   private void registerEth1Routes(
@@ -217,25 +228,13 @@ public class Runner implements Runnable {
 
     final SignerForIdentifier<SecpArtifactSignature> secpSigner =
         new SignerForIdentifier<>(secpSignerProvider, this::formatSecpSignature, SECP256K1);
-    addSignHandler(
-        routerFactory, ETH1_SIGN.name(), secpSigner, metricsSystem, SECP256K1, errorHandler, null);
-  }
-
-  private void addSignHandler(
-      final OpenAPI3RouterFactory routerFactory,
-      final String operationId,
-      final SignerForIdentifier<?> signer,
-      final MetricsSystem metricsSystem,
-      final KeyType keyType,
-      final LogErrorHandler errorHandler,
-      final SlashingProtection slashingProtection) {
     routerFactory.addHandlerByOperationId(
-        operationId,
+        ETH1_SIGN.name(),
         new BlockingHandlerDecorator(
-            new SignForIdentifierHandler(
-                signer, new HttpApiMetrics(metricsSystem, keyType), slashingProtection),
+            new Eth1SignForIdentifierHandler(
+                secpSigner, new HttpApiMetrics(metricsSystem, SECP256K1)),
             false));
-    routerFactory.addFailureHandlerByOperationId(operationId, errorHandler);
+    routerFactory.addFailureHandlerByOperationId(ETH1_SIGN.name(), errorHandler);
   }
 
   private void addPublicKeysListHandler(

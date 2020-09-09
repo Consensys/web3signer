@@ -16,11 +16,13 @@ import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 
+import org.mozilla.javascript.ast.Block;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
+import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -54,12 +56,13 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   @EnumSource(value = KeyType.class)
   public void receiveA404IfRequestedKeyDoesNotExist(final KeyType keyType) {
     setupSigner();
+    final String body = createBody(keyType);
     given()
         .baseUri(signer.getUrl())
         .filter(signer.getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("data", DATA.toHexString()).toString())
+        .body(body)
         .when()
         .post(Signer.signPath(keyType))
         .then()
@@ -82,7 +85,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
         .pathParam("identifier", keyPair.getPublicKey().toString())
-        .body(new JsonObject().put("data", data).toString())
+        .body(new JsonObject().put("signingRoot", data).toString())
         .when()
         .post(Signer.signPath(KeyType.BLS))
         .then()
@@ -147,7 +150,8 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(
             new JsonObject()
-                .put("data", DATA.toHexString())
+                .put("signingRoot", DATA.toHexString())
+                .put("type", ArtifactType.RANDAO_REVEAL)
                 .put("unknownField", "someValue")
                 .toString())
         .when()
@@ -156,5 +160,17 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .assertThat()
         .statusCode(200)
         .body(equalToIgnoringCase(expectedSignature.toString()));
+  }
+
+  private String createBody(final KeyType keyType) {
+    if (keyType == KeyType.SECP256K1) {
+      return new JsonObject().put("data", DATA.toHexString()).toString();
+    } else {
+      return new JsonObject()
+          .put("signingRoot", DATA.toHexString())
+          .put("type", ArtifactType.BLOCK)
+          .put("slot", "8192")
+          .toString();
+    }
   }
 }
