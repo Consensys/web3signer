@@ -42,21 +42,17 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
   public void noLoadedKeysReturnsEmptyPublicKeyResponse(final KeyType keyType) {
-    initAndStartSigner("filecoin");
-
-    //TODO(tmm): CRAP - this needs to be split up.
+    initAndStartSigner(keyType == BLS ? "eth2" : "eth1");
     validateApiResponse(signer.callApiPublicKeys(keyType), empty());
-    assertThat(signer.walletList()).isEmpty();
   }
 
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
   public void invalidKeysReturnsEmptyPublicKeyResponse(final KeyType keyType) {
     createKeys(keyType, false, privateKeys(keyType));
-    initAndStartSigner("filecoin");
+    initAndStartSigner(keyType == BLS ? "eth2" : "eth1");
 
     validateApiResponse(signer.callApiPublicKeys(keyType), empty());
-    assertThat(signer.walletList()).isEmpty();
   }
 
   @ParameterizedTest
@@ -71,36 +67,6 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final Response response = signer.callApiPublicKeys(keyType);
     validateApiResponse(response, contains(keys));
     validateApiResponse(response, everyItem(not(in(invalidKeys))));
-
-    //TODO(tmm): THESE NEED TO GO BACK IN
-//    final String[] filecoinAddresses = filecoinAddresses(keyType);
-//    assertThat(signer.walletList()).containsExactly(filecoinAddresses[0]);
-  }
-
-  @ParameterizedTest
-  @EnumSource(value = KeyType.class)
-  public void filecoinWalletHasReturnFalseWhenKeysAreNotLoaded(final KeyType keyType) {
-    initAndStartSigner("filecoin");
-
-    final String[] filecoinAddresses = filecoinAddresses(keyType);
-
-    assertThat(signer.walletHas(filecoinAddresses[0])).isEqualTo(false);
-    assertThat(signer.walletHas(filecoinAddresses[1])).isEqualTo(false);
-  }
-
-  @ParameterizedTest
-  @EnumSource(value = KeyType.class)
-  public void filecoinWalletHasReturnsValidResponse(final KeyType keyType) {
-    final String[] prvKeys = privateKeys(keyType);
-    createKeys(keyType, true, prvKeys[0]);
-    createKeys(keyType, false, prvKeys[1]);
-
-    initAndStartSigner("filecoin");
-
-    final String[] filecoinAddresses = filecoinAddresses(keyType);
-
-    assertThat(signer.walletHas(filecoinAddresses[0])).isEqualTo(true);
-    assertThat(signer.walletHas(filecoinAddresses[1])).isEqualTo(false);
   }
 
   @ParameterizedTest
@@ -110,10 +76,6 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     initAndStartSigner(keyType == BLS ? "eth2" : "eth1");
 
     validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
-
-    //TODO(tmm): These need to go back in
-//    final String[] filecoinAddresses = filecoinAddresses(keyType);
-//    assertThat(signer.walletList()).containsOnly(filecoinAddresses);
   }
 
   @ParameterizedTest
@@ -124,8 +86,6 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
 
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(keyType);
     validateApiResponse(response, containsInAnyOrder(keys));
-    final String[] filecoinAddresses = filecoinAddresses(keyType);
-    assertThat(signer.walletList()).containsOnly(filecoinAddresses);
   }
 
   @Test
