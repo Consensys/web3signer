@@ -21,16 +21,22 @@ public class Eth2SignRequest {
 
   private final ArtifactType type;
   private final Bytes signingRoot;
-  private UInt64 slot;
-  private UInt64 sourceEpoch;
-  private UInt64 targetEpoch;
+  private final UInt64 slot;
+  private final UInt64 sourceEpoch;
+  private final UInt64 targetEpoch;
 
   @JsonCreator
   public Eth2SignRequest(
       @JsonProperty(value = "signingRoot", required = true) final Bytes signingRoot,
-      @JsonProperty(value = "type", required = true) final ArtifactType type) {
+      @JsonProperty(value = "type", required = true) final ArtifactType type,
+      @JsonProperty(value = "slot") final UInt64 slot,
+      @JsonProperty(value = "sourceEpoch") final UInt64 sourceEpoch,
+      @JsonProperty(value = "targetEpoch") final UInt64 targetEpoch) {
     this.type = type;
     this.signingRoot = signingRoot;
+    this.slot = slot;
+    this.sourceEpoch = sourceEpoch;
+    this.targetEpoch = targetEpoch;
   }
 
   public ArtifactType getType() {
