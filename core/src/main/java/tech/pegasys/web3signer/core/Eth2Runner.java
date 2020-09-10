@@ -38,18 +38,19 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
 
-  public Eth2Runner(final Config config) {
+  private final boolean slashingProtectionEnabled;
+
+  public Eth2Runner(final Config config, final boolean slashingProtectionEnabled) {
     super(config);
+    this.slashingProtectionEnabled = slashingProtectionEnabled;
   }
 
   @Override
   public Router populateRouter(final Context context) {
-    final SlashingProtection slashingProtection;
-    if (config.isSlashingProtectionEnabled()) {
-      slashingProtection = SlashingProtectionFactory.createSlashingProtection();
-    } else {
-      slashingProtection = new NoOpSlashingProtection();
-    }
+    final SlashingProtection slashingProtection =
+        slashingProtectionEnabled
+            ? SlashingProtectionFactory.createSlashingProtection()
+            : new NoOpSlashingProtection();
 
     registerEth2Routes(
         context.getRouterFactory(),

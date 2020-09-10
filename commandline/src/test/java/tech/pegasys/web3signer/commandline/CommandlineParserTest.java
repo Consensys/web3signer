@@ -58,7 +58,6 @@ class CommandlineParserTest {
     assertThat(config.getHttpListenHost()).isEqualTo("localhost");
     assertThat(config.getHttpListenPort()).isEqualTo(5001);
     assertThat(config.getIdleConnectionTimeoutSeconds()).isEqualTo(45);
-    assertThat(config.isSlashingProtectionEnabled()).isFalse();
   }
 
   @Test
@@ -100,12 +99,6 @@ class CommandlineParserTest {
   void missingIdleConnectionDefaultsToThirtySeconds() {
     missingOptionalParameterIsValidAndMeetsDefault(
         "idle-connection-timeout-seconds", config::getIdleConnectionTimeoutSeconds, 30);
-  }
-
-  @Test
-  void missingSlashingProtectionEnabledDefaultsToTrue() {
-    missingOptionalParameterIsValidAndMeetsDefault(
-        "slashing-protection-enabled", config::isSlashingProtectionEnabled, true);
   }
 
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(

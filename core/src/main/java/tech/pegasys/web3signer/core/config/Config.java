@@ -51,6 +51,4 @@ public interface Config {
   int getIdleConnectionTimeoutSeconds();
 
   FilecoinNetwork getFilecoinNetwork();
-
-  boolean isSlashingProtectionEnabled();
 }

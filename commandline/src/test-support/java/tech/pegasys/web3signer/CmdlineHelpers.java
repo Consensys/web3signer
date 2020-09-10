@@ -21,8 +21,7 @@ public class CmdlineHelpers {
         + "--http-listen-host=localhost "
         + "--key-store-path=./keys "
         + "--idle-connection-timeout-seconds=45 "
-        + "--logging=INFO "
-        + "--slashing-protection-enabled=false ";
+        + "--logging=INFO ";
   }
 
   public static String validBaseYamlOptions() {

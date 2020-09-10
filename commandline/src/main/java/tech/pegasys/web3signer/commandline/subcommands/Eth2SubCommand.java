@@ -13,9 +13,9 @@
 package tech.pegasys.web3signer.commandline.subcommands;
 
 import tech.pegasys.web3signer.core.Eth2Runner;
-import tech.pegasys.web3signer.core.Runner;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @Command(
     name = Eth2SubCommand.COMMAND_NAME,
@@ -25,9 +25,19 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
 
+  @Option(
+      names = {"--slashing-protection-enabled"},
+      description =
+          "Set to true if all Eth2 signing operations should be validated against historic data, "
+              + "prior to responding with signatures"
+              + "(default: ${DEFAULT-VALUE})",
+      paramLabel = "<BOOL>",
+      arity = "1")
+  private boolean slashingProtectionEnabled = true;
+
   @Override
-  public Runner createRunner() {
-    return new Eth2Runner(config);
+  public Eth2Runner createRunner() {
+    return new Eth2Runner(globalConfig, slashingProtectionEnabled);
   }
 
   @Override

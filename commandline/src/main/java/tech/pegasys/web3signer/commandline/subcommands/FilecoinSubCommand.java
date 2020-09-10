@@ -27,7 +27,7 @@ public class FilecoinSubCommand extends ModeSubCommand {
 
   @Override
   public Runner createRunner() {
-    return new FilecoinRunner(config);
+    return new FilecoinRunner(globalConfig);
   }
 
   @Override

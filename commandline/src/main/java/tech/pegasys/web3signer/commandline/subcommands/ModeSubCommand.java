@@ -25,13 +25,13 @@ public abstract class ModeSubCommand implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  @CommandLine.ParentCommand protected Web3SignerCommand config;
+  @CommandLine.ParentCommand protected Web3SignerCommand globalConfig;
 
   @Override
   public void run() {
     // set log level per CLI flags
-    System.out.println("Setting logging level to " + config.getLogLevel().name());
-    Configurator.setAllLevels("", config.getLogLevel());
+    System.out.println("Setting logging level to " + globalConfig.getLogLevel().name());
+    Configurator.setAllLevels("", globalConfig.getLogLevel());
 
     LOG.debug("Configuration = {}", this);
     LOG.info("Version = {}", ApplicationInfo.version());
