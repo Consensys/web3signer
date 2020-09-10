@@ -110,6 +110,9 @@ public class CommandlineParser {
 
   private int executeCommandUsageHelp() {
     final CommandLine baseCommandLine = new CommandLine(baseCommand);
+    for (final ModeSubCommand subcommand : modes) {
+      baseCommandLine.addSubcommand(subcommand.getCommandName(), subcommand);
+    }
     baseCommandLine.usage(outputWriter);
     return baseCommandLine.getCommandSpec().exitCodeOnUsageHelp();
   }
