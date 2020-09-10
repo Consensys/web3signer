@@ -49,8 +49,4 @@ public interface Config {
   Optional<TlsOptions> getTlsOptions();
 
   int getIdleConnectionTimeoutSeconds();
-
-  FilecoinNetwork getFilecoinNetwork();
-
-  boolean isSlashingProtectionEnabled();
 }

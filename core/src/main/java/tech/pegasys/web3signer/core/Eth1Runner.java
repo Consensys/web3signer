@@ -16,12 +16,24 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
+import io.vertx.core.Vertx;
+import java.util.Collection;
+import java.util.List;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.core.multikey.SignerLoader;
+import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.core.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 
 import io.vertx.ext.web.Router;
@@ -34,9 +46,30 @@ public class Eth1Runner extends Runner {
     super(config);
   }
 
+  protected ArtifactSignerProvider loadSigners(final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+    final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+    final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory(vertx);
+
+    final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
+        new Secp256k1ArtifactSignerFactory(
+            hashicorpConnectionFactory,
+            config.getKeyConfigPath(),
+            azureFactory,
+            EthSecpArtifactSigner::new,
+            true);
+
+    final Collection<ArtifactSigner> signers = SignerLoader.load(
+            config.getKeyConfigPath(),
+            "yaml",
+            new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
+
+    return DefaultArtifactSignerProvider.create(signers);
+  }
+
   @Override
   protected Router populateRouter(final Context context) {
-    final ArtifactSignerProvider secpSignerProvider = context.getSigners().getEthSignerProvider();
+    final ArtifactSignerProvider secpSignerProvider = context.getSignerProvider();
     final OpenAPI3RouterFactory routerFactory = context.getRouterFactory();
     final LogErrorHandler errorHandler = context.getErrorHandler();
 

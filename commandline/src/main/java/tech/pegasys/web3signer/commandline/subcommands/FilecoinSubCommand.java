@@ -12,10 +12,26 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import java.util.Collection;
+import java.util.List;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import picocli.CommandLine.Option;
 import tech.pegasys.web3signer.core.FilecoinRunner;
 import tech.pegasys.web3signer.core.Runner;
 
 import picocli.CommandLine.Command;
+import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.core.multikey.SignerLoader;
+import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.web3signer.core.signing.ArtifactSigner;
+import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.core.signing.FcBlsArtifactSigner;
+import tech.pegasys.web3signer.core.signing.FcSecpArtifactSigner;
+import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 
 @Command(
     name = FilecoinSubCommand.COMMAND_NAME,
@@ -25,9 +41,16 @@ public class FilecoinSubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "filecoin";
 
+  @Option(
+      names = {"--filecoin-network"},
+      description = "Filecoin network to use for addresses (default: ${DEFAULT-VALUE})",
+      paramLabel = "<network name>",
+      arity = "1")
+  private final FilecoinNetwork filecoinNetwork = FilecoinNetwork.TESTNET;
+
   @Override
   public Runner createRunner() {
-    return new FilecoinRunner(config);
+    return new FilecoinRunner(config, filecoinNetwork);
   }
 
   @Override

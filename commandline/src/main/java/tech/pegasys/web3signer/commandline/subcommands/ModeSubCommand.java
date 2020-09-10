@@ -12,20 +12,23 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import tech.pegasys.web3signer.commandline.ApplicationInfo;
-import tech.pegasys.web3signer.commandline.Web3SignerCommand;
+import tech.pegasys.web3signer.commandline.Web3SignerBaseCommand;
 import tech.pegasys.web3signer.core.Runner;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import picocli.CommandLine;
+import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 
 public abstract class ModeSubCommand implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  @CommandLine.ParentCommand protected Web3SignerCommand config;
+  @CommandLine.ParentCommand protected Web3SignerBaseCommand config;
 
   @Override
   public void run() {

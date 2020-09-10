@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline;
 
-public class MockWeb3SignerCommand extends Web3SignerCommand {
+public class MockWeb3SignerBaseCommand extends Web3SignerBaseCommand {
 
   @Override
   public void run() {}

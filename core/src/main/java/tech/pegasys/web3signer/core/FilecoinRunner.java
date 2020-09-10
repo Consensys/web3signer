@@ -15,10 +15,22 @@ package tech.pegasys.web3signer.core;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
+import io.vertx.core.Vertx;
+import java.util.Collection;
+import java.util.List;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.core.multikey.SignerLoader;
+import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
+import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,13 +39,46 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.BodyHandler;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import tech.pegasys.web3signer.core.signing.FcBlsArtifactSigner;
+import tech.pegasys.web3signer.core.signing.FcSecpArtifactSigner;
+import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 
 public class FilecoinRunner extends Runner {
 
   private static final String FC_JSON_RPC_PATH = JSON_RPC_PATH + "/filecoin";
+  private final FilecoinNetwork network;
 
-  public FilecoinRunner(final Config config) {
+  public FilecoinRunner(final Config config, final FilecoinNetwork network) {
     super(config);
+    this.network = network;
+  }
+
+  public ArtifactSignerProvider loadSigners(final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+    final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+    final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory(vertx);
+
+    final AbstractArtifactSignerFactory blsArtifactSignerFactory =
+        new BlsArtifactSignerFactory(
+            config.getKeyConfigPath(),
+            metricsSystem,
+            hashicorpConnectionFactory,
+            keyPair -> new FcBlsArtifactSigner(keyPair, network));
+
+    final AbstractArtifactSignerFactory secpArtifactSignerFactory =
+        new Secp256k1ArtifactSignerFactory(
+            hashicorpConnectionFactory,
+            config.getKeyConfigPath(),
+            azureFactory,
+            signer -> new FcSecpArtifactSigner(signer, network),
+            false);
+
+    final Collection<ArtifactSigner> signers = SignerLoader.load(
+        config.getKeyConfigPath(),
+        "yaml",
+        new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+
+    return DefaultArtifactSignerProvider.create(signers);
   }
 
   @Override
@@ -41,7 +86,7 @@ public class FilecoinRunner extends Runner {
     return registerFilecoinJsonRpcRoute(
         context.getRouterFactory(),
         context.getMetricsSystem(),
-        context.getSigners().getFcSignerProvider());
+        context.getSignerProvider());
   }
 
   private Router registerFilecoinJsonRpcRoute(

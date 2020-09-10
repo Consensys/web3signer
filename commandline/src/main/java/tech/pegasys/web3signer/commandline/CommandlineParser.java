@@ -39,7 +39,7 @@ import picocli.CommandLine.Unmatched;
 
 public class CommandlineParser {
 
-  private final Web3SignerCommand baseCommand;
+  private final Web3SignerBaseCommand baseCommand;
   private final PrintWriter outputWriter;
   private final PrintWriter errorWriter;
   private final Map<String, String> environment;
@@ -58,7 +58,7 @@ public class CommandlineParser {
   }
 
   public CommandlineParser(
-      final Web3SignerCommand baseCommand,
+      final Web3SignerBaseCommand baseCommand,
       final PrintWriter outputWriter,
       final PrintWriter errorWriter,
       final Map<String, String> environment) {

@@ -63,7 +63,7 @@ import picocli.CommandLine.TypeConversionException;
     footerHeading = "%n",
     subcommands = {HelpCommand.class},
     footer = "Web3Signer is licensed under the Apache License 2.0")
-public class Web3SignerCommand implements Config, Runnable {
+public class Web3SignerBaseCommand implements Config, Runnable {
 
   @Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
 
@@ -164,23 +164,6 @@ public class Web3SignerCommand implements Config, Runnable {
       arity = "1")
   private int idleConnectionTimeoutSeconds = 30;
 
-  @Option(
-      names = {"--filecoin-network"},
-      description = "Filecoin network to use for addresses (default: ${DEFAULT-VALUE})",
-      paramLabel = "<network name>",
-      arity = "1")
-  private final FilecoinNetwork filecoinNetwork = FilecoinNetwork.TESTNET;
-
-  @Option(
-      names = {"--slashing-protection-enabled"},
-      description =
-          "Set to true if all Eth2 signing operations should be validated against historic data, "
-              + "prior to responding with signatures"
-              + "(default: ${DEFAULT-VALUE})",
-      paramLabel = "<BOOL>",
-      arity = "1")
-  private boolean slashingProtectionEnabled = true;
-
   @ArgGroup(exclusive = false)
   private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
@@ -250,16 +233,6 @@ public class Web3SignerCommand implements Config, Runnable {
   }
 
   @Override
-  public FilecoinNetwork getFilecoinNetwork() {
-    return filecoinNetwork;
-  }
-
-  @Override
-  public boolean isSlashingProtectionEnabled() {
-    return slashingProtectionEnabled;
-  }
-
-  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -276,8 +249,6 @@ public class Web3SignerCommand implements Config, Runnable {
         .add("metricsHostAllowList", metricsHostAllowList)
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
-        .add("filecoinNetwork", filecoinNetwork)
-        .add("slashingProtectionEnabled", slashingProtectionEnabled)
         .toString();
   }
 
