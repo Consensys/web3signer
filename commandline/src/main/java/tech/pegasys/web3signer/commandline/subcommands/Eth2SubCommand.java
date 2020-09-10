@@ -14,9 +14,10 @@ package tech.pegasys.web3signer.commandline.subcommands;
 
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
-import tech.pegasys.web3signer.slashingprotection.NoOpSlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
+
+import java.util.Optional;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -58,15 +59,12 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Override
   public Runner createRunner() {
-    final SlashingProtection slashingProtection;
-    if (slashingProtectionEnabled) {
-      slashingProtection =
-          SlashingProtectionFactory.createDbSlashingProtection(
-              slashingDbUrl, slashingDbUser, slashingDbPassword);
-    } else {
-      slashingProtection = new NoOpSlashingProtection();
-    }
-
+    final Optional<SlashingProtection> slashingProtection =
+        slashingProtectionEnabled
+            ? Optional.of(
+                SlashingProtectionFactory.createDbSlashingProtection(
+                    slashingDbUrl, slashingDbUser, slashingDbPassword))
+            : Optional.empty();
     return new Eth2Runner(config, slashingProtection);
   }
 

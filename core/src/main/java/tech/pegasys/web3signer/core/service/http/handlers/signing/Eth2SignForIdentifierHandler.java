@@ -43,11 +43,11 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   public Eth2SignForIdentifierHandler(
       final SignerForIdentifier<?> signerForIdentifier,
       final HttpApiMetrics metrics,
-      final SlashingProtection slashingProtection,
+      final Optional<SlashingProtection> slashingProtection,
       final ObjectMapper objectMapper) {
     this.signerForIdentifier = signerForIdentifier;
     this.metrics = metrics;
-    this.slashingProtection = Optional.ofNullable(slashingProtection);
+    this.slashingProtection = slashingProtection;
     this.objectMapper = objectMapper;
   }
 
