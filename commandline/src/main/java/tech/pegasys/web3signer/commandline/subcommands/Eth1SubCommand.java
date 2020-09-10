@@ -27,7 +27,7 @@ public class Eth1SubCommand extends ModeSubCommand {
 
   @Override
   public Runner createRunner() {
-    return new Eth1Runner(globalConfig);
+    return new Eth1Runner(config);
   }
 
   @Override

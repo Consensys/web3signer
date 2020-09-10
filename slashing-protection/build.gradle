@@ -22,10 +22,6 @@ dependencies {
   implementation 'commons-io:commons-io'
   implementation 'commons-lang:commons-lang'
 
-  implementation 'com.mchange:c3p0'
-  implementation 'org.xerial:sqlite-jdbc'
-  implementation 'org.flywaydb:flyway-core'
-
   implementation 'org.apache.tuweni:tuweni-units'
 
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'

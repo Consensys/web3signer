@@ -96,9 +96,5 @@ dependencyManagement {
     dependency 'com.github.arteam:simple-json-rpc-client:1.2'
 
     dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
-
-    dependency 'com.mchange:c3p0:0.9.5.5'
-    dependency 'org.flywaydb:flyway-core:6.5.5'
-    dependency 'org.xerial:sqlite-jdbc:3.32.3.2'
   }
 }

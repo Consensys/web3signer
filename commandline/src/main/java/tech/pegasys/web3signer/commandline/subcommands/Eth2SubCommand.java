@@ -40,30 +40,11 @@ public class Eth2SubCommand extends ModeSubCommand {
       arity = "1")
   private boolean slashingProtectionEnabled = true;
 
-  @Option(
-      names = {"--slashing-db-url"},
-      description = "A jdbc url to use for storing slashing data",
-      paramLabel = "<storage label>",
-      arity = "1")
-  private String slashingDbUrl = "leveldb"; // TODO determine default
-
-  @Option(
-      names = {"--slashing-db-user"},
-      description = "The user to use to connect to the slashing storage database")
-  private String slashingDbUser;
-
-  @Option(
-      names = {"--slashing-db-password"},
-      description = "The password to use when connecting to the slashing storage database")
-  private String slashingDbPassword;
-
   @Override
   public Runner createRunner() {
     final Optional<SlashingProtection> slashingProtection =
         slashingProtectionEnabled
-            ? Optional.of(
-                SlashingProtectionFactory.createDbSlashingProtection(
-                    slashingDbUrl, slashingDbUser, slashingDbPassword))
+            ? Optional.of(SlashingProtectionFactory.createDbSlashingProtection())
             : Optional.empty();
     return new Eth2Runner(config, slashingProtection);
   }

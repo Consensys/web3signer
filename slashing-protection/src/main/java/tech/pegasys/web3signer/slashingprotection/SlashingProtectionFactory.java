@@ -14,10 +14,7 @@ package tech.pegasys.web3signer.slashingprotection;
 
 public class SlashingProtectionFactory {
 
-  public static SlashingProtection createDbSlashingProtection(
-      final String slashingDbUrl, final String slashingDbUser, final String slashingDbPassword) {
-    return DbBackedSlashingProtectionFactory.createDbBackedSlashingProtection(
-        slashingDbUrl, slashingDbUser, slashingDbPassword);
+  public static SlashingProtection createDbSlashingProtection() {
+    return new NoOpSlashingProtection();
   }
-
 }

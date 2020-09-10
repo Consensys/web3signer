@@ -12,28 +12,10 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import java.sql.PreparedStatement;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class DbBackedSlashingProtection implements SlashingProtection {
-
-  private final PreparedStatement canSignBlockSqlTemplate;
-  private final PreparedStatement addBlockSignEntrySqlTemplate;
-  private final PreparedStatement canSignAttestationTemplate;
-  private final PreparedStatement addAttestationSignEntrySqlTemplate;
-
-  public DbBackedSlashingProtection(
-      final PreparedStatement canSignBlockSqlTemplate,
-      final PreparedStatement addBlockSignEntrySqlTemplate,
-      final PreparedStatement canSignAttestationTemplate,
-      final PreparedStatement addAttestationSignEntrySqlTemplate) {
-    this.canSignBlockSqlTemplate = canSignBlockSqlTemplate;
-    this.addBlockSignEntrySqlTemplate = addBlockSignEntrySqlTemplate;
-    this.canSignAttestationTemplate = canSignAttestationTemplate;
-    this.addAttestationSignEntrySqlTemplate = addAttestationSignEntrySqlTemplate;
-  }
+public class NoOpSlashingProtection implements SlashingProtection {
 
   @Override
   public boolean maySignAttestation(
@@ -41,14 +23,12 @@ public class DbBackedSlashingProtection implements SlashingProtection {
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
-    // TODO store in db
-    return false;
+    return true;
   }
 
   @Override
   public boolean maySignBlock(
       final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
-    // TODO store in db
-    return false;
+    return true;
   }
 }
