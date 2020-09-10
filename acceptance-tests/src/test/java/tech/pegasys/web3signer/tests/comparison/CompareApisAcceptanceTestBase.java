@@ -29,6 +29,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.io.TempDir;
 
 public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
+
   protected static final LotusNode LOTUS_NODE =
       new LotusNode(Integer.parseInt(System.getenv("LOTUS_PORT")));
   protected static final int NO_OF_BLS_KEYS = 2;
@@ -59,8 +60,8 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
       initSignerKeystoreDirectory();
     }
 
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
+    final SignerConfigurationBuilder builder =
+        new SignerConfigurationBuilder().withKeyStoreDirectory(testDirectory).withMode("filecoin");
     startSigner(builder.build());
   }
 

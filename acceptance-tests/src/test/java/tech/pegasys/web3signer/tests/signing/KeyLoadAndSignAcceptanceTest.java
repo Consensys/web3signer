@@ -54,7 +54,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
   public void receiveA404IfRequestedKeyDoesNotExist(final KeyType keyType) {
-    setupSigner();
+    setupSigner(keyType == KeyType.BLS ? "eth2" : "eth1");
     final String body = createBody(keyType);
     given()
         .baseUri(signer.getUrl())
@@ -77,7 +77,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupSigner();
+    setupSigner("eth2");
 
     // without client-side openapi validator
     given()
@@ -98,7 +98,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupSigner();
+    setupSigner("eth2");
 
     // without OpenAPI validation filter
     given()
@@ -119,7 +119,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupSigner();
+    setupSigner("eth2");
 
     // without OpenAPI validation filter
     given()
@@ -140,7 +140,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupSigner();
+    setupSigner("eth2");
 
     given()
         .baseUri(signer.getUrl())

@@ -116,7 +116,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   private void signAndVerifySignature() {
-    setupSigner();
+    setupSigner("eth2");
 
     // openapi
     final Response response =

@@ -19,7 +19,8 @@ i=0
 GOSS_FILES_PATH=tests/01 \
 bash tests/dgoss \
 run ${DOCKER_TEST_IMAGE} \
---http-listen-host=0.0.0.0
+--http-listen-host=0.0.0.0 \
+eth2 \
 > ./reports/01.xml || i=`expr $i + 1`
 
 docker image rm ${DOCKER_TEST_IMAGE}

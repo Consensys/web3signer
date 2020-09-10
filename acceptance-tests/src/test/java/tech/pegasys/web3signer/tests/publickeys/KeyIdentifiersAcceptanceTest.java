@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.tests.publickeys;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;
@@ -42,20 +41,17 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
   public void noLoadedKeysReturnsEmptyPublicKeyResponse(final KeyType keyType) {
-    initAndStartSigner();
-
+    initAndStartSigner(calculateMode(keyType));
     validateApiResponse(signer.callApiPublicKeys(keyType), empty());
-    assertThat(signer.walletList()).isEmpty();
   }
 
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
   public void invalidKeysReturnsEmptyPublicKeyResponse(final KeyType keyType) {
     createKeys(keyType, false, privateKeys(keyType));
-    initAndStartSigner();
+    initAndStartSigner(calculateMode(keyType));
 
     validateApiResponse(signer.callApiPublicKeys(keyType), empty());
-    assertThat(signer.walletList()).isEmpty();
   }
 
   @ParameterizedTest
@@ -65,64 +61,30 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String[] keys = createKeys(keyType, true, prvKeys[0]);
     final String[] invalidKeys = createKeys(keyType, false, prvKeys[1]);
 
-    initAndStartSigner();
+    initAndStartSigner(calculateMode(keyType));
 
     final Response response = signer.callApiPublicKeys(keyType);
     validateApiResponse(response, contains(keys));
     validateApiResponse(response, everyItem(not(in(invalidKeys))));
-
-    final String[] filecoinAddresses = filecoinAddresses(keyType);
-    assertThat(signer.walletList()).containsExactly(filecoinAddresses[0]);
-  }
-
-  @ParameterizedTest
-  @EnumSource(value = KeyType.class)
-  public void filecoinWalletHasReturnFalseWhenKeysAreNotLoaded(final KeyType keyType) {
-    initAndStartSigner();
-
-    final String[] filecoinAddresses = filecoinAddresses(keyType);
-
-    assertThat(signer.walletHas(filecoinAddresses[0])).isEqualTo(false);
-    assertThat(signer.walletHas(filecoinAddresses[1])).isEqualTo(false);
-  }
-
-  @ParameterizedTest
-  @EnumSource(value = KeyType.class)
-  public void filecoinWalletHasReturnsValidResponse(final KeyType keyType) {
-    final String[] prvKeys = privateKeys(keyType);
-    createKeys(keyType, true, prvKeys[0]);
-    createKeys(keyType, false, prvKeys[1]);
-
-    initAndStartSigner();
-
-    final String[] filecoinAddresses = filecoinAddresses(keyType);
-
-    assertThat(signer.walletHas(filecoinAddresses[0])).isEqualTo(true);
-    assertThat(signer.walletHas(filecoinAddresses[1])).isEqualTo(false);
   }
 
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
   public void allLoadedKeysAreReturnedInPublicKeyResponse(final KeyType keyType) {
     final String[] keys = createKeys(keyType, true, privateKeys(keyType));
-    initAndStartSigner();
+    initAndStartSigner(calculateMode(keyType));
 
     validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
-
-    final String[] filecoinAddresses = filecoinAddresses(keyType);
-    assertThat(signer.walletList()).containsOnly(filecoinAddresses);
   }
 
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
   public void allLoadedKeysAreReturnedPublicKeyResponseWithEmptyAccept(final KeyType keyType) {
     final String[] keys = createKeys(keyType, true, privateKeys(keyType));
-    initAndStartSigner();
+    initAndStartSigner(calculateMode(keyType));
 
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(keyType);
     validateApiResponse(response, containsInAnyOrder(keys));
-    final String[] filecoinAddresses = filecoinAddresses(keyType);
-    assertThat(signer.walletList()).containsOnly(filecoinAddresses);
   }
 
   @Test
@@ -146,7 +108,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
         clientSecret,
         keyVaultName,
         tenantId);
-    initAndStartSigner();
+    initAndStartSigner("eth1");
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(SECP256K1);
     validateApiResponse(response, containsInAnyOrder("0x" + PUBLIC_KEY_HEX_STRING));
   }
@@ -167,7 +129,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
           keyConfigFile, bytes.toUnprefixedHexString(), BLS);
     }
 
-    initAndStartSigner();
+    initAndStartSigner("eth2");
     validateApiResponse(signer.callApiPublicKeys(BLS), containsInAnyOrder(publicKeys));
   }
 
@@ -178,7 +140,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String filename = "foo" + "_" + keyType + ".yaml";
     metadataFileHelpers.createUnencryptedYamlFileAt(
         testDirectory.resolve(filename), privateKey, keyType);
-    initAndStartSigner();
+    initAndStartSigner(calculateMode(keyType));
 
     final String publicKey = keyType == BLS ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
     validateApiResponse(signer.callApiPublicKeys(keyType), contains(publicKey));

@@ -25,9 +25,9 @@ import org.junit.jupiter.api.io.TempDir;
 public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   protected @TempDir Path testDirectory;
 
-  protected void setupSigner() {
+  protected void setupSigner(final String mode) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
+    builder.withKeyStoreDirectory(testDirectory).withMode(mode);
     startSigner(builder.build());
   }
 

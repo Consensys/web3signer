@@ -123,6 +123,8 @@ public abstract class Web3SignerRunner {
 
     params.addAll(createServerTlsArgs());
 
+    params.add(signerConfig.getMode());
+
     return params;
   }
 
@@ -187,7 +189,6 @@ public abstract class Web3SignerRunner {
   public int httpPort() {
     if (signerConfig.isHttpDynamicPortAllocation()) {
       final String value = portsProperties.getProperty(HTTP_PORT_KEY);
-      LOG.info("{}: {}", HTTP_PORT_KEY, value);
       assertThat(value).isNotEmpty();
       return Integer.parseInt(value);
     } else {
@@ -198,7 +199,6 @@ public abstract class Web3SignerRunner {
   public int metricsPort() {
     if (signerConfig.isMetricsDynamicPortAllocation()) {
       final String value = portsProperties.getProperty(METRICS_PORT_KEY);
-      LOG.info("{}: {}", METRICS_PORT_KEY, value);
       assertThat(value).isNotEmpty();
       return Integer.parseInt(value);
     } else {

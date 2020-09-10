@@ -101,7 +101,7 @@ class ServerSideTlsAcceptanceTest {
 
     try {
       final SignerConfigurationBuilder configBuilder =
-          new SignerConfigurationBuilder().withHttpPort(fixedListenPort);
+          new SignerConfigurationBuilder().withHttpPort(fixedListenPort).withMode("eth1");
 
       final ClientAuthConstraints clientAuthConstraints;
       if (clientCertInServerWhitelist != null) {
@@ -231,7 +231,7 @@ class ServerSideTlsAcceptanceTest {
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder().withServerTlsOptions(serverOptions).withHttpPort(9000);
 
-    signer = new Signer(configBuilder.build(), null);
+    signer = new Signer(configBuilder.withMode("eth2").build(), null);
     signer.start();
     waitFor(() -> assertThat(signer.isRunning()).isFalse());
   }

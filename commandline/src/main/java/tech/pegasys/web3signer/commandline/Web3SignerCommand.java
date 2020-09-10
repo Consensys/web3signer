@@ -21,7 +21,6 @@ import static tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory.DEFA
 import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
-import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
@@ -36,8 +35,6 @@ import java.util.Set;
 
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import picocli.CommandLine;
@@ -45,6 +42,8 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Spec;
 import picocli.CommandLine.TypeConversionException;
 
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
@@ -66,7 +65,7 @@ import picocli.CommandLine.TypeConversionException;
     footer = "Web3Signer is licensed under the Apache License 2.0")
 public class Web3SignerCommand implements Config, Runnable {
 
-  private static final Logger LOG = LogManager.getLogger();
+  @Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
 
   @SuppressWarnings("UnusedVariable")
   @CommandLine.Option(
@@ -284,9 +283,7 @@ public class Web3SignerCommand implements Config, Runnable {
 
   @Override
   public void run() {
-    LOG.debug("Commandline has been parsed with: " + toString());
-    final Runner runner = new Runner(this);
-    runner.run();
+    throw new ParameterException(spec.commandLine(), "Missing required subcommand");
   }
 
   public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {

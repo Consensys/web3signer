@@ -63,7 +63,7 @@ public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void receiveTrueResponseWhenSubmitValidVerifyRequestToFilecoinEndpoint() {
-    startSigner(new SignerConfigurationBuilder().build());
+    startSigner(new SignerConfigurationBuilder().withMode("filecoin").build());
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final ObjectMapper mapper = new ObjectMapper();

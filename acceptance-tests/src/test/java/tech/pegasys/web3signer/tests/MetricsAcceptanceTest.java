@@ -51,13 +51,11 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   @Test
   void filecoinApisAreCounted() {
     final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMetricsEnabled(true).build();
+        new SignerConfigurationBuilder().withMetricsEnabled(true).withMode("filecoin").build();
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest =
         List.of(
-            "signing_" + SECP256K1.name().toLowerCase() + "_signing_duration_count",
-            "signing_" + BLS.name().toLowerCase() + "_signing_duration_count",
             "filecoin_" + SECP256K1.name().toLowerCase() + "_signing_request_count",
             "filecoin_" + BLS.name().toLowerCase() + "_signing_request_count",
             "filecoin_total_request_count",
@@ -97,7 +95,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   @Test
   void missingSignerMetricIncreasesWhenUnmatchedRequestReceived() {
     final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMetricsEnabled(true).build();
+        new SignerConfigurationBuilder().withMetricsEnabled(true).withMode("eth2").build();
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest = List.of("signing_bls_missing_identifier_count");
@@ -126,6 +124,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory)
+            .withMode("eth1")
             .build();
 
     startSigner(signerConfiguration);
@@ -163,6 +162,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory)
+            .withMode("eth2")
             .build();
 
     startSigner(signerConfiguration);

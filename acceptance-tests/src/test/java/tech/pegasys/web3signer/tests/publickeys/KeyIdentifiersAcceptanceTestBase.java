@@ -155,9 +155,9 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
     return testDirectory.resolve(configFilename + ".yaml");
   }
 
-  protected void initAndStartSigner() {
+  protected void initAndStartSigner(final String mode) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory);
+    builder.withKeyStoreDirectory(testDirectory).withMode(mode);
     startSigner(builder.build());
   }
 

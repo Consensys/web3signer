@@ -125,7 +125,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   private void signAndVerifySignature() {
-    setupSigner();
+    setupSigner("eth1");
 
     // openapi
     final Response response = signer.eth1Sign(PUBLIC_KEY_HEX_STRING, DATA);
