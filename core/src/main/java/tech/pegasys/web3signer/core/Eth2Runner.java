@@ -54,6 +54,7 @@ public class Eth2Runner extends Runner {
     this.slashingProtection = slashingProtection;
   }
 
+  @Override
   protected ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
     final HashicorpConnectionFactory hashicorpConnectionFactory =

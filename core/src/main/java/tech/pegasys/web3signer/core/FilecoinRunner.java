@@ -54,6 +54,7 @@ public class FilecoinRunner extends Runner {
     this.network = network;
   }
 
+  @Override
   public ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();

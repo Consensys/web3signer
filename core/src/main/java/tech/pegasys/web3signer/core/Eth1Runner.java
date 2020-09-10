@@ -47,6 +47,7 @@ public class Eth1Runner extends Runner {
     super(config);
   }
 
+  @Override
   protected ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
