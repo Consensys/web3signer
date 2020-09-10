@@ -44,7 +44,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   public Runner createRunner() {
     final Optional<SlashingProtection> slashingProtection =
         slashingProtectionEnabled
-            ? Optional.of(SlashingProtectionFactory.createDbSlashingProtection())
+            ? Optional.of(SlashingProtectionFactory.createSlashingProtection())
             : Optional.empty();
     return new Eth2Runner(config, slashingProtection);
   }
