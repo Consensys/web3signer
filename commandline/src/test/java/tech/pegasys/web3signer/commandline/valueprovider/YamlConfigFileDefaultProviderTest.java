@@ -19,7 +19,7 @@ import static tech.pegasys.web3signer.CmdlineHelpers.removeFieldFrom;
 import static tech.pegasys.web3signer.CmdlineHelpers.validBaseCommandOptions;
 
 import tech.pegasys.web3signer.CmdlineHelpers;
-import tech.pegasys.web3signer.commandline.Web3SignerCommand;
+import tech.pegasys.web3signer.commandline.Web3SignerBaseCommand;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,8 +38,8 @@ class YamlConfigFileDefaultProviderTest {
     final File configFile =
         Files.writeString(tempDir.resolve("config.yaml"), CmdlineHelpers.validBaseYamlOptions())
             .toFile();
-    final Web3SignerCommand web3signerCommand = new Web3SignerCommand();
-    final CommandLine commandLine = new CommandLine(web3signerCommand);
+    final Web3SignerBaseCommand web3SignerBaseCommand = new Web3SignerBaseCommand();
+    final CommandLine commandLine = new CommandLine(web3SignerBaseCommand);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.setDefaultValueProvider(new YamlConfigFileDefaultProvider(commandLine, configFile));
 
@@ -48,8 +48,8 @@ class YamlConfigFileDefaultProviderTest {
     final String[] args = cmdArgs.split(" ");
     commandLine.parseArgs(args);
 
-    assertThat(web3signerCommand.getHttpListenPort()).isEqualTo(6001);
-    assertThat(web3signerCommand.getKeyConfigPath()).isEqualTo(Path.of("./keys_yaml"));
+    assertThat(web3SignerBaseCommand.getHttpListenPort()).isEqualTo(6001);
+    assertThat(web3SignerBaseCommand.getKeyConfigPath()).isEqualTo(Path.of("./keys_yaml"));
   }
 
   @Test
@@ -60,8 +60,8 @@ class YamlConfigFileDefaultProviderTest {
             + String.join(lineSeparator(), "extra-option: True", "extra-option2: False");
     final File configFile =
         Files.writeString(tempDir.resolve("config.yaml"), extraYamlOptions).toFile();
-    final Web3SignerCommand web3signerCommand = new Web3SignerCommand();
-    final CommandLine commandLine = new CommandLine(web3signerCommand);
+    final Web3SignerBaseCommand web3SignerBaseCommand = new Web3SignerBaseCommand();
+    final CommandLine commandLine = new CommandLine(web3SignerBaseCommand);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.setDefaultValueProvider(new YamlConfigFileDefaultProvider(commandLine, configFile));
 
@@ -78,8 +78,8 @@ class YamlConfigFileDefaultProviderTest {
         CmdlineHelpers.validBaseYamlOptions() + String.join(lineSeparator(), "extra-option= True");
     final File configFile =
         Files.writeString(tempDir.resolve("config.yaml"), extraYamlOptions).toFile();
-    final Web3SignerCommand web3signerCommand = new Web3SignerCommand();
-    final CommandLine commandLine = new CommandLine(web3signerCommand);
+    final Web3SignerBaseCommand web3SignerBaseCommand = new Web3SignerBaseCommand();
+    final CommandLine commandLine = new CommandLine(web3SignerBaseCommand);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.setDefaultValueProvider(new YamlConfigFileDefaultProvider(commandLine, configFile));
 
@@ -96,8 +96,8 @@ class YamlConfigFileDefaultProviderTest {
     final String extraYamlOptions = "";
     final File configFile =
         Files.writeString(tempDir.resolve("config.yaml"), extraYamlOptions).toFile();
-    final Web3SignerCommand web3signerCommand = new Web3SignerCommand();
-    final CommandLine commandLine = new CommandLine(web3signerCommand);
+    final Web3SignerBaseCommand web3SignerBaseCommand = new Web3SignerBaseCommand();
+    final CommandLine commandLine = new CommandLine(web3SignerBaseCommand);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.setDefaultValueProvider(new YamlConfigFileDefaultProvider(commandLine, configFile));
 
@@ -110,8 +110,8 @@ class YamlConfigFileDefaultProviderTest {
   @Test
   void yamlConfigFileNotExistsThrowsExceptionDuringParsing(@TempDir final Path tempDir) {
     final File configFile = tempDir.resolve("config.yaml").toFile();
-    final Web3SignerCommand web3signerCommand = new Web3SignerCommand();
-    final CommandLine commandLine = new CommandLine(web3signerCommand);
+    final Web3SignerBaseCommand web3SignerBaseCommand = new Web3SignerBaseCommand();
+    final CommandLine commandLine = new CommandLine(web3SignerBaseCommand);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.setDefaultValueProvider(new YamlConfigFileDefaultProvider(commandLine, configFile));
 

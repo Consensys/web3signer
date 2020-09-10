@@ -15,57 +15,72 @@ package tech.pegasys.web3signer.core;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
-import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory.createDbSlashingProtection;
-import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory.createNoOpSlashingProtection;
 
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.core.multikey.SignerLoader;
+import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
+import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+
+import java.util.Collection;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
+  final SlashingProtection slashingProtection;
 
-  private final boolean slashingProtectionEnabled;
-  private final String slashingDbUrl;
-  private final String slashingDbUser;
-  private final String slashingDbPassword;
-
-  public Eth2Runner(
-      final Config config,
-      final boolean slashingProtectionEnabled,
-      final String slashingDbUrl,
-      final String slashingDbUser,
-      final String slashingDbPassword) {
+  public Eth2Runner(final Config config, final SlashingProtection slashingProtection) {
     super(config);
-    this.slashingProtectionEnabled = slashingProtectionEnabled;
-    this.slashingDbUrl = slashingDbUrl;
-    this.slashingDbUser = slashingDbUser;
-    this.slashingDbPassword = slashingDbPassword;
+    this.slashingProtection = slashingProtection;
+  }
+
+  @Override
+  protected ArtifactSignerProvider loadSigners(
+      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+    final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory(vertx);
+
+    final AbstractArtifactSignerFactory artifactSignerFactory =
+        new BlsArtifactSignerFactory(
+            config.getKeyConfigPath(),
+            metricsSystem,
+            hashicorpConnectionFactory,
+            BlsArtifactSigner::new);
+
+    final Collection<ArtifactSigner> signers =
+        SignerLoader.load(
+            config.getKeyConfigPath(),
+            "yaml",
+            new YamlSignerParser(List.of(artifactSignerFactory)));
+
+    return DefaultArtifactSignerProvider.create(signers);
   }
 
   @Override
   public Router populateRouter(final Context context) {
-    final SlashingProtection slashingProtection =
-        slashingProtectionEnabled
-            ? createDbSlashingProtection(slashingDbUrl, slashingDbUser, slashingDbPassword)
-            : createNoOpSlashingProtection();
-
     registerEth2Routes(
         context.getRouterFactory(),
-        context.getSigners().getBlsSignerProvider(),
+        context.getSignerProvider(),
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtection);

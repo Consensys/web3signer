@@ -14,6 +14,7 @@ jar {
 dependencies {
 
   implementation project(":core")
+  implementation project(":slashing-protection")
   implementation 'info.picocli:picocli'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'

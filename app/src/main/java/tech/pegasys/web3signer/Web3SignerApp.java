@@ -15,7 +15,7 @@ package tech.pegasys.web3signer;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import tech.pegasys.web3signer.commandline.CommandlineParser;
-import tech.pegasys.web3signer.commandline.Web3SignerCommand;
+import tech.pegasys.web3signer.commandline.Web3SignerBaseCommand;
 import tech.pegasys.web3signer.commandline.subcommands.Eth1SubCommand;
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.commandline.subcommands.FilecoinSubCommand;
@@ -32,7 +32,7 @@ public class Web3SignerApp {
   public static void main(final String... args) {
     LOG.info("Web3Signer has started with args " + String.join(",", args));
 
-    final Web3SignerCommand baseCommand = new Web3SignerCommand();
+    final Web3SignerBaseCommand baseCommand = new Web3SignerBaseCommand();
     final PrintWriter outputWriter = new PrintWriter(System.out, true, UTF_8);
     final PrintWriter errorWriter = new PrintWriter(System.err, true, UTF_8);
     final CommandlineParser cmdLineParser =

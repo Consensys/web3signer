@@ -14,8 +14,10 @@ package tech.pegasys.web3signer.commandline.subcommands;
 
 import tech.pegasys.web3signer.core.FilecoinRunner;
 import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @Command(
     name = FilecoinSubCommand.COMMAND_NAME,
@@ -25,9 +27,16 @@ public class FilecoinSubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "filecoin";
 
+  @Option(
+      names = {"--network"},
+      description = "Filecoin network to use for addresses (default: ${DEFAULT-VALUE})",
+      paramLabel = "<network name>",
+      arity = "1")
+  private final FilecoinNetwork network = FilecoinNetwork.TESTNET;
+
   @Override
   public Runner createRunner() {
-    return new FilecoinRunner(globalConfig);
+    return new FilecoinRunner(config, network);
   }
 
   @Override
