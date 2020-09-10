@@ -20,7 +20,4 @@ public class SlashingProtectionFactory {
         slashingDbUrl, slashingDbUser, slashingDbPassword);
   }
 
-  public static SlashingProtection createNoOpSlashingProtection() {
-    return new NoOpSlashingProtection();
-  }
 }

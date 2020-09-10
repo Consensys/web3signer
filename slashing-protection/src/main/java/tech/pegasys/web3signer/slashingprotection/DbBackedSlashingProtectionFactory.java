@@ -17,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 
+import com.mchange.v2.c3p0.AbstractConnectionCustomizer;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,12 +43,13 @@ public class DbBackedSlashingProtectionFactory {
 
   private static DataSource createDataSource(
       final String url, final String username, final String password) {
+    // TODO use hikari
     final ComboPooledDataSource dataSource = new ComboPooledDataSource();
     dataSource.setUser(username);
     dataSource.setPassword(password);
     dataSource.setJdbcUrl(url);
     dataSource.setAcquireRetryAttempts(3);
-
+    dataSource.setConnectionCustomizerClassName(DbConnectionCustomizer.class.getName());
     return dataSource;
   }
 
@@ -97,5 +99,14 @@ public class DbBackedSlashingProtectionFactory {
         addBlockSignEntrySqlTemplate,
         canSignAttestationTemplate,
         addAttestationSignEntrySqlTemplate);
+  }
+
+  public static class DbConnectionCustomizer extends AbstractConnectionCustomizer {
+
+    @Override
+    public void onAcquire(final Connection c, final String parentDataSourceIdentityToken)
+        throws Exception {
+      c.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+    }
   }
 }

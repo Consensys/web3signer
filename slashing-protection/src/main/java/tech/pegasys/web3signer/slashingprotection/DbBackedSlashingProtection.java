@@ -41,12 +41,14 @@ public class DbBackedSlashingProtection implements SlashingProtection {
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
+    // TODO store in db
     return false;
   }
 
   @Override
   public boolean maySignBlock(
       final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
+    // TODO store in db
     return false;
   }
 }
