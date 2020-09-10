@@ -29,13 +29,13 @@ import picocli.CommandLine;
 
 class CommandlineParserTest {
   private static final String defaultUsageText =
-      new CommandLine(new Web3SignerCommand()).getUsageMessage();
+      new CommandLine(new Web3SignerBaseCommand()).getUsageMessage();
 
   private StringWriter commandOutput;
   private StringWriter commandError;
   private PrintWriter outputWriter;
   private PrintWriter errorWriter;
-  private Web3SignerCommand config;
+  private Web3SignerBaseCommand config;
   private CommandlineParser parser;
 
   @BeforeEach
@@ -44,7 +44,7 @@ class CommandlineParserTest {
     commandError = new StringWriter();
     outputWriter = new PrintWriter(commandOutput, true);
     errorWriter = new PrintWriter(commandError, true);
-    config = new MockWeb3SignerCommand();
+    config = new MockWeb3SignerBaseCommand();
     parser = new CommandlineParser(config, outputWriter, errorWriter, Collections.emptyMap());
   }
 
@@ -58,7 +58,6 @@ class CommandlineParserTest {
     assertThat(config.getHttpListenHost()).isEqualTo("localhost");
     assertThat(config.getHttpListenPort()).isEqualTo(5001);
     assertThat(config.getIdleConnectionTimeoutSeconds()).isEqualTo(45);
-    assertThat(config.isSlashingProtectionEnabled()).isFalse();
   }
 
   @Test
@@ -100,12 +99,6 @@ class CommandlineParserTest {
   void missingIdleConnectionDefaultsToThirtySeconds() {
     missingOptionalParameterIsValidAndMeetsDefault(
         "idle-connection-timeout-seconds", config::getIdleConnectionTimeoutSeconds, 30);
-  }
-
-  @Test
-  void missingSlashingProtectionEnabledDefaultsToTrue() {
-    missingOptionalParameterIsValidAndMeetsDefault(
-        "slashing-protection-enabled", config::isSlashingProtectionEnabled, true);
   }
 
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(

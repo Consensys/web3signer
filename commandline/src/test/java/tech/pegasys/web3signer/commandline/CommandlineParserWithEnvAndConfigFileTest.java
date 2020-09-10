@@ -44,7 +44,7 @@ class CommandlineParserWithEnvAndConfigFileTest {
     final String configArg =
         DefaultCommandValues.CONFIG_FILE_OPTION_NAME + " " + configPath.toString() + " ";
 
-    final MockWeb3SignerCommand config = new MockWeb3SignerCommand();
+    final MockWeb3SignerBaseCommand config = new MockWeb3SignerBaseCommand();
     final Map<String, String> environmentMap = validBaseEnvironmentVariableOptions();
     final CommandlineParser parser =
         new CommandlineParser(config, outputWriter, errorWriter, environmentMap);
@@ -69,7 +69,7 @@ class CommandlineParserWithEnvAndConfigFileTest {
 
   @Test
   void emptyCliWithEnvOnlyPopulates() {
-    final MockWeb3SignerCommand config = new MockWeb3SignerCommand();
+    final MockWeb3SignerBaseCommand config = new MockWeb3SignerBaseCommand();
     final Map<String, String> environmentMap = validBaseEnvironmentVariableOptions();
     final CommandlineParser parser =
         new CommandlineParser(config, outputWriter, errorWriter, environmentMap);
@@ -94,7 +94,7 @@ class CommandlineParserWithEnvAndConfigFileTest {
     final String configArg =
         DefaultCommandValues.CONFIG_FILE_OPTION_NAME + " " + configPath.toString() + " ";
 
-    final MockWeb3SignerCommand config = new MockWeb3SignerCommand();
+    final MockWeb3SignerBaseCommand config = new MockWeb3SignerBaseCommand();
     final CommandlineParser parser =
         new CommandlineParser(config, outputWriter, errorWriter, Collections.emptyMap());
 

@@ -17,7 +17,7 @@ import static tech.pegasys.web3signer.CmdlineHelpers.removeFieldFrom;
 import static tech.pegasys.web3signer.CmdlineHelpers.validBaseCommandOptions;
 import static tech.pegasys.web3signer.CmdlineHelpers.validBaseEnvironmentVariableOptions;
 
-import tech.pegasys.web3signer.commandline.Web3SignerCommand;
+import tech.pegasys.web3signer.commandline.Web3SignerBaseCommand;
 
 import java.nio.file.Path;
 
@@ -28,8 +28,8 @@ import picocli.CommandLine;
 class EnvironmentVariableDefaultProviderTest {
   @Test
   void valuesFromEnvironmentVariableArePopulated() {
-    final Web3SignerCommand web3signerCommand = new Web3SignerCommand();
-    final CommandLine commandLine = new CommandLine(web3signerCommand);
+    final Web3SignerBaseCommand web3SignerBaseCommand = new Web3SignerBaseCommand();
+    final CommandLine commandLine = new CommandLine(web3SignerBaseCommand);
     commandLine.registerConverter(Level.class, Level::valueOf);
     commandLine.setDefaultValueProvider(
         new EnvironmentVariableDefaultProvider(validBaseEnvironmentVariableOptions()));
@@ -39,7 +39,7 @@ class EnvironmentVariableDefaultProviderTest {
     final String[] args = cmdArgs.split(" ");
     commandLine.parseArgs(args);
 
-    assertThat(web3signerCommand.getHttpListenPort()).isEqualTo(7001);
-    assertThat(web3signerCommand.getKeyConfigPath()).isEqualTo(Path.of("./keys_env"));
+    assertThat(web3SignerBaseCommand.getHttpListenPort()).isEqualTo(7001);
+    assertThat(web3SignerBaseCommand.getKeyConfigPath()).isEqualTo(Path.of("./keys_env"));
   }
 }

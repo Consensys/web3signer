@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.core.config;
 
-import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -49,8 +47,4 @@ public interface Config {
   Optional<TlsOptions> getTlsOptions();
 
   int getIdleConnectionTimeoutSeconds();
-
-  FilecoinNetwork getFilecoinNetwork();
-
-  boolean isSlashingProtectionEnabled();
 }
