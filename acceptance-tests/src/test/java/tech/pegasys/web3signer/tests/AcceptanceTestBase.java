@@ -12,6 +12,9 @@
  */
 package tech.pegasys.web3signer.tests;
 
+import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
+
+import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 
@@ -34,5 +37,9 @@ public class AcceptanceTestBase {
       signer.shutdown();
       signer = null;
     }
+  }
+
+  public static String calculateMode(final KeyType keyType) {
+    return (keyType == BLS) ? "eth2" : "eth1";
   }
 }

@@ -41,7 +41,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
   public void noLoadedKeysReturnsEmptyPublicKeyResponse(final KeyType keyType) {
-    initAndStartSigner(keyType == BLS ? "eth2" : "eth1");
+    initAndStartSigner(calculateMode(keyType));
     validateApiResponse(signer.callApiPublicKeys(keyType), empty());
   }
 
@@ -49,7 +49,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   @EnumSource(value = KeyType.class)
   public void invalidKeysReturnsEmptyPublicKeyResponse(final KeyType keyType) {
     createKeys(keyType, false, privateKeys(keyType));
-    initAndStartSigner(keyType == BLS ? "eth2" : "eth1");
+    initAndStartSigner(calculateMode(keyType));
 
     validateApiResponse(signer.callApiPublicKeys(keyType), empty());
   }
@@ -61,7 +61,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String[] keys = createKeys(keyType, true, prvKeys[0]);
     final String[] invalidKeys = createKeys(keyType, false, prvKeys[1]);
 
-    initAndStartSigner(keyType == BLS ? "eth2" : "eth1");
+    initAndStartSigner(calculateMode(keyType));
 
     final Response response = signer.callApiPublicKeys(keyType);
     validateApiResponse(response, contains(keys));
@@ -72,7 +72,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   @EnumSource(value = KeyType.class)
   public void allLoadedKeysAreReturnedInPublicKeyResponse(final KeyType keyType) {
     final String[] keys = createKeys(keyType, true, privateKeys(keyType));
-    initAndStartSigner(keyType == BLS ? "eth2" : "eth1");
+    initAndStartSigner(calculateMode(keyType));
 
     validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
   }
@@ -81,7 +81,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   @EnumSource(value = KeyType.class)
   public void allLoadedKeysAreReturnedPublicKeyResponseWithEmptyAccept(final KeyType keyType) {
     final String[] keys = createKeys(keyType, true, privateKeys(keyType));
-    initAndStartSigner(keyType == BLS ? "eth2" : "eth1");
+    initAndStartSigner(calculateMode(keyType));
 
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(keyType);
     validateApiResponse(response, containsInAnyOrder(keys));
@@ -140,7 +140,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String filename = "foo" + "_" + keyType + ".yaml";
     metadataFileHelpers.createUnencryptedYamlFileAt(
         testDirectory.resolve(filename), privateKey, keyType);
-    initAndStartSigner(keyType == BLS ? "eth2" : "eth1");
+    initAndStartSigner(calculateMode(keyType));
 
     final String publicKey = keyType == BLS ? BLS_PUBLIC_KEY_1 : SECP_PUBLIC_KEY_1;
     validateApiResponse(signer.callApiPublicKeys(keyType), contains(publicKey));
