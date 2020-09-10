@@ -16,16 +16,6 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.Vertx;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
-import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import java.util.Collection;
-import java.util.List;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
@@ -44,6 +34,18 @@ import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
+import java.util.Collection;
+import java.util.List;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
+import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+
 public class Eth2Runner extends Runner {
   final SlashingProtection slashingProtection;
 
@@ -52,7 +54,8 @@ public class Eth2Runner extends Runner {
     this.slashingProtection = slashingProtection;
   }
 
-  protected ArtifactSignerProvider loadSigners(final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+  protected ArtifactSignerProvider loadSigners(
+      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
 
@@ -63,14 +66,14 @@ public class Eth2Runner extends Runner {
             hashicorpConnectionFactory,
             BlsArtifactSigner::new);
 
-    final Collection<ArtifactSigner> signers = SignerLoader.load(
-        config.getKeyConfigPath(),
-        "yaml",
-        new YamlSignerParser(List.of(artifactSignerFactory)));
+    final Collection<ArtifactSigner> signers =
+        SignerLoader.load(
+            config.getKeyConfigPath(),
+            "yaml",
+            new YamlSignerParser(List.of(artifactSignerFactory)));
 
     return DefaultArtifactSignerProvider.create(signers);
   }
-
 
   @Override
   public Router populateRouter(final Context context) {

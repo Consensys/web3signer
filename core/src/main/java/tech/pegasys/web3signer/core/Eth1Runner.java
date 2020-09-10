@@ -16,10 +16,6 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
-import io.vertx.core.Vertx;
-import java.util.Collection;
-import java.util.List;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
@@ -36,9 +32,14 @@ import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 
+import java.util.Collection;
+import java.util.List;
+
+import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
 
@@ -46,7 +47,8 @@ public class Eth1Runner extends Runner {
     super(config);
   }
 
-  protected ArtifactSignerProvider loadSigners(final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+  protected ArtifactSignerProvider loadSigners(
+      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
@@ -59,7 +61,8 @@ public class Eth1Runner extends Runner {
             EthSecpArtifactSigner::new,
             true);
 
-    final Collection<ArtifactSigner> signers = SignerLoader.load(
+    final Collection<ArtifactSigner> signers =
+        SignerLoader.load(
             config.getKeyConfigPath(),
             "yaml",
             new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));

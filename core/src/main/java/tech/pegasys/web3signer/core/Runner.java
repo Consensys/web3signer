@@ -107,7 +107,8 @@ public abstract class Runner implements Runnable {
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
-      final Context context = new Context(routerFactory, metricsSystem, signerProvider, errorHandler);
+      final Context context =
+          new Context(routerFactory, metricsSystem, signerProvider, errorHandler);
       final Router router = populateRouter(context);
       registerSwaggerUIRoute(router); // serve static openapi spec
 
@@ -122,7 +123,8 @@ public abstract class Runner implements Runnable {
     }
   }
 
-  protected abstract ArtifactSignerProvider loadSigners(final Config config, final Vertx vertx, final MetricsSystem metricsSystem);
+  protected abstract ArtifactSignerProvider loadSigners(
+      final Config config, final Vertx vertx, final MetricsSystem metricsSystem);
 
   protected abstract Router populateRouter(final Context context);
 

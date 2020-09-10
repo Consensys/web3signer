@@ -12,14 +12,14 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
-import picocli.CommandLine.Option;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
-
-import picocli.CommandLine.Command;
 import tech.pegasys.web3signer.slashingprotection.NoOpSlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
+
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @Command(
     name = Eth2SubCommand.COMMAND_NAME,
