@@ -28,15 +28,15 @@ public class FilecoinSubCommand extends ModeSubCommand {
   public static final String COMMAND_NAME = "filecoin";
 
   @Option(
-      names = {"--filecoin-network"},
+      names = {"--network"},
       description = "Filecoin network to use for addresses (default: ${DEFAULT-VALUE})",
       paramLabel = "<network name>",
       arity = "1")
-  private final FilecoinNetwork filecoinNetwork = FilecoinNetwork.TESTNET;
+  private final FilecoinNetwork network = FilecoinNetwork.TESTNET;
 
   @Override
   public Runner createRunner() {
-    return new FilecoinRunner(config, filecoinNetwork);
+    return new FilecoinRunner(config, network);
   }
 
   @Override
