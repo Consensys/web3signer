@@ -28,7 +28,7 @@ dependencyManagement {
     dependency 'commons-io:commons-io:2.6'
     dependency 'commons-lang:commons-lang:2.6'
 
-    dependency 'info.picocli:picocli:4.2.0'
+    dependency 'info.picocli:picocli:4.5.1'
 
     dependencySet(group: 'io.vertx', version: '3.9.2') {
       entry 'vertx-codegen'
