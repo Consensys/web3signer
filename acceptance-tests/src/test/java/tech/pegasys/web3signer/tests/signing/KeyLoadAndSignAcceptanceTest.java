@@ -35,7 +35,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
@@ -70,7 +70,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @NullAndEmptySource
+  @NullSource
   @ValueSource(strings = {"zzzddd"})
   public void receiveA400IfDataIsNotValid(final String data) {
     final String configFilename = publicKey.toString().substring(2);
