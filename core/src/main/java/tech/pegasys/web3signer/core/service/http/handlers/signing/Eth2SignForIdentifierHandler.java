@@ -96,6 +96,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private boolean maySign(
       final String publicKey, final Eth2SigningRequestBody eth2SigningRequestBody) {
+    checkArgument(eth2SigningRequestBody.getType() != null, "Type must be specified");
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
         checkArgument(eth2SigningRequestBody.getSlot() != null, "Slot must be specified");
