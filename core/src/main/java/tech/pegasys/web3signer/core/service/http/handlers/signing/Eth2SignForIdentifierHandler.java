@@ -72,8 +72,11 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                   try {
                     if (maySign(identifier, eth2SigningRequestBody)) {
                       respondWithSignature(routingContext, signature);
+                    } else {
+                      LOG.debug("Signing not allowed due to slashing protection rules failing");
+                      routingContext.fail(403);
                     }
-                  } catch (IllegalArgumentException e) {
+                  } catch (final IllegalArgumentException e) {
                     handleInvalidRequest(routingContext, e);
                   }
                 } else {
