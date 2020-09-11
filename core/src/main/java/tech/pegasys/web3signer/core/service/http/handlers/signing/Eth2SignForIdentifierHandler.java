@@ -60,9 +60,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       try {
         eth2SigningRequestBody = getSigningRequest(params);
       } catch (final IllegalArgumentException | JsonProcessingException e) {
-        metrics.getMalformedRequestCounter().inc();
-        LOG.debug("Invalid signing request", e);
-        routingContext.fail(400);
+        handleInvalidRequest(routingContext, e);
         return;
       }
 
@@ -71,8 +69,12 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
           .ifPresentOrElse(
               signature -> {
                 if (slashingProtection.isPresent()) {
-                  if (maySign(identifier, eth2SigningRequestBody)) {
-                    respondWithSignature(routingContext, signature);
+                  try {
+                    if (maySign(identifier, eth2SigningRequestBody)) {
+                      respondWithSignature(routingContext, signature);
+                    }
+                  } catch (IllegalArgumentException e) {
+                    handleInvalidRequest(routingContext, e);
                   }
                 } else {
                   respondWithSignature(routingContext, signature);
@@ -84,6 +86,12 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                 routingContext.fail(404);
               });
     }
+  }
+
+  private void handleInvalidRequest(final RoutingContext routingContext, final Exception e) {
+    metrics.getMalformedRequestCounter().inc();
+    LOG.debug("Invalid signing request", e);
+    routingContext.fail(400);
   }
 
   private boolean maySign(
