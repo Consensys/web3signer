@@ -28,7 +28,7 @@ public class Eth2SigningRequestBody {
   @JsonCreator
   public Eth2SigningRequestBody(
       @JsonProperty(value = "signingRoot", required = true) final Bytes signingRoot,
-      @JsonProperty(value = "type", required = true) final ArtifactType type,
+      @JsonProperty(value = "type") final ArtifactType type,
       @JsonProperty(value = "slot") final UInt64 slot,
       @JsonProperty(value = "sourceEpoch") final UInt64 sourceEpoch,
       @JsonProperty(value = "targetEpoch") final UInt64 targetEpoch) {

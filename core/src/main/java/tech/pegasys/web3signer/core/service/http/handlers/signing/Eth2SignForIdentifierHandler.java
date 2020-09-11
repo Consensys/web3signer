@@ -43,11 +43,11 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   public Eth2SignForIdentifierHandler(
       final SignerForIdentifier<?> signerForIdentifier,
       final HttpApiMetrics metrics,
-      final SlashingProtection slashingProtection,
+      final Optional<SlashingProtection> slashingProtection,
       final ObjectMapper objectMapper) {
     this.signerForIdentifier = signerForIdentifier;
     this.metrics = metrics;
-    this.slashingProtection = Optional.ofNullable(slashingProtection);
+    this.slashingProtection = slashingProtection;
     this.objectMapper = objectMapper;
   }
 
@@ -60,9 +60,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       try {
         eth2SigningRequestBody = getSigningRequest(params);
       } catch (final IllegalArgumentException | JsonProcessingException e) {
-        metrics.getMalformedRequestCounter().inc();
-        LOG.debug("Invalid signing request", e);
-        routingContext.fail(400);
+        handleInvalidRequest(routingContext, e);
         return;
       }
 
@@ -71,8 +69,15 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
           .ifPresentOrElse(
               signature -> {
                 if (slashingProtection.isPresent()) {
-                  if (maySign(identifier, eth2SigningRequestBody)) {
-                    respondWithSignature(routingContext, signature);
+                  try {
+                    if (maySign(identifier, eth2SigningRequestBody)) {
+                      respondWithSignature(routingContext, signature);
+                    } else {
+                      LOG.debug("Signing not allowed due to slashing protection rules failing");
+                      routingContext.fail(403);
+                    }
+                  } catch (final IllegalArgumentException e) {
+                    handleInvalidRequest(routingContext, e);
                   }
                 } else {
                   respondWithSignature(routingContext, signature);
@@ -86,8 +91,15 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     }
   }
 
+  private void handleInvalidRequest(final RoutingContext routingContext, final Exception e) {
+    metrics.getMalformedRequestCounter().inc();
+    LOG.debug("Invalid signing request", e);
+    routingContext.fail(400);
+  }
+
   private boolean maySign(
       final String publicKey, final Eth2SigningRequestBody eth2SigningRequestBody) {
+    checkArgument(eth2SigningRequestBody.getType() != null, "Type must be specified");
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
         checkArgument(eth2SigningRequestBody.getSlot() != null, "Slot must be specified");

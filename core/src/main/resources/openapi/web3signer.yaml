@@ -39,7 +39,6 @@ paths:
                   type: string
               required:
                 - signingRoot
-                - type
               additionalProperties:
                 type: string
             example:

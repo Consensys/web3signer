@@ -36,6 +36,7 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -47,9 +48,9 @@ import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
-  final SlashingProtection slashingProtection;
+  final Optional<SlashingProtection> slashingProtection;
 
-  public Eth2Runner(final Config config, final SlashingProtection slashingProtection) {
+  public Eth2Runner(final Config config, final Optional<SlashingProtection> slashingProtection) {
     super(config);
     this.slashingProtection = slashingProtection;
   }
@@ -93,7 +94,7 @@ public class Eth2Runner extends Runner {
       final ArtifactSignerProvider blsSignerProvider,
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
-      final SlashingProtection slashingProtection) {
+      final Optional<SlashingProtection> slashingProtection) {
     final ObjectMapper objectMapper =
         new ObjectMapper()
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)

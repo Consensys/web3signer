@@ -14,9 +14,10 @@ package tech.pegasys.web3signer.commandline.subcommands;
 
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
-import tech.pegasys.web3signer.slashingprotection.NoOpSlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
+
+import java.util.Optional;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -30,24 +31,22 @@ public class Eth2SubCommand extends ModeSubCommand {
   public static final String COMMAND_NAME = "eth2";
 
   @Option(
-      names = {"--slashing-protection-enabled"},
+      names = {"--Xslashing-protection-enabled"},
+      hidden = true,
       description =
           "Set to true if all Eth2 signing operations should be validated against historic data, "
               + "prior to responding with signatures"
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  private boolean slashingProtectionEnabled = true;
+  private boolean slashingProtectionEnabled = false;
 
   @Override
   public Runner createRunner() {
-    final SlashingProtection slashingProtection;
-    if (slashingProtectionEnabled) {
-      slashingProtection = SlashingProtectionFactory.createSlashingProtection();
-    } else {
-      slashingProtection = new NoOpSlashingProtection();
-    }
-
+    final Optional<SlashingProtection> slashingProtection =
+        slashingProtectionEnabled
+            ? Optional.of(SlashingProtectionFactory.createSlashingProtection())
+            : Optional.empty();
     return new Eth2Runner(config, slashingProtection);
   }
 
