@@ -31,14 +31,15 @@ public class Eth2SubCommand extends ModeSubCommand {
   public static final String COMMAND_NAME = "eth2";
 
   @Option(
-      names = {"--slashing-protection-enabled"},
+      names = {"--Xslashing-protection-enabled"},
+      hidden = true,
       description =
           "Set to true if all Eth2 signing operations should be validated against historic data, "
               + "prior to responding with signatures"
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  private boolean slashingProtectionEnabled = true;
+  private boolean slashingProtectionEnabled = false;
 
   @Override
   public Runner createRunner() {
