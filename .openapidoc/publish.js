@@ -14,30 +14,49 @@ function getConfig() {
   const branch = process.env.OA_GH_PAGES_BRANCH || "gh-pages";
   const gitUserName = process.env.OA_GIT_USERNAME || "CircleCI Build";
   const gitUserEmail = process.env.OA_GIT_EMAIL || "ci-build@consensys.net";
-  const specPath =
-    process.env.OA_SPEC_PATH ||
-    "../core/build/resources/main/openapi/web3signer.yaml";
-  const specVersion = yaml.safeLoad(fs.readFileSync(specPath, "utf8")).info
-    .version;
+
+  const eth2SpecPath = "../core/build/resources/main/openapi/web3signer-eth2.yaml";
+  const eth1SpecPath = "../core/build/resources/main/openapi/web3signer-eth1.yaml";
+
+  // both spec files have same version
+  const specVersion = yaml.safeLoad(fs.readFileSync(eth2SpecPath, "utf8")).info.version;
   const isReleaseVersion = !specVersion.includes("-dev-"); // gradle build puts -dev- for snapshot version
-  const specFileNamePrefix = path.parse(specPath).name;
-  const specFileNameExtension = path.extname(specPath);
+
+  const eth2SpecFileNamePrefix = path.parse(eth2SpecPath).name;
+  const eth2SpecFileNameExtension = path.extname(eth2SpecPath);
+
+  const eth1SpecFileNamePrefix = path.parse(eth1SpecPath).name;
+  const eth1SpecFileNameExtension = path.extname(eth1SpecPath);
+
   const versionsFileName = process.env.OA_VERSIONS_FILE_NAME || "versions.json";
   const versionsFileUrl = `https://${repo.source}/${repo.owner}/${repo.name}/raw/${branch}/${versionsFileName}`;
   const distDir = process.env.OA_DIST_DIR || "./dist";
   const versionsFileDist = path.join(distDir, versionsFileName);
   return {
-    spec: {
-      path: specPath,
+    eth2Spec: {
+      path: eth2SpecPath,
       version: specVersion,
       isReleaseVersion: isReleaseVersion,
       latestDist: path.join(
         distDir,
-        `${specFileNamePrefix}-latest${specFileNameExtension}`
+        `${eth2SpecFileNamePrefix}-latest${eth2SpecFileNameExtension}`
       ),
       releaseDist: path.join(
         distDir,
-        `${specFileNamePrefix}-${specVersion}${specFileNameExtension}`
+        `${eth2SpecFileNamePrefix}-${specVersion}${eth2SpecFileNameExtension}`
+      ),
+    },
+    eth1Spec: {
+      path: eth1SpecPath,
+      version: specVersion,
+      isReleaseVersion: isReleaseVersion,
+      latestDist: path.join(
+        distDir,
+        `${eth1SpecFileNamePrefix}-latest${eth1SpecFileNameExtension}`
+      ),
+      releaseDist: path.join(
+        distDir,
+        `${eth1SpecFileNamePrefix}-${specVersion}${eth1SpecFileNameExtension}`
       ),
     },
     distDir,
@@ -63,21 +82,22 @@ function getConfig() {
  */
 async function main() {
   const config = getConfig();
-  const { distDir, spec, versions, ghPagesConfig } = config;
+  const { distDir, eth1Spec, eth2Spec, versions, ghPagesConfig } = config;
   try {
     prepareDistDir(distDir);
-    copySpecFileToDist(spec);
+    copySpecFileToDist(eth2Spec);
+    copySpecFileToDist(eth1Spec);
 
-    if (spec.isReleaseVersion) {
+    if (eth2Spec.isReleaseVersion) {
       const versionsJson = await fetchVersions(versions.url);
-      const updatedVersionsJson = updateVersions(versionsJson, spec.version);
+      const updatedVersionsJson = updateVersions(versionsJson, eth2Spec.version);
       saveVersionsJson(updatedVersionsJson, versions.dist);
     }
 
     cleanGhPagesCache();
     await publishToGHPages(distDir, ghPagesConfig);
     log(
-      `OpenAPI spec [${spec.version}] published to [${ghPagesConfig.branch}] using user [${ghPagesConfig.user.name}]`
+      `OpenAPI specs [${eth2Spec.version}] published to [${ghPagesConfig.branch}] using user [${ghPagesConfig.user.name}]`
     );
   } catch (err) {
     log(`ERROR: OpenAPI spec failed to publish: ${err.message}`);
