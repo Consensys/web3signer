@@ -55,6 +55,11 @@ public class FilecoinRunner extends Runner {
   }
 
   @Override
+  protected String getOpenApiSpecResource() {
+    return "openapi/web3signer-filecoin.yaml";
+  }
+
+  @Override
   public ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
