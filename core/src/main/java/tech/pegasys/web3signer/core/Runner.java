@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
-import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
@@ -23,7 +22,6 @@ import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.util.FileUtil;
 
 import java.io.File;
@@ -100,15 +98,11 @@ public abstract class Runner implements Runnable {
     try {
       metricsEndpoint.start(vertx);
 
-      final ArtifactSignerProvider signerProvider = loadSigners(config, vertx, metricsSystem);
-      incSignerLoadCount(metricsSystem, signerProvider.availableIdentifiers().stream().count());
-
       final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
-      final Context context =
-          new Context(routerFactory, metricsSystem, signerProvider, errorHandler);
+      final Context context = new Context(routerFactory, metricsSystem, errorHandler, vertx);
       final Router router = populateRouter(context);
       registerSwaggerUIRoute(router); // serve static openapi spec
 
@@ -122,9 +116,6 @@ public abstract class Runner implements Runnable {
       LOG.error("Failed to create Http Server", e);
     }
   }
-
-  protected abstract ArtifactSignerProvider loadSigners(
-      final Config config, final Vertx vertx, final MetricsSystem metricsSystem);
 
   protected abstract Router populateRouter(final Context context);
 
