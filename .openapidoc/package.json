@@ -20,7 +20,7 @@
     "eslint": "^7.2.0"
   },
   "scripts": {
-    "lint": "eslint publish.js",
+    "lint": "eslint publish.js config.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "PegaSys",
