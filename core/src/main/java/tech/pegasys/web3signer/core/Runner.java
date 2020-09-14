@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
-import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
@@ -23,7 +22,6 @@ import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.util.FileUtil;
 
 import java.io.File;
@@ -119,6 +117,8 @@ public abstract class Runner implements Runnable {
   }
 
   protected abstract Router populateRouter(final Context context);
+
+  protected abstract String getOpenApiSpecResource();
 
   private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)
       throws InterruptedException, ExecutionException {

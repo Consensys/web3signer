@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
+import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
