@@ -18,11 +18,8 @@ import java.util.function.Supplier;
 import javax.sql.DataSource;
 
 import com.zaxxer.hikari.HikariDataSource;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class DbConnection {
-  private static final Logger LOG = LogManager.getLogger();
 
   public static Supplier<Connection> createConnectionSupplier(
       final String jdbcUrl, final String username, final String password) {

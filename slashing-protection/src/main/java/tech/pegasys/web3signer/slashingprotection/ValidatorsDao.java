@@ -18,9 +18,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,7 +29,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class ValidatorsDao {
   private static final Logger LOG = LogManager.getLogger();
-  private static final String SELECT_VALIDATOR = "SELECT id FROM validators WHERE public_key = ?";
+  private static final String SELECT_VALIDATOR =
+      "SELECT id, public_key FROM validators WHERE public_key IN (%s)";
   private static final String INSERT_VALIDATOR = "INSERT INTO validators (public_key) VALUES (?)";
   private final Supplier<Connection> connectionSupplier;
 
@@ -40,16 +42,16 @@ public class ValidatorsDao {
     final Connection connection = connectionSupplier.get();
     try {
       connection.setAutoCommit(false);
-      final PreparedStatement insertStatement = connection.prepareStatement(INSERT_VALIDATOR);
+      final List<Bytes> publicKeys =
+          validators.stream().map(Bytes::fromHexString).collect(Collectors.toList());
+      final List<Bytes> missingValidators = retrieveMissingValidators(connection, publicKeys);
 
-      for (String validator : validators) {
-        final byte[] publicKeyBytes = Bytes.fromHexString(validator).toArrayUnsafe();
-        final Optional<Long> validatorId = retrieveValidatorId(connection, publicKeyBytes);
-        if (validatorId.isEmpty()) {
-          insertStatement.setBytes(1, publicKeyBytes);
-          insertStatement.execute();
-        }
+      final PreparedStatement insertStatement = connection.prepareStatement(INSERT_VALIDATOR);
+      for (Bytes missingValidator : missingValidators) {
+        insertStatement.setBytes(1, missingValidator.toArrayUnsafe());
+        insertStatement.addBatch();
       }
+      insertStatement.executeBatch();
       connection.commit();
     } catch (SQLException e) {
       LOG.error("Failed registering validators. Check slashing database is correctly setup.", e);
@@ -57,20 +59,23 @@ public class ValidatorsDao {
     }
   }
 
-  private Optional<Long> retrieveValidatorId(
-      final Connection connection, final byte[] publicKeyBytes) throws SQLException {
-    final PreparedStatement selectStatement = connection.prepareStatement(SELECT_VALIDATOR);
-    selectStatement.setBytes(1, publicKeyBytes);
+  private List<Bytes> retrieveMissingValidators(
+      final Connection connection, final List<Bytes> publicKeys) throws SQLException {
+    final String inSql = String.join(",", Collections.nCopies(publicKeys.size(), "?"));
+    final PreparedStatement selectStatement =
+        connection.prepareStatement(String.format(SELECT_VALIDATOR, inSql));
+    for (int i = 0; i < publicKeys.size(); i++) {
+      selectStatement.setBytes(i + 1, publicKeys.get(i).toArrayUnsafe());
+    }
+
     final ResultSet resultSet = selectStatement.executeQuery();
-    final List<Long> validatorIds = new ArrayList<>();
+    final List<Bytes> validatorIds = new ArrayList<>();
     while (resultSet.next()) {
-      final long id = resultSet.getLong(1);
-      validatorIds.add(id);
+      validatorIds.add(Bytes.wrap(resultSet.getBytes(2)));
     }
-    if (validatorIds.size() > 1) {
-      throw new IllegalStateException(
-          "Invalid validators table, more than one validator public key registered.");
-    }
-    return validatorIds.size() == 0 ? Optional.empty() : Optional.of(validatorIds.get(0));
+
+    final List<Bytes> missingValidators = new ArrayList<>(publicKeys);
+    missingValidators.removeAll(validatorIds);
+    return missingValidators;
   }
 }
