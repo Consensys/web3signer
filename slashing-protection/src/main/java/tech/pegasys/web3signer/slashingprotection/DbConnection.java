@@ -30,10 +30,8 @@ public class DbConnection {
     return () -> {
       try {
         return datasource.getConnection();
-      } catch (SQLException throwables) {
-        LOG.error("Failed to open database connection");
-        // TODO what happens in this case?
-        throw new RuntimeException(throwables);
+      } catch (SQLException e) {
+        throw new IllegalStateException("Unable to connect to slashing database", e);
       }
     };
   }
