@@ -13,26 +13,26 @@
 package tech.pegasys.web3signer.core;
 
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 
+import io.vertx.core.Vertx;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Context {
   private final OpenAPI3RouterFactory routerFactory;
   private final MetricsSystem metricsSystem;
-  private final ArtifactSignerProvider signerProvider;
   private final LogErrorHandler errorHandler;
+  private final Vertx vertx;
 
   public Context(
       final OpenAPI3RouterFactory routerFactory,
       final MetricsSystem metricsSystem,
-      final ArtifactSignerProvider signerProvider,
-      final LogErrorHandler errorHandler) {
+      final LogErrorHandler errorHandler,
+      final Vertx vertx) {
     this.routerFactory = routerFactory;
     this.metricsSystem = metricsSystem;
-    this.signerProvider = signerProvider;
     this.errorHandler = errorHandler;
+    this.vertx = vertx;
   }
 
   public OpenAPI3RouterFactory getRouterFactory() {
@@ -43,11 +43,11 @@ public class Context {
     return metricsSystem;
   }
 
-  public ArtifactSignerProvider getSignerProvider() {
-    return signerProvider;
-  }
-
   public LogErrorHandler getErrorHandler() {
     return errorHandler;
+  }
+
+  public Vertx getVertx() {
+    return vertx;
   }
 }

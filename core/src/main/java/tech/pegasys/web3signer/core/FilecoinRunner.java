@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
+import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
@@ -60,40 +61,13 @@ public class FilecoinRunner extends Runner {
   }
 
   @Override
-  public ArtifactSignerProvider loadSigners(
-      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
-    final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
-    final HashicorpConnectionFactory hashicorpConnectionFactory =
-        new HashicorpConnectionFactory(vertx);
-
-    final AbstractArtifactSignerFactory blsArtifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            keyPair -> new FcBlsArtifactSigner(keyPair, network));
-
-    final AbstractArtifactSignerFactory secpArtifactSignerFactory =
-        new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            config.getKeyConfigPath(),
-            azureFactory,
-            signer -> new FcSecpArtifactSigner(signer, network),
-            false);
-
-    final Collection<ArtifactSigner> signers =
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
-
-    return DefaultArtifactSignerProvider.create(signers);
-  }
-
-  @Override
   protected Router populateRouter(final Context context) {
+    final ArtifactSignerProvider signerProvider =
+        loadSigners(config, context.getVertx(), context.getMetricsSystem());
+    incSignerLoadCount(context.getMetricsSystem(), signerProvider.availableIdentifiers().size());
+
     return registerFilecoinJsonRpcRoute(
-        context.getRouterFactory(), context.getMetricsSystem(), context.getSignerProvider());
+        context.getRouterFactory(), context.getMetricsSystem(), signerProvider);
   }
 
   private Router registerFilecoinJsonRpcRoute(
@@ -121,5 +95,35 @@ public class FilecoinRunner extends Runner {
             false);
 
     return router;
+  }
+
+  private ArtifactSignerProvider loadSigners(
+      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+    final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+    final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory(vertx);
+
+    final AbstractArtifactSignerFactory blsArtifactSignerFactory =
+        new BlsArtifactSignerFactory(
+            config.getKeyConfigPath(),
+            metricsSystem,
+            hashicorpConnectionFactory,
+            keyPair -> new FcBlsArtifactSigner(keyPair, network));
+
+    final AbstractArtifactSignerFactory secpArtifactSignerFactory =
+        new Secp256k1ArtifactSignerFactory(
+            hashicorpConnectionFactory,
+            config.getKeyConfigPath(),
+            azureFactory,
+            signer -> new FcSecpArtifactSigner(signer, network),
+            false);
+
+    final Collection<ArtifactSigner> signers =
+        SignerLoader.load(
+            config.getKeyConfigPath(),
+            "yaml",
+            new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+
+    return DefaultArtifactSignerProvider.create(signers);
   }
 }
