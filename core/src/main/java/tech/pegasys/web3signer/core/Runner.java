@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
+import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
@@ -22,6 +23,7 @@ import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
+import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.util.FileUtil;
 
 import java.io.File;
@@ -65,7 +67,6 @@ public abstract class Runner implements Runnable {
   private static final String CONTENT_TYPE_YAML = "text/x-yaml";
 
   public static final String OPENAPI_INDEX_RESOURCE = "openapi/index.html";
-  public static final String OPENAPI_SPEC_RESOURCE = "openapi/web3signer.yaml";
 
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
   protected static final String JSON_RPC_PATH = "/rpc/v1";
@@ -124,7 +125,7 @@ public abstract class Runner implements Runnable {
     final CompletableFuture<OpenAPI3RouterFactory> completableFuture = new CompletableFuture<>();
     OpenAPI3RouterFactory.create(
         vertx,
-        OPENAPI_SPEC_RESOURCE,
+        getOpenApiSpecResource(),
         ar -> {
           if (ar.succeeded()) {
             completableFuture.complete(ar.result());
@@ -164,7 +165,7 @@ public abstract class Runner implements Runnable {
 
   private void registerSwaggerUIRoute(final Router router) throws IOException {
     final URL indexResourceUrl = Resources.getResource(OPENAPI_INDEX_RESOURCE);
-    final URL openApiSpecUrl = Resources.getResource(OPENAPI_SPEC_RESOURCE);
+    final URL openApiSpecUrl = Resources.getResource(getOpenApiSpecResource());
     final String indexHtml = Resources.toString(indexResourceUrl, Charsets.UTF_8);
     final String openApiSpecYaml = Resources.toString(openApiSpecUrl, Charsets.UTF_8);
 

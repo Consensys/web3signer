@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
-import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -54,6 +53,11 @@ public class Eth2Runner extends Runner {
   public Eth2Runner(final Config config, final Optional<SlashingProtection> slashingProtection) {
     super(config);
     this.slashingProtection = slashingProtection;
+  }
+
+  @Override
+  protected String getOpenApiSpecResource() {
+    return "openapi/web3signer-eth2.yaml";
   }
 
   @Override
