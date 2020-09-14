@@ -54,7 +54,7 @@ public class ValidatorsDao {
       try {
         connection.rollback();
       } catch (SQLException re) {
-        LOG.error("Rollback of validators failed", re);
+        LOG.error("Rollback of validator registration failed", re);
       }
       throw new IllegalStateException("Failed registering validators", e);
     }
