@@ -46,26 +46,27 @@ public class Eth2SubCommand extends ModeSubCommand {
   private boolean slashingProtectionEnabled = false;
 
   @Option(
-      names = {"--slashing-db-url"},
-      description = "The jdbc url to use to connect to the slashing database",
+      names = {"--slashing-protection-db-url"},
+      description = "The jdbc url to use to connect to the slashing protection database",
       paramLabel = "<storage label>",
       arity = "1")
-  private String slashingDbUrl;
+  private String slashingProtectionDbUrl;
 
   @Option(
-      names = {"--slashing-db-username"},
-      description = "The username to use when connecting to the slashing database")
-  private String slashingDbUser;
+      names = {"--slashing-protection-db-username"},
+      description = "The username to use when connecting to the slashing protection database")
+  private String slashingProtectionDbUser;
 
   @Option(
-      names = {"--slashing-db-password"},
-      description = "The password to use when connecting to the slashing database")
-  private String slashingDbPassword;
+      names = {"--slashing-protection-db-password"},
+      description = "The password to use when connecting to the slashing protection database")
+  private String slashingProtectionDbPassword;
 
   @Override
   public Runner createRunner() {
     final Supplier<Connection> connectionSupplier =
-        DbConnection.createConnectionSupplier(slashingDbUrl, slashingDbUser, slashingDbPassword);
+        DbConnection.createConnectionSupplier(
+            slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
     final ValidatorsDao validatorsDao = new ValidatorsDao(connectionSupplier);
 
     final Optional<SlashingProtection> slashingProtection =

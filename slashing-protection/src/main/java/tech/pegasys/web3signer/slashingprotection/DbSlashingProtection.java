@@ -25,12 +25,12 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
-    return false;
+    return true;
   }
 
   @Override
   public boolean maySignBlock(
       final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
-    return false;
+    return true;
   }
 }

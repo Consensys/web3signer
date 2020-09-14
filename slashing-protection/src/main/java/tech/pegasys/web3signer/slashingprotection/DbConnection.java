@@ -27,7 +27,7 @@ public class DbConnection {
     return () -> {
       try {
         return datasource.getConnection();
-      } catch (SQLException e) {
+      } catch (final SQLException e) {
         throw new IllegalStateException("Unable to connect to slashing database", e);
       }
     };

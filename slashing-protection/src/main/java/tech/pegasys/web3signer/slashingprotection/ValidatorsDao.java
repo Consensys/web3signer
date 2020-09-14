@@ -40,39 +40,49 @@ public class ValidatorsDao {
     final Connection connection = connectionSupplier.get();
     try {
       connection.setAutoCommit(false);
-      final List<Bytes> missingValidators = retrieveMissingValidators(connection, validators);
+      final List<Bytes> validatorsMissingFromDb =
+          retrieveValidatorsMissingFromDb(connection, validators);
 
       final PreparedStatement insertStatement = connection.prepareStatement(INSERT_VALIDATOR);
-      for (Bytes missingValidator : missingValidators) {
+      for (Bytes missingValidator : validatorsMissingFromDb) {
         insertStatement.setBytes(1, missingValidator.toArrayUnsafe());
         insertStatement.addBatch();
       }
       insertStatement.executeBatch();
       connection.commit();
-    } catch (SQLException e) {
+    } catch (final SQLException e) {
       LOG.error("Failed registering validators. Check slashing database is correctly setup.", e);
       try {
         connection.rollback();
-      } catch (SQLException re) {
+      } catch (final SQLException re) {
         LOG.error("Rollback of validator registration failed", re);
       }
       throw new IllegalStateException("Failed registering validators", e);
+    } finally {
+      try {
+        connection.close();
+      } catch (SQLException e) {
+        LOG.error("Failed closing db connection", e);
+      }
     }
   }
 
-  private List<Bytes> retrieveMissingValidators(
+  private List<Bytes> retrieveValidatorsMissingFromDb(
       final Connection connection, final List<Bytes> publicKeys) throws SQLException {
     final String inSql = String.join(",", Collections.nCopies(publicKeys.size(), "?"));
-    final PreparedStatement selectStatement =
-        connection.prepareStatement(String.format(SELECT_VALIDATOR, inSql));
-    for (int i = 0; i < publicKeys.size(); i++) {
-      selectStatement.setBytes(i + 1, publicKeys.get(i).toArrayUnsafe());
-    }
-
-    final ResultSet resultSet = selectStatement.executeQuery();
+    final String sql = String.format(SELECT_VALIDATOR, inSql);
     final List<Bytes> validatorIds = new ArrayList<>();
-    while (resultSet.next()) {
-      validatorIds.add(Bytes.wrap(resultSet.getBytes(2)));
+
+    try (final PreparedStatement selectStatement = connection.prepareStatement(sql)) {
+      for (int i = 0; i < publicKeys.size(); i++) {
+        selectStatement.setBytes(i + 1, publicKeys.get(i).toArrayUnsafe());
+      }
+
+      try (ResultSet resultSet = selectStatement.executeQuery()) {
+        while (resultSet.next()) {
+          validatorIds.add(Bytes.wrap(resultSet.getBytes(2)));
+        }
+      }
     }
 
     final List<Bytes> missingValidators = new ArrayList<>(publicKeys);
