@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
+import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -39,7 +40,6 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
 
@@ -53,8 +53,33 @@ public class Eth1Runner extends Runner {
   }
 
   @Override
-  protected ArtifactSignerProvider loadSigners(
-      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+  protected Router populateRouter(final Context context) {
+    final ArtifactSignerProvider signerProvider = loadSigners(config, context.getVertx());
+    incSignerLoadCount(context.getMetricsSystem(), signerProvider.availableIdentifiers().size());
+
+    final OpenAPI3RouterFactory routerFactory = context.getRouterFactory();
+    final LogErrorHandler errorHandler = context.getErrorHandler();
+
+    addPublicKeysListHandler(
+        routerFactory,
+        signerProvider.availableIdentifiers(),
+        ETH1_LIST.name(),
+        context.getErrorHandler());
+
+    final SignerForIdentifier<SecpArtifactSignature> secpSigner =
+        new SignerForIdentifier<>(signerProvider, this::formatSecpSignature, SECP256K1);
+    routerFactory.addHandlerByOperationId(
+        ETH1_SIGN.name(),
+        new BlockingHandlerDecorator(
+            new Eth1SignForIdentifierHandler(
+                secpSigner, new HttpApiMetrics(context.getMetricsSystem(), SECP256K1)),
+            false));
+    routerFactory.addFailureHandlerByOperationId(ETH1_SIGN.name(), errorHandler);
+
+    return context.getRouterFactory().getRouter();
+  }
+
+  private ArtifactSignerProvider loadSigners(final Config config, final Vertx vertx) {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
@@ -74,31 +99,6 @@ public class Eth1Runner extends Runner {
             new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
 
     return DefaultArtifactSignerProvider.create(signers);
-  }
-
-  @Override
-  protected Router populateRouter(final Context context) {
-    final ArtifactSignerProvider secpSignerProvider = context.getSignerProvider();
-    final OpenAPI3RouterFactory routerFactory = context.getRouterFactory();
-    final LogErrorHandler errorHandler = context.getErrorHandler();
-
-    addPublicKeysListHandler(
-        routerFactory,
-        secpSignerProvider.availableIdentifiers(),
-        ETH1_LIST.name(),
-        context.getErrorHandler());
-
-    final SignerForIdentifier<SecpArtifactSignature> secpSigner =
-        new SignerForIdentifier<>(secpSignerProvider, this::formatSecpSignature, SECP256K1);
-    routerFactory.addHandlerByOperationId(
-        ETH1_SIGN.name(),
-        new BlockingHandlerDecorator(
-            new Eth1SignForIdentifierHandler(
-                secpSigner, new HttpApiMetrics(context.getMetricsSystem(), SECP256K1)),
-            false));
-    routerFactory.addFailureHandlerByOperationId(ETH1_SIGN.name(), errorHandler);
-
-    return context.getRouterFactory().getRouter();
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {

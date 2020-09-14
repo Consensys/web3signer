@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
+import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -94,40 +95,14 @@ public class Eth2Runner extends Runner {
   }
 
   @Override
-  protected ArtifactSignerProvider loadSigners(
-      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
-    final HashicorpConnectionFactory hashicorpConnectionFactory =
-        new HashicorpConnectionFactory(vertx);
-
-    final AbstractArtifactSignerFactory artifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            BlsArtifactSigner::new);
-
-    final Collection<ArtifactSigner> signers =
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(artifactSignerFactory)));
-
-    final List<Bytes> validators =
-        signers.stream()
-            .map(ArtifactSigner::getIdentifier)
-            .map(Bytes::fromHexString)
-            .collect(Collectors.toList());
-    slashingProtection.ifPresent(
-        slashingProtection -> slashingProtection.registerValidators(validators));
-
-    return DefaultArtifactSignerProvider.create(signers);
-  }
-
-  @Override
   public Router populateRouter(final Context context) {
+    final ArtifactSignerProvider signerProvider =
+        loadSigners(config, context.getVertx(), context.getMetricsSystem());
+    incSignerLoadCount(context.getMetricsSystem(), signerProvider.availableIdentifiers().size());
+
     registerEth2Routes(
         context.getRouterFactory(),
-        context.getSignerProvider(),
+        signerProvider,
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtection);
@@ -162,6 +137,35 @@ public class Eth2Runner extends Runner {
                 objectMapper),
             false));
     routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
+  }
+
+  private ArtifactSignerProvider loadSigners(
+      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+    final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory(vertx);
+
+    final AbstractArtifactSignerFactory artifactSignerFactory =
+        new BlsArtifactSignerFactory(
+            config.getKeyConfigPath(),
+            metricsSystem,
+            hashicorpConnectionFactory,
+            BlsArtifactSigner::new);
+
+    final Collection<ArtifactSigner> signers =
+        SignerLoader.load(
+            config.getKeyConfigPath(),
+            "yaml",
+            new YamlSignerParser(List.of(artifactSignerFactory)));
+
+    final List<Bytes> validators =
+        signers.stream()
+            .map(ArtifactSigner::getIdentifier)
+            .map(Bytes::fromHexString)
+            .collect(Collectors.toList());
+    slashingProtection.ifPresent(
+        slashingProtection -> slashingProtection.registerValidators(validators));
+
+    return DefaultArtifactSignerProvider.create(signers);
   }
 
   private String formatBlsSignature(final BlsArtifactSignature signature) {
