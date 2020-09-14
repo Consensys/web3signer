@@ -11,7 +11,6 @@ const log = (...args) => console.log(...args); // eslint-disable-line no-console
  */
 async function main() {
   const cfg = config.getConfig();
-  log(cfg);
   const { distDir, specs, versions, ghPagesConfig } = cfg;
   try {
     prepareDistDir(distDir);
