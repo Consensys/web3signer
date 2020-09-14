@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.slashingprotection;
 
 public class SlashingProtectionFactory {
 
-  public static SlashingProtection createSlashingProtection() {
-    return new DbSlashingProtection();
+  public static SlashingProtection createSlashingProtection(final ValidatorsDao validatorsDao) {
+    return new DbSlashingProtection(validatorsDao);
   }
 }

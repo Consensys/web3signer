@@ -12,12 +12,18 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import java.util.List;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class DbSlashingProtection implements SlashingProtection {
 
-  public DbSlashingProtection() {}
+  private ValidatorsDao validatorsDao;
+
+  public DbSlashingProtection(final ValidatorsDao validatorsDao) {
+    this.validatorsDao = validatorsDao;
+  }
 
   @Override
   public boolean maySignAttestation(
@@ -32,5 +38,10 @@ public class DbSlashingProtection implements SlashingProtection {
   public boolean maySignBlock(
       final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
     return true;
+  }
+
+  @Override
+  public void registerValidators(final List<Bytes> validators) {
+    validatorsDao.registerValidators(validators);
   }
 }

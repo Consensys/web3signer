@@ -33,6 +33,9 @@ public class SignerConfiguration {
   private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
   private final String mode;
+  private final String slashingProtectionDbUrl;
+  private final String slashingProtectionDbUsername;
+  private final String slashingProtectionDbPassword;
 
   public SignerConfiguration(
       final String hostname,
@@ -44,6 +47,9 @@ public class SignerConfiguration {
       final boolean metricsEnabled,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
+      final String slashingProtectionDbUrl,
+      final String slashingProtectionDbUsername,
+      final String slashingProtectionDbPassword,
       final String mode) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
@@ -54,6 +60,9 @@ public class SignerConfiguration {
     this.metricsEnabled = metricsEnabled;
     this.serverTlsOptions = serverTlsOptions;
     this.overriddenCaTrustStore = overriddenCaTrustStore;
+    this.slashingProtectionDbUrl = slashingProtectionDbUrl;
+    this.slashingProtectionDbUsername = slashingProtectionDbUsername;
+    this.slashingProtectionDbPassword = slashingProtectionDbPassword;
     this.mode = mode;
   }
 
@@ -103,5 +112,21 @@ public class SignerConfiguration {
 
   public String getMode() {
     return mode;
+  }
+
+  public boolean isSlashingProtectionEnabled() {
+    return !slashingProtectionDbUrl.isEmpty();
+  }
+
+  public String getSlashingProtectionDbUrl() {
+    return slashingProtectionDbUrl;
+  }
+
+  public String getSlashingProtectionDbUsername() {
+    return slashingProtectionDbUsername;
+  }
+
+  public String getSlashingProtectionDbPassword() {
+    return slashingProtectionDbPassword;
   }
 }

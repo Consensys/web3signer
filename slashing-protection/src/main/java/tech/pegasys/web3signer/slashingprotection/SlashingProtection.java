@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import java.util.List;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
@@ -21,4 +23,6 @@ public interface SlashingProtection {
       String publicKey, final Bytes signingRoot, UInt64 sourceEpoch, UInt64 targetEpoch);
 
   boolean maySignBlock(String publicKey, final Bytes signingRoot, UInt64 blockSlot);
+
+  void registerValidators(List<Bytes> validators);
 }

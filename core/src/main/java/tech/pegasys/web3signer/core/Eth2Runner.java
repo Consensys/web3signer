@@ -32,12 +32,16 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.slashingprotection.DbConnection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 import tech.pegasys.web3signer.slashingprotection.ValidatorsDao;
 
+import java.sql.Connection;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -52,15 +56,36 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
   final Optional<SlashingProtection> slashingProtection;
-  private ValidatorsDao validatorsDao;
 
   public Eth2Runner(
       final Config config,
-      final Optional<SlashingProtection> slashingProtection,
-      final ValidatorsDao validatorsDao) {
+      final boolean slashingProtectionEnabled,
+      final String slashingProtectionDbUrl,
+      final String slashingProtectionDbUser,
+      final String slashingProtectionDbPassword) {
     super(config);
-    this.slashingProtection = slashingProtection;
-    this.validatorsDao = validatorsDao;
+    this.slashingProtection =
+        createSlashingProtection(
+            slashingProtectionEnabled,
+            slashingProtectionDbUrl,
+            slashingProtectionDbUser,
+            slashingProtectionDbPassword);
+  }
+
+  private Optional<SlashingProtection> createSlashingProtection(
+      final boolean slashingProtectionEnabled,
+      final String slashingProtectionDbUrl,
+      final String slashingProtectionDbUser,
+      final String slashingProtectionDbPassword) {
+    if (slashingProtectionEnabled) {
+      final Supplier<Connection> connectionSupplier =
+          DbConnection.createConnectionSupplier(
+              slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
+      final ValidatorsDao validatorsDao = new ValidatorsDao(connectionSupplier);
+      return Optional.of(SlashingProtectionFactory.createSlashingProtection(validatorsDao));
+    } else {
+      return Optional.empty();
+    }
   }
 
   @Override
@@ -92,7 +117,8 @@ public class Eth2Runner extends Runner {
             .map(ArtifactSigner::getIdentifier)
             .map(Bytes::fromHexString)
             .collect(Collectors.toList());
-    validatorsDao.registerValidators(validators);
+    slashingProtection.ifPresent(
+        slashingProtection -> slashingProtection.registerValidators(validators));
 
     return DefaultArtifactSignerProvider.create(signers);
   }

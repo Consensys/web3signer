@@ -33,6 +33,9 @@ public class SignerConfigurationBuilder {
   private List<String> httpHostAllowList = emptyList();
   private TlsOptions serverTlsOptions;
   private TlsCertificateDefinition overriddenCaTrustStore;
+  private String slashingProtectionDbUrl = "";
+  private String slashingProtectionDbUsername = "";
+  private String slashingProtectionDbPassword = "";
   private String mode;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
@@ -80,6 +83,24 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withSlashingProtectionDbUrl(
+      final String slashingProtectionDbUrl) {
+    this.slashingProtectionDbUrl = slashingProtectionDbUrl;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withSlashingProtectionDbUsername(
+      final String slashingProtectionDbUsername) {
+    this.slashingProtectionDbUsername = slashingProtectionDbUsername;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withSlashingProtectionDbPassword(
+      final String slashingProtectionDbPassword) {
+    this.slashingProtectionDbPassword = slashingProtectionDbPassword;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -94,6 +115,9 @@ public class SignerConfigurationBuilder {
         metricsEnabled,
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),
+        slashingProtectionDbUrl,
+        slashingProtectionDbUsername,
+        slashingProtectionDbPassword,
         mode);
   }
 }

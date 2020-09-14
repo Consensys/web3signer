@@ -13,15 +13,6 @@
 package tech.pegasys.web3signer.commandline.subcommands;
 
 import tech.pegasys.web3signer.core.Eth2Runner;
-import tech.pegasys.web3signer.core.Runner;
-import tech.pegasys.web3signer.slashingprotection.DbConnection;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
-import tech.pegasys.web3signer.slashingprotection.ValidatorsDao;
-
-import java.sql.Connection;
-import java.util.Optional;
-import java.util.function.Supplier;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -63,17 +54,13 @@ public class Eth2SubCommand extends ModeSubCommand {
   private String slashingProtectionDbPassword;
 
   @Override
-  public Runner createRunner() {
-    final Supplier<Connection> connectionSupplier =
-        DbConnection.createConnectionSupplier(
-            slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
-    final ValidatorsDao validatorsDao = new ValidatorsDao(connectionSupplier);
-
-    final Optional<SlashingProtection> slashingProtection =
-        slashingProtectionEnabled
-            ? Optional.of(SlashingProtectionFactory.createSlashingProtection())
-            : Optional.empty();
-    return new Eth2Runner(config, slashingProtection, validatorsDao);
+  public Eth2Runner createRunner() {
+    return new Eth2Runner(
+        config,
+        slashingProtectionEnabled,
+        slashingProtectionDbUrl,
+        slashingProtectionDbUser,
+        slashingProtectionDbPassword);
   }
 
   @Override

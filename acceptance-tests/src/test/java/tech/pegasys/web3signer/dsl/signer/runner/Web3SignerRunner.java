@@ -125,6 +125,10 @@ public abstract class Web3SignerRunner {
 
     params.add(signerConfig.getMode());
 
+    if (signerConfig.getMode().equals("eth2")) {
+      params.addAll(createEth2Args());
+    }
+
     return params;
   }
 
@@ -150,6 +154,23 @@ public abstract class Web3SignerRunner {
         }
       }
     }
+    return params;
+  }
+
+  private Collection<String> createEth2Args() {
+    final List<String> params = Lists.newArrayList();
+    params.add("--Xslashing-protection-enabled");
+    params.add(Boolean.toString(signerConfig.isSlashingProtectionEnabled()));
+
+    if (signerConfig.isSlashingProtectionEnabled()) {
+      params.add("--slashing-protection-db-url");
+      params.add(signerConfig.getSlashingProtectionDbUrl());
+      params.add("--slashing-protection-db-username");
+      params.add(signerConfig.getSlashingProtectionDbUsername());
+      params.add("--slashing-protection-db-password");
+      params.add(signerConfig.getSlashingProtectionDbPassword());
+    }
+
     return params;
   }
 
