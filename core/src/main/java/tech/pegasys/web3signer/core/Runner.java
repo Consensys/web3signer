@@ -67,7 +67,6 @@ public abstract class Runner implements Runnable {
   private static final String CONTENT_TYPE_YAML = "text/x-yaml";
 
   public static final String OPENAPI_INDEX_RESOURCE = "openapi/index.html";
-  public static final String OPENAPI_SPEC_RESOURCE = "openapi/web3signer.yaml";
 
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
   protected static final String JSON_RPC_PATH = "/rpc/v1";
@@ -101,7 +100,7 @@ public abstract class Runner implements Runnable {
       metricsEndpoint.start(vertx);
 
       final ArtifactSignerProvider signerProvider = loadSigners(config, vertx, metricsSystem);
-      incSignerLoadCount(metricsSystem, signerProvider.availableIdentifiers().stream().count());
+      incSignerLoadCount(metricsSystem, signerProvider.availableIdentifiers().size());
 
       final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
       registerUpcheckRoute(routerFactory, errorHandler);
@@ -128,12 +127,14 @@ public abstract class Runner implements Runnable {
 
   protected abstract Router populateRouter(final Context context);
 
+  protected abstract String getOpenApiSpecResource();
+
   private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)
       throws InterruptedException, ExecutionException {
     final CompletableFuture<OpenAPI3RouterFactory> completableFuture = new CompletableFuture<>();
     OpenAPI3RouterFactory.create(
         vertx,
-        OPENAPI_SPEC_RESOURCE,
+        getOpenApiSpecResource(),
         ar -> {
           if (ar.succeeded()) {
             completableFuture.complete(ar.result());
@@ -173,7 +174,7 @@ public abstract class Runner implements Runnable {
 
   private void registerSwaggerUIRoute(final Router router) throws IOException {
     final URL indexResourceUrl = Resources.getResource(OPENAPI_INDEX_RESOURCE);
-    final URL openApiSpecUrl = Resources.getResource(OPENAPI_SPEC_RESOURCE);
+    final URL openApiSpecUrl = Resources.getResource(getOpenApiSpecResource());
     final String indexHtml = Resources.toString(indexResourceUrl, Charsets.UTF_8);
     final String openApiSpecYaml = Resources.toString(openApiSpecUrl, Charsets.UTF_8);
 
