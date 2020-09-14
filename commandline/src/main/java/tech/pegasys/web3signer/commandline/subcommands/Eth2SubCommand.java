@@ -47,19 +47,19 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Option(
       names = {"--slashing-db-url"},
-      description = "A jdbc url to use for storing slashing data",
+      description = "The jdbc url to use to connect to the slashing database",
       paramLabel = "<storage label>",
       arity = "1")
   private String slashingDbUrl;
 
   @Option(
       names = {"--slashing-db-username"},
-      description = "The username to use to connect to the slashing storage database")
+      description = "The username to use when connecting to the slashing database")
   private String slashingDbUser;
 
   @Option(
       names = {"--slashing-db-password"},
-      description = "The password to use when connecting to the slashing storage database")
+      description = "The password to use when connecting to the slashing database")
   private String slashingDbPassword;
 
   @Override

@@ -17,11 +17,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,13 +36,11 @@ public class ValidatorsDao {
     this.connectionSupplier = connectionSupplier;
   }
 
-  public void registerValidators(final Collection<String> validators) {
+  public void registerValidators(final List<Bytes> validators) {
     final Connection connection = connectionSupplier.get();
     try {
       connection.setAutoCommit(false);
-      final List<Bytes> publicKeys =
-          validators.stream().map(Bytes::fromHexString).collect(Collectors.toList());
-      final List<Bytes> missingValidators = retrieveMissingValidators(connection, publicKeys);
+      final List<Bytes> missingValidators = retrieveMissingValidators(connection, validators);
 
       final PreparedStatement insertStatement = connection.prepareStatement(INSERT_VALIDATOR);
       for (Bytes missingValidator : missingValidators) {

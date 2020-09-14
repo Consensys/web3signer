@@ -47,6 +47,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
@@ -86,8 +87,11 @@ public class Eth2Runner extends Runner {
             "yaml",
             new YamlSignerParser(List.of(artifactSignerFactory)));
 
-    final List<String> validators =
-        signers.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList());
+    final List<Bytes> validators =
+        signers.stream()
+            .map(ArtifactSigner::getIdentifier)
+            .map(Bytes::fromHexString)
+            .collect(Collectors.toList());
     validatorsDao.registerValidators(validators);
 
     return DefaultArtifactSignerProvider.create(signers);
