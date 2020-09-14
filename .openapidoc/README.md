@@ -14,7 +14,7 @@ The script performs following tasks:
 
 * Create `dist` directory (this folder will be pushed to `gh-pages` branch)
 * Read spec's version i.e. `info.version`.
-* Copy the spec to `dist` as `web3signer-<mode>-latest.yaml`.
+* Copy the specs to `dist` as `web3signer-<mode>-latest.yaml`.
 
 For release version, it performs following additional steps (the release version do not have `-dev-` in it)
 
@@ -56,5 +56,5 @@ Following environment variables can be used to override defaults
 Following should only be overridden if changing the project
 * `OA_VERSIONS_FILE_NAME` (default: `versions.json`)
 * `OA_DIST_DIR`           (default: `./dist`)
-* 
+* `OA_SPEC_DIR`          (default: `../core/build/resources/main/openapi`)
  
