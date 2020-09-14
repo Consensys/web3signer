@@ -63,6 +63,11 @@ public class Eth2Runner extends Runner {
   }
 
   @Override
+  protected String getOpenApiSpecResource() {
+    return "openapi/web3signer-eth2.yaml";
+  }
+
+  @Override
   protected ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
     final HashicorpConnectionFactory hashicorpConnectionFactory =

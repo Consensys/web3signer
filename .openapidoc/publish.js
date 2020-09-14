@@ -1,83 +1,42 @@
 const fs = require("fs");
-const path = require("path");
-const yaml = require("js-yaml");
 const fetch = require("node-fetch");
-const GitUrlParse = require("git-url-parse");
 const ghpages = require("gh-pages");
 
-const log = (...args) => console.log(...args); // eslint-disable-line no-console
+const config = require("./config.js");
 
-function getConfig() {
-  const repo = GitUrlParse(
-    process.env.OA_GIT_URL || "git@github.com:PegaSysEng/web3signer.git"
-  );
-  const branch = process.env.OA_GH_PAGES_BRANCH || "gh-pages";
-  const gitUserName = process.env.OA_GIT_USERNAME || "CircleCI Build";
-  const gitUserEmail = process.env.OA_GIT_EMAIL || "ci-build@consensys.net";
-  const specPath =
-    process.env.OA_SPEC_PATH ||
-    "../core/build/resources/main/openapi/web3signer.yaml";
-  const specVersion = yaml.safeLoad(fs.readFileSync(specPath, "utf8")).info
-    .version;
-  const isReleaseVersion = !specVersion.includes("-dev-"); // gradle build puts -dev- for snapshot version
-  const specFileNamePrefix = path.parse(specPath).name;
-  const specFileNameExtension = path.extname(specPath);
-  const versionsFileName = process.env.OA_VERSIONS_FILE_NAME || "versions.json";
-  const versionsFileUrl = `https://${repo.source}/${repo.owner}/${repo.name}/raw/${branch}/${versionsFileName}`;
-  const distDir = process.env.OA_DIST_DIR || "./dist";
-  const versionsFileDist = path.join(distDir, versionsFileName);
-  return {
-    spec: {
-      path: specPath,
-      version: specVersion,
-      isReleaseVersion: isReleaseVersion,
-      latestDist: path.join(
-        distDir,
-        `${specFileNamePrefix}-latest${specFileNameExtension}`
-      ),
-      releaseDist: path.join(
-        distDir,
-        `${specFileNamePrefix}-${specVersion}${specFileNameExtension}`
-      ),
-    },
-    distDir,
-    versions: {
-      url: versionsFileUrl,
-      dist: versionsFileDist,
-    },
-    ghPagesConfig: {
-      add: true, // allows gh-pages module to keep remote files
-      branch: branch,
-      repo: repo.href,
-      user: {
-        name: gitUserName,
-        email: gitUserEmail,
-      },
-      message: `[skip ci] OpenAPI Publish ${specVersion}`,
-    },
-  };
-}
+const log = (...args) => console.log(...args); // eslint-disable-line no-console
 
 /**
  * Main function to prepare and publish openapi spec to gh-pages branch
  */
 async function main() {
-  const config = getConfig();
-  const { distDir, spec, versions, ghPagesConfig } = config;
+  const cfg = config.getConfig();
+  const { distDir, specs, versions, ghPagesConfig } = cfg;
   try {
     prepareDistDir(distDir);
-    copySpecFileToDist(spec);
 
-    if (spec.isReleaseVersion) {
+    specs.forEach(function (spec) {
+      copySpecFileToDist(spec);
+    });
+
+    if (specs[0].isReleaseVersion) {
       const versionsJson = await fetchVersions(versions.url);
-      const updatedVersionsJson = updateVersions(versionsJson, spec.version);
+      const updatedVersionsJson = updateVersions(
+        versionsJson,
+        specs[0].version
+      );
       saveVersionsJson(updatedVersionsJson, versions.dist);
     }
+
+    log("Publishing following files: ");
+    fs.readdirSync(distDir).forEach((file) => {
+      log(file);
+    });
 
     cleanGhPagesCache();
     await publishToGHPages(distDir, ghPagesConfig);
     log(
-      `OpenAPI spec [${spec.version}] published to [${ghPagesConfig.branch}] using user [${ghPagesConfig.user.name}]`
+      `OpenAPI specs [${specs[0].version}] published to [${ghPagesConfig.branch}] using user [${ghPagesConfig.user.name}]`
     );
   } catch (err) {
     log(`ERROR: OpenAPI spec failed to publish: ${err.message}`);

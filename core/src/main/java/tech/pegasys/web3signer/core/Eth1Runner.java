@@ -48,6 +48,11 @@ public class Eth1Runner extends Runner {
   }
 
   @Override
+  protected String getOpenApiSpecResource() {
+    return "openapi/web3signer-eth1.yaml";
+  }
+
+  @Override
   protected ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
