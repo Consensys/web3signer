@@ -51,6 +51,11 @@ public class ValidatorsDao {
       connection.commit();
     } catch (SQLException e) {
       LOG.error("Failed registering validators. Check slashing database is correctly setup.", e);
+      try {
+        connection.rollback();
+      } catch (SQLException re) {
+        LOG.error("Rollback of validators failed", re);
+      }
       throw new IllegalStateException("Failed registering validators", e);
     }
   }
