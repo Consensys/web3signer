@@ -12,9 +12,25 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-public class SlashingProtectionFactory {
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 
-  public static SlashingProtection createSlashingProtection() {
-    return new DbSlashingProtection();
+public class DbSlashingProtection implements SlashingProtection {
+
+  public DbSlashingProtection() {}
+
+  @Override
+  public boolean maySignAttestation(
+      final String publicKey,
+      final Bytes signingRoot,
+      final UInt64 sourceEpoch,
+      final UInt64 targetEpoch) {
+    return false;
+  }
+
+  @Override
+  public boolean maySignBlock(
+      final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
+    return false;
   }
 }

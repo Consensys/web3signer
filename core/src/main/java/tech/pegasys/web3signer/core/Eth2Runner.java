@@ -33,10 +33,12 @@ import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.ValidatorsDao;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
@@ -49,10 +51,15 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
   final Optional<SlashingProtection> slashingProtection;
+  private ValidatorsDao validatorsDao;
 
-  public Eth2Runner(final Config config, final Optional<SlashingProtection> slashingProtection) {
+  public Eth2Runner(
+      final Config config,
+      final Optional<SlashingProtection> slashingProtection,
+      final ValidatorsDao validatorsDao) {
     super(config);
     this.slashingProtection = slashingProtection;
+    this.validatorsDao = validatorsDao;
   }
 
   @Override
@@ -73,6 +80,10 @@ public class Eth2Runner extends Runner {
             config.getKeyConfigPath(),
             "yaml",
             new YamlSignerParser(List.of(artifactSignerFactory)));
+
+    final List<String> validators =
+        signers.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList());
+    validatorsDao.registerValidators(validators);
 
     return DefaultArtifactSignerProvider.create(signers);
   }

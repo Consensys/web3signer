@@ -15,18 +15,16 @@ jar {
 }
 
 dependencies {
-
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'commons-io:commons-io'
   implementation 'commons-lang:commons-lang'
-
   implementation 'org.apache.tuweni:tuweni-units'
-
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
-
   implementation 'org.hyperledger.besu.internal:metrics-core'
+  implementation 'com.zaxxer:HikariCP'
+  implementation 'org.postgresql:postgresql'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 

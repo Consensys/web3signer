@@ -14,10 +14,14 @@ package tech.pegasys.web3signer.commandline.subcommands;
 
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.slashingprotection.DbConnection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
+import tech.pegasys.web3signer.slashingprotection.ValidatorsDao;
 
+import java.sql.Connection;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -41,13 +45,34 @@ public class Eth2SubCommand extends ModeSubCommand {
       arity = "1")
   private boolean slashingProtectionEnabled = false;
 
+  @Option(
+      names = {"--slashing-db-url"},
+      description = "A jdbc url to use for storing slashing data",
+      paramLabel = "<storage label>",
+      arity = "1")
+  private String slashingDbUrl;
+
+  @Option(
+      names = {"--slashing-db-username"},
+      description = "The username to use to connect to the slashing storage database")
+  private String slashingDbUser;
+
+  @Option(
+      names = {"--slashing-db-password"},
+      description = "The password to use when connecting to the slashing storage database")
+  private String slashingDbPassword;
+
   @Override
   public Runner createRunner() {
+    final Supplier<Connection> connectionSupplier =
+        DbConnection.createConnectionSupplier(slashingDbUrl, slashingDbUser, slashingDbPassword);
+    final ValidatorsDao validatorsDao = new ValidatorsDao(connectionSupplier);
+
     final Optional<SlashingProtection> slashingProtection =
         slashingProtectionEnabled
             ? Optional.of(SlashingProtectionFactory.createSlashingProtection())
             : Optional.empty();
-    return new Eth2Runner(config, slashingProtection);
+    return new Eth2Runner(config, slashingProtection, validatorsDao);
   }
 
   @Override
