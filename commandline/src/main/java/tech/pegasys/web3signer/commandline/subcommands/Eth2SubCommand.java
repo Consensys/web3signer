@@ -46,7 +46,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Option(
       names = {"--slashing-protection-db-username"},
       description = "The username to use when connecting to the slashing protection database")
-  private String slashingProtectionDbUser;
+  private String slashingProtectionDbUsername;
 
   @Option(
       names = {"--slashing-protection-db-password"},
@@ -59,7 +59,7 @@ public class Eth2SubCommand extends ModeSubCommand {
         config,
         slashingProtectionEnabled,
         slashingProtectionDbUrl,
-        slashingProtectionDbUser,
+        slashingProtectionDbUsername,
         slashingProtectionDbPassword);
   }
 
