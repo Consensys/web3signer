@@ -36,7 +36,6 @@ import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
-import tech.pegasys.web3signer.slashingprotection.ValidatorsDao;
 
 import java.util.Collection;
 import java.util.List;
@@ -78,11 +77,10 @@ public class Eth2Runner extends Runner {
       final String slashingProtectionDbUser,
       final String slashingProtectionDbPassword) {
     if (slashingProtectionEnabled) {
-      final Jdbi connection =
+      final Jdbi jdbi =
           DbConnection.createConnection(
               slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
-      final ValidatorsDao validatorsDao = new ValidatorsDao(connection);
-      return Optional.of(SlashingProtectionFactory.createSlashingProtection(validatorsDao));
+      return Optional.of(SlashingProtectionFactory.createSlashingProtection(jdbi));
     } else {
       return Optional.empty();
     }

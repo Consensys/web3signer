@@ -12,17 +12,20 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.slashingprotection.ValidatorsDao.Validator;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.jdbi.v3.core.Jdbi;
 
 public class DbSlashingProtection implements SlashingProtection {
+  private final Jdbi jdbi;
 
-  private ValidatorsDao validatorsDao;
-
-  public DbSlashingProtection(final ValidatorsDao validatorsDao) {
-    this.validatorsDao = validatorsDao;
+  public DbSlashingProtection(final Jdbi jdbi) {
+    this.jdbi = jdbi;
   }
 
   @Override
@@ -42,6 +45,14 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public void registerValidators(final List<Bytes> validators) {
-    validatorsDao.registerValidators(validators);
+    jdbi.useExtension(
+        ValidatorsDao.class,
+        dao -> {
+          final List<Validator> registeredValidators = dao.retrieveRegisteredValidators(validators);
+          final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
+          registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
+
+          dao.registerValidators(validatorsMissingFromDb);
+        });
   }
 }

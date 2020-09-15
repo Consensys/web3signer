@@ -12,51 +12,44 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.statement.PreparedBatch;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.transaction.Transaction;
 
-public class ValidatorsDao {
-  private static final String SELECT_VALIDATOR =
-      "SELECT id, public_key FROM validators WHERE public_key IN (<listOfPublicKeys>)";
-  private static final String INSERT_VALIDATOR = "INSERT INTO validators (public_key) VALUES (?)";
-  private final Jdbi jdbi;
+public interface ValidatorsDao {
 
-  public ValidatorsDao(final Jdbi jdbi) {
-    this.jdbi = jdbi;
-  }
+  @SqlBatch("INSERT INTO validators (public_key) VALUES (?)")
+  @Transaction
+  void registerValidators(final List<Bytes> validators);
 
-  public void registerValidators(final List<Bytes> validators) {
-    jdbi.useTransaction(
-        handle -> {
-          final List<Bytes> validatorsMissingFromDb =
-              retrieveValidatorsMissingFromDb(handle, validators);
-          final PreparedBatch batch = handle.prepareBatch(INSERT_VALIDATOR);
-          for (Bytes missingValidator : validatorsMissingFromDb) {
-            batch.bind(0, missingValidator.toArrayUnsafe()).add();
-          }
-          batch.execute();
-        });
-  }
+  @SqlQuery("SELECT id, public_key FROM validators WHERE public_key IN (<publicKeys>)")
+  @RegisterBeanMapper(Validator.class)
+  List<Validator> retrieveRegisteredValidators(
+      @BindList("publicKeys") final List<Bytes> publicKeys);
 
-  private List<Bytes> retrieveValidatorsMissingFromDb(
-      final Handle handle, final List<Bytes> publicKeys) {
-    final List<Bytes> validatorKeysInDb =
-        handle
-            .createQuery(SELECT_VALIDATOR)
-            .bindList(
-                "listOfPublicKeys",
-                publicKeys.stream().map(Bytes::toArrayUnsafe).collect(Collectors.toList()))
-            .map((rs, ctx) -> Bytes.wrap(rs.getBytes(2)))
-            .list();
+  class Validator {
+    private int id;
+    private Bytes publicKey;
 
-    final List<Bytes> missingValidators = new ArrayList<>(publicKeys);
-    missingValidators.removeAll(validatorKeysInDb);
-    return missingValidators;
+    public int getId() {
+      return id;
+    }
+
+    public Bytes getPublicKey() {
+      return publicKey;
+    }
+
+    public void setId(final int id) {
+      this.id = id;
+    }
+
+    public void setPublicKey(final Bytes publicKey) {
+      this.publicKey = publicKey;
+    }
   }
 }
