@@ -35,7 +35,7 @@ public interface ValidatorsDao {
   @Transaction
   void registerValidators(final List<Bytes> validators);
 
-  @SqlQuery("SELECT id, public_key FROM validators WHERE public_key IN (<publicKeys>)")
+  @SqlQuery("SELECT public_key FROM validators WHERE public_key IN (<publicKeys>)")
   @Transaction
   List<Bytes> retrieveRegisteredValidators(@BindList("publicKeys") final List<Bytes> publicKeys);
 }
