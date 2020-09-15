@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -25,9 +26,9 @@ public interface ValidatorsDao {
 
   @Transaction
   default void registerMissingValidators(final List<Bytes> validators) {
-    final List<Bytes> registeredValidators = retrieveRegisteredValidators(validators);
+    final List<Validator> registeredValidators = retrieveValidators(validators);
     final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
-    registeredValidators.removeAll(validatorsMissingFromDb);
+    registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
     registerValidators(validatorsMissingFromDb);
   }
 
@@ -35,7 +36,8 @@ public interface ValidatorsDao {
   @Transaction
   void registerValidators(final List<Bytes> validators);
 
-  @SqlQuery("SELECT public_key FROM validators WHERE public_key IN (<publicKeys>)")
+  @SqlQuery("SELECT id, public_key FROM validators WHERE public_key IN (<publicKeys>) ORDER BY id")
+  @RegisterBeanMapper(Validator.class)
   @Transaction
-  List<Bytes> retrieveRegisteredValidators(@BindList("publicKeys") final List<Bytes> publicKeys);
+  List<Validator> retrieveValidators(@BindList("publicKeys") final List<Bytes> publicKeys);
 }

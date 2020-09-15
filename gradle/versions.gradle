@@ -103,6 +103,10 @@ dependencyManagement {
     dependencySet(group: 'org.jdbi', version: '3.14.4') {
       entry 'jdbi3-core'
       entry 'jdbi3-sqlobject'
+      entry 'jdbi3-testing'
     }
+
+    dependency 'com.opentable.components:otj-pg-embedded:0.11.3'
+    dependency 'org.flywaydb:flyway-core:6.1.1'
   }
 }
