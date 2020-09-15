@@ -99,5 +99,7 @@ dependencyManagement {
 
     dependency 'com.zaxxer:HikariCP:3.4.5'
     dependency 'org.postgresql:postgresql:42.2.16.jre7'
+
+    dependency 'org.jdbi:jdbi3-core:3.14.4'
   }
 }

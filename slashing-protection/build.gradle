@@ -25,6 +25,7 @@ dependencies {
   implementation 'org.hyperledger.besu.internal:metrics-core'
   implementation 'com.zaxxer:HikariCP'
   implementation 'org.postgresql:postgresql'
+  implementation 'org.jdbi:jdbi3-core'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 

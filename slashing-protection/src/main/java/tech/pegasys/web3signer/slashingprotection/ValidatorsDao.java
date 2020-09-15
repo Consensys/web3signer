@@ -12,81 +12,51 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.Jdbi;
+import org.jdbi.v3.core.statement.PreparedBatch;
 
 public class ValidatorsDao {
-  private static final Logger LOG = LogManager.getLogger();
   private static final String SELECT_VALIDATOR =
-      "SELECT id, public_key FROM validators WHERE public_key IN (%s)";
+      "SELECT id, public_key FROM validators WHERE public_key IN (<listOfPublicKeys>)";
   private static final String INSERT_VALIDATOR = "INSERT INTO validators (public_key) VALUES (?)";
-  private final Supplier<Connection> connectionSupplier;
+  private final Jdbi jdbi;
 
-  public ValidatorsDao(final Supplier<Connection> connectionSupplier) {
-    this.connectionSupplier = connectionSupplier;
+  public ValidatorsDao(final Jdbi jdbi) {
+    this.jdbi = jdbi;
   }
 
   public void registerValidators(final List<Bytes> validators) {
-    final Connection connection = connectionSupplier.get();
-    try {
-      connection.setAutoCommit(false);
-      final List<Bytes> validatorsMissingFromDb =
-          retrieveValidatorsMissingFromDb(connection, validators);
-
-      final PreparedStatement insertStatement = connection.prepareStatement(INSERT_VALIDATOR);
-      for (Bytes missingValidator : validatorsMissingFromDb) {
-        insertStatement.setBytes(1, missingValidator.toArrayUnsafe());
-        insertStatement.addBatch();
-      }
-      insertStatement.executeBatch();
-      connection.commit();
-    } catch (final SQLException e) {
-      LOG.error("Failed registering validators. Check slashing database is correctly setup.", e);
-      try {
-        connection.rollback();
-      } catch (final SQLException re) {
-        LOG.error("Rollback of validator registration failed", re);
-      }
-      throw new IllegalStateException("Failed registering validators", e);
-    } finally {
-      try {
-        connection.close();
-      } catch (SQLException e) {
-        LOG.error("Failed closing db connection", e);
-      }
-    }
+    jdbi.useTransaction(
+        handle -> {
+          final List<Bytes> validatorsMissingFromDb =
+              retrieveValidatorsMissingFromDb(handle, validators);
+          final PreparedBatch batch = handle.prepareBatch(INSERT_VALIDATOR);
+          for (Bytes missingValidator : validatorsMissingFromDb) {
+            batch.bind(0, missingValidator.toArrayUnsafe()).add();
+          }
+          batch.execute();
+        });
   }
 
   private List<Bytes> retrieveValidatorsMissingFromDb(
-      final Connection connection, final List<Bytes> publicKeys) throws SQLException {
-    final String inSql = String.join(",", Collections.nCopies(publicKeys.size(), "?"));
-    final String sql = String.format(SELECT_VALIDATOR, inSql);
-    final List<Bytes> validatorIds = new ArrayList<>();
-
-    try (final PreparedStatement selectStatement = connection.prepareStatement(sql)) {
-      for (int i = 0; i < publicKeys.size(); i++) {
-        selectStatement.setBytes(i + 1, publicKeys.get(i).toArrayUnsafe());
-      }
-
-      try (ResultSet resultSet = selectStatement.executeQuery()) {
-        while (resultSet.next()) {
-          validatorIds.add(Bytes.wrap(resultSet.getBytes(2)));
-        }
-      }
-    }
+      final Handle handle, final List<Bytes> publicKeys) {
+    final List<Bytes> validatorKeysInDb =
+        handle
+            .createQuery(SELECT_VALIDATOR)
+            .bindList(
+                "listOfPublicKeys",
+                publicKeys.stream().map(Bytes::toArrayUnsafe).collect(Collectors.toList()))
+            .map((rs, ctx) -> Bytes.wrap(rs.getBytes(2)))
+            .list();
 
     final List<Bytes> missingValidators = new ArrayList<>(publicKeys);
-    missingValidators.removeAll(validatorIds);
+    missingValidators.removeAll(validatorKeysInDb);
     return missingValidators;
   }
 }

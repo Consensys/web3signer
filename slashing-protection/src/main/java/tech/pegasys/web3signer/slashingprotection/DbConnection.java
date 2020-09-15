@@ -12,25 +12,17 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.function.Supplier;
 import javax.sql.DataSource;
 
 import com.zaxxer.hikari.HikariDataSource;
+import org.jdbi.v3.core.Jdbi;
 
 public class DbConnection {
 
-  public static Supplier<Connection> createConnectionSupplier(
+  public static Jdbi createConnection(
       final String jdbcUrl, final String username, final String password) {
     final DataSource datasource = createDataSource(jdbcUrl, username, password);
-    return () -> {
-      try {
-        return datasource.getConnection();
-      } catch (final SQLException e) {
-        throw new IllegalStateException("Unable to connect to slashing database", e);
-      }
-    };
+    return Jdbi.create(datasource);
   }
 
   private static DataSource createDataSource(

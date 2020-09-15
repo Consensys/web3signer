@@ -38,11 +38,9 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 import tech.pegasys.web3signer.slashingprotection.ValidatorsDao;
 
-import java.sql.Connection;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -54,6 +52,7 @@ import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.jdbi.v3.core.Jdbi;
 
 public class Eth2Runner extends Runner {
   final Optional<SlashingProtection> slashingProtection;
@@ -79,10 +78,10 @@ public class Eth2Runner extends Runner {
       final String slashingProtectionDbUser,
       final String slashingProtectionDbPassword) {
     if (slashingProtectionEnabled) {
-      final Supplier<Connection> connectionSupplier =
-          DbConnection.createConnectionSupplier(
+      final Jdbi connection =
+          DbConnection.createConnection(
               slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
-      final ValidatorsDao validatorsDao = new ValidatorsDao(connectionSupplier);
+      final ValidatorsDao validatorsDao = new ValidatorsDao(connection);
       return Optional.of(SlashingProtectionFactory.createSlashingProtection(validatorsDao));
     } else {
       return Optional.empty();
