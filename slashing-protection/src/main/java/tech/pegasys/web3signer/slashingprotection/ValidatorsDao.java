@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -23,33 +23,19 @@ import org.jdbi.v3.sqlobject.transaction.Transaction;
 
 public interface ValidatorsDao {
 
+  @Transaction
+  default void registerMissingValidators(final List<Bytes> validators) {
+    final List<Bytes> registeredValidators = retrieveRegisteredValidators(validators);
+    final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
+    registeredValidators.removeAll(validatorsMissingFromDb);
+    registerValidators(validatorsMissingFromDb);
+  }
+
   @SqlBatch("INSERT INTO validators (public_key) VALUES (?)")
   @Transaction
   void registerValidators(final List<Bytes> validators);
 
   @SqlQuery("SELECT id, public_key FROM validators WHERE public_key IN (<publicKeys>)")
-  @RegisterBeanMapper(Validator.class)
-  List<Validator> retrieveRegisteredValidators(
-      @BindList("publicKeys") final List<Bytes> publicKeys);
-
-  class Validator {
-    private int id;
-    private Bytes publicKey;
-
-    public int getId() {
-      return id;
-    }
-
-    public Bytes getPublicKey() {
-      return publicKey;
-    }
-
-    public void setId(final int id) {
-      this.id = id;
-    }
-
-    public void setPublicKey(final Bytes publicKey) {
-      this.publicKey = publicKey;
-    }
-  }
+  @Transaction
+  List<Bytes> retrieveRegisteredValidators(@BindList("publicKeys") final List<Bytes> publicKeys);
 }
