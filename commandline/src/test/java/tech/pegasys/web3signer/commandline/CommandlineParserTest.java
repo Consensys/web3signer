@@ -101,6 +101,19 @@ class CommandlineParserTest {
         "idle-connection-timeout-seconds", config::getIdleConnectionTimeoutSeconds, 30);
   }
 
+  @Test
+  void includingASingleAzureKeyVaultParameterThenRequiresAll() {
+    String cmdline = validBaseCommandOptions();
+    cmdline =
+        cmdline
+            + "--azure-vault-name=vault --azure-client-id=client_id --azure-tenant-id=tenant_id";
+
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains("Missing required argument(s): --azure-client-secret");
+  }
+
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(
       final String paramToRemove, final Supplier<T> actualValueGetter, final T expectedValue) {
 

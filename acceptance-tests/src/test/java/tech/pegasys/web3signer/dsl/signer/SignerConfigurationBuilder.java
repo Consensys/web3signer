@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.dsl.signer;
 
 import static java.util.Collections.emptyList;
 
+import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
@@ -34,6 +35,7 @@ public class SignerConfigurationBuilder {
   private TlsOptions serverTlsOptions;
   private TlsCertificateDefinition overriddenCaTrustStore;
   private String mode;
+  private AzureKeyVaultParameters azureKeyVaultParameters;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -80,6 +82,12 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withAzureKeyVaultParameters(
+      final AzureKeyVaultParameters azureKeyVaultParameters) {
+    this.azureKeyVaultParameters = azureKeyVaultParameters;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -92,6 +100,7 @@ public class SignerConfigurationBuilder {
         metricsPort,
         metricsHostAllowList,
         metricsEnabled,
+        Optional.ofNullable(azureKeyVaultParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),
         mode);
