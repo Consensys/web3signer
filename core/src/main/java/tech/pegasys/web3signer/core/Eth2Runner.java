@@ -59,6 +59,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
+
   final Optional<SlashingProtection> slashingProtection;
 
   private static final Logger LOG = LogManager.getLogger();
@@ -122,42 +123,48 @@ public class Eth2Runner extends Runner {
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
 
     final List<ArtifactSigner> signers = Lists.newArrayList();
-    if (config.getKeyConfigPath() != null) {
-      final HashicorpConnectionFactory hashicorpConnectionFactory =
-          new HashicorpConnectionFactory(vertx);
+    final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory(vertx);
 
-      final AbstractArtifactSignerFactory artifactSignerFactory =
-          new BlsArtifactSignerFactory(
-              config.getKeyConfigPath(),
-              metricsSystem,
-              hashicorpConnectionFactory,
-              BlsArtifactSigner::new);
+    final AbstractArtifactSignerFactory artifactSignerFactory =
+        new BlsArtifactSignerFactory(
+            config.getKeyConfigPath(),
+            metricsSystem,
+            hashicorpConnectionFactory,
+            BlsArtifactSigner::new);
 
-      signers.addAll(
-          SignerLoader.load(
-              config.getKeyConfigPath(),
-              "yaml",
-              new YamlSignerParser(List.of(artifactSignerFactory))));
-    }
+    signers.addAll(
+        SignerLoader.load(
+            config.getKeyConfigPath(),
+            "yaml",
+            new YamlSignerParser(List.of(artifactSignerFactory))));
 
     if (config.getAzureKeyVaultParameters() != null) {
       final AzureKeyVaultParameters params = config.getAzureKeyVaultParameters();
-      final AzureKeyVault keyVault =
-          new AzureKeyVault(
-              params.getClientlId(),
-              params.getClientSecret(),
-              params.getTenantId(),
-              params.getKeyVaultName());
 
-      signers.addAll(loadAzureSigners(keyVault));
+      signers.addAll(loadAzureSigners(params));
     }
 
     return DefaultArtifactSignerProvider.create(signers);
   }
 
-  final List<ArtifactSigner> loadAzureSigners(final AzureKeyVault keyVault) {
-    return keyVault
-        .getAvailableSecrets()
+  final List<ArtifactSigner> loadAzureSigners(final AzureKeyVaultParameters params) {
+    final AzureKeyVault keyVault =
+        new AzureKeyVault(
+            params.getClientlId(),
+            params.getClientSecret(),
+            params.getTenantId(),
+            params.getKeyVaultName());
+
+    final List<String> secretNames;
+    try {
+      secretNames = keyVault.getAvailableSecrets();
+    } catch (final Exception e) {
+      throw new InitializationException(
+          "Failed to connect to an Azure Keyvault with provided configuration.");
+    }
+
+    return secretNames
         .parallelStream()
         .map(
             secretName -> {

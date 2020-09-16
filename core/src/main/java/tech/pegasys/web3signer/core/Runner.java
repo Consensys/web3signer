@@ -112,7 +112,7 @@ public abstract class Runner implements Runnable {
     } catch (final Throwable e) {
       vertx.close();
       metricsEndpoint.stop();
-      LOG.error("Failed to create Http Server", e);
+      LOG.error("Failed to initialised application", e);
     }
   }
 
