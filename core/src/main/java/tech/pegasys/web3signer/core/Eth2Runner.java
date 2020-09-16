@@ -148,32 +148,35 @@ public class Eth2Runner extends Runner {
               params.getClientSecret(),
               params.getTenantId(),
               params.getKeyVaultName());
-      signers.addAll(
-          keyVault
-              .getAvailableSecrets()
-              .parallelStream()
-              .map(
-                  secretName -> {
-                    final Optional<String> secret = keyVault.fetchSecret(secretName);
-                    if (secret.isPresent()) {
-                      try {
-                        final Bytes privateKeyBytes = Bytes.fromHexString(secret.get());
-                        final BLSKeyPair keyPair =
-                            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
-                        return new BlsArtifactSigner(keyPair);
-                      } catch (final Exception e) {
-                        LOG.error(
-                            "Failed to load secret named {} from azure key vault.", secretName);
-                        return null;
-                      }
-                    }
-                    return null;
-                  })
-              .filter(Objects::nonNull)
-              .collect(Collectors.toList()));
+
+      signers.addAll(loadAzureSigners(keyVault));
     }
 
     return DefaultArtifactSignerProvider.create(signers);
+  }
+
+  final List<ArtifactSigner> loadAzureSigners(final AzureKeyVault keyVault) {
+    return keyVault
+        .getAvailableSecrets()
+        .parallelStream()
+        .map(
+            secretName -> {
+              final Optional<String> secret = keyVault.fetchSecret(secretName);
+              if (secret.isPresent()) {
+                try {
+                  final Bytes privateKeyBytes = Bytes.fromHexString(secret.get());
+                  final BLSKeyPair keyPair =
+                      new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
+                  return new BlsArtifactSigner(keyPair);
+                } catch (final Exception e) {
+                  LOG.error("Failed to load secret named {} from azure key vault.", secretName);
+                  return null;
+                }
+              }
+              return null;
+            })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 
   private String formatBlsSignature(final BlsArtifactSignature signature) {

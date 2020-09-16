@@ -53,6 +53,6 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     startSigner(configBuilder.build());
 
     final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY))
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
   }
 }

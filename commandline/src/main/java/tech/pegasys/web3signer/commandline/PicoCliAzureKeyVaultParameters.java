@@ -42,8 +42,7 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
   @Option(
       names = {"--azure-client-secret"},
-      description =
-          "Path to a file containing the secret used to access the vault (along with client-id)",
+      description = "The secret used to access the vault (along with client-id)",
       required = true,
       paramLabel = "<CLIENT_SECRET>")
   private String clientSecret;
