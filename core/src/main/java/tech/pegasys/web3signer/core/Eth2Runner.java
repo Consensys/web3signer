@@ -17,7 +17,11 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
+import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
@@ -35,17 +39,20 @@ import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
@@ -108,21 +115,47 @@ public class Eth2Runner extends Runner {
 
   private ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
-    final HashicorpConnectionFactory hashicorpConnectionFactory =
-        new HashicorpConnectionFactory(vertx);
 
-    final AbstractArtifactSignerFactory artifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            BlsArtifactSigner::new);
+    final List<ArtifactSigner> signers = Lists.newArrayList();
+    if (config.getKeyConfigPath() != null) {
+      final HashicorpConnectionFactory hashicorpConnectionFactory =
+          new HashicorpConnectionFactory(vertx);
 
-    final Collection<ArtifactSigner> signers =
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(artifactSignerFactory)));
+      final AbstractArtifactSignerFactory artifactSignerFactory =
+          new BlsArtifactSignerFactory(
+              config.getKeyConfigPath(),
+              metricsSystem,
+              hashicorpConnectionFactory,
+              BlsArtifactSigner::new);
+
+      signers.addAll(
+          SignerLoader.load(
+              config.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(List.of(artifactSignerFactory))));
+    }
+
+    if (config.getAzureKeyVaultParameters() != null) {
+      final AzureKeyVaultParameters params = config.getAzureKeyVaultParameters();
+      final AzureKeyVault keyVault =
+          new AzureKeyVault(
+              params.getClientlId(),
+              params.getClientSecret(),
+              params.getTenantId(),
+              params.getKeyVaultName());
+      signers.addAll(
+          keyVault
+              .getAvailableSecrets()
+              .parallelStream()
+              .map(
+                  secret -> {
+                    final Bytes privateKeyBytes = Bytes.fromHexString(secret);
+                    final BLSKeyPair keyPair =
+                        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
+                    return new BlsArtifactSigner(keyPair);
+                  })
+              .collect(Collectors.toList()));
+    }
 
     return DefaultArtifactSignerProvider.create(signers);
   }
