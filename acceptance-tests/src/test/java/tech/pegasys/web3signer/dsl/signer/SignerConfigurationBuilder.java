@@ -82,7 +82,8 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withAzureKeyVaultParameters(final AzureKeyVaultParameters azureKeyVaultParameters) {
+  public SignerConfigurationBuilder withAzureKeyVaultParameters(
+      final AzureKeyVaultParameters azureKeyVaultParameters) {
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     return this;
   }

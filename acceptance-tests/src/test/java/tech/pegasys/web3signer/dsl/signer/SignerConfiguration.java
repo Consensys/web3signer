@@ -101,7 +101,7 @@ public class SignerConfiguration {
     return overriddenCaTrustStore;
   }
 
-  public Optional<AzureKeyVaultParameters> get AzureKeyVaultParameters() {
+  public Optional<AzureKeyVaultParameters> getAzureKeyVaultParameters() {
     return azureKeyVaultParameters;
   }
 

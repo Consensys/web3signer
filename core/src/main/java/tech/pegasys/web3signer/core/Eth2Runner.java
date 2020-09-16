@@ -40,6 +40,7 @@ import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -51,12 +52,16 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
   final Optional<SlashingProtection> slashingProtection;
+
+  private static final Logger LOG = LogManager.getLogger();
 
   public Eth2Runner(final Config config, final Optional<SlashingProtection> slashingProtection) {
     super(config);
@@ -148,12 +153,23 @@ public class Eth2Runner extends Runner {
               .getAvailableSecrets()
               .parallelStream()
               .map(
-                  secret -> {
-                    final Bytes privateKeyBytes = Bytes.fromHexString(secret);
-                    final BLSKeyPair keyPair =
-                        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
-                    return new BlsArtifactSigner(keyPair);
+                  secretName -> {
+                    final Optional<String> secret = keyVault.fetchSecret(secretName);
+                    if (secret.isPresent()) {
+                      try {
+                        final Bytes privateKeyBytes = Bytes.fromHexString(secret.get());
+                        final BLSKeyPair keyPair =
+                            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
+                        return new BlsArtifactSigner(keyPair);
+                      } catch (final Exception e) {
+                        LOG.error(
+                            "Failed to load secret named {} from azure key vault.", secretName);
+                        return null;
+                      }
+                    }
+                    return null;
                   })
+              .filter(Objects::nonNull)
               .collect(Collectors.toList()));
     }
 
