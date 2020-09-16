@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.signer;
 
+import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
@@ -29,6 +30,7 @@ public class SignerConfiguration {
   private final Path keyStorePath;
   private final List<String> metricsHostAllowList;
   private final boolean metricsEnabled;
+  private final Optional<AzureKeyVaultParameters> azureKeyVaultParameters;
   private Optional<TlsOptions> serverTlsOptions;
   private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
@@ -42,6 +44,7 @@ public class SignerConfiguration {
       final int metricsPort,
       final List<String> metricsHostAllowList,
       final boolean metricsEnabled,
+      final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
       final String mode) {
@@ -52,6 +55,7 @@ public class SignerConfiguration {
     this.metricsPort = metricsPort;
     this.metricsHostAllowList = metricsHostAllowList;
     this.metricsEnabled = metricsEnabled;
+    this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.serverTlsOptions = serverTlsOptions;
     this.overriddenCaTrustStore = overriddenCaTrustStore;
     this.mode = mode;
@@ -95,6 +99,10 @@ public class SignerConfiguration {
 
   public Optional<TlsCertificateDefinition> getOverriddenCaTrustStore() {
     return overriddenCaTrustStore;
+  }
+
+  public Optional<AzureKeyVaultParameters> get AzureKeyVaultParameters() {
+    return azureKeyVaultParameters;
   }
 
   public boolean isMetricsDynamicPortAllocation() {
