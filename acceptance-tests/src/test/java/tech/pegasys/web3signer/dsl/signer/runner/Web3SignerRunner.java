@@ -159,7 +159,7 @@ public abstract class Web3SignerRunner {
 
   private Collection<String> createEth2Args() {
     final List<String> params = Lists.newArrayList();
-    params.add("--Xslashing-protection-enabled");
+    params.add("--slashing-protection-enabled");
     params.add(Boolean.toString(signerConfig.isSlashingProtectionEnabled()));
 
     if (signerConfig.isSlashingProtectionEnabled()) {
