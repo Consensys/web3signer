@@ -12,7 +12,13 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.Validator;
+import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -37,7 +43,32 @@ public class DbSlashingProtection implements SlashingProtection {
   @Override
   public boolean maySignBlock(
       final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
-    return true;
+    final Bytes publicKeyBytes = Bytes.fromHexString(publicKey);
+    final List<Validator> validators =
+        jdbi.withExtension(
+            ValidatorsDao.class, dao -> dao.retrieveValidators(List.of(publicKeyBytes)));
+    final Optional<Long> validatorId = validators.stream().findFirst().map(Validator::getId);
+
+    if (validatorId.isEmpty()) {
+      return false;
+    } else {
+      final long id = validatorId.get();
+      return jdbi.withExtension(
+          SignedBlocksDao.class,
+          dao -> {
+            final long slot = blockSlot.toLong();
+            final Optional<SignedBlock> existingBlock = dao.findExistingBlock(id, slot);
+
+            // same slot and signing_root is allowed for broadcasting previously signed block
+            // otherwise if slot and different signing_root then this is a double block proposal
+            final boolean isValid =
+                existingBlock.map(block -> block.getSigningRoot().equals(signingRoot)).orElse(true);
+            if (isValid) {
+              dao.insertBlockProposal(id, slot, signingRoot);
+            }
+            return isValid;
+          });
+    }
   }
 
   @Override

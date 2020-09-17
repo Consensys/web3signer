@@ -14,6 +14,9 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.web3signer.slashingprotection.BytesArgumentFactory;
+import tech.pegasys.web3signer.slashingprotection.BytesColumnMapper;
+
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -27,10 +30,6 @@ import org.jdbi.v3.testing.Migration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import tech.pegasys.web3signer.slashingprotection.BytesArgumentFactory;
-import tech.pegasys.web3signer.slashingprotection.BytesColumnMapper;
-import tech.pegasys.web3signer.slashingprotection.dao.Validator;
-import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 // This must be a junit4 for the JdbiRule to work
 public class ValidatorsDaoTest {
