@@ -17,7 +17,11 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
+import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
@@ -37,24 +41,32 @@ import tech.pegasys.web3signer.slashingprotection.DbConnection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.jdbi.v3.core.Jdbi;
 
 public class Eth2Runner extends Runner {
+
   final Optional<SlashingProtection> slashingProtection;
+
+  private static final Logger LOG = LogManager.getLogger();
 
   public Eth2Runner(
       final Config config,
@@ -138,6 +150,8 @@ public class Eth2Runner extends Runner {
 
   private ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+
+    final List<ArtifactSigner> signers = Lists.newArrayList();
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
 
@@ -148,11 +162,17 @@ public class Eth2Runner extends Runner {
             hashicorpConnectionFactory,
             BlsArtifactSigner::new);
 
-    final Collection<ArtifactSigner> signers =
+    signers.addAll(
         SignerLoader.load(
             config.getKeyConfigPath(),
             "yaml",
-            new YamlSignerParser(List.of(artifactSignerFactory)));
+            new YamlSignerParser(List.of(artifactSignerFactory))));
+
+    if (config.getAzureKeyVaultParameters() != null) {
+      final AzureKeyVaultParameters params = config.getAzureKeyVaultParameters();
+
+      signers.addAll(loadAzureSigners(params));
+    }
 
     final List<Bytes> validators =
         signers.stream()
@@ -163,6 +183,44 @@ public class Eth2Runner extends Runner {
         slashingProtection -> slashingProtection.registerValidators(validators));
 
     return DefaultArtifactSignerProvider.create(signers);
+  }
+
+  final List<ArtifactSigner> loadAzureSigners(final AzureKeyVaultParameters params) {
+    final AzureKeyVault keyVault =
+        new AzureKeyVault(
+            params.getClientlId(),
+            params.getClientSecret(),
+            params.getTenantId(),
+            params.getKeyVaultName());
+
+    final List<String> secretNames;
+    try {
+      secretNames = keyVault.getAvailableSecrets();
+    } catch (final Exception e) {
+      throw new InitializationException(
+          "Failed to connect to an Azure Keyvault with provided configuration.");
+    }
+
+    return secretNames
+        .parallelStream()
+        .map(
+            secretName -> {
+              final Optional<String> secret = keyVault.fetchSecret(secretName);
+              if (secret.isPresent()) {
+                try {
+                  final Bytes privateKeyBytes = Bytes.fromHexString(secret.get());
+                  final BLSKeyPair keyPair =
+                      new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
+                  return new BlsArtifactSigner(keyPair);
+                } catch (final Exception e) {
+                  LOG.error("Failed to load secret named {} from azure key vault.", secretName);
+                  return null;
+                }
+              }
+              return null;
+            })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 
   private String formatBlsSignature(final BlsArtifactSignature signature) {

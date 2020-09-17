@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.dsl.signer;
 
 import static java.util.Collections.emptyList;
 
+import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
@@ -37,6 +38,7 @@ public class SignerConfigurationBuilder {
   private String slashingProtectionDbUsername = "";
   private String slashingProtectionDbPassword = "";
   private String mode;
+  private AzureKeyVaultParameters azureKeyVaultParameters;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -83,6 +85,12 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withAzureKeyVaultParameters(
+      final AzureKeyVaultParameters azureKeyVaultParameters) {
+    this.azureKeyVaultParameters = azureKeyVaultParameters;
+    return this;
+  }
+
   public SignerConfigurationBuilder withSlashingProtectionDbUrl(
       final String slashingProtectionDbUrl) {
     this.slashingProtectionDbUrl = slashingProtectionDbUrl;
@@ -113,6 +121,7 @@ public class SignerConfigurationBuilder {
         metricsPort,
         metricsHostAllowList,
         metricsEnabled,
+        Optional.ofNullable(azureKeyVaultParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),
         slashingProtectionDbUrl,

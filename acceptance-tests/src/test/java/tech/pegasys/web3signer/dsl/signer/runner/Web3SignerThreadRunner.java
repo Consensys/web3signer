@@ -18,12 +18,14 @@ import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Web3SignerThreadRunner extends Web3SignerRunner {
 
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
+  private CompletableFuture<?> ethsignerFuture;
 
   public Web3SignerThreadRunner(final SignerConfiguration signerConfig) {
     super(signerConfig);
@@ -41,7 +43,8 @@ public class Web3SignerThreadRunner extends Web3SignerRunner {
     }
 
     final String[] paramsAsArray = params.toArray(new String[0]);
-    executor.submit(() -> Web3SignerApp.main(paramsAsArray));
+
+    ethsignerFuture = CompletableFuture.runAsync(() -> Web3SignerApp.main(paramsAsArray), executor);
   }
 
   @Override
@@ -51,6 +54,6 @@ public class Web3SignerThreadRunner extends Web3SignerRunner {
 
   @Override
   public boolean isRunning() {
-    return executor.isTerminated();
+    return !ethsignerFuture.isDone();
   }
 }
