@@ -16,6 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.CmdlineHelpers.removeFieldFrom;
 import static tech.pegasys.web3signer.CmdlineHelpers.validBaseCommandOptions;
 
+import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
@@ -114,6 +116,27 @@ class CommandlineParserTest {
         .contains("Missing required argument(s): --azure-client-secret");
   }
 
+  @Test
+  void eth2SubcommandRequiresSlashingDatabaseUrlWhenSlashingEnabled() {
+    String cmdline = validBaseCommandOptions();
+    cmdline = cmdline + "eth2 --slashing-protection-enabled=true";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString()).contains("Missing slashing protection database url");
+  }
+
+  @Test
+  void eth2SubcommandSlashingDatabaseUrlNotRequiredWhenSlashingDisabled() {
+    String cmdline = validBaseCommandOptions();
+    cmdline = cmdline + "eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isZero();
+  }
+
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(
       final String paramToRemove, final Supplier<T> actualValueGetter, final T expectedValue) {
 
@@ -123,5 +146,12 @@ class CommandlineParserTest {
     assertThat(result).isZero();
     assertThat(actualValueGetter.get()).isEqualTo(expectedValue);
     assertThat(commandOutput.toString()).isEmpty();
+  }
+
+  public static class MockEth2SubCommand extends Eth2SubCommand {
+    @Override
+    public void run() {
+      createRunner();
+    }
   }
 }

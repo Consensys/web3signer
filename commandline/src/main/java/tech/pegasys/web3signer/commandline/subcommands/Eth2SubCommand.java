@@ -15,7 +15,10 @@ package tech.pegasys.web3signer.commandline.subcommands;
 import tech.pegasys.web3signer.core.Eth2Runner;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Spec;
 
 @Command(
     name = Eth2SubCommand.COMMAND_NAME,
@@ -24,6 +27,8 @@ import picocli.CommandLine.Option;
 public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
+
+  @Spec CommandSpec spec;
 
   @Option(
       names = {"--slashing-protection-enabled"},
@@ -60,12 +65,19 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Override
   public Eth2Runner createRunner() {
+    validateArgs();
     return new Eth2Runner(
         config,
         slashingProtectionEnabled,
         slashingProtectionDbUrl,
         slashingProtectionDbUsername,
         slashingProtectionDbPassword);
+  }
+
+  private void validateArgs() {
+    if (slashingProtectionEnabled && slashingProtectionDbUrl == null) {
+      throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
+    }
   }
 
   @Override
