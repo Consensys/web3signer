@@ -12,7 +12,7 @@ See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching 
 * [API Documentation](https://pegasyseng.github.io/web3signer/)
 
 ## Users
-* [User documentation](https://docs.web3signer.pegasys.tech/)
+* [User documentation](https://docs.web3signer.consensys.net/)
 
 ## Chat
 * [Discord server](https://discord.gg/KMh2Mjh)
