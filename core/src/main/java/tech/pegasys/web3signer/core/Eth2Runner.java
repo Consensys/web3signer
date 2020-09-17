@@ -37,7 +37,9 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.slashingprotection.DbConnection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
 import java.util.List;
 import java.util.Objects;
@@ -57,6 +59,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.jdbi.v3.core.Jdbi;
 
 public class Eth2Runner extends Runner {
 
@@ -64,9 +67,34 @@ public class Eth2Runner extends Runner {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  public Eth2Runner(final Config config, final Optional<SlashingProtection> slashingProtection) {
+  public Eth2Runner(
+      final Config config,
+      final boolean slashingProtectionEnabled,
+      final String slashingProtectionDbUrl,
+      final String slashingProtectionDbUser,
+      final String slashingProtectionDbPassword) {
     super(config);
-    this.slashingProtection = slashingProtection;
+    this.slashingProtection =
+        createSlashingProtection(
+            slashingProtectionEnabled,
+            slashingProtectionDbUrl,
+            slashingProtectionDbUser,
+            slashingProtectionDbPassword);
+  }
+
+  private Optional<SlashingProtection> createSlashingProtection(
+      final boolean slashingProtectionEnabled,
+      final String slashingProtectionDbUrl,
+      final String slashingProtectionDbUser,
+      final String slashingProtectionDbPassword) {
+    if (slashingProtectionEnabled) {
+      final Jdbi jdbi =
+          DbConnection.createConnection(
+              slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
+      return Optional.of(SlashingProtectionFactory.createSlashingProtection(jdbi));
+    } else {
+      return Optional.empty();
+    }
   }
 
   @Override
@@ -144,6 +172,14 @@ public class Eth2Runner extends Runner {
 
       signers.addAll(loadAzureSigners(params));
     }
+
+    final List<Bytes> validators =
+        signers.stream()
+            .map(ArtifactSigner::getIdentifier)
+            .map(Bytes::fromHexString)
+            .collect(Collectors.toList());
+    slashingProtection.ifPresent(
+        slashingProtection -> slashingProtection.registerValidators(validators));
 
     return DefaultArtifactSignerProvider.create(signers);
   }

@@ -52,6 +52,8 @@ dependencies {
 
   implementation 'org.miracl.milagro.amcl:milagro-crypto-java'
 
+  implementation 'org.jdbi:jdbi3-core'
+
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
   runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
 

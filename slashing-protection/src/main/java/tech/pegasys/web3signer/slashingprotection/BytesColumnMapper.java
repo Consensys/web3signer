@@ -12,17 +12,24 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import java.util.List;
+import java.lang.reflect.Type;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
+import org.jdbi.v3.core.config.ConfigRegistry;
+import org.jdbi.v3.core.generic.GenericTypes;
+import org.jdbi.v3.core.mapper.ColumnMapper;
+import org.jdbi.v3.core.mapper.ColumnMapperFactory;
 
-public interface SlashingProtection {
+public class BytesColumnMapper implements ColumnMapperFactory {
 
-  boolean maySignAttestation(
-      String publicKey, final Bytes signingRoot, UInt64 sourceEpoch, UInt64 targetEpoch);
+  @Override
+  public Optional<ColumnMapper<?>> build(final Type type, final ConfigRegistry config) {
+    if (!Bytes.class.equals(GenericTypes.getErasedType(type))) {
+      return Optional.empty();
+    }
 
-  boolean maySignBlock(String publicKey, final Bytes signingRoot, UInt64 blockSlot);
-
-  void registerValidators(List<Bytes> validators);
+    return Optional.of(
+        (ColumnMapper<Bytes>) (r, columnNumber, ctx) -> Bytes.wrap(r.getBytes(columnNumber)));
+  }
 }

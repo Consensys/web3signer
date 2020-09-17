@@ -12,11 +12,21 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import org.jdbi.v3.core.Jdbi;
+import java.sql.Types;
 
-public class SlashingProtectionFactory {
+import org.apache.tuweni.bytes.Bytes;
+import org.jdbi.v3.core.argument.AbstractArgumentFactory;
+import org.jdbi.v3.core.argument.Argument;
+import org.jdbi.v3.core.config.ConfigRegistry;
 
-  public static SlashingProtection createSlashingProtection(final Jdbi jdbi) {
-    return new DbSlashingProtection(jdbi);
+public class BytesArgumentFactory extends AbstractArgumentFactory<Bytes> {
+
+  public BytesArgumentFactory() {
+    super(Types.BINARY);
+  }
+
+  @Override
+  protected Argument build(final Bytes value, final ConfigRegistry config) {
+    return (position, statement, ctx) -> statement.setBytes(position, value.toArrayUnsafe());
   }
 }

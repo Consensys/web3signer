@@ -12,11 +12,33 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import org.jdbi.v3.core.Jdbi;
+import org.apache.tuweni.bytes.Bytes;
 
-public class SlashingProtectionFactory {
+public class Validator {
+  private long id;
+  private Bytes publicKey;
 
-  public static SlashingProtection createSlashingProtection(final Jdbi jdbi) {
-    return new DbSlashingProtection(jdbi);
+  // needed for JDBI bean mapping
+  public Validator() {}
+
+  public Validator(final long id, final Bytes publicKey) {
+    this.id = id;
+    this.publicKey = publicKey;
+  }
+
+  public long getId() {
+    return id;
+  }
+
+  public void setId(final long id) {
+    this.id = id;
+  }
+
+  public Bytes getPublicKey() {
+    return publicKey;
+  }
+
+  public void setPublicKey(final Bytes publicKey) {
+    this.publicKey = publicKey;
   }
 }

@@ -13,14 +13,12 @@
 package tech.pegasys.web3signer.commandline.subcommands;
 
 import tech.pegasys.web3signer.core.Eth2Runner;
-import tech.pegasys.web3signer.core.Runner;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
-
-import java.util.Optional;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.Spec;
 
 @Command(
     name = Eth2SubCommand.COMMAND_NAME,
@@ -30,8 +28,10 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
 
+  @Spec CommandSpec spec;
+
   @Option(
-      names = {"--Xslashing-protection-enabled"},
+      names = {"--slashing-protection-enabled"},
       hidden = true,
       description =
           "Set to true if all Eth2 signing operations should be validated against historic data, "
@@ -41,13 +41,43 @@ public class Eth2SubCommand extends ModeSubCommand {
       arity = "1")
   private boolean slashingProtectionEnabled = false;
 
+  @Option(
+      names = {"--slashing-protection-db-url"},
+      hidden = true,
+      description = "The jdbc url to use to connect to the slashing protection database",
+      paramLabel = "<jdbc url>",
+      arity = "1")
+  private String slashingProtectionDbUrl;
+
+  @Option(
+      names = {"--slashing-protection-db-username"},
+      hidden = true,
+      description = "The username to use when connecting to the slashing protection database",
+      paramLabel = "<jdbc user>")
+  private String slashingProtectionDbUsername;
+
+  @Option(
+      names = {"--slashing-protection-db-password"},
+      hidden = true,
+      description = "The password to use when connecting to the slashing protection database",
+      paramLabel = "<jdbc password>")
+  private String slashingProtectionDbPassword;
+
   @Override
-  public Runner createRunner() {
-    final Optional<SlashingProtection> slashingProtection =
-        slashingProtectionEnabled
-            ? Optional.of(SlashingProtectionFactory.createSlashingProtection())
-            : Optional.empty();
-    return new Eth2Runner(config, slashingProtection);
+  public Eth2Runner createRunner() {
+    validateArgs();
+    return new Eth2Runner(
+        config,
+        slashingProtectionEnabled,
+        slashingProtectionDbUrl,
+        slashingProtectionDbUsername,
+        slashingProtectionDbPassword);
+  }
+
+  private void validateArgs() {
+    if (slashingProtectionEnabled && slashingProtectionDbUrl == null) {
+      throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
+    }
   }
 
   @Override

@@ -416,7 +416,7 @@ distributions {
     contents {
       from("./LICENSE") { into "." }
       from("build/reports/license/license-dependency.html") { into "." }
-      from("./migrations") { into "./migrations" }
+      from("./slashing-protection/src/main/resources/migrations") { into "./migrations" }
     }
   }
 }

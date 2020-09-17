@@ -12,10 +12,18 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import java.util.List;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.jdbi.v3.core.Jdbi;
 
-public class NoOpSlashingProtection implements SlashingProtection {
+public class DbSlashingProtection implements SlashingProtection {
+  private final Jdbi jdbi;
+
+  public DbSlashingProtection(final Jdbi jdbi) {
+    this.jdbi = jdbi;
+  }
 
   @Override
   public boolean maySignAttestation(
@@ -30,5 +38,10 @@ public class NoOpSlashingProtection implements SlashingProtection {
   public boolean maySignBlock(
       final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
     return true;
+  }
+
+  @Override
+  public void registerValidators(final List<Bytes> validators) {
+    jdbi.useExtension(ValidatorsDao.class, dao -> dao.registerMissingValidators(validators));
   }
 }
