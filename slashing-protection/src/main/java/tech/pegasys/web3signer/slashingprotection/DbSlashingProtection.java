@@ -44,35 +44,37 @@ public class DbSlashingProtection implements SlashingProtection {
   public boolean maySignBlock(
       final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
     final Bytes publicKeyBytes = Bytes.fromHexString(publicKey);
-    final List<Validator> validators =
-        jdbi.withExtension(
-            ValidatorsDao.class, dao -> dao.retrieveValidators(List.of(publicKeyBytes)));
-    final Optional<Long> validatorId = validators.stream().findFirst().map(Validator::getId);
 
-    if (validatorId.isEmpty()) {
-      return false;
-    } else {
-      final long id = validatorId.get();
-      return jdbi.withExtension(
-          SignedBlocksDao.class,
-          dao -> {
+    return jdbi.inTransaction(
+        h -> {
+          final ValidatorsDao validatorsDao = new ValidatorsDao(h);
+          final List<Validator> validators =
+              validatorsDao.retrieveValidators(List.of(publicKeyBytes));
+          final Optional<Long> validatorId = validators.stream().findFirst().map(Validator::getId);
+
+          if (validatorId.isEmpty()) {
+            return false;
+          } else {
+            final long id = validatorId.get();
+
             final long slot = blockSlot.toLong();
-            final Optional<SignedBlock> existingBlock = dao.findExistingBlock(id, slot);
+            final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(h);
+            final Optional<SignedBlock> existingBlock = signedBlocksDao.findExistingBlock(id, slot);
 
             // same slot and signing_root is allowed for broadcasting previously signed block
             // otherwise if slot and different signing_root then this is a double block proposal
             final boolean isValid =
                 existingBlock.map(block -> block.getSigningRoot().equals(signingRoot)).orElse(true);
             if (isValid) {
-              dao.insertBlockProposal(id, slot, signingRoot);
+              signedBlocksDao.insertBlockProposal(id, slot, signingRoot);
             }
             return isValid;
-          });
-    }
+          }
+        });
   }
 
   @Override
   public void registerValidators(final List<Bytes> validators) {
-    jdbi.useExtension(ValidatorsDao.class, dao -> dao.registerMissingValidators(validators));
+    jdbi.useTransaction(h -> new ValidatorsDao(h).registerMissingValidators(validators));
   }
 }

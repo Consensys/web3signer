@@ -16,28 +16,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.statement.PreparedBatch;
 import org.jdbi.v3.sqlobject.customizer.BindList;
-import org.jdbi.v3.sqlobject.statement.SqlBatch;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.transaction.Transaction;
 
-public interface ValidatorsDao {
+public class ValidatorsDao {
+  private final Handle handle;
 
-  @Transaction
-  default void registerMissingValidators(final List<Bytes> validators) {
+  public ValidatorsDao(final Handle handle) {
+    this.handle = handle;
+  }
+
+  public void registerMissingValidators(final List<Bytes> validators) {
     final List<Validator> registeredValidators = retrieveValidators(validators);
     final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
     registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
     registerValidators(validatorsMissingFromDb);
   }
 
-  @SqlBatch("INSERT INTO validators (public_key) VALUES (?)")
-  @Transaction
-  void registerValidators(final List<Bytes> validators);
+  public void registerValidators(final List<Bytes> validators) {
+    final PreparedBatch batch =
+        handle.prepareBatch("INSERT INTO validators (public_key) VALUES (?)");
+    validators.forEach(b -> batch.bind(0, b).add());
+    batch.execute();
+  }
 
-  @SqlQuery("SELECT id, public_key FROM validators WHERE public_key IN (<publicKeys>) ORDER BY id")
-  @RegisterBeanMapper(Validator.class)
-  @Transaction
-  List<Validator> retrieveValidators(@BindList("publicKeys") final List<Bytes> publicKeys);
+  public List<Validator> retrieveValidators(@BindList("publicKeys") final List<Bytes> publicKeys) {
+    return handle
+        .createQuery(
+            "SELECT id, public_key FROM validators WHERE public_key IN (<publicKeys>) ORDER BY id")
+        .bindList("publicKeys", publicKeys)
+        .mapToBean(Validator.class)
+        .list();
+  }
 }

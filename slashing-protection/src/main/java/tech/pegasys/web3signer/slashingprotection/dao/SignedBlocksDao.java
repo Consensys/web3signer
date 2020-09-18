@@ -15,20 +15,34 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.jdbi.v3.sqlobject.transaction.Transaction;
+import org.jdbi.v3.core.Handle;
 
-public interface SignedBlocksDao {
+public class SignedBlocksDao {
 
-  @SqlQuery(
-      "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ?")
-  @RegisterBeanMapper(SignedBlock.class)
-  @Transaction
-  Optional<SignedBlock> findExistingBlock(final long validatorId, final long slot);
+  private final Handle handle;
 
-  @SqlUpdate("INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)")
-  @Transaction
-  void insertBlockProposal(final long validatorId, final long slot, final Bytes signingRoot);
+  public SignedBlocksDao(final Handle handle) {
+    this.handle = handle;
+  }
+
+  public Optional<SignedBlock> findExistingBlock(long validatorId, final long slot) {
+    return handle
+        .createQuery(
+            "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ?")
+        .bind(0, validatorId)
+        .bind(1, slot)
+        .mapToBean(SignedBlock.class)
+        .findFirst();
+  }
+
+  public void insertBlockProposal(
+      final long validatorId, final long slot, final Bytes signingRoot) {
+    handle
+        .createUpdate(
+            "INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)")
+        .bind(0, validatorId)
+        .bind(1, slot)
+        .bind(2, signingRoot)
+        .execute();
+  }
 }

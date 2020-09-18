@@ -22,12 +22,11 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.argument.Arguments;
 import org.jdbi.v3.core.mapper.ColumnMappers;
-import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.jdbi.v3.testing.JdbiRule;
 import org.jdbi.v3.testing.Migration;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,55 +38,53 @@ public class SignedBlocksDaoTest {
       JdbiRule.embeddedPostgres()
           .withMigration(Migration.before().withPath("migrations/postgresql"));
 
+  private Handle handle;
+
   @Before
   public void setup() {
-    postgres.getJdbi().installPlugin(new SqlObjectPlugin());
     postgres.getJdbi().getConfig(Arguments.class).register(new BytesArgumentFactory());
     postgres.getJdbi().getConfig(ColumnMappers.class).register(new BytesColumnMapper());
+    handle = postgres.getJdbi().open();
+  }
+
+  @After
+  public void cleanup() {
+    handle.close();
   }
 
   @Test
   public void findsExistingBlockInDb() {
-    final Jdbi jdbi = postgres.getJdbi();
-    jdbi.useHandle(h -> insertBlock(h, Bytes.of(100), 1, 2, Bytes.of(3)));
+    insertBlock(handle, Bytes.of(100), 1, 2, Bytes.of(3));
+    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(handle);
 
-    jdbi.useExtension(
-        SignedBlocksDao.class,
-        dao -> {
-          final Optional<SignedBlock> existingBlock = dao.findExistingBlock(1, 2);
-          assertThat(existingBlock).isNotEmpty();
-          assertThat(existingBlock.get().getValidatorId()).isEqualTo(1);
-          assertThat(existingBlock.get().getSlot()).isEqualTo(2);
-          assertThat(existingBlock.get().getSigningRoot()).isEqualTo(Bytes.of(3));
-        });
+    final Optional<SignedBlock> existingBlock = signedBlocksDao.findExistingBlock(1, 2);
+    assertThat(existingBlock).isNotEmpty();
+    assertThat(existingBlock.get().getValidatorId()).isEqualTo(1);
+    assertThat(existingBlock.get().getSlot()).isEqualTo(2);
+    assertThat(existingBlock.get().getSigningRoot()).isEqualTo(Bytes.of(3));
   }
 
   @Test
   public void returnsEmptyForNonExistingBlockInDb() {
-    final Jdbi jdbi = postgres.getJdbi();
-    jdbi.useHandle(h -> insertBlock(h, Bytes.of(100), 1, 2, Bytes.of(3)));
-
-    jdbi.useExtension(
-        SignedBlocksDao.class,
-        dao -> {
-          assertThat(dao.findExistingBlock(1, 1)).isEmpty();
-          assertThat(dao.findExistingBlock(2, 2)).isEmpty();
-        });
+    insertBlock(handle, Bytes.of(100), 1, 2, Bytes.of(3));
+    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(handle);
+    assertThat(signedBlocksDao.findExistingBlock(1, 1)).isEmpty();
+    assertThat(signedBlocksDao.findExistingBlock(2, 2)).isEmpty();
   }
 
   @Test
   public void storesBlockInDb() {
-    final Jdbi jdbi = postgres.getJdbi();
+    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(handle);
+    final ValidatorsDao validatorsDao = new ValidatorsDao(handle);
 
-    jdbi.useExtension(ValidatorsDao.class, dao -> dao.registerValidators(List.of(Bytes.of(100))));
-    jdbi.useExtension(SignedBlocksDao.class, dao -> dao.insertBlockProposal(1, 2, Bytes.of(100)));
+    validatorsDao.registerValidators(List.of(Bytes.of(100)));
+    signedBlocksDao.insertBlockProposal(1, 2, Bytes.of(100));
 
     final List<SignedBlock> validators =
-        jdbi.withHandle(
-            h ->
-                h.createQuery("SELECT * FROM signed_blocks ORDER BY validator_id")
-                    .mapToBean(SignedBlock.class)
-                    .list());
+        handle
+            .createQuery("SELECT * FROM signed_blocks ORDER BY validator_id")
+            .mapToBean(SignedBlock.class)
+            .list();
     assertThat(validators.size()).isEqualTo(1);
     assertThat(validators.get(0))
         .isEqualToComparingFieldByField(new SignedBlock(1, 2, Bytes.of(100)));
