@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.web3signer.slashingprotection.BytesArgumentFactory;
 import tech.pegasys.web3signer.slashingprotection.BytesColumnMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -90,8 +91,12 @@ public class ValidatorsDaoTest {
     insertValidator(handle, 102);
 
     final ValidatorsDao validatorsDao = new ValidatorsDao(handle);
-    validatorsDao.registerMissingValidators(
-        List.of(Bytes.of(101), Bytes.of(102), Bytes.of(103), Bytes.of(104)));
+    final List<Bytes> validators1 =
+        List.of(Bytes.of(101), Bytes.of(102), Bytes.of(103), Bytes.of(104));
+    final List<Validator> registeredValidators = validatorsDao.retrieveValidators(validators1);
+    final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators1);
+    registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
+    validatorsDao.registerValidators(validatorsMissingFromDb);
 
     final List<Validator> validators =
         handle

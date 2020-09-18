@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.slashingprotection.dao;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -25,13 +24,6 @@ public class ValidatorsDao {
 
   public ValidatorsDao(final Handle handle) {
     this.handle = handle;
-  }
-
-  public void registerMissingValidators(final List<Bytes> validators) {
-    final List<Validator> registeredValidators = retrieveValidators(validators);
-    final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
-    registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
-    registerValidators(validatorsMissingFromDb);
   }
 
   public void registerValidators(final List<Bytes> validators) {

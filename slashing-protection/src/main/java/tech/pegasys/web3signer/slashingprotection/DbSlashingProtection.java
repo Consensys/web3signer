@@ -17,6 +17,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,13 +44,11 @@ public class DbSlashingProtection implements SlashingProtection {
   @Override
   public boolean maySignBlock(
       final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
-    final Bytes publicKeyBytes = Bytes.fromHexString(publicKey);
-
     return jdbi.inTransaction(
         h -> {
           final ValidatorsDao validatorsDao = new ValidatorsDao(h);
           final List<Validator> validators =
-              validatorsDao.retrieveValidators(List.of(publicKeyBytes));
+              validatorsDao.retrieveValidators(List.of(Bytes.fromHexString(publicKey)));
           final Optional<Long> validatorId = validators.stream().findFirst().map(Validator::getId);
 
           if (validatorId.isEmpty()) {
@@ -75,6 +74,13 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public void registerValidators(final List<Bytes> validators) {
-    jdbi.useTransaction(h -> new ValidatorsDao(h).registerMissingValidators(validators));
+    jdbi.useTransaction(
+        h -> {
+          final ValidatorsDao validatorsDao = new ValidatorsDao(h);
+          final List<Validator> registeredValidators = validatorsDao.retrieveValidators(validators);
+          final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
+          registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
+          validatorsDao.registerValidators(validatorsMissingFromDb);
+        });
   }
 }
