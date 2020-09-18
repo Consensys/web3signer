@@ -60,7 +60,6 @@ class CommandlineParserTest {
     assertThat(config.getHttpListenHost()).isEqualTo("localhost");
     assertThat(config.getHttpListenPort()).isEqualTo(5001);
     assertThat(config.getIdleConnectionTimeoutSeconds()).isEqualTo(45);
-    assertThat(config.getAzureKeyVaultParameters().isAzureKeyVaultEnabled()).isFalse();
   }
 
   @Test
