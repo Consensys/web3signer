@@ -106,7 +106,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       if (azureKeyVaultParameters.getKeyVaultName() == null) {
         missingAzureFields.add("--azure-vault-name");
       }
-      if(missingAzureFields.size() != 0) {
+      if (missingAzureFields.size() != 0) {
         final String errorMsg =
             String.format(
                 "\"Azure Key Vault was enabled, but the following parameters were missing [%s].",
