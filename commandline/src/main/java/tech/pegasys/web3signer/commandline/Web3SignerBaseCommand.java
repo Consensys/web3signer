@@ -41,6 +41,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
@@ -167,8 +168,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   @ArgGroup(exclusive = false)
   private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
-  @ArgGroup(exclusive = false)
-  public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
   public Level getLogLevel() {

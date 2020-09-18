@@ -51,4 +51,9 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   public String getClientSecret() {
     return clientSecret;
   }
+
+  @Override
+  public boolean isAzureKeyVaultEnabled() {
+    return true;
+  }
 }

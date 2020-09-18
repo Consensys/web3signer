@@ -14,6 +14,8 @@ package tech.pegasys.web3signer.core.config;
 
 public interface AzureKeyVaultParameters {
 
+  boolean isAzureKeyVaultEnabled();
+
   String getKeyVaultName();
 
   String getTenantId();

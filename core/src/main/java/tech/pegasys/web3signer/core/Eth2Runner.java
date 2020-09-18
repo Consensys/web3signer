@@ -12,12 +12,12 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static tech.pegasys.signers.azure.AzureKeyVault.constructAzureKeyVaultUrl;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
-import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
@@ -41,11 +41,19 @@ import tech.pegasys.web3signer.slashingprotection.DbConnection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
+import com.azure.core.http.rest.PagedIterable;
+import com.azure.identity.ClientSecretCredential;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.SecretClientBuilder;
+import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
+import com.azure.security.keyvault.secrets.models.SecretProperties;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,6 +62,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -167,8 +176,16 @@ public class Eth2Runner extends Runner {
             "yaml",
             new YamlSignerParser(List.of(artifactSignerFactory))));
 
-    if (config.getAzureKeyVaultParameters() != null) {
+    if (config.getAzureKeyVaultParameters().isAzureKeyVaultEnabled()) {
       final AzureKeyVaultParameters params = config.getAzureKeyVaultParameters();
+      if (!ObjectUtils.allNotNull(
+          params.getClientlId(),
+          params.getClientSecret(),
+          params.getTenantId(),
+          params.getKeyVaultName())) {
+        throw new InitializationException(
+            "Azure Key vault is enabled, but some fields are not set.");
+      }
 
       signers.addAll(loadAzureSigners(params));
     }

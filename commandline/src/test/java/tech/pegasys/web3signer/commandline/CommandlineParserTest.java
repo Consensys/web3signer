@@ -60,6 +60,7 @@ class CommandlineParserTest {
     assertThat(config.getHttpListenHost()).isEqualTo("localhost");
     assertThat(config.getHttpListenPort()).isEqualTo(5001);
     assertThat(config.getIdleConnectionTimeoutSeconds()).isEqualTo(45);
+    assertThat(config.getAzureKeyVaultParameters().isAzureKeyVaultEnabled()).isFalse();
   }
 
   @Test
@@ -101,19 +102,6 @@ class CommandlineParserTest {
   void missingIdleConnectionDefaultsToThirtySeconds() {
     missingOptionalParameterIsValidAndMeetsDefault(
         "idle-connection-timeout-seconds", config::getIdleConnectionTimeoutSeconds, 30);
-  }
-
-  @Test
-  void includingASingleAzureKeyVaultParameterThenRequiresAll() {
-    String cmdline = validBaseCommandOptions();
-    cmdline =
-        cmdline
-            + "--azure-vault-name=vault --azure-client-id=client_id --azure-tenant-id=tenant_id";
-
-    final int result = parser.parseCommandLine(cmdline.split(" "));
-    assertThat(result).isNotZero();
-    assertThat(commandError.toString())
-        .contains("Missing required argument(s): --azure-client-secret");
   }
 
   @Test
