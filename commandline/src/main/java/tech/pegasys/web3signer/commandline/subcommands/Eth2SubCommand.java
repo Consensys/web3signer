@@ -109,7 +109,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       if (missingAzureFields.size() != 0) {
         final String errorMsg =
             String.format(
-                "\"Azure Key Vault was enabled, but the following parameters were missing [%s].",
+                "Azure Key Vault was enabled, but the following parameters were missing [%s].",
                 String.join(",", missingAzureFields));
         throw new ParameterException(spec.commandLine(), errorMsg);
       }
