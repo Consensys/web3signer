@@ -13,16 +13,17 @@
 package tech.pegasys.web3signer.slashingprotection.dao;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class SignedBlock {
   private long validatorId;
-  private long slot;
+  private UInt64 slot;
   private Bytes signingRoot;
 
   // needed for JDBI bean mapping
   public SignedBlock() {}
 
-  public SignedBlock(final long validatorId, final long slot, final Bytes signingRoot) {
+  public SignedBlock(final long validatorId, final UInt64 slot, final Bytes signingRoot) {
     this.validatorId = validatorId;
     this.slot = slot;
     this.signingRoot = signingRoot;
@@ -36,11 +37,11 @@ public class SignedBlock {
     this.validatorId = validatorId;
   }
 
-  public long getSlot() {
+  public UInt64 getSlot() {
     return slot;
   }
 
-  public void setSlot(final long slot) {
+  public void setSlot(final UInt64 slot) {
     this.slot = slot;
   }
 

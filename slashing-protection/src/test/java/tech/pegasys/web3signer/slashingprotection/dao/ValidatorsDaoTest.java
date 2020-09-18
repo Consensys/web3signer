@@ -14,8 +14,10 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.slashingprotection.BytesArgumentFactory;
-import tech.pegasys.web3signer.slashingprotection.BytesColumnMapper;
+import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.BytesArgumentFactory;
+import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.UInt64ArgumentFactory;
+import tech.pegasys.web3signer.slashingprotection.ColumnMappers.BytesColumnMapper;
+import tech.pegasys.web3signer.slashingprotection.ColumnMappers.UInt64ColumnMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +46,9 @@ public class ValidatorsDaoTest {
   @Before
   public void setup() {
     postgres.getJdbi().getConfig(Arguments.class).register(new BytesArgumentFactory());
+    postgres.getJdbi().getConfig(Arguments.class).register(new UInt64ArgumentFactory());
     postgres.getJdbi().getConfig(ColumnMappers.class).register(new BytesColumnMapper());
+    postgres.getJdbi().getConfig(ColumnMappers.class).register(new UInt64ColumnMapper());
     handle = postgres.getJdbi().open();
   }
 

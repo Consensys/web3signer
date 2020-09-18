@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 
 public class SignedBlocksDao {
@@ -25,7 +26,7 @@ public class SignedBlocksDao {
     this.handle = handle;
   }
 
-  public Optional<SignedBlock> findExistingBlock(long validatorId, final long slot) {
+  public Optional<SignedBlock> findExistingBlock(long validatorId, final UInt64 slot) {
     return handle
         .createQuery(
             "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ?")
@@ -36,7 +37,7 @@ public class SignedBlocksDao {
   }
 
   public void insertBlockProposal(
-      final long validatorId, final long slot, final Bytes signingRoot) {
+      final long validatorId, final UInt64 slot, final Bytes signingRoot) {
     handle
         .createUpdate(
             "INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)")

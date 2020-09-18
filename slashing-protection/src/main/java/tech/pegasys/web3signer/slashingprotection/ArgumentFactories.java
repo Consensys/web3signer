@@ -12,21 +12,39 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import java.math.BigDecimal;
 import java.sql.Types;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.argument.AbstractArgumentFactory;
 import org.jdbi.v3.core.argument.Argument;
 import org.jdbi.v3.core.config.ConfigRegistry;
 
-public class BytesArgumentFactory extends AbstractArgumentFactory<Bytes> {
+public class ArgumentFactories {
 
-  public BytesArgumentFactory() {
-    super(Types.BINARY);
+  public static class BytesArgumentFactory extends AbstractArgumentFactory<Bytes> {
+
+    public BytesArgumentFactory() {
+      super(Types.BINARY);
+    }
+
+    @Override
+    protected Argument build(final Bytes value, final ConfigRegistry config) {
+      return (position, statement, ctx) -> statement.setBytes(position, value.toArrayUnsafe());
+    }
   }
 
-  @Override
-  protected Argument build(final Bytes value, final ConfigRegistry config) {
-    return (position, statement, ctx) -> statement.setBytes(position, value.toArrayUnsafe());
+  public static class UInt64ArgumentFactory extends AbstractArgumentFactory<UInt64> {
+
+    public UInt64ArgumentFactory() {
+      super(Types.NUMERIC);
+    }
+
+    @Override
+    protected Argument build(final UInt64 value, final ConfigRegistry config) {
+      return (position, statement, ctx) ->
+          statement.setBigDecimal(position, new BigDecimal(value.toBigInteger()));
+    }
   }
 }

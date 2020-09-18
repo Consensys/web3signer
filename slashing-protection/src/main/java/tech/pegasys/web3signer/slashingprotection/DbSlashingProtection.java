@@ -55,17 +55,16 @@ public class DbSlashingProtection implements SlashingProtection {
             return false;
           } else {
             final long id = validatorId.get();
-
-            final long slot = blockSlot.toLong();
             final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(h);
-            final Optional<SignedBlock> existingBlock = signedBlocksDao.findExistingBlock(id, slot);
+            final Optional<SignedBlock> existingBlock =
+                signedBlocksDao.findExistingBlock(id, blockSlot);
 
             // same slot and signing_root is allowed for broadcasting previously signed block
             // otherwise if slot and different signing_root then this is a double block proposal
             final boolean isValid =
                 existingBlock.map(block -> block.getSigningRoot().equals(signingRoot)).orElse(true);
             if (isValid) {
-              signedBlocksDao.insertBlockProposal(id, slot, signingRoot);
+              signedBlocksDao.insertBlockProposal(id, blockSlot, signingRoot);
             }
             return isValid;
           }

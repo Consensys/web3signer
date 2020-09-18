@@ -14,13 +14,16 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.slashingprotection.BytesArgumentFactory;
-import tech.pegasys.web3signer.slashingprotection.BytesColumnMapper;
+import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.BytesArgumentFactory;
+import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.UInt64ArgumentFactory;
+import tech.pegasys.web3signer.slashingprotection.ColumnMappers.BytesColumnMapper;
+import tech.pegasys.web3signer.slashingprotection.ColumnMappers.UInt64ColumnMapper;
 
 import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.argument.Arguments;
 import org.jdbi.v3.core.mapper.ColumnMappers;
@@ -43,7 +46,9 @@ public class SignedBlocksDaoTest {
   @Before
   public void setup() {
     postgres.getJdbi().getConfig(Arguments.class).register(new BytesArgumentFactory());
+    postgres.getJdbi().getConfig(Arguments.class).register(new UInt64ArgumentFactory());
     postgres.getJdbi().getConfig(ColumnMappers.class).register(new BytesColumnMapper());
+    postgres.getJdbi().getConfig(ColumnMappers.class).register(new UInt64ColumnMapper());
     handle = postgres.getJdbi().open();
   }
 
@@ -57,7 +62,8 @@ public class SignedBlocksDaoTest {
     insertBlock(handle, Bytes.of(100), 1, 2, Bytes.of(3));
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(handle);
 
-    final Optional<SignedBlock> existingBlock = signedBlocksDao.findExistingBlock(1, 2);
+    final Optional<SignedBlock> existingBlock =
+        signedBlocksDao.findExistingBlock(1, UInt64.valueOf(2));
     assertThat(existingBlock).isNotEmpty();
     assertThat(existingBlock.get().getValidatorId()).isEqualTo(1);
     assertThat(existingBlock.get().getSlot()).isEqualTo(2);
@@ -68,8 +74,8 @@ public class SignedBlocksDaoTest {
   public void returnsEmptyForNonExistingBlockInDb() {
     insertBlock(handle, Bytes.of(100), 1, 2, Bytes.of(3));
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(handle);
-    assertThat(signedBlocksDao.findExistingBlock(1, 1)).isEmpty();
-    assertThat(signedBlocksDao.findExistingBlock(2, 2)).isEmpty();
+    assertThat(signedBlocksDao.findExistingBlock(1, UInt64.valueOf(1))).isEmpty();
+    assertThat(signedBlocksDao.findExistingBlock(2, UInt64.valueOf(2))).isEmpty();
   }
 
   @Test
@@ -78,16 +84,24 @@ public class SignedBlocksDaoTest {
     final ValidatorsDao validatorsDao = new ValidatorsDao(handle);
 
     validatorsDao.registerValidators(List.of(Bytes.of(100)));
-    signedBlocksDao.insertBlockProposal(1, 2, Bytes.of(100));
+    validatorsDao.registerValidators(List.of(Bytes.of(101)));
+    validatorsDao.registerValidators(List.of(Bytes.of(102)));
+    signedBlocksDao.insertBlockProposal(1, UInt64.valueOf(2), Bytes.of(100));
+    signedBlocksDao.insertBlockProposal(2, UInt64.MAX_VALUE, Bytes.of(101));
+    signedBlocksDao.insertBlockProposal(3, UInt64.MIN_VALUE, Bytes.of(102));
 
     final List<SignedBlock> validators =
         handle
             .createQuery("SELECT * FROM signed_blocks ORDER BY validator_id")
             .mapToBean(SignedBlock.class)
             .list();
-    assertThat(validators.size()).isEqualTo(1);
+    assertThat(validators.size()).isEqualTo(3);
     assertThat(validators.get(0))
-        .isEqualToComparingFieldByField(new SignedBlock(1, 2, Bytes.of(100)));
+        .isEqualToComparingFieldByField(new SignedBlock(1, UInt64.valueOf(2), Bytes.of(100)));
+    assertThat(validators.get(1))
+        .isEqualToComparingFieldByField(new SignedBlock(2, UInt64.MAX_VALUE, Bytes.of(101)));
+    assertThat(validators.get(2))
+        .isEqualToComparingFieldByField(new SignedBlock(3, UInt64.MIN_VALUE, Bytes.of(102)));
   }
 
   private void insertBlock(
