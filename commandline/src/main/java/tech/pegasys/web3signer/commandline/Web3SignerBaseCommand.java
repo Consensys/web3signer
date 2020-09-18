@@ -21,7 +21,6 @@ import static tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory.DEFA
 import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
-import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
@@ -41,7 +40,6 @@ import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
-import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
@@ -168,8 +166,6 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   @ArgGroup(exclusive = false)
   private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
-  @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
-
   @Override
   public Level getLogLevel() {
     return logLevel;
@@ -233,11 +229,6 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   @Override
   public int getIdleConnectionTimeoutSeconds() {
     return idleConnectionTimeoutSeconds;
-  }
-
-  @Override
-  public AzureKeyVaultParameters getAzureKeyVaultParameters() {
-    return azureKeyVaultParameters;
   }
 
   @Override

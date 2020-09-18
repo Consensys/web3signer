@@ -23,7 +23,7 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
       description =
           "Set true if Web3signer should try and load all keys in the specified vault "
               + "(Default: ${DEFAULT-VALUE})",
-      paramLabel = "<ENABLED>")
+      paramLabel = "<BOOL>")
   private boolean azureKeyVaultEnabled = false;
 
   @Option(

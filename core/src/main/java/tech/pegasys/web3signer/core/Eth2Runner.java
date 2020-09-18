@@ -54,7 +54,6 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -65,6 +64,7 @@ import org.jdbi.v3.core.Jdbi;
 public class Eth2Runner extends Runner {
 
   final Optional<SlashingProtection> slashingProtection;
+  final AzureKeyVaultParameters azureKeyVaultParameters;
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -73,7 +73,8 @@ public class Eth2Runner extends Runner {
       final boolean slashingProtectionEnabled,
       final String slashingProtectionDbUrl,
       final String slashingProtectionDbUser,
-      final String slashingProtectionDbPassword) {
+      final String slashingProtectionDbPassword,
+      final AzureKeyVaultParameters azureKeyVaultParameters) {
     super(config);
     this.slashingProtection =
         createSlashingProtection(
@@ -81,6 +82,7 @@ public class Eth2Runner extends Runner {
             slashingProtectionDbUrl,
             slashingProtectionDbUser,
             slashingProtectionDbPassword);
+    this.azureKeyVaultParameters = azureKeyVaultParameters;
   }
 
   private Optional<SlashingProtection> createSlashingProtection(
@@ -168,18 +170,8 @@ public class Eth2Runner extends Runner {
             "yaml",
             new YamlSignerParser(List.of(artifactSignerFactory))));
 
-    if (config.getAzureKeyVaultParameters().isAzureKeyVaultEnabled()) {
-      final AzureKeyVaultParameters params = config.getAzureKeyVaultParameters();
-      if (!ObjectUtils.allNotNull(
-          params.getClientlId(),
-          params.getClientSecret(),
-          params.getTenantId(),
-          params.getKeyVaultName())) {
-        throw new InitializationException(
-            "Azure Key vault is enabled, but some fields are not set.");
-      }
-
-      signers.addAll(loadAzureSigners(params));
+    if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
+      signers.addAll(loadAzureSigners());
     }
 
     final List<Bytes> validators =
@@ -193,13 +185,13 @@ public class Eth2Runner extends Runner {
     return DefaultArtifactSignerProvider.create(signers);
   }
 
-  final List<ArtifactSigner> loadAzureSigners(final AzureKeyVaultParameters params) {
+  final List<ArtifactSigner> loadAzureSigners() {
     final AzureKeyVault keyVault =
         new AzureKeyVault(
-            params.getClientlId(),
-            params.getClientSecret(),
-            params.getTenantId(),
-            params.getKeyVaultName());
+            azureKeyVaultParameters.getClientlId(),
+            azureKeyVaultParameters.getClientSecret(),
+            azureKeyVaultParameters.getTenantId(),
+            azureKeyVaultParameters.getKeyVaultName());
 
     final List<String> secretNames;
     try {

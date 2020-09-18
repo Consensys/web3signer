@@ -109,6 +109,8 @@ public abstract class Runner implements Runnable {
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
       persistPortInformation(httpServer.actualPort(), metricsEndpoint.getPort());
+    } catch (final InitializationException e) {
+      throw e;
     } catch (final Throwable e) {
       vertx.close();
       metricsEndpoint.stop();
