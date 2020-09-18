@@ -17,6 +17,7 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
+import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
@@ -41,7 +42,9 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;

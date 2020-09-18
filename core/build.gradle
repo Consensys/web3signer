@@ -52,8 +52,6 @@ dependencies {
 
   implementation 'org.miracl.milagro.amcl:milagro-crypto-java'
 
-  implementation 'com.azure:azure-security-keyvault-secrets'
-  implementation 'com.azure:azure-identity'
   implementation 'org.jdbi:jdbi3-core'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
