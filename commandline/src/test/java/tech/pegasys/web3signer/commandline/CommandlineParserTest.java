@@ -124,7 +124,6 @@ class CommandlineParserTest {
     assertThat(result).isNotZero();
     assertThat(commandError.toString())
         .contains("Azure Key Vault was enabled, but the following parameters were missing");
-
   }
 
   @Test
