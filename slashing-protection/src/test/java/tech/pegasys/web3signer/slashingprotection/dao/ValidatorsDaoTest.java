@@ -14,18 +14,13 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.BytesArgumentFactory;
-import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.UInt64ArgumentFactory;
-import tech.pegasys.web3signer.slashingprotection.ColumnMappers.BytesColumnMapper;
-import tech.pegasys.web3signer.slashingprotection.ColumnMappers.UInt64ColumnMapper;
+import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.argument.Arguments;
-import org.jdbi.v3.core.mapper.ColumnMappers;
 import org.jdbi.v3.testing.JdbiRule;
 import org.jdbi.v3.testing.Migration;
 import org.junit.After;
@@ -45,10 +40,7 @@ public class ValidatorsDaoTest {
 
   @Before
   public void setup() {
-    postgres.getJdbi().getConfig(Arguments.class).register(new BytesArgumentFactory());
-    postgres.getJdbi().getConfig(Arguments.class).register(new UInt64ArgumentFactory());
-    postgres.getJdbi().getConfig(ColumnMappers.class).register(new BytesColumnMapper());
-    postgres.getJdbi().getConfig(ColumnMappers.class).register(new UInt64ColumnMapper());
+    DbConnection.configureJdbi(postgres.getJdbi());
     handle = postgres.getJdbi().open();
   }
 

@@ -14,10 +14,7 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.BytesArgumentFactory;
-import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.UInt64ArgumentFactory;
-import tech.pegasys.web3signer.slashingprotection.ColumnMappers.BytesColumnMapper;
-import tech.pegasys.web3signer.slashingprotection.ColumnMappers.UInt64ColumnMapper;
+import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,8 +22,6 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.argument.Arguments;
-import org.jdbi.v3.core.mapper.ColumnMappers;
 import org.jdbi.v3.testing.JdbiRule;
 import org.jdbi.v3.testing.Migration;
 import org.junit.After;
@@ -45,10 +40,7 @@ public class SignedBlocksDaoTest {
 
   @Before
   public void setup() {
-    postgres.getJdbi().getConfig(Arguments.class).register(new BytesArgumentFactory());
-    postgres.getJdbi().getConfig(Arguments.class).register(new UInt64ArgumentFactory());
-    postgres.getJdbi().getConfig(ColumnMappers.class).register(new BytesColumnMapper());
-    postgres.getJdbi().getConfig(ColumnMappers.class).register(new UInt64ColumnMapper());
+    DbConnection.configureJdbi(postgres.getJdbi());
     handle = postgres.getJdbi().open();
   }
 
@@ -66,7 +58,7 @@ public class SignedBlocksDaoTest {
         signedBlocksDao.findExistingBlock(1, UInt64.valueOf(2));
     assertThat(existingBlock).isNotEmpty();
     assertThat(existingBlock.get().getValidatorId()).isEqualTo(1);
-    assertThat(existingBlock.get().getSlot()).isEqualTo(2);
+    assertThat(existingBlock.get().getSlot()).isEqualTo(UInt64.valueOf(2));
     assertThat(existingBlock.get().getSigningRoot()).isEqualTo(Bytes.of(3));
   }
 

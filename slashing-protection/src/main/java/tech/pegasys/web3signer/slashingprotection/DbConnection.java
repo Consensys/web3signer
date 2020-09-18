@@ -30,11 +30,17 @@ public class DbConnection {
       final String jdbcUrl, final String username, final String password) {
     final DataSource datasource = createDataSource(jdbcUrl, username, password);
     final Jdbi jdbi = Jdbi.create(datasource);
-    jdbi.getConfig(Arguments.class).register(new BytesArgumentFactory());
-    jdbi.getConfig(Arguments.class).register(new UInt64ArgumentFactory());
-    jdbi.getConfig(ColumnMappers.class).register(new BytesColumnMapper());
-    jdbi.getConfig(ColumnMappers.class).register(new UInt64ColumnMapper());
+    configureJdbi(jdbi);
     return jdbi;
+  }
+
+  public static void configureJdbi(final Jdbi jdbi) {
+    jdbi.getConfig(Arguments.class)
+        .register(new BytesArgumentFactory())
+        .register(new UInt64ArgumentFactory());
+    jdbi.getConfig(ColumnMappers.class)
+        .register(new BytesColumnMapper())
+        .register(new UInt64ColumnMapper());
   }
 
   private static DataSource createDataSource(
