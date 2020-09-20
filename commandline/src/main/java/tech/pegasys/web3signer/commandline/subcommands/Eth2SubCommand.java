@@ -12,9 +12,14 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 
+import java.util.List;
+
+import com.google.common.collect.Lists;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
@@ -63,6 +68,8 @@ public class Eth2SubCommand extends ModeSubCommand {
       paramLabel = "<jdbc password>")
   private String slashingProtectionDbPassword;
 
+  @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+
   @Override
   public Eth2Runner createRunner() {
     validateArgs();
@@ -71,12 +78,41 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionEnabled,
         slashingProtectionDbUrl,
         slashingProtectionDbUsername,
-        slashingProtectionDbPassword);
+        slashingProtectionDbPassword,
+        azureKeyVaultParameters);
   }
 
   private void validateArgs() {
     if (slashingProtectionEnabled && slashingProtectionDbUrl == null) {
       throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
+    }
+
+    if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
+
+      List<String> missingAzureFields = Lists.newArrayList();
+
+      if (azureKeyVaultParameters.getClientSecret() == null) {
+        missingAzureFields.add("--azure-client-secret");
+      }
+
+      if (azureKeyVaultParameters.getClientlId() == null) {
+        missingAzureFields.add("--azure-client-id");
+      }
+
+      if (azureKeyVaultParameters.getTenantId() == null) {
+        missingAzureFields.add("--azure-tenant-id");
+      }
+
+      if (azureKeyVaultParameters.getKeyVaultName() == null) {
+        missingAzureFields.add("--azure-vault-name");
+      }
+      if (missingAzureFields.size() != 0) {
+        final String errorMsg =
+            String.format(
+                "Azure Key Vault was enabled, but the following parameters were missing [%s].",
+                String.join(",", missingAzureFields));
+        throw new ParameterException(spec.commandLine(), errorMsg);
+      }
     }
   }
 

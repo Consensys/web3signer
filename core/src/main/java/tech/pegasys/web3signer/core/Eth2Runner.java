@@ -64,6 +64,7 @@ import org.jdbi.v3.core.Jdbi;
 public class Eth2Runner extends Runner {
 
   final Optional<SlashingProtection> slashingProtection;
+  final AzureKeyVaultParameters azureKeyVaultParameters;
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -72,7 +73,8 @@ public class Eth2Runner extends Runner {
       final boolean slashingProtectionEnabled,
       final String slashingProtectionDbUrl,
       final String slashingProtectionDbUser,
-      final String slashingProtectionDbPassword) {
+      final String slashingProtectionDbPassword,
+      final AzureKeyVaultParameters azureKeyVaultParameters) {
     super(config);
     this.slashingProtection =
         createSlashingProtection(
@@ -80,6 +82,7 @@ public class Eth2Runner extends Runner {
             slashingProtectionDbUrl,
             slashingProtectionDbUser,
             slashingProtectionDbPassword);
+    this.azureKeyVaultParameters = azureKeyVaultParameters;
   }
 
   private Optional<SlashingProtection> createSlashingProtection(
@@ -167,10 +170,8 @@ public class Eth2Runner extends Runner {
             "yaml",
             new YamlSignerParser(List.of(artifactSignerFactory))));
 
-    if (config.getAzureKeyVaultParameters() != null) {
-      final AzureKeyVaultParameters params = config.getAzureKeyVaultParameters();
-
-      signers.addAll(loadAzureSigners(params));
+    if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
+      signers.addAll(loadAzureSigners());
     }
 
     final List<Bytes> validators =
@@ -184,13 +185,13 @@ public class Eth2Runner extends Runner {
     return DefaultArtifactSignerProvider.create(signers);
   }
 
-  final List<ArtifactSigner> loadAzureSigners(final AzureKeyVaultParameters params) {
+  final List<ArtifactSigner> loadAzureSigners() {
     final AzureKeyVault keyVault =
         new AzureKeyVault(
-            params.getClientlId(),
-            params.getClientSecret(),
-            params.getTenantId(),
-            params.getKeyVaultName());
+            azureKeyVaultParameters.getClientlId(),
+            azureKeyVaultParameters.getClientSecret(),
+            azureKeyVaultParameters.getTenantId(),
+            azureKeyVaultParameters.getKeyVaultName());
 
     final List<String> secretNames;
     try {

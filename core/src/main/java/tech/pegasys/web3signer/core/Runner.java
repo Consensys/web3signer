@@ -109,10 +109,12 @@ public abstract class Runner implements Runnable {
       LOG.info("Server is up, and listening on {}", httpServer.actualPort());
 
       persistPortInformation(httpServer.actualPort(), metricsEndpoint.getPort());
+    } catch (final InitializationException e) {
+      throw e;
     } catch (final Throwable e) {
       vertx.close();
       metricsEndpoint.stop();
-      LOG.error("Failed to initialised application", e);
+      LOG.error("Failed to initialise application", e);
     }
   }
 

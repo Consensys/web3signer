@@ -122,24 +122,25 @@ public abstract class Web3SignerRunner {
       params.add(dataPath.toAbsolutePath().toString());
     }
 
-    if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
-      final AzureKeyVaultParameters azureParams = signerConfig.getAzureKeyVaultParameters().get();
-      params.add("--azure-vault-name");
-      params.add(azureParams.getKeyVaultName());
-      params.add("--azure-client-id");
-      params.add(azureParams.getClientlId());
-      params.add("--azure-client-secret");
-      params.add(azureParams.getClientSecret());
-      params.add("--azure-tenant-id");
-      params.add(azureParams.getTenantId());
-    }
-
     params.addAll(createServerTlsArgs());
 
     params.add(signerConfig.getMode());
 
     if (signerConfig.getMode().equals("eth2")) {
       params.addAll(createEth2Args());
+
+      if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
+        final AzureKeyVaultParameters azureParams = signerConfig.getAzureKeyVaultParameters().get();
+        params.add("--azure-vault-enabled=true");
+        params.add("--azure-vault-name");
+        params.add(azureParams.getKeyVaultName());
+        params.add("--azure-client-id");
+        params.add(azureParams.getClientlId());
+        params.add("--azure-client-secret");
+        params.add(azureParams.getClientSecret());
+        params.add("--azure-tenant-id");
+        params.add(azureParams.getTenantId());
+      }
     }
 
     return params;

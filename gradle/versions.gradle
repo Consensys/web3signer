@@ -97,6 +97,9 @@ dependencyManagement {
 
     dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
 
+    dependency 'com.azure:azure-security-keyvault-secrets:4.2.1'
+    dependency 'com.azure:azure-identity:1.0.9'
+
     dependency 'com.zaxxer:HikariCP:3.4.5'
     dependency 'org.postgresql:postgresql:42.2.16.jre7'
 

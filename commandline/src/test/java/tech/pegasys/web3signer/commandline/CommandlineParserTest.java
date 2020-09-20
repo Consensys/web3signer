@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
 class CommandlineParserTest {
+
   private static final String defaultUsageText =
       new CommandLine(new Web3SignerBaseCommand()).getUsageMessage();
 
@@ -104,19 +105,6 @@ class CommandlineParserTest {
   }
 
   @Test
-  void includingASingleAzureKeyVaultParameterThenRequiresAll() {
-    String cmdline = validBaseCommandOptions();
-    cmdline =
-        cmdline
-            + "--azure-vault-name=vault --azure-client-id=client_id --azure-tenant-id=tenant_id";
-
-    final int result = parser.parseCommandLine(cmdline.split(" "));
-    assertThat(result).isNotZero();
-    assertThat(commandError.toString())
-        .contains("Missing required argument(s): --azure-client-secret");
-  }
-
-  @Test
   void eth2SubcommandRequiresSlashingDatabaseUrlWhenSlashingEnabled() {
     String cmdline = validBaseCommandOptions();
     cmdline = cmdline + "eth2 --slashing-protection-enabled=true";
@@ -125,6 +113,17 @@ class CommandlineParserTest {
     final int result = parser.parseCommandLine(cmdline.split(" "));
     assertThat(result).isNotZero();
     assertThat(commandError.toString()).contains("Missing slashing protection database url");
+  }
+
+  @Test
+  void missingAzureKeyVaultParamsProducesSuitableError() {
+    String cmdline = validBaseCommandOptions();
+    cmdline = cmdline + "eth2 --azure-vault-enabled=true";
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains("Azure Key Vault was enabled, but the following parameters were missing");
   }
 
   @Test
@@ -149,6 +148,7 @@ class CommandlineParserTest {
   }
 
   public static class MockEth2SubCommand extends Eth2SubCommand {
+
     @Override
     public void run() {
       createRunner();
