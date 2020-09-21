@@ -41,8 +41,8 @@ import tech.pegasys.web3signer.slashingprotection.DbConnection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -185,7 +185,7 @@ public class Eth2Runner extends Runner {
     return DefaultArtifactSignerProvider.create(signers);
   }
 
-  final List<ArtifactSigner> loadAzureSigners() {
+  final Collection<ArtifactSigner> loadAzureSigners() {
     final AzureKeyVault keyVault =
         new AzureKeyVault(
             azureKeyVaultParameters.getClientlId(),
@@ -193,34 +193,18 @@ public class Eth2Runner extends Runner {
             azureKeyVaultParameters.getTenantId(),
             azureKeyVaultParameters.getKeyVaultName());
 
-    final List<String> secretNames;
-    try {
-      secretNames = keyVault.getAvailableSecrets();
-    } catch (final Exception e) {
-      throw new InitializationException(
-          "Failed to connect to an Azure Keyvault with provided configuration.");
-    }
-
-    return secretNames
-        .parallelStream()
-        .map(
-            secretName -> {
-              final Optional<String> secret = keyVault.fetchSecret(secretName);
-              if (secret.isPresent()) {
-                try {
-                  final Bytes privateKeyBytes = Bytes.fromHexString(secret.get());
-                  final BLSKeyPair keyPair =
-                      new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
-                  return new BlsArtifactSigner(keyPair);
-                } catch (final Exception e) {
-                  LOG.error("Failed to load secret named {} from azure key vault.", secretName);
-                  return null;
-                }
-              }
-              return null;
-            })
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+    return keyVault.mapSecrets(
+        (name, value) -> {
+          try {
+            final Bytes privateKeyBytes = Bytes.fromHexString(value);
+            final BLSKeyPair keyPair =
+                new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
+            return new BlsArtifactSigner(keyPair);
+          } catch (final Exception e) {
+            LOG.error("Failed to load secret named {} from azure key vault.", name);
+            return null;
+          }
+        });
   }
 
   private String formatBlsSignature(final BlsArtifactSignature signature) {
