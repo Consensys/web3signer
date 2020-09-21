@@ -20,13 +20,8 @@ import org.jdbi.v3.core.Handle;
 
 public class SignedBlocksDao {
 
-  private final Handle handle;
-
-  public SignedBlocksDao(final Handle handle) {
-    this.handle = handle;
-  }
-
-  public Optional<SignedBlock> findExistingBlock(long validatorId, final UInt64 slot) {
+  public Optional<SignedBlock> findExistingBlock(
+      final Handle handle, long validatorId, final UInt64 slot) {
     return handle
         .createQuery(
             "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ?")
@@ -37,7 +32,7 @@ public class SignedBlocksDao {
   }
 
   public void insertBlockProposal(
-      final long validatorId, final UInt64 slot, final Bytes signingRoot) {
+      final Handle handle, final long validatorId, final UInt64 slot, final Bytes signingRoot) {
     handle
         .createUpdate(
             "INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)")

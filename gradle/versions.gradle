@@ -106,7 +106,8 @@ dependencyManagement {
       entry 'jdbi3-testing'
     }
 
-    dependency 'com.opentable.components:otj-pg-embedded:0.11.3'
+    dependency 'com.opentable.components:otj-pg-embedded:0.13.3'
     dependency 'org.flywaydb:flyway-core:6.1.1'
+    dependency 'com.h2database:h2:1.4.200'
   }
 }

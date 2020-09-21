@@ -52,10 +52,10 @@ public class SignedBlocksDaoTest {
   @Test
   public void findsExistingBlockInDb() {
     insertBlock(handle, Bytes.of(100), 1, 2, Bytes.of(3));
-    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(handle);
+    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
 
     final Optional<SignedBlock> existingBlock =
-        signedBlocksDao.findExistingBlock(1, UInt64.valueOf(2));
+        signedBlocksDao.findExistingBlock(handle, 1, UInt64.valueOf(2));
     assertThat(existingBlock).isNotEmpty();
     assertThat(existingBlock.get().getValidatorId()).isEqualTo(1);
     assertThat(existingBlock.get().getSlot()).isEqualTo(UInt64.valueOf(2));
@@ -65,22 +65,22 @@ public class SignedBlocksDaoTest {
   @Test
   public void returnsEmptyForNonExistingBlockInDb() {
     insertBlock(handle, Bytes.of(100), 1, 2, Bytes.of(3));
-    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(handle);
-    assertThat(signedBlocksDao.findExistingBlock(1, UInt64.valueOf(1))).isEmpty();
-    assertThat(signedBlocksDao.findExistingBlock(2, UInt64.valueOf(2))).isEmpty();
+    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+    assertThat(signedBlocksDao.findExistingBlock(handle, 1, UInt64.valueOf(1))).isEmpty();
+    assertThat(signedBlocksDao.findExistingBlock(handle, 2, UInt64.valueOf(2))).isEmpty();
   }
 
   @Test
   public void storesBlockInDb() {
-    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(handle);
-    final ValidatorsDao validatorsDao = new ValidatorsDao(handle);
+    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
 
-    validatorsDao.registerValidators(List.of(Bytes.of(100)));
-    validatorsDao.registerValidators(List.of(Bytes.of(101)));
-    validatorsDao.registerValidators(List.of(Bytes.of(102)));
-    signedBlocksDao.insertBlockProposal(1, UInt64.valueOf(2), Bytes.of(100));
-    signedBlocksDao.insertBlockProposal(2, UInt64.MAX_VALUE, Bytes.of(101));
-    signedBlocksDao.insertBlockProposal(3, UInt64.MIN_VALUE, Bytes.of(102));
+    validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
+    validatorsDao.registerValidators(handle, List.of(Bytes.of(101)));
+    validatorsDao.registerValidators(handle, List.of(Bytes.of(102)));
+    signedBlocksDao.insertBlockProposal(handle, 1, UInt64.valueOf(2), Bytes.of(100));
+    signedBlocksDao.insertBlockProposal(handle, 2, UInt64.MAX_VALUE, Bytes.of(101));
+    signedBlocksDao.insertBlockProposal(handle, 3, UInt64.MIN_VALUE, Bytes.of(102));
 
     final List<SignedBlock> validators =
         handle

@@ -55,9 +55,9 @@ public class ValidatorsDaoTest {
     insertValidator(handle, 101);
     insertValidator(handle, 102);
 
-    final ValidatorsDao validatorsDao = new ValidatorsDao(handle);
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
     final List<Validator> registeredValidators =
-        validatorsDao.retrieveValidators(List.of(Bytes.of(101), Bytes.of(102)));
+        validatorsDao.retrieveValidators(handle, List.of(Bytes.of(101), Bytes.of(102)));
     assertThat(registeredValidators).hasSize(2);
     assertThat(registeredValidators.get(0))
         .isEqualToComparingFieldByField(new Validator(2, Bytes.of(101)));
@@ -67,8 +67,8 @@ public class ValidatorsDaoTest {
 
   @Test
   public void storesValidatorsInDb() {
-    final ValidatorsDao validatorsDao = new ValidatorsDao(handle);
-    validatorsDao.registerValidators(List.of(Bytes.of(101), Bytes.of(102)));
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    validatorsDao.registerValidators(handle, List.of(Bytes.of(101), Bytes.of(102)));
 
     final List<Validator> validators =
         handle
@@ -86,13 +86,14 @@ public class ValidatorsDaoTest {
     insertValidator(handle, 101);
     insertValidator(handle, 102);
 
-    final ValidatorsDao validatorsDao = new ValidatorsDao(handle);
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
     final List<Bytes> validators1 =
         List.of(Bytes.of(101), Bytes.of(102), Bytes.of(103), Bytes.of(104));
-    final List<Validator> registeredValidators = validatorsDao.retrieveValidators(validators1);
+    final List<Validator> registeredValidators =
+        validatorsDao.retrieveValidators(handle, validators1);
     final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators1);
     registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
-    validatorsDao.registerValidators(validatorsMissingFromDb);
+    validatorsDao.registerValidators(handle, validatorsMissingFromDb);
 
     final List<Validator> validators =
         handle

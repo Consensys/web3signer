@@ -27,14 +27,19 @@ import org.jdbi.v3.core.Jdbi;
 
 public class DbSlashingProtection implements SlashingProtection {
   private final Jdbi jdbi;
+  private final ValidatorsDao validatorsDao;
+  private final SignedBlocksDao signedBlocksDao;
 
-  public DbSlashingProtection(final Jdbi jdbi) {
+  public DbSlashingProtection(
+      final Jdbi jdbi, final ValidatorsDao validatorsDao, final SignedBlocksDao signedBlocksDao) {
     this.jdbi = jdbi;
+    this.validatorsDao = validatorsDao;
+    this.signedBlocksDao = signedBlocksDao;
   }
 
   @Override
   public boolean maySignAttestation(
-      final String publicKey,
+      final Bytes publicKey,
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
@@ -43,28 +48,25 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public boolean maySignBlock(
-      final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
+      final Bytes publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
     return jdbi.inTransaction(
         h -> {
-          final ValidatorsDao validatorsDao = new ValidatorsDao(h);
           final List<Validator> validators =
-              validatorsDao.retrieveValidators(List.of(Bytes.fromHexString(publicKey)));
+              validatorsDao.retrieveValidators(h, List.of(publicKey));
           final Optional<Long> validatorId = validators.stream().findFirst().map(Validator::getId);
-
           if (validatorId.isEmpty()) {
             return false;
           } else {
             final long id = validatorId.get();
-            final SignedBlocksDao signedBlocksDao = new SignedBlocksDao(h);
             final Optional<SignedBlock> existingBlock =
-                signedBlocksDao.findExistingBlock(id, blockSlot);
+                signedBlocksDao.findExistingBlock(h, id, blockSlot);
 
             // same slot and signing_root is allowed for broadcasting previously signed block
             // otherwise if slot and different signing_root then this is a double block proposal
             final boolean isValid =
                 existingBlock.map(block -> block.getSigningRoot().equals(signingRoot)).orElse(true);
             if (isValid) {
-              signedBlocksDao.insertBlockProposal(id, blockSlot, signingRoot);
+              signedBlocksDao.insertBlockProposal(h, id, blockSlot, signingRoot);
             }
             return isValid;
           }
@@ -75,11 +77,11 @@ public class DbSlashingProtection implements SlashingProtection {
   public void registerValidators(final List<Bytes> validators) {
     jdbi.useTransaction(
         h -> {
-          final ValidatorsDao validatorsDao = new ValidatorsDao(h);
-          final List<Validator> registeredValidators = validatorsDao.retrieveValidators(validators);
+          final List<Validator> registeredValidators =
+              validatorsDao.retrieveValidators(h, validators);
           final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
           registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
-          validatorsDao.registerValidators(validatorsMissingFromDb);
+          validatorsDao.registerValidators(h, validatorsMissingFromDb);
         });
   }
 }
