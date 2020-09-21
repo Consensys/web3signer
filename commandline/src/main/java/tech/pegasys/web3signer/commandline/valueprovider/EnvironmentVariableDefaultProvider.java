@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.commandline.valueprovider;
 
+import static tech.pegasys.web3signer.commandline.valueprovider.PrefixUtil.stripPrefix;
+
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Map;
@@ -23,8 +25,6 @@ import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.OptionSpec;
 
 public class EnvironmentVariableDefaultProvider implements IDefaultValueProvider {
-  private static final String ENV_VAR_PREFIX = "WEB3SIGNER_";
-
   private final Map<String, String> environment;
 
   public EnvironmentVariableDefaultProvider(final Map<String, String> environment) {
@@ -34,23 +34,14 @@ public class EnvironmentVariableDefaultProvider implements IDefaultValueProvider
   @Override
   public String defaultValue(final ArgSpec argSpec) {
     if (argSpec.isOption()) {
-      return envVarNames((OptionSpec) argSpec)
-          .map(environment::get)
-          .filter(Objects::nonNull)
-          .findFirst()
-          .orElse(null);
+      final OptionSpec optionSpec = (OptionSpec) argSpec;
+      final String qualifiedPrefix =
+          optionSpec.command().qualifiedName("_").replace("-", "_").toUpperCase();
+      final String key = stripPrefix(optionSpec.longestName()).replace("-", "_").toUpperCase();
+      final String qualifiedKey = qualifiedPrefix + "_" + key;
+      return environment.get(qualifiedKey);
     }
 
     return null; // currently not supporting positional parameters
-  }
-
-  private Stream<String> envVarNames(final OptionSpec spec) {
-    return Arrays.stream(spec.names())
-        .filter(name -> name.startsWith("--")) // Only long options are allowed
-        .map(name -> ENV_VAR_PREFIX + nameToEnvVarSuffix(name));
-  }
-
-  private String nameToEnvVarSuffix(final String name) {
-    return name.substring("--".length()).replace('-', '_').toUpperCase(Locale.US);
   }
 }
