@@ -14,12 +14,7 @@ package tech.pegasys.web3signer.commandline.valueprovider;
 
 import static tech.pegasys.web3signer.commandline.valueprovider.PrefixUtil.stripPrefix;
 
-import java.util.Arrays;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
-
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;
 import picocli.CommandLine.Model.OptionSpec;
