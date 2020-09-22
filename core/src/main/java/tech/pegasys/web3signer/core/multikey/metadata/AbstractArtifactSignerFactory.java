@@ -31,6 +31,7 @@ import java.util.Optional;
 
 import com.google.common.io.Files;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
 
@@ -82,6 +83,11 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
     } catch (final Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
     }
+  }
+
+  protected Bytes extractBytesFromVault(final YubiHsm2SigningMetadata metadata) {
+    // TODO: Call Signer's YubiHsm2
+    return Bytes32.random();
   }
 
   private Optional<TlsOptions> buildTlsOptions(final HashicorpSigningMetadata metadata) {
