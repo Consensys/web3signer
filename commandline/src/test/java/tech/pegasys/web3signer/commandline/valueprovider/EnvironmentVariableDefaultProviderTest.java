@@ -12,34 +12,79 @@
  */
 package tech.pegasys.web3signer.commandline.valueprovider;
 
+import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.CmdlineHelpers.removeFieldFrom;
-import static tech.pegasys.web3signer.CmdlineHelpers.validBaseCommandOptions;
-import static tech.pegasys.web3signer.CmdlineHelpers.validBaseEnvironmentVariableOptions;
 
-import tech.pegasys.web3signer.commandline.Web3SignerBaseCommand;
+import java.util.Map;
 
-import java.nio.file.Path;
-
-import org.apache.logging.log4j.Level;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
 
 class EnvironmentVariableDefaultProviderTest {
+  private DemoCommand demoCommand;
+  private DemoCommand.SubCommand subCommand;
+  private CommandLine commandLine;
+
+  @BeforeEach
+  void setUp() {
+    demoCommand = new DemoCommand();
+    subCommand = new DemoCommand.SubCommand();
+
+    commandLine = new CommandLine(demoCommand);
+    commandLine.addSubcommand(subCommand);
+  }
+
   @Test
-  void valuesFromEnvironmentVariableArePopulated() {
-    final Web3SignerBaseCommand web3SignerBaseCommand = new Web3SignerBaseCommand();
-    final CommandLine commandLine = new CommandLine(web3SignerBaseCommand);
-    commandLine.registerConverter(Level.class, Level::valueOf);
-    commandLine.setDefaultValueProvider(
-        new EnvironmentVariableDefaultProvider(validBaseEnvironmentVariableOptions()));
+  void validEnvironmentVariablesAreUsedAsDefaultValueProvider() {
 
-    final String cmdArgs =
-        removeFieldFrom(validBaseCommandOptions(), "http-listen-port", "key-store-path");
-    final String[] args = cmdArgs.split(" ");
-    commandLine.parseArgs(args);
+    final EnvironmentVariableDefaultProvider defaultProvider =
+        new EnvironmentVariableDefaultProvider(validEnvMap());
 
-    assertThat(web3SignerBaseCommand.getHttpListenPort()).isEqualTo(7001);
-    assertThat(web3SignerBaseCommand.getKeyConfigPath()).isEqualTo(Path.of("./keys_env"));
+    commandLine.setDefaultValueProvider(defaultProvider);
+    commandLine.parseArgs("country");
+
+    // assertions
+    assertThat(demoCommand.x).isEqualTo(10);
+    assertThat(demoCommand.y).isEqualTo(20);
+    assertThat(demoCommand.name).isEqualTo("test name");
+    assertThat(subCommand.countryCodes).containsExactlyInAnyOrder("AU", "US");
+  }
+
+  @Test
+  void validEnvironmentVariablesAndCliOptionsMixed() {
+
+    final EnvironmentVariableDefaultProvider defaultProvider =
+        new EnvironmentVariableDefaultProvider(validEnvMap());
+
+    commandLine.setDefaultValueProvider(defaultProvider);
+    commandLine.parseArgs("--name", "test name2", "country");
+
+    // assertions
+    assertThat(demoCommand.x).isEqualTo(10);
+    assertThat(demoCommand.y).isEqualTo(20);
+    assertThat(demoCommand.name).isEqualTo("test name2");
+    assertThat(subCommand.countryCodes).containsExactlyInAnyOrder("AU", "US");
+  }
+
+  @Test
+  void emptyEnvironmentVariablesResultsNullValues() {
+
+    final EnvironmentVariableDefaultProvider defaultProvider =
+        new EnvironmentVariableDefaultProvider(emptyMap());
+
+    commandLine.setDefaultValueProvider(defaultProvider);
+    commandLine.parseArgs("country");
+
+    // assertions
+    assertThat(demoCommand.x).isEqualTo(0);
+    assertThat(demoCommand.y).isEqualTo(0);
+    assertThat(demoCommand.name).isNull();
+    assertThat(subCommand.countryCodes).isNullOrEmpty();
+  }
+
+  private Map<String, String> validEnvMap() {
+    return Map.of(
+        "DEMO_X", "10", "DEMO_Y", "20", "DEMO_NAME", "test name", "DEMO_COUNTRY_CODES", "AU,US");
   }
 }
