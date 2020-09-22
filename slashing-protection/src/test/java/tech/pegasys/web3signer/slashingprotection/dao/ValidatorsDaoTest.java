@@ -68,13 +68,9 @@ public class ValidatorsDaoTest {
   @Test
   public void storesValidatorsInDb() {
     final ValidatorsDao validatorsDao = new ValidatorsDao();
-    validatorsDao.registerValidators(handle, List.of(Bytes.of(101), Bytes.of(102)));
-
     final List<Validator> validators =
-        handle
-            .createQuery("SELECT * FROM validators ORDER BY ID")
-            .mapToBean(Validator.class)
-            .list();
+        validatorsDao.registerValidators(handle, List.of(Bytes.of(101), Bytes.of(102)));
+
     assertThat(validators.size()).isEqualTo(2);
     assertThat(validators.get(0)).isEqualToComparingFieldByField(new Validator(1, Bytes.of(101)));
     assertThat(validators.get(1)).isEqualToComparingFieldByField(new Validator(2, Bytes.of(102)));

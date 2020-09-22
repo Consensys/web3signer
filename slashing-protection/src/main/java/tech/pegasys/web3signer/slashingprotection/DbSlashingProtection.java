@@ -12,15 +12,20 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.collect.Streams;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Jdbi;
@@ -29,12 +34,28 @@ public class DbSlashingProtection implements SlashingProtection {
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
+  private final SignedAttestationsDao signedAttestationsDao;
+  private final Map<Bytes, Long> registeredValidators;
 
   public DbSlashingProtection(
-      final Jdbi jdbi, final ValidatorsDao validatorsDao, final SignedBlocksDao signedBlocksDao) {
+      final Jdbi jdbi,
+      final ValidatorsDao validatorsDao,
+      final SignedBlocksDao signedBlocksDao,
+      final SignedAttestationsDao signedAttestationsDao) {
+    this(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, new HashMap<>());
+  }
+
+  public DbSlashingProtection(
+      final Jdbi jdbi,
+      final ValidatorsDao validatorsDao,
+      final SignedBlocksDao signedBlocksDao,
+      final SignedAttestationsDao signedAttestationsDao,
+      final Map<Bytes, Long> registeredValidators) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
+    this.signedAttestationsDao = signedAttestationsDao;
+    this.registeredValidators = registeredValidators;
   }
 
   @Override
@@ -43,15 +64,57 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
-    return true;
+    final Optional<Long> validatorId = Optional.ofNullable(registeredValidators.get(publicKey));
+    if (validatorId.isEmpty()) {
+      return false;
+    }
+
+    if (sourceEpoch.compareTo(targetEpoch) > 0) {
+      return false;
+    }
+
+    return jdbi.inTransaction(
+        h -> {
+          final long id = validatorId.get();
+          final boolean maySign = maySignAttestation(signingRoot, sourceEpoch, targetEpoch, h, id);
+          if (maySign) {
+            signedAttestationsDao.insertAttestation(h, id, signingRoot, sourceEpoch, targetEpoch);
+          }
+          return maySign;
+        });
+  }
+
+  private Boolean maySignAttestation(
+      final Bytes signingRoot,
+      final UInt64 sourceEpoch,
+      final UInt64 targetEpoch,
+      final org.jdbi.v3.core.Handle h,
+      final long id) {
+    // check for double vote, an existing attestation with same target epoch by different
+    // signing root
+    final Optional<SignedAttestation> existingAttestation =
+        signedAttestationsDao.findExistingAttestation(h, id, targetEpoch);
+    if (existingAttestation.isPresent()) {
+      return existingAttestation.get().getSigningRoot().equals(signingRoot);
+    }
+
+    // check that no previous vote is surrounding the attestation
+    final Optional<SignedAttestation> surroundingAttestation =
+        signedAttestationsDao.findSurroundingAttestation(h, id, sourceEpoch, targetEpoch);
+    if (surroundingAttestation.isPresent()) {
+      return false;
+    }
+
+    // check that no previous vote is surrounded by attestation
+    final Optional<SignedAttestation> surroundedAttestation =
+        signedAttestationsDao.findSurroundedAttestation(h, id, sourceEpoch, targetEpoch);
+    return surroundedAttestation.isEmpty();
   }
 
   @Override
   public boolean maySignBlock(
       final Bytes publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
-    final List<Validator> validators =
-        jdbi.inTransaction(h -> validatorsDao.retrieveValidators(h, List.of(publicKey)));
-    final Optional<Long> validatorId = validators.stream().findFirst().map(Validator::getId);
+    final Optional<Long> validatorId = Optional.ofNullable(registeredValidators.get(publicKey));
     if (validatorId.isEmpty()) {
       return false;
     }
@@ -77,11 +140,16 @@ public class DbSlashingProtection implements SlashingProtection {
   public void registerValidators(final List<Bytes> validators) {
     jdbi.useTransaction(
         h -> {
-          final List<Validator> registeredValidators =
+          final List<Validator> existingRegisteredValidators =
               validatorsDao.retrieveValidators(h, validators);
           final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
-          registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
-          validatorsDao.registerValidators(h, validatorsMissingFromDb);
+          existingRegisteredValidators.forEach(
+              v -> validatorsMissingFromDb.remove(v.getPublicKey()));
+          final List<Validator> newlyRegisteredValidators =
+              validatorsDao.registerValidators(h, validatorsMissingFromDb);
+
+          Streams.concat(existingRegisteredValidators.stream(), newlyRegisteredValidators.stream())
+              .forEach(v -> registeredValidators.put(v.getPublicKey(), v.getId()));
         });
   }
 }
