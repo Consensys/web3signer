@@ -78,9 +78,12 @@ public class SignedBlocksDaoTest {
     validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
     validatorsDao.registerValidators(handle, List.of(Bytes.of(101)));
     validatorsDao.registerValidators(handle, List.of(Bytes.of(102)));
-    signedBlocksDao.insertBlockProposal(handle, 1, UInt64.valueOf(2), Bytes.of(100));
-    signedBlocksDao.insertBlockProposal(handle, 2, UInt64.MAX_VALUE, Bytes.of(101));
-    signedBlocksDao.insertBlockProposal(handle, 3, UInt64.MIN_VALUE, Bytes.of(102));
+    signedBlocksDao.insertBlockProposal(
+        handle, new SignedBlock(1, UInt64.valueOf(2), Bytes.of(100)));
+    signedBlocksDao.insertBlockProposal(
+        handle, new SignedBlock(2, UInt64.MAX_VALUE, Bytes.of(101)));
+    signedBlocksDao.insertBlockProposal(
+        handle, new SignedBlock(3, UInt64.MIN_VALUE, Bytes.of(102)));
 
     final List<SignedBlock> validators =
         handle

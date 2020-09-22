@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 
@@ -31,14 +30,13 @@ public class SignedBlocksDao {
         .findFirst();
   }
 
-  public void insertBlockProposal(
-      final Handle handle, final long validatorId, final UInt64 slot, final Bytes signingRoot) {
+  public void insertBlockProposal(final Handle handle, final SignedBlock signedBlock) {
     handle
         .createUpdate(
             "INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)")
-        .bind(0, validatorId)
-        .bind(1, slot)
-        .bind(2, signingRoot)
+        .bind(0, signedBlock.getValidatorId())
+        .bind(1, signedBlock.getSlot())
+        .bind(2, signedBlock.getSigningRoot())
         .execute();
   }
 }

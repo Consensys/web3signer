@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,7 +63,7 @@ public class DbSlashingProtectionTest {
     verify(validatorsDao).retrieveValidators(any(), eq(List.of(PUBLIC_KEY)));
     verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
     verify(signedBlocksDao)
-        .insertBlockProposal(any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
+        .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
   }
 
   @Test
@@ -79,7 +80,7 @@ public class DbSlashingProtectionTest {
     verify(validatorsDao).retrieveValidators(any(), eq(List.of(PUBLIC_KEY)));
     verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
     verify(signedBlocksDao)
-        .insertBlockProposal(any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
+        .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
   }
 
   @Test
@@ -96,7 +97,7 @@ public class DbSlashingProtectionTest {
     verify(validatorsDao).retrieveValidators(any(), eq(List.of(PUBLIC_KEY)));
     verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
     verify(signedBlocksDao, never())
-        .insertBlockProposal(any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
+        .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
   }
 
   @Test
@@ -108,6 +109,6 @@ public class DbSlashingProtectionTest {
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY, SIGNING_ROOT, SLOT)).isFalse();
     verify(validatorsDao).retrieveValidators(any(), eq(List.of(PUBLIC_KEY)));
     verify(signedBlocksDao, never())
-        .insertBlockProposal(any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
+        .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
   }
 }

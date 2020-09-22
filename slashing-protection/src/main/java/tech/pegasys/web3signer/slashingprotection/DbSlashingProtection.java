@@ -49,27 +49,27 @@ public class DbSlashingProtection implements SlashingProtection {
   @Override
   public boolean maySignBlock(
       final Bytes publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
+    final List<Validator> validators =
+        jdbi.inTransaction(h -> validatorsDao.retrieveValidators(h, List.of(publicKey)));
+    final Optional<Long> validatorId = validators.stream().findFirst().map(Validator::getId);
+    if (validatorId.isEmpty()) {
+      return false;
+    }
+
     return jdbi.inTransaction(
         h -> {
-          final List<Validator> validators =
-              validatorsDao.retrieveValidators(h, List.of(publicKey));
-          final Optional<Long> validatorId = validators.stream().findFirst().map(Validator::getId);
-          if (validatorId.isEmpty()) {
-            return false;
-          } else {
-            final long id = validatorId.get();
-            final Optional<SignedBlock> existingBlock =
-                signedBlocksDao.findExistingBlock(h, id, blockSlot);
-
-            // same slot and signing_root is allowed for broadcasting previously signed block
-            // otherwise if slot and different signing_root then this is a double block proposal
-            final boolean isValid =
-                existingBlock.map(block -> block.getSigningRoot().equals(signingRoot)).orElse(true);
-            if (isValid) {
-              signedBlocksDao.insertBlockProposal(h, id, blockSlot, signingRoot);
-            }
-            return isValid;
+          final long id = validatorId.get();
+          final Optional<SignedBlock> existingBlock =
+              signedBlocksDao.findExistingBlock(h, id, blockSlot);
+          // same slot and signing_root is allowed for broadcasting previously signed block
+          // otherwise if slot and different signing_root then this is a double block proposal
+          final boolean maySign =
+              existingBlock.isEmpty() || existingBlock.get().getSigningRoot().equals(signingRoot);
+          if (maySign) {
+            final SignedBlock signedBlock = new SignedBlock(id, blockSlot, signingRoot);
+            signedBlocksDao.insertBlockProposal(h, signedBlock);
           }
+          return maySign;
         });
   }
 
