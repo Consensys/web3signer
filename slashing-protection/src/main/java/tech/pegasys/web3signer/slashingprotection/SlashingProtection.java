@@ -20,9 +20,9 @@ import org.apache.tuweni.units.bigints.UInt64;
 public interface SlashingProtection {
 
   boolean maySignAttestation(
-      String publicKey, final Bytes signingRoot, UInt64 sourceEpoch, UInt64 targetEpoch);
+      Bytes publicKey, final Bytes signingRoot, UInt64 sourceEpoch, UInt64 targetEpoch);
 
-  boolean maySignBlock(String publicKey, final Bytes signingRoot, UInt64 blockSlot);
+  boolean maySignBlock(Bytes publicKey, final Bytes signingRoot, UInt64 blockSlot);
 
   void registerValidators(List<Bytes> validators);
 }
