@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 
@@ -70,19 +69,14 @@ public class SignedAttestationsDao {
         .findFirst();
   }
 
-  public void insertAttestation(
-      final Handle handle,
-      final long validatorId,
-      final Bytes signingRoot,
-      final UInt64 sourceEpoch,
-      final UInt64 targetEpoch) {
+  public void insertAttestation(final Handle handle, final SignedAttestation signedAttestation) {
     handle
         .createUpdate(
-            "INSERT INTO signed_blocks (validator_id, signing_root, source_epoch, target_epoch) VALUES (?, ?, ?, ?)")
-        .bind(0, validatorId)
-        .bind(1, signingRoot)
-        .bind(2, sourceEpoch)
-        .bind(3, targetEpoch)
+            "INSERT INTO signed_attestations (validator_id, signing_root, source_epoch, target_epoch) VALUES (?, ?, ?, ?)")
+        .bind(0, signedAttestation.getValidatorId())
+        .bind(1, signedAttestation.getSigningRoot())
+        .bind(2, signedAttestation.getSourceEpoch())
+        .bind(3, signedAttestation.getTargetEpoch())
         .execute();
   }
 }

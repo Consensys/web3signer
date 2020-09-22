@@ -78,7 +78,9 @@ public class DbSlashingProtection implements SlashingProtection {
           final long id = validatorId.get();
           final boolean maySign = maySignAttestation(signingRoot, sourceEpoch, targetEpoch, h, id);
           if (maySign) {
-            signedAttestationsDao.insertAttestation(h, id, signingRoot, sourceEpoch, targetEpoch);
+            final SignedAttestation signedAttestation =
+                new SignedAttestation(id, sourceEpoch, targetEpoch, signingRoot);
+            signedAttestationsDao.insertAttestation(h, signedAttestation);
           }
           return maySign;
         });
