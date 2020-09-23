@@ -81,20 +81,21 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   @Test
   void envVarsAreUsedToDefaultAzureParams() {
     // This ensures env vars correspond to the WEB3SIGNER_<subcommand>_<option> syntax
-    final Map<String, String> env = Map.of("WEB3SIGNER_ETH2_AZURE_VAULT_NAME", "nonExistentVault");
-    final AzureKeyVaultParameters azureParams =
-        new DefaultAzureKeyVaultParameters(VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET);
+    final Map<String, String> env = Map.of(
+        "WEB3SIGNER_ETH2_AZURE_VAULT_ENABLED", "true",
+        "WEB3SIGNER_ETH2_AZURE_VAULT_NAME", VAULT_NAME,
+        "WEB3SIGNER_ETH2_AZURE_CLIENT_ID", CLIENT_ID,
+        "WEB3SIGNER_ETH2_AZURE_CLIENT_SECRET", CLIENT_SECRET,
+        "WEB3SIGNER_ETH2_AZURE_TENANT_ID", TENANT_ID);
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withMode("eth2")
-            .withEnvironment(env)
-            .withAzureKeyVaultParameters(azureParams)
-            .withHttpPort(9000); // required to prevent waiting for ports file.
+            .withEnvironment(env);
 
-    final Signer signer = new Signer(configBuilder.build(), null);
-    signer.start();
-    waitFor(30, () -> assertThat(signer.isRunning()).isTrue());
-    waitFor(30, () -> assertThat(signer.isRunning()).isFalse());
+    startSigner(configBuilder.build());
+
+    final Response response = signer.callApiPublicKeys(KeyType.BLS);
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
   }
 }
