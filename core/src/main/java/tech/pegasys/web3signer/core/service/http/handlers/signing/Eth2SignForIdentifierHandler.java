@@ -30,6 +30,7 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
 public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
@@ -70,7 +71,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
               signature -> {
                 if (slashingProtection.isPresent()) {
                   try {
-                    if (maySign(identifier, eth2SigningRequestBody)) {
+                    if (maySign(Bytes.fromHexString(identifier), eth2SigningRequestBody)) {
                       respondWithSignature(routingContext, signature);
                     } else {
                       LOG.debug("Signing not allowed due to slashing protection rules failing");
@@ -98,7 +99,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   }
 
   private boolean maySign(
-      final String publicKey, final Eth2SigningRequestBody eth2SigningRequestBody) {
+      final Bytes publicKey, final Eth2SigningRequestBody eth2SigningRequestBody) {
     checkArgument(eth2SigningRequestBody.getType() != null, "Type must be specified");
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:

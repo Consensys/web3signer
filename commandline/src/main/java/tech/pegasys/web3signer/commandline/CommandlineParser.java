@@ -93,11 +93,12 @@ public class CommandlineParser {
     commandLine.setErr(errorWriter);
     commandLine.setExecutionExceptionHandler(this::handleExecutionException);
     commandLine.setParameterExceptionHandler(this::handleParseException);
-    commandLine.setDefaultValueProvider(defaultValueProvider(commandLine, configFile));
 
     for (final ModeSubCommand subcommand : modes) {
       commandLine.addSubcommand(subcommand.getCommandName(), subcommand);
     }
+
+    commandLine.setDefaultValueProvider(defaultValueProvider(commandLine, configFile));
 
     return commandLine.execute(args);
   }

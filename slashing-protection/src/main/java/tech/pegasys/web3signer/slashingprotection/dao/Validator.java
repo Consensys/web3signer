@@ -10,23 +10,35 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.slashingprotection;
-
-import java.sql.Types;
+package tech.pegasys.web3signer.slashingprotection.dao;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.jdbi.v3.core.argument.AbstractArgumentFactory;
-import org.jdbi.v3.core.argument.Argument;
-import org.jdbi.v3.core.config.ConfigRegistry;
 
-public class BytesArgumentFactory extends AbstractArgumentFactory<Bytes> {
+public class Validator {
+  private long id;
+  private Bytes publicKey;
 
-  public BytesArgumentFactory() {
-    super(Types.BINARY);
+  // needed for JDBI bean mapping
+  public Validator() {}
+
+  public Validator(final long id, final Bytes publicKey) {
+    this.id = id;
+    this.publicKey = publicKey;
   }
 
-  @Override
-  protected Argument build(final Bytes value, final ConfigRegistry config) {
-    return (position, statement, ctx) -> statement.setBytes(position, value.toArrayUnsafe());
+  public long getId() {
+    return id;
+  }
+
+  public void setId(final long id) {
+    this.id = id;
+  }
+
+  public Bytes getPublicKey() {
+    return publicKey;
+  }
+
+  public void setPublicKey(final Bytes publicKey) {
+    this.publicKey = publicKey;
   }
 }

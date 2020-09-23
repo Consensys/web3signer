@@ -12,13 +12,17 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.BytesArgumentFactory;
+import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.UInt64ArgumentFactory;
+import tech.pegasys.web3signer.slashingprotection.ColumnMappers.BytesColumnMapper;
+import tech.pegasys.web3signer.slashingprotection.ColumnMappers.UInt64ColumnMapper;
+
 import javax.sql.DataSource;
 
 import com.zaxxer.hikari.HikariDataSource;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.argument.Arguments;
 import org.jdbi.v3.core.mapper.ColumnMappers;
-import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
 public class DbConnection {
 
@@ -26,10 +30,17 @@ public class DbConnection {
       final String jdbcUrl, final String username, final String password) {
     final DataSource datasource = createDataSource(jdbcUrl, username, password);
     final Jdbi jdbi = Jdbi.create(datasource);
-    jdbi.installPlugin(new SqlObjectPlugin());
-    jdbi.getConfig(Arguments.class).register(new BytesArgumentFactory());
-    jdbi.getConfig(ColumnMappers.class).register(new BytesColumnMapper());
+    configureJdbi(jdbi);
     return jdbi;
+  }
+
+  public static void configureJdbi(final Jdbi jdbi) {
+    jdbi.getConfig(Arguments.class)
+        .register(new BytesArgumentFactory())
+        .register(new UInt64ArgumentFactory());
+    jdbi.getConfig(ColumnMappers.class)
+        .register(new BytesColumnMapper())
+        .register(new UInt64ColumnMapper());
   }
 
   private static DataSource createDataSource(

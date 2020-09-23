@@ -10,20 +10,20 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.slashingprotection;
+package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.web3signer.slashingprotection.DbConnection;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.argument.Arguments;
-import org.jdbi.v3.core.mapper.ColumnMappers;
-import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.jdbi.v3.testing.JdbiRule;
 import org.jdbi.v3.testing.Migration;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,49 +36,45 @@ public class ValidatorsDaoTest {
       JdbiRule.embeddedPostgres()
           .withMigration(Migration.before().withPath("migrations/postgresql"));
 
+  private Handle handle;
+
   @Before
   public void setup() {
-    postgres.getJdbi().installPlugin(new SqlObjectPlugin());
-    postgres.getJdbi().getConfig(Arguments.class).register(new BytesArgumentFactory());
-    postgres.getJdbi().getConfig(ColumnMappers.class).register(new BytesColumnMapper());
+    DbConnection.configureJdbi(postgres.getJdbi());
+    handle = postgres.getJdbi().open();
+  }
+
+  @After
+  public void cleanup() {
+    handle.close();
   }
 
   @Test
   public void retrievesSpecifiedValidatorsFromDb() {
-    final Jdbi jdbi = postgres.getJdbi();
-    jdbi.useHandle(
-        h -> {
-          insertValidator(h, 100);
-          insertValidator(h, 101);
-          insertValidator(h, 102);
-        });
+    insertValidator(handle, 100);
+    insertValidator(handle, 101);
+    insertValidator(handle, 102);
 
-    jdbi.useExtension(
-        ValidatorsDao.class,
-        dao -> {
-          final List<Validator> registeredValidators =
-              dao.retrieveValidators(List.of(Bytes.of(101), Bytes.of(102)));
-          assertThat(registeredValidators).hasSize(2);
-          assertThat(registeredValidators.get(0))
-              .isEqualToComparingFieldByField(new Validator(2, Bytes.of(101)));
-          assertThat(registeredValidators.get(1))
-              .isEqualToComparingFieldByField(new Validator(3, Bytes.of(102)));
-        });
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    final List<Validator> registeredValidators =
+        validatorsDao.retrieveValidators(handle, List.of(Bytes.of(101), Bytes.of(102)));
+    assertThat(registeredValidators).hasSize(2);
+    assertThat(registeredValidators.get(0))
+        .isEqualToComparingFieldByField(new Validator(2, Bytes.of(101)));
+    assertThat(registeredValidators.get(1))
+        .isEqualToComparingFieldByField(new Validator(3, Bytes.of(102)));
   }
 
   @Test
   public void storesValidatorsInDb() {
-    final Jdbi jdbi = postgres.getJdbi();
-
-    jdbi.useExtension(
-        ValidatorsDao.class, dao -> dao.registerValidators(List.of(Bytes.of(101), Bytes.of(102))));
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    validatorsDao.registerValidators(handle, List.of(Bytes.of(101), Bytes.of(102)));
 
     final List<Validator> validators =
-        jdbi.withHandle(
-            h ->
-                h.createQuery("SELECT * FROM validators ORDER BY ID")
-                    .mapToBean(Validator.class)
-                    .list());
+        handle
+            .createQuery("SELECT * FROM validators ORDER BY ID")
+            .mapToBean(Validator.class)
+            .list();
     assertThat(validators.size()).isEqualTo(2);
     assertThat(validators.get(0)).isEqualToComparingFieldByField(new Validator(1, Bytes.of(101)));
     assertThat(validators.get(1)).isEqualToComparingFieldByField(new Validator(2, Bytes.of(102)));
@@ -86,26 +82,24 @@ public class ValidatorsDaoTest {
 
   @Test
   public void storesUnregisteredValidatorsInDb() {
-    final Jdbi jdbi = postgres.getJdbi();
-    jdbi.useHandle(
-        h -> {
-          insertValidator(h, 100);
-          insertValidator(h, 101);
-          insertValidator(h, 102);
-        });
+    insertValidator(handle, 100);
+    insertValidator(handle, 101);
+    insertValidator(handle, 102);
 
-    jdbi.useExtension(
-        ValidatorsDao.class,
-        dao ->
-            dao.registerMissingValidators(
-                List.of(Bytes.of(101), Bytes.of(102), Bytes.of(103), Bytes.of(104))));
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    final List<Bytes> validators1 =
+        List.of(Bytes.of(101), Bytes.of(102), Bytes.of(103), Bytes.of(104));
+    final List<Validator> registeredValidators =
+        validatorsDao.retrieveValidators(handle, validators1);
+    final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators1);
+    registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
+    validatorsDao.registerValidators(handle, validatorsMissingFromDb);
 
     final List<Validator> validators =
-        jdbi.withHandle(
-            h ->
-                h.createQuery("SELECT * FROM validators ORDER BY ID")
-                    .mapToBean(Validator.class)
-                    .list());
+        handle
+            .createQuery("SELECT * FROM validators ORDER BY ID")
+            .mapToBean(Validator.class)
+            .list();
     assertThat(validators.size()).isEqualTo(5);
     assertThat(validators.get(0)).isEqualToComparingFieldByField(new Validator(1, Bytes.of(100)));
     assertThat(validators.get(1)).isEqualToComparingFieldByField(new Validator(2, Bytes.of(101)));

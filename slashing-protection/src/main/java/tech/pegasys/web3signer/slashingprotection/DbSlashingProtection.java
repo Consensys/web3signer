@@ -12,7 +12,14 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.Validator;
+import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -20,14 +27,19 @@ import org.jdbi.v3.core.Jdbi;
 
 public class DbSlashingProtection implements SlashingProtection {
   private final Jdbi jdbi;
+  private final ValidatorsDao validatorsDao;
+  private final SignedBlocksDao signedBlocksDao;
 
-  public DbSlashingProtection(final Jdbi jdbi) {
+  public DbSlashingProtection(
+      final Jdbi jdbi, final ValidatorsDao validatorsDao, final SignedBlocksDao signedBlocksDao) {
     this.jdbi = jdbi;
+    this.validatorsDao = validatorsDao;
+    this.signedBlocksDao = signedBlocksDao;
   }
 
   @Override
   public boolean maySignAttestation(
-      final String publicKey,
+      final Bytes publicKey,
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
@@ -36,12 +48,40 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public boolean maySignBlock(
-      final String publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
-    return true;
+      final Bytes publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
+    final List<Validator> validators =
+        jdbi.inTransaction(h -> validatorsDao.retrieveValidators(h, List.of(publicKey)));
+    final Optional<Long> validatorId = validators.stream().findFirst().map(Validator::getId);
+    if (validatorId.isEmpty()) {
+      return false;
+    }
+
+    return jdbi.inTransaction(
+        h -> {
+          final long id = validatorId.get();
+          final Optional<SignedBlock> existingBlock =
+              signedBlocksDao.findExistingBlock(h, id, blockSlot);
+          // same slot and signing_root is allowed for broadcasting previously signed block
+          // otherwise if slot and different signing_root then this is a double block proposal
+          final boolean maySign =
+              existingBlock.isEmpty() || existingBlock.get().getSigningRoot().equals(signingRoot);
+          if (maySign) {
+            final SignedBlock signedBlock = new SignedBlock(id, blockSlot, signingRoot);
+            signedBlocksDao.insertBlockProposal(h, signedBlock);
+          }
+          return maySign;
+        });
   }
 
   @Override
   public void registerValidators(final List<Bytes> validators) {
-    jdbi.useExtension(ValidatorsDao.class, dao -> dao.registerMissingValidators(validators));
+    jdbi.useTransaction(
+        h -> {
+          final List<Validator> registeredValidators =
+              validatorsDao.retrieveValidators(h, validators);
+          final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
+          registeredValidators.forEach(v -> validatorsMissingFromDb.remove(v.getPublicKey()));
+          validatorsDao.registerValidators(h, validatorsMissingFromDb);
+        });
   }
 }
