@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
@@ -213,6 +214,20 @@ public class DbSlashingProtectionTest {
         .isFalse();
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
+    verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
+  }
+
+  @Test
+  public void attestationCannotSignWhenSourceEpochGreaterThanTargetEpoch() {
+    final UInt64 sourceEpoch = TARGET_EPOCH.add(1);
+    final SignedAttestation attestation =
+        new SignedAttestation(VALIDATOR_ID, sourceEpoch, TARGET_EPOCH, SIGNING_ROOT);
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY, SIGNING_ROOT, sourceEpoch, TARGET_EPOCH))
+        .isFalse();
+    verifyNoInteractions(signedAttestationsDao);
     verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
   }
 }

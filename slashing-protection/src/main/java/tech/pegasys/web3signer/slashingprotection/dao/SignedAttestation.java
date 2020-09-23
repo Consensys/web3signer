@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.dao;
 
+import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
@@ -65,5 +66,15 @@ public class SignedAttestation {
 
   public void setSigningRoot(final Bytes signingRoot) {
     this.signingRoot = signingRoot;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("validatorId", validatorId)
+        .add("sourceEpoch", sourceEpoch)
+        .add("targetEpoch", targetEpoch)
+        .add("signingRoot", signingRoot)
+        .toString();
   }
 }

@@ -26,11 +26,15 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.Streams;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 public class DbSlashingProtection implements SlashingProtection {
+  private static final Logger LOG = LogManager.getLogger();
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
@@ -66,17 +70,24 @@ public class DbSlashingProtection implements SlashingProtection {
       final UInt64 targetEpoch) {
     final Optional<Long> validatorId = Optional.ofNullable(registeredValidators.get(publicKey));
     if (validatorId.isEmpty()) {
+      LOG.error("Unregistered Eth2 validator for {}", publicKey);
       return false;
     }
 
     if (sourceEpoch.compareTo(targetEpoch) > 0) {
+      LOG.error(
+          "Eth2 slashing protection for {} detected sourceEpoch {} greater than targetEpoch {}",
+          publicKey,
+          sourceEpoch,
+          targetEpoch);
       return false;
     }
 
     return jdbi.inTransaction(
         h -> {
           final long id = validatorId.get();
-          final boolean maySign = maySignAttestation(signingRoot, sourceEpoch, targetEpoch, h, id);
+          final boolean maySign =
+              maySignAttestation(h, signingRoot, sourceEpoch, targetEpoch, id, publicKey);
           if (maySign) {
             final SignedAttestation signedAttestation =
                 new SignedAttestation(id, sourceEpoch, targetEpoch, signingRoot);
@@ -87,30 +98,57 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   private Boolean maySignAttestation(
+      final Handle handle,
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch,
-      final org.jdbi.v3.core.Handle h,
-      final long id) {
+      final long id,
+      final Bytes publicKey) {
     // check for double vote, an existing attestation with same target epoch by different
     // signing root
     final Optional<SignedAttestation> existingAttestation =
-        signedAttestationsDao.findExistingAttestation(h, id, targetEpoch);
+        signedAttestationsDao.findExistingAttestation(handle, id, targetEpoch);
     if (existingAttestation.isPresent()) {
-      return existingAttestation.get().getSigningRoot().equals(signingRoot);
+      if (existingAttestation.get().getSigningRoot().equals(signingRoot)) {
+        return true;
+      } else {
+        LOG.error(
+            "Eth2 slashing protection for validator {} detected double signed attestation {}",
+            publicKey,
+            existingAttestation.get());
+        return false;
+      }
     }
 
     // check that no previous vote is surrounding the attestation
     final Optional<SignedAttestation> surroundingAttestation =
-        signedAttestationsDao.findSurroundingAttestation(h, id, sourceEpoch, targetEpoch);
+        signedAttestationsDao.findSurroundingAttestation(handle, id, sourceEpoch, targetEpoch);
     if (surroundingAttestation.isPresent()) {
+      LOG.error(
+          "Eth2 slashing protection for validator {} detected surrounding attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={}",
+          publicKey,
+          surroundingAttestation.get(),
+          signingRoot,
+          sourceEpoch,
+          targetEpoch);
       return false;
     }
 
     // check that no previous vote is surrounded by attestation
     final Optional<SignedAttestation> surroundedAttestation =
-        signedAttestationsDao.findSurroundedAttestation(h, id, sourceEpoch, targetEpoch);
-    return surroundedAttestation.isEmpty();
+        signedAttestationsDao.findSurroundedAttestation(handle, id, sourceEpoch, targetEpoch);
+    if (surroundedAttestation.isPresent()) {
+      LOG.error(
+          "Eth2 slashing protection for validator {} detected surrounded attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={}",
+          publicKey,
+          surroundedAttestation.get(),
+          signingRoot,
+          sourceEpoch,
+          targetEpoch);
+      return false;
+    } else {
+      return true;
+    }
   }
 
   @Override
@@ -118,6 +156,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
     final Optional<Long> validatorId = Optional.ofNullable(registeredValidators.get(publicKey));
     if (validatorId.isEmpty()) {
+      LOG.error("Unregistered Eth2 validator for {}", publicKey);
       return false;
     }
 
@@ -126,15 +165,20 @@ public class DbSlashingProtection implements SlashingProtection {
           final long id = validatorId.get();
           final Optional<SignedBlock> existingBlock =
               signedBlocksDao.findExistingBlock(h, id, blockSlot);
+
           // same slot and signing_root is allowed for broadcasting previously signed block
           // otherwise if slot and different signing_root then this is a double block proposal
-          final boolean maySign =
-              existingBlock.isEmpty() || existingBlock.get().getSigningRoot().equals(signingRoot);
-          if (maySign) {
+          if (existingBlock.isEmpty() || existingBlock.get().getSigningRoot().equals(signingRoot)) {
             final SignedBlock signedBlock = new SignedBlock(id, blockSlot, signingRoot);
             signedBlocksDao.insertBlockProposal(h, signedBlock);
+            return true;
+          } else {
+            LOG.error(
+                "Eth2 slashing protection for {} detected double signed block {}",
+                publicKey,
+                existingBlock.get());
+            return false;
           }
-          return maySign;
         });
   }
 
