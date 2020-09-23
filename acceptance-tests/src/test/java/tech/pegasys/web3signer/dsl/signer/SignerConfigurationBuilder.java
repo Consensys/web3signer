@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class SignerConfigurationBuilder {
@@ -39,6 +40,7 @@ public class SignerConfigurationBuilder {
   private String slashingProtectionDbPassword = "";
   private String mode;
   private AzureKeyVaultParameters azureKeyVaultParameters;
+  private Map<String, String> web3SignerEnvironment;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -109,6 +111,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withEnvironment(final Map<String, String> environment) {
+    this.web3SignerEnvironment = environment;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -127,6 +134,7 @@ public class SignerConfigurationBuilder {
         slashingProtectionDbUrl,
         slashingProtectionDbUsername,
         slashingProtectionDbPassword,
-        mode);
+        mode,
+        Optional.ofNullable(web3SignerEnvironment));
   }
 }

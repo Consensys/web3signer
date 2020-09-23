@@ -22,6 +22,8 @@ import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
 
+import java.util.Map;
+
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Assumptions;
@@ -74,5 +76,25 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     signer.start();
     waitFor(30, () -> assertThat(signer.isRunning()).isTrue());
     waitFor(30, () -> assertThat(signer.isRunning()).isFalse());
+  }
+
+  @Test
+  void envVarsAreUsedToDefaultAzureParams() {
+    // This ensures env vars correspond to the WEB3SIGNER_<subcommand>_<option> syntax
+    final Map<String, String> env =
+        Map.of(
+            "WEB3SIGNER_ETH2_AZURE_VAULT_ENABLED", "true",
+            "WEB3SIGNER_ETH2_AZURE_VAULT_NAME", VAULT_NAME,
+            "WEB3SIGNER_ETH2_AZURE_CLIENT_ID", CLIENT_ID,
+            "WEB3SIGNER_ETH2_AZURE_CLIENT_SECRET", CLIENT_SECRET,
+            "WEB3SIGNER_ETH2_AZURE_TENANT_ID", TENANT_ID);
+
+    final SignerConfigurationBuilder configBuilder =
+        new SignerConfigurationBuilder().withMode("eth2").withEnvironment(env);
+
+    startSigner(configBuilder.build());
+
+    final Response response = signer.callApiPublicKeys(KeyType.BLS);
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
   }
 }

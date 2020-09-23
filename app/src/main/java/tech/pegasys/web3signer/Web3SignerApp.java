@@ -21,6 +21,7 @@ import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.commandline.subcommands.FilecoinSubCommand;
 
 import java.io.PrintWriter;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,13 +31,18 @@ public class Web3SignerApp {
   private static final Logger LOG = LogManager.getLogger();
 
   public static void main(final String... args) {
+    executeWithEnvironment(System.getenv(), args);
+  }
+
+  public static void executeWithEnvironment(
+      final Map<String, String> environment, final String... args) {
     LOG.info("Web3Signer has started with args " + String.join(",", args));
 
     final Web3SignerBaseCommand baseCommand = new Web3SignerBaseCommand();
     final PrintWriter outputWriter = new PrintWriter(System.out, true, UTF_8);
     final PrintWriter errorWriter = new PrintWriter(System.err, true, UTF_8);
     final CommandlineParser cmdLineParser =
-        new CommandlineParser(baseCommand, outputWriter, errorWriter, System.getenv());
+        new CommandlineParser(baseCommand, outputWriter, errorWriter, environment);
     cmdLineParser.registerSubCommands(
         new Eth2SubCommand(), new Eth1SubCommand(), new FilecoinSubCommand());
     final int result = cmdLineParser.parseCommandLine(args);
