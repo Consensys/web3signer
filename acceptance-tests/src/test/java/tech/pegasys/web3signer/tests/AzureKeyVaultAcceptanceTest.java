@@ -22,6 +22,8 @@ import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
 
+import java.util.Map;
+
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Assumptions;
@@ -67,6 +69,26 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withMode("eth2")
+            .withAzureKeyVaultParameters(azureParams)
+            .withHttpPort(9000); // required to prevent waiting for ports file.
+
+    final Signer signer = new Signer(configBuilder.build(), null);
+    signer.start();
+    waitFor(30, () -> assertThat(signer.isRunning()).isTrue());
+    waitFor(30, () -> assertThat(signer.isRunning()).isFalse());
+  }
+
+  @Test
+  void envVarsAreUsedToDefaultAzureParams() {
+    // This ensures env vars correspond to the WEB3SIGNER_<subcommand>_<option> syntax
+    final Map<String, String> env = Map.of("WEB3SIGNER_ETH2_AZURE_VAULT_NAME", "nonExistentVault");
+    final AzureKeyVaultParameters azureParams =
+        new DefaultAzureKeyVaultParameters(VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET);
+
+    final SignerConfigurationBuilder configBuilder =
+        new SignerConfigurationBuilder()
+            .withMode("eth2")
+            .withEnvironment(env)
             .withAzureKeyVaultParameters(azureParams)
             .withHttpPort(9000); // required to prevent waiting for ports file.
 

@@ -69,17 +69,25 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
 
+    // NOTE - the subprocess will get THIS processes environment, extended with configured params.
+    getSignerConfig()
+        .getWeb3SignerEnvironment()
+        .ifPresent(env -> processBuilder.environment().putAll(env));
+
     if (Boolean.getBoolean("debugSubProcess")) {
+
       javaOpts.add("-Xdebug -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005");
     }
 
     javaOpts.add(createTrustStoreOptions());
+
     processBuilder.environment().put("JAVA_OPTS", javaOpts.toString());
 
     try {
       process = processBuilder.start();
       outputProcessorExecutor.submit(this::printOutput);
     } catch (final IOException e) {
+
       LOG.error("Error starting Web3Signer process", e);
       throw new UncheckedIOException("Failed to start the Web3Signer process", e);
     }

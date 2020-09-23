@@ -46,7 +46,11 @@ public class Web3SignerThreadRunner extends Web3SignerRunner {
 
     ethsignerFuture =
         CompletableFuture.runAsync(
-            () -> Web3SignerApp.executeWithEnvironment(System.getenv(), paramsAsArray), executor);
+            () ->
+                Web3SignerApp.executeWithEnvironment(
+                    getSignerConfig().getWeb3SignerEnvironment().orElse(System.getenv()),
+                    paramsAsArray),
+            executor);
   }
 
   @Override

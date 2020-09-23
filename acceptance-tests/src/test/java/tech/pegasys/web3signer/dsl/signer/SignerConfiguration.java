@@ -18,6 +18,7 @@ import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class SignerConfiguration {
@@ -38,6 +39,7 @@ public class SignerConfiguration {
   private final String slashingProtectionDbUrl;
   private final String slashingProtectionDbUsername;
   private final String slashingProtectionDbPassword;
+  private final Optional<Map<String, String>> web3SignerEnvironment;
 
   public SignerConfiguration(
       final String hostname,
@@ -53,7 +55,8 @@ public class SignerConfiguration {
       final String slashingProtectionDbUrl,
       final String slashingProtectionDbUsername,
       final String slashingProtectionDbPassword,
-      final String mode) {
+      final String mode,
+      final Optional<Map<String, String>> web3SignerEnvironment) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
     this.httpHostAllowList = httpHostAllowList;
@@ -68,6 +71,7 @@ public class SignerConfiguration {
     this.slashingProtectionDbUsername = slashingProtectionDbUsername;
     this.slashingProtectionDbPassword = slashingProtectionDbPassword;
     this.mode = mode;
+    this.web3SignerEnvironment = web3SignerEnvironment;
   }
 
   public String hostname() {
@@ -136,5 +140,9 @@ public class SignerConfiguration {
 
   public String getSlashingProtectionDbPassword() {
     return slashingProtectionDbPassword;
+  }
+
+  public Optional<Map<String, String>> getWeb3SignerEnvironment() {
+    return web3SignerEnvironment;
   }
 }
