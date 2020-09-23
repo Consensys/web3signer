@@ -81,17 +81,16 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   @Test
   void envVarsAreUsedToDefaultAzureParams() {
     // This ensures env vars correspond to the WEB3SIGNER_<subcommand>_<option> syntax
-    final Map<String, String> env = Map.of(
-        "WEB3SIGNER_ETH2_AZURE_VAULT_ENABLED", "true",
-        "WEB3SIGNER_ETH2_AZURE_VAULT_NAME", VAULT_NAME,
-        "WEB3SIGNER_ETH2_AZURE_CLIENT_ID", CLIENT_ID,
-        "WEB3SIGNER_ETH2_AZURE_CLIENT_SECRET", CLIENT_SECRET,
-        "WEB3SIGNER_ETH2_AZURE_TENANT_ID", TENANT_ID);
+    final Map<String, String> env =
+        Map.of(
+            "WEB3SIGNER_ETH2_AZURE_VAULT_ENABLED", "true",
+            "WEB3SIGNER_ETH2_AZURE_VAULT_NAME", VAULT_NAME,
+            "WEB3SIGNER_ETH2_AZURE_CLIENT_ID", CLIENT_ID,
+            "WEB3SIGNER_ETH2_AZURE_CLIENT_SECRET", CLIENT_SECRET,
+            "WEB3SIGNER_ETH2_AZURE_TENANT_ID", TENANT_ID);
 
     final SignerConfigurationBuilder configBuilder =
-        new SignerConfigurationBuilder()
-            .withMode("eth2")
-            .withEnvironment(env);
+        new SignerConfigurationBuilder().withMode("eth2").withEnvironment(env);
 
     startSigner(configBuilder.build());
 
