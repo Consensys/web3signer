@@ -19,6 +19,15 @@ import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpeci
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
+import tech.pegasys.web3signer.core.service.http.ArtifactType;
+import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
+import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
+import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
+
+import java.util.Optional;
+
 import com.atlassian.oai.validator.restassured.OpenApiValidationFilter;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -26,16 +35,9 @@ import io.restassured.specification.RequestSpecification;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
-import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.web3signer.core.service.http.ArtifactType;
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
-import tech.pegasys.web3signer.core.signing.KeyType;
-import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
-import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
-import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
 
 public class Signer extends FilecoinJsonRpcEndpoint {
 
