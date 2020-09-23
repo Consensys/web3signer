@@ -179,7 +179,7 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
-  public void attestationCanSignWhenNotSurroundingOrSurroundedByAttestations() {
+  public void attestationCanSignWhenNoSurroundingOrSurroundedByAttestation() {
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
     when(signedAttestationsDao.findExistingAttestation(any(), anyLong(), any()))
