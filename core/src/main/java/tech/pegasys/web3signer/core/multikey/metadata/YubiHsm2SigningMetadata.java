@@ -12,6 +12,9 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import tech.pegasys.signers.yubihsm2.OutputFormat;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -24,38 +27,85 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 public class YubiHsm2SigningMetadata extends SigningMetadata {
   private final String yubiShellBinaryPath;
   private final String connectorUrl;
-  private final String authKey;
+  private final Short authKey;
   private final String password;
-  private final String opaqueData;
+  private final Short opaqueObjId;
 
   // following fields are optional and will be populated if defined in configuration file
-  private Optional<String> caCert = Optional.empty();
-  private Optional<String> proxy = Optional.empty();
+  private Optional<OutputFormat> outformat = Optional.empty();
+  private Optional<String> caCertPath = Optional.empty();
+  private Optional<String> proxyUrl = Optional.empty();
 
   @JsonCreator
   public YubiHsm2SigningMetadata(
       @JsonProperty("yubiShellBinaryPath") final String yubiShellBinaryPath,
       @JsonProperty("connectorUrl") final String connectorUrl,
-      @JsonProperty("authKey") final String authKey,
+      @JsonProperty("authKey") final Short authKey,
       @JsonProperty("password") final String password,
-      @JsonProperty("opaqueData") final String opaqueData,
-      @JsonProperty(value = "keyType") final KeyType keyType) {
+      @JsonProperty("opaqueObjId") final Short opaqueObjId,
+      @JsonProperty("keyType") final KeyType keyType) {
     super(keyType != null ? keyType : KeyType.BLS);
+
+    checkNotNull(yubiShellBinaryPath, "yubiShellBinaryPath is required");
+    checkNotNull(connectorUrl, "connectorUrl is required");
+    checkNotNull(authKey, "authKey is required");
+    checkNotNull(password, "password is required");
+    checkNotNull(opaqueObjId, "opaqueObjId is required");
+
     this.yubiShellBinaryPath = yubiShellBinaryPath;
     this.connectorUrl = connectorUrl;
     this.authKey = authKey;
     this.password = password;
-    this.opaqueData = opaqueData;
+    this.opaqueObjId = opaqueObjId;
   }
 
-  @JsonSetter("caCert")
-  public void setCaCert(final String caCert) {
-    this.caCert = Optional.ofNullable(caCert);
+  @SuppressWarnings("UnunsedMethod")
+  @JsonSetter("caCertPath")
+  public void setCaCertPath(final String caCertPath) {
+    this.caCertPath = Optional.ofNullable(caCertPath);
   }
 
-  @JsonSetter("proxy")
-  public void setProxy(final String proxy) {
-    this.proxy = Optional.ofNullable(proxy);
+  @SuppressWarnings("UnunsedMethod")
+  @JsonSetter("proxyUrl")
+  public void setProxyUrl(final String proxyUrl) {
+    this.proxyUrl = Optional.ofNullable(proxyUrl);
+  }
+
+  @JsonSetter("outformat")
+  public void setOutformat(final OutputFormat outformat) {
+    this.outformat = Optional.ofNullable(outformat);
+  }
+
+  public String getYubiShellBinaryPath() {
+    return yubiShellBinaryPath;
+  }
+
+  public String getConnectorUrl() {
+    return connectorUrl;
+  }
+
+  public Short getAuthKey() {
+    return authKey;
+  }
+
+  public String getPassword() {
+    return password;
+  }
+
+  public Short getOpaqueObjId() {
+    return opaqueObjId;
+  }
+
+  public Optional<OutputFormat> getOutformat() {
+    return outformat;
+  }
+
+  public Optional<String> getCaCertPath() {
+    return caCertPath;
+  }
+
+  public Optional<String> getProxyUrl() {
+    return proxyUrl;
   }
 
   @Override
