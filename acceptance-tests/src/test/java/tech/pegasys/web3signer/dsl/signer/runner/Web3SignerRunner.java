@@ -15,6 +15,11 @@ package tech.pegasys.web3signer.dsl.signer.runner;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
 
+import com.zaxxer.hikari.HikariDataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import javax.sql.DataSource;
+import org.flywaydb.core.Flyway;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -258,5 +263,39 @@ public abstract class Web3SignerRunner {
 
   protected SignerConfiguration getSignerConfig() {
     return signerConfig;
+  }
+
+  // Assumes database already exists, just enforces the tables exist as necessary.
+  @SuppressWarnings("unused-variable")
+  private void createSlashingDatabase(
+      final String url, final String username, final String password) {
+    final HikariDataSource dataSource = new HikariDataSource();
+    dataSource.setUsername(username);
+    dataSource.setPassword(password);
+    dataSource.setJdbcUrl(url);
+
+
+    try {
+      final Connection conn = dataSource.getConnection();
+    } catch (SQLException throwables) {
+      throwables.printStackTrace();
+    }
+
+    final Flyway flyway =
+        Flyway.configure().locations(getProjectPath().toPath()
+            .resolve(Path.of("slashing-protection", "src", "main", "resources", "migrations",
+                "postgresql"))
+            .toString())
+            .dataSource(dataSource).load();
+    flyway.migrate();
+  }
+
+  protected File getProjectPath() {
+    // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
+    final String userDir = System.getProperty("user.dir");
+    return
+        userDir.toLowerCase().endsWith("web3signer")
+            ? new File(userDir)
+            : new File(userDir).getParentFile();
   }
 }
