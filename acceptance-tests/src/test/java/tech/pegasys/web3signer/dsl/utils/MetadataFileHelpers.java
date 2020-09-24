@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
@@ -30,15 +31,19 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -50,7 +55,7 @@ public class MetadataFileHelpers {
 
   public void createUnencryptedYamlFileAt(
       final Path metadataFilePath, final String privateKey, final KeyType keyType) {
-    final Map<String, String> signingMetadata = new HashMap<>();
+    final Map<String, Serializable> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "file-raw");
     signingMetadata.put("privateKey", privateKey);
     signingMetadata.put("keyType", keyType.name());
@@ -97,7 +102,7 @@ public class MetadataFileHelpers {
     final Path passwordFile = metadataFilePath.getParent().resolve(passwordFilename);
     createPasswordFile(passwordFile, password);
 
-    final Map<String, String> signingMetadata = new HashMap<>();
+    final Map<String, Serializable> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "file-keystore");
     signingMetadata.put("keystoreFile", keystoreFile.toString());
     signingMetadata.put("keystorePasswordFile", passwordFile.toString());
@@ -108,7 +113,7 @@ public class MetadataFileHelpers {
   public void createHashicorpYamlFileAt(
       final Path metadataFilePath, final HashicorpSigningParams node) {
     try {
-      final Map<String, String> signingMetadata = new HashMap<>();
+      final Map<String, Serializable> signingMetadata = new HashMap<>();
 
       final boolean tlsEnabled = node.getServerCertificate().isPresent();
 
@@ -144,7 +149,7 @@ public class MetadataFileHelpers {
       final String keyVaultName,
       final String secretName) {
     try {
-      final Map<String, String> signingMetadata = new HashMap<>();
+      final Map<String, Serializable> signingMetadata = new HashMap<>();
 
       signingMetadata.put("type", "azure-secret");
       signingMetadata.put("clientId", clientId);
@@ -166,7 +171,7 @@ public class MetadataFileHelpers {
       final String keyVaultName,
       final String tenantId) {
     try {
-      final Map<String, String> signingMetadata = new HashMap<>();
+      final Map<String, Serializable> signingMetadata = new HashMap<>();
       signingMetadata.put("type", "azure-key");
       signingMetadata.put("vaultName", keyVaultName);
       signingMetadata.put("keyName", "TestKey");
@@ -177,6 +182,49 @@ public class MetadataFileHelpers {
     } catch (final Exception e) {
       throw new RuntimeException("Unable to construct hashicorp yaml file", e);
     }
+  }
+
+  public void createYubiHsmYamlFileAt(
+      final Path metadataFilePath,
+      final Path destinationYubiShellSimulator,
+      final KeyType keyType) {
+    final int opaqueObjId = keyType == KeyType.BLS ? 1 : 2;
+
+    final Map<String, Serializable> yaml =
+        Map.of(
+            "type",
+            "yubihsm2",
+            "yubiShellBinaryPath",
+            destinationYubiShellSimulator.toString(),
+            "connectorUrl",
+            "http://localhost:12345",
+            "authKey",
+            1,
+            "password",
+            "password",
+            "opaqueObjId",
+            opaqueObjId,
+            "keyType",
+            keyType.name());
+
+    createYamlFile(metadataFilePath, yaml);
+  }
+
+  public static Path copyYubiHsmSimulator(final Path destDir) throws IOException {
+    final Path sourceYubiShellSimulator =
+        Path.of(Resources.getResource("YubiShellSimulator").getPath());
+    final Path destinationYubiShellSimulator = destDir.resolve("YubiShellSimulator");
+    Files.copy(sourceYubiShellSimulator, destinationYubiShellSimulator);
+    // update shebang with jvm path
+    final List<String> sourceLines =
+        new ArrayList<>(Files.readAllLines(destinationYubiShellSimulator));
+    final String shebang =
+        "#!" + Path.of(System.getProperty("java.home"), "bin", "java") + " --source 11";
+    sourceLines.set(0, shebang);
+    Files.write(destinationYubiShellSimulator, sourceLines, UTF_8);
+    // make file executeable
+    sourceYubiShellSimulator.toFile().setExecutable(true);
+    return destinationYubiShellSimulator;
   }
 
   private void createPasswordFile(final Path passwordFilePath, final String password) {
@@ -207,7 +255,8 @@ public class MetadataFileHelpers {
     }
   }
 
-  private void createYamlFile(final Path filePath, final Map<String, String> signingMetadata) {
+  private void createYamlFile(
+      final Path filePath, final Map<String, Serializable> signingMetadata) {
     try {
       YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), signingMetadata);
     } catch (final IOException e) {
