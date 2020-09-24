@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -108,7 +109,10 @@ public class DbSlashingProtectionTest {
         new DbSlashingProtection(
             db.getJdbi(), validatorsDao, signedBlocksDao, signedAttestationsDao);
 
-    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY, SIGNING_ROOT, SLOT)).isFalse();
+    assertThatThrownBy(() -> dbSlashingProtection.maySignBlock(PUBLIC_KEY, SIGNING_ROOT, SLOT))
+        .hasMessage("Unregistered validator for " + PUBLIC_KEY)
+        .isInstanceOf(IllegalStateException.class);
+
     verify(signedBlocksDao, never())
         .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
   }
@@ -208,10 +212,12 @@ public class DbSlashingProtectionTest {
         new DbSlashingProtection(
             db.getJdbi(), validatorsDao, signedBlocksDao, signedAttestationsDao);
 
-    assertThat(
-            dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
-        .isFalse();
+    assertThatThrownBy(
+            () ->
+                dbSlashingProtection.maySignAttestation(
+                    PUBLIC_KEY, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+        .hasMessage("Unregistered validator for " + PUBLIC_KEY)
+        .isInstanceOf(IllegalStateException.class);
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
     verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
