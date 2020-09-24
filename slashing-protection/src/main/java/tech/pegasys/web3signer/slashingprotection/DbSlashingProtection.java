@@ -71,7 +71,7 @@ public class DbSlashingProtection implements SlashingProtection {
     final long validatorId = validatorId(publicKey);
 
     if (sourceEpoch.compareTo(targetEpoch) > 0) {
-      LOG.error(
+      LOG.warn(
           "Detected sourceEpoch {} greater than targetEpoch {} for {}",
           sourceEpoch,
           targetEpoch,
@@ -107,7 +107,7 @@ public class DbSlashingProtection implements SlashingProtection {
       if (existingAttestation.get().getSigningRoot().equals(signingRoot)) {
         return true;
       } else {
-        LOG.error(
+        LOG.warn(
             "Detected double signed attestation {} for {}", existingAttestation.get(), publicKey);
         return false;
       }
@@ -117,7 +117,7 @@ public class DbSlashingProtection implements SlashingProtection {
     final Optional<SignedAttestation> surroundingAttestation =
         signedAttestationsDao.findSurroundingAttestation(handle, id, sourceEpoch, targetEpoch);
     if (surroundingAttestation.isPresent()) {
-      LOG.error(
+      LOG.warn(
           "Detected surrounding attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
           surroundingAttestation.get(),
           signingRoot,
@@ -131,7 +131,7 @@ public class DbSlashingProtection implements SlashingProtection {
     final Optional<SignedAttestation> surroundedAttestation =
         signedAttestationsDao.findSurroundedAttestation(handle, id, sourceEpoch, targetEpoch);
     if (surroundedAttestation.isPresent()) {
-      LOG.error(
+      LOG.warn(
           "Detected surrounded attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
           surroundedAttestation.get(),
           signingRoot,
@@ -160,7 +160,7 @@ public class DbSlashingProtection implements SlashingProtection {
             signedBlocksDao.insertBlockProposal(h, signedBlock);
             return true;
           } else {
-            LOG.error("Detected double signed block {} for {}", existingBlock.get(), publicKey);
+            LOG.warn("Detected double signed block {} for {}", existingBlock.get(), publicKey);
             return false;
           }
         });
