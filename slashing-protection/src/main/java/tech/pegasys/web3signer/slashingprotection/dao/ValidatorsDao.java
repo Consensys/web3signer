@@ -21,11 +21,11 @@ import org.jdbi.v3.sqlobject.customizer.BindList;
 
 public class ValidatorsDao {
 
-  public void registerValidators(final Handle handle, final List<Bytes> validators) {
+  public List<Validator> registerValidators(final Handle handle, final List<Bytes> validators) {
     final PreparedBatch batch =
         handle.prepareBatch("INSERT INTO validators (public_key) VALUES (?)");
     validators.forEach(b -> batch.bind(0, b).add());
-    batch.execute();
+    return batch.executeAndReturnGeneratedKeys().mapToBean(Validator.class).list();
   }
 
   public List<Validator> retrieveValidators(

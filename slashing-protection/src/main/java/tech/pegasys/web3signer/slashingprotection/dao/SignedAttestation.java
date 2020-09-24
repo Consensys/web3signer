@@ -16,17 +16,23 @@ import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class SignedBlock {
+public class SignedAttestation {
   private long validatorId;
-  private UInt64 slot;
+  private UInt64 sourceEpoch;
+  private UInt64 targetEpoch;
   private Bytes signingRoot;
 
   // needed for JDBI bean mapping
-  public SignedBlock() {}
+  public SignedAttestation() {}
 
-  public SignedBlock(final long validatorId, final UInt64 slot, final Bytes signingRoot) {
+  public SignedAttestation(
+      final long validatorId,
+      final UInt64 sourceEpoch,
+      final UInt64 targetEpoch,
+      final Bytes signingRoot) {
     this.validatorId = validatorId;
-    this.slot = slot;
+    this.sourceEpoch = sourceEpoch;
+    this.targetEpoch = targetEpoch;
     this.signingRoot = signingRoot;
   }
 
@@ -38,12 +44,20 @@ public class SignedBlock {
     this.validatorId = validatorId;
   }
 
-  public UInt64 getSlot() {
-    return slot;
+  public UInt64 getSourceEpoch() {
+    return sourceEpoch;
   }
 
-  public void setSlot(final UInt64 slot) {
-    this.slot = slot;
+  public void setSourceEpoch(final UInt64 sourceEpoch) {
+    this.sourceEpoch = sourceEpoch;
+  }
+
+  public UInt64 getTargetEpoch() {
+    return targetEpoch;
+  }
+
+  public void setTargetEpoch(final UInt64 targetEpoch) {
+    this.targetEpoch = targetEpoch;
   }
 
   public Bytes getSigningRoot() {
@@ -58,7 +72,8 @@ public class SignedBlock {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("validatorId", validatorId)
-        .add("slot", slot)
+        .add("sourceEpoch", sourceEpoch)
+        .add("targetEpoch", targetEpoch)
         .add("signingRoot", signingRoot)
         .toString();
   }

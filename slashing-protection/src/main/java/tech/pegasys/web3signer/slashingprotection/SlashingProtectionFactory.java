@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
@@ -20,6 +21,7 @@ import org.jdbi.v3.core.Jdbi;
 public class SlashingProtectionFactory {
 
   public static SlashingProtection createSlashingProtection(final Jdbi jdbi) {
-    return new DbSlashingProtection(jdbi, new ValidatorsDao(), new SignedBlocksDao());
+    return new DbSlashingProtection(
+        jdbi, new ValidatorsDao(), new SignedBlocksDao(), new SignedAttestationsDao());
   }
 }
