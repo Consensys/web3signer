@@ -100,7 +100,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
       final String secret =
           yubiHsm2.fetchOpaqueData(metadata.getOpaqueObjId(), metadata.getOutformat());
       return Bytes.fromHexString(secret);
-    } catch (RuntimeException e) {
+    } catch (final RuntimeException e) {
       throw new SigningMetadataException(
           "Failed to fetch secret from YubiHSM2: " + e.getMessage(), e);
     }
