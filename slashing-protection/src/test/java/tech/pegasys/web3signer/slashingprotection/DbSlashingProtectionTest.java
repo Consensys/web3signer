@@ -27,8 +27,11 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -47,7 +50,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class DbSlashingProtectionTest {
   private static final long VALIDATOR_ID = 1;
   private static final UInt64 SLOT = UInt64.valueOf(2);
-  private static final Bytes PUBLIC_KEY = Bytes.of(42);
+  private static final Bytes PUBLIC_KEY1 = Bytes.of(42);
+  private static final Bytes PUBLIC_KEY2 = Bytes.of(43);
+  private static final Bytes PUBLIC_KEY3 = Bytes.of(44);
   private static final Bytes SIGNING_ROOT = Bytes.of(3);
   private static final UInt64 SOURCE_EPOCH = UInt64.valueOf(10);
   private static final UInt64 TARGET_EPOCH = UInt64.valueOf(20);
@@ -67,14 +72,14 @@ public class DbSlashingProtectionTest {
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
-            Map.of(PUBLIC_KEY, VALIDATOR_ID));
+            Map.of(PUBLIC_KEY1, VALIDATOR_ID));
   }
 
   @Test
   public void blockCanSignWhenNoMatchForPublicKey() {
     when(signedBlocksDao.findExistingBlock(any(), anyLong(), any())).thenReturn(Optional.empty());
 
-    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY, SIGNING_ROOT, SLOT)).isTrue();
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isTrue();
     verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
     verify(signedBlocksDao)
         .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
@@ -86,7 +91,7 @@ public class DbSlashingProtectionTest {
     when(signedBlocksDao.findExistingBlock(any(), anyLong(), any()))
         .thenReturn(Optional.of(signedBlock));
 
-    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY, SIGNING_ROOT, SLOT)).isTrue();
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isTrue();
     verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
     verify(signedBlocksDao).insertBlockProposal(any(), refEq(signedBlock));
   }
@@ -97,7 +102,7 @@ public class DbSlashingProtectionTest {
     when(signedBlocksDao.findExistingBlock(any(), anyLong(), any()))
         .thenReturn(Optional.of(signedBlock));
 
-    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY, SIGNING_ROOT, SLOT)).isFalse();
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isFalse();
     verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
     verify(signedBlocksDao, never())
         .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
@@ -109,8 +114,8 @@ public class DbSlashingProtectionTest {
         new DbSlashingProtection(
             db.getJdbi(), validatorsDao, signedBlocksDao, signedAttestationsDao);
 
-    assertThatThrownBy(() -> dbSlashingProtection.maySignBlock(PUBLIC_KEY, SIGNING_ROOT, SLOT))
-        .hasMessage("Unregistered validator for " + PUBLIC_KEY)
+    assertThatThrownBy(() -> dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT))
+        .hasMessage("Unregistered validator for " + PUBLIC_KEY1)
         .isInstanceOf(IllegalStateException.class);
 
     verify(signedBlocksDao, never())
@@ -126,7 +131,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
         .isTrue();
     verify(signedAttestationsDao)
         .findExistingAttestation(any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH));
@@ -147,7 +152,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
         .isFalse();
     verify(signedAttestationsDao)
         .findExistingAttestation(any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH));
@@ -171,7 +176,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
         .isFalse();
     verify(signedAttestationsDao)
         .findExistingAttestation(any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH));
@@ -195,7 +200,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
         .isTrue();
     verify(signedAttestationsDao)
         .findExistingAttestation(any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH));
@@ -215,8 +220,8 @@ public class DbSlashingProtectionTest {
     assertThatThrownBy(
             () ->
                 dbSlashingProtection.maySignAttestation(
-                    PUBLIC_KEY, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
-        .hasMessage("Unregistered validator for " + PUBLIC_KEY)
+                    PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+        .hasMessage("Unregistered validator for " + PUBLIC_KEY1)
         .isInstanceOf(IllegalStateException.class);
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
@@ -231,9 +236,35 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY, SIGNING_ROOT, sourceEpoch, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, sourceEpoch, TARGET_EPOCH))
         .isFalse();
     verifyNoInteractions(signedAttestationsDao);
     verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
+  }
+
+  @Test
+  public void registersValidatorsThatAreNotAlreadyInDb() {
+    final Map<Bytes, Long> registeredValidators = new HashMap<>();
+    registeredValidators.put(PUBLIC_KEY1, 1L);
+    final DbSlashingProtection dbSlashingProtection =
+        new DbSlashingProtection(
+            db.getJdbi(),
+            validatorsDao,
+            signedBlocksDao,
+            signedAttestationsDao,
+            registeredValidators);
+
+    when(validatorsDao.retrieveValidators(any(), any()))
+        .thenReturn(List.of(new Validator(1, PUBLIC_KEY1)));
+    when(validatorsDao.registerValidators(any(), any()))
+        .thenReturn(List.of(new Validator(2, PUBLIC_KEY2), new Validator(3, PUBLIC_KEY3)));
+    dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3));
+
+    assertThat(registeredValidators).hasSize(3);
+    assertThat(registeredValidators)
+        .isEqualTo(Map.of(PUBLIC_KEY1, 1L, PUBLIC_KEY2, 2L, PUBLIC_KEY3, 3L));
+    verify(validatorsDao)
+        .retrieveValidators(any(), eq(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3)));
+    verify(validatorsDao).registerValidators(any(), eq(List.of(PUBLIC_KEY2, PUBLIC_KEY3)));
   }
 }

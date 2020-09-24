@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Streams;
 import org.apache.logging.log4j.LogManager;
@@ -172,9 +173,14 @@ public class DbSlashingProtection implements SlashingProtection {
         h -> {
           final List<Validator> existingRegisteredValidators =
               validatorsDao.retrieveValidators(h, validators);
+          final List<Bytes> existingValidatorsPublicKeys =
+              existingRegisteredValidators.stream()
+                  .map(Validator::getPublicKey)
+                  .collect(Collectors.toList());
+
           final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
-          existingRegisteredValidators.forEach(
-              v -> validatorsMissingFromDb.remove(v.getPublicKey()));
+          validatorsMissingFromDb.removeAll(existingValidatorsPublicKeys);
+
           final List<Validator> newlyRegisteredValidators =
               validatorsDao.registerValidators(h, validatorsMissingFromDb);
 
