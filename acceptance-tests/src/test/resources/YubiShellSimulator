@@ -36,7 +36,7 @@ public class YubiShellSimulator {
 
         // make sure required arguments are passed
         if (!argsMap.containsKey("--connector")) {
-            System.err.println("--connctor is missing");
+            System.err.println("--connector is missing");
             System.exit(-1);
         }
         if (!argsMap.containsKey("--authkey")) {
@@ -44,7 +44,7 @@ public class YubiShellSimulator {
             System.exit(-1);
         }
         if (!argsMap.containsKey("--object-id")) {
-            System.err.println("--bject-id is missing");
+            System.err.println("--object-id is missing");
             System.exit(-1);
         }
         if (!argsMap.containsKey("--action")) {
