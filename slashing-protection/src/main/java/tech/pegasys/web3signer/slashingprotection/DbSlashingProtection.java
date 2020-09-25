@@ -31,7 +31,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 public class DbSlashingProtection implements SlashingProtection {
@@ -82,8 +81,54 @@ public class DbSlashingProtection implements SlashingProtection {
 
     return jdbi.inTransaction(
         h -> {
-          final boolean maySign =
-              maySignAttestation(h, signingRoot, sourceEpoch, targetEpoch, validatorId, publicKey);
+          boolean maySign = false;
+
+          final Optional<SignedAttestation> existingAttestation =
+              signedAttestationsDao.findExistingAttestation(h, validatorId, targetEpoch);
+          if (existingAttestation.isPresent()) {
+            if (!existingAttestation.get().getSigningRoot().equals(signingRoot)) {
+              LOG.warn(
+                  "Detected double signed attestation {} for {}",
+                  existingAttestation.get(),
+                  publicKey);
+              return false;
+            } else {
+              // same slot and signing_root is allowed for broadcasting previous attestation
+              return true;
+            }
+          }
+
+          // check that no previous vote is surrounding the attestation
+          final Optional<SignedAttestation> surroundingAttestation =
+              signedAttestationsDao.findSurroundingAttestation(
+                  h, validatorId, sourceEpoch, targetEpoch);
+          if (surroundingAttestation.isPresent()) {
+            LOG.warn(
+                "Detected surrounding attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
+                surroundingAttestation.get(),
+                signingRoot,
+                sourceEpoch,
+                targetEpoch,
+                publicKey);
+            return false;
+          }
+
+          // check that no previous vote is surrounded by attestation
+          final Optional<SignedAttestation> surroundedAttestation =
+              signedAttestationsDao.findSurroundedAttestation(
+                  h, validatorId, sourceEpoch, targetEpoch);
+          if (surroundedAttestation.isPresent()) {
+            LOG.warn(
+                "Detected surrounded attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
+                surroundedAttestation.get(),
+                signingRoot,
+                sourceEpoch,
+                targetEpoch,
+                publicKey);
+          } else {
+            maySign = true;
+          }
+
           if (maySign) {
             final SignedAttestation signedAttestation =
                 new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
@@ -91,58 +136,6 @@ public class DbSlashingProtection implements SlashingProtection {
           }
           return maySign;
         });
-  }
-
-  private Boolean maySignAttestation(
-      final Handle handle,
-      final Bytes signingRoot,
-      final UInt64 sourceEpoch,
-      final UInt64 targetEpoch,
-      final long id,
-      final Bytes publicKey) {
-    // check for double vote, an existing attestation with same target epoch by different
-    // signing root
-    final Optional<SignedAttestation> existingAttestation =
-        signedAttestationsDao.findExistingAttestation(handle, id, targetEpoch);
-    if (existingAttestation.isPresent()) {
-      if (existingAttestation.get().getSigningRoot().equals(signingRoot)) {
-        return true;
-      } else {
-        LOG.warn(
-            "Detected double signed attestation {} for {}", existingAttestation.get(), publicKey);
-        return false;
-      }
-    }
-
-    // check that no previous vote is surrounding the attestation
-    final Optional<SignedAttestation> surroundingAttestation =
-        signedAttestationsDao.findSurroundingAttestation(handle, id, sourceEpoch, targetEpoch);
-    if (surroundingAttestation.isPresent()) {
-      LOG.warn(
-          "Detected surrounding attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
-          surroundingAttestation.get(),
-          signingRoot,
-          sourceEpoch,
-          targetEpoch,
-          publicKey);
-      return false;
-    }
-
-    // check that no previous vote is surrounded by attestation
-    final Optional<SignedAttestation> surroundedAttestation =
-        signedAttestationsDao.findSurroundedAttestation(handle, id, sourceEpoch, targetEpoch);
-    if (surroundedAttestation.isPresent()) {
-      LOG.warn(
-          "Detected surrounded attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
-          surroundedAttestation.get(),
-          signingRoot,
-          sourceEpoch,
-          targetEpoch,
-          publicKey);
-      return false;
-    } else {
-      return true;
-    }
   }
 
   @Override

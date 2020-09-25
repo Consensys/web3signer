@@ -135,7 +135,7 @@ public class DbSlashingProtectionTest {
         .isTrue();
     verify(signedAttestationsDao)
         .findExistingAttestation(any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH));
-    verify(signedAttestationsDao).insertAttestation(any(), refEq(attestation));
+    verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
   }
 
   @Test
