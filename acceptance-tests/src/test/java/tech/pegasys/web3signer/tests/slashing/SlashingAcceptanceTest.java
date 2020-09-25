@@ -14,24 +14,27 @@ package tech.pegasys.web3signer.tests.slashing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.teku.bls.impl.blst.BlstSecretKey;
-import tech.pegasys.web3signer.core.service.http.ArtifactType;
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
-import tech.pegasys.web3signer.core.signing.KeyType;
-import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
-import tech.pegasys.web3signer.tests.AcceptanceTestBase;
-
-import java.nio.file.Path;
-import java.util.Random;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.Response;
+import io.vertx.core.json.JsonObject;
+import java.nio.file.Path;
+import java.security.SecureRandom;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.web3signer.core.service.http.ArtifactType;
+import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
+import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
@@ -40,6 +43,11 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
   private static final String SLASHING_DB_PASSWORD = System.getenv("SLASHING_DB_PASSWORD");
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+
+  private static final ObjectMapper objectMapper =
+      new ObjectMapper()
+          .registerModule(new SigningJsonRpcModule());
+
 
   @BeforeAll
   static void setup() {
@@ -51,7 +59,8 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void cannotSignSameAttestationTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory) {
+  void cannotSignSameAttestationTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
+      throws JsonProcessingException {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withMode("eth2");
     builder.withSlashingProtectionDbUrl(SLASHING_DB_URL);
@@ -59,10 +68,10 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     builder.withSlashingProtectionDbPassword(SLASHING_DB_PASSWORD);
     builder.withKeyStoreDirectory(testDirectory);
 
-    final BlstSecretKey secretKey = BlstSecretKey.generateNew(new Random());
+    final BLSKeyPair keyPair = BLSKeyPair.random(new SecureRandom());
     final Path keyConfigFile = testDirectory.resolve("keyfile.yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(
-        keyConfigFile, secretKey.toBytes().toHexString(), KeyType.BLS);
+        keyConfigFile, keyPair.getSecretKey().toBytes().toHexString(), KeyType.BLS);
 
     startSigner(builder.build());
 
@@ -74,11 +83,14 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             UInt64.valueOf(1L),
             UInt64.valueOf(5L),
             UInt64.valueOf(6L));
+
+    final String requestBody = objectMapper.writeValueAsString(request);
+
     final Response initialResponse =
-        signer.sign(secretKey.derivePublicKey().toBytesUncompressed().toHexString(), request);
+        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), requestBody);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
     final Response secondResponse =
-        signer.sign(secretKey.derivePublicKey().toBytesUncompressed().toHexString(), request);
+        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), requestBody);
     assertThat(secondResponse.getStatusCode()).isEqualTo(400);
   }
 }

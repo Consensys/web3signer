@@ -116,13 +116,13 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         .post(signPath(KeyType.SECP256K1));
   }
 
-  public Response sign(final String publicKey, final Eth2SigningRequestBody request) {
+  public Response sign(final String publicKey, final String ethSignBody) {
     return given()
         .baseUri(getUrl())
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
-        .body(Json.encode(request))
+        .body(ethSignBody)
         .post(signPath(KeyType.BLS));
   }
 
