@@ -31,7 +31,6 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
@@ -55,7 +54,7 @@ public class MetadataFileHelpers {
 
   public void createUnencryptedYamlFileAt(
       final Path metadataFilePath, final String privateKey, final KeyType keyType) {
-    final Map<String, Serializable> signingMetadata = new HashMap<>();
+    final Map<String, String> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "file-raw");
     signingMetadata.put("privateKey", privateKey);
     signingMetadata.put("keyType", keyType.name());
@@ -102,7 +101,7 @@ public class MetadataFileHelpers {
     final Path passwordFile = metadataFilePath.getParent().resolve(passwordFilename);
     createPasswordFile(passwordFile, password);
 
-    final Map<String, Serializable> signingMetadata = new HashMap<>();
+    final Map<String, String> signingMetadata = new HashMap<>();
     signingMetadata.put("type", "file-keystore");
     signingMetadata.put("keystoreFile", keystoreFile.toString());
     signingMetadata.put("keystorePasswordFile", passwordFile.toString());
@@ -113,7 +112,7 @@ public class MetadataFileHelpers {
   public void createHashicorpYamlFileAt(
       final Path metadataFilePath, final HashicorpSigningParams node) {
     try {
-      final Map<String, Serializable> signingMetadata = new HashMap<>();
+      final Map<String, String> signingMetadata = new HashMap<>();
 
       final boolean tlsEnabled = node.getServerCertificate().isPresent();
 
@@ -149,7 +148,7 @@ public class MetadataFileHelpers {
       final String keyVaultName,
       final String secretName) {
     try {
-      final Map<String, Serializable> signingMetadata = new HashMap<>();
+      final Map<String, String> signingMetadata = new HashMap<>();
 
       signingMetadata.put("type", "azure-secret");
       signingMetadata.put("clientId", clientId);
@@ -171,7 +170,7 @@ public class MetadataFileHelpers {
       final String keyVaultName,
       final String tenantId) {
     try {
-      final Map<String, Serializable> signingMetadata = new HashMap<>();
+      final Map<String, String> signingMetadata = new HashMap<>();
       signingMetadata.put("type", "azure-key");
       signingMetadata.put("vaultName", keyVaultName);
       signingMetadata.put("keyName", "TestKey");
@@ -190,22 +189,15 @@ public class MetadataFileHelpers {
       final KeyType keyType) {
     final int opaqueObjId = keyType == KeyType.BLS ? 1 : 2;
 
-    final Map<String, Serializable> yaml =
-        Map.of(
-            "type",
-            "yubihsm2",
-            "yubiShellBinaryPath",
-            destinationYubiShellSimulator.toString(),
-            "connectorUrl",
-            "http://localhost:12345",
-            "authKey",
-            1,
-            "password",
-            "password",
-            "opaqueObjId",
-            opaqueObjId,
-            "keyType",
-            keyType.name());
+    final Map<String, String> yaml = new HashMap<>();
+    yaml.put("type", "yubihsm2");
+    // TODO: Remove bin from yaml - Use env var
+    yaml.put("yubiShellBinaryPath", destinationYubiShellSimulator.toString());
+    yaml.put("connectorUrl", "http://localhost:12345");
+    yaml.put("authKey", String.valueOf(1));
+    yaml.put("password", "password");
+    yaml.put("opaqueObjId", String.valueOf(opaqueObjId));
+    yaml.put("keyType", keyType.name());
 
     createYamlFile(metadataFilePath, yaml);
   }
@@ -255,8 +247,7 @@ public class MetadataFileHelpers {
     }
   }
 
-  private void createYamlFile(
-      final Path filePath, final Map<String, Serializable> signingMetadata) {
+  private void createYamlFile(final Path filePath, final Map<String, String> signingMetadata) {
     try {
       YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), signingMetadata);
     } catch (final IOException e) {
