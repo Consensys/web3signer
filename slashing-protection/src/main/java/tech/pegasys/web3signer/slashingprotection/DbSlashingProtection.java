@@ -81,8 +81,6 @@ public class DbSlashingProtection implements SlashingProtection {
 
     return jdbi.inTransaction(
         h -> {
-          boolean maySign = false;
-
           final Optional<SignedAttestation> existingAttestation =
               signedAttestationsDao.findExistingAttestation(h, validatorId, targetEpoch);
           if (existingAttestation.isPresent()) {
@@ -125,16 +123,13 @@ public class DbSlashingProtection implements SlashingProtection {
                 sourceEpoch,
                 targetEpoch,
                 publicKey);
-          } else {
-            maySign = true;
+            return false;
           }
 
-          if (maySign) {
-            final SignedAttestation signedAttestation =
-                new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
-            signedAttestationsDao.insertAttestation(h, signedAttestation);
-          }
-          return maySign;
+          final SignedAttestation signedAttestation =
+              new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
+          signedAttestationsDao.insertAttestation(h, signedAttestation);
+          return true;
         });
   }
 
