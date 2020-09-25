@@ -12,18 +12,16 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.OBJECT_MAPPER;
-
+import com.fasterxml.jackson.databind.JsonMappingException;
+import org.junit.jupiter.api.Test;
 import tech.pegasys.signers.yubihsm2.OutputFormat;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.OBJECT_MAPPER;
 
 class YubiHsm2SigningMetadataParsingTest {
   private static final String RET = System.lineSeparator();
@@ -31,7 +29,6 @@ class YubiHsm2SigningMetadataParsingTest {
   @Test
   void yamlParsingWithRequiredValuesWorks() throws IOException {
     StringBuilder yaml = new StringBuilder("type: yubihsm2").append(RET);
-    yaml.append("yubiShellBinaryPath: /some/path/bin/yubihsm-shell").append(RET);
     yaml.append("connectorUrl: http://localhost:12345").append(RET);
     yaml.append("authKey: 1").append(RET);
     yaml.append("password: password").append(RET);
@@ -39,12 +36,10 @@ class YubiHsm2SigningMetadataParsingTest {
     yaml.append("keyType: BLS").append(RET);
 
     final SigningMetadata signingMetadata =
-        OBJECT_MAPPER.readValue(
-            yaml.toString().getBytes(StandardCharsets.UTF_8), SigningMetadata.class);
+        OBJECT_MAPPER.readValue(yaml.toString(), SigningMetadata.class);
     assertThat(signingMetadata).isInstanceOf(YubiHsm2SigningMetadata.class);
 
     final YubiHsm2SigningMetadata metadata = (YubiHsm2SigningMetadata) signingMetadata;
-    assertThat(metadata.getYubiShellBinaryPath()).isEqualTo("/some/path/bin/yubihsm-shell");
     assertThat(metadata.getConnectorUrl()).isEqualTo("http://localhost:12345");
     assertThat(metadata.getAuthKey()).isEqualTo((short) 1);
     assertThat(metadata.getOpaqueObjId()).isEqualTo((short) 5);
@@ -57,7 +52,6 @@ class YubiHsm2SigningMetadataParsingTest {
   @Test
   void yamlParsingWithAllValuesWorks() throws IOException {
     StringBuilder yaml = new StringBuilder("type: yubihsm2").append(RET);
-    yaml.append("yubiShellBinaryPath: /some/path/bin/yubihsm-shell").append(RET);
     yaml.append("connectorUrl: http://localhost:12345").append(RET);
     yaml.append("authKey: 1").append(RET);
     yaml.append("password: password").append(RET);
@@ -68,12 +62,10 @@ class YubiHsm2SigningMetadataParsingTest {
     yaml.append("proxyUrl: http://proxy:8080/").append(RET);
 
     final SigningMetadata signingMetadata =
-        OBJECT_MAPPER.readValue(
-            yaml.toString().getBytes(StandardCharsets.UTF_8), SigningMetadata.class);
+        OBJECT_MAPPER.readValue(yaml.toString(), SigningMetadata.class);
     assertThat(signingMetadata).isInstanceOf(YubiHsm2SigningMetadata.class);
 
     final YubiHsm2SigningMetadata metadata = (YubiHsm2SigningMetadata) signingMetadata;
-    assertThat(metadata.getYubiShellBinaryPath()).isEqualTo("/some/path/bin/yubihsm-shell");
     assertThat(metadata.getConnectorUrl()).isEqualTo("http://localhost:12345");
     assertThat(metadata.getAuthKey()).isEqualTo((short) 1);
     assertThat(metadata.getOpaqueObjId()).isEqualTo((short) 5);
@@ -86,7 +78,6 @@ class YubiHsm2SigningMetadataParsingTest {
   @Test
   void yamlParsingWithSomeOptionalWorks() throws IOException {
     StringBuilder yaml = new StringBuilder("type: yubihsm2").append(RET);
-    yaml.append("yubiShellBinaryPath: /some/path/bin/yubihsm-shell").append(RET);
     yaml.append("connectorUrl: http://localhost:12345").append(RET);
     yaml.append("authKey: 1").append(RET);
     yaml.append("password: password").append(RET);
@@ -95,12 +86,10 @@ class YubiHsm2SigningMetadataParsingTest {
     yaml.append("outformat: ASCII").append(RET);
 
     final SigningMetadata signingMetadata =
-        OBJECT_MAPPER.readValue(
-            yaml.toString().getBytes(StandardCharsets.UTF_8), SigningMetadata.class);
+        OBJECT_MAPPER.readValue(yaml.toString(), SigningMetadata.class);
     assertThat(signingMetadata).isInstanceOf(YubiHsm2SigningMetadata.class);
 
     final YubiHsm2SigningMetadata metadata = (YubiHsm2SigningMetadata) signingMetadata;
-    assertThat(metadata.getYubiShellBinaryPath()).isEqualTo("/some/path/bin/yubihsm-shell");
     assertThat(metadata.getConnectorUrl()).isEqualTo("http://localhost:12345");
     assertThat(metadata.getAuthKey()).isEqualTo((short) 1);
     assertThat(metadata.getOpaqueObjId()).isEqualTo((short) 5);
@@ -112,19 +101,11 @@ class YubiHsm2SigningMetadataParsingTest {
 
   @Test
   void yamlParsingWithoutRequiredOptionsFails() {
-    StringBuilder yaml = new StringBuilder("type: yubihsm2").append(RET);
-    yaml.append("connectorUrl: http://localhost:12345").append(RET);
-    yaml.append("authKey: 1").append(RET);
-    yaml.append("password: password").append(RET);
-    yaml.append("opaqueObjId: 5").append(RET);
-    yaml.append("keyType: BLS").append(RET);
-    yaml.append("outformat: ASCII").append(RET);
 
     assertThatExceptionOfType(JsonMappingException.class)
         .isThrownBy(
             () ->
-                OBJECT_MAPPER.readValue(
-                    yaml.toString().getBytes(StandardCharsets.UTF_8), SigningMetadata.class))
-        .withMessageContaining("yubiShellBinaryPath is required");
+                OBJECT_MAPPER.readValue("type: yubihsm2", SigningMetadata.class))
+        .withMessageContaining("Missing required creator property 'connectorUrl'");
   }
 }

@@ -12,20 +12,16 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import tech.pegasys.signers.yubihsm2.OutputFormat;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.util.Optional;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
-
 public class YubiHsm2SigningMetadata extends SigningMetadata {
-  private final String yubiShellBinaryPath;
   private final String connectorUrl;
   private final Short authKey;
   private final String password;
@@ -38,21 +34,13 @@ public class YubiHsm2SigningMetadata extends SigningMetadata {
 
   @JsonCreator
   public YubiHsm2SigningMetadata(
-      @JsonProperty("yubiShellBinaryPath") final String yubiShellBinaryPath,
-      @JsonProperty("connectorUrl") final String connectorUrl,
-      @JsonProperty("authKey") final Short authKey,
-      @JsonProperty("password") final String password,
-      @JsonProperty("opaqueObjId") final Short opaqueObjId,
+      @JsonProperty(value = "connectorUrl", required = true) final String connectorUrl,
+      @JsonProperty(value = "authKey", required = true) final Short authKey,
+      @JsonProperty(value = "password", required = true) final String password,
+      @JsonProperty(value = "opaqueObjId", required = true) final Short opaqueObjId,
       @JsonProperty("keyType") final KeyType keyType) {
     super(keyType != null ? keyType : KeyType.BLS);
 
-    checkNotNull(yubiShellBinaryPath, "yubiShellBinaryPath is required");
-    checkNotNull(connectorUrl, "connectorUrl is required");
-    checkNotNull(authKey, "authKey is required");
-    checkNotNull(password, "password is required");
-    checkNotNull(opaqueObjId, "opaqueObjId is required");
-
-    this.yubiShellBinaryPath = yubiShellBinaryPath;
     this.connectorUrl = connectorUrl;
     this.authKey = authKey;
     this.password = password;
@@ -74,10 +62,6 @@ public class YubiHsm2SigningMetadata extends SigningMetadata {
   @JsonSetter("outformat")
   public void setOutformat(final OutputFormat outformat) {
     this.outformat = Optional.ofNullable(outformat);
-  }
-
-  public String getYubiShellBinaryPath() {
-    return yubiShellBinaryPath;
   }
 
   public String getConnectorUrl() {
