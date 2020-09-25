@@ -12,17 +12,11 @@
  */
 package tech.pegasys.web3signer.tests.signing;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.io.Resources;
@@ -33,7 +27,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   protected @TempDir Path testDirectory;
-  protected @TempDir Path tempBinDirectory;
 
   protected void setupSigner(final String mode) {
     setupSigner(mode, null);
@@ -51,25 +44,14 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   protected Map<String, String> yubiHsmShellEnvMap() {
-    // TODO: Find a better way than to modify the executeable script
-    try {
-      final Path source = Path.of(Resources.getResource("YubiShellSimulator").getPath());
-
-      final List<String> sourceLines = new ArrayList<>(Files.readAllLines(source));
-      sourceLines.set(0, "#!" + getJvmPath());
-
-      final Path dest = tempBinDirectory.resolve(source.getFileName());
-      Files.write(dest, sourceLines, UTF_8);
-      // make dest file executeable
-      dest.toFile().setExecutable(true);
-
-      return Map.of("WEB3SIGNER_YUBIHSM_SHELL_PATH", dest.toString());
-    } catch (final IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    final String simulator = Resources.getResource("YubiShellSimulator.java").getPath();
+    Map<String, String> map = new HashMap<>();
+    map.put("WEB3SIGNER_YUBIHSM_SHELL_PATH", getJvmPath());
+    map.put("WEB3SIGNER_YUBIHSM_SHELL_ARG_1", simulator);
+    return map;
   }
 
   private String getJvmPath() {
-    return Path.of(System.getProperty("java.home"), "bin", "java") + " --source 11";
+    return Path.of(System.getProperty("java.home"), "bin", "java").toString();
   }
 }

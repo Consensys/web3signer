@@ -28,17 +28,16 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 
 import com.google.common.io.Files;
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
-  private static final String YUBIHSM_SHELL_PATH =
-      Optional.ofNullable(System.getenv("WEB3SIGNER_YUBIHSM_SHELL_PATH")).orElse("yubihsm-shell");
+
   final HashicorpConnectionFactory connectionFactory;
   final Path configsDirectory;
+  final YubiHsmShellArgs yubiHsmShellArgs = new YubiHsmShellArgs();
 
   public AbstractArtifactSignerFactory(
       final HashicorpConnectionFactory connectionFactory, final Path configsDirectory) {
@@ -90,7 +89,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   protected Bytes extractBytesFromVault(final YubiHsm2SigningMetadata metadata) {
     final YubiHsm2 yubiHsm2 =
         new YubiHsm2(
-            List.of(YUBIHSM_SHELL_PATH),
+            yubiHsmShellArgs.getArgs(),
             Optional.empty(),
             metadata.getConnectorUrl(),
             metadata.getAuthKey(),
