@@ -53,22 +53,23 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   protected Map<String, String> yubiHsmShellEnvMap() {
     // TODO: Find a better way than to modify the executeable script
     try {
-      final Path sourceYubiShellSimulator =
-          Path.of(Resources.getResource("YubiShellSimulator").getPath());
-      final Path destinationYubiShellSimulator = tempBinDirectory.resolve("YubiShellSimulator");
-      Files.copy(sourceYubiShellSimulator, destinationYubiShellSimulator);
-      // update shebang with jvm path
-      final List<String> sourceLines =
-          new ArrayList<>(Files.readAllLines(destinationYubiShellSimulator));
-      final String shebang =
-          "#!" + Path.of(System.getProperty("java.home"), "bin", "java") + " --source 11";
-      sourceLines.set(0, shebang);
-      Files.write(destinationYubiShellSimulator, sourceLines, UTF_8);
-      // make file executeable
-      sourceYubiShellSimulator.toFile().setExecutable(true);
-      return Map.of("WEB3SIGNER_YUBIHSM_SHELL_PATH", destinationYubiShellSimulator.toString());
+      final Path source = Path.of(Resources.getResource("YubiShellSimulator").getPath());
+
+      final List<String> sourceLines = new ArrayList<>(Files.readAllLines(source));
+      sourceLines.set(0, "#!" + getJvmPath());
+
+      final Path dest = tempBinDirectory.resolve(source.getFileName());
+      Files.write(dest, sourceLines, UTF_8);
+      // make dest file executeable
+      dest.toFile().setExecutable(true);
+
+      return Map.of("WEB3SIGNER_YUBIHSM_SHELL_PATH", dest.toString());
     } catch (final IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  private String getJvmPath() {
+    return Path.of(System.getProperty("java.home"), "bin", "java") + " --source 11";
   }
 }
