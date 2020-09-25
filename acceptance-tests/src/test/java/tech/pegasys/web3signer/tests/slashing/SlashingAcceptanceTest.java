@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.tests.slashing;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.Response;
 import java.nio.file.Path;
 import java.security.SecureRandom;
@@ -26,7 +25,6 @@ import org.junit.jupiter.api.io.TempDir;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
-import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -35,10 +33,6 @@ import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-
-  private static final ObjectMapper objectMapper =
-      new ObjectMapper()
-          .registerModule(new SigningJsonRpcModule());
 
   @Test
   void canSignSameAttestationTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
@@ -66,13 +60,11 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             UInt64.valueOf(5L),
             UInt64.valueOf(6L));
 
-    final String requestBody = objectMapper.writeValueAsString(request);
-
     final Response initialResponse =
-        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), requestBody);
+        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
     final Response secondResponse =
-        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), requestBody);
+        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
   }
 }

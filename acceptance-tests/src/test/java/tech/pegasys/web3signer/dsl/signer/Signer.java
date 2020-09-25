@@ -19,8 +19,11 @@ import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpeci
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
@@ -54,6 +57,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   private final Vertx vertx;
   private final String urlFormatting;
   private final Optional<ClientTlsConfig> clientTlsConfig;
+  private final ObjectMapper eth2InterfaceObjectMapper;
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
     super(JSON_RPC_PATH + "/filecoin");
@@ -63,6 +67,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         signerConfig.getServerTlsOptions().isPresent() ? "https://%s:%s" : "http://%s:%s";
     this.clientTlsConfig = Optional.ofNullable(clientTlsConfig);
     vertx = Vertx.vertx();
+    eth2InterfaceObjectMapper = new ObjectMapper().registerModule(new SigningJsonRpcModule());
   }
 
   public void start() {
@@ -116,13 +121,14 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         .post(signPath(KeyType.SECP256K1));
   }
 
-  public Response sign(final String publicKey, final String ethSignBody) {
+  public Response sign(final String publicKey, final Eth2SigningRequestBody ethSignBody)
+      throws JsonProcessingException {
     return given()
         .baseUri(getUrl())
         .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
-        .body(ethSignBody)
+        .body(eth2InterfaceObjectMapper.writeValueAsString(ethSignBody))
         .post(signPath(KeyType.BLS));
   }
 
