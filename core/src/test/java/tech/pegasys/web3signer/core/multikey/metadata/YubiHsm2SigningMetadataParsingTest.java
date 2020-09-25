@@ -12,16 +12,17 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.OBJECT_MAPPER;
+
 import tech.pegasys.signers.yubihsm2.OutputFormat;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.IOException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.OBJECT_MAPPER;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import org.junit.jupiter.api.Test;
 
 class YubiHsm2SigningMetadataParsingTest {
   private static final String RET = System.lineSeparator();
@@ -101,11 +102,11 @@ class YubiHsm2SigningMetadataParsingTest {
 
   @Test
   void yamlParsingWithoutRequiredOptionsFails() {
+    StringBuilder yaml = new StringBuilder("type: yubihsm2").append(RET);
+    yaml.append("authKey: 1").append(RET);
 
     assertThatExceptionOfType(JsonMappingException.class)
-        .isThrownBy(
-            () ->
-                OBJECT_MAPPER.readValue("type: yubihsm2", SigningMetadata.class))
+        .isThrownBy(() -> OBJECT_MAPPER.readValue(yaml.toString(), SigningMetadata.class))
         .withMessageContaining("Missing required creator property 'connectorUrl'");
   }
 }

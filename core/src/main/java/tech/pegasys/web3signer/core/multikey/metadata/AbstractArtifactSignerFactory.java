@@ -36,7 +36,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
   private static final String YUBIHSM_SHELL_PATH =
-          Optional.ofNullable(System.getenv("WEB3SIGNER_YUBIHSM_SHELL_PATH")).orElse("yubihsm-shell");
+      Optional.ofNullable(System.getenv("WEB3SIGNER_YUBIHSM_SHELL_PATH")).orElse("yubihsm-shell");
   final HashicorpConnectionFactory connectionFactory;
   final Path configsDirectory;
 

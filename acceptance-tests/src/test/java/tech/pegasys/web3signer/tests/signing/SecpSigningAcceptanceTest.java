@@ -17,7 +17,6 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.crypto.Sign.publicKeyFromPrivate;
 import static org.web3j.crypto.Sign.signedMessageToKey;
-import static tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers.copyYubiHsmSimulator;
 
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -25,11 +24,11 @@ import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.io.File;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.SignatureException;
+import java.util.Map;
 
 import com.google.common.io.Resources;
 import io.restassured.response.Response;
@@ -127,17 +126,19 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  public void ableToSignUsingYubiHsm() throws IOException {
-    final Path yubiShellSimulator = copyYubiHsmSimulator(testDirectory);
-
+  public void ableToSignUsingYubiHsm() {
     final Path configFile = testDirectory.resolve("yubihsm_2.yaml");
-    metadataFileHelpers.createYubiHsmYamlFileAt(configFile, yubiShellSimulator, KeyType.SECP256K1);
+    metadataFileHelpers.createYubiHsmYamlFileAt(configFile, KeyType.SECP256K1);
 
-    signAndVerifySignature();
+    signAndVerifySignature(yubiHsmShellEnvMap());
   }
 
   private void signAndVerifySignature() {
-    setupSigner("eth1");
+    signAndVerifySignature(null);
+  }
+
+  private void signAndVerifySignature(final Map<String, String> env) {
+    setupSigner("eth1", env);
 
     // openapi
     final Response response = signer.eth1Sign(PUBLIC_KEY_HEX_STRING, DATA);

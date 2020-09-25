@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
@@ -34,15 +33,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -183,16 +179,11 @@ public class MetadataFileHelpers {
     }
   }
 
-  public void createYubiHsmYamlFileAt(
-      final Path metadataFilePath,
-      final Path destinationYubiShellSimulator,
-      final KeyType keyType) {
+  public void createYubiHsmYamlFileAt(final Path metadataFilePath, final KeyType keyType) {
     final int opaqueObjId = keyType == KeyType.BLS ? 1 : 2;
 
     final Map<String, String> yaml = new HashMap<>();
     yaml.put("type", "yubihsm2");
-    // TODO: Remove bin from yaml - Use env var
-    yaml.put("yubiShellBinaryPath", destinationYubiShellSimulator.toString());
     yaml.put("connectorUrl", "http://localhost:12345");
     yaml.put("authKey", String.valueOf(1));
     yaml.put("password", "password");
@@ -200,23 +191,6 @@ public class MetadataFileHelpers {
     yaml.put("keyType", keyType.name());
 
     createYamlFile(metadataFilePath, yaml);
-  }
-
-  public static Path copyYubiHsmSimulator(final Path destDir) throws IOException {
-    final Path sourceYubiShellSimulator =
-        Path.of(Resources.getResource("YubiShellSimulator").getPath());
-    final Path destinationYubiShellSimulator = destDir.resolve("YubiShellSimulator");
-    Files.copy(sourceYubiShellSimulator, destinationYubiShellSimulator);
-    // update shebang with jvm path
-    final List<String> sourceLines =
-        new ArrayList<>(Files.readAllLines(destinationYubiShellSimulator));
-    final String shebang =
-        "#!" + Path.of(System.getProperty("java.home"), "bin", "java") + " --source 11";
-    sourceLines.set(0, shebang);
-    Files.write(destinationYubiShellSimulator, sourceLines, UTF_8);
-    // make file executeable
-    sourceYubiShellSimulator.toFile().setExecutable(true);
-    return destinationYubiShellSimulator;
   }
 
   private void createPasswordFile(final Path passwordFilePath, final String password) {

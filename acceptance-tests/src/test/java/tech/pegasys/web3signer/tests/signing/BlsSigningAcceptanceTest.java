@@ -16,7 +16,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATION_SLOT;
-import static tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers.copyYubiHsmSimulator;
 
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
@@ -29,8 +28,8 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
-import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
@@ -118,17 +117,19 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  public void ableToSignUsingYubiHsm() throws IOException {
-    final Path yubiShellSimulator = copyYubiHsmSimulator(testDirectory);
-
+  public void ableToSignUsingYubiHsm() {
     final Path configFile = testDirectory.resolve("yubihsm_1.yaml");
-    metadataFileHelpers.createYubiHsmYamlFileAt(configFile, yubiShellSimulator, KeyType.BLS);
+    metadataFileHelpers.createYubiHsmYamlFileAt(configFile, KeyType.BLS);
 
-    signAndVerifySignature();
+    signAndVerifySignature(yubiHsmShellEnvMap());
   }
 
   private void signAndVerifySignature() {
-    setupSigner("eth2");
+    signAndVerifySignature(null);
+  }
+
+  private void signAndVerifySignature(final Map<String, String> env) {
+    setupSigner("eth2", env);
 
     // openapi
     final Response response =
