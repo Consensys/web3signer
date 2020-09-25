@@ -99,7 +99,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
             metadata.getProxyUrl());
     try {
       final String secret =
-          yubiHsm2.fetchOpaqueData(metadata.getOpaqueObjId(), metadata.getOutformat());
+          yubiHsm2.fetchOpaqueData(metadata.getOpaqueObjId(), metadata.getOutputFormat());
       return Bytes.fromHexString(secret);
     } catch (final RuntimeException e) {
       throw new SigningMetadataException(

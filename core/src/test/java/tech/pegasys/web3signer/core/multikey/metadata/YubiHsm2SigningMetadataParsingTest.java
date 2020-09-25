@@ -45,7 +45,7 @@ class YubiHsm2SigningMetadataParsingTest {
     assertThat(metadata.getAuthKey()).isEqualTo((short) 1);
     assertThat(metadata.getOpaqueObjId()).isEqualTo((short) 5);
     assertThat(metadata.getKeyType()).isEqualTo(KeyType.BLS);
-    assertThat(metadata.getOutformat()).isEmpty();
+    assertThat(metadata.getOutputFormat()).isEmpty();
     assertThat(metadata.getCaCertPath()).isEmpty();
     assertThat(metadata.getProxyUrl()).isEmpty();
   }
@@ -58,7 +58,7 @@ class YubiHsm2SigningMetadataParsingTest {
     yaml.append("password: password").append(RET);
     yaml.append("opaqueObjId: 5").append(RET);
     yaml.append("keyType: BLS").append(RET);
-    yaml.append("outformat: hex").append(RET);
+    yaml.append("outputFormat: hex").append(RET);
     yaml.append("caCertPath: /some/path/cert.crt").append(RET);
     yaml.append("proxyUrl: http://proxy:8080/").append(RET);
 
@@ -71,7 +71,7 @@ class YubiHsm2SigningMetadataParsingTest {
     assertThat(metadata.getAuthKey()).isEqualTo((short) 1);
     assertThat(metadata.getOpaqueObjId()).isEqualTo((short) 5);
     assertThat(metadata.getKeyType()).isEqualTo(KeyType.BLS);
-    assertThat(metadata.getOutformat().get()).isEqualTo(OutputFormat.HEX);
+    assertThat(metadata.getOutputFormat().get()).isEqualTo(OutputFormat.HEX);
     assertThat(metadata.getCaCertPath().get()).isEqualTo("/some/path/cert.crt");
     assertThat(metadata.getProxyUrl().get()).isEqualTo("http://proxy:8080/");
   }
@@ -84,7 +84,7 @@ class YubiHsm2SigningMetadataParsingTest {
     yaml.append("password: password").append(RET);
     yaml.append("opaqueObjId: 5").append(RET);
     yaml.append("keyType: BLS").append(RET);
-    yaml.append("outformat: ASCII").append(RET);
+    yaml.append("outputFormat: ASCII").append(RET);
 
     final SigningMetadata signingMetadata =
         OBJECT_MAPPER.readValue(yaml.toString(), SigningMetadata.class);
@@ -95,7 +95,7 @@ class YubiHsm2SigningMetadataParsingTest {
     assertThat(metadata.getAuthKey()).isEqualTo((short) 1);
     assertThat(metadata.getOpaqueObjId()).isEqualTo((short) 5);
     assertThat(metadata.getKeyType()).isEqualTo(KeyType.BLS);
-    assertThat(metadata.getOutformat().get()).isEqualTo(OutputFormat.ASCII);
+    assertThat(metadata.getOutputFormat().get()).isEqualTo(OutputFormat.ASCII);
     assertThat(metadata.getCaCertPath()).isEmpty();
     assertThat(metadata.getProxyUrl()).isEmpty();
   }

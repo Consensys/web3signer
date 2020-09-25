@@ -29,7 +29,7 @@ public class YubiHsm2SigningMetadata extends SigningMetadata {
   private final Short opaqueObjId;
 
   // following fields are optional and will be populated if defined in configuration file
-  private Optional<OutputFormat> outformat = Optional.empty();
+  private Optional<OutputFormat> outputFormat = Optional.empty();
   private Optional<String> caCertPath = Optional.empty();
   private Optional<String> proxyUrl = Optional.empty();
 
@@ -60,9 +60,9 @@ public class YubiHsm2SigningMetadata extends SigningMetadata {
     this.proxyUrl = Optional.ofNullable(proxyUrl);
   }
 
-  @JsonSetter("outformat")
-  public void setOutformat(final OutputFormat outformat) {
-    this.outformat = Optional.ofNullable(outformat);
+  @JsonSetter("outputFormat")
+  public void setOutputFormat(final OutputFormat outputFormat) {
+    this.outputFormat = Optional.ofNullable(outputFormat);
   }
 
   public String getConnectorUrl() {
@@ -81,8 +81,8 @@ public class YubiHsm2SigningMetadata extends SigningMetadata {
     return opaqueObjId;
   }
 
-  public Optional<OutputFormat> getOutformat() {
-    return outformat;
+  public Optional<OutputFormat> getOutputFormat() {
+    return outputFormat;
   }
 
   public Optional<String> getCaCertPath() {
