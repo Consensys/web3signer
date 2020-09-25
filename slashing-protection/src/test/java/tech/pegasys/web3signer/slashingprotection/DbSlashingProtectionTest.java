@@ -93,7 +93,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isTrue();
     verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
-    verify(signedBlocksDao).insertBlockProposal(any(), refEq(signedBlock));
+    verify(signedBlocksDao, never()).insertBlockProposal(any(), refEq(signedBlock));
   }
 
   @Test

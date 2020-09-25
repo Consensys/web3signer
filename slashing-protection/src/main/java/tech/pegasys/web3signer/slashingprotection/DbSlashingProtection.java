@@ -154,11 +154,12 @@ public class DbSlashingProtection implements SlashingProtection {
           final Optional<SignedBlock> existingBlock =
               signedBlocksDao.findExistingBlock(h, validatorId, blockSlot);
 
-          // same slot and signing_root is allowed for broadcasting previously signed block
-          // otherwise if slot and different signing_root then this is a double block proposal
-          if (existingBlock.isEmpty() || existingBlock.get().getSigningRoot().equals(signingRoot)) {
+          if (existingBlock.isEmpty()) {
             final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
             signedBlocksDao.insertBlockProposal(h, signedBlock);
+            return true;
+          } else if (existingBlock.get().getSigningRoot().equals(signingRoot)) {
+            // same slot and signing_root is allowed for broadcasting previously signed block
             return true;
           } else {
             LOG.warn("Detected double signed block {} for {}", existingBlock.get(), publicKey);
