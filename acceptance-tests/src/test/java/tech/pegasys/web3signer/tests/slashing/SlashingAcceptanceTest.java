@@ -15,16 +15,12 @@ package tech.pegasys.web3signer.tests.slashing;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.response.Response;
-import io.vertx.core.json.JsonObject;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -38,34 +34,20 @@ import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
-  private static final String SLASHING_DB_URL = System.getenv("SLASHING_DB_URL");
-  private static final String SLASHING_DB_USERNAME = System.getenv("SLASHING_DB_USERNAME");
-  private static final String SLASHING_DB_PASSWORD = System.getenv("SLASHING_DB_PASSWORD");
-
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
   private static final ObjectMapper objectMapper =
       new ObjectMapper()
           .registerModule(new SigningJsonRpcModule());
 
-
-  @BeforeAll
-  static void setup() {
-    Assumptions.assumeTrue(SLASHING_DB_URL != null, "Set SLASHING_DB_URL environment variable");
-    Assumptions.assumeTrue(
-        SLASHING_DB_USERNAME != null, "Set SLASHING_DB_USERNAME environment variable");
-    Assumptions.assumeTrue(
-        SLASHING_DB_PASSWORD != null, "Set SLASHING_DB_PASSWORD environment variable");
-  }
-
   @Test
-  void cannotSignSameAttestationTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
+  void canSignSameAttestationTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
       throws JsonProcessingException {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withMode("eth2");
-    builder.withSlashingProtectionDbUrl(SLASHING_DB_URL);
-    builder.withSlashingProtectionDbUsername(SLASHING_DB_USERNAME);
-    builder.withSlashingProtectionDbPassword(SLASHING_DB_PASSWORD);
+    builder.withSlashingEnabled(true);
+    builder.withSlashingProtectionDbUsername("postgres");
+    builder.withSlashingProtectionDbPassword("postgres");
     builder.withKeyStoreDirectory(testDirectory);
 
     final BLSKeyPair keyPair = BLSKeyPair.random(new SecureRandom());
@@ -91,6 +73,6 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
     final Response secondResponse =
         signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), requestBody);
-    assertThat(secondResponse.getStatusCode()).isEqualTo(400);
+    assertThat(secondResponse.getStatusCode()).isEqualTo(200);
   }
 }

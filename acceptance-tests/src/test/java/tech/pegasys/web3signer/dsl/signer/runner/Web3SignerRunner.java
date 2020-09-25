@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.dsl.signer.runner;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
 
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import java.sql.Statement;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
@@ -52,6 +53,8 @@ public abstract class Web3SignerRunner {
   private final Path dataPath;
   private final Properties portsProperties;
 
+  private EmbeddedPostgres slashingDatabase;
+
   private static final String PORTS_FILENAME = "web3signer.ports";
   private static final String HTTP_PORT_KEY = "http-port";
   private static final String METRICS_PORT_KEY = "metrics-port";
@@ -72,6 +75,7 @@ public abstract class Web3SignerRunner {
 
     if (signerConfig.isHttpDynamicPortAllocation()) {
       this.dataPath = createTempDirectory("acceptance-test");
+
     } else {
       dataPath = null;
     }
@@ -182,17 +186,23 @@ public abstract class Web3SignerRunner {
     params.add(Boolean.toString(signerConfig.isSlashingProtectionEnabled()));
 
     if (signerConfig.isSlashingProtectionEnabled()) {
+      try {
+        slashingDatabase = EmbeddedPostgres.start();
+      } catch (final IOException e) {
+        throw new RuntimeException("Unable to start embedded postgres db", e);
+      }
+      // Default embeddedPostgres uses a database, username and password of "postgres"
+
+      final String dbUrl =
+          String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
       params.add("--slashing-protection-db-url");
-      params.add(signerConfig.getSlashingProtectionDbUrl());
+      params.add(dbUrl);
       params.add("--slashing-protection-db-username");
       params.add(signerConfig.getSlashingProtectionDbUsername());
       params.add("--slashing-protection-db-password");
       params.add(signerConfig.getSlashingProtectionDbPassword());
 
-      createSlashingDatabase(
-          signerConfig.getSlashingProtectionDbUrl(),
-          signerConfig.getSlashingProtectionDbUsername(),
-          signerConfig.getSlashingProtectionDbPassword());
+      createSlashingDatabase(dbUrl, "postgres", "postgres");
     }
 
     return params;
