@@ -15,8 +15,6 @@ package tech.pegasys.web3signer.dsl.signer.runner;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
-import java.sql.Statement;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -38,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Lists;
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -291,24 +290,21 @@ public abstract class Web3SignerRunner {
 
     try {
       final Connection conn = dataSource.getConnection();
-//      final Statement stmt = conn.createStatement();
-//      stmt.executeUpdate(
-//          "Drop table if exists flyway_schema_history,validators,signed_blocks,signed_attestations");
+      //      final Statement stmt = conn.createStatement();
+      //      stmt.executeUpdate(
+      //          "Drop table if exists
+      // flyway_schema_history,validators,signed_blocks,signed_attestations");
 
     } catch (final SQLException e) {
       throw new RuntimeException("Unable to initialise database");
     }
 
-    final Path migrationPath = getProjectPath()
-        .toPath()
-        .resolve(
-            Path.of(
-                "slashing-protection",
-                "src",
-                "main",
-                "resources",
-                "migrations",
-                "postgresql"));
+    final Path migrationPath =
+        getProjectPath()
+            .toPath()
+            .resolve(
+                Path.of(
+                    "slashing-protection", "src", "main", "resources", "migrations", "postgresql"));
 
     final Flyway flyway =
         Flyway.configure()

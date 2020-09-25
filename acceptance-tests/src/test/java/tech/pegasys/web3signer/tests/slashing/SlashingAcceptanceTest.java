@@ -14,14 +14,6 @@ package tech.pegasys.web3signer.tests.slashing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import io.restassured.response.Response;
-import java.nio.file.Path;
-import java.security.SecureRandom;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
@@ -30,13 +22,23 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.nio.file.Path;
+import java.security.SecureRandom;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.restassured.response.Response;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
-  @Test
-  void canSignSameAttestationTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
-      throws JsonProcessingException {
+  final BLSKeyPair keyPair = BLSKeyPair.random(new SecureRandom());
+
+  void setupSigner(final Path testDirectory) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withMode("eth2");
     builder.withSlashingEnabled(true);
@@ -44,12 +46,18 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     builder.withSlashingProtectionDbPassword("postgres");
     builder.withKeyStoreDirectory(testDirectory);
 
-    final BLSKeyPair keyPair = BLSKeyPair.random(new SecureRandom());
     final Path keyConfigFile = testDirectory.resolve("keyfile.yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(
         keyConfigFile, keyPair.getSecretKey().toBytes().toHexString(), KeyType.BLS);
 
     startSigner(builder.build());
+  }
+
+  @Test
+  void canSignSameAttestationTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
+      throws JsonProcessingException {
+
+    setupSigner(testDirectory);
 
     final Bytes signingRoot = Bytes.fromHexString("0x01");
     final Eth2SigningRequestBody request =
@@ -66,5 +74,37 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     final Response secondResponse =
         signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
+  }
+
+  @Test
+  void cannotSignASecondAttestationForSameSlotWithDifferentSigningRoot(@TempDir Path testDirectory)
+      throws JsonProcessingException {
+    setupSigner(testDirectory);
+
+    final Bytes signingRoot = Bytes.fromHexString("0x01");
+    final Eth2SigningRequestBody initialRequest =
+        new Eth2SigningRequestBody(
+            signingRoot,
+            ArtifactType.ATTESTATION,
+            UInt64.valueOf(1L),
+            UInt64.valueOf(5L),
+            UInt64.valueOf(6L));
+
+    final Response initialResponse =
+        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), initialRequest);
+    assertThat(initialResponse.getStatusCode()).isEqualTo(200);
+
+    final Bytes secondSigningRoot = Bytes.fromHexString("0x02");
+    final Eth2SigningRequestBody secondRequest =
+        new Eth2SigningRequestBody(
+            secondSigningRoot,
+            ArtifactType.ATTESTATION,
+            UInt64.valueOf(1L),
+            UInt64.valueOf(5L),
+            UInt64.valueOf(6L));
+
+    final Response secondResponse =
+        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), secondRequest);
+    assertThat(secondResponse.getStatusCode()).isEqualTo(403);
   }
 }
