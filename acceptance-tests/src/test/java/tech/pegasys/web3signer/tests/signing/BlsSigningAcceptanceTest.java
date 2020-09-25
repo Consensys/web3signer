@@ -29,6 +29,7 @@ import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
@@ -115,8 +116,20 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     signAndVerifySignature();
   }
 
+  @Test
+  public void ableToSignUsingYubiHsm() {
+    final Path configFile = testDirectory.resolve("yubihsm_1.yaml");
+    metadataFileHelpers.createYubiHsmYamlFileAt(configFile, KeyType.BLS);
+
+    signAndVerifySignature(yubiHsmShellEnvMap());
+  }
+
   private void signAndVerifySignature() {
-    setupSigner("eth2");
+    signAndVerifySignature(null);
+  }
+
+  private void signAndVerifySignature(final Map<String, String> env) {
+    setupSigner("eth2", env);
 
     // openapi
     final Response response =

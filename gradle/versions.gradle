@@ -79,10 +79,11 @@ dependencyManagement {
     dependency 'tech.pegasys.teku.internal:bls:0.12.6-SNAPSHOT'
     dependency 'tech.pegasys:jblst:0.1.0-RELEASE'
 
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.8') {
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.9') {
       entry 'bls-keystore'
       entry 'keystorage-hashicorp'
       entry 'keystorage-azure'
+      entry 'keystorage-yubihsm2'
       entry 'signing-secp256k1-api'
       entry 'signing-secp256k1-impl'
       entry 'acceptance-tests'

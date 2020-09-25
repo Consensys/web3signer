@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata.parser;
 
+import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
+
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
@@ -31,8 +33,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 public class YamlSignerParser implements SignerParser {
 
-  private static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper(new YAMLFactory()).registerModule(new SigningMetadataModule());
+  public static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper(new YAMLFactory())
+          .registerModule(new SigningMetadataModule())
+          .enable(ACCEPT_CASE_INSENSITIVE_ENUMS);
 
   private final Collection<AbstractArtifactSignerFactory> signerFactories;
 

@@ -42,7 +42,8 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
@@ -64,13 +65,21 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
 
-  @Test
-  void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint() {
+  @ParameterizedTest
+  @ValueSource(strings = {"file-raw", "yubihsm2"})
+  void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint(final String metadataType) {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
-
-    setupSigner("filecoin");
+    switch (metadataType) {
+      case "file-raw":
+        metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+        setupSigner("filecoin");
+        break;
+      case "yubihsm2":
+        metadataFileHelpers.createYubiHsmYamlFileAt(keyConfigFile, KeyType.BLS);
+        setupSigner("filecoin", yubiHsmShellEnvMap());
+        break;
+    }
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     ObjectMapper mapper = new ObjectMapper();
