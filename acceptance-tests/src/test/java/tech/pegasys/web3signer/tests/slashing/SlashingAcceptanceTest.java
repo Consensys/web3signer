@@ -69,10 +69,10 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             UInt64.valueOf(6L));
 
     final Response initialResponse =
-        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
+        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
     final Response secondResponse =
-        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
+        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
   }
 
@@ -91,7 +91,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             UInt64.valueOf(6L));
 
     final Response initialResponse =
-        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), initialRequest);
+        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
     final Bytes secondSigningRoot = Bytes.fromHexString("0x02");
@@ -104,7 +104,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             UInt64.valueOf(6L));
 
     final Response secondResponse =
-        signer.sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), secondRequest);
+        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
   }
 }

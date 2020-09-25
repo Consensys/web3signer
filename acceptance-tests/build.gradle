@@ -47,7 +47,6 @@ dependencies {
   testImplementation 'org.apache.tuweni:tuweni-bytes'
   testImplementation 'com.github.arteam:simple-json-rpc-server'
   testImplementation 'com.github.arteam:simple-json-rpc-client'
-  testImplementation 'com.zaxxer:HikariCP'
   testImplementation 'org.flywaydb:flyway-core'
   testImplementation 'com.opentable.components:otj-pg-embedded'
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'keystorage-hashicorp', classifier: 'test-fixtures')

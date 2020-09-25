@@ -26,18 +26,16 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+import javax.sql.DataSource;
 
 import com.google.common.collect.Lists;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
-import com.zaxxer.hikari.HikariDataSource;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -187,11 +185,12 @@ public abstract class Web3SignerRunner {
     if (signerConfig.isSlashingProtectionEnabled()) {
       try {
         slashingDatabase = EmbeddedPostgres.start();
+        createSlashingDatabase(slashingDatabase.getPostgresDatabase());
       } catch (final IOException e) {
         throw new RuntimeException("Unable to start embedded postgres db", e);
       }
-      // Default embeddedPostgres uses a database, username and password of "postgres"
 
+      // Default embeddedPostgres uses a database, username and password of "postgres"
       final String dbUrl =
           String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
       params.add("--slashing-protection-db-url");
@@ -200,8 +199,6 @@ public abstract class Web3SignerRunner {
       params.add(signerConfig.getSlashingProtectionDbUsername());
       params.add("--slashing-protection-db-password");
       params.add(signerConfig.getSlashingProtectionDbPassword());
-
-      createSlashingDatabase(dbUrl, "postgres", "postgres");
     }
 
     return params;
@@ -281,24 +278,7 @@ public abstract class Web3SignerRunner {
 
   // Assumes database already exists, just enforces the tables exist as necessary.
   @SuppressWarnings("UnusedVariable")
-  private void createSlashingDatabase(
-      final String url, final String username, final String password) {
-    final HikariDataSource dataSource = new HikariDataSource();
-    dataSource.setUsername(username);
-    dataSource.setPassword(password);
-    dataSource.setJdbcUrl(url);
-
-    try {
-      final Connection conn = dataSource.getConnection();
-      //      final Statement stmt = conn.createStatement();
-      //      stmt.executeUpdate(
-      //          "Drop table if exists
-      // flyway_schema_history,validators,signed_blocks,signed_attestations");
-
-    } catch (final SQLException e) {
-      throw new RuntimeException("Unable to initialise database");
-    }
-
+  private void createSlashingDatabase(final DataSource dataSource) {
     final Path migrationPath =
         getProjectPath()
             .toPath()

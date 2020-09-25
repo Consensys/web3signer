@@ -120,7 +120,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         .post(signPath(KeyType.SECP256K1));
   }
 
-  public Response sign(final String publicKey, final Eth2SigningRequestBody ethSignBody)
+  public Response eth2Sign(final String publicKey, final Eth2SigningRequestBody ethSignBody)
       throws JsonProcessingException {
     return given()
         .baseUri(getUrl())
