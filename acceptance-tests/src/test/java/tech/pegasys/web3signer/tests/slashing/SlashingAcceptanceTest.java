@@ -38,10 +38,10 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   final BLSKeyPair keyPair = BLSKeyPair.random(new SecureRandom());
 
-  void setupSigner(final Path testDirectory) {
+  void setupSigner(final Path testDirectory, final boolean enableSlashing) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withMode("eth2");
-    builder.withSlashingEnabled(true);
+    builder.withSlashingEnabled(enableSlashing);
     builder.withSlashingProtectionDbUsername("postgres");
     builder.withSlashingProtectionDbPassword("postgres");
     builder.withKeyStoreDirectory(testDirectory);
@@ -57,7 +57,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
   void canSignSameAttestationTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
       throws JsonProcessingException {
 
-    setupSigner(testDirectory);
+    setupSigner(testDirectory, true);
 
     final Eth2SigningRequestBody request =
         new Eth2SigningRequestBody(
@@ -78,7 +78,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
   @Test
   void cannotSignASecondAttestationForSameSlotWithDifferentSigningRoot(@TempDir Path testDirectory)
       throws JsonProcessingException {
-    setupSigner(testDirectory);
+    setupSigner(testDirectory, true);
 
     final Bytes signingRoot = Bytes.fromHexString("0x01");
     final Eth2SigningRequestBody initialRequest =
@@ -111,7 +111,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
   void canSignSameBlockTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
       throws JsonProcessingException {
 
-    setupSigner(testDirectory);
+    setupSigner(testDirectory, true);
 
     final Eth2SigningRequestBody request =
         new Eth2SigningRequestBody(
@@ -132,7 +132,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
   @Test
   void signingBlockWithDifferentSigningRootForPreviousSLotFailsWith403(@TempDir Path testDirectory)
       throws JsonProcessingException {
-    setupSigner(testDirectory);
+    setupSigner(testDirectory, true);
 
     final Eth2SigningRequestBody initialRequest =
         new Eth2SigningRequestBody(
@@ -157,5 +157,35 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
+  }
+
+  @Test
+  void twoDifferentBlocksCanBeSignedForSameSlotIfSlashingIsDisabled(@TempDir Path testDirectory)
+      throws JsonProcessingException {
+    setupSigner(testDirectory, false);
+    final Eth2SigningRequestBody initialRequest =
+        new Eth2SigningRequestBody(
+            Bytes.fromHexString("0x01"),
+            ArtifactType.BLOCK,
+            UInt64.valueOf(3L),
+            null,
+            null);
+
+    final Response initialResponse =
+        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), initialRequest);
+    assertThat(initialResponse.getStatusCode()).isEqualTo(200);
+
+    final Eth2SigningRequestBody secondRequest =
+        new Eth2SigningRequestBody(
+            Bytes.fromHexString("0x02"),
+            ArtifactType.BLOCK,
+            UInt64.valueOf(3L),
+            null,
+            null);
+
+    final Response secondResponse =
+        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), secondRequest);
+    assertThat(secondResponse.getStatusCode()).isEqualTo(200);
+
   }
 }
