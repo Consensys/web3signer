@@ -19,6 +19,7 @@ import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpeci
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
@@ -66,7 +67,9 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         signerConfig.getServerTlsOptions().isPresent() ? "https://%s:%s" : "http://%s:%s";
     this.clientTlsConfig = Optional.ofNullable(clientTlsConfig);
     vertx = Vertx.vertx();
-    eth2InterfaceObjectMapper = new ObjectMapper().registerModule(new SigningJsonRpcModule());
+    eth2InterfaceObjectMapper = new ObjectMapper()
+        .registerModule(new SigningJsonRpcModule())
+        .setSerializationInclusion(Include.NON_NULL);
   }
 
   public void start() {

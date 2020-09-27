@@ -59,12 +59,11 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
     setupSigner(testDirectory);
 
-    final Bytes signingRoot = Bytes.fromHexString("0x01");
     final Eth2SigningRequestBody request =
         new Eth2SigningRequestBody(
-            signingRoot,
+            Bytes.fromHexString("0x01"),
             ArtifactType.ATTESTATION,
-            UInt64.valueOf(1L),
+            null,
             UInt64.valueOf(5L),
             UInt64.valueOf(6L));
 
@@ -86,7 +85,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
         new Eth2SigningRequestBody(
             signingRoot,
             ArtifactType.ATTESTATION,
-            UInt64.valueOf(1L),
+            null,
             UInt64.valueOf(5L),
             UInt64.valueOf(6L));
 
@@ -99,9 +98,61 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
         new Eth2SigningRequestBody(
             secondSigningRoot,
             ArtifactType.ATTESTATION,
-            UInt64.valueOf(1L),
+            null,
             UInt64.valueOf(5L),
             UInt64.valueOf(6L));
+
+    final Response secondResponse =
+        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), secondRequest);
+    assertThat(secondResponse.getStatusCode()).isEqualTo(403);
+  }
+
+  @Test
+  void canSignSameBlockTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
+      throws JsonProcessingException {
+
+    setupSigner(testDirectory);
+
+    final Eth2SigningRequestBody request =
+        new Eth2SigningRequestBody(
+            Bytes.fromHexString("0x01"),
+            ArtifactType.BLOCK,
+            null,
+            UInt64.valueOf(5L),
+            UInt64.valueOf(6L));
+
+    final Response initialResponse =
+        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
+    assertThat(initialResponse.getStatusCode()).isEqualTo(200);
+    final Response secondResponse =
+        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
+    assertThat(secondResponse.getStatusCode()).isEqualTo(200);
+  }
+
+  @Test
+  void signingBlockWithDifferentSigningRootForPreviousSLotFailsWith403(@TempDir Path testDirectory)
+      throws JsonProcessingException {
+    setupSigner(testDirectory);
+
+    final Eth2SigningRequestBody initialRequest =
+        new Eth2SigningRequestBody(
+            Bytes.fromHexString("0x01"),
+            ArtifactType.BLOCK,
+            UInt64.valueOf(3L),
+            null,
+            null);
+
+    final Response initialResponse =
+        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), initialRequest);
+    assertThat(initialResponse.getStatusCode()).isEqualTo(200);
+
+    final Eth2SigningRequestBody secondRequest =
+        new Eth2SigningRequestBody(
+            Bytes.fromHexString("0x02"),
+            ArtifactType.BLOCK,
+            UInt64.valueOf(3L),
+            null,
+            null);
 
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), secondRequest);
