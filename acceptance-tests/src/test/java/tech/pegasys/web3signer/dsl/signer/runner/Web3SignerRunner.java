@@ -32,12 +32,15 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
+import javax.sql.DataSource;
 
 import com.google.common.collect.Lists;
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
+import org.flywaydb.core.Flyway;
 
 public abstract class Web3SignerRunner {
 
@@ -46,6 +49,8 @@ public abstract class Web3SignerRunner {
   private final SignerConfiguration signerConfig;
   private final Path dataPath;
   private final Properties portsProperties;
+
+  private EmbeddedPostgres slashingDatabase;
 
   private static final String PORTS_FILENAME = "web3signer.ports";
   private static final String HTTP_PORT_KEY = "http-port";
@@ -67,6 +72,7 @@ public abstract class Web3SignerRunner {
 
     if (signerConfig.isHttpDynamicPortAllocation()) {
       this.dataPath = createTempDirectory("acceptance-test");
+
     } else {
       dataPath = null;
     }
@@ -177,8 +183,18 @@ public abstract class Web3SignerRunner {
     params.add(Boolean.toString(signerConfig.isSlashingProtectionEnabled()));
 
     if (signerConfig.isSlashingProtectionEnabled()) {
+      try {
+        slashingDatabase = EmbeddedPostgres.start();
+        createSlashingDatabase(slashingDatabase.getPostgresDatabase());
+      } catch (final IOException e) {
+        throw new RuntimeException("Unable to start embedded postgres db", e);
+      }
+
+      // Default embeddedPostgres uses a database, username and password of "postgres"
+      final String dbUrl =
+          String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
       params.add("--slashing-protection-db-url");
-      params.add(signerConfig.getSlashingProtectionDbUrl());
+      params.add(dbUrl);
       params.add("--slashing-protection-db-username");
       params.add(signerConfig.getSlashingProtectionDbUsername());
       params.add("--slashing-protection-db-password");
@@ -258,5 +274,31 @@ public abstract class Web3SignerRunner {
 
   protected SignerConfiguration getSignerConfig() {
     return signerConfig;
+  }
+
+  // Assumes database already exists, just enforces the tables exist as necessary.
+  @SuppressWarnings("UnusedVariable")
+  private void createSlashingDatabase(final DataSource dataSource) {
+    final Path migrationPath =
+        getProjectPath()
+            .toPath()
+            .resolve(
+                Path.of(
+                    "slashing-protection", "src", "main", "resources", "migrations", "postgresql"));
+
+    final Flyway flyway =
+        Flyway.configure()
+            .locations("filesystem:" + migrationPath.toString())
+            .dataSource(dataSource)
+            .load();
+    flyway.migrate();
+  }
+
+  protected File getProjectPath() {
+    // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
+    final String userDir = System.getProperty("user.dir");
+    return userDir.toLowerCase().endsWith("web3signer")
+        ? new File(userDir)
+        : new File(userDir).getParentFile();
   }
 }
