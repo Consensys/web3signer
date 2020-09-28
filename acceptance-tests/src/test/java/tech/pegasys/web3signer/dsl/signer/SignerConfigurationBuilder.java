@@ -35,12 +35,12 @@ public class SignerConfigurationBuilder {
   private List<String> httpHostAllowList = emptyList();
   private TlsOptions serverTlsOptions;
   private TlsCertificateDefinition overriddenCaTrustStore;
-  private String slashingProtectionDbUrl = "";
   private String slashingProtectionDbUsername = "";
   private String slashingProtectionDbPassword = "";
   private String mode;
   private AzureKeyVaultParameters azureKeyVaultParameters;
   private Map<String, String> web3SignerEnvironment;
+  private boolean enableSlashing = false;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -93,12 +93,6 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withSlashingProtectionDbUrl(
-      final String slashingProtectionDbUrl) {
-    this.slashingProtectionDbUrl = slashingProtectionDbUrl;
-    return this;
-  }
-
   public SignerConfigurationBuilder withSlashingProtectionDbUsername(
       final String slashingProtectionDbUsername) {
     this.slashingProtectionDbUsername = slashingProtectionDbUsername;
@@ -108,6 +102,11 @@ public class SignerConfigurationBuilder {
   public SignerConfigurationBuilder withSlashingProtectionDbPassword(
       final String slashingProtectionDbPassword) {
     this.slashingProtectionDbPassword = slashingProtectionDbPassword;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withSlashingEnabled(final boolean enableSlashing) {
+    this.enableSlashing = enableSlashing;
     return this;
   }
 
@@ -131,10 +130,10 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(azureKeyVaultParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),
-        slashingProtectionDbUrl,
         slashingProtectionDbUsername,
         slashingProtectionDbPassword,
         mode,
-        Optional.ofNullable(web3SignerEnvironment));
+        Optional.ofNullable(web3SignerEnvironment),
+        enableSlashing);
   }
 }

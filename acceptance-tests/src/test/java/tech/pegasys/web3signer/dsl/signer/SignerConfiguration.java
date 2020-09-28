@@ -36,10 +36,10 @@ public class SignerConfiguration {
   private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
   private final String mode;
-  private final String slashingProtectionDbUrl;
   private final String slashingProtectionDbUsername;
   private final String slashingProtectionDbPassword;
   private final Optional<Map<String, String>> web3SignerEnvironment;
+  private final boolean enableSlashing;
 
   public SignerConfiguration(
       final String hostname,
@@ -52,11 +52,11 @@ public class SignerConfiguration {
       final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
-      final String slashingProtectionDbUrl,
       final String slashingProtectionDbUsername,
       final String slashingProtectionDbPassword,
       final String mode,
-      final Optional<Map<String, String>> web3SignerEnvironment) {
+      final Optional<Map<String, String>> web3SignerEnvironment,
+      final boolean enableSlashing) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
     this.httpHostAllowList = httpHostAllowList;
@@ -67,11 +67,11 @@ public class SignerConfiguration {
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.serverTlsOptions = serverTlsOptions;
     this.overriddenCaTrustStore = overriddenCaTrustStore;
-    this.slashingProtectionDbUrl = slashingProtectionDbUrl;
     this.slashingProtectionDbUsername = slashingProtectionDbUsername;
     this.slashingProtectionDbPassword = slashingProtectionDbPassword;
     this.mode = mode;
     this.web3SignerEnvironment = web3SignerEnvironment;
+    this.enableSlashing = enableSlashing;
   }
 
   public String hostname() {
@@ -127,11 +127,7 @@ public class SignerConfiguration {
   }
 
   public boolean isSlashingProtectionEnabled() {
-    return !slashingProtectionDbUrl.isEmpty();
-  }
-
-  public String getSlashingProtectionDbUrl() {
-    return slashingProtectionDbUrl;
+    return enableSlashing;
   }
 
   public String getSlashingProtectionDbUsername() {

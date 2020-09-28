@@ -20,6 +20,8 @@ import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
+import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
@@ -28,6 +30,9 @@ import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
 import java.util.Optional;
 
 import com.atlassian.oai.validator.restassured.OpenApiValidationFilter;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -52,6 +57,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   private final Vertx vertx;
   private final String urlFormatting;
   private final Optional<ClientTlsConfig> clientTlsConfig;
+  private final ObjectMapper eth2InterfaceObjectMapper;
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
     super(JSON_RPC_PATH + "/filecoin");
@@ -61,6 +67,10 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         signerConfig.getServerTlsOptions().isPresent() ? "https://%s:%s" : "http://%s:%s";
     this.clientTlsConfig = Optional.ofNullable(clientTlsConfig);
     vertx = Vertx.vertx();
+    eth2InterfaceObjectMapper =
+        new ObjectMapper()
+            .registerModule(new SigningJsonRpcModule())
+            .setSerializationInclusion(Include.NON_NULL);
   }
 
   public void start() {
@@ -112,6 +122,17 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         .pathParam("identifier", publicKey)
         .body(new JsonObject().put("data", dataToSign.toHexString()).toString())
         .post(signPath(KeyType.SECP256K1));
+  }
+
+  public Response eth2Sign(final String publicKey, final Eth2SigningRequestBody ethSignBody)
+      throws JsonProcessingException {
+    return given()
+        .baseUri(getUrl())
+        .filter(getOpenApiValidationFilter())
+        .contentType(ContentType.JSON)
+        .pathParam("identifier", publicKey)
+        .body(eth2InterfaceObjectMapper.writeValueAsString(ethSignBody))
+        .post(signPath(KeyType.BLS));
   }
 
   public Response eth2Sign(
