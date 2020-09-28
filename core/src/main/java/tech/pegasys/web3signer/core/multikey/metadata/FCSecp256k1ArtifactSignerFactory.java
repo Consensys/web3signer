@@ -17,8 +17,9 @@ import tech.pegasys.signers.secp256k1.azure.AzureConfig;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.signers.secp256k1.filebased.CredentialSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
-import tech.pegasys.web3signer.core.signing.EthSecpArtifactSigner;
+import tech.pegasys.web3signer.core.signing.FcSecpArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -30,17 +31,20 @@ import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 
-public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactory {
+public class FCSecp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   private final AzureKeyVaultSignerFactory azureCloudSignerFactory;
-  private static final boolean needToHash = true;
+  private final FilecoinNetwork network;
+  private static final boolean needToHash = false;
 
-  public Secp256k1ArtifactSignerFactory(
+  public FCSecp256k1ArtifactSignerFactory(
       final HashicorpConnectionFactory connectionFactory,
       final Path configsDirectory,
-      final AzureKeyVaultSignerFactory azureCloudSignerFactory) {
+      final AzureKeyVaultSignerFactory azureCloudSignerFactory,
+      final FilecoinNetwork network) {
     super(connectionFactory, configsDirectory);
     this.azureCloudSignerFactory = azureCloudSignerFactory;
+    this.network = network;
   }
 
   @Override
@@ -88,7 +92,8 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
             azureSigningMetadata.getClientId(),
             azureSigningMetadata.getClientSecret(),
             azureSigningMetadata.getTenantId());
-    return List.of(new EthSecpArtifactSigner(azureCloudSignerFactory.createSigner(config)));
+
+    return List.of(new FcSecpArtifactSigner(azureCloudSignerFactory.createSigner(config), network));
   }
 
   @Override
@@ -99,7 +104,8 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   }
 
   private List<ArtifactSigner> createCredentialSigner(final Credentials credentials) {
-    return List.of(new EthSecpArtifactSigner(new CredentialSigner(credentials, needToHash)));
+    return List.of(
+        new FcSecpArtifactSigner(new CredentialSigner(credentials, needToHash), network));
   }
 
   @Override

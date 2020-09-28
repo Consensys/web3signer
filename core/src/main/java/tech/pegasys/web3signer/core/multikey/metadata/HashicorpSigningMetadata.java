@@ -16,6 +16,7 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -105,7 +106,7 @@ public class HashicorpSigningMetadata extends SigningMetadata {
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
+  public List<ArtifactSigner> createSigner(final ArtifactSignerFactory factory) {
     return factory.create(this);
   }
 }

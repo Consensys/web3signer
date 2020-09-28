@@ -159,10 +159,7 @@ public class Eth2Runner extends Runner {
 
     final AbstractArtifactSignerFactory artifactSignerFactory =
         new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            BlsArtifactSigner::new);
+            config.getKeyConfigPath(), metricsSystem, hashicorpConnectionFactory);
 
     signers.addAll(
         SignerLoader.load(

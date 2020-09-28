@@ -26,6 +26,7 @@ import tech.pegasys.web3signer.core.multikey.metadata.AzureSecretSigningMetadata
 import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.FileRawSigningMetadata;
+import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
@@ -57,7 +58,7 @@ class YamlSignerParserTest {
 
   @TempDir Path configDir;
   @Mock private BlsArtifactSignerFactory blsArtifactSignerFactory;
-  @Mock private BlsArtifactSignerFactory otherBlsArtifactSignerFactory;
+  @Mock private Secp256k1ArtifactSignerFactory otherBlsArtifactSignerFactory;
 
   private YamlSignerParser signerParser;
 
@@ -125,7 +126,7 @@ class YamlSignerParserTest {
         new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY))));
     when(blsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
-        .thenReturn(artifactSigner);
+        .thenReturn(List.of(artifactSigner));
 
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
@@ -145,7 +146,7 @@ class YamlSignerParserTest {
         new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY))));
     when(blsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
-        .thenReturn(artifactSigner);
+        .thenReturn(List.of(artifactSigner));
 
     final Path filename = configDir.resolve("unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
@@ -205,7 +206,7 @@ class YamlSignerParserTest {
         new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY))));
     when(blsArtifactSignerFactory.create(any(FileKeyStoreMetadata.class)))
-        .thenReturn(artifactSigner);
+        .thenReturn(List.of(artifactSigner));
 
     final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
     final Path keystoreFile = configDir.resolve("keystore.json");
@@ -225,6 +226,16 @@ class YamlSignerParserTest {
   @Test
   void aSignerIsCreatedForEachMatchingFactory() throws IOException {
     lenient().when(otherBlsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
+
+    final BlsArtifactSigner artifactSigner =
+        new BlsArtifactSigner(
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY))));
+
+    when(blsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
+        .thenReturn(List.of(artifactSigner));
+    when(otherBlsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
+        .thenReturn(List.of(artifactSigner));
+
     final Path filename = configDir.resolve("bls_unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
     unencryptedKeyMetadataFile.put("type", "file-raw");
@@ -255,7 +266,7 @@ class YamlSignerParserTest {
         new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY))));
     when(blsArtifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
-        .thenReturn(artifactSigner);
+        .thenReturn(List.of(artifactSigner));
 
     final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
 

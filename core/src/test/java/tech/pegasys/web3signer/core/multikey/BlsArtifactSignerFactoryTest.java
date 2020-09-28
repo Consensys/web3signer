@@ -32,7 +32,6 @@ import tech.pegasys.web3signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.HashicorpSigningMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
-import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.IOException;
@@ -83,10 +82,7 @@ class BlsArtifactSignerFactoryTest {
 
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
-            configDir,
-            new NoOpMetricsSystem(),
-            new HashicorpConnectionFactory(vertx),
-            BlsArtifactSigner::new);
+            configDir, new NoOpMetricsSystem(), new HashicorpConnectionFactory(vertx));
   }
 
   @AfterEach
@@ -99,8 +95,10 @@ class BlsArtifactSignerFactoryTest {
     final Path relativeKeystorePath = Path.of(KEYSTORE_FILE_NAME);
     final Path relativePasswordPath = Path.of(PASSWORD_FILE_NAME);
     final ArtifactSigner artifactSigner =
-        artifactSignerFactory.create(
-            new FileKeyStoreMetadata(relativeKeystorePath, relativePasswordPath, KeyType.BLS));
+        artifactSignerFactory
+            .create(
+                new FileKeyStoreMetadata(relativeKeystorePath, relativePasswordPath, KeyType.BLS))
+            .get(0);
 
     assertThat(relativeKeystorePath).isRelative();
     assertThat(relativePasswordPath).isRelative();
@@ -111,8 +109,9 @@ class BlsArtifactSignerFactoryTest {
   @Test
   void createsArtifactSignerFromKeyStoreUsingAbsolutePaths() {
     final ArtifactSigner artifactSigner =
-        artifactSignerFactory.create(
-            new FileKeyStoreMetadata(keystoreFile, passwordFile, KeyType.BLS));
+        artifactSignerFactory
+            .create(new FileKeyStoreMetadata(keystoreFile, passwordFile, KeyType.BLS))
+            .get(0);
 
     assertThat(keystoreFile).isAbsolute();
     assertThat(passwordFile).isAbsolute();

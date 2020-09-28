@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.core.multikey.metadata;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -37,7 +39,7 @@ public abstract class SigningMetadata {
     this.keyType = keyType;
   }
 
-  public abstract ArtifactSigner createSigner(ArtifactSignerFactory artifactSignerFactory);
+  public abstract List<ArtifactSigner> createSigner(ArtifactSignerFactory artifactSignerFactory);
 
   public KeyType getKeyType() {
     return keyType;

@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.core.multikey.metadata;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -30,7 +32,7 @@ public class FileRawSigningMetadata extends SigningMetadata {
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory artifactSignerFactory) {
+  public List<ArtifactSigner> createSigner(final ArtifactSignerFactory artifactSignerFactory) {
     return artifactSignerFactory.create(this);
   }
 

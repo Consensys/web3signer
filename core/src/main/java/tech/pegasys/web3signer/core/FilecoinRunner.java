@@ -22,16 +22,14 @@ import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
-import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
-import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.FCBlsArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.FCSecp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.core.signing.FcBlsArtifactSigner;
-import tech.pegasys.web3signer.core.signing.FcSecpArtifactSigner;
 import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 
 import java.util.Collection;
@@ -104,19 +102,12 @@ public class FilecoinRunner extends Runner {
         new HashicorpConnectionFactory(vertx);
 
     final AbstractArtifactSignerFactory blsArtifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            keyPair -> new FcBlsArtifactSigner(keyPair, network));
+        new FCBlsArtifactSignerFactory(
+            config.getKeyConfigPath(), metricsSystem, hashicorpConnectionFactory, network);
 
     final AbstractArtifactSignerFactory secpArtifactSignerFactory =
-        new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            config.getKeyConfigPath(),
-            azureFactory,
-            signer -> new FcSecpArtifactSigner(signer, network),
-            false);
+        new FCSecp256k1ArtifactSignerFactory(
+            hashicorpConnectionFactory, config.getKeyConfigPath(), azureFactory, network);
 
     final Collection<ArtifactSigner> signers =
         SignerLoader.load(

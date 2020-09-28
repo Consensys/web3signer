@@ -30,7 +30,6 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.core.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 
 import java.util.Collection;
@@ -86,11 +85,7 @@ public class Eth1Runner extends Runner {
 
     final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            config.getKeyConfigPath(),
-            azureFactory,
-            EthSecpArtifactSigner::new,
-            true);
+            hashicorpConnectionFactory, config.getKeyConfigPath(), azureFactory);
 
     final Collection<ArtifactSigner> signers =
         SignerLoader.load(

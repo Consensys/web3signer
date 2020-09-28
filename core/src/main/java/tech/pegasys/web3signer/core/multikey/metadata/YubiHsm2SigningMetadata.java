@@ -16,6 +16,7 @@ import tech.pegasys.signers.yubihsm2.OutputFormat;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -94,7 +95,7 @@ public class YubiHsm2SigningMetadata extends SigningMetadata {
   }
 
   @Override
-  public ArtifactSigner createSigner(final ArtifactSignerFactory artifactSignerFactory) {
+  public List<ArtifactSigner> createSigner(final ArtifactSignerFactory artifactSignerFactory) {
     return artifactSignerFactory.create(this);
   }
 }

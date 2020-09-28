@@ -14,34 +14,36 @@ package tech.pegasys.web3signer.core.multikey.metadata;
 
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 
+import java.util.List;
+
 public interface ArtifactSignerFactory {
 
-  default ArtifactSigner create(FileRawSigningMetadata fileRawSigningMetadata) {
+  default List<ArtifactSigner> create(FileRawSigningMetadata fileRawSigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(FileKeyStoreMetadata fileKeyStoreMetadata) {
+  default List<ArtifactSigner> create(FileKeyStoreMetadata fileKeyStoreMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(HashicorpSigningMetadata hashicorpMetadata) {
+  default List<ArtifactSigner> create(HashicorpSigningMetadata hashicorpMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(AzureSecretSigningMetadata azureSecretSigningMetadata) {
+  default List<ArtifactSigner> create(AzureSecretSigningMetadata azureSecretSigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(AzureKeySigningMetadata azureSigningMetadata) {
+  default List<ArtifactSigner> create(AzureKeySigningMetadata azureSigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(YubiHsm2SigningMetadata yubiHsm2SigningMetadata) {
+  default List<ArtifactSigner> create(YubiHsm2SigningMetadata yubiHsm2SigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
