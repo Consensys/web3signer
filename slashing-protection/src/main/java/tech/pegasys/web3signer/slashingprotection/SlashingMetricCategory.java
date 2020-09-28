@@ -10,37 +10,18 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.metrics;
+package tech.pegasys.web3signer.slashingprotection;
 
-import tech.pegasys.web3signer.slashingprotection.SlashingMetricCategory;
-
-import java.util.EnumSet;
 import java.util.Optional;
-import java.util.Set;
 
-import com.google.common.collect.ImmutableSet;
-import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
-public enum Web3SignerMetricCategory implements MetricCategory {
-  HTTP("http"),
-  SIGNING("signing"),
-  FILECOIN("filecoin");
+public enum SlashingMetricCategory implements MetricCategory {
+  SLASHING_PROTECTION("slashingprotection");
 
   private final String name;
 
-  public static final Set<MetricCategory> DEFAULT_METRIC_CATEGORIES;
-
-  static {
-    DEFAULT_METRIC_CATEGORIES =
-        ImmutableSet.<MetricCategory>builder()
-            .addAll(EnumSet.allOf(Web3SignerMetricCategory.class))
-            .addAll(EnumSet.allOf(StandardMetricCategory.class))
-            .addAll(EnumSet.allOf(SlashingMetricCategory.class))
-            .build();
-  }
-
-  Web3SignerMetricCategory(final String name) {
+  SlashingMetricCategory(final String name) {
     this.name = name;
   }
 

@@ -23,6 +23,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
@@ -144,6 +145,7 @@ public class Eth2Runner extends Runner {
             new Eth2SignForIdentifierHandler(
                 blsSigner,
                 new HttpApiMetrics(metricsSystem, BLS),
+                new SlashingProtectionMetrics(metricsSystem),
                 slashingProtection,
                 objectMapper),
             false));
