@@ -76,19 +76,21 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
       throws JsonProcessingException {
     setupSigner(testDirectory, true);
 
-    final Bytes signingRoot = Bytes.fromHexString("0x01");
     final Eth2SigningRequestBody initialRequest =
         new Eth2SigningRequestBody(
-            signingRoot, ArtifactType.ATTESTATION, null, UInt64.valueOf(5L), UInt64.valueOf(6L));
+            Bytes.fromHexString("0x01"),
+            ArtifactType.ATTESTATION,
+            null,
+            UInt64.valueOf(5L),
+            UInt64.valueOf(6L));
 
     final Response initialResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
-    final Bytes secondSigningRoot = Bytes.fromHexString("0x02");
     final Eth2SigningRequestBody secondRequest =
         new Eth2SigningRequestBody(
-            secondSigningRoot,
+            Bytes.fromHexString("0x02"),
             ArtifactType.ATTESTATION,
             null,
             UInt64.valueOf(5L),
@@ -97,6 +99,66 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
+  }
+
+  @Test
+  void cannotSignSurroundedAttestationWhenSlashingEnabled(@TempDir Path testDirectory)
+      throws JsonProcessingException {
+    setupSigner(testDirectory, true);
+
+    final Eth2SigningRequestBody initialRequest =
+        new Eth2SigningRequestBody(
+            Bytes.fromHexString("0x01"),
+            ArtifactType.ATTESTATION,
+            null,
+            UInt64.valueOf(3L),
+            UInt64.valueOf(6L));
+    final Response initialResponse =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
+    assertThat(initialResponse.getStatusCode()).isEqualTo(200);
+
+    // attempt a surrounded Request
+    final Eth2SigningRequestBody surroundedRequest =
+        new Eth2SigningRequestBody(
+            Bytes.fromHexString("0x01"),
+            ArtifactType.ATTESTATION,
+            null,
+            UInt64.valueOf(4L),
+            UInt64.valueOf(5L));
+
+    final Response surroundedResponse =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), surroundedRequest);
+    assertThat(surroundedResponse.getStatusCode()).isEqualTo(403);
+  }
+
+  @Test
+  void cannotSignASurroundingAttestationWhenSlashingEnabled(@TempDir Path testDirectory)
+      throws JsonProcessingException {
+    setupSigner(testDirectory, true);
+
+    final Eth2SigningRequestBody initialRequest =
+        new Eth2SigningRequestBody(
+            Bytes.fromHexString("0x01"),
+            ArtifactType.ATTESTATION,
+            null,
+            UInt64.valueOf(3L),
+            UInt64.valueOf(6L));
+    final Response initialResponse =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
+    assertThat(initialResponse.getStatusCode()).isEqualTo(200);
+
+    // attempt a surrounding Request
+    final Eth2SigningRequestBody surroundingRequest =
+        new Eth2SigningRequestBody(
+            Bytes.fromHexString("0x01"),
+            ArtifactType.ATTESTATION,
+            null,
+            UInt64.valueOf(2L),
+            UInt64.valueOf(7L));
+
+    final Response surroundingResponse =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), surroundingRequest);
+    assertThat(surroundingResponse.getStatusCode()).isEqualTo(403);
   }
 
   @Test
