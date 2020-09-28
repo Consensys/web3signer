@@ -23,7 +23,6 @@ import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.nio.file.Path;
-import java.security.SecureRandom;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.response.Response;
@@ -35,8 +34,7 @@ import org.junit.jupiter.api.io.TempDir;
 public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-
-  final BLSKeyPair keyPair = BLSKeyPair.random(new SecureRandom());
+  final BLSKeyPair keyPair = BLSKeyPair.random(0);
 
   void setupSigner(final Path testDirectory, final boolean enableSlashing) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
@@ -67,11 +65,9 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             UInt64.valueOf(5L),
             UInt64.valueOf(6L));
 
-    final Response initialResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
+    final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
-    final Response secondResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
+    final Response secondResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
   }
 
@@ -86,7 +82,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             signingRoot, ArtifactType.ATTESTATION, null, UInt64.valueOf(5L), UInt64.valueOf(6L));
 
     final Response initialResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), initialRequest);
+        signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
     final Bytes secondSigningRoot = Bytes.fromHexString("0x02");
@@ -99,7 +95,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             UInt64.valueOf(6L));
 
     final Response secondResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), secondRequest);
+        signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
   }
 
@@ -113,16 +109,14 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
         new Eth2SigningRequestBody(
             Bytes.fromHexString("0x01"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
 
-    final Response initialResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
+    final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
-    final Response secondResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), request);
+    final Response secondResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
   }
 
   @Test
-  void signingBlockWithDifferentSigningRootForPreviousSLotFailsWith403(@TempDir Path testDirectory)
+  void signingBlockWithDifferentSigningRootForPreviousSlotFailsWith403(@TempDir Path testDirectory)
       throws JsonProcessingException {
     setupSigner(testDirectory, true);
 
@@ -131,7 +125,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             Bytes.fromHexString("0x01"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
 
     final Response initialResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), initialRequest);
+        signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
     final Eth2SigningRequestBody secondRequest =
@@ -139,7 +133,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             Bytes.fromHexString("0x02"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
 
     final Response secondResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), secondRequest);
+        signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
   }
 
@@ -152,7 +146,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             Bytes.fromHexString("0x01"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
 
     final Response initialResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), initialRequest);
+        signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
     final Eth2SigningRequestBody secondRequest =
@@ -160,7 +154,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             Bytes.fromHexString("0x02"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
 
     final Response secondResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toBytesCompressed().toHexString(), secondRequest);
+        signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
   }
 }
