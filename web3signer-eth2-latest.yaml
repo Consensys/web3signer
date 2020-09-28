@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Web3Signer ETH2 Api'
   description: 'Sign Eth2 Artifacts'
-  version: '0.1.1-dev-549cea40'
+  version: '0.1.1-dev-ffa68fb2'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -52,6 +52,8 @@ paths:
               schema:
                 type: string
               example: '0xb3baa751d0a9132cfe93e4e3d5ff9075111100e3789dca219ade5a24d27e19d16b3353149da1833e9b691bb38634e8dc04469be7032132906c927d7e1a49b414730612877bc6b2810c8f202daf793d1ab0d6b5cb21d52f9e52e883859887a5d9'
+        '403':
+          description: 'Signing operation forbidden due to slashing protection'
         '404':
           description: 'Public Key not found'
         '400':
