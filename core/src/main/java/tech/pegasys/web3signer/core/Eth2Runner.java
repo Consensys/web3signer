@@ -174,6 +174,10 @@ public class Eth2Runner extends Runner {
       signers.addAll(loadAzureSigners());
     }
 
+    if (signers.isEmpty()) {
+      throw new IllegalStateException("No signers available");
+    }
+
     final List<Bytes> validators =
         signers.stream()
             .map(ArtifactSigner::getIdentifier)
