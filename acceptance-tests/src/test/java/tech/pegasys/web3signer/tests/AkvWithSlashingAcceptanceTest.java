@@ -1,0 +1,69 @@
+/*
+ * Copyright 2020 ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package tech.pegasys.web3signer.tests;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.contains;
+
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import java.nio.file.Path;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
+
+public class AkvWithSlashingAcceptanceTest extends AcceptanceTestBase {
+
+  private static final String CLIENT_ID = System.getenv("AZURE_CLIENT_ID");
+  private static final String CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
+  private static final String TENANT_ID = System.getenv("AZURE_TENANT_ID");
+  private static final String VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
+  private static final String EXPECTED_KEY =
+      "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
+
+  @BeforeAll
+  public static void setup() {
+    Assumptions.assumeTrue(CLIENT_ID != null, "Set AZURE_CLIENT_ID environment variable");
+    Assumptions.assumeTrue(CLIENT_SECRET != null, "Set AZURE_CLIENT_SECRET environment variable");
+    Assumptions.assumeTrue(TENANT_ID != null, "Set AZURE_TENANT_ID environment variable");
+    Assumptions.assumeTrue(VAULT_NAME != null, "Set AZURE_KEY_VAULT_NAME environment variable");
+  }
+
+  @Test
+  void confirmAkvWorksWithSlashing(@TempDir Path testDirectory) {
+    final AzureKeyVaultParameters azureParams =
+        new DefaultAzureKeyVaultParameters(VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET);
+
+    final SignerConfigurationBuilder configBuilder =
+        new SignerConfigurationBuilder()
+            .withMode("eth2")
+            .withAzureKeyVaultParameters(azureParams)
+            .withSlashingEnabled(true)
+            .withSlashingProtectionDbUsername("postgres")
+            .withSlashingProtectionDbPassword("postgres")
+            .withKeyStoreDirectory(testDirectory);
+
+    startSigner(configBuilder.build());
+
+    final Response response = signer.callApiPublicKeys(KeyType.BLS);
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
+  }
+
+}
