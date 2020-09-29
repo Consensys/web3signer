@@ -175,7 +175,7 @@ public class Eth2Runner extends Runner {
     }
 
     if (signers.isEmpty()) {
-      throw new IllegalStateException("No signers available");
+      throw new InitializationException("No signers available");
     }
 
     final List<Bytes> validators =

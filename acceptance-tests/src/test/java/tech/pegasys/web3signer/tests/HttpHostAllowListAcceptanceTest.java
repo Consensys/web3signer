@@ -28,7 +28,7 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
   @Test
   void httpEndpointWithDefaultAllowHostsRespondsWithOkResponse() {
     final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMode("eth2").build();
+        new SignerConfigurationBuilder().withMode("eth1").build();
     startSigner(signerConfiguration);
 
     given()
@@ -46,7 +46,7 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
             .withHttpAllowHostList(Collections.singletonList("127.0.0.1, foo"))
-            .withMode("eth2")
+            .withMode("eth1")
             .build();
     startSigner(signerConfiguration);
 
@@ -66,7 +66,7 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
             .withHttpAllowHostList(Collections.singletonList("127.0.0.1"))
-            .withMode("eth2")
+            .withMode("eth1")
             .build();
     startSigner(signerConfiguration);
 

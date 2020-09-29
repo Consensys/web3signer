@@ -25,7 +25,7 @@ public class SwaggerUIAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void swaggerUiEndPointRespondsWith200() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth2");
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth1");
     startSigner(builder.build());
 
     given()
@@ -40,7 +40,7 @@ public class SwaggerUIAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void swaggerUiWithTrailingSlashEndPointRespondsWith200() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth2");
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth1");
     startSigner(builder.build());
 
     given()
@@ -55,7 +55,7 @@ public class SwaggerUIAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void web3signerYamlEndPointRespondsWith200() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth2");
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth1");
     startSigner(builder.build());
 
     given()

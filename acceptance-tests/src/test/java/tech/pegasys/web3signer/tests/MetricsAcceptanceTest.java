@@ -93,9 +93,21 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void missingSignerMetricIncreasesWhenUnmatchedRequestReceived() {
+  void missingSignerMetricIncreasesWhenUnmatchedRequestReceived(@TempDir Path testDirectory) {
+    final MetadataFileHelpers fileHelpers = new MetadataFileHelpers();
+    final BLSKeyPair blsKeyPair = BLSKeyPair.random(1);
+
+    fileHelpers.createUnencryptedYamlFileAt(
+        testDirectory.resolve(blsKeyPair.getPublicKey().toString() + ".yaml"),
+        blsKeyPair.getSecretKey().toBytes().toHexString(),
+        BLS);
+
     final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMetricsEnabled(true).withMode("eth2").build();
+        new SignerConfigurationBuilder()
+            .withMetricsEnabled(true)
+            .withKeyStoreDirectory(testDirectory)
+            .withMode("eth2")
+            .build();
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest = List.of("signing_bls_missing_identifier_count");

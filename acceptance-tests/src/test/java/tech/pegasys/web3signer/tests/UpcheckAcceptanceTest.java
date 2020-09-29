@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 public class UpcheckAcceptanceTest extends AcceptanceTestBase {
   @Test
   void upcheckOnCorrectPortRespondsWithOK() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth2");
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth1");
     startSigner(builder.build());
 
     given()

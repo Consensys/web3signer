@@ -67,7 +67,7 @@ public class ServerSideTlsCaClientAcceptanceTest {
         new SignerConfigurationBuilder()
             .withServerTlsOptions(serverOptions)
             .withOverriddenCA(certInCa)
-            .withMode("eth2");
+            .withMode("eth1");
 
     final ClientTlsConfig clientTlsConfig = new ClientTlsConfig(serverCert, clientCert);
 
