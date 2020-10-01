@@ -218,7 +218,7 @@ public class DbSlashingProtection implements SlashingProtection {
 
   private void lockForValidator(
       final Handle handle, final LockType lockType, final long validatorId) {
-    final String lockTypePrefix = lockType == LockType.BLOCK ? "0" : "1";
+    final String lockTypePrefix = Integer.toString(lockType.ordinal());
     final String lockId = lockTypePrefix + validatorId;
     handle.execute("SELECT pg_advisory_xact_lock(?)", Long.valueOf(lockId));
   }
