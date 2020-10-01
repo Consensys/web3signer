@@ -60,7 +60,7 @@ public class DbSlashingProtectionTest {
   @Mock private ValidatorsDao validatorsDao;
   @Mock private SignedBlocksDao signedBlocksDao;
   @Mock private SignedAttestationsDao signedAttestationsDao;
-  @Rule public JdbiRule db = JdbiRule.h2();
+  @Rule public JdbiRule db = JdbiRule.embeddedPostgres();
 
   private DbSlashingProtection dbSlashingProtection;
 
