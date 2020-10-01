@@ -39,13 +39,13 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   final List<String> attestationSlashingMetrics =
       List.of(
-          "slashingprotection_permitted_signings{atfifactType=\"ATTESTATION\",}",
-          "slashingprotection_prevented_signings{atfifactType=\"ATTESTATION\",}");
+          "eth2_slashingprotection_permitted_signings{artifactType=\"ATTESTATION\",}",
+          "eth2_slashingprotection_prevented_signings{artifactType=\"ATTESTATION\",}");
 
   final List<String> blockSlashingMetrics =
       List.of(
-          "slashingprotection_permitted_signings{atfifactType=\"BLOCK\",}",
-          "slashingprotection_prevented_signings{atfifactType=\"BLOCK\",}");
+          "eth2_slashingprotection_permitted_signings{artifactType=\"BLOCK\",}",
+          "eth2_slashingprotection_prevented_signings{artifactType=\"BLOCK\",}");
 
   void setupSigner(final Path testDirectory, final boolean enableSlashing) {
     final SignerConfigurationBuilder builder =

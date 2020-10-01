@@ -17,7 +17,7 @@ import java.util.Optional;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 public enum SlashingMetricCategory implements MetricCategory {
-  SLASHING_PROTECTION("slashingprotection");
+  ETH2_SLASHING_PROTECTION("eth2_slashingprotection");
 
   private final String name;
 
