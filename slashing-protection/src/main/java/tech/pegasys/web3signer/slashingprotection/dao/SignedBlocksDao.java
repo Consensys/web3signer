@@ -20,7 +20,7 @@ import org.jdbi.v3.core.Handle;
 public class SignedBlocksDao {
 
   public Optional<SignedBlock> findExistingBlock(
-      final Handle handle, long validatorId, final UInt64 slot) {
+      final Handle handle, int validatorId, final UInt64 slot) {
     return handle
         .createQuery(
             "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ?")

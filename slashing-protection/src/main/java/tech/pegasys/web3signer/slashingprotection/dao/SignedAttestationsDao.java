@@ -20,7 +20,7 @@ import org.jdbi.v3.core.Handle;
 public class SignedAttestationsDao {
 
   public Optional<SignedAttestation> findExistingAttestation(
-      final Handle handle, final long validatorId, final UInt64 targetEpoch) {
+      final Handle handle, final int validatorId, final UInt64 targetEpoch) {
     return handle
         .createQuery(
             "SELECT validator_id, source_epoch, target_epoch, signing_root "
@@ -33,7 +33,7 @@ public class SignedAttestationsDao {
 
   public Optional<SignedAttestation> findSurroundingAttestation(
       final Handle handle,
-      final long validatorId,
+      final int validatorId,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
     return handle
@@ -52,7 +52,7 @@ public class SignedAttestationsDao {
 
   public Optional<SignedAttestation> findSurroundedAttestation(
       final Handle handle,
-      final long validatorId,
+      final int validatorId,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
     return handle
