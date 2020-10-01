@@ -15,22 +15,22 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 import org.apache.tuweni.bytes.Bytes;
 
 public class Validator {
-  private long id;
+  private int id;
   private Bytes publicKey;
 
   // needed for JDBI bean mapping
   public Validator() {}
 
-  public Validator(final long id, final Bytes publicKey) {
+  public Validator(final int id, final Bytes publicKey) {
     this.id = id;
     this.publicKey = publicKey;
   }
 
-  public long getId() {
+  public int getId() {
     return id;
   }
 
-  public void setId(final long id) {
+  public void setId(final int id) {
     this.id = id;
   }
 

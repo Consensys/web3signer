@@ -43,7 +43,7 @@ public class DbSlashingProtection implements SlashingProtection {
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
-  private final Map<Bytes, Long> registeredValidators;
+  private final Map<Bytes, Integer> registeredValidators;
 
   private enum LockType {
     BLOCK,
@@ -63,7 +63,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
-      final Map<Bytes, Long> registeredValidators) {
+      final Map<Bytes, Integer> registeredValidators) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
@@ -77,7 +77,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
-    final long validatorId = validatorId(publicKey);
+    final int validatorId = validatorId(publicKey);
 
     if (sourceEpoch.compareTo(targetEpoch) > 0) {
       LOG.warn(
@@ -154,7 +154,7 @@ public class DbSlashingProtection implements SlashingProtection {
   @Override
   public boolean maySignBlock(
       final Bytes publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
-    final long validatorId = validatorId(publicKey);
+    final int validatorId = validatorId(publicKey);
     return jdbi.inTransaction(
         READ_COMMITTED,
         h -> {
@@ -208,8 +208,8 @@ public class DbSlashingProtection implements SlashingProtection {
         });
   }
 
-  private long validatorId(final Bytes publicKey) {
-    final Long validatorId = registeredValidators.get(publicKey);
+  private int validatorId(final Bytes publicKey) {
+    final Integer validatorId = registeredValidators.get(publicKey);
     if (validatorId == null) {
       throw new IllegalStateException("Unregistered validator for " + publicKey);
     }
@@ -217,9 +217,7 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   private void lockForValidator(
-      final Handle handle, final LockType lockType, final long validatorId) {
-    final String lockTypePrefix = Integer.toString(lockType.ordinal());
-    final String lockId = lockTypePrefix + validatorId;
-    handle.execute("SELECT pg_advisory_xact_lock(?)", Long.valueOf(lockId));
+      final Handle handle, final LockType lockType, final int validatorId) {
+    handle.execute("SELECT pg_advisory_xact_lock(?, ?)", lockType.ordinal(), validatorId);
   }
 }

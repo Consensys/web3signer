@@ -48,7 +48,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("ConstantConditions")
 public class DbSlashingProtectionTest {
-  private static final long VALIDATOR_ID = 1;
+  private static final int VALIDATOR_ID = 1;
   private static final UInt64 SLOT = UInt64.valueOf(2);
   private static final Bytes PUBLIC_KEY1 = Bytes.of(42);
   private static final Bytes PUBLIC_KEY2 = Bytes.of(43);
@@ -244,8 +244,8 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void registersValidatorsThatAreNotAlreadyInDb() {
-    final Map<Bytes, Long> registeredValidators = new HashMap<>();
-    registeredValidators.put(PUBLIC_KEY1, 1L);
+    final Map<Bytes, Integer> registeredValidators = new HashMap<>();
+    registeredValidators.put(PUBLIC_KEY1, 1);
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             db.getJdbi(),
