@@ -103,7 +103,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch,
-      final long validatorId) {
+      final int validatorId) {
     final Optional<SignedAttestation> existingAttestation =
         signedAttestationsDao.findExistingAttestation(h, validatorId, targetEpoch);
     if (existingAttestation.isPresent()) {
@@ -168,7 +168,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes publicKey,
       final Bytes signingRoot,
       final UInt64 blockSlot,
-      final long validatorId) {
+      final int validatorId) {
     final Optional<SignedBlock> existingBlock =
         signedBlocksDao.findExistingBlock(handle, validatorId, blockSlot);
 

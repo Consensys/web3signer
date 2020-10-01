@@ -15,7 +15,7 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.never;
@@ -77,7 +77,7 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void blockCanSignWhenNoMatchForPublicKey() {
-    when(signedBlocksDao.findExistingBlock(any(), anyLong(), any())).thenReturn(Optional.empty());
+    when(signedBlocksDao.findExistingBlock(any(), anyInt(), any())).thenReturn(Optional.empty());
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isTrue();
     verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
@@ -88,7 +88,7 @@ public class DbSlashingProtectionTest {
   @Test
   public void blockCanSignWhenExactlyMatchesBlock() {
     final SignedBlock signedBlock = new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT);
-    when(signedBlocksDao.findExistingBlock(any(), anyLong(), any()))
+    when(signedBlocksDao.findExistingBlock(any(), anyInt(), any()))
         .thenReturn(Optional.of(signedBlock));
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isTrue();
@@ -99,7 +99,7 @@ public class DbSlashingProtectionTest {
   @Test
   public void blockCannotSignWhenSamePublicKeyAndSlotButDifferentSigningRoot() {
     final SignedBlock signedBlock = new SignedBlock(VALIDATOR_ID, SLOT, Bytes.of(4));
-    when(signedBlocksDao.findExistingBlock(any(), anyLong(), any()))
+    when(signedBlocksDao.findExistingBlock(any(), anyInt(), any()))
         .thenReturn(Optional.of(signedBlock));
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isFalse();
@@ -126,7 +126,7 @@ public class DbSlashingProtectionTest {
   public void attestationCanSignWhenExactlyMatchesExistingAttestation() {
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
-    when(signedAttestationsDao.findExistingAttestation(any(), anyLong(), any()))
+    when(signedAttestationsDao.findExistingAttestation(any(), anyInt(), any()))
         .thenReturn(Optional.of(attestation));
 
     assertThat(
@@ -142,12 +142,12 @@ public class DbSlashingProtectionTest {
   public void attestationCannotSignWhenPreviousIsSurroundingAttestation() {
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
-    when(signedAttestationsDao.findExistingAttestation(any(), anyLong(), any()))
+    when(signedAttestationsDao.findExistingAttestation(any(), anyInt(), any()))
         .thenReturn(Optional.empty());
     final SignedAttestation surroundingAttestation =
         new SignedAttestation(
             VALIDATOR_ID, SOURCE_EPOCH.subtract(1), TARGET_EPOCH.subtract(1), SIGNING_ROOT);
-    when(signedAttestationsDao.findSurroundingAttestation(any(), anyLong(), any(), any()))
+    when(signedAttestationsDao.findSurroundingAttestation(any(), anyInt(), any(), any()))
         .thenReturn(Optional.of(surroundingAttestation));
 
     assertThat(
@@ -165,13 +165,13 @@ public class DbSlashingProtectionTest {
   public void attestationCannotSignWhenPreviousIsSurroundedByAttestation() {
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
-    when(signedAttestationsDao.findExistingAttestation(any(), anyLong(), any()))
+    when(signedAttestationsDao.findExistingAttestation(any(), anyInt(), any()))
         .thenReturn(Optional.empty());
-    when(signedAttestationsDao.findSurroundingAttestation(any(), anyLong(), any(), any()))
+    when(signedAttestationsDao.findSurroundingAttestation(any(), anyInt(), any(), any()))
         .thenReturn(Optional.empty());
     final SignedAttestation surroundedAttestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH.add(1), TARGET_EPOCH.add(1), SIGNING_ROOT);
-    when(signedAttestationsDao.findSurroundedAttestation(any(), anyLong(), any(), any()))
+    when(signedAttestationsDao.findSurroundedAttestation(any(), anyInt(), any(), any()))
         .thenReturn(Optional.of(surroundedAttestation));
 
     assertThat(
@@ -191,11 +191,11 @@ public class DbSlashingProtectionTest {
   public void attestationCanSignWhenNoSurroundingOrSurroundedByAttestation() {
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
-    when(signedAttestationsDao.findExistingAttestation(any(), anyLong(), any()))
+    when(signedAttestationsDao.findExistingAttestation(any(), anyInt(), any()))
         .thenReturn(Optional.empty());
-    when(signedAttestationsDao.findSurroundingAttestation(any(), anyLong(), any(), any()))
+    when(signedAttestationsDao.findSurroundingAttestation(any(), anyInt(), any(), any()))
         .thenReturn(Optional.empty());
-    when(signedAttestationsDao.findSurroundedAttestation(any(), anyLong(), any(), any()))
+    when(signedAttestationsDao.findSurroundedAttestation(any(), anyInt(), any(), any()))
         .thenReturn(Optional.empty());
 
     assertThat(
@@ -262,7 +262,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(registeredValidators).hasSize(3);
     assertThat(registeredValidators)
-        .isEqualTo(Map.of(PUBLIC_KEY1, 1L, PUBLIC_KEY2, 2L, PUBLIC_KEY3, 3L));
+        .isEqualTo(Map.of(PUBLIC_KEY1, 1, PUBLIC_KEY2, 2, PUBLIC_KEY3, 3));
     verify(validatorsDao)
         .retrieveValidators(any(), eq(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3)));
     verify(validatorsDao).registerValidators(any(), eq(List.of(PUBLIC_KEY2, PUBLIC_KEY3)));
