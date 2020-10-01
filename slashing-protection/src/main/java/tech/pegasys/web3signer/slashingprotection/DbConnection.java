@@ -23,6 +23,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.argument.Arguments;
 import org.jdbi.v3.core.mapper.ColumnMappers;
+import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
 
 public class DbConnection {
 
@@ -41,6 +42,7 @@ public class DbConnection {
     jdbi.getConfig(ColumnMappers.class)
         .register(new BytesColumnMapper())
         .register(new UInt64ColumnMapper());
+    jdbi.setTransactionHandler(new SerializableTransactionRunner());
   }
 
   private static DataSource createDataSource(
@@ -49,7 +51,6 @@ public class DbConnection {
     dataSource.setJdbcUrl(jdbcUrl);
     dataSource.setUsername(username);
     dataSource.setPassword(password);
-    dataSource.setTransactionIsolation("TRANSACTION_SERIALIZABLE");
     return dataSource;
   }
 }
