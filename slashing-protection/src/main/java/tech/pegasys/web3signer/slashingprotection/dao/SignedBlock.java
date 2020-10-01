@@ -17,24 +17,24 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class SignedBlock {
-  private long validatorId;
+  private int validatorId;
   private UInt64 slot;
   private Bytes signingRoot;
 
   // needed for JDBI bean mapping
   public SignedBlock() {}
 
-  public SignedBlock(final long validatorId, final UInt64 slot, final Bytes signingRoot) {
+  public SignedBlock(final int validatorId, final UInt64 slot, final Bytes signingRoot) {
     this.validatorId = validatorId;
     this.slot = slot;
     this.signingRoot = signingRoot;
   }
 
-  public long getValidatorId() {
+  public int getValidatorId() {
     return validatorId;
   }
 
-  public void setValidatorId(final long validatorId) {
+  public void setValidatorId(final int validatorId) {
     this.validatorId = validatorId;
   }
 

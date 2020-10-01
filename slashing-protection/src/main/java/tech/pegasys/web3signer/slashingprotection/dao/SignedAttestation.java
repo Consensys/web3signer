@@ -17,7 +17,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class SignedAttestation {
-  private long validatorId;
+  private int validatorId;
   private UInt64 sourceEpoch;
   private UInt64 targetEpoch;
   private Bytes signingRoot;
@@ -26,7 +26,7 @@ public class SignedAttestation {
   public SignedAttestation() {}
 
   public SignedAttestation(
-      final long validatorId,
+      final int validatorId,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch,
       final Bytes signingRoot) {
@@ -36,11 +36,11 @@ public class SignedAttestation {
     this.signingRoot = signingRoot;
   }
 
-  public long getValidatorId() {
+  public int getValidatorId() {
     return validatorId;
   }
 
-  public void setValidatorId(final long validatorId) {
+  public void setValidatorId(final int validatorId) {
     this.validatorId = validatorId;
   }
 
