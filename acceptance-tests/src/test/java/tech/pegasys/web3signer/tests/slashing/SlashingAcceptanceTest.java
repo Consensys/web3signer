@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.response.Response;
@@ -95,7 +96,6 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
       throws JsonProcessingException {
     setupSigner(testDirectory, true);
 
-    final Bytes signingRoot = Bytes.fromHexString("0x01");
     final Eth2SigningRequestBody initialRequest =
         new Eth2SigningRequestBody(
             Bytes.fromHexString("0x01"),
@@ -126,7 +126,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     assertThat(signer.getMetricsMatching(attestationSlashingMetrics))
         .containsOnly(
             attestationSlashingMetrics.get(0) + " 1.0", attestationSlashingMetrics.get(1) + " 1.0");
-}  
+  }
 
   @Test
   void cannotSignSurroundedAttestationWhenSlashingEnabled(@TempDir Path testDirectory)
