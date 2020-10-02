@@ -12,12 +12,13 @@
  */
 package tech.pegasys.web3signer.core.service.http.metrics;
 
-import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
-import tech.pegasys.web3signer.core.signing.KeyType;
-
+import java.util.concurrent.atomic.AtomicLong;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
+import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.core.signing.KeyType;
 
 public class HttpApiMetrics {
   private static Counter signersLoadedCounter;
@@ -25,6 +26,7 @@ public class HttpApiMetrics {
   private final Counter malformedRequestCounter;
   private final OperationTimer signingTimer;
   private final Counter missingSignerCounter;
+  private final AtomicLong signingsAttempted = new AtomicLong(0L);
 
   public HttpApiMetrics(final MetricsSystem metricsSystem, final KeyType keyType) {
 
@@ -49,8 +51,9 @@ public class HttpApiMetrics {
     return malformedRequestCounter;
   }
 
-  public OperationTimer getSigningTimer() {
-    return signingTimer;
+  public TimingContext startHttpOperation() {
+    signingsAttempted.incrementAndGet();
+    return signingTimer.startTimer();
   }
 
   public Counter getMissingSignerCounter() {
@@ -66,5 +69,9 @@ public class HttpApiMetrics {
               "Number of keys loaded (combining SECP256k1 and BLS12-381");
     }
     signersLoadedCounter.inc(count);
+  }
+
+  public long getSigningsAttempted() {
+    return signingsAttempted.get();
   }
 }

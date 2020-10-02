@@ -63,8 +63,8 @@ import org.jdbi.v3.core.Jdbi;
 
 public class Eth2Runner extends Runner {
 
-  final Optional<SlashingProtection> slashingProtection;
-  final AzureKeyVaultParameters azureKeyVaultParameters;
+  private final Optional<SlashingProtection> slashingProtection;
+  private final AzureKeyVaultParameters azureKeyVaultParameters;
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -116,7 +116,8 @@ public class Eth2Runner extends Runner {
         signerProvider,
         context.getErrorHandler(),
         context.getMetricsSystem(),
-        slashingProtection);
+        slashingProtection,
+        context.getVertx());
 
     return context.getRouterFactory().getRouter();
   }
@@ -126,7 +127,8 @@ public class Eth2Runner extends Runner {
       final ArtifactSignerProvider blsSignerProvider,
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
-      final Optional<SlashingProtection> slashingProtection) {
+      final Optional<SlashingProtection> slashingProtection,
+      final Vertx vertx) {
     final ObjectMapper objectMapper =
         new ObjectMapper()
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
@@ -138,15 +140,23 @@ public class Eth2Runner extends Runner {
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
+
+    final HttpApiMetrics httpMetrics = new HttpApiMetrics(metricsSystem, BLS);
+
     routerFactory.addHandlerByOperationId(
         ETH2_SIGN.name(),
         new BlockingHandlerDecorator(
             new Eth2SignForIdentifierHandler(
                 blsSigner,
-                new HttpApiMetrics(metricsSystem, BLS),
+                httpMetrics,
                 slashingProtection,
                 objectMapper),
             false));
+
+    vertx.setPeriodic(5000, timerId -> {
+      LOG.info("Signings requested = {}", httpMetrics.getSigningsAttempted());
+    });
+
     routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
   }
 

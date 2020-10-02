@@ -43,7 +43,7 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(final RoutingContext routingContext) {
-    try (final TimingContext ignored = metrics.getSigningTimer().startTimer()) {
+    try (final TimingContext ignored = metrics.startHttpOperation()) {
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
       final Bytes data;
