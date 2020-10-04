@@ -154,7 +154,7 @@ public class Eth2Runner extends Runner {
             false));
 
     vertx.setPeriodic(5000, timerId -> {
-      LOG.info("Signings requested = {}", httpMetrics.getSigningsAttempted());
+      LOG.info("Total signing requests received = {}", httpMetrics.getSigningsAttempted());
     });
 
     routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
