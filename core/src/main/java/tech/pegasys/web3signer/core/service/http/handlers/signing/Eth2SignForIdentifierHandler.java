@@ -17,8 +17,6 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
-import io.netty.handler.logging.LogLevel;
-import org.apache.logging.log4j.Level;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
@@ -30,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.RequestParameters;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -60,8 +59,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       if (!LOG.getLevel().equals(Level.TRACE)) {
         LOG.debug("Received on {}", routingContext.normalisedPath());
       } else {
-        LOG.trace("{} || {}", routingContext.normalisedPath(),
-            routingContext.getBody());
+        LOG.trace("{} || {}", routingContext.normalisedPath(), routingContext.getBody());
       }
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();

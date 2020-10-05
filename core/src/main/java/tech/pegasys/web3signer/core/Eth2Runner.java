@@ -147,15 +147,14 @@ public class Eth2Runner extends Runner {
         ETH2_SIGN.name(),
         new BlockingHandlerDecorator(
             new Eth2SignForIdentifierHandler(
-                blsSigner,
-                httpMetrics,
-                slashingProtection,
-                objectMapper),
+                blsSigner, httpMetrics, slashingProtection, objectMapper),
             false));
 
-    vertx.setPeriodic(5000, timerId -> {
-      LOG.info("Total signing requests received = {}", httpMetrics.getSigningsAttempted());
-    });
+    vertx.setPeriodic(
+        5000,
+        timerId -> {
+          LOG.info("Total signing requests received = {}", httpMetrics.getSigningsAttempted());
+        });
 
     routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
   }

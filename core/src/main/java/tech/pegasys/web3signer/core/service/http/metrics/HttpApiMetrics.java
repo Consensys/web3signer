@@ -12,13 +12,15 @@
  */
 package tech.pegasys.web3signer.core.service.http.metrics;
 
+import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.core.signing.KeyType;
+
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
-import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
-import tech.pegasys.web3signer.core.signing.KeyType;
 
 public class HttpApiMetrics {
   private static Counter signersLoadedCounter;
