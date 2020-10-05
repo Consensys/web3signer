@@ -15,10 +15,14 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Streams;
-import java.io.File;
-import java.io.FileOutputStream;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.Validator;
+import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.Exporter;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -27,19 +31,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Streams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
-import tech.pegasys.web3signer.slashingprotection.dao.Validator;
-import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.Exporter;
 
 public class DbSlashingProtection implements SlashingProtection {
 
@@ -75,8 +75,9 @@ public class DbSlashingProtection implements SlashingProtection {
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
     this.registeredValidators = registeredValidators;
-    this.exporter = new Exporter(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao,
-        new ObjectMapper());
+    this.exporter =
+        new Exporter(
+            jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, new ObjectMapper());
   }
 
   @Override

@@ -17,8 +17,6 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
-import java.io.File;
-import java.io.OutputStream;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -43,6 +41,7 @@ import tech.pegasys.web3signer.slashingprotection.DbConnection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -88,8 +87,9 @@ public class Eth2Runner extends Runner {
   }
 
   public void exportSlashingDb(final OutputStream output) {
+    LOG.info("Starting export of database.");
     slashingProtection.orElseThrow().exportTo(output);
-
+    LOG.info("Export Complete.");
   }
 
   private Optional<SlashingProtection> createSlashingProtection(

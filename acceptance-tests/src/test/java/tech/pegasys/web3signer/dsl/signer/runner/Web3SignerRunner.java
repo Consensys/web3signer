@@ -50,7 +50,7 @@ public abstract class Web3SignerRunner {
   private final Path dataPath;
   private final Properties portsProperties;
 
-  private EmbeddedPostgres slashingDatabase;
+  private String slashingProtectionDbUrl;
 
   private static final String PORTS_FILENAME = "web3signer.ports";
   private static final String HTTP_PORT_KEY = "http-port";
@@ -148,6 +148,9 @@ public abstract class Web3SignerRunner {
         params.add(azureParams.getTenantId());
       }
     }
+    if (signerConfig.getPostfix() != null) {
+      params.addAll(List.of(signerConfig.getPostfix().split(" ")));
+    }
 
     return params;
   }
@@ -183,11 +186,18 @@ public abstract class Web3SignerRunner {
     params.add(Boolean.toString(signerConfig.isSlashingProtectionEnabled()));
 
     if (signerConfig.isSlashingProtectionEnabled()) {
-      try {
-        slashingDatabase = EmbeddedPostgres.start();
-        createSlashingDatabase(slashingDatabase.getPostgresDatabase());
-      } catch (final IOException e) {
-        throw new RuntimeException("Unable to start embedded postgres db", e);
+      final EmbeddedPostgres slashingDatabase;
+      if (signerConfig.getSlashingProtectionDbUrl() == null) {
+        try {
+          slashingDatabase = EmbeddedPostgres.start();
+          createSlashingDatabase(slashingDatabase.getPostgresDatabase());
+        } catch (final IOException e) {
+          throw new RuntimeException("Unable to start embedded postgres db", e);
+        }
+        slashingProtectionDbUrl =
+            String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
+      } else {
+        slashingProtectionDbUrl = signerConfig.getSlashingProtectionDbUrl();
       }
 
       // Default embeddedPostgres uses a database, username and password of "postgres"
@@ -301,6 +311,6 @@ public abstract class Web3SignerRunner {
   }
 
   public String getSlashingDbUrl() {
-    return String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
+    return slashingProtectionDbUrl;
   }
 }

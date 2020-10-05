@@ -13,11 +13,13 @@
 package tech.pegasys.web3signer.tests.slashing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
@@ -197,6 +199,22 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
+
+
+    final Path exportFile = testDirectory.resolve("dbExport.json");
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withMode("eth2");
+    builder.withSlashingEnabled(true);
+    builder.withSlashingProtectionDbUrl(signer.getSlashingDbUrl());
+    builder.withSlashingProtectionDbUsername("postgres");
+    builder.withSlashingProtectionDbPassword("postgres");
+    builder.withKeyStoreDirectory(testDirectory);
+    builder.withPostfix("export --to=" + exportFile.toAbsolutePath().toString());
+    builder.withHttpPort(12345); // prevent wait for Ports file in AT
+
+    final Signer exportSigner = new Signer(builder.build(), null);
+    exportSigner.start();
+    waitFor(() -> assertThat(exportSigner.isRunning()).isFalse());
   }
 
   @Test

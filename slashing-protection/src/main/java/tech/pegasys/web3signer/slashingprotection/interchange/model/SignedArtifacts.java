@@ -12,8 +12,9 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SignedArtifacts {
 
