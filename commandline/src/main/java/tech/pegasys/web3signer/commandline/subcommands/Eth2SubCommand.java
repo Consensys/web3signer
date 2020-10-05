@@ -13,6 +13,9 @@
 package tech.pegasys.web3signer.commandline.subcommands;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 
@@ -34,11 +37,9 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
 
-  @Spec
-  CommandSpec spec;
+  @Spec CommandSpec spec;
 
-
-  @Command(name = "export", description = "Export db to json file")
+  @Command(name = "export", description = "Export slashing db to json file")
   public void export(@Option(names = "--to") File output) {
     final Eth2Runner runner = new Eth2Runner(
         config,
@@ -48,7 +49,11 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionDbPassword,
         null);
 
-    runner.exportSlashingDb(output);
+    try {
+      runner.exportSlashingDb(new FileOutputStream(output));
+    } catch (final FileNotFoundException e) {
+      throw new RuntimeException("Unable to find output target file", e);
+    }
   }
 
   @Option(
@@ -84,8 +89,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       paramLabel = "<jdbc password>")
   private String slashingProtectionDbPassword;
 
-  @Mixin
-  public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
   public Eth2Runner createRunner() {

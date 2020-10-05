@@ -16,41 +16,40 @@ import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMIT
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Streams;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import org.apache.logging.log4j.core.tools.picocli.CommandLine;
-import org.apache.logging.log4j.core.tools.picocli.CommandLine.ParameterException;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
-import tech.pegasys.web3signer.slashingprotection.dao.Validator;
-import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Streams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.Validator;
+import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.Exporter;
 
 public class DbSlashingProtection implements SlashingProtection {
+
   private static final Logger LOG = LogManager.getLogger();
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
   private final Map<Bytes, Integer> registeredValidators;
+  private final Exporter exporter;
 
   private enum LockType {
     BLOCK,
@@ -76,16 +75,16 @@ public class DbSlashingProtection implements SlashingProtection {
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
     this.registeredValidators = registeredValidators;
+    this.exporter = new Exporter(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao,
+        new ObjectMapper());
   }
 
   @Override
-  public void exportTo(final File output) {
-    final Exporter exporter =
-        new Exporter(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, new ObjectMapper());
+  public void exportTo(final OutputStream output) {
     try {
-      exporter.exportTo(new FileOutputStream(output));
-    } catch(final IOException e) {
-      throw new RuntimeException("Unable to export database", e);
+      exporter.exportTo(output);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to export database content", e);
     }
   }
 
