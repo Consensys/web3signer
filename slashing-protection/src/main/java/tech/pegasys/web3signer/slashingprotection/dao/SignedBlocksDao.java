@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.dao;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt64;
@@ -38,5 +39,13 @@ public class SignedBlocksDao {
         .bind(1, signedBlock.getSlot())
         .bind(2, signedBlock.getSigningRoot())
         .execute();
+  }
+
+  public List<SignedBlock> getAllBlockSignedBy(final Handle handle, final int validatorId) {
+    return handle.createQuery(
+            "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ?")
+        .bind(0, validatorId)
+        .mapToBean(SignedBlock.class)
+        .list();
   }
 }

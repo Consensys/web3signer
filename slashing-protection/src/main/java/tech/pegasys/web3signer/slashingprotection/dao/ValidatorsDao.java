@@ -37,4 +37,12 @@ public class ValidatorsDao {
         .mapToBean(Validator.class)
         .list();
   }
+
+  public List<Validator> retrieveAllValidators(final Handle handle) {
+    return handle
+        .createQuery(
+            "SELECT id, public_key FROM validators")
+        .mapToBean(Validator.class)
+        .list();
+  }
 }

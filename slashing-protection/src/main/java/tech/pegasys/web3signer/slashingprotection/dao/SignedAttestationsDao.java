@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.dao;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt64;
@@ -78,5 +79,15 @@ public class SignedAttestationsDao {
         .bind(2, signedAttestation.getSourceEpoch())
         .bind(3, signedAttestation.getTargetEpoch())
         .execute();
+  }
+
+  public List<SignedAttestation> getAllAttestationsSignedBy(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery(
+            "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                + "FROM signed_attestations WHERE validator_id = ?")
+        .bind(0, validatorId)
+        .mapToBean(SignedAttestation.class)
+        .list();
   }
 }
