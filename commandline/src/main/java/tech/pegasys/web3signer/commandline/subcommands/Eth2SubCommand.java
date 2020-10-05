@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import java.io.File;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 
@@ -33,7 +34,22 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
 
-  @Spec CommandSpec spec;
+  @Spec
+  CommandSpec spec;
+
+
+  @Command(name = "export", description = "Export db to json file")
+  public void export(@Option(names = "--to") File output) {
+    final Eth2Runner runner = new Eth2Runner(
+        config,
+        true, // must enforce slashing to be "on" or else no db connection is created
+        slashingProtectionDbUrl,
+        slashingProtectionDbUsername,
+        slashingProtectionDbPassword,
+        null);
+
+    runner.exportSlashingDb(output);
+  }
 
   @Option(
       names = {"--slashing-protection-enabled"},
@@ -68,7 +84,8 @@ public class Eth2SubCommand extends ModeSubCommand {
       paramLabel = "<jdbc password>")
   private String slashingProtectionDbPassword;
 
-  @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin
+  public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
   public Eth2Runner createRunner() {

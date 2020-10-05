@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import java.io.File;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -25,4 +26,6 @@ public interface SlashingProtection {
   boolean maySignBlock(Bytes publicKey, final Bytes signingRoot, UInt64 blockSlot);
 
   void registerValidators(List<Bytes> validators);
+
+  void exportTo(final File output);
 }

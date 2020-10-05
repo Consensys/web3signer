@@ -15,6 +15,12 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import org.apache.logging.log4j.core.tools.picocli.CommandLine;
+import org.apache.logging.log4j.core.tools.picocli.CommandLine.ParameterException;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
@@ -36,6 +42,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
+import tech.pegasys.web3signer.slashingprotection.interchange.Exporter;
 
 public class DbSlashingProtection implements SlashingProtection {
   private static final Logger LOG = LogManager.getLogger();
@@ -69,6 +76,17 @@ public class DbSlashingProtection implements SlashingProtection {
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
     this.registeredValidators = registeredValidators;
+  }
+
+  @Override
+  public void exportTo(final File output) {
+    final Exporter exporter =
+        new Exporter(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, new ObjectMapper());
+    try {
+      exporter.exportTo(new FileOutputStream(output));
+    } catch(final IOException e) {
+      throw new RuntimeException("Unable to export database", e);
+    }
   }
 
   @Override
