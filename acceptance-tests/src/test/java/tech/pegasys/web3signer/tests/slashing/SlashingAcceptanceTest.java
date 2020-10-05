@@ -14,23 +14,12 @@ package tech.pegasys.web3signer.tests.slashing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import org.jdbi.v3.core.Jdbi;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
-import tech.pegasys.web3signer.slashingprotection.DbConnection;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
-import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.Exporter;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.nio.file.Path;
@@ -190,7 +179,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void signingBlockWithDifferentSigningRootForPreviousSlotFailsWith403(@TempDir Path testDirectory)
-      throws IOException {
+      throws JsonProcessingException {
     setupSigner(testDirectory, true);
 
     final Eth2SigningRequestBody initialRequest =
@@ -208,14 +197,6 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
-
-    final Jdbi
-        jdbi = DbConnection.createConnection(signer.getSlashingDbUrl(), "postgres", "postgres");
-    final Exporter exporter =
-        new Exporter(jdbi, new ValidatorsDao(), new SignedBlocksDao(), new SignedAttestationsDao(),
-            new ObjectMapper());
-    final OutputStream output = new ByteArrayOutputStream();
-    exporter.exportTo(output);
   }
 
   @Test
