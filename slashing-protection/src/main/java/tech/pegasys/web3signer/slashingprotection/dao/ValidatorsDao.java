@@ -40,8 +40,7 @@ public class ValidatorsDao {
 
   public List<Validator> retrieveAllValidators(final Handle handle) {
     return handle
-        .createQuery(
-            "SELECT id, public_key FROM validators")
+        .createQuery("SELECT id, public_key FROM validators")
         .mapToBean(Validator.class)
         .list();
   }

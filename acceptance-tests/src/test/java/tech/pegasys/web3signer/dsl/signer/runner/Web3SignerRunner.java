@@ -191,10 +191,8 @@ public abstract class Web3SignerRunner {
       }
 
       // Default embeddedPostgres uses a database, username and password of "postgres"
-      final String dbUrl =
-          String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
       params.add("--slashing-protection-db-url");
-      params.add(dbUrl);
+      params.add(getSlashingDbUrl());
       params.add("--slashing-protection-db-username");
       params.add(signerConfig.getSlashingProtectionDbUsername());
       params.add("--slashing-protection-db-password");
@@ -300,5 +298,9 @@ public abstract class Web3SignerRunner {
     return userDir.toLowerCase().endsWith("web3signer")
         ? new File(userDir)
         : new File(userDir).getParentFile();
+  }
+
+  public String getSlashingDbUrl() {
+    return String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
   }
 }

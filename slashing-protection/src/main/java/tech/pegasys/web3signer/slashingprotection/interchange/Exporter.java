@@ -9,19 +9,9 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.annotation.Signed;
-import org.jdbi.v3.core.Jdbi;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
@@ -32,6 +22,15 @@ import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedArtifa
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
+import org.jdbi.v3.core.Jdbi;
+
 public class Exporter {
 
   private final Jdbi jdbi;
@@ -40,7 +39,8 @@ public class Exporter {
   private final SignedAttestationsDao signedAttestationsDao;
   private final ObjectMapper mapper;
 
-  public Exporter(final Jdbi jdbi,
+  public Exporter(
+      final Jdbi jdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
@@ -58,28 +58,38 @@ public class Exporter {
 
     final ExportFormat toExport = new ExportFormat(metadata, signedArtifacts);
 
-    mapper.writeValue(out, toExport);
+    mapper.writerWithDefaultPrettyPrinter().writeValue(out, toExport);
   }
 
   private List<SignedArtifacts> generateModelFromDatabase() {
-    return jdbi.inTransaction(h -> {
+    return jdbi.inTransaction(
+        h -> {
           final List<SignedArtifacts> result = Lists.newArrayList();
-          validatorsDao.retrieveAllValidators(h).forEach(validator -> {
-            final List<SignedBlock> blocks =
-                signedBlocksDao.getAllBlockSignedBy(h, validator.getId()).stream()
-                    .map(b -> new SignedBlock(b.getSlot().toString(),
-                        b.getSigningRoot().toHexString()))
-                    .collect(
-                        Collectors.toList());
-            final List<SignedAttestation> attestations =
-                signedAttestationsDao.getAllAttestationsSignedBy(h, validator.getId()).stream()
-                    .map(a -> new SignedAttestation(a.getSourceEpoch().toString(),
-                        a.getTargetEpoch().toString(), a.getSigningRoot().toHexString())).collect(
-                    Collectors.toList());
-            result
-                .add(new SignedArtifacts(validator.getPublicKey().toHexString(), blocks,
-                    attestations));
-          });
+          validatorsDao
+              .retrieveAllValidators(h)
+              .forEach(
+                  validator -> {
+                    final List<SignedBlock> blocks =
+                        signedBlocksDao.getAllBlockSignedBy(h, validator.getId()).stream()
+                            .map(
+                                b ->
+                                    new SignedBlock(
+                                        b.getSlot().toString(), b.getSigningRoot().toHexString()))
+                            .collect(Collectors.toList());
+                    final List<SignedAttestation> attestations =
+                        signedAttestationsDao.getAllAttestationsSignedBy(h, validator.getId())
+                            .stream()
+                            .map(
+                                a ->
+                                    new SignedAttestation(
+                                        a.getSourceEpoch().toString(),
+                                        a.getTargetEpoch().toString(),
+                                        a.getSigningRoot().toHexString()))
+                            .collect(Collectors.toList());
+                    result.add(
+                        new SignedArtifacts(
+                            validator.getPublicKey().toHexString(), blocks, attestations));
+                  });
           return result;
         });
   }

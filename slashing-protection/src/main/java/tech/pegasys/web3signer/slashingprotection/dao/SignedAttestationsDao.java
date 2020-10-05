@@ -81,7 +81,8 @@ public class SignedAttestationsDao {
         .execute();
   }
 
-  public List<SignedAttestation> getAllAttestationsSignedBy(final Handle handle, final int validatorId) {
+  public List<SignedAttestation> getAllAttestationsSignedBy(
+      final Handle handle, final int validatorId) {
     return handle
         .createQuery(
             "SELECT validator_id, source_epoch, target_epoch, signing_root "

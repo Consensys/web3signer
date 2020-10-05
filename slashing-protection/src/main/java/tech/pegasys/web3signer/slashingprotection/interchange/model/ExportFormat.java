@@ -9,13 +9,12 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.slashingprotection.interchange.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ExportFormat {
 
@@ -25,9 +24,16 @@ public class ExportFormat {
   @JsonProperty("data")
   private final List<SignedArtifacts> signedArtifacts;
 
-  public ExportFormat(final Metadata metdata,
-      final List<SignedArtifacts> signedArtifacts) {
+  public ExportFormat(final Metadata metdata, final List<SignedArtifacts> signedArtifacts) {
     this.metdata = metdata;
     this.signedArtifacts = signedArtifacts;
+  }
+
+  public Metadata getMetdata() {
+    return metdata;
+  }
+
+  public List<SignedArtifacts> getSignedArtifacts() {
+    return signedArtifacts;
   }
 }

@@ -169,4 +169,8 @@ public class Signer extends FilecoinJsonRpcEndpoint {
     final String swaggerUrl = getUrl() + "/swagger-ui/web3signer.yaml";
     return new OpenApiValidationFilter(swaggerUrl);
   }
+
+  public String getSlashingDbUrl() {
+    return runner.getSlashingDbUrl();
+  }
 }
