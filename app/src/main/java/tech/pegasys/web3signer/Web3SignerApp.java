@@ -14,6 +14,7 @@ package tech.pegasys.web3signer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import tech.pegasys.web3signer.commandline.ApplicationInfo;
 import tech.pegasys.web3signer.commandline.CommandlineParser;
 import tech.pegasys.web3signer.commandline.Web3SignerBaseCommand;
 import tech.pegasys.web3signer.commandline.subcommands.Eth1SubCommand;
@@ -37,6 +38,7 @@ public class Web3SignerApp {
   public static void executeWithEnvironment(
       final Map<String, String> environment, final String... args) {
     LOG.info("Web3Signer has started with args " + String.join(",", args));
+    LOG.info("Version = {}", ApplicationInfo.version());
 
     final Web3SignerBaseCommand baseCommand = new Web3SignerBaseCommand();
     final PrintWriter outputWriter = new PrintWriter(System.out, true, UTF_8);

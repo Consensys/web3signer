@@ -64,8 +64,8 @@ import org.jdbi.v3.core.Jdbi;
 
 public class Eth2Runner extends Runner {
 
-  final Optional<SlashingProtection> slashingProtection;
-  final AzureKeyVaultParameters azureKeyVaultParameters;
+  private final Optional<SlashingProtection> slashingProtection;
+  private final AzureKeyVaultParameters azureKeyVaultParameters;
 
   private static final Logger LOG = LogManager.getLogger();
 
