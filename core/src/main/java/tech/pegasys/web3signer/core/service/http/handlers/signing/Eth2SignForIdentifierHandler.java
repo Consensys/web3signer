@@ -17,6 +17,7 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
+import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
@@ -37,24 +38,27 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
   private final SignerForIdentifier<?> signerForIdentifier;
-  private final HttpApiMetrics metrics;
+  private final HttpApiMetrics httpMetrics;
+  private final SlashingProtectionMetrics slashingMetrics;
   private final Optional<SlashingProtection> slashingProtection;
   private final ObjectMapper objectMapper;
 
   public Eth2SignForIdentifierHandler(
       final SignerForIdentifier<?> signerForIdentifier,
-      final HttpApiMetrics metrics,
+      final HttpApiMetrics httpMetrics,
+      final SlashingProtectionMetrics slashingMetrics,
       final Optional<SlashingProtection> slashingProtection,
       final ObjectMapper objectMapper) {
     this.signerForIdentifier = signerForIdentifier;
-    this.metrics = metrics;
+    this.httpMetrics = httpMetrics;
+    this.slashingMetrics = slashingMetrics;
     this.slashingProtection = slashingProtection;
     this.objectMapper = objectMapper;
   }
 
   @Override
   public void handle(final RoutingContext routingContext) {
-    try (final TimingContext ignored = metrics.getSigningTimer().startTimer()) {
+    try (final TimingContext ignored = httpMetrics.getSigningTimer().startTimer()) {
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
       final Eth2SigningRequestBody eth2SigningRequestBody;
@@ -72,8 +76,12 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                 if (slashingProtection.isPresent()) {
                   try {
                     if (maySign(Bytes.fromHexString(identifier), eth2SigningRequestBody)) {
+                      slashingMetrics.incrementSigningsPermitted(
+                          eth2SigningRequestBody.getType().name());
                       respondWithSignature(routingContext, signature);
                     } else {
+                      slashingMetrics.incrementSigningsPrevented(
+                          eth2SigningRequestBody.getType().name());
                       LOG.debug("Signing not allowed due to slashing protection rules failing");
                       routingContext.fail(403);
                     }
@@ -86,14 +94,14 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
               },
               () -> {
                 LOG.trace("Identifier not found {}", identifier);
-                metrics.getMissingSignerCounter().inc();
+                httpMetrics.getMissingSignerCounter().inc();
                 routingContext.fail(404);
               });
     }
   }
 
   private void handleInvalidRequest(final RoutingContext routingContext, final Exception e) {
-    metrics.getMalformedRequestCounter().inc();
+    httpMetrics.getMalformedRequestCounter().inc();
     LOG.debug("Invalid signing request", e);
     routingContext.fail(400);
   }
