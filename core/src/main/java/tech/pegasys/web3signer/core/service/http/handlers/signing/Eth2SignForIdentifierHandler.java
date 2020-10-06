@@ -94,7 +94,6 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                 }
               },
               () -> {
-                LOG.warn("Identifier not found {}", identifier);
                 httpMetrics.getMissingSignerCounter().inc();
                 routingContext.fail(404);
               });
