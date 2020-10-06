@@ -106,7 +106,9 @@ public abstract class Runner implements Runnable {
       registerSwaggerUIRoute(router); // serve static openapi spec
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
-      LOG.info("Server is up, and listening on {}", httpServer.actualPort());
+      LOG.info("Web3Signer is started, and ready to handle signing requests on {}:{}",
+          config.getHttpListenHost(),
+          httpServer.actualPort());
 
       persistPortInformation(httpServer.actualPort(), metricsEndpoint.getPort());
     } catch (final InitializationException e) {
@@ -286,7 +288,7 @@ public abstract class Runner implements Runnable {
     properties.setProperty("http-port", String.valueOf(httpPort));
     metricsPort.ifPresent(port -> properties.setProperty("metrics-port", String.valueOf(port)));
 
-    LOG.info(
+    LOG.debug(
         "Writing web3signer.ports file: {}, with contents: {}",
         portsFile.getAbsolutePath(),
         properties);

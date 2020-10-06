@@ -56,11 +56,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext routingContext) {
     try (final TimingContext ignored = metrics.startHttpOperation()) {
-      if (!LOG.getLevel().equals(Level.TRACE)) {
-        LOG.debug("Received on {}", routingContext.normalisedPath());
-      } else {
-        LOG.trace("{} || {}", routingContext.normalisedPath(), routingContext.getBody());
-      }
+      LOG.debug("{} || {}", routingContext.normalisedPath(), routingContext.getBody());
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
       final Eth2SigningRequestBody eth2SigningRequestBody;
@@ -78,20 +74,22 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                 if (slashingProtection.isPresent()) {
                   try {
                     if (maySign(Bytes.fromHexString(identifier), eth2SigningRequestBody)) {
+                      LOG.trace("Success - id={}, sr={}, sig={}", identifier, eth2SigningRequestBody.getSigningRoot(), signature);
                       respondWithSignature(routingContext, signature);
                     } else {
-                      LOG.debug("Signing not allowed due to slashing protection rules failing");
+                      LOG.warn("Signing not allowed due to slashing protection rules failing");
                       routingContext.fail(403);
                     }
                   } catch (final IllegalArgumentException e) {
                     handleInvalidRequest(routingContext, e);
                   }
                 } else {
+                  LOG.trace("Success - id={}, sr={}, sig={}", identifier, eth2SigningRequestBody.getSigningRoot(), signature);
                   respondWithSignature(routingContext, signature);
                 }
               },
               () -> {
-                LOG.trace("Identifier not found {}", identifier);
+                LOG.warn("Identifier not found {}", identifier);
                 metrics.getMissingSignerCounter().inc();
                 routingContext.fail(404);
               });
@@ -100,7 +98,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private void handleInvalidRequest(final RoutingContext routingContext, final Exception e) {
     metrics.getMalformedRequestCounter().inc();
-    LOG.debug("Invalid signing request", e);
+    LOG.debug("Invalid signing request - " + routingContext.getBodyAsString(), e);
     routingContext.fail(400);
   }
 

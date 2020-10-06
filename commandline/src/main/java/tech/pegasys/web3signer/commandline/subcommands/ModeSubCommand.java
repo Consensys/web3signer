@@ -32,8 +32,6 @@ public abstract class ModeSubCommand implements Runnable {
     // set log level per CLI flags
     System.out.println("Setting logging level to " + config.getLogLevel().name());
     Configurator.setAllLevels("", config.getLogLevel());
-
-    LOG.debug("Configuration = {}", this);
     LOG.info("Version = {}", ApplicationInfo.version());
 
     final Runner runner = createRunner();
