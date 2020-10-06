@@ -27,6 +27,7 @@ dependencies {
   implementation 'org.postgresql:postgresql'
   implementation 'org.jdbi:jdbi3-core'
   implementation 'org.jdbi:jdbi3-sqlobject'
+  implementation 'org.hyperledger.besu:plugin-api'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
