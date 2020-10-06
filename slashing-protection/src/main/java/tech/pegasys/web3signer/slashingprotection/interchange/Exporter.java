@@ -12,10 +12,6 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
-import java.io.InputStream;
-import java.net.InterfaceAddress;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -28,12 +24,15 @@ import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttest
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Jdbi;
 
 public class Exporter {
@@ -71,27 +70,41 @@ public class Exporter {
 
     validateMetaData(toImport.getMetdata());
 
-    toImport.getSignedArtifacts().forEach(artifact -> {
-      jdbi.useTransaction(h -> {
-        final Validator validator =
-            validatorsDao.insertIfNotExist(h, Bytes.fromHexString(artifact.getPublicKey()));
+    toImport
+        .getSignedArtifacts()
+        .forEach(
+            artifact -> {
+              jdbi.useTransaction(
+                  h -> {
+                    final Validator validator =
+                        validatorsDao.insertIfNotExist(
+                            h, Bytes.fromHexString(artifact.getPublicKey()));
 
-        artifact.getSignedAttestations().forEach(sa ->
-            signedAttestationsDao.insertAttestation(h,
-                new tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation(
-                    validator.getId(),
-                    UInt64.fromHexString(sa.getSourceEpoch()),
-                    UInt64.fromHexString(sa.getTargetEpoch()),
-                    Bytes.fromHexString(sa.getSigningRoot()))));
+                    artifact
+                        .getSignedAttestations()
+                        .forEach(
+                            sa ->
+                                signedAttestationsDao.insertAttestation(
+                                    h,
+                                    new tech.pegasys.web3signer.slashingprotection.dao
+                                        .SignedAttestation(
+                                        validator.getId(),
+                                        UInt64.fromHexString(sa.getSourceEpoch()),
+                                        UInt64.fromHexString(sa.getTargetEpoch()),
+                                        Bytes.fromHexString(sa.getSigningRoot()))));
 
-        artifact.getSignedBlocks().forEach(sb ->
-            signedBlocksDao.insertBlockProposal(h,
-                new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
-                    validator.getId(),
-                    UInt64.fromHexString(sb.getSlot()),
-                    Bytes.fromHexString(sb.getSigningRoot()))));
-      });
-    });
+                    artifact
+                        .getSignedBlocks()
+                        .forEach(
+                            sb ->
+                                signedBlocksDao.insertBlockProposal(
+                                    h,
+                                    new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
+                                        validator.getId(),
+                                        UInt64.fromHexString(sb.getSlot()),
+                                        Bytes.fromHexString(sb.getSigningRoot()))));
+                  });
+            });
   }
 
   private void validateMetaData(final Metadata metdata) {

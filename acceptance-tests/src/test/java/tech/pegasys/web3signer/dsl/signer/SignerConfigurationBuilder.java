@@ -95,7 +95,8 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withSlashingProtectionDbUrl(final String slashingProtectionDbUrl) {
+  public SignerConfigurationBuilder withSlashingProtectionDbUrl(
+      final String slashingProtectionDbUrl) {
     this.slashingProtectionDbUrl = slashingProtectionDbUrl;
     return this;
   }

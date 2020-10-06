@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
-import java.io.InputStream;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
@@ -25,6 +24,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.Exporter;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -91,9 +91,7 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void importFrom(final InputStream input) {
-
-  }
+  public void importFrom(final InputStream input) {}
 
   @Override
   public boolean maySignAttestation(

@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 

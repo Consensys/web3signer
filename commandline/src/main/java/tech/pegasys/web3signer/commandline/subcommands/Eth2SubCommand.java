@@ -12,11 +12,11 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
-import java.io.FileInputStream;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.List;
@@ -40,7 +40,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Spec CommandSpec spec;
 
   @Command(name = "export", description = "Export slashing db to json file")
-  public void export(@Option(names = "--to") File output) {
+  public void exportSlashingDb(@Option(names = "--to") File output) {
     final Eth2Runner runner =
         new Eth2Runner(
             config,
@@ -58,7 +58,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   }
 
   @Command(name = "import", description = "Import json file to the slashing db")
-  public void import(@Option(names = "--from") File input) {
+  public void importSlashingDb(@Option(names = "--from") File input) {
     final Eth2Runner runner =
         new Eth2Runner(
             config,

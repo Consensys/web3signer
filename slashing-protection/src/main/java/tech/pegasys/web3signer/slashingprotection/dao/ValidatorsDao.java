@@ -22,9 +22,12 @@ import org.jdbi.v3.sqlobject.customizer.BindList;
 public class ValidatorsDao {
 
   public Validator insertIfNotExist(final Handle handle, final Bytes validator) {
-    return handle.createUpdate("INSERT validators (public_key) VALUES (<public_key>) ON CONFLICT DO NOTHING")
+    return handle
+        .createUpdate("INSERT validators (public_key) VALUES (<public_key>) ON CONFLICT DO NOTHING")
         .bind("public_key", validator)
-        .executeAndReturnGeneratedKeys().mapTo(Validator.class).first();
+        .executeAndReturnGeneratedKeys()
+        .mapTo(Validator.class)
+        .first();
   }
 
   public List<Validator> registerValidators(final Handle handle, final List<Bytes> validators) {
