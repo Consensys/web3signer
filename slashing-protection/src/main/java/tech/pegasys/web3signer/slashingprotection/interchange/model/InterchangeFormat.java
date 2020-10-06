@@ -16,7 +16,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ExportFormat {
+public class InterchangeFormat {
 
   @JsonProperty("metadata")
   private final Metadata metdata;
@@ -24,7 +24,7 @@ public class ExportFormat {
   @JsonProperty("data")
   private final List<SignedArtifacts> signedArtifacts;
 
-  public ExportFormat(final Metadata metdata, final List<SignedArtifacts> signedArtifacts) {
+  public InterchangeFormat(final Metadata metdata, final List<SignedArtifacts> signedArtifacts) {
     this.metdata = metdata;
     this.signedArtifacts = signedArtifacts;
   }

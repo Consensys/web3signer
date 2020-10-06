@@ -12,10 +12,15 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import java.io.InputStream;
+import java.net.InterfaceAddress;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.model.ExportFormat;
+import tech.pegasys.web3signer.slashingprotection.interchange.model.InterchangeFormat;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata.Format;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedArtifacts;
@@ -56,9 +61,49 @@ public class Exporter {
     final Metadata metadata = new Metadata(Format.COMPLETE, 4, "notApplicable");
     final List<SignedArtifacts> signedArtifacts = generateModelFromDatabase();
 
-    final ExportFormat toExport = new ExportFormat(metadata, signedArtifacts);
+    final InterchangeFormat toExport = new InterchangeFormat(metadata, signedArtifacts);
 
     mapper.writerWithDefaultPrettyPrinter().writeValue(out, toExport);
+  }
+
+  public void importFrom(final InputStream in) throws IOException {
+    final InterchangeFormat toImport = mapper.readValue(in, InterchangeFormat.class);
+
+    validateMetaData(toImport.getMetdata());
+
+    toImport.getSignedArtifacts().forEach(artifact -> {
+      jdbi.useTransaction(h -> {
+        final Validator validator =
+            validatorsDao.insertIfNotExist(h, Bytes.fromHexString(artifact.getPublicKey()));
+
+        artifact.getSignedAttestations().forEach(sa ->
+            signedAttestationsDao.insertAttestation(h,
+                new tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation(
+                    validator.getId(),
+                    UInt64.fromHexString(sa.getSourceEpoch()),
+                    UInt64.fromHexString(sa.getTargetEpoch()),
+                    Bytes.fromHexString(sa.getSigningRoot()))));
+
+        artifact.getSignedBlocks().forEach(sb ->
+            signedBlocksDao.insertBlockProposal(h,
+                new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
+                    validator.getId(),
+                    UInt64.fromHexString(sb.getSlot()),
+                    Bytes.fromHexString(sb.getSigningRoot()))));
+      });
+    });
+  }
+
+  private void validateMetaData(final Metadata metdata) {
+    if (metdata.getFormatVersion() != 4) {
+      throw new RuntimeException("Web3signer can only accept version 4 of the interchange format");
+    }
+
+    if (metdata.getFormat() != Format.COMPLETE) {
+      throw new RuntimeException("Web3Signer can only read complete data sets (not minimal)");
+    }
+
+    // SHOULD validate the genesis root, but ... we don't really do that atm
   }
 
   private List<SignedArtifacts> generateModelFromDatabase() {

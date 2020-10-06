@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import java.io.FileInputStream;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 
@@ -50,7 +51,25 @@ public class Eth2SubCommand extends ModeSubCommand {
             null);
 
     try {
-      runner.exportSlashingDb(new FileOutputStream(output));
+      runner.exportSigningsPerformed(new FileOutputStream(output));
+    } catch (final FileNotFoundException e) {
+      throw new RuntimeException("Unable to find output target file", e);
+    }
+  }
+
+  @Command(name = "import", description = "Import json file to the slashing db")
+  public void import(@Option(names = "--from") File input) {
+    final Eth2Runner runner =
+        new Eth2Runner(
+            config,
+            true, // must enforce slashing to be "on" or else no db connection is created
+            slashingProtectionDbUrl,
+            slashingProtectionDbUsername,
+            slashingProtectionDbPassword,
+            null);
+
+    try {
+      runner.importSingingsPerformed(new FileInputStream(input));
     } catch (final FileNotFoundException e) {
       throw new RuntimeException("Unable to find output target file", e);
     }

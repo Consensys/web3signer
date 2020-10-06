@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
+import java.io.InputStream;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
@@ -87,6 +88,11 @@ public class DbSlashingProtection implements SlashingProtection {
     } catch (IOException e) {
       throw new RuntimeException("Failed to export database content", e);
     }
+  }
+
+  @Override
+  public void importFrom(final InputStream input) {
+
   }
 
   @Override

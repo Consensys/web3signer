@@ -17,6 +17,7 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
+import java.io.InputStream;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -86,9 +87,15 @@ public class Eth2Runner extends Runner {
     this.azureKeyVaultParameters = azureKeyVaultParameters;
   }
 
-  public void exportSlashingDb(final OutputStream output) {
+  public void exportSigningsPerformed(final OutputStream output) {
     LOG.info("Starting export of database.");
     slashingProtection.orElseThrow().exportTo(output);
+    LOG.info("Export Complete.");
+  }
+
+  public void importSingingsPerformed(final InputStream input) {
+    LOG.info("Starting import of database.");
+    slashingProtection.orElseThrow().importFrom(input);
     LOG.info("Export Complete.");
   }
 
