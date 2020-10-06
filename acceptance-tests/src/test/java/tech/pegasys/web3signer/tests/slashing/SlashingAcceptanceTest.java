@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.response.Response;
@@ -34,15 +35,27 @@ import org.junit.jupiter.api.io.TempDir;
 public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  final BLSKeyPair keyPair = BLSKeyPair.random(0);
+  private final BLSKeyPair keyPair = BLSKeyPair.random(0);
+
+  final List<String> attestationSlashingMetrics =
+      List.of(
+          "eth2_slashingprotection_permitted_signings{artifactType=\"ATTESTATION\",}",
+          "eth2_slashingprotection_prevented_signings{artifactType=\"ATTESTATION\",}");
+
+  final List<String> blockSlashingMetrics =
+      List.of(
+          "eth2_slashingprotection_permitted_signings{artifactType=\"BLOCK\",}",
+          "eth2_slashingprotection_prevented_signings{artifactType=\"BLOCK\",}");
 
   void setupSigner(final Path testDirectory, final boolean enableSlashing) {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withMode("eth2");
-    builder.withSlashingEnabled(enableSlashing);
-    builder.withSlashingProtectionDbUsername("postgres");
-    builder.withSlashingProtectionDbPassword("postgres");
-    builder.withKeyStoreDirectory(testDirectory);
+    final SignerConfigurationBuilder builder =
+        new SignerConfigurationBuilder()
+            .withMode("eth2")
+            .withSlashingEnabled(enableSlashing)
+            .withSlashingProtectionDbUsername("postgres")
+            .withSlashingProtectionDbPassword("postgres")
+            .withMetricsEnabled(true)
+            .withKeyStoreDirectory(testDirectory);
 
     final Path keyConfigFile = testDirectory.resolve("keyfile.yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(
@@ -67,8 +80,15 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
     final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
+
+    assertThat(signer.getMetricsMatching(attestationSlashingMetrics))
+        .containsOnly(attestationSlashingMetrics.get(0) + " 1.0");
+
     final Response secondResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
+
+    assertThat(signer.getMetricsMatching(attestationSlashingMetrics))
+        .containsOnly(attestationSlashingMetrics.get(0) + " 2.0");
   }
 
   @Test
@@ -88,6 +108,9 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
         signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
+    assertThat(signer.getMetricsMatching(attestationSlashingMetrics))
+        .containsOnly(attestationSlashingMetrics.get(0) + " 1.0");
+
     final Eth2SigningRequestBody secondRequest =
         new Eth2SigningRequestBody(
             Bytes.fromHexString("0x02"),
@@ -99,6 +122,10 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
+
+    assertThat(signer.getMetricsMatching(attestationSlashingMetrics))
+        .containsOnly(
+            attestationSlashingMetrics.get(0) + " 1.0", attestationSlashingMetrics.get(1) + " 1.0");
   }
 
   @Test
@@ -173,8 +200,13 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
     final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
+    assertThat(signer.getMetricsMatching(blockSlashingMetrics))
+        .containsOnly(blockSlashingMetrics.get(0) + " 1.0");
+
     final Response secondResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
+    assertThat(signer.getMetricsMatching(blockSlashingMetrics))
+        .containsOnly(blockSlashingMetrics.get(0) + " 2.0");
   }
 
   @Test
@@ -189,6 +221,8 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     final Response initialResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
+    assertThat(signer.getMetricsMatching(blockSlashingMetrics))
+        .containsOnly(blockSlashingMetrics.get(0) + " 1.0");
 
     final Eth2SigningRequestBody secondRequest =
         new Eth2SigningRequestBody(
@@ -197,6 +231,8 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
+    assertThat(signer.getMetricsMatching(blockSlashingMetrics))
+        .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 1.0");
   }
 
   @Test

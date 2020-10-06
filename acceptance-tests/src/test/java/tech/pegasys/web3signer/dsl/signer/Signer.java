@@ -27,12 +27,18 @@ import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
 import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.atlassian.oai.validator.restassured.OpenApiValidationFilter;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Iterables;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -51,6 +57,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
       "/api/v1/eth2/sign/{identifier}"; // using bls keys
   public static final String ETH1_PUBLIC_KEYS = "/api/v1/eth1/publicKeys"; // secp keys
   public static final String ETH2_PUBLIC_KEYS = "/api/v1/eth2/publicKeys"; // bls keys
+  private static final String METRICS_ENDPOINT = "/metrics";
 
   private final Web3SignerRunner runner;
   private final String hostname;
@@ -168,5 +175,17 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   public OpenApiValidationFilter getOpenApiValidationFilter() {
     final String swaggerUrl = getUrl() + "/swagger-ui/web3signer.yaml";
     return new OpenApiValidationFilter(swaggerUrl);
+  }
+
+  public Set<String> getMetricsMatching(final List<String> metricsOfInterest) {
+    final Response response =
+        given().baseUri(getMetricsUrl()).contentType(ContentType.JSON).when().get(METRICS_ENDPOINT);
+
+    final List<String> lines =
+        Arrays.asList(response.getBody().asString().split(String.format("%n")).clone());
+
+    return lines.stream()
+        .filter(line -> metricsOfInterest.contains(Iterables.get(Splitter.on(' ').split(line), 0)))
+        .collect(Collectors.toSet());
   }
 }

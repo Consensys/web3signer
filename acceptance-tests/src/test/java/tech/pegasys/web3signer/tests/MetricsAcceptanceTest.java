@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.tests;
 
-import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATE_AND_PROOF;
 import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATION_SLOT;
@@ -28,15 +27,9 @@ import java.nio.file.Path;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -45,8 +38,6 @@ import org.web3j.crypto.Keys;
 import org.web3j.utils.Numeric;
 
 public class MetricsAcceptanceTest extends AcceptanceTestBase {
-
-  private static final String METRICS_ENDPOINT = "/metrics";
 
   @Test
   void filecoinApisAreCounted() {
@@ -63,18 +54,18 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
             "filecoin_wallet_list_count",
             "filecoin_wallet_sign_message_count");
 
-    final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
+    final Set<String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
     signer.walletHas("t01234");
-    final Set<String> metricsAfterWalletHas = getMetricsMatching(metricsOfInterest);
+    final Set<String> metricsAfterWalletHas = signer.getMetricsMatching(metricsOfInterest);
     metricsAfterWalletHas.removeAll(initialMetrics);
     assertThat(metricsAfterWalletHas)
         .containsOnly("filecoin_total_request_count 1.0", "filecoin_wallet_has_count 1.0");
 
     signer.walletList();
-    final Set<String> metricsAfterWalletList = getMetricsMatching(metricsOfInterest);
+    final Set<String> metricsAfterWalletList = signer.getMetricsMatching(metricsOfInterest);
     metricsAfterWalletList.removeAll(initialMetrics);
     metricsAfterWalletList.removeAll(metricsAfterWalletHas);
     assertThat(metricsAfterWalletList)
@@ -85,7 +76,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     } catch (final Exception e) {
       // it is known that the signing will fail.
     }
-    final Set<String> metricsAfterWalletSign = getMetricsMatching(metricsOfInterest);
+    final Set<String> metricsAfterWalletSign = signer.getMetricsMatching(metricsOfInterest);
     metricsAfterWalletSign.removeAll(initialMetrics);
     metricsAfterWalletSign.removeAll(metricsAfterWalletList);
     metricsAfterWalletSign.removeAll(metricsAfterWalletHas);
@@ -100,12 +91,12 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final List<String> metricsOfInterest = List.of("signing_bls_missing_identifier_count");
 
-    final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
+    final Set<String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
     signer.eth2Sign("12345", Bytes.fromHexString("0011"), AGGREGATE_AND_PROOF);
-    final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
+    final Set<String> metricsAfterSign = signer.getMetricsMatching(metricsOfInterest);
     assertThat(metricsAfterSign).containsOnly("signing_bls_missing_identifier_count 1.0");
   }
 
@@ -133,14 +124,14 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         List.of(
             "signing_" + SECP256K1.name().toLowerCase() + "_signing_duration_count",
             "signing_" + SECP256K1.name().toLowerCase() + "_missing_identifier_count");
-    final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
+    final Set<String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
     signer.eth1Sign(
         Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPublicKey(), 128),
         Bytes.fromHexString("1122"));
-    final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
+    final Set<String> metricsAfterSign = signer.getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)
         .containsOnly(
@@ -171,7 +162,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         List.of(
             "signing_" + BLS.name().toLowerCase() + "_signing_duration_count",
             "signing_" + BLS.name().toLowerCase() + "_missing_identifier_count");
-    final Set<String> initialMetrics = getMetricsMatching(metricsOfInterest);
+    final Set<String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
@@ -179,27 +170,11 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         keyPair.getPublicKey().toBytesCompressed().toHexString(),
         Bytes.fromHexString("1122"),
         AGGREGATION_SLOT);
-    final Set<String> metricsAfterSign = getMetricsMatching(metricsOfInterest);
+    final Set<String> metricsAfterSign = signer.getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)
         .containsOnly(
             "signing_" + BLS.name().toLowerCase() + "_signing_duration_count 1.0",
             "signing_" + BLS.name().toLowerCase() + "_missing_identifier_count 0.0");
-  }
-
-  private Set<String> getMetricsMatching(final List<String> metricsOfInterest) {
-    final Response response =
-        given()
-            .baseUri(signer.getMetricsUrl())
-            .contentType(ContentType.JSON)
-            .when()
-            .get(METRICS_ENDPOINT);
-
-    final List<String> lines =
-        Arrays.asList(response.getBody().asString().split(String.format("%n")).clone());
-
-    return lines.stream()
-        .filter(line -> metricsOfInterest.contains(Iterables.get(Splitter.on(' ').split(line), 0)))
-        .collect(Collectors.toSet());
   }
 }

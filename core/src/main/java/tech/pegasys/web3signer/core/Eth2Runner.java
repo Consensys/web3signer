@@ -23,6 +23,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
@@ -116,8 +117,7 @@ public class Eth2Runner extends Runner {
         signerProvider,
         context.getErrorHandler(),
         context.getMetricsSystem(),
-        slashingProtection,
-        context.getVertx());
+        slashingProtection);
 
     return context.getRouterFactory().getRouter();
   }
@@ -127,8 +127,7 @@ public class Eth2Runner extends Runner {
       final ArtifactSignerProvider blsSignerProvider,
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
-      final Optional<SlashingProtection> slashingProtection,
-      final Vertx vertx) {
+      final Optional<SlashingProtection> slashingProtection) {
     final ObjectMapper objectMapper =
         new ObjectMapper()
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
@@ -140,22 +139,16 @@ public class Eth2Runner extends Runner {
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-
-    final HttpApiMetrics httpMetrics = new HttpApiMetrics(metricsSystem, BLS);
-
     routerFactory.addHandlerByOperationId(
         ETH2_SIGN.name(),
         new BlockingHandlerDecorator(
             new Eth2SignForIdentifierHandler(
-                blsSigner, httpMetrics, slashingProtection, objectMapper),
+                blsSigner,
+                new HttpApiMetrics(metricsSystem, BLS),
+                new SlashingProtectionMetrics(metricsSystem),
+                slashingProtection,
+                objectMapper),
             false));
-
-    vertx.setPeriodic(
-        5000,
-        timerId -> {
-          LOG.info("Total signing requests received = {}", httpMetrics.getSigningsAttempted());
-        });
-
     routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
   }
 
