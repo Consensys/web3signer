@@ -99,7 +99,7 @@ public abstract class Web3SignerRunner {
   public abstract boolean isRunning();
 
   private List<String> createCmdLineParams() {
-    final String loggingLevel = "DEBUG";
+    final String loggingLevel = "TRACE";
 
     final List<String> params = new ArrayList<>();
     params.add("--logging");

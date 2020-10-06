@@ -106,7 +106,8 @@ public abstract class Runner implements Runnable {
       registerSwaggerUIRoute(router); // serve static openapi spec
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
-      LOG.info("Web3Signer is started, and ready to handle signing requests on {}:{}",
+      LOG.info(
+          "Web3Signer has started, and ready to handle signing requests on {}:{}",
           config.getHttpListenHost(),
           httpServer.actualPort());
 

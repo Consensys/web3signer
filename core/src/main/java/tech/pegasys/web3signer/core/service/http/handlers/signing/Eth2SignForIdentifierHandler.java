@@ -59,7 +59,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext routingContext) {
     try (final TimingContext ignored = httpMetrics.getSigningTimer().startTimer()) {
-      LOG.debug("{} || {}", routingContext.normalisedPath(), routingContext.getBody());  
+      LOG.debug("{} || {}", routingContext.normalisedPath(), routingContext.getBody());
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
       final Eth2SigningRequestBody eth2SigningRequestBody;
