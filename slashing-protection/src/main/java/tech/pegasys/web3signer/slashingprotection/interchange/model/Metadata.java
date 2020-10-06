@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Metadata {
 
-  public enum Format {
+  public static enum Format {
     COMPLETE,
     MINIMAL;
   }

@@ -21,7 +21,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.Exporter;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV4Manager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +50,7 @@ public class DbSlashingProtection implements SlashingProtection {
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
   private final Map<Bytes, Integer> registeredValidators;
-  private final Exporter exporter;
+  private final InterchangeV4Manager interchangeV4Manager;
 
   private enum LockType {
     BLOCK,
@@ -76,15 +76,15 @@ public class DbSlashingProtection implements SlashingProtection {
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
     this.registeredValidators = registeredValidators;
-    this.exporter =
-        new Exporter(
+    this.interchangeV4Manager =
+        new InterchangeV4Manager(
             jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, new ObjectMapper());
   }
 
   @Override
   public void exportTo(final OutputStream output) {
     try {
-      exporter.exportTo(output);
+      interchangeV4Manager.exportTo(output);
     } catch (IOException e) {
       throw new RuntimeException("Failed to export database content", e);
     }

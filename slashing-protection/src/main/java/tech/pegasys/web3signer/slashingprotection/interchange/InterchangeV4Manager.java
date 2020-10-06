@@ -16,12 +16,10 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.model.InterchangeFormat;
+import tech.pegasys.web3signer.slashingprotection.interchange.model.InterchangeV4Format;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata.Format;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedArtifacts;
-import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation;
-import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +33,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Jdbi;
 
-public class Exporter {
+public class InterchangeV4Manager implements InterchangeManager {
 
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
@@ -43,7 +41,7 @@ public class Exporter {
   private final SignedAttestationsDao signedAttestationsDao;
   private final ObjectMapper mapper;
 
-  public Exporter(
+  public InterchangeV4Manager(
       final Jdbi jdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
@@ -56,17 +54,19 @@ public class Exporter {
     this.mapper = mapper;
   }
 
+  @Override
   public void exportTo(final OutputStream out) throws IOException {
     final Metadata metadata = new Metadata(Format.COMPLETE, 4, "notApplicable");
     final List<SignedArtifacts> signedArtifacts = generateModelFromDatabase();
 
-    final InterchangeFormat toExport = new InterchangeFormat(metadata, signedArtifacts);
+    final InterchangeV4Format toExport = new InterchangeV4Format(metadata, signedArtifacts);
 
     mapper.writerWithDefaultPrettyPrinter().writeValue(out, toExport);
   }
 
+  @Override
   public void importFrom(final InputStream in) throws IOException {
-    final InterchangeFormat toImport = mapper.readValue(in, InterchangeFormat.class);
+    final InterchangeV4Format toImport = mapper.readValue(in, InterchangeV4Format.class);
 
     validateMetaData(toImport.getMetdata());
 
@@ -127,23 +127,32 @@ public class Exporter {
               .retrieveAllValidators(h)
               .forEach(
                   validator -> {
-                    final List<SignedBlock> blocks =
-                        signedBlocksDao.getAllBlockSignedBy(h, validator.getId()).stream()
-                            .map(
-                                b ->
-                                    new SignedBlock(
-                                        b.getSlot().toString(), b.getSigningRoot().toHexString()))
-                            .collect(Collectors.toList());
-                    final List<SignedAttestation> attestations =
-                        signedAttestationsDao.getAllAttestationsSignedBy(h, validator.getId())
-                            .stream()
-                            .map(
-                                a ->
-                                    new SignedAttestation(
-                                        a.getSourceEpoch().toString(),
-                                        a.getTargetEpoch().toString(),
-                                        a.getSigningRoot().toHexString()))
-                            .collect(Collectors.toList());
+                    final List<
+                            tech.pegasys.web3signer.slashingprotection.interchange.model
+                                .SignedBlock>
+                        blocks =
+                            signedBlocksDao.getAllBlockSignedBy(h, validator.getId()).stream()
+                                .map(
+                                    b ->
+                                        new tech.pegasys.web3signer.slashingprotection.interchange
+                                            .model.SignedBlock(
+                                            b.getSlot().toString(),
+                                            b.getSigningRoot().toHexString()))
+                                .collect(Collectors.toList());
+                    final List<
+                            tech.pegasys.web3signer.slashingprotection.interchange.model
+                                .SignedAttestation>
+                        attestations =
+                            signedAttestationsDao.getAllAttestationsSignedBy(h, validator.getId())
+                                .stream()
+                                .map(
+                                    a ->
+                                        new tech.pegasys.web3signer.slashingprotection.interchange
+                                            .model.SignedAttestation(
+                                            a.getSourceEpoch().toString(),
+                                            a.getTargetEpoch().toString(),
+                                            a.getSigningRoot().toHexString()))
+                                .collect(Collectors.toList());
                     result.add(
                         new SignedArtifacts(
                             validator.getPublicKey().toHexString(), blocks, attestations));

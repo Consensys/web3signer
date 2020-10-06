@@ -14,9 +14,10 @@ package tech.pegasys.web3signer.slashingprotection.interchange.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class InterchangeFormat {
+public class InterchangeV4Format {
 
   @JsonProperty("metadata")
   private final Metadata metdata;
@@ -24,7 +25,8 @@ public class InterchangeFormat {
   @JsonProperty("data")
   private final List<SignedArtifacts> signedArtifacts;
 
-  public InterchangeFormat(final Metadata metdata, final List<SignedArtifacts> signedArtifacts) {
+  @JsonCreator
+  public InterchangeV4Format(final Metadata metdata, final List<SignedArtifacts> signedArtifacts) {
     this.metdata = metdata;
     this.signedArtifacts = signedArtifacts;
   }
