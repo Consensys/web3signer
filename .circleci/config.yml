@@ -225,6 +225,7 @@ jobs:
             docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
       - notify
+      
 
   publishOpenApiSpec:
     executor: executor_node
