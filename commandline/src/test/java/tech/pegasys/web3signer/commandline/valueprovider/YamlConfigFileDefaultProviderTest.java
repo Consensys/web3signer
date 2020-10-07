@@ -53,6 +53,29 @@ class YamlConfigFileDefaultProviderTest {
   }
 
   @Test
+  void valuesFromConfigFileWithSubcommandArePopulated(@TempDir final Path tempDir)
+      throws IOException {
+    final String subcommandOptions =
+        String.join(lineSeparator(), "demo.x: 10", "demo.y: 2", "demo.name: \"test name\"");
+    final String config = CmdlineHelpers.validBaseYamlOptions() + subcommandOptions;
+    final File configFile = Files.writeString(tempDir.resolve("config.yaml"), config).toFile();
+
+    final Web3SignerBaseCommand mainCommand = new Web3SignerBaseCommand();
+    final DemoCommand subCommand = new DemoCommand();
+    final CommandLine commandLine = new CommandLine(mainCommand);
+    commandLine.registerConverter(Level.class, Level::valueOf);
+    commandLine.addSubcommand("demo", subCommand);
+    commandLine.setDefaultValueProvider(new YamlConfigFileDefaultProvider(commandLine, configFile));
+    commandLine.parseArgs("demo");
+
+    assertThat(mainCommand.getHttpListenPort()).isEqualTo(6001);
+    assertThat(mainCommand.getKeyConfigPath()).isEqualTo(Path.of("./keys_yaml"));
+    assertThat(subCommand.x).isEqualTo(10);
+    assertThat(subCommand.y).isEqualTo(2);
+    assertThat(subCommand.name).isEqualTo("test name");
+  }
+
+  @Test
   void unknownOptionsInConfigFileThrowsExceptionDuringParsing(@TempDir final Path tempDir)
       throws IOException {
     final String extraYamlOptions =

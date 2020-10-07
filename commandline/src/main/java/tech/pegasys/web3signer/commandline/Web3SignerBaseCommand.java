@@ -43,7 +43,6 @@ import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
-import picocli.CommandLine.TypeConversionException;
 
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
 @Command(
@@ -261,22 +260,6 @@ public class Web3SignerBaseCommand implements Config, Runnable {
     public Web3signerMetricCategoryConverter() {
       addCategories(Web3SignerMetricCategory.class);
       addCategories(StandardMetricCategory.class);
-    }
-  }
-
-  public static class CacheLimitConverter implements CommandLine.ITypeConverter<Long> {
-
-    @Override
-    public Long convert(final String value) {
-      try {
-        final long longValue = Long.parseLong(value);
-        if (longValue < 0) {
-          throw new TypeConversionException("Cache size must be a positive value");
-        }
-        return longValue;
-      } catch (final NumberFormatException e) {
-        throw new TypeConversionException("Cache size is not a valid number");
-      }
     }
   }
 }

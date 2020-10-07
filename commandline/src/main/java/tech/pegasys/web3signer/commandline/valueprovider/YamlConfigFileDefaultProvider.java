@@ -12,18 +12,20 @@
  */
 package tech.pegasys.web3signer.commandline.valueprovider;
 
+import static java.util.function.Predicate.not;
+import static tech.pegasys.web3signer.commandline.valueprovider.PrefixUtil.stripPrefix;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -34,7 +36,6 @@ import org.apache.commons.lang.ArrayUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 
@@ -100,11 +101,27 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private void checkUnknownOptions(final Map<String, Object> result) {
-    final CommandSpec commandSpec = commandLine.getCommandSpec();
+    final Set<String> picoCliOptionsKeys = new TreeSet<>();
+
+    // parent command options
+    final Set<String> mainCommandOptions =
+        commandLine.getCommandSpec().options().stream()
+            .map(YamlConfigFileDefaultProvider::buildOptionName)
+            .collect(Collectors.toSet());
+
+    // subcommands options
+    final Set<String> subCommandsOptions =
+        commandLine.getSubcommands().values().stream()
+            .flatMap(YamlConfigFileDefaultProvider::subCommandOptions)
+            .map(YamlConfigFileDefaultProvider::buildQualifiedOptionName)
+            .collect(Collectors.toSet());
+
+    picoCliOptionsKeys.addAll(mainCommandOptions);
+    picoCliOptionsKeys.addAll(subCommandsOptions);
 
     final Set<String> unknownOptionsList =
         result.keySet().stream()
-            .filter(option -> !commandSpec.optionsMap().containsKey("--" + option))
+            .filter(not(picoCliOptionsKeys::contains))
             .collect(Collectors.toCollection(TreeSet::new));
 
     if (!unknownOptionsList.isEmpty()) {
@@ -124,12 +141,19 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getConfigurationValue(final OptionSpec optionSpec) {
-    final Optional<Object> optionalValue = getKeyName(optionSpec).map(result::get);
-    if (optionalValue.isEmpty()) {
-      return null;
+    final String keyName;
+    if (commandLine.getCommandName().equals(optionSpec.command().name())) {
+      keyName = buildOptionName(optionSpec);
+    } else {
+      // subcommand option
+      keyName = buildQualifiedOptionName(optionSpec);
     }
 
-    final Object value = optionalValue.get();
+    final Object value = result.get(keyName);
+
+    if (value == null) {
+      return null;
+    }
 
     if (optionSpec.isMultiValue() && value instanceof Collection) {
       return ((Collection<?>) value).stream().map(String::valueOf).collect(Collectors.joining(","));
@@ -138,13 +162,15 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
     return String.valueOf(value);
   }
 
-  private Optional<String> getKeyName(final OptionSpec spec) {
-    // If any of the names of the option are used as key in the yaml results
-    // then returns the value of first one.
-    return Arrays.stream(spec.names())
-        // remove leading dashes on option name as we can have "--" or "-" options
-        .map(name -> name.replaceFirst("^-+", ""))
-        .filter(result::containsKey)
-        .findFirst();
+  private static Stream<OptionSpec> subCommandOptions(final CommandLine subcommand) {
+    return subcommand.getCommandSpec().options().stream();
+  }
+
+  private static String buildQualifiedOptionName(final OptionSpec optionSpec) {
+    return optionSpec.command().name() + "." + buildOptionName(optionSpec);
+  }
+
+  private static String buildOptionName(final OptionSpec optionSpec) {
+    return stripPrefix(optionSpec.longestName());
   }
 }
