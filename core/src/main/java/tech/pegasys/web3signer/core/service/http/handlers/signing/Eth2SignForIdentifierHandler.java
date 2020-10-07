@@ -77,12 +77,10 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                 if (slashingProtection.isPresent()) {
                   try {
                     if (maySign(Bytes.fromHexString(identifier), eth2SigningRequestBody)) {
-                      slashingMetrics.incrementSigningsPermitted(
-                          eth2SigningRequestBody.getType().name());
+                      slashingMetrics.incrementSigningsPermitted();
                       respondWithSignature(routingContext, signature);
                     } else {
-                      slashingMetrics.incrementSigningsPrevented(
-                          eth2SigningRequestBody.getType().name());
+                      slashingMetrics.incrementSigningsPrevented();
                       LOG.debug("Signing not allowed due to slashing protection rules failing");
                       routingContext.fail(403);
                     }

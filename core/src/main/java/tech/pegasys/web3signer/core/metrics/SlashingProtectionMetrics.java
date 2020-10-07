@@ -16,34 +16,31 @@ import static tech.pegasys.web3signer.slashingprotection.SlashingMetricCategory.
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
-import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 public class SlashingProtectionMetrics {
 
-  private final LabelledMetric<Counter> preventedSignings;
-  private final LabelledMetric<Counter> permittedSignings;
+  private final Counter preventedSignings;
+  private final Counter permittedSignings;
 
   public SlashingProtectionMetrics(final MetricsSystem metricsSystem) {
     this.permittedSignings =
-        metricsSystem.createLabelledCounter(
+        metricsSystem.createCounter(
             ETH2_SLASHING_PROTECTION,
             "permitted_signings",
-            "The number of slashing checks which have reported 'safe to sign'.",
-            "artifactType");
+            "The number of slashing checks which have reported 'safe to sign'.");
 
     this.preventedSignings =
-        metricsSystem.createLabelledCounter(
+        metricsSystem.createCounter(
             ETH2_SLASHING_PROTECTION,
             "prevented_signings",
-            "The number of slashing checks which have been prevented due violation of slashing conditions.",
-            "artifactType");
+            "The number of slashing checks which have been prevented due violation of slashing conditions.");
   }
 
-  public void incrementSigningsPrevented(final String artifactType) {
-    preventedSignings.labels(artifactType).inc();
+  public void incrementSigningsPrevented() {
+    preventedSignings.inc();
   }
 
-  public void incrementSigningsPermitted(final String artifactType) {
-    permittedSignings.labels(artifactType).inc();
+  public void incrementSigningsPermitted() {
+    permittedSignings.inc();
   }
 }
