@@ -7,7 +7,10 @@ orbs:
 executors:
   executor_med:  # 2cpu, 4G ram
     docker:
-      - image: circleci/openjdk:11.0.4-jdk-stretch
+      - image: circleci/openjdk:11.0.8-jdk-buster
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASSWORD      
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -16,7 +19,10 @@ executors:
 
   executor_large: # 4cpu, 8G ram
     docker:
-      - image: circleci/openjdk:11.0.4-jdk-stretch
+      - image: circleci/openjdk:11.0.8-jdk-buster
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASSWORD      
     resource_class: large
     working_directory: ~/project
     environment:
@@ -26,9 +32,15 @@ executors:
   executor_large_with_fc_devnet: # 4cpu, 8G ram
     docker:
       # Primary container
-      - image: circleci/openjdk:11.0.4-jdk-stretch
+      - image: circleci/openjdk:11.0.8-jdk-buster
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASSWORD      
       # Secondary container running lotus as devnet on port 7777
       - image: textile/lotus-devnet
+        auth:
+          username: $DOCKER_USER
+          password: $DOCKER_PASSWORD      
         environment:
           TEXLOTUSDEVNET_BIGSECTORS: false
     resource_class: large
@@ -213,6 +225,7 @@ jobs:
             docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
       - notify
+      
 
   publishOpenApiSpec:
     executor: executor_node
