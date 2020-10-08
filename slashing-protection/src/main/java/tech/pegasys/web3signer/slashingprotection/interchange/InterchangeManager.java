@@ -19,6 +19,4 @@ import java.io.OutputStream;
 public interface InterchangeManager {
 
   void exportTo(OutputStream out) throws IOException;
-
-  public void importFrom(InputStream in) throws IOException;
 }

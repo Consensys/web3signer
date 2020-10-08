@@ -12,6 +12,14 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.Jdbi;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -20,18 +28,6 @@ import tech.pegasys.web3signer.slashingprotection.interchange.model.InterchangeV
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata.Format;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedArtifacts;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
-import org.jdbi.v3.core.Jdbi;
 
 public class InterchangeV4Manager implements InterchangeManager {
 
@@ -64,100 +60,38 @@ public class InterchangeV4Manager implements InterchangeManager {
     mapper.writerWithDefaultPrettyPrinter().writeValue(out, toExport);
   }
 
-  @Override
-  public void importFrom(final InputStream in) throws IOException {
-    final InterchangeV4Format toImport = mapper.readValue(in, InterchangeV4Format.class);
-
-    validateMetaData(toImport.getMetdata());
-
-    toImport
-        .getSignedArtifacts()
-        .forEach(
-            artifact -> {
-              jdbi.useTransaction(
-                  h -> {
-                    final Validator validator =
-                        validatorsDao.insertIfNotExist(
-                            h, Bytes.fromHexString(artifact.getPublicKey()));
-
-                    artifact
-                        .getSignedAttestations()
-                        .forEach(
-                            sa ->
-                                signedAttestationsDao.insertAttestation(
-                                    h,
-                                    new tech.pegasys.web3signer.slashingprotection.dao
-                                        .SignedAttestation(
-                                        validator.getId(),
-                                        UInt64.fromHexString(sa.getSourceEpoch()),
-                                        UInt64.fromHexString(sa.getTargetEpoch()),
-                                        Bytes.fromHexString(sa.getSigningRoot()))));
-
-                    artifact
-                        .getSignedBlocks()
-                        .forEach(
-                            sb ->
-                                signedBlocksDao.insertBlockProposal(
-                                    h,
-                                    new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
-                                        validator.getId(),
-                                        UInt64.fromHexString(sb.getSlot()),
-                                        Bytes.fromHexString(sb.getSigningRoot()))));
-                  });
-            });
-  }
-
-  private void validateMetaData(final Metadata metdata) {
-    if (metdata.getFormatVersion() != 4) {
-      throw new RuntimeException("Web3signer can only accept version 4 of the interchange format");
-    }
-
-    if (metdata.getFormat() != Format.COMPLETE) {
-      throw new RuntimeException("Web3Signer can only read complete data sets (not minimal)");
-    }
-
-    // SHOULD validate the genesis root, but ... we don't really do that atm
-  }
-
   private List<SignedArtifacts> generateModelFromDatabase() {
-    return jdbi.inTransaction(
-        h -> {
-          final List<SignedArtifacts> result = Lists.newArrayList();
+    final List<SignedArtifacts> result = Lists.newArrayList();
+    jdbi.useTransaction(h ->
           validatorsDao
               .retrieveAllValidators(h)
-              .forEach(
-                  validator -> {
-                    final List<
-                            tech.pegasys.web3signer.slashingprotection.interchange.model
-                                .SignedBlock>
-                        blocks =
-                            signedBlocksDao.getAllBlockSignedBy(h, validator.getId()).stream()
-                                .map(
-                                    b ->
-                                        new tech.pegasys.web3signer.slashingprotection.interchange
-                                            .model.SignedBlock(
-                                            b.getSlot().toString(),
-                                            b.getSigningRoot().toHexString()))
-                                .collect(Collectors.toList());
-                    final List<
-                            tech.pegasys.web3signer.slashingprotection.interchange.model
-                                .SignedAttestation>
-                        attestations =
-                            signedAttestationsDao.getAllAttestationsSignedBy(h, validator.getId())
-                                .stream()
-                                .map(
-                                    a ->
-                                        new tech.pegasys.web3signer.slashingprotection.interchange
-                                            .model.SignedAttestation(
-                                            a.getSourceEpoch().toString(),
-                                            a.getTargetEpoch().toString(),
-                                            a.getSigningRoot().toHexString()))
-                                .collect(Collectors.toList());
-                    result.add(
-                        new SignedArtifacts(
-                            validator.getPublicKey().toHexString(), blocks, attestations));
-                  });
-          return result;
-        });
+              .forEach(validator -> result.add(extractSigningsFor(h, validator))));
+    return result;
   }
+
+  private SignedArtifacts extractSigningsFor(final Handle h, final Validator validator) {
+    final List<tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock>
+        blocks = signedBlocksDao.getAllBlockSignedBy(h, validator.getId()).stream().map(
+        b ->
+            new tech.pegasys.web3signer.slashingprotection.interchange
+                .model.SignedBlock(
+                b.getSlot().toString(),
+                b.getSigningRoot().toHexString()))
+        .collect(Collectors.toList());
+
+    final List<tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation>
+        attestations =
+        signedAttestationsDao.getAllAttestationsSignedBy(h, validator.getId()).stream()
+            .map(
+                a ->
+                    new tech.pegasys.web3signer.slashingprotection.interchange
+                        .model.SignedAttestation(
+                        a.getSourceEpoch().toString(),
+                        a.getTargetEpoch().toString(),
+                        a.getSigningRoot().toHexString()))
+            .collect(Collectors.toList());
+
+    return new SignedArtifacts(validator.getPublicKey().toHexString(), blocks, attestations);
+  }
+
 }

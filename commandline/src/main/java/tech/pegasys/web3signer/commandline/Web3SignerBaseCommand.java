@@ -18,6 +18,7 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
 import static tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
+import java.util.AbstractList;
 import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
@@ -182,7 +183,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   }
 
   @Override
-  public AllowListHostsProperty getHttpHostAllowList() {
+  public List<String> getHttpHostAllowList() {
     return httpHostAllowList;
   }
 

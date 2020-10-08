@@ -12,25 +12,28 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SignedBlock {
 
-  @JsonProperty("slot")
   public String slot;
-
-  @JsonProperty("signing_root")
   public String signingRoot;
 
-  public SignedBlock(final String slot, final String signingRoot) {
+  @JsonCreator
+  public SignedBlock(@JsonProperty(value = "slot", required = true) final String slot,
+      @JsonProperty(value = "signing_root", required = true) final String signingRoot) {
     this.slot = slot;
     this.signingRoot = signingRoot;
   }
 
+  @JsonGetter(value = "slot")
   public String getSlot() {
     return slot;
   }
 
+  @JsonGetter(value = "signing_root")
   public String getSigningRoot() {
     return signingRoot;
   }

@@ -29,6 +29,4 @@ public interface SlashingProtection {
   void registerValidators(List<Bytes> validators);
 
   void exportTo(OutputStream output);
-
-  void importFrom(InputStream input);
 }

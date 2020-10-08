@@ -4,9 +4,9 @@ import java.util
 import io.gatling.core.Predef.{rampUsersPerSec, _}
 import io.gatling.http.Predef._
 import org.apache.tuweni.bytes.Bytes
+import tech.pegasys.web3signer.MetadataFileHelpers
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder
 import tech.pegasys.web3signer.dsl.signer.Signer
-import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.concurrent.duration.DurationInt
