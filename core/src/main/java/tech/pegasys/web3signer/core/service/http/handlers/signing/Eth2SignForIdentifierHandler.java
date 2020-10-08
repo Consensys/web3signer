@@ -12,11 +12,13 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
+import tech.pegasys.teku.api.schema.BeaconBlock;
+import tech.pegasys.teku.core.signatures.SigningRootUtil;
+import tech.pegasys.teku.datastructures.state.ForkInfo;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
@@ -32,6 +34,7 @@ import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
 public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
@@ -70,13 +73,15 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         return;
       }
 
-      signerForIdentifier
-          .sign(normaliseIdentifier(identifier), eth2SigningRequestBody.getSigningRoot())
-          .ifPresentOrElse(
-              signature -> {
-                if (slashingProtection.isPresent()) {
+      if (slashingProtection.isPresent()) {
+        final Bytes signingRoot = signingRoot(eth2SigningRequestBody);
+        signerForIdentifier
+            .sign(normaliseIdentifier(identifier), signingRoot)
+            .ifPresentOrElse(
+                signature -> {
                   try {
-                    if (maySign(Bytes.fromHexString(identifier), eth2SigningRequestBody)) {
+                    if (maySign(
+                        Bytes.fromHexString(identifier), signingRoot, eth2SigningRequestBody)) {
                       slashingMetrics.incrementSigningsPermitted(
                           eth2SigningRequestBody.getType().name());
                       respondWithSignature(routingContext, signature);
@@ -89,14 +94,22 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                   } catch (final IllegalArgumentException e) {
                     handleInvalidRequest(routingContext, e);
                   }
-                } else {
-                  respondWithSignature(routingContext, signature);
-                }
-              },
-              () -> {
-                httpMetrics.getMissingSignerCounter().inc();
-                routingContext.fail(404);
-              });
+                },
+                () -> {
+                  httpMetrics.getMissingSignerCounter().inc();
+                  routingContext.fail(404);
+                });
+      } else {
+        // TODO handle signingRoot not existing
+        signerForIdentifier
+            .sign(normaliseIdentifier(identifier), eth2SigningRequestBody.getSigningRoot())
+            .ifPresentOrElse(
+                signature -> respondWithSignature(routingContext, signature),
+                () -> {
+                  httpMetrics.getMissingSignerCounter().inc();
+                  routingContext.fail(404);
+                });
+      }
     }
   }
 
@@ -107,32 +120,49 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   }
 
   private boolean maySign(
-      final Bytes publicKey, final Eth2SigningRequestBody eth2SigningRequestBody) {
-    checkArgument(eth2SigningRequestBody.getType() != null, "Type must be specified");
+      final Bytes publicKey,
+      final Bytes signingRoot,
+      final Eth2SigningRequestBody eth2SigningRequestBody) {
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
-        checkArgument(eth2SigningRequestBody.getSlot() != null, "Slot must be specified");
-        return slashingProtection
-            .get()
-            .maySignBlock(
-                publicKey,
-                eth2SigningRequestBody.getSigningRoot(),
-                eth2SigningRequestBody.getSlot());
+        final BeaconBlock beaconBlock = eth2SigningRequestBody.getBeaconBlock();
+        final UInt64 blockSlot = UInt64.valueOf(beaconBlock.slot.bigIntegerValue());
+        return slashingProtection.get().maySignBlock(publicKey, signingRoot, blockSlot);
       case ATTESTATION:
-        checkArgument(
-            eth2SigningRequestBody.getSourceEpoch() != null, "Source epoch must be specified");
-        checkArgument(
-            eth2SigningRequestBody.getTargetEpoch() != null, "Target epoch must be specified");
         return slashingProtection
             .get()
             .maySignAttestation(
                 publicKey,
-                eth2SigningRequestBody.getSigningRoot(),
-                eth2SigningRequestBody.getSourceEpoch(),
-                eth2SigningRequestBody.getTargetEpoch());
+                signingRoot,
+                toUInt64(eth2SigningRequestBody.getAttestationData().source.epoch),
+                toUInt64(eth2SigningRequestBody.getAttestationData().target.epoch));
       default:
         return true;
     }
+  }
+
+  private Bytes signingRoot(final Eth2SigningRequestBody eth2SigningRequestBody) {
+    switch (eth2SigningRequestBody.getType()) {
+      case BLOCK:
+        final BeaconBlock beaconBlock = eth2SigningRequestBody.getBeaconBlock();
+        return SigningRootUtil.signingRootForSignBlock(
+            beaconBlock.asInternalBeaconBlock(),
+            new ForkInfo(
+                eth2SigningRequestBody.getFork().asInternalFork(),
+                eth2SigningRequestBody.getGenesisValidatorsRoot()));
+      case ATTESTATION:
+        return SigningRootUtil.signingRootForSignAttestationData(
+            eth2SigningRequestBody.getAttestationData().asInternalAttestationData(),
+            new ForkInfo(
+                eth2SigningRequestBody.getFork().asInternalFork(),
+                eth2SigningRequestBody.getGenesisValidatorsRoot()));
+      default:
+        return eth2SigningRequestBody.getSigningRoot();
+    }
+  }
+
+  private UInt64 toUInt64(final tech.pegasys.teku.infrastructure.unsigned.UInt64 uInt64) {
+    return UInt64.valueOf(uInt64.bigIntegerValue());
   }
 
   private void respondWithSignature(final RoutingContext routingContext, final String signature) {

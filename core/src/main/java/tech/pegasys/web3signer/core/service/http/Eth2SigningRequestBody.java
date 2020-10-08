@@ -12,50 +12,61 @@
  */
 package tech.pegasys.web3signer.core.service.http;
 
+import tech.pegasys.teku.api.schema.AttestationData;
+import tech.pegasys.teku.api.schema.BeaconBlock;
+import tech.pegasys.teku.api.schema.Fork;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class Eth2SigningRequestBody {
 
   private final ArtifactType type;
+  private final BeaconBlock beaconBlock;
+  private final AttestationData attestationData;
+  private final Bytes32 genesisValidatorsRoot;
+  private final Fork fork;
   private final Bytes signingRoot;
-  private final UInt64 slot;
-  private final UInt64 sourceEpoch;
-  private final UInt64 targetEpoch;
 
   @JsonCreator
   public Eth2SigningRequestBody(
-      @JsonProperty(value = "signingRoot", required = true) final Bytes signingRoot,
-      @JsonProperty(value = "type") final ArtifactType type,
-      @JsonProperty(value = "slot") final UInt64 slot,
-      @JsonProperty(value = "sourceEpoch") final UInt64 sourceEpoch,
-      @JsonProperty(value = "targetEpoch") final UInt64 targetEpoch) {
+      @JsonProperty(value = "type", required = true) final ArtifactType type,
+      @JsonProperty(value = "genesisValidatorsRoot") final Bytes32 genesisValidatorsRoot,
+      @JsonProperty(value = "fork") final Fork fork,
+      @JsonProperty(value = "beaconBlock") final BeaconBlock beaconBlock,
+      @JsonProperty(value = "attestationData") final AttestationData attestationData,
+      @JsonProperty(value = "signingRoot") final Bytes signingRoot) {
     this.type = type;
+    this.genesisValidatorsRoot = genesisValidatorsRoot;
+    this.fork = fork;
+    this.beaconBlock = beaconBlock;
+    this.attestationData = attestationData;
     this.signingRoot = signingRoot;
-    this.slot = slot;
-    this.sourceEpoch = sourceEpoch;
-    this.targetEpoch = targetEpoch;
   }
 
   public ArtifactType getType() {
     return type;
   }
 
+  public Bytes32 getGenesisValidatorsRoot() {
+    return genesisValidatorsRoot;
+  }
+
+  public Fork getFork() {
+    return fork;
+  }
+
+  public BeaconBlock getBeaconBlock() {
+    return beaconBlock;
+  }
+
+  public AttestationData getAttestationData() {
+    return attestationData;
+  }
+
   public Bytes getSigningRoot() {
     return signingRoot;
-  }
-
-  public UInt64 getSlot() {
-    return slot;
-  }
-
-  public UInt64 getSourceEpoch() {
-    return sourceEpoch;
-  }
-
-  public UInt64 getTargetEpoch() {
-    return targetEpoch;
   }
 }

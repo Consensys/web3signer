@@ -12,6 +12,16 @@
  */
 package tech.pegasys.web3signer.core.service.http;
 
+import tech.pegasys.teku.api.schema.BLSSignature;
+import tech.pegasys.teku.provider.BLSSignatureDeserializer;
+import tech.pegasys.teku.provider.BLSSignatureSerializer;
+import tech.pegasys.teku.provider.Bytes32Deserializer;
+import tech.pegasys.teku.provider.Bytes4Deserializer;
+import tech.pegasys.teku.provider.Bytes4Serializer;
+import tech.pegasys.teku.provider.UInt64Deserializer;
+import tech.pegasys.teku.provider.UInt64Serializer;
+import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
+import tech.pegasys.web3signer.core.multikey.metadata.parser.SigningMetadataModule.Bytes32Serializer;
 import tech.pegasys.web3signer.core.service.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.core.service.JacksonSerializers.HexSerialiser;
 import tech.pegasys.web3signer.core.service.JacksonSerializers.StringUInt64Deserializer;
@@ -19,6 +29,7 @@ import tech.pegasys.web3signer.core.service.JacksonSerializers.StringUInt64Seria
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class SigningJsonRpcModule extends SimpleModule {
@@ -29,5 +40,14 @@ public class SigningJsonRpcModule extends SimpleModule {
     addSerializer(Bytes.class, new HexSerialiser());
     addDeserializer(UInt64.class, new StringUInt64Deserializer());
     addSerializer(UInt64.class, new StringUInt64Serialiser());
+    addDeserializer(
+        tech.pegasys.teku.infrastructure.unsigned.UInt64.class, new UInt64Deserializer());
+    addSerializer(tech.pegasys.teku.infrastructure.unsigned.UInt64.class, new UInt64Serializer());
+    addDeserializer(Bytes4.class, new Bytes4Deserializer());
+    addSerializer(Bytes4.class, new Bytes4Serializer());
+    addDeserializer(Bytes32.class, new Bytes32Deserializer());
+    addSerializer(Bytes32.class, new Bytes32Serializer());
+    addDeserializer(BLSSignature.class, new BLSSignatureDeserializer());
+    addSerializer(BLSSignature.class, new BLSSignatureSerializer());
   }
 }

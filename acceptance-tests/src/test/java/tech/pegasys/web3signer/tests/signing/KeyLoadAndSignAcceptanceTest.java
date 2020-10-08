@@ -168,7 +168,6 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
       return new JsonObject()
           .put("signingRoot", DATA.toHexString())
           .put("type", ArtifactType.BLOCK)
-          .put("slot", "8192")
           .toString();
     }
   }
