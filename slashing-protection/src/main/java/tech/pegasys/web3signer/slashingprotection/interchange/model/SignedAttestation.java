@@ -12,34 +12,35 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange.model;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SignedAttestation {
 
-  @JsonProperty("source_epoch")
   private final String sourceEpoch;
-
-  @JsonProperty("target_epoch")
   private final String targetEpoch;
-
-  @JsonProperty("signing_root")
   public String signingRoot;
 
   public SignedAttestation(
-      final String sourceEpoch, final String targetEpoch, final String signingRoot) {
+      @JsonProperty(value = "source_epoch", required = true) final String sourceEpoch,
+      @JsonProperty(value = "target_epoch", required = true) final String targetEpoch,
+      @JsonProperty(value="signing_root", required = true) final String signingRoot) {
     this.sourceEpoch = sourceEpoch;
     this.targetEpoch = targetEpoch;
     this.signingRoot = signingRoot;
   }
 
+  @JsonGetter(value = "source_epoch")
   public String getSourceEpoch() {
     return sourceEpoch;
   }
 
+  @JsonGetter(value = "target_epoch")
   public String getTargetEpoch() {
     return targetEpoch;
   }
 
+  @JsonGetter(value = "signing_root")
   public String getSigningRoot() {
     return signingRoot;
   }

@@ -14,6 +14,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
@@ -30,6 +32,7 @@ import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
@@ -62,7 +65,7 @@ public class InterchangeExport {
   }
 
   @Test
-  void canCreateDatabaseWithEntries(@TempDir Path testDir) throws IOException, URISyntaxException {
+  void canCreateDatabaseWithEntries() throws IOException, URISyntaxException {
     final EmbeddedPostgres db = setup();
 
     final String databaseUrl =
@@ -71,12 +74,25 @@ public class InterchangeExport {
     final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
 
     jdbi.useTransaction(
-        h -> validators.registerValidators(h, List.of(Bytes.fromHexString("0x01"))));
+        h -> {
+          validators.registerValidators(h, List.of(Bytes.fromHexString("0x01")));
+          validators.registerValidators(h, List.of(Bytes.fromHexString("0x02")));
+        });
 
+    final int TOTAL_BLOCKS_SIGNED = 6;
     jdbi.useTransaction(h -> {
-      for (int i = 0; i < 5; i++) {
+      for (int i = 0; i < TOTAL_BLOCKS_SIGNED; i++) {
         signedBlocks.insertBlockProposal(h,
-            new SignedBlock(1, UInt64.valueOf(i), Bytes.fromHexString("0x01")));
+            new SignedBlock((i % 2) + 1, UInt64.valueOf(i), Bytes.fromHexString("0x01")));
+      }
+    });
+
+    final int TOTAL_ATTESTATIONS_SIGNED = 8;
+    jdbi.useTransaction(h -> {
+      for (int i = 0; i < TOTAL_ATTESTATIONS_SIGNED; i++) {
+        signedAttestations.insertAttestation(h,
+            new SignedAttestation((i % 2) + 1, UInt64.valueOf(i), UInt64.valueOf(i),
+                Bytes.fromHexString("0x01")));
       }
     });
 
@@ -90,20 +106,18 @@ public class InterchangeExport {
 
     final InterchangeV4Format outputObject =
         mapper.readValue(exportOutput.toString(), InterchangeV4Format.class);
+
+    assertThat(outputObject.getSignedArtifacts()).hasSize(2);
+    assertThat(outputObject.getSignedArtifacts().get(0).getSignedBlocks())
+        .hasSize(TOTAL_BLOCKS_SIGNED / 2);
+    assertThat(outputObject.getSignedArtifacts().get(0).getSignedAttestations())
+        .hasSize(TOTAL_ATTESTATIONS_SIGNED / 2);
+    assertThat(outputObject.getSignedArtifacts().get(0).getPublicKey()).isEqualTo("0x01");
+    assertThat(outputObject.getSignedArtifacts().get(1).getSignedBlocks())
+        .hasSize(TOTAL_BLOCKS_SIGNED / 2);
+    assertThat(outputObject.getSignedArtifacts().get(1).getSignedAttestations())
+        .hasSize(TOTAL_ATTESTATIONS_SIGNED / 2);
+    assertThat(outputObject.getSignedArtifacts().get(1).getPublicKey()).isEqualTo("0x02");
+
   }
-//
-//  @Test
-//  public void testSlashing() {
-//    final EmbeddedPostgres db = setup();
-//    final String databaseUrl =
-//        String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-//    final SlashingProtection slashingProtection = SlashingProtectionFactory
-//        .createSlashingProtection(databaseUrl, "postgres", "postgres");
-//    final Jdbi jdbi = DbConnection.createConnection(
-//        slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
-//
-//    jdbi.insertcrap();
-//
-//    prot.maySignAttestation()
-//  }
 }
