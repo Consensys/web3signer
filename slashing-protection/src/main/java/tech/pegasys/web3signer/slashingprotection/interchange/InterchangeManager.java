@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 
 public interface InterchangeManager {

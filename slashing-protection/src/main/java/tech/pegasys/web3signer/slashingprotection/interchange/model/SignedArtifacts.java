@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 
 public class SignedArtifacts {
 
@@ -26,7 +26,8 @@ public class SignedArtifacts {
   public SignedArtifacts(
       @JsonProperty(value = "pubKey", required = true) final String publicKey,
       @JsonProperty(value = "signed_blocks", required = true) final List<SignedBlock> signedBlocks,
-      @JsonProperty(value = "signed_attestations", required = true) final List<SignedAttestation> signedAttestations) {
+      @JsonProperty(value = "signed_attestations", required = true)
+          final List<SignedAttestation> signedAttestations) {
     this.publicKey = publicKey;
     this.signedBlocks = signedBlocks;
     this.signedAttestations = signedAttestations;

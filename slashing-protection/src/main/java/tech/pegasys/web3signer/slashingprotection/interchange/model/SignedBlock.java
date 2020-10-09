@@ -22,7 +22,8 @@ public class SignedBlock {
   public String signingRoot;
 
   @JsonCreator
-  public SignedBlock(@JsonProperty(value = "slot", required = true) final String slot,
+  public SignedBlock(
+      @JsonProperty(value = "slot", required = true) final String slot,
       @JsonProperty(value = "signing_root", required = true) final String signingRoot) {
     this.slot = slot;
     this.signingRoot = signingRoot;

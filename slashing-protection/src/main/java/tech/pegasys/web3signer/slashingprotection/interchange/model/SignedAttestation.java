@@ -24,7 +24,7 @@ public class SignedAttestation {
   public SignedAttestation(
       @JsonProperty(value = "source_epoch", required = true) final String sourceEpoch,
       @JsonProperty(value = "target_epoch", required = true) final String targetEpoch,
-      @JsonProperty(value="signing_root", required = true) final String signingRoot) {
+      @JsonProperty(value = "signing_root", required = true) final String signingRoot) {
     this.sourceEpoch = sourceEpoch;
     this.targetEpoch = targetEpoch;
     this.signingRoot = signingRoot;

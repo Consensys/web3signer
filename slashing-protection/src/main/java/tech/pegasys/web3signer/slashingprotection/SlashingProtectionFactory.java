@@ -24,9 +24,10 @@ public class SlashingProtectionFactory {
       final String slashingProtectionDbUrl,
       final String slashingProtectionDbUser,
       final String slashingProtectionDbPassword) {
-      final Jdbi jdbi = DbConnection.createConnection(
-              slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
-      return createSlashingProtection(jdbi);
+    final Jdbi jdbi =
+        DbConnection.createConnection(
+            slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
+    return createSlashingProtection(jdbi);
   }
 
   private static SlashingProtection createSlashingProtection(final Jdbi jdbi) {

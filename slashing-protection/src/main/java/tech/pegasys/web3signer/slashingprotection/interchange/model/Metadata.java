@@ -31,7 +31,8 @@ public class Metadata {
   public Metadata(
       @JsonProperty(value = "interchange_format", required = true) final Format format,
       @JsonProperty(value = "interchange_version", required = true) final int formatVersion,
-      @JsonProperty(value = "genesis_validators_root", required = true) final String genesisValidatorsRoot) {
+      @JsonProperty(value = "genesis_validators_root", required = true)
+          final String genesisValidatorsRoot) {
     this.format = format;
     this.formatVersion = formatVersion;
     this.genesisValidatorsRoot = genesisValidatorsRoot;
