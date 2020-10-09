@@ -25,7 +25,6 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV4Manager;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,7 +43,6 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 public class DbSlashingProtection implements SlashingProtection {
-
   private static final Logger LOG = LogManager.getLogger();
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;

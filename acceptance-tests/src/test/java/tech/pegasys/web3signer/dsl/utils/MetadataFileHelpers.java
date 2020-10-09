@@ -13,8 +13,8 @@
 package tech.pegasys.web3signer.dsl.utils;
 
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
+import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
-import org.assertj.core.api.AssertionsForClassTypes;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.model.Cipher;
@@ -23,11 +23,11 @@ import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 import tech.pegasys.signers.bls.keystore.model.KdfParam;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
-import tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction;
 import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import tech.pegasys.signers.hashicorp.dsl.certificates.CertificateHelpers;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -41,7 +41,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 
 public class MetadataFileHelpers {
   private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
@@ -198,7 +197,7 @@ public class MetadataFileHelpers {
     try {
       Files.writeString(passwordFilePath, password);
     } catch (IOException e) {
-      AssertionsForClassTypes.fail("Unable to create password file", e);
+      fail("Unable to create password file", e);
     }
   }
 
@@ -211,14 +210,14 @@ public class MetadataFileHelpers {
     final KdfParam kdfParam =
         kdfFunctionType == KdfFunction.SCRYPT
             ? new SCryptParam(32, SALT)
-            : new Pbkdf2Param(32, 262144, Pbkdf2PseudoRandomFunction.HMAC_SHA256, SALT);
+            : new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
     final KeyStoreData keyStoreData =
         KeyStore.encrypt(privateKey, publicKey, password, "", kdfParam, cipher);
     try {
       KeyStoreLoader.saveToFile(keyStoreFilePath, keyStoreData);
     } catch (IOException e) {
-      AssertionsForClassTypes.fail("Unable to create keystore file", e);
+      fail("Unable to create keystore file", e);
     }
   }
 
@@ -226,7 +225,7 @@ public class MetadataFileHelpers {
     try {
       YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), signingMetadata);
     } catch (final IOException e) {
-      AssertionsForClassTypes.fail("Unable to create metadata file.", e);
+      fail("Unable to create metadata file.", e);
     }
   }
 }

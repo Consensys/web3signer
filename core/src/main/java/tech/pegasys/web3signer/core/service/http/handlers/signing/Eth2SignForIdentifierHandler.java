@@ -59,6 +59,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext routingContext) {
     try (final TimingContext ignored = httpMetrics.getSigningTimer().startTimer()) {
+      LOG.debug("{} || {}", routingContext.normalisedPath(), routingContext.getBody());
       final RequestParameters params = routingContext.get("parsedParameters");
       final String identifier = params.pathParameter("identifier").toString();
       final Eth2SigningRequestBody eth2SigningRequestBody;
@@ -93,7 +94,6 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                 }
               },
               () -> {
-                LOG.trace("Identifier not found {}", identifier);
                 httpMetrics.getMissingSignerCounter().inc();
                 routingContext.fail(404);
               });
@@ -102,7 +102,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private void handleInvalidRequest(final RoutingContext routingContext, final Exception e) {
     httpMetrics.getMalformedRequestCounter().inc();
-    LOG.debug("Invalid signing request", e);
+    LOG.debug("Invalid signing request - " + routingContext.getBodyAsString(), e);
     routingContext.fail(400);
   }
 

@@ -115,7 +115,7 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8))) {
       String line = in.readLine();
       while (line != null) {
-        PROCESS_LOG.info("Web3SignerProc: {}", line);
+        PROCESS_LOG.info(line);
         line = in.readLine();
       }
     } catch (final IOException e) {

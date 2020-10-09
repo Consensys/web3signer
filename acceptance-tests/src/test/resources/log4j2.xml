@@ -2,13 +2,28 @@
 <Configuration status="INFO">
   <Properties>
     <Property name="root.log.level">DEBUG</Property>
+    <Property name="dependency.log.level">WARN</Property>
   </Properties>
 
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | %t | %-5level | %c{1} | %msg%n" />    </Console>
+      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSSZZZ} | %t | %-5level | %c{1} | %msg%n" />
+    </Console>
+    <Console name="SubProcessConsole" target="SYSTEM_OUT">
+      <PatternLayout pattern="SubProcess | %msg%n" />
+    </Console>
   </Appenders>
   <Loggers>
+    <Logger name="tech.pegasys.web3signer.SubProcessLog" level="INFO" additivity="false">
+      <AppenderRef ref="SubProcessConsole" />
+    </Logger>
+    <Logger name="com.zaxxer.hikari" level="${dependency.log.level}" additivity="false"/>
+    <Logger name="org.flywaydb.core" level="${dependency.log.level}" additivity="false"/>
+    <Logger name="org.apache.http" level="${dependency.log.level}" additivity="false"/>
+    <Logger name="io.restassured.internal" level="${dependency.log.level}" additivity="false"/>
+    <Logger name="io.netty" level="${dependency.log.level}" additivity="false"/>
+    <Logger name="io.swagger.v3" level="${dependency.log.level}" additivity="false"/>
+    <Logger name="com.atlassian.oai" level="${dependency.log.level}" additivity="false"/>
     <Root level="${sys:root.log.level}">
       <AppenderRef ref="Console" />
     </Root>
