@@ -36,7 +36,6 @@ class InterlockSigningMetadataParsingTest {
     yaml.append("volume: armory").append(RET);
     yaml.append("password: usbarmory").append(RET);
     yaml.append("keyPath: /bls/key1.txt").append(RET);
-    yaml.append("keyType: BLS").append(RET);
 
     final SigningMetadata signingMetadata =
         OBJECT_MAPPER.readValue(yaml.toString(), SigningMetadata.class);
@@ -50,6 +49,30 @@ class InterlockSigningMetadataParsingTest {
     assertThat(metadata.getPassword()).isEqualTo("usbarmory");
     assertThat(metadata.getKeyPath()).isEqualTo(Path.of("/bls/key1.txt"));
     assertThat(metadata.getKeyType()).isEqualTo(KeyType.BLS);
+  }
+
+  @Test
+  void yamlParsingWithAllValuesWorks() throws IOException {
+    StringBuilder yaml = new StringBuilder("type: interlock").append(RET);
+    yaml.append("interlockUrl: https://10.0.0.1").append(RET);
+    yaml.append("knownServersFile: ./interlockKnownServersFile.txt").append(RET);
+    yaml.append("volume: armory").append(RET);
+    yaml.append("password: usbarmory").append(RET);
+    yaml.append("keyPath: /bls/key1.txt").append(RET);
+    yaml.append("keyType: SECP256K1").append(RET);
+
+    final SigningMetadata signingMetadata =
+        OBJECT_MAPPER.readValue(yaml.toString(), SigningMetadata.class);
+    assertThat(signingMetadata).isInstanceOf(InterlockSigningMetadata.class);
+
+    final InterlockSigningMetadata metadata = (InterlockSigningMetadata) signingMetadata;
+    assertThat(metadata.getInterlockUrl()).isEqualTo(URI.create("https://10.0.0.1"));
+    assertThat(metadata.getKnownServersFile())
+        .isEqualTo(Path.of("./interlockKnownServersFile.txt"));
+    assertThat(metadata.getVolume()).isEqualTo("armory");
+    assertThat(metadata.getPassword()).isEqualTo("usbarmory");
+    assertThat(metadata.getKeyPath()).isEqualTo(Path.of("/bls/key1.txt"));
+    assertThat(metadata.getKeyType()).isEqualTo(KeyType.SECP256K1);
   }
 
   @Test
