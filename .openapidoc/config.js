@@ -7,7 +7,7 @@ const distDir = process.env.OA_DIST_DIR || "./dist";
 const specDir =
   process.env.OA_SPEC_DIR || "../core/build/resources/main/openapi";
 const gitUrl =
-  process.env.OA_GIT_URL || "git@github.com:PegaSysEng/web3signer.git";
+  process.env.OA_GIT_URL || "git@github.com:ConsenSys/web3signer.git";
 const gitUserName = process.env.OA_GIT_USERNAME || "CircleCI Build";
 const gitEmail = process.env.OA_GIT_EMAIL || "ci-build@consensys.net";
 const branch = process.env.OA_GH_PAGES_BRANCH || "gh-pages";
