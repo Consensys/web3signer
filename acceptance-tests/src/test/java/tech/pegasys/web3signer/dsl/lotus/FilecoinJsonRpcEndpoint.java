@@ -49,7 +49,7 @@ public abstract class FilecoinJsonRpcEndpoint {
   private final JsonRpcClient jsonRpcClient;
   private final String rpcPath;
 
-  public FilecoinJsonRpcEndpoint(final String rpcPath) {
+  protected FilecoinJsonRpcEndpoint(final String rpcPath) {
     jsonRpcClient = new JsonRpcClient(this::executeRawJsonRpcRequest, OBJECT_MAPPER);
     this.rpcPath = rpcPath;
   }
