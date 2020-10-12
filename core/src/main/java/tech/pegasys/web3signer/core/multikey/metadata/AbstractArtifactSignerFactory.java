@@ -39,7 +39,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   final Path configsDirectory;
   final YubiHsmShellArgs yubiHsmShellArgs = new YubiHsmShellArgs();
 
-  public AbstractArtifactSignerFactory(
+  protected AbstractArtifactSignerFactory(
       final HashicorpConnectionFactory connectionFactory, final Path configsDirectory) {
     this.connectionFactory = connectionFactory;
     this.configsDirectory = configsDirectory;

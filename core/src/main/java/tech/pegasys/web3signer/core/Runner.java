@@ -71,7 +71,7 @@ public abstract class Runner implements Runnable {
 
   protected final Config config;
 
-  public Runner(final Config config) {
+  protected Runner(final Config config) {
     this.config = config;
   }
 

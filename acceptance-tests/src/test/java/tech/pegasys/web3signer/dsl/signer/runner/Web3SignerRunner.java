@@ -66,7 +66,7 @@ public abstract class Web3SignerRunner {
     }
   }
 
-  public Web3SignerRunner(final SignerConfiguration signerConfig) {
+  protected Web3SignerRunner(final SignerConfiguration signerConfig) {
     this.signerConfig = signerConfig;
     this.portsProperties = new Properties();
 
