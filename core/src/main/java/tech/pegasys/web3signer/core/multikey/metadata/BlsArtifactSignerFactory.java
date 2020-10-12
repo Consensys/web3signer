@@ -16,7 +16,6 @@ import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
@@ -26,6 +25,7 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import java.nio.file.Path;
 import java.util.function.Function;
 
+import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -39,11 +39,11 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
   private final Function<BLSKeyPair, ArtifactSigner> signerFactory;
 
   public BlsArtifactSignerFactory(
+      final Vertx vertx,
       final Path configsDirectory,
       final MetricsSystem metricsSystem,
-      final HashicorpConnectionFactory connectionFactory,
       final Function<BLSKeyPair, ArtifactSigner> signerFactory) {
-    super(connectionFactory, configsDirectory);
+    super(vertx, configsDirectory);
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
             Web3SignerMetricCategory.SIGNING,
@@ -94,6 +94,16 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final Bytes privateKeyBytes = extractBytesFromVault(yubiHsm2SigningMetadata);
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
+      return signerFactory.apply(keyPair);
+    }
+  }
+
+  @Override
+  public ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
+    try (TimingContext ignored = privateKeyRetrievalTimer.labels("interlock").startTimer()) {
+
+      final Bytes32 keyBytes = Bytes32.wrap(extractBytesFromInterlock(interlockSigningMetadata));
+      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(keyBytes));
       return signerFactory.apply(keyPair);
     }
   }

@@ -22,6 +22,9 @@ import tech.pegasys.signers.hashicorp.TrustStoreType;
 import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
+import tech.pegasys.signers.interlock.InterlockSession;
+import tech.pegasys.signers.interlock.InterlockSessionFactoryProvider;
+import tech.pegasys.signers.interlock.vertx.InterlockSessionFactoryImpl;
 import tech.pegasys.signers.yubihsm2.YubiHsm2;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -31,17 +34,19 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import com.google.common.io.Files;
+import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
 
-  final HashicorpConnectionFactory connectionFactory;
+  final Vertx vertx;
+  final HashicorpConnectionFactory hashicorpConnectionFactory;
   final Path configsDirectory;
   final YubiHsmShellArgs yubiHsmShellArgs = new YubiHsmShellArgs();
 
-  protected AbstractArtifactSignerFactory(
-      final HashicorpConnectionFactory connectionFactory, final Path configsDirectory) {
-    this.connectionFactory = connectionFactory;
+  protected AbstractArtifactSignerFactory(final Vertx vertx, final Path configsDirectory) {
+    this.vertx = vertx;
+    this.hashicorpConnectionFactory = new HashicorpConnectionFactory(vertx);
     this.configsDirectory = configsDirectory;
   }
 
@@ -67,7 +72,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
 
     try {
       final HashicorpConnection connection =
-          connectionFactory.create(
+          hashicorpConnectionFactory.create(
               new ConnectionParameters(
                   metadata.getServerHost(),
                   Optional.ofNullable(metadata.getServerPort()),
@@ -103,6 +108,19 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
     } catch (final RuntimeException e) {
       throw new SigningMetadataException(
           "Failed to fetch secret from YubiHSM2: " + e.getMessage(), e);
+    }
+  }
+
+  protected Bytes extractBytesFromInterlock(final InterlockSigningMetadata metadata) {
+    final InterlockSessionFactoryImpl interlockSessionFactory =
+        InterlockSessionFactoryProvider.newInstance(vertx, metadata.getKnownServersFile());
+    try (final InterlockSession session =
+        interlockSessionFactory.newSession(
+            metadata.getInterlockUrl(), metadata.getVolume(), metadata.getPassword())) {
+      return session.fetchKey(metadata.getKeyPath());
+    } catch (final RuntimeException e) {
+      throw new SigningMetadataException(
+          "Failed to fetch secret from Interlock: " + e.getMessage(), e);
     }
   }
 

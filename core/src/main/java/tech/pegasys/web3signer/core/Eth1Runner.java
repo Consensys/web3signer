@@ -17,7 +17,6 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
@@ -81,16 +80,10 @@ public class Eth1Runner extends Runner {
 
   private ArtifactSignerProvider loadSigners(final Config config, final Vertx vertx) {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
-    final HashicorpConnectionFactory hashicorpConnectionFactory =
-        new HashicorpConnectionFactory(vertx);
 
     final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            config.getKeyConfigPath(),
-            azureFactory,
-            EthSecpArtifactSigner::new,
-            true);
+            vertx, config.getKeyConfigPath(), azureFactory, EthSecpArtifactSigner::new, true);
 
     final Collection<ArtifactSigner> signers =
         SignerLoader.load(
