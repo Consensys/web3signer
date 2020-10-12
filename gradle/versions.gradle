@@ -17,10 +17,12 @@ dependencyManagement {
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.10.1'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.10.1'
 
-    dependency 'com.google.errorprone:error_prone_annotation:2.3.4'
-    dependency 'com.google.errorprone:error_prone_check_api:2.3.4'
-    dependency 'com.google.errorprone:error_prone_core:2.3.4'
-    dependency 'com.google.errorprone:error_prone_test_helpers:2.3.4'
+    dependencySet(group: 'com.google.errorprone', version: '2.4.0') {
+      entry 'error_prone_annotation'
+      entry 'error_prone_check_api'
+      entry 'error_prone_core'
+      entry 'error_prone_test_helpers'
+    }
 
     dependency 'com.google.guava:guava:28.2-jre'
 
