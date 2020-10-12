@@ -12,15 +12,18 @@
  */
 package tech.pegasys.web3signer.slashingprotection.dao;
 
+import java.util.Optional;
+
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class SignedAttestation {
+
   private int validatorId;
   private UInt64 sourceEpoch;
   private UInt64 targetEpoch;
-  private Bytes signingRoot;
+  private Optional<Bytes> signingRoot;
 
   // needed for JDBI bean mapping
   public SignedAttestation() {}
@@ -33,7 +36,7 @@ public class SignedAttestation {
     this.validatorId = validatorId;
     this.sourceEpoch = sourceEpoch;
     this.targetEpoch = targetEpoch;
-    this.signingRoot = signingRoot;
+    this.signingRoot = Optional.ofNullable(signingRoot);
   }
 
   public int getValidatorId() {
@@ -60,11 +63,11 @@ public class SignedAttestation {
     this.targetEpoch = targetEpoch;
   }
 
-  public Bytes getSigningRoot() {
+  public Optional<Bytes> getSigningRoot() {
     return signingRoot;
   }
 
-  public void setSigningRoot(final Bytes signingRoot) {
+  public void setSigningRoot(final Optional<Bytes> signingRoot) {
     this.signingRoot = signingRoot;
   }
 
