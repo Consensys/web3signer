@@ -1,0 +1,6 @@
+[submodule "slashing-protection/reference_tests/slashing-protection-interchange-tests"]
+	path = slashing-protection/reference_tests/slashing-protection-interchange-tests
+	url = git@github.com:eth2-clients/slashing-protection-interchange-tests.git
+[submodule "slashing-protection/referencetests/src/test/resources/slashing-protection-interchange-tests"]
+	path = slashing-protection/referencetests/src/test/resources/slashing-protection-interchange-tests
+	url = git@github.com:eth2-clients/slashing-protection-interchange-tests.git
