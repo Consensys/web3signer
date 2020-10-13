@@ -193,6 +193,20 @@ public class MetadataFileHelpers {
     createYamlFile(metadataFilePath, yaml);
   }
 
+  public void createInterlockYamlFileAt(
+      final Path metadataFilePath, final Path knownServersFile, final KeyType keyType) {
+    final Map<String, String> yaml = new HashMap<>();
+    yaml.put("type", "interlock");
+    yaml.put("interlockUrl", "https://10.0.0.1");
+    yaml.put("knownServersFile", knownServersFile.toString());
+    yaml.put("volume", "armory");
+    yaml.put("password", "usbarmory");
+    yaml.put("keyPath", "/bls/key1.txt");
+    yaml.put("keyType", keyType.name());
+
+    createYamlFile(metadataFilePath, yaml);
+  }
+
   private void createPasswordFile(final Path passwordFilePath, final String password) {
     try {
       Files.writeString(passwordFilePath, password);

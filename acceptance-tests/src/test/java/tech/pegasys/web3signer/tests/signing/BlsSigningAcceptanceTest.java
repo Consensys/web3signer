@@ -34,6 +34,7 @@ import java.util.Map;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -120,6 +121,17 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   public void ableToSignUsingYubiHsm() {
     final Path configFile = testDirectory.resolve("yubihsm_1.yaml");
     metadataFileHelpers.createYubiHsmYamlFileAt(configFile, KeyType.BLS);
+
+    signAndVerifySignature(yubiHsmShellEnvMap());
+  }
+
+  @Test
+  @Disabled("Requires access to Interlock on Armory II")
+  public void blsSingingUsingInterlock() {
+    final Path configFile = testDirectory.resolve("interlock_1.yaml");
+    final Path knownServersFile = testDirectory.resolve("interlockKnownServer.txt");
+
+    metadataFileHelpers.createInterlockYamlFileAt(configFile, knownServersFile, KeyType.BLS);
 
     signAndVerifySignature(yubiHsmShellEnvMap());
   }
