@@ -131,7 +131,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path configFile = testDirectory.resolve("interlock_1.yaml");
     final Path knownServersFile = testDirectory.resolve("interlockKnownServer.txt");
 
-    metadataFileHelpers.createInterlockYamlFileAt(configFile, knownServersFile, KeyType.BLS);
+    metadataFileHelpers.createInterlockYamlFileAt(
+        configFile, knownServersFile, Path.of("/bls/key1.txt"), KeyType.BLS);
 
     signAndVerifySignature(yubiHsmShellEnvMap());
   }

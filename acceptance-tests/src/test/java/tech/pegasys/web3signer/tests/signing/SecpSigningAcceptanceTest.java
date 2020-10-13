@@ -33,6 +33,7 @@ import java.util.Map;
 import com.google.common.io.Resources;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -129,6 +130,18 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   public void ableToSignUsingYubiHsm() {
     final Path configFile = testDirectory.resolve("yubihsm_2.yaml");
     metadataFileHelpers.createYubiHsmYamlFileAt(configFile, KeyType.SECP256K1);
+
+    signAndVerifySignature(yubiHsmShellEnvMap());
+  }
+
+  @Test
+  @Disabled("Requires access to Interlock on Armory II")
+  public void secpSingingUsingInterlock() {
+    final Path configFile = testDirectory.resolve("interlock_2.yaml");
+    final Path knownServersFile = testDirectory.resolve("interlockKnownServer.txt");
+
+    metadataFileHelpers.createInterlockYamlFileAt(
+        configFile, knownServersFile, Path.of("/secp/key1.txt"), KeyType.SECP256K1);
 
     signAndVerifySignature(yubiHsmShellEnvMap());
   }
