@@ -37,7 +37,11 @@ dependencyManagement {
       entry 'vertx-web-client'
       entry 'vertx-web'
       entry 'vertx-web-api-contract'
+      entry 'vertx-micrometer-metrics'
     }
+
+    dependency 'io.micrometer:micrometer-registry-prometheus:1.5.5'
+
 
     dependency 'javax.activation:activation:1.1.1'
 

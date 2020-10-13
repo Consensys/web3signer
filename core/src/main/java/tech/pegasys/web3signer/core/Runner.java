@@ -41,6 +41,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -51,6 +52,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.PrometheusScrapingHandler;
+import io.vertx.micrometer.VertxPrometheusOptions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -91,7 +95,16 @@ public abstract class Runner implements Runnable {
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
 
-    final Vertx vertx = Vertx.vertx();
+    final VertxOptions vertxOptions = new VertxOptions();
+    if (config.isMetricsEnabled()) {
+      vertxOptions.setMetricsOptions(
+          new MicrometerMetricsOptions()
+              .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
+              .setEnabled(true));
+    }
+
+    final Vertx vertx = Vertx.vertx(vertxOptions);
+
     final LogErrorHandler errorHandler = new LogErrorHandler();
 
     try {
@@ -104,6 +117,10 @@ public abstract class Runner implements Runnable {
       final Context context = new Context(routerFactory, metricsSystem, errorHandler, vertx);
       final Router router = populateRouter(context);
       registerSwaggerUIRoute(router); // serve static openapi spec
+
+      if (config.isMetricsEnabled()) {
+        registerVertxMetrics(router);
+      }
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info(
@@ -185,6 +202,10 @@ public abstract class Runner implements Runnable {
         .produces(CONTENT_TYPE_TEXT_HTML)
         .handler(ResponseContentTypeHandler.create())
         .handler(routingContext -> routingContext.response().end(indexHtml));
+  }
+
+  private void registerVertxMetrics(final Router router) {
+    router.route("/metrics/vertx").handler(PrometheusScrapingHandler.create());
   }
 
   private HttpServer createServerAndWait(

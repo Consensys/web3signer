@@ -24,6 +24,9 @@ dependencies {
   implementation 'commons-io:commons-io'
   implementation 'commons-lang:commons-lang'
 
+  compile 'io.vertx:vertx-micrometer-metrics:3.9.3'
+  compile 'io.micrometer:micrometer-registry-prometheus:1.5.5'
+
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-net'
   implementation 'org.web3j:core'
