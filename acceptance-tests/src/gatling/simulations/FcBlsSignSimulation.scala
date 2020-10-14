@@ -24,7 +24,7 @@ class FcBlsSignSimulation extends Simulation {
     runner.shutdown()
   }
 
-  private val httpProtocol = http.baseUrl(runner.getUrl())
+  private val httpProtocol = http.baseUrl(runner.getUrl)
   private val addresses: util.List[String] = runner.walletList()
   private val feeder = addresses.asScala.map(a => Map("address" -> a,
     "data" -> Bytes.random(64).toHexString)).toArray.random
