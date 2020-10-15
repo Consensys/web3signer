@@ -48,6 +48,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("ConstantConditions")
 public class DbSlashingProtectionTest {
+
   private static final int VALIDATOR_ID = 1;
   private static final UInt64 SLOT = UInt64.valueOf(2);
   private static final Bytes PUBLIC_KEY1 = Bytes.of(42);
@@ -266,5 +267,28 @@ public class DbSlashingProtectionTest {
     verify(validatorsDao)
         .retrieveValidators(any(), eq(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3)));
     verify(validatorsDao).registerValidators(any(), eq(List.of(PUBLIC_KEY2, PUBLIC_KEY3)));
+  }
+
+  @Test
+  public void slashingProtectionEnactedIfAttestationWithNullSigningRootExists() {
+    when(signedAttestationsDao.findExistingAttestation(any(), anyInt(), any()))
+        .thenReturn(
+            Optional.of(new SignedAttestation(1, UInt64.valueOf(1), UInt64.valueOf(2), null)));
+
+    final boolean result =
+        dbSlashingProtection.maySignAttestation(
+            PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH);
+
+    assertThat(result).isFalse();
+  }
+
+  @Test
+  public void slashingProtectionEnactedIfBlockWithNullSigningRootExists() {
+    when(signedBlocksDao.findExistingBlock(any(), anyInt(), any()))
+        .thenReturn(Optional.of(new SignedBlock(1, UInt64.valueOf(1), null)));
+
+    final boolean result = dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT);
+
+    assertThat(result).isFalse();
   }
 }

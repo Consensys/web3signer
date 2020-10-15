@@ -148,7 +148,7 @@ This facilitates social contribution, easy testing, and peer review.
 
 To contribute changes, use the following workflow:
 
-1. [**Fork the repository**](https://github.com/PegaSysEng/web3signer/fork).
+1. [**Fork the repository**](https://github.com/ConsenSys/web3signer/fork).
 1. **Clone your fork** to your computer.
 1. **Create a topic branch** and name it appropriately.
 Starting the branch name with the issue number is a good practice and a reminder to fix only one issue in a 
@@ -244,7 +244,7 @@ These are not strictly enforced during the build, but should be adhered to and c
 
 [private-quorum@consensys.net]: mailto:private-quorum@consensys.net
 [Discord]: https://discord.gg/KMh2Mjh
-[GitHub]: https://github.com/PegaSysEng/web3signer
+[GitHub]: https://github.com/ConsenSys/web3signer
 [Web3Signer documentation]: https://doc.eth2signer.pegasys.tech/en/latest/
 [CLA.md]: /CLA.md
 [Code Reviews]: /community/code-reviews.md

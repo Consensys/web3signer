@@ -33,7 +33,9 @@ public class ColumnMappers {
       }
 
       return Optional.of(
-          (ColumnMapper<Bytes>) (r, columnNumber, ctx) -> Bytes.wrap(r.getBytes(columnNumber)));
+          (ColumnMapper<Bytes>)
+              (r, columnNumber, ctx) ->
+                  r.getBytes(columnNumber) == null ? null : Bytes.wrap(r.getBytes(columnNumber)));
     }
   }
 

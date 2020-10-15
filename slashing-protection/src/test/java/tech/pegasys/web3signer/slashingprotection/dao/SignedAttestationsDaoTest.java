@@ -163,6 +163,20 @@ public class SignedAttestationsDaoTest {
         .isEmpty();
   }
 
+  @Test
+  public void canCreateAttestationsWithNoSigningRoot() {
+    validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
+    final SignedAttestation attestation =
+        new SignedAttestation(1, UInt64.valueOf(3), UInt64.valueOf(4), null);
+    signedAttestationsDao.insertAttestation(handle, attestation);
+
+    final Optional<SignedAttestation> existingAttestation =
+        signedAttestationsDao.findExistingAttestation(handle, 1, UInt64.valueOf(4));
+
+    assertThat(existingAttestation).isNotEmpty();
+    assertThat(existingAttestation.get().getSigningRoot()).isEmpty();
+  }
+
   private void insertAttestation(
       final Handle h,
       final Bytes publicKey,

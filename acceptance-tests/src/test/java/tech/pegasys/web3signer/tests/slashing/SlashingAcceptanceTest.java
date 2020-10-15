@@ -41,13 +41,13 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   final List<String> attestationSlashingMetrics =
       List.of(
-          "eth2_slashingprotection_permitted_signings{artifactType=\"ATTESTATION\",}",
-          "eth2_slashingprotection_prevented_signings{artifactType=\"ATTESTATION\",}");
+          "eth2_slashingprotection_permitted_signings",
+          "eth2_slashingprotection_prevented_signings");
 
   final List<String> blockSlashingMetrics =
       List.of(
-          "eth2_slashingprotection_permitted_signings{artifactType=\"BLOCK\",}",
-          "eth2_slashingprotection_prevented_signings{artifactType=\"BLOCK\",}");
+          "eth2_slashingprotection_permitted_signings",
+          "eth2_slashingprotection_prevented_signings");
 
   void setupSigner(final Path testDirectory, final boolean enableSlashing) {
     final SignerConfigurationBuilder builder =
@@ -84,13 +84,15 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
     assertThat(signer.getMetricsMatching(attestationSlashingMetrics))
-        .containsOnly(attestationSlashingMetrics.get(0) + " 1.0");
+        .containsOnly(
+            attestationSlashingMetrics.get(0) + " 1.0", attestationSlashingMetrics.get(1) + " 0.0");
 
     final Response secondResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
 
     assertThat(signer.getMetricsMatching(attestationSlashingMetrics))
-        .containsOnly(attestationSlashingMetrics.get(0) + " 2.0");
+        .containsOnly(
+            attestationSlashingMetrics.get(0) + " 2.0", attestationSlashingMetrics.get(1) + " 0.0");
   }
 
   @Test
@@ -111,7 +113,8 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
     assertThat(signer.getMetricsMatching(attestationSlashingMetrics))
-        .containsOnly(attestationSlashingMetrics.get(0) + " 1.0");
+        .containsOnly(
+            attestationSlashingMetrics.get(0) + " 1.0", attestationSlashingMetrics.get(1) + " 0.0");
 
     final Eth2SigningRequestBody secondRequest =
         new Eth2SigningRequestBody(
@@ -203,12 +206,12 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
     assertThat(signer.getMetricsMatching(blockSlashingMetrics))
-        .containsOnly(blockSlashingMetrics.get(0) + " 1.0");
+        .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 0.0");
 
     final Response secondResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
     assertThat(signer.getMetricsMatching(blockSlashingMetrics))
-        .containsOnly(blockSlashingMetrics.get(0) + " 2.0");
+        .containsOnly(blockSlashingMetrics.get(0) + " 2.0", blockSlashingMetrics.get(1) + " 0.0");
   }
 
   @Test
@@ -224,7 +227,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
         signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
     assertThat(signer.getMetricsMatching(blockSlashingMetrics))
-        .containsOnly(blockSlashingMetrics.get(0) + " 1.0");
+        .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 0.0");
 
     final Eth2SigningRequestBody secondRequest =
         new Eth2SigningRequestBody(

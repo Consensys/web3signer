@@ -43,6 +43,7 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 public class DbSlashingProtection implements SlashingProtection {
+
   private static final Logger LOG = LogManager.getLogger();
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
@@ -125,7 +126,15 @@ public class DbSlashingProtection implements SlashingProtection {
     final Optional<SignedAttestation> existingAttestation =
         signedAttestationsDao.findExistingAttestation(h, validatorId, targetEpoch);
     if (existingAttestation.isPresent()) {
-      if (!existingAttestation.get().getSigningRoot().equals(signingRoot)) {
+      if (existingAttestation.get().getSigningRoot().isEmpty()) {
+        LOG.warn(
+            "Existing signed attestation ({}, {}, {}) exists with no signing root",
+            publicKey,
+            existingAttestation.get().getSourceEpoch(),
+            existingAttestation.get().getTargetEpoch());
+        return false;
+      }
+      if (!existingAttestation.get().getSigningRoot().get().equals(signingRoot)) {
         LOG.warn(
             "Detected double signed attestation {} for {}", existingAttestation.get(), publicKey);
         return false;
@@ -194,7 +203,13 @@ public class DbSlashingProtection implements SlashingProtection {
       final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
       signedBlocksDao.insertBlockProposal(handle, signedBlock);
       return true;
-    } else if (existingBlock.get().getSigningRoot().equals(signingRoot)) {
+    } else if (existingBlock.get().getSigningRoot().isEmpty()) {
+      LOG.warn(
+          "Signed block ({}, {}) exists with no signing root",
+          publicKey,
+          existingBlock.get().getSlot());
+      return false;
+    } else if (existingBlock.get().getSigningRoot().get().equals(signingRoot)) {
       // same slot and signing_root is allowed for broadcasting previously signed block
       return true;
     } else {

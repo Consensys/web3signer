@@ -9,7 +9,7 @@ Web3Signer issues are tracked in GitHub.
 See our [contribution guidelines](CONTRIBUTING.md) for more detail on searching and creating issues.
 
 ## API
-* [API Documentation](https://pegasyseng.github.io/web3signer/)
+* [API Documentation](https://consensys.github.io/web3signer/)
 
 ## Users
 * [User documentation](https://docs.web3signer.consensys.net/)

@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * </code>
  */
 public class LotusNode extends FilecoinJsonRpcEndpoint {
-  private static final String FC_URL_FORMAT = "http://%s:%d";
 
   private final String fcUrl;
   public static final ObjectMapper OBJECT_MAPPER =
@@ -38,7 +37,7 @@ public class LotusNode extends FilecoinJsonRpcEndpoint {
 
   public LotusNode(final String host, final int port) {
     super("/rpc/v0");
-    fcUrl = String.format(FC_URL_FORMAT, host, port);
+    fcUrl = String.format("http://%s:%d", host, port);
   }
 
   public LotusNode(final int port) {
