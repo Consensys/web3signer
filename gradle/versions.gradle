@@ -96,7 +96,7 @@ dependencyManagement {
       entry 'acceptance-tests'
     }
 
-    dependency 'com.atlassian.oai:swagger-request-validator-restassured:2.10.0'
+    dependency 'io.rest-assured:rest-assured:4.3.1'
     dependency 'org.zeroturnaround:zt-exec:1.11'
     dependency 'org.web3j:core:4.5.14'
 

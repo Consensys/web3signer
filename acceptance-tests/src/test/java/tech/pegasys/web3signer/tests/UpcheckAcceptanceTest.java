@@ -28,7 +28,6 @@ public class UpcheckAcceptanceTest extends AcceptanceTestBase {
 
     given()
         .baseUri(signer.getUrl())
-        .filter(signer.getOpenApiValidationFilter())
         .get("/upcheck")
         .then()
         .statusCode(200)

@@ -46,7 +46,7 @@ dependencies {
   testImplementation 'tech.pegasys.teku.internal:datastructures'
   testImplementation 'tech.pegasys.teku.internal:serializer'
   testImplementation 'tech.pegasys.teku.internal:unsigned'
-  testImplementation 'com.atlassian.oai:swagger-request-validator-restassured'
+  testImplementation 'io.rest-assured:rest-assured'
   testImplementation 'org.web3j:core'
   testImplementation 'org.apache.tuweni:tuweni-bytes'
   testImplementation 'com.github.arteam:simple-json-rpc-server'
