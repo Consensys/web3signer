@@ -15,19 +15,21 @@ package tech.pegasys.web3signer.tests.signing;
 import static io.restassured.RestAssured.given;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
+import static tech.pegasys.web3signer.dsl.signer.Signer.ETH_2_INTERFACE_OBJECT_MAPPER;
 
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.teku.bls.BLSSignature;
-import tech.pegasys.web3signer.core.service.http.ArtifactType;
+import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
+import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.nio.file.Path;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
@@ -44,23 +46,22 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  private static final BLSSecretKey key =
+  private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
+  private static final BLSSecretKey BLS_SECRET_KEY =
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
-  private static final BLSKeyPair keyPair = new BLSKeyPair(key);
-  private static final BLSPublicKey publicKey = keyPair.getPublicKey();
-  private static final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), DATA);
+  private static final BLSKeyPair BLS_KEY_PAIR = new BLSKeyPair(BLS_SECRET_KEY);
+  private static final BLSPublicKey PUBLIC_KEY = BLS_KEY_PAIR.getPublicKey();
 
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
-  public void receiveA404IfRequestedKeyDoesNotExist(final KeyType keyType) {
+  public void receiveA404IfRequestedKeyDoesNotExist(final KeyType keyType)
+      throws JsonProcessingException {
     setupSigner(keyType == KeyType.BLS ? "eth2" : "eth1");
     final String body = createBody(keyType);
     given()
         .baseUri(signer.getUrl())
-        .filter(signer.getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
-        .pathParam("identifier", keyPair.getPublicKey().toString())
+        .pathParam("identifier", BLS_KEY_PAIR.getPublicKey().toString())
         .body(body)
         .when()
         .post(Signer.signPath(keyType))
@@ -73,9 +74,9 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   @NullSource
   @ValueSource(strings = {"zzzddd"})
   public void receiveA400IfDataIsNotValid(final String data) {
-    final String configFilename = publicKey.toString().substring(2);
+    final String configFilename = PUBLIC_KEY.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner("eth2");
 
@@ -83,7 +84,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     given()
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
-        .pathParam("identifier", keyPair.getPublicKey().toString())
+        .pathParam("identifier", BLS_KEY_PAIR.getPublicKey().toString())
         .body(new JsonObject().put("signingRoot", data).toString())
         .when()
         .post(Signer.signPath(KeyType.BLS))
@@ -94,9 +95,9 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
 
   @Test
   public void receiveA400IfDataIsMissingFromJsonBody() {
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final String configFilename = BLS_KEY_PAIR.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner("eth2");
 
@@ -104,7 +105,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     given()
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
-        .pathParam("identifier", keyPair.getPublicKey().toString())
+        .pathParam("identifier", BLS_KEY_PAIR.getPublicKey().toString())
         .body("{\"invalid\": \"json body\"}")
         .when()
         .post(Signer.signPath(KeyType.BLS))
@@ -115,9 +116,9 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
 
   @Test
   public void receiveA400IfJsonBodyIsMalformed() {
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final String configFilename = BLS_KEY_PAIR.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner("eth2");
 
@@ -125,7 +126,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     given()
         .baseUri(signer.getUrl())
         .contentType(ContentType.JSON)
-        .pathParam("identifier", keyPair.getPublicKey().toString())
+        .pathParam("identifier", BLS_KEY_PAIR.getPublicKey().toString())
         .body("not a json body")
         .when()
         .post(Signer.signPath(KeyType.BLS))
@@ -135,40 +136,39 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  public void unusedFieldsInRequestDoesNotAffectSigning() {
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+  public void unusedFieldsInRequestDoesNotAffectSigning() throws JsonProcessingException {
+    final String configFilename = BLS_KEY_PAIR.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupSigner("eth2");
 
+    final Eth2SigningRequestBody blockRequest = Eth2RequestUtils.createBlockRequest();
+    final JsonObject jsonObject =
+        new JsonObject(ETH_2_INTERFACE_OBJECT_MAPPER.writeValueAsString(blockRequest));
+    final String body = jsonObject.put("unknownField", "someValue").toString();
+    final String expectedSignature =
+        BLS.sign(BLS_KEY_PAIR.getSecretKey(), blockRequest.getSigningRoot()).toString();
+
     given()
         .baseUri(signer.getUrl())
-        .filter(signer.getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
-        .pathParam("identifier", keyPair.getPublicKey().toString())
-        .body(
-            new JsonObject()
-                .put("signingRoot", DATA.toHexString())
-                .put("type", ArtifactType.RANDAO_REVEAL)
-                .put("unknownField", "someValue")
-                .toString())
+        .pathParam("identifier", BLS_KEY_PAIR.getPublicKey().toString())
+        .body(body)
         .when()
         .post(Signer.signPath(KeyType.BLS))
         .then()
         .assertThat()
         .statusCode(200)
-        .body(equalToIgnoringCase(expectedSignature.toString()));
+        .body(equalToIgnoringCase(expectedSignature));
   }
 
-  private String createBody(final KeyType keyType) {
+  private String createBody(final KeyType keyType) throws JsonProcessingException {
     if (keyType == KeyType.SECP256K1) {
       return new JsonObject().put("data", DATA.toHexString()).toString();
     } else {
-      return new JsonObject()
-          .put("signingRoot", DATA.toHexString())
-          .put("type", ArtifactType.BLOCK)
-          .toString();
+      return ETH_2_INTERFACE_OBJECT_MAPPER.writeValueAsString(
+          Eth2RequestUtils.createBlockRequest());
     }
   }
 }

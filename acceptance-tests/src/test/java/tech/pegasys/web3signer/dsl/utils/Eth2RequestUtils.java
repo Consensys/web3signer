@@ -71,6 +71,10 @@ public class Eth2RequestUtils {
         null);
   }
 
+  public static Eth2SigningRequestBody createBlockRequest() {
+    return createBlockRequest(UInt64.ZERO, Bytes32.fromHexString("0x"));
+  }
+
   public static Eth2SigningRequestBody createBlockRequest(
       final UInt64 slot, final Bytes32 stateRoot) {
     final Fork fork =

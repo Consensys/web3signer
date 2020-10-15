@@ -57,6 +57,10 @@ public class Signer extends FilecoinJsonRpcEndpoint {
       "/api/v1/eth2/sign/{identifier}"; // using bls keys
   public static final String ETH1_PUBLIC_KEYS = "/api/v1/eth1/publicKeys"; // secp keys
   public static final String ETH2_PUBLIC_KEYS = "/api/v1/eth2/publicKeys"; // bls keys
+  public static final ObjectMapper ETH_2_INTERFACE_OBJECT_MAPPER =
+      new ObjectMapper()
+          .registerModule(new SigningJsonRpcModule())
+          .setSerializationInclusion(Include.NON_NULL);
   private static final String METRICS_ENDPOINT = "/metrics";
 
   private final Web3SignerRunner runner;
@@ -64,7 +68,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   private final Vertx vertx;
   private final String urlFormatting;
   private final Optional<ClientTlsConfig> clientTlsConfig;
-  private final ObjectMapper eth2InterfaceObjectMapper;
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
     super(JSON_RPC_PATH + "/filecoin");
@@ -74,10 +77,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         signerConfig.getServerTlsOptions().isPresent() ? "https://%s:%s" : "http://%s:%s";
     this.clientTlsConfig = Optional.ofNullable(clientTlsConfig);
     vertx = Vertx.vertx();
-    eth2InterfaceObjectMapper =
-        new ObjectMapper()
-            .registerModule(new SigningJsonRpcModule())
-            .setSerializationInclusion(Include.NON_NULL);
   }
 
   public void start() {
@@ -137,7 +136,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         .baseUri(getUrl())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
-        .body(eth2InterfaceObjectMapper.writeValueAsString(ethSignBody))
+        .body(ETH_2_INTERFACE_OBJECT_MAPPER.writeValueAsString(ethSignBody))
         .post(signPath(KeyType.BLS));
   }
 
