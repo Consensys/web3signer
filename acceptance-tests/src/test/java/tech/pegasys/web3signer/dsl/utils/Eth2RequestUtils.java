@@ -22,11 +22,11 @@ import tech.pegasys.teku.api.schema.Checkpoint;
 import tech.pegasys.teku.api.schema.Eth1Data;
 import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
-import tech.pegasys.teku.datastructures.state.ForkInfo;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -35,15 +35,7 @@ public class Eth2RequestUtils {
 
   public static Eth2SigningRequestBody createAttestationRequest(
       final int sourceEpoch, final int targetEpoch, final UInt64 slot) {
-    // TODO remove duplication of forkInfo
-    final Fork fork =
-        new Fork(
-            Bytes4.fromHexString("0x00000001"),
-            Bytes4.fromHexString("0x00000001"),
-            UInt64.valueOf(1));
-    final Bytes32 genesisValidatorsRoot =
-        Bytes32.fromHexString("0x270d43e74ce340de4bca2b1936beca0f4f5408d9e78aec4850920baf659d5b69");
-    final ForkInfo forkInfo = new ForkInfo(fork.asInternalFork(), genesisValidatorsRoot);
+    final ForkInfo forkInfo = forkInfo();
     final AttestationData attestationData =
         new AttestationData(
             UInt64.valueOf(32),
@@ -57,12 +49,11 @@ public class Eth2RequestUtils {
                     "0xb2eedb01adbd02c828d5eec09b4c70cbba12ffffba525ebf48aca33028e8ad89")));
     final Bytes signingRoot =
         SigningRootUtil.signingRootForSignAttestationData(
-            attestationData.asInternalAttestationData(), forkInfo);
+            attestationData.asInternalAttestationData(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.ATTESTATION,
         signingRoot,
-        genesisValidatorsRoot,
-        fork,
+        forkInfo,
         null,
         attestationData,
         null,
@@ -77,14 +68,7 @@ public class Eth2RequestUtils {
 
   public static Eth2SigningRequestBody createBlockRequest(
       final UInt64 slot, final Bytes32 stateRoot) {
-    final Fork fork =
-        new Fork(
-            Bytes4.fromHexString("0x00000001"),
-            Bytes4.fromHexString("0x00000001"),
-            UInt64.valueOf(1));
-    final Bytes32 genesisValidatorsRoot =
-        Bytes32.fromHexString("0x270d43e74ce340de4bca2b1936beca0f4f5408d9e78aec4850920baf659d5b69");
-    final ForkInfo forkInfo = new ForkInfo(fork.asInternalFork(), genesisValidatorsRoot);
+    final ForkInfo forkInfo = forkInfo();
     final BeaconBlock block =
         new BeaconBlock(
             slot,
@@ -109,17 +93,20 @@ public class Eth2RequestUtils {
                 emptyList(),
                 emptyList()));
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignBlock(block.asInternalBeaconBlock(), forkInfo);
+        SigningRootUtil.signingRootForSignBlock(
+            block.asInternalBeaconBlock(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
-        ArtifactType.BLOCK,
-        signingRoot,
-        genesisValidatorsRoot,
-        fork,
-        block,
-        null,
-        null,
-        null,
-        null,
-        null);
+        ArtifactType.BLOCK, signingRoot, forkInfo, block, null, null, null, null, null);
+  }
+
+  private static ForkInfo forkInfo() {
+    final Fork fork =
+        new Fork(
+            Bytes4.fromHexString("0x00000001"),
+            Bytes4.fromHexString("0x00000001"),
+            UInt64.valueOf(1));
+    final Bytes32 genesisValidatorsRoot =
+        Bytes32.fromHexString("0x270d43e74ce340de4bca2b1936beca0f4f5408d9e78aec4850920baf659d5b69");
+    return new ForkInfo(fork, genesisValidatorsRoot);
   }
 }

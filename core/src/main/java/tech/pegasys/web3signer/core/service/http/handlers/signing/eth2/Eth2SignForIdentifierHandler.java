@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http.handlers.signing;
+package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
@@ -19,9 +19,8 @@ import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentif
 
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
-import tech.pegasys.teku.datastructures.state.ForkInfo;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
@@ -74,22 +73,20 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         return;
       }
 
-      final Bytes calculatedSigningRoot = signingRoot(eth2SigningRequestBody);
+      final Bytes signingRoot = signingRoot(eth2SigningRequestBody);
       checkArgument(
-          eth2SigningRequestBody.getSigningRoot().equals(calculatedSigningRoot),
+          eth2SigningRequestBody.getSigningRoot().equals(signingRoot),
           "Signing root %s must match signing computed signing root %s from data",
           eth2SigningRequestBody.getSigningRoot(),
-          calculatedSigningRoot);
+          signingRoot);
       if (slashingProtection.isPresent()) {
         signerForIdentifier
-            .sign(normaliseIdentifier(identifier), calculatedSigningRoot)
+            .sign(normaliseIdentifier(identifier), signingRoot)
             .ifPresentOrElse(
                 signature -> {
                   try {
                     if (maySign(
-                        Bytes.fromHexString(identifier),
-                        calculatedSigningRoot,
-                        eth2SigningRequestBody)) {
+                        Bytes.fromHexString(identifier), signingRoot, eth2SigningRequestBody)) {
                       slashingMetrics.incrementSigningsPermitted();
                       respondWithSignature(routingContext, signature);
                     } else {
@@ -106,7 +103,6 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                   routingContext.fail(404);
                 });
       } else {
-        // TODO handle signingRoot not existing
         signerForIdentifier
             .sign(normaliseIdentifier(identifier), eth2SigningRequestBody.getSigningRoot())
             .ifPresentOrElse(
@@ -153,42 +149,31 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         final BeaconBlock beaconBlock = eth2SigningRequestBody.getBlock();
         return SigningRootUtil.signingRootForSignBlock(
             beaconBlock.asInternalBeaconBlock(),
-            new ForkInfo(
-                eth2SigningRequestBody.getFork().asInternalFork(),
-                eth2SigningRequestBody.getGenesisValidatorsRoot()));
+            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
       case ATTESTATION:
         return SigningRootUtil.signingRootForSignAttestationData(
             eth2SigningRequestBody.getAttestation().asInternalAttestationData(),
-            new ForkInfo(
-                eth2SigningRequestBody.getFork().asInternalFork(),
-                eth2SigningRequestBody.getGenesisValidatorsRoot()));
+            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
       case AGGREGATE_AND_PROOF:
         return SigningRootUtil.signingRootForSignAggregateAndProof(
             eth2SigningRequestBody.getAggregateAndProof().asInternalAggregateAndProof(),
-            new ForkInfo(
-                eth2SigningRequestBody.getFork().asInternalFork(),
-                eth2SigningRequestBody.getGenesisValidatorsRoot()));
+            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
       case AGGREGATION_SLOT:
         return SigningRootUtil.signingRootForSignAggregationSlot(
             eth2SigningRequestBody.getAggregationSlot().getSlot(),
-            new ForkInfo(
-                eth2SigningRequestBody.getFork().asInternalFork(),
-                eth2SigningRequestBody.getGenesisValidatorsRoot()));
+            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
       case RANDAO_REVEAL:
         return SigningRootUtil.signingRootForRandaoReveal(
             eth2SigningRequestBody.getRandaoReveal().getEpoch(),
-            new ForkInfo(
-                eth2SigningRequestBody.getFork().asInternalFork(),
-                eth2SigningRequestBody.getGenesisValidatorsRoot()));
+            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
       case VOLUNTARY_EXIT:
         return SigningRootUtil.signingRootForSignVoluntaryExit(
             eth2SigningRequestBody.getVoluntaryExit().asInternalVoluntaryExit(),
-            new ForkInfo(
-                eth2SigningRequestBody.getFork().asInternalFork(),
-                eth2SigningRequestBody.getGenesisValidatorsRoot()));
+            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
       default:
         // TODO add support for deposit
-        throw new IllegalStateException("Signing root unimplemented for type");
+        throw new IllegalStateException(
+            "Signing root unimplemented for type " + eth2SigningRequestBody.getType());
     }
   }
 

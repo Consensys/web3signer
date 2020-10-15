@@ -19,8 +19,8 @@ import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpeci
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;

@@ -21,7 +21,7 @@ import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;

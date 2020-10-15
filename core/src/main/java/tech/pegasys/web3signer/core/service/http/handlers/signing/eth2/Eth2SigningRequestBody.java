@@ -10,24 +10,22 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http;
+package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
 import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
-import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
+import tech.pegasys.web3signer.core.service.http.ArtifactType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class Eth2SigningRequestBody {
   private final ArtifactType type;
   private final Bytes signingRoot;
-  private final Bytes32 genesisValidatorsRoot;
-  private final Fork fork;
+  private final ForkInfo forkInfo;
   private final BeaconBlock beaconBlock;
   private final AttestationData attestation;
   private final AggregationSlot aggregationSlot;
@@ -39,8 +37,7 @@ public class Eth2SigningRequestBody {
   public Eth2SigningRequestBody(
       @JsonProperty(value = "type", required = true) final ArtifactType type,
       @JsonProperty(value = "signingRoot") final Bytes signingRoot,
-      @JsonProperty(value = "genesisValidatorsRoot") final Bytes32 genesisValidatorsRoot,
-      @JsonProperty(value = "fork") final Fork fork,
+      @JsonProperty(value = "forkInfo") final ForkInfo forkInfo,
       @JsonProperty(value = "block") final BeaconBlock block,
       @JsonProperty(value = "attestation") final AttestationData attestation,
       @JsonProperty(value = "aggregationSlot") final AggregationSlot aggregationSlot,
@@ -49,8 +46,7 @@ public class Eth2SigningRequestBody {
       @JsonProperty(value = "randaoReveal") final RandaoReveal randaoReveal) {
     this.type = type;
     this.signingRoot = signingRoot;
-    this.genesisValidatorsRoot = genesisValidatorsRoot;
-    this.fork = fork;
+    this.forkInfo = forkInfo;
     this.beaconBlock = block;
     this.attestation = attestation;
     this.aggregationSlot = aggregationSlot;
@@ -63,12 +59,8 @@ public class Eth2SigningRequestBody {
     return type;
   }
 
-  public Bytes32 getGenesisValidatorsRoot() {
-    return genesisValidatorsRoot;
-  }
-
-  public Fork getFork() {
-    return fork;
+  public ForkInfo getForkInfo() {
+    return forkInfo;
   }
 
   public BeaconBlock getBlock() {

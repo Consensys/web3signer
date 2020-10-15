@@ -22,7 +22,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
@@ -140,4 +140,6 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         BLS.sign(keyPair.getSecretKey(), blockRequest.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
+
+  // TODO JF test for non-matching signing root
 }

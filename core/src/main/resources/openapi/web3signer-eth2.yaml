@@ -110,17 +110,19 @@ components:
       properties:
         type:
           type: "string"
+        forkInfo:
+          type: object
+          properties:
+            fork:
+              $ref: '#/components/schemas/AttestationData'
+            genesisValidatorsRoot:
+              type: "string"
         signingRoot:
           type: "string"
-        genesisValidatorsRoot:
-          type: "string"
-        fork:
-          $ref: '#/components/schemas/AttestationData'
       required:
         - type
         - signingRoot
-        - genesisValidatorsRoot
-        - fork
+        - forkInfo
     AggregationSlotSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'

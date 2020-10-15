@@ -18,7 +18,7 @@ import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createBlockRequ
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -87,8 +87,6 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
         .containsOnly(
             attestationSlashingMetrics.get(0) + " 2.0", attestationSlashingMetrics.get(1) + " 0.0");
   }
-
-  // TODO do we want to specify the signing root or calculate it?
 
   @Test
   void cannotSignASecondAttestationForSameSlotWithDifferentSigningRoot(@TempDir Path testDirectory)
