@@ -41,9 +41,9 @@ def bintrayPackage = bintray.pkg {
   name = 'web3signer'
   userOrg = 'consensys'
   licenses = ['Apache-2.0']
-  websiteUrl = 'https://github.com/PegaSysEng/web3signer'
-  issueTrackerUrl = 'https://github.com/PegaSysEng/web3signer/issues'
-  vcsUrl = 'https://github.com/PegaSysEng/web3signer.git'
+  websiteUrl = 'https://github.com/ConsenSys/web3signer'
+  issueTrackerUrl = 'https://github.com/ConsenSys/web3signer/issues'
+  vcsUrl = 'https://github.com/ConsenSys/web3signer.git'
 
   version {
     name = project.version
@@ -100,7 +100,7 @@ allprojects {
 
   version = rootProject.version
 
-  jacoco { toolVersion = '0.8.5' }
+  jacoco { toolVersion = '0.8.6' }
 
   task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
@@ -257,7 +257,7 @@ subprojects {
           }
           pom {
             name = "web3signer - ${project.name}"
-            url = 'http://github.com/PegaSysEng/web3signer'
+            url = 'http://github.com/ConsenSys/web3signer'
             licenses {
               license {
                 name = 'The Apache License, Version 2.0'
@@ -265,9 +265,9 @@ subprojects {
               }
             }
             scm {
-              connection = 'scm:git:git://github.com/PegaSysEng/web3signer.git'
-              developerConnection = 'scm:git:ssh://github.com/PegaSysEng/web3signer.git'
-              url = 'https://github.com/PegaSysEng/web3signer'
+              connection = 'scm:git:git://github.com/ConsenSys/web3signer.git'
+              developerConnection = 'scm:git:ssh://github.com/ConsenSys/web3signer.git'
+              url = 'https://github.com/ConsenSys/web3signer'
             }
           }
         }

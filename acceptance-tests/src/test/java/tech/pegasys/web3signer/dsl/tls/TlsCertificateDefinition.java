@@ -60,6 +60,7 @@ public class TlsCertificateDefinition {
     return password;
   }
 
+  @SuppressWarnings("JdkObsolete")
   public List<X509Certificate> certificates()
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException {
     final List<X509Certificate> results = Lists.newArrayList();
@@ -72,6 +73,7 @@ public class TlsCertificateDefinition {
     return results;
   }
 
+  @SuppressWarnings("JdkObsolete")
   public List<PrivateKey> keys()
       throws KeyStoreException, NoSuchAlgorithmException, CertificateException,
           UnrecoverableKeyException {

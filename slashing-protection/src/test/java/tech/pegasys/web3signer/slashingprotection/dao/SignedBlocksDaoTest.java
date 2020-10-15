@@ -59,7 +59,7 @@ public class SignedBlocksDaoTest {
     assertThat(existingBlock).isNotEmpty();
     assertThat(existingBlock.get().getValidatorId()).isEqualTo(1);
     assertThat(existingBlock.get().getSlot()).isEqualTo(UInt64.valueOf(2));
-    assertThat(existingBlock.get().getSigningRoot()).isEqualTo(Bytes.of(3));
+    assertThat(existingBlock.get().getSigningRoot()).isEqualTo(Optional.of(Bytes.of(3)));
   }
 
   @Test
@@ -97,6 +97,15 @@ public class SignedBlocksDaoTest {
         .isEqualToComparingFieldByField(new SignedBlock(2, UInt64.MAX_VALUE, Bytes.of(101)));
     assertThat(validators.get(2))
         .isEqualToComparingFieldByField(new SignedBlock(3, UInt64.MIN_VALUE, Bytes.of(102)));
+  }
+
+  @Test
+  public void canCreateBlocksWithNoSigningRoot() {
+    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+    insertBlock(handle, Bytes.of(100), 1, 2, null);
+    Optional<SignedBlock> block = signedBlocksDao.findExistingBlock(handle, 1, UInt64.valueOf(2));
+    assertThat(block).isNotEmpty();
+    assertThat(block.get().getSigningRoot()).isEmpty();
   }
 
   private void insertBlock(
