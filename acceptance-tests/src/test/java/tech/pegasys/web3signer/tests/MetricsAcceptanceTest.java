@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATION_SLOT;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
@@ -145,7 +144,8 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void signMetricIncrementsWhenBlsSignRequestReceived(@TempDir Path testDirectory) {
+  void signMetricIncrementsWhenBlsSignRequestReceived(@TempDir Path testDirectory)
+      throws JsonProcessingException {
     final MetadataFileHelpers fileHelpers = new MetadataFileHelpers();
     final BLSKeyPair keyPair = BLSKeyPair.random(1);
 
@@ -173,8 +173,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     signer.eth2Sign(
         keyPair.getPublicKey().toBytesCompressed().toHexString(),
-        Bytes.fromHexString("1122"),
-        AGGREGATION_SLOT);
+        Eth2RequestUtils.createBlockRequest(UInt64.valueOf(1), Bytes32.fromHexString("0x1111")));
     final Set<String> metricsAfterSign = signer.getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)
