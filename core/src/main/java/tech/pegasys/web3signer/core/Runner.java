@@ -77,7 +77,7 @@ public abstract class Runner implements Runnable {
 
   @Override
   public void run() {
-    if(config.getLogLevel() != null) {
+    if (config.getLogLevel() != null) {
       System.out.println("Setting logging level to " + config.getLogLevel().name());
       Configurator.setAllLevels("", config.getLogLevel());
     }
