@@ -2,7 +2,6 @@
 <Configuration status="INFO">
   <Properties>
     <Property name="root.log.level">INFO</Property>
-    <Property name="dependency.log.level">WARN</Property>
   </Properties>
 
   <Appenders>
@@ -11,26 +10,6 @@
     </Console>
   </Appenders>
   <Loggers>
-    <Logger name="com.azure.security.keyvault.secrets.SecretAsyncClient"
-      level="${dependency.log.level}" additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
-    <Logger name="com.networknt.schema" level="${sys:dependency.log.level}" additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
-    <Logger name="org.jdbi.v3.core" level="${sys:dependency.log.level}" additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
-    <Logger name="com.zaxxer.hikari" level="${sys:dependency.log.level}" additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
-    <Logger name="io.swagger.v3.parser.OpenAPIV3Parser" level="${sys:dependency.log.level}"
-      additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
-    <Logger name="io.netty" level="${sys:dependency.log.level}" additivity="false">
-      <AppenderRef ref="Console"/>
-    </Logger>
     <Root level="${sys:root.log.level}">
       <AppenderRef ref="Console"/>
     </Root>
