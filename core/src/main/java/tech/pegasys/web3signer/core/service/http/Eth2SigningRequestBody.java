@@ -12,9 +12,11 @@
  */
 package tech.pegasys.web3signer.core.service.http;
 
+import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.Fork;
+import tech.pegasys.teku.api.schema.VoluntaryExit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,28 +24,39 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class Eth2SigningRequestBody {
-
   private final ArtifactType type;
-  private final BeaconBlock beaconBlock;
-  private final AttestationData attestationData;
+  private final Bytes signingRoot;
   private final Bytes32 genesisValidatorsRoot;
   private final Fork fork;
-  private final Bytes signingRoot;
+  private final BeaconBlock beaconBlock;
+  private final AttestationData attestation;
+  private final AggregationSlot aggregationSlot;
+  private final AggregateAndProof aggregateAndProof;
+  private final VoluntaryExit voluntaryExit;
+  private final RandaoReveal randaoReveal;
 
   @JsonCreator
   public Eth2SigningRequestBody(
       @JsonProperty(value = "type", required = true) final ArtifactType type,
+      @JsonProperty(value = "signingRoot") final Bytes signingRoot,
       @JsonProperty(value = "genesisValidatorsRoot") final Bytes32 genesisValidatorsRoot,
       @JsonProperty(value = "fork") final Fork fork,
-      @JsonProperty(value = "beaconBlock") final BeaconBlock beaconBlock,
-      @JsonProperty(value = "attestationData") final AttestationData attestationData,
-      @JsonProperty(value = "signingRoot") final Bytes signingRoot) {
+      @JsonProperty(value = "block") final BeaconBlock block,
+      @JsonProperty(value = "attestation") final AttestationData attestation,
+      @JsonProperty(value = "aggregationSlot") final AggregationSlot aggregationSlot,
+      @JsonProperty(value = "aggregateAndProof") final AggregateAndProof aggregateAndProof,
+      @JsonProperty(value = "voluntaryExit") final VoluntaryExit voluntaryExit,
+      @JsonProperty(value = "randaoReveal") final RandaoReveal randaoReveal) {
     this.type = type;
+    this.signingRoot = signingRoot;
     this.genesisValidatorsRoot = genesisValidatorsRoot;
     this.fork = fork;
-    this.beaconBlock = beaconBlock;
-    this.attestationData = attestationData;
-    this.signingRoot = signingRoot;
+    this.beaconBlock = block;
+    this.attestation = attestation;
+    this.aggregationSlot = aggregationSlot;
+    this.aggregateAndProof = aggregateAndProof;
+    this.voluntaryExit = voluntaryExit;
+    this.randaoReveal = randaoReveal;
   }
 
   public ArtifactType getType() {
@@ -58,15 +71,35 @@ public class Eth2SigningRequestBody {
     return fork;
   }
 
-  public BeaconBlock getBeaconBlock() {
+  public BeaconBlock getBlock() {
     return beaconBlock;
   }
 
-  public AttestationData getAttestationData() {
-    return attestationData;
+  public AttestationData getAttestation() {
+    return attestation;
   }
 
   public Bytes getSigningRoot() {
     return signingRoot;
+  }
+
+  public BeaconBlock getBeaconBlock() {
+    return beaconBlock;
+  }
+
+  public AggregationSlot getAggregationSlot() {
+    return aggregationSlot;
+  }
+
+  public AggregateAndProof getAggregateAndProof() {
+    return aggregateAndProof;
+  }
+
+  public VoluntaryExit getVoluntaryExit() {
+    return voluntaryExit;
+  }
+
+  public RandaoReveal getRandaoReveal() {
+    return randaoReveal;
   }
 }

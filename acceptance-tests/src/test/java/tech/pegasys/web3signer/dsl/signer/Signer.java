@@ -135,7 +135,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
       throws JsonProcessingException {
     return given()
         .baseUri(getUrl())
-        .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
         .body(eth2InterfaceObjectMapper.writeValueAsString(ethSignBody))

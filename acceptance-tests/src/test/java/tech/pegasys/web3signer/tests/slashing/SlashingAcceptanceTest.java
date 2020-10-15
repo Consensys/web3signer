@@ -12,20 +12,12 @@
  */
 package tech.pegasys.web3signer.tests.slashing;
 
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
+import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createBlockRequest;
 
-import tech.pegasys.teku.api.schema.AttestationData;
-import tech.pegasys.teku.api.schema.BLSSignature;
-import tech.pegasys.teku.api.schema.BeaconBlock;
-import tech.pegasys.teku.api.schema.BeaconBlockBody;
-import tech.pegasys.teku.api.schema.Checkpoint;
-import tech.pegasys.teku.api.schema.Eth1Data;
-import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
-import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
-import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
@@ -93,6 +85,8 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     assertThat(signer.getMetricsMatching(attestationSlashingMetrics))
         .containsOnly(attestationSlashingMetrics.get(0) + " 2.0");
   }
+
+  // TODO do we want to specify the signing root or calculate it?
 
   @Test
   void cannotSignASecondAttestationForSameSlotWithDifferentSigningRoot(@TempDir Path testDirectory)
@@ -206,62 +200,5 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
     assertThat(signer.getMetricsMatching(blockSlashingMetrics))
         .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 1.0");
-  }
-
-  private Eth2SigningRequestBody createAttestationRequest(
-      final int sourceEpoch, final int targetEpoch, final UInt64 slot) {
-    return new Eth2SigningRequestBody(
-        ArtifactType.ATTESTATION,
-        Bytes32.fromHexString("0x270d43e74ce340de4bca2b1936beca0f4f5408d9e78aec4850920baf659d5b69"),
-        new Fork(
-            Bytes4.fromHexString("0x00000001"),
-            Bytes4.fromHexString("0x00000001"),
-            UInt64.valueOf(1)),
-        null,
-        new AttestationData(
-            UInt64.valueOf(32),
-            slot,
-            Bytes32.fromHexString(
-                "0xb2eedb01adbd02c828d5eec09b4c70cbba12ffffba525ebf48aca33028e8ad89"),
-            new Checkpoint(UInt64.valueOf(sourceEpoch), Bytes32.ZERO),
-            new Checkpoint(
-                UInt64.valueOf(targetEpoch),
-                Bytes32.fromHexString(
-                    "0xb2eedb01adbd02c828d5eec09b4c70cbba12ffffba525ebf48aca33028e8ad89"))),
-        null);
-  }
-
-  private Eth2SigningRequestBody createBlockRequest(final UInt64 slot, final Bytes32 stateRoot) {
-    return new Eth2SigningRequestBody(
-        ArtifactType.BLOCK,
-        Bytes32.fromHexString("0x270d43e74ce340de4bca2b1936beca0f4f5408d9e78aec4850920baf659d5b69"),
-        new Fork(
-            Bytes4.fromHexString("0x00000001"),
-            Bytes4.fromHexString("0x00000001"),
-            UInt64.valueOf(1)),
-        new BeaconBlock(
-            slot,
-            UInt64.valueOf(5),
-            Bytes32.fromHexString(
-                "0xb2eedb01adbd02c828d5eec09b4c70cbba12ffffba525ebf48aca33028e8ad89"),
-            stateRoot,
-            new BeaconBlockBody(
-                BLSSignature.fromHexString(
-                    "0xa686652aed2617da83adebb8a0eceea24bb0d2ccec9cd691a902087f90db16aa5c7b03172a35e874e07e3b60c5b2435c0586b72b08dfe5aee0ed6e5a2922b956aa88ad0235b36dfaa4d2255dfeb7bed60578d982061a72c7549becab19b3c12f"),
-                new Eth1Data(
-                    Bytes32.fromHexString(
-                        "0x6a0f9d6cb0868daa22c365563bb113b05f7568ef9ee65fdfeb49a319eaf708cf"),
-                    UInt64.valueOf(8),
-                    Bytes32.fromHexString(
-                        "0x4242424242424242424242424242424242424242424242424242424242424242")),
-                Bytes32.fromHexString(
-                    "0x74656b752f76302e31322e31302d6465762d6338316361363235000000000000"),
-                emptyList(),
-                emptyList(),
-                emptyList(),
-                emptyList(),
-                emptyList())),
-        null,
-        null);
   }
 }

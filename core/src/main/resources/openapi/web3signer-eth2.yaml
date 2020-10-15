@@ -31,25 +31,22 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                type:
-                  type: string
-                signingRoot:
-                  type: string
-                fork:
-                  $ref: "#/components/schemas/Fork"
-                attestationData:
-                  $ref: "#/components/schemas/AttestationData"
-                beaconBlock:
-                  $ref: "#components/schemas/BeaconBlock"
-                genesisValidatorRoot:
-                  type: string
-              additionalProperties:
-                type: string
-            example:
-              data: 0x48656c6c6f2c20776f726c6421
-
+              oneOf:
+                - $ref: '#/components/schemas/AggregationSlotSigning'
+                - $ref: '#/components/schemas/AggregateAndProofSigning'
+                - $ref: '#/components/schemas/AttestationSigning'
+                - $ref: '#/components/schemas/BlockSigning'
+                - $ref: '#/components/schemas/RandaoRevealSigning'
+                - $ref: '#/components/schemas/VoluntaryExitSigning'
+              discriminator:
+                propertyName: type
+                mapping:
+                  AGGREGATION_SLOT: '#/components/schemas/AggregationSlotSigning'
+                  AGGREGATE_AND_PROOF: '#/components/schemas/AggregationAndProofSigning'
+                  ATTESTATION: '#/components/schemas/AttestationSigning'
+                  BLOCK: '#/components/schemas/BlockSigning'
+                  RANDAO_REVEAL: '#/components/schemas/RandaoRevealSigning'
+                  VOLUNTARY_EXIT: '#/components/schemas/VoluntaryExitSigning'
       responses:
         '200':
           description: 'hex encoded string of signature'
@@ -108,6 +105,93 @@ paths:
 
 components:
   schemas:
+    Signing:
+      type: "object"
+      properties:
+        type:
+          type: "string"
+        signingRoot:
+          type: "string"
+        genesisValidatorsRoot:
+          type: "string"
+        fork:
+          $ref: '#/components/schemas/AttestationData'
+      required:
+        - type
+        - signingRoot
+        - genesisValidatorsRoot
+        - fork
+    AggregationSlotSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: "object"
+          properties:
+            aggregationSlot:
+              type: "object"
+              properties:
+                slot:
+                  type: string
+                  format: "uint64"
+          required:
+            - aggregationSlot
+    AggregateAndProofSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            aggregateAndProof:
+              $ref: "#/components/schemas/AggregateAndProof"
+          required:
+            - aggregateAndProof
+    AttestationSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            attestation:
+              $ref: "#/components/schemas/AttestationData"
+            type:
+              type: "string"
+            signingRoot:
+              type: "string"
+            genesisValidatorsRoot:
+              type: "string"
+            fork:
+              $ref: '#/components/schemas/AttestationData'
+          required:
+            - attestation
+    BlockSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            block:
+              $ref: "#/components/schemas/BeaconBlock"
+          required:
+            - block
+    RandaoRevealSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            randaoReveal:
+              type: "object"
+              properties:
+                epoch:
+                  type: string
+                  format: "uint64"
+          additionalProperties: false
+          required:
+            - randaoReveal
+    VoluntaryExitSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            voluntaryExit:
+              $ref: "#/components/schemas/VoluntaryExit"
+          required:
+            - voluntaryExit
     AttestationData:
       type: "object"
       properties:
@@ -292,6 +376,17 @@ components:
         body_root:
           type: string
           description: Bytes32 hexadecimal
+    AggregateAndProof:
+      type: object
+      properties:
+        index:
+          type: string
+          format: uint64
+        attestation:
+          "$ref": "#/components/schemas/Attestation"
+        selection_proof:
+          type: string
+          description: Bytes96 hexadecimal
 
 externalDocs:
   description: 'Web3Signer User Documentation'

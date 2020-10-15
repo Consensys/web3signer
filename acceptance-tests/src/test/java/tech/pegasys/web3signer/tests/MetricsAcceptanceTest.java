@@ -13,14 +13,15 @@
 package tech.pegasys.web3signer.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATE_AND_PROOF;
 import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATION_SLOT;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.nio.file.Path;
@@ -30,7 +31,9 @@ import java.security.NoSuchProviderException;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.web3j.crypto.ECKeyPair;
@@ -84,7 +87,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void missingSignerMetricIncreasesWhenUnmatchedRequestReceived() {
+  void missingSignerMetricIncreasesWhenUnmatchedRequestReceived() throws JsonProcessingException {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder().withMetricsEnabled(true).withMode("eth2").build();
     startSigner(signerConfiguration);
@@ -95,7 +98,9 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
 
-    signer.eth2Sign("12345", Bytes.fromHexString("0011"), AGGREGATE_AND_PROOF);
+    signer.eth2Sign(
+        "12345",
+        Eth2RequestUtils.createBlockRequest(UInt64.valueOf(1), Bytes32.fromHexString("0x1111")));
     final Set<String> metricsAfterSign = signer.getMetricsMatching(metricsOfInterest);
     assertThat(metricsAfterSign).containsOnly("signing_bls_missing_identifier_count 1.0");
   }
