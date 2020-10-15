@@ -19,7 +19,6 @@ import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpeci
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
-import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -135,20 +134,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
         .body(ETH_2_INTERFACE_OBJECT_MAPPER.writeValueAsString(ethSignBody))
-        .post(signPath(KeyType.BLS));
-  }
-
-  public Response eth2Sign(
-      final String publicKey, final Bytes dataToSign, final ArtifactType type) {
-    return given()
-        .baseUri(getUrl())
-        .contentType(ContentType.JSON)
-        .pathParam("identifier", publicKey)
-        .body(
-            new JsonObject()
-                .put("signingRoot", dataToSign.toHexString())
-                .put("type", type)
-                .toString())
         .post(signPath(KeyType.BLS));
   }
 

@@ -12,10 +12,8 @@
  */
 package tech.pegasys.web3signer.tests.signing;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.core.service.http.ArtifactType.AGGREGATION_SLOT;
 
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
@@ -24,13 +22,16 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
+import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
+import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.nio.file.Path;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -42,7 +43,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
-  private static final Bytes DATA = Bytes.wrap("Hello, world!".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
@@ -51,10 +51,9 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
-  private static final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), DATA);
 
   @Test
-  public void signDataWithKeyLoadedFromUnencryptedFile() {
+  public void signDataWithKeyLoadedFromUnencryptedFile() throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
@@ -64,7 +63,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @ParameterizedTest
   @EnumSource(KdfFunction.class)
-  public void signDataWithKeyLoadedFromKeyStoreFile(KdfFunction kdfFunction) {
+  public void signDataWithKeyLoadedFromKeyStoreFile(KdfFunction kdfFunction)
+      throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
@@ -74,7 +74,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  public void ableToSignUsingHashicorp() {
+  public void ableToSignUsingHashicorp() throws JsonProcessingException {
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final HashicorpNode hashicorpNode = HashicorpNode.createAndStartHashicorp(true);
     try {
@@ -101,7 +101,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
     @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
   })
-  public void ableToSignUsingAzure() {
+  public void ableToSignUsingAzure() throws JsonProcessingException {
     final String clientId = System.getenv("AZURE_CLIENT_ID");
     final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
     final String tenantId = System.getenv("AZURE_TENANT_ID");
@@ -117,24 +117,27 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  public void ableToSignUsingYubiHsm() {
+  public void ableToSignUsingYubiHsm() throws JsonProcessingException {
     final Path configFile = testDirectory.resolve("yubihsm_1.yaml");
     metadataFileHelpers.createYubiHsmYamlFileAt(configFile, KeyType.BLS);
 
     signAndVerifySignature(yubiHsmShellEnvMap());
   }
 
-  private void signAndVerifySignature() {
+  private void signAndVerifySignature() throws JsonProcessingException {
     signAndVerifySignature(null);
   }
 
-  private void signAndVerifySignature(final Map<String, String> env) {
+  private void signAndVerifySignature(final Map<String, String> env)
+      throws JsonProcessingException {
     setupSigner("eth2", env);
 
     // openapi
-    final Response response =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), DATA, AGGREGATION_SLOT);
+    final Eth2SigningRequestBody blockRequest = Eth2RequestUtils.createBlockRequest();
+    final Response response = signer.eth2Sign(keyPair.getPublicKey().toString(), blockRequest);
     final Bytes signature = verifyAndGetSignatureResponse(response);
+    final BLSSignature expectedSignature =
+        BLS.sign(keyPair.getSecretKey(), blockRequest.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 }
