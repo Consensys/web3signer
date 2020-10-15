@@ -14,16 +14,30 @@
     </Console>
   </Appenders>
   <Loggers>
-    <Logger name="tech.pegasys.web3signer.SubProcessLog" level="INFO" additivity="false">
+    <Logger name="tech.pegasys.web3signer.SubProcessLog" level="${sys:dependency.log.level}" additivity="false">
       <AppenderRef ref="SubProcessConsole" />
     </Logger>
-    <Logger name="com.zaxxer.hikari" level="${dependency.log.level}" additivity="false"/>
-    <Logger name="org.flywaydb.core" level="${dependency.log.level}" additivity="false"/>
-    <Logger name="org.apache.http" level="${dependency.log.level}" additivity="false"/>
-    <Logger name="io.restassured.internal" level="${dependency.log.level}" additivity="false"/>
-    <Logger name="io.netty" level="${dependency.log.level}" additivity="false"/>
-    <Logger name="io.swagger.v3" level="${dependency.log.level}" additivity="false"/>
-    <Logger name="com.atlassian.oai" level="${dependency.log.level}" additivity="false"/>
+    <Logger name="com.zaxxer.hikari" level="${sys:dependency.log.level}" additivity="false">
+      <AppenderRef ref="SubProcessConsole" />
+    </Logger>
+    <Logger name="org.flywaydb.core" level="${sys:dependency.log.level}" additivity="false">
+      <AppenderRef ref="SubProcessConsole" />
+    </Logger>
+    <Logger name="org.apache.http" level="${sys:dependency.log.level}" additivity="false">
+      <AppenderRef ref="SubProcessConsole" />
+    </Logger>
+    <Logger name="io.restassured.internal" level="${sys:dependency.log.level}" additivity="false">
+      <AppenderRef ref="SubProcessConsole" />
+    </Logger>
+    <Logger name="io.netty" level="${sys:dependency.log.level}" additivity="false">
+      <AppenderRef ref="SubProcessConsole" />
+    </Logger>
+    <Logger name="io.swagger.v3" level="${sys:dependency.log.level}" additivity="false">
+      <AppenderRef ref="SubProcessConsole" />
+    </Logger>
+    <Logger name="com.atlassian.oai" level="${sys:dependency.log.level}" additivity="false">
+      <AppenderRef ref="SubProcessConsole" />
+    </Logger>
     <Root level="${sys:root.log.level}">
       <AppenderRef ref="Console" />
     </Root>

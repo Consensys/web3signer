@@ -79,7 +79,7 @@ public abstract class Runner implements Runnable {
   public void run() {
     // set log level per CLI flags
     System.out.println("Setting logging level to " + config.getLogLevel().name());
-    Configurator.setAllLevels("", config.getLogLevel());
+    Configurator.setRootLevel(config.getLogLevel());
 
     final MetricsEndpoint metricsEndpoint =
         new MetricsEndpoint(
