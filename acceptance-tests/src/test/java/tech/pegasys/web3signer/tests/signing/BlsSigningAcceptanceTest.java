@@ -53,13 +53,15 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
 
-  @Test
-  public void signDataWithKeyLoadedFromUnencryptedFile() throws JsonProcessingException {
+  @ParameterizedTest
+  @EnumSource(ArtifactType.class)
+  public void signDataWithKeyLoadedFromUnencryptedFile(final ArtifactType artifactType)
+      throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    signAndVerifySignature();
+    signAndVerifySignature(artifactType);
   }
 
   @ParameterizedTest
@@ -71,7 +73,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, kdfFunction);
 
-    signAndVerifySignature();
+    signAndVerifySignature(ArtifactType.BLOCK);
   }
 
   @Test
@@ -89,7 +91,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
           keyConfigFile,
           new HashicorpSigningParams(hashicorpNode, secretPath, secretName, KeyType.BLS));
 
-      signAndVerifySignature();
+      signAndVerifySignature(ArtifactType.BLOCK);
     } finally {
       hashicorpNode.shutdown();
     }
@@ -114,7 +116,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     metadataFileHelpers.createAzureYamlFileAt(
         keyConfigFile, clientId, clientSecret, tenantId, keyVaultName, secretName);
 
-    signAndVerifySignature();
+    signAndVerifySignature(ArtifactType.BLOCK);
   }
 
   @Test
@@ -122,13 +124,11 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path configFile = testDirectory.resolve("yubihsm_1.yaml");
     metadataFileHelpers.createYubiHsmYamlFileAt(configFile, KeyType.BLS);
 
-    signAndVerifySignature(yubiHsmShellEnvMap());
+    signAndVerifySignature(ArtifactType.BLOCK, yubiHsmShellEnvMap());
   }
 
-  @ParameterizedTest
-  @EnumSource(ArtifactType.class)
-  public void signDataWithKeyLoadedFromKeyStoreFile(ArtifactType artifactType)
-      throws JsonProcessingException {
+  @Test
+  public void failsIfSigningRootDoesNotMatchSigningData() throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
@@ -136,31 +136,41 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     setupSigner("eth2", null);
 
+    final Eth2SigningRequestBody request = Eth2RequestUtils.createBlockRequest();
+    final Eth2SigningRequestBody requestWithMismatchedSigningRoot =
+        new Eth2SigningRequestBody(
+            request.getType(),
+            Bytes32.ZERO,
+            request.getForkInfo(),
+            request.getBlock(),
+            request.getAttestation(),
+            request.getAggregationSlot(),
+            request.getAggregateAndProof(),
+            request.getVoluntaryExit(),
+            request.getRandaoReveal(),
+            request.getDeposit());
+
+    final Response response =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), requestWithMismatchedSigningRoot);
+    assertThat(response.getStatusCode()).isEqualTo(500);
+  }
+
+  private void signAndVerifySignature(final ArtifactType artifactType)
+      throws JsonProcessingException {
+    signAndVerifySignature(artifactType, null);
+  }
+
+  private void signAndVerifySignature(
+      final ArtifactType artifactType, final Map<String, String> env)
+      throws JsonProcessingException {
+    setupSigner("eth2", env);
+
     // openapi
     final Eth2SigningRequestBody request = Eth2RequestUtils.createRequest(artifactType);
     final Response response = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     final Bytes signature = verifyAndGetSignatureResponse(response);
     final BLSSignature expectedSignature =
         BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
-    assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
-  }
-
-  // TODO JF test for non-matching signing root
-
-  private void signAndVerifySignature() throws JsonProcessingException {
-    signAndVerifySignature(null);
-  }
-
-  private void signAndVerifySignature(final Map<String, String> env)
-      throws JsonProcessingException {
-    setupSigner("eth2", env);
-
-    // openapi
-    final Eth2SigningRequestBody blockRequest = Eth2RequestUtils.createBlockRequest();
-    final Response response = signer.eth2Sign(keyPair.getPublicKey().toString(), blockRequest);
-    final Bytes signature = verifyAndGetSignatureResponse(response);
-    final BLSSignature expectedSignature =
-        BLS.sign(keyPair.getSecretKey(), blockRequest.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 }
