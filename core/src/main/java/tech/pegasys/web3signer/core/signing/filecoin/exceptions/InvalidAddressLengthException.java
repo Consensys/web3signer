@@ -16,7 +16,7 @@ import static tech.pegasys.web3signer.core.signing.filecoin.exceptions.InvalidAd
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = -32700, message = MESSAGE)
+@JsonRpcError(code = -32700, message = InvalidAddressLengthException.MESSAGE)
 public class InvalidAddressLengthException extends RuntimeException {
   static final String MESSAGE = "Invalid Address length";
 

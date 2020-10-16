@@ -12,11 +12,9 @@
  */
 package tech.pegasys.web3signer.core.signing.filecoin.exceptions;
 
-import static tech.pegasys.web3signer.core.signing.filecoin.exceptions.InvalidFilecoinProtocolException.MESSAGE;
-
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = -32700, message = MESSAGE)
+@JsonRpcError(code = -32700, message = InvalidFilecoinProtocolException.MESSAGE)
 public class InvalidFilecoinProtocolException extends RuntimeException {
   static final String MESSAGE = "Unknown Filecoin protocol";
 
