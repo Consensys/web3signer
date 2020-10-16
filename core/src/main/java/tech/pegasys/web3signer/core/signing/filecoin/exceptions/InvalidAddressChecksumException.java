@@ -12,11 +12,9 @@
  */
 package tech.pegasys.web3signer.core.signing.filecoin.exceptions;
 
-import static tech.pegasys.web3signer.core.signing.filecoin.exceptions.InvalidAddressChecksumException.MESSAGE;
-
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = -32700, message = MESSAGE)
+@JsonRpcError(code = -32700, message = InvalidAddressChecksumException.MESSAGE)
 public class InvalidAddressChecksumException extends RuntimeException {
   static final String MESSAGE = "Filecoin address checksum doesn't match";
 
