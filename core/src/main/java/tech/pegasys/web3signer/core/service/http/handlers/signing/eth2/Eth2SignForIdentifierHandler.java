@@ -20,6 +20,7 @@ import static tech.pegasys.teku.util.config.Constants.DOMAIN_DEPOSIT;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
+import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
@@ -134,53 +135,54 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         final UInt64 blockSlot = UInt64.valueOf(beaconBlock.slot.bigIntegerValue());
         return slashingProtection.get().maySignBlock(publicKey, signingRoot, blockSlot);
       case ATTESTATION:
+        final AttestationData attestation = eth2SigningRequestBody.getAttestation();
         return slashingProtection
             .get()
             .maySignAttestation(
                 publicKey,
                 signingRoot,
-                toUInt64(eth2SigningRequestBody.getAttestation().source.epoch),
-                toUInt64(eth2SigningRequestBody.getAttestation().target.epoch));
+                toUInt64(attestation.source.epoch),
+                toUInt64(attestation.target.epoch));
       default:
         return true;
     }
   }
 
-  private Bytes signingRoot(final Eth2SigningRequestBody eth2SigningRequestBody) {
-    // TODO validate that the signing root data fields match for the type
-    switch (eth2SigningRequestBody.getType()) {
+  private Bytes signingRoot(final Eth2SigningRequestBody body) {
+    switch (body.getType()) {
       case BLOCK:
-        final BeaconBlock beaconBlock = eth2SigningRequestBody.getBlock();
+        checkArgument(body.getBlock() != null, "block must be specified");
         return SigningRootUtil.signingRootForSignBlock(
-            beaconBlock.asInternalBeaconBlock(),
-            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
+            body.getBlock().asInternalBeaconBlock(), body.getForkInfo().asInternalForkInfo());
       case ATTESTATION:
+        checkArgument(body.getAttestation() != null, "attestation must be specified");
         return SigningRootUtil.signingRootForSignAttestationData(
-            eth2SigningRequestBody.getAttestation().asInternalAttestationData(),
-            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
+            body.getAttestation().asInternalAttestationData(),
+            body.getForkInfo().asInternalForkInfo());
       case AGGREGATE_AND_PROOF:
+        checkArgument(body.getAggregateAndProof() != null, "aggregateAndProof must be specified");
         return SigningRootUtil.signingRootForSignAggregateAndProof(
-            eth2SigningRequestBody.getAggregateAndProof().asInternalAggregateAndProof(),
-            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
+            body.getAggregateAndProof().asInternalAggregateAndProof(),
+            body.getForkInfo().asInternalForkInfo());
       case AGGREGATION_SLOT:
+        checkArgument(body.getAggregationSlot() != null, "aggregationSlot must be specified");
         return SigningRootUtil.signingRootForSignAggregationSlot(
-            eth2SigningRequestBody.getAggregationSlot().getSlot(),
-            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
+            body.getAggregationSlot().getSlot(), body.getForkInfo().asInternalForkInfo());
       case RANDAO_REVEAL:
+        checkArgument(body.getRandaoReveal() != null, "randaoReveal must be specified");
         return SigningRootUtil.signingRootForRandaoReveal(
-            eth2SigningRequestBody.getRandaoReveal().getEpoch(),
-            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
+            body.getRandaoReveal().getEpoch(), body.getForkInfo().asInternalForkInfo());
       case VOLUNTARY_EXIT:
+        checkArgument(body.getVoluntaryExit() != null, "voluntaryExit must be specified");
         return SigningRootUtil.signingRootForSignVoluntaryExit(
-            eth2SigningRequestBody.getVoluntaryExit().asInternalVoluntaryExit(),
-            eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
+            body.getVoluntaryExit().asInternalVoluntaryExit(),
+            body.getForkInfo().asInternalForkInfo());
       case DEPOSIT:
+        checkArgument(body.getDeposit() != null, "deposit must be specified");
         return compute_signing_root(
-            eth2SigningRequestBody.getDeposit().asInternalDepositMessage(),
-            compute_domain(DOMAIN_DEPOSIT));
+            body.getDeposit().asInternalDepositMessage(), compute_domain(DOMAIN_DEPOSIT));
       default:
-        throw new IllegalStateException(
-            "Signing root unimplemented for type " + eth2SigningRequestBody.getType());
+        throw new IllegalStateException("Signing root unimplemented for type " + body.getType());
     }
   }
 
