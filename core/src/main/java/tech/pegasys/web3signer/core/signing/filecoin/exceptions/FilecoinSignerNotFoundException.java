@@ -12,11 +12,9 @@
  */
 package tech.pegasys.web3signer.core.signing.filecoin.exceptions;
 
-import static tech.pegasys.web3signer.core.signing.filecoin.exceptions.InvalidFilecoinProtocolException.MESSAGE;
-
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = -32700, message = MESSAGE)
+@JsonRpcError(code = -32700, message = FilecoinSignerNotFoundException.MESSAGE)
 public class FilecoinSignerNotFoundException extends RuntimeException {
   static final String MESSAGE = "No keys associated with supplied address";
 

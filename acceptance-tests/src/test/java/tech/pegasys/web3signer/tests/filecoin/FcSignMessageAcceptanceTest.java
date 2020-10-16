@@ -53,7 +53,7 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
       BLSSecretKey.fromBytes(Bytes32.wrap(Bytes.fromBase64String(PRIVATE_KEY).reverse()));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
-  private static final FilecoinNetwork network = FilecoinNetwork.TESTNET;
+  private static final FilecoinNetwork network = FilecoinNetwork.MAINNET;
   private final FilecoinAddress sender = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
 
   @Test
