@@ -36,6 +36,7 @@ paths:
                 - $ref: '#/components/schemas/AggregateAndProofSigning'
                 - $ref: '#/components/schemas/AttestationSigning'
                 - $ref: '#/components/schemas/BlockSigning'
+                - $ref: '#/components/schemas/DepositSigning'
                 - $ref: '#/components/schemas/RandaoRevealSigning'
                 - $ref: '#/components/schemas/VoluntaryExitSigning'
               discriminator:
@@ -45,6 +46,7 @@ paths:
                   AGGREGATE_AND_PROOF: '#/components/schemas/AggregationAndProofSigning'
                   ATTESTATION: '#/components/schemas/AttestationSigning'
                   BLOCK: '#/components/schemas/BlockSigning'
+                  DEPOSIT: '#/components/schemas/DepositSigning'
                   RANDAO_REVEAL: '#/components/schemas/RandaoRevealSigning'
                   VOLUNTARY_EXIT: '#/components/schemas/VoluntaryExitSigning'
       responses:
@@ -171,6 +173,22 @@ components:
               $ref: "#/components/schemas/BeaconBlock"
           required:
             - block
+    DepositSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            deposit:
+              type: object
+              properties:
+                pubkey:
+                  type: "string"
+                withdrawal_credentials:
+                  type: "string"
+                amount:
+                  type: "string"
+      required:
+        - deposit
     RandaoRevealSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'

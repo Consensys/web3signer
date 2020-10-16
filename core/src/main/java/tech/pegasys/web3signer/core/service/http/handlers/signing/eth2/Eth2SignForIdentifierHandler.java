@@ -14,6 +14,9 @@ package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_domain;
+import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_signing_root;
+import static tech.pegasys.teku.util.config.Constants.DOMAIN_DEPOSIT;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
@@ -171,8 +174,11 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         return SigningRootUtil.signingRootForSignVoluntaryExit(
             eth2SigningRequestBody.getVoluntaryExit().asInternalVoluntaryExit(),
             eth2SigningRequestBody.getForkInfo().asInternalForkInfo());
+      case DEPOSIT:
+        return compute_signing_root(
+            eth2SigningRequestBody.getDeposit().asInternalDepositMessage(),
+            compute_domain(DOMAIN_DEPOSIT));
       default:
-        // TODO add support for deposit
         throw new IllegalStateException(
             "Signing root unimplemented for type " + eth2SigningRequestBody.getType());
     }

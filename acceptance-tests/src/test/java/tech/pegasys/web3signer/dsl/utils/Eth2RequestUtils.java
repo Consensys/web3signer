@@ -13,10 +13,14 @@
 package tech.pegasys.web3signer.dsl.utils;
 
 import static java.util.Collections.emptyList;
+import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_domain;
+import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_signing_root;
+import static tech.pegasys.teku.util.config.Constants.DOMAIN_DEPOSIT;
 
 import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.Attestation;
 import tech.pegasys.teku.api.schema.AttestationData;
+import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.api.schema.BLSSignature;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.BeaconBlockBody;
@@ -30,9 +34,12 @@ import tech.pegasys.teku.ssz.SSZTypes.Bitlist;
 import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregationSlot;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
+
+import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -95,6 +102,7 @@ public class Eth2RequestUtils {
         null,
         aggregateAndProof,
         null,
+        null,
         null);
   }
 
@@ -111,6 +119,7 @@ public class Eth2RequestUtils {
         null,
         null,
         aggregationSlot,
+        null,
         null,
         null,
         null);
@@ -135,7 +144,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        randaoReveal);
+        randaoReveal,
+        null);
   }
 
   private static Eth2SigningRequestBody createVoluntaryExit() {
@@ -153,11 +163,32 @@ public class Eth2RequestUtils {
         null,
         null,
         voluntaryExit,
+        null,
         null);
   }
 
   private static Eth2SigningRequestBody createDepositRequest() {
-    return null;
+    final ForkInfo forkInfo = forkInfo();
+    final DepositMessage depositMessage =
+        new DepositMessage(
+            BLSPubKey.fromHexString(
+                "0x8f82597c919c056571a05dfe83e6a7d32acf9ad8931be04d11384e95468cd68b40129864ae12745f774654bbac09b057"),
+            Bytes32.random(new Random(2)),
+            UInt64.valueOf(32));
+    final Bytes signingRoot =
+        compute_signing_root(
+            depositMessage.asInternalDepositMessage(), compute_domain(DOMAIN_DEPOSIT));
+    return new Eth2SigningRequestBody(
+        ArtifactType.DEPOSIT,
+        signingRoot,
+        forkInfo,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        depositMessage);
   }
 
   public static Eth2SigningRequestBody createAttestationRequest(
@@ -183,6 +214,7 @@ public class Eth2RequestUtils {
         forkInfo,
         null,
         attestationData,
+        null,
         null,
         null,
         null,
@@ -223,7 +255,7 @@ public class Eth2RequestUtils {
         SigningRootUtil.signingRootForSignBlock(
             block.asInternalBeaconBlock(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
-        ArtifactType.BLOCK, signingRoot, forkInfo, block, null, null, null, null, null);
+        ArtifactType.BLOCK, signingRoot, forkInfo, block, null, null, null, null, null, null);
   }
 
   private static ForkInfo forkInfo() {

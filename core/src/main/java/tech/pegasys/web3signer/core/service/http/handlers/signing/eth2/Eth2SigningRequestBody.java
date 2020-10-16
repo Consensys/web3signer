@@ -32,6 +32,7 @@ public class Eth2SigningRequestBody {
   private final AggregateAndProof aggregateAndProof;
   private final VoluntaryExit voluntaryExit;
   private final RandaoReveal randaoReveal;
+  private final DepositMessage deposit;
 
   @JsonCreator
   public Eth2SigningRequestBody(
@@ -43,7 +44,8 @@ public class Eth2SigningRequestBody {
       @JsonProperty(value = "aggregationSlot") final AggregationSlot aggregationSlot,
       @JsonProperty(value = "aggregateAndProof") final AggregateAndProof aggregateAndProof,
       @JsonProperty(value = "voluntaryExit") final VoluntaryExit voluntaryExit,
-      @JsonProperty(value = "randaoReveal") final RandaoReveal randaoReveal) {
+      @JsonProperty(value = "randaoReveal") final RandaoReveal randaoReveal,
+      @JsonProperty(value = "deposit") final DepositMessage deposit) {
     this.type = type;
     this.signingRoot = signingRoot;
     this.forkInfo = forkInfo;
@@ -53,6 +55,7 @@ public class Eth2SigningRequestBody {
     this.aggregateAndProof = aggregateAndProof;
     this.voluntaryExit = voluntaryExit;
     this.randaoReveal = randaoReveal;
+    this.deposit = deposit;
   }
 
   public ArtifactType getType() {
@@ -93,5 +96,9 @@ public class Eth2SigningRequestBody {
 
   public RandaoReveal getRandaoReveal() {
     return randaoReveal;
+  }
+
+  public DepositMessage getDeposit() {
+    return deposit;
   }
 }
