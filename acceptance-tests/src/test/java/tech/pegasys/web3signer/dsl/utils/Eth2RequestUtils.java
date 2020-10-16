@@ -14,6 +14,8 @@ package tech.pegasys.web3signer.dsl.utils;
 
 import static java.util.Collections.emptyList;
 
+import tech.pegasys.teku.api.schema.AggregateAndProof;
+import tech.pegasys.teku.api.schema.Attestation;
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BLSSignature;
 import tech.pegasys.teku.api.schema.BeaconBlock;
@@ -21,17 +23,142 @@ import tech.pegasys.teku.api.schema.BeaconBlockBody;
 import tech.pegasys.teku.api.schema.Checkpoint;
 import tech.pegasys.teku.api.schema.Eth1Data;
 import tech.pegasys.teku.api.schema.Fork;
+import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.teku.ssz.SSZTypes.Bitlist;
 import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregationSlot;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class Eth2RequestUtils {
+
+  public static Eth2SigningRequestBody createRequest(final ArtifactType artifactType) {
+    switch (artifactType) {
+      case DEPOSIT:
+        return createDepositRequest();
+      case VOLUNTARY_EXIT:
+        return createVoluntaryExit();
+      case RANDAO_REVEAL:
+        return createRandaoReveal();
+      case BLOCK:
+        return createBlockRequest();
+      case ATTESTATION:
+        return createAttestationRequest();
+      case AGGREGATION_SLOT:
+        return createAggregationSlot();
+      case AGGREGATE_AND_PROOF:
+        return createAggregateAndProof();
+      default:
+        throw new IllegalStateException("Unknown eth2 signing type");
+    }
+  }
+
+  private static Eth2SigningRequestBody createAggregateAndProof() {
+    final ForkInfo forkInfo = forkInfo();
+    final Attestation attestation =
+        new Attestation(
+            Bitlist.fromBytes(Bytes.fromHexString("0x03"), 2048L),
+            new AttestationData(
+                UInt64.ZERO,
+                UInt64.ZERO,
+                Bytes32.fromHexString(
+                    "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"),
+                new Checkpoint(UInt64.ZERO, Bytes32.ZERO),
+                new Checkpoint(
+                    UInt64.ZERO,
+                    Bytes32.fromHexString(
+                        "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"))),
+            BLSSignature.fromHexString(
+                "0xa627242e4a5853708f4ebf923960fb8192f93f2233cd347e05239d86dd9fb66b721ceec1baeae6647f498c9126074f1101a87854d674b6eebc220fd8c3d8405bdfd8e286b707975d9e00a56ec6cbbf762f23607d490f0bbb16c3e0e483d51875"));
+    final BLSSignature selectionProof =
+        BLSSignature.fromHexString(
+            "0xa63f73a03f1f42b1fd0a988b614d511eb346d0a91c809694ef76df5ae021f0f144d64e612d735bc8820950cf6f7f84cd0ae194bfe3d4242fe79688f83462e3f69d9d33de71aab0721b7dab9d6960875e5fdfd26b171a75fb51af822043820c47");
+    final AggregateAndProof aggregateAndProof =
+        new AggregateAndProof(UInt64.ONE, attestation, selectionProof);
+    final Bytes signingRoot =
+        SigningRootUtil.signingRootForSignAggregateAndProof(
+            aggregateAndProof.asInternalAggregateAndProof(), forkInfo.asInternalForkInfo());
+
+    return new Eth2SigningRequestBody(
+        ArtifactType.AGGREGATE_AND_PROOF,
+        signingRoot,
+        forkInfo,
+        null,
+        null,
+        null,
+        aggregateAndProof,
+        null,
+        null);
+  }
+
+  private static Eth2SigningRequestBody createAggregationSlot() {
+    final ForkInfo forkInfo = forkInfo();
+    final AggregationSlot aggregationSlot = new AggregationSlot(UInt64.valueOf(119));
+    final Bytes signingRoot =
+        SigningRootUtil.signingRootForSignAggregationSlot(
+            aggregationSlot.getSlot(), forkInfo.asInternalForkInfo());
+    return new Eth2SigningRequestBody(
+        ArtifactType.AGGREGATION_SLOT,
+        signingRoot,
+        forkInfo,
+        null,
+        null,
+        aggregationSlot,
+        null,
+        null,
+        null);
+  }
+
+  private static Eth2SigningRequestBody createAttestationRequest() {
+    return createAttestationRequest(0, 0, UInt64.ZERO);
+  }
+
+  private static Eth2SigningRequestBody createRandaoReveal() {
+    final ForkInfo forkInfo = forkInfo();
+    final RandaoReveal randaoReveal = new RandaoReveal(UInt64.valueOf(3));
+    final Bytes signingRoot =
+        SigningRootUtil.signingRootForRandaoReveal(
+            randaoReveal.getEpoch(), forkInfo.asInternalForkInfo());
+    return new Eth2SigningRequestBody(
+        ArtifactType.RANDAO_REVEAL,
+        signingRoot,
+        forkInfo,
+        null,
+        null,
+        null,
+        null,
+        null,
+        randaoReveal);
+  }
+
+  private static Eth2SigningRequestBody createVoluntaryExit() {
+    final ForkInfo forkInfo = forkInfo();
+    final VoluntaryExit voluntaryExit = new VoluntaryExit(UInt64.valueOf(119), UInt64.ZERO);
+    final Bytes signingRoot =
+        SigningRootUtil.signingRootForSignVoluntaryExit(
+            voluntaryExit.asInternalVoluntaryExit(), forkInfo.asInternalForkInfo());
+    return new Eth2SigningRequestBody(
+        ArtifactType.VOLUNTARY_EXIT,
+        signingRoot,
+        forkInfo,
+        null,
+        null,
+        null,
+        null,
+        voluntaryExit,
+        null);
+  }
+
+  private static Eth2SigningRequestBody createDepositRequest() {
+    return null;
+  }
 
   public static Eth2SigningRequestBody createAttestationRequest(
       final int sourceEpoch, final int targetEpoch, final UInt64 slot) {

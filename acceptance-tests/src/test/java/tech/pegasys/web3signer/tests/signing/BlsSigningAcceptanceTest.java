@@ -22,6 +22,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
+import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
@@ -124,6 +125,28 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     signAndVerifySignature(yubiHsmShellEnvMap());
   }
 
+  @ParameterizedTest
+  @EnumSource(ArtifactType.class)
+  public void signDataWithKeyLoadedFromKeyStoreFile(ArtifactType artifactType)
+      throws JsonProcessingException {
+    final String configFilename = publicKey.toString().substring(2);
+
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.SCRYPT);
+
+    setupSigner("eth2", null);
+
+    // openapi
+    final Eth2SigningRequestBody request = Eth2RequestUtils.createRequest(artifactType);
+    final Response response = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
+    final Bytes signature = verifyAndGetSignatureResponse(response);
+    final BLSSignature expectedSignature =
+        BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
+    assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
+  }
+
+  // TODO JF test for non-matching signing root
+
   private void signAndVerifySignature() throws JsonProcessingException {
     signAndVerifySignature(null);
   }
@@ -140,6 +163,4 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         BLS.sign(keyPair.getSecretKey(), blockRequest.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
-
-  // TODO JF test for non-matching signing root
 }

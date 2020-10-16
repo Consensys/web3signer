@@ -12,14 +12,20 @@
  */
 package tech.pegasys.web3signer.core.service.http;
 
+import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.api.schema.BLSSignature;
+import tech.pegasys.teku.provider.BLSPubKeyDeserializer;
+import tech.pegasys.teku.provider.BLSPubKeySerializer;
 import tech.pegasys.teku.provider.BLSSignatureDeserializer;
 import tech.pegasys.teku.provider.BLSSignatureSerializer;
+import tech.pegasys.teku.provider.BitlistDeserializer;
+import tech.pegasys.teku.provider.BitlistSerializer;
 import tech.pegasys.teku.provider.Bytes32Deserializer;
 import tech.pegasys.teku.provider.Bytes4Deserializer;
 import tech.pegasys.teku.provider.Bytes4Serializer;
 import tech.pegasys.teku.provider.UInt64Deserializer;
 import tech.pegasys.teku.provider.UInt64Serializer;
+import tech.pegasys.teku.ssz.SSZTypes.Bitlist;
 import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.SigningMetadataModule.Bytes32Serializer;
 import tech.pegasys.web3signer.core.service.JacksonSerializers.HexDeserialiser;
@@ -47,7 +53,13 @@ public class SigningJsonRpcModule extends SimpleModule {
     addSerializer(Bytes4.class, new Bytes4Serializer());
     addDeserializer(Bytes32.class, new Bytes32Deserializer());
     addSerializer(Bytes32.class, new Bytes32Serializer());
+
+    addSerializer(BLSPubKey.class, new BLSPubKeySerializer());
+    addDeserializer(BLSPubKey.class, new BLSPubKeyDeserializer());
     addDeserializer(BLSSignature.class, new BLSSignatureDeserializer());
     addSerializer(BLSSignature.class, new BLSSignatureSerializer());
+
+    addSerializer(Bitlist.class, new BitlistSerializer());
+    addDeserializer(Bitlist.class, new BitlistDeserializer());
   }
 }

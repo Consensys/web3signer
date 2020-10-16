@@ -177,12 +177,7 @@ components:
         - type: object
           properties:
             randaoReveal:
-              type: "object"
-              properties:
-                epoch:
-                  type: string
-                  format: "uint64"
-          additionalProperties: false
+              $ref: "#/components/schemas/RandaoReveal"
           required:
             - randaoReveal
     VoluntaryExitSigning:
@@ -194,6 +189,12 @@ components:
               $ref: "#/components/schemas/VoluntaryExit"
           required:
             - voluntaryExit
+    RandaoReveal:
+      type: "object"
+      properties:
+        epoch:
+          type: string
+          format: "uint64"
     AttestationData:
       type: "object"
       properties:

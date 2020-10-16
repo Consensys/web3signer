@@ -144,6 +144,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   }
 
   private Bytes signingRoot(final Eth2SigningRequestBody eth2SigningRequestBody) {
+    // TODO validate that the signing root data fields match for the type
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
         final BeaconBlock beaconBlock = eth2SigningRequestBody.getBlock();
