@@ -56,12 +56,12 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
 
   // These values were generated using go-address https://github.com/filecoin-project/go-address
   // with above corresponding public keys
-  protected static final String SECP_FC_ADDRESS_1 = "t1yv62jzybqbktnamqrart5ovqtpuiizf33dv45ga";
-  protected static final String SECP_FC_ADDRESS_2 = "t1fg4ofyvbbqkobf7gdv4ggozuhen5johtimueabi";
+  protected static final String SECP_FC_ADDRESS_1 = "f1yv62jzybqbktnamqrart5ovqtpuiizf33dv45ga";
+  protected static final String SECP_FC_ADDRESS_2 = "f1fg4ofyvbbqkobf7gdv4ggozuhen5johtimueabi";
   protected static final String BLS_FC_ADDRESS_1 =
-      "t3tcoti4s2fp6d6fiql47v7sdud5bwyjpod3spssheexllzogfnphg4bwcnfrvw7uylj77uy46eqe36xecyo6a";
+      "f3tcoti4s2fp6d6fiql47v7sdud5bwyjpod3spssheexllzogfnphg4bwcnfrvw7uylj77uy46eqe36xecyo6a";
   protected static final String BLS_FC_ADDRESS_2 =
-      "t3w3xgslow4fgr5clqa23ew6l4moiiyf6oqbglgkz47ula4xm7xxdkpi4kpmdbhqgts4k5n63qmjav6uulgb4q";
+      "f3w3xgslow4fgr5clqa23ew6l4moiiyf6oqbglgkz47ula4xm7xxdkpi4kpmdbhqgts4k5n63qmjav6uulgb4q";
 
   protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 

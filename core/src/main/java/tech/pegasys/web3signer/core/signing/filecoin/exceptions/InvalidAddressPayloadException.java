@@ -16,7 +16,7 @@ import static tech.pegasys.web3signer.core.signing.filecoin.exceptions.InvalidAd
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = -32700, message = MESSAGE)
+@JsonRpcError(code = -32700, message = InvalidAddressPayloadException.MESSAGE)
 public class InvalidAddressPayloadException extends RuntimeException {
   static final String MESSAGE = "Invalid payload must be base32 encoded";
 
