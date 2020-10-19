@@ -155,6 +155,35 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     assertThat(response.getStatusCode()).isEqualTo(500);
   }
 
+  @Test
+  public void ableToSignWithoutSigningRootField() throws JsonProcessingException {
+    final String configFilename = publicKey.toString().substring(2);
+
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.SCRYPT);
+
+    setupSigner("eth2", null);
+
+    final Eth2SigningRequestBody request = Eth2RequestUtils.createBlockRequest();
+
+    final Eth2SigningRequestBody requestWithMismatchedSigningRoot =
+        new Eth2SigningRequestBody(
+            request.getType(),
+            null,
+            request.getForkInfo(),
+            request.getBlock(),
+            request.getAttestation(),
+            request.getAggregationSlot(),
+            request.getAggregateAndProof(),
+            request.getVoluntaryExit(),
+            request.getRandaoReveal(),
+            request.getDeposit());
+
+    final Response response =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), requestWithMismatchedSigningRoot);
+    assertThat(response.getStatusCode()).isEqualTo(500);
+  }
+
   private void signAndVerifySignature(final ArtifactType artifactType)
       throws JsonProcessingException {
     signAndVerifySignature(artifactType, null);

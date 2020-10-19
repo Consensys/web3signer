@@ -77,12 +77,15 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         return;
       }
 
-      final Bytes signingRoot = signingRoot(eth2SigningRequestBody);
-      checkArgument(
-          eth2SigningRequestBody.getSigningRoot().equals(signingRoot),
-          "Signing root %s must match signing computed signing root %s from data",
-          eth2SigningRequestBody.getSigningRoot(),
-          signingRoot);
+      final Bytes signingRoot = computeSigningRoot(eth2SigningRequestBody);
+      if (eth2SigningRequestBody.getSigningRoot() != null) {
+        checkArgument(
+            eth2SigningRequestBody.getSigningRoot().equals(signingRoot),
+            "Signing root %s must match signing computed signing root %s from data",
+            eth2SigningRequestBody.getSigningRoot(),
+            signingRoot);
+      }
+
       if (slashingProtection.isPresent()) {
         signerForIdentifier
             .sign(normaliseIdentifier(identifier), signingRoot)
@@ -148,7 +151,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     }
   }
 
-  private Bytes signingRoot(final Eth2SigningRequestBody body) {
+  private Bytes computeSigningRoot(final Eth2SigningRequestBody body) {
     switch (body.getType()) {
       case BLOCK:
         checkArgument(body.getBlock() != null, "block must be specified");
