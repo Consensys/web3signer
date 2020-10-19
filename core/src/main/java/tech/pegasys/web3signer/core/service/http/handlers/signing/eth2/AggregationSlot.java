@@ -25,6 +25,7 @@ public class AggregationSlot {
     this.slot = slot;
   }
 
+  @JsonProperty("slot")
   public UInt64 getSlot() {
     return slot;
   }

@@ -32,14 +32,17 @@ public class DepositMessage {
     this.amount = amount;
   }
 
+  @JsonProperty("pubkey")
   public BLSPubKey getPubkey() {
     return pubkey;
   }
 
+  @JsonProperty("withdrawal_credentials")
   public Bytes32 getWithdrawalCredentials() {
     return withdrawalCredentials;
   }
 
+  @JsonProperty("amount")
   public UInt64 getAmount() {
     return amount;
   }

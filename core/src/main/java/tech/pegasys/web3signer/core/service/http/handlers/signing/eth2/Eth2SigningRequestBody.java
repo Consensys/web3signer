@@ -25,79 +25,85 @@ import org.apache.tuweni.bytes.Bytes;
 public class Eth2SigningRequestBody {
   private final ArtifactType type;
   private final Bytes signingRoot;
-  private final ForkInfo forkInfo;
+  private final ForkInfo fork_info;
   private final BeaconBlock beaconBlock;
   private final AttestationData attestation;
-  private final AggregationSlot aggregationSlot;
-  private final AggregateAndProof aggregateAndProof;
-  private final VoluntaryExit voluntaryExit;
-  private final RandaoReveal randaoReveal;
+  private final AggregationSlot aggregation_slot;
+  private final AggregateAndProof aggregate_and_proof;
+  private final VoluntaryExit voluntary_exit;
+  private final RandaoReveal randao_reveal;
   private final DepositMessage deposit;
 
   @JsonCreator
   public Eth2SigningRequestBody(
       @JsonProperty(value = "type", required = true) final ArtifactType type,
-      @JsonProperty(value = "signingRoot") final Bytes signingRoot,
-      @JsonProperty(value = "forkInfo") final ForkInfo forkInfo,
-      @JsonProperty(value = "block") final BeaconBlock block,
-      @JsonProperty(value = "attestation") final AttestationData attestation,
-      @JsonProperty(value = "aggregationSlot") final AggregationSlot aggregationSlot,
-      @JsonProperty(value = "aggregateAndProof") final AggregateAndProof aggregateAndProof,
-      @JsonProperty(value = "voluntaryExit") final VoluntaryExit voluntaryExit,
-      @JsonProperty(value = "randaoReveal") final RandaoReveal randaoReveal,
-      @JsonProperty(value = "deposit") final DepositMessage deposit) {
+      @JsonProperty("signingRoot") final Bytes signingRoot,
+      @JsonProperty("fork_info") final ForkInfo fork_info,
+      @JsonProperty("block") final BeaconBlock block,
+      @JsonProperty("attestation") final AttestationData attestation,
+      @JsonProperty("aggregation_slot") final AggregationSlot aggregation_slot,
+      @JsonProperty("aggregate_and_proof") final AggregateAndProof aggregate_and_proof,
+      @JsonProperty("voluntary_exit") final VoluntaryExit voluntary_exit,
+      @JsonProperty("randao_reveal") final RandaoReveal randao_reveal,
+      @JsonProperty("deposit") final DepositMessage deposit) {
     this.type = type;
     this.signingRoot = signingRoot;
-    this.forkInfo = forkInfo;
+    this.fork_info = fork_info;
     this.beaconBlock = block;
     this.attestation = attestation;
-    this.aggregationSlot = aggregationSlot;
-    this.aggregateAndProof = aggregateAndProof;
-    this.voluntaryExit = voluntaryExit;
-    this.randaoReveal = randaoReveal;
+    this.aggregation_slot = aggregation_slot;
+    this.aggregate_and_proof = aggregate_and_proof;
+    this.voluntary_exit = voluntary_exit;
+    this.randao_reveal = randao_reveal;
     this.deposit = deposit;
   }
 
+  @JsonProperty("type")
   public ArtifactType getType() {
     return type;
   }
 
+  @JsonProperty("fork_info")
   public ForkInfo getForkInfo() {
-    return forkInfo;
+    return fork_info;
   }
 
+  @JsonProperty("block")
   public BeaconBlock getBlock() {
     return beaconBlock;
   }
 
+  @JsonProperty("attestation")
   public AttestationData getAttestation() {
     return attestation;
   }
 
+  @JsonProperty("signingRoot")
   public Bytes getSigningRoot() {
     return signingRoot;
   }
 
-  public BeaconBlock getBeaconBlock() {
-    return beaconBlock;
-  }
-
+  @JsonProperty("aggregation_slot")
   public AggregationSlot getAggregationSlot() {
-    return aggregationSlot;
+    return aggregation_slot;
   }
 
+  @JsonProperty("aggregate_and_proof")
   public AggregateAndProof getAggregateAndProof() {
-    return aggregateAndProof;
+    return aggregate_and_proof;
   }
 
+  @JsonProperty("voluntary_exit")
   public VoluntaryExit getVoluntaryExit() {
-    return voluntaryExit;
+    return voluntary_exit;
   }
 
+  @JsonProperty("randao_reveal")
   public RandaoReveal getRandaoReveal() {
-    return randaoReveal;
+    return randao_reveal;
   }
 
+  @JsonProperty("deposit")
   public DepositMessage getDeposit() {
     return deposit;
   }

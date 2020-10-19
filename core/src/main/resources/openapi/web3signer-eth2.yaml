@@ -112,41 +112,40 @@ components:
       properties:
         type:
           type: "string"
-        forkInfo:
+        fork_info:
           type: object
           properties:
             fork:
               $ref: '#/components/schemas/AttestationData'
-            genesisValidatorsRoot:
+            genesis_validators_root:
               type: "string"
         signingRoot:
           type: "string"
       required:
         - type
-        - signingRoot
-        - forkInfo
+        - fork_info
     AggregationSlotSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: "object"
           properties:
-            aggregationSlot:
+            aggregation_slot:
               type: "object"
               properties:
                 slot:
                   type: string
                   format: "uint64"
           required:
-            - aggregationSlot
+            - aggregation_slot
     AggregateAndProofSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
-            aggregateAndProof:
+            aggregate_and_proof:
               $ref: "#/components/schemas/AggregateAndProof"
           required:
-            - aggregateAndProof
+            - aggregate_and_proof
     AttestationSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
@@ -154,12 +153,6 @@ components:
           properties:
             attestation:
               $ref: "#/components/schemas/AttestationData"
-            type:
-              type: "string"
-            signingRoot:
-              type: "string"
-            genesisValidatorsRoot:
-              type: "string"
             fork:
               $ref: '#/components/schemas/AttestationData'
           required:
@@ -194,19 +187,19 @@ components:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
-            randaoReveal:
+            randao_reveal:
               $ref: "#/components/schemas/RandaoReveal"
           required:
-            - randaoReveal
+            - randao_reveal
     VoluntaryExitSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
-            voluntaryExit:
+            voluntary_exit:
               $ref: "#/components/schemas/VoluntaryExit"
           required:
-            - voluntaryExit
+            - voluntary_exit
     RandaoReveal:
       type: "object"
       properties:

@@ -25,6 +25,7 @@ public class RandaoReveal {
     this.epoch = epoch;
   }
 
+  @JsonProperty("epoch")
   public UInt64 getEpoch() {
     return epoch;
   }
