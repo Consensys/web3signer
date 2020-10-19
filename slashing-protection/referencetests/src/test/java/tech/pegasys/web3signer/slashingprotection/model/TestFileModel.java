@@ -9,14 +9,14 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.slashingprotection.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.InterchangeV4Format;
+
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TestFileModel {
 
@@ -31,11 +31,12 @@ public class TestFileModel {
 
   public TestFileModel(
       @JsonProperty(value = "name", required = true) final String name,
-      @JsonProperty(value = "name", required = true) boolean shouldSucceed,
-      @JsonProperty(value = "name", required = true) String genesis_validators_root,
-      @JsonProperty(value = "name", required = true) InterchangeV4Format interchangeContent,
+      @JsonProperty(value = "should_succeed", required = true) boolean shouldSucceed,
+      @JsonProperty(value = "genesis_validators_root", required = true) String genesis_validators_root,
+      @JsonProperty(value = "interchange", required = true) InterchangeV4Format interchangeContent,
       @JsonProperty(value = "blocks", required = true) List<BlockTestModel> blocks,
-      @JsonProperty(value = "attestations", required = true) List<AttestionTestModel> attestations) {
+      @JsonProperty(value = "attestations", required = true)
+          List<AttestionTestModel> attestations) {
     this.name = name;
     this.shouldSucceed = shouldSucceed;
     this.genesis_validators_root = genesis_validators_root;

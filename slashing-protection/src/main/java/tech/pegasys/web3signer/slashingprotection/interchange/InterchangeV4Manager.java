@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
@@ -78,7 +79,8 @@ public class InterchangeV4Manager implements InterchangeManager {
             .map(
                 b ->
                     new tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock(
-                        b.getSlot().toString(), b.getSigningRoot().toHexString()))
+                        b.getSlot().toString(),
+                        b.getSigningRoot().map(Bytes::toHexString).orElse(null)))
             .collect(Collectors.toList());
 
     final List<tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation>
@@ -90,7 +92,7 @@ public class InterchangeV4Manager implements InterchangeManager {
                             .SignedAttestation(
                             a.getSourceEpoch().toString(),
                             a.getTargetEpoch().toString(),
-                            a.getSigningRoot().toHexString()))
+                            a.getSigningRoot().map(Bytes::toHexString).orElse(null)))
                 .collect(Collectors.toList());
 
     return new SignedArtifacts(validator.getPublicKey().toHexString(), blocks, attestations);

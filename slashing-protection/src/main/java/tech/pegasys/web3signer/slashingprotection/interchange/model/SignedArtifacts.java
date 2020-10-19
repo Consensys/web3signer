@@ -24,7 +24,7 @@ public class SignedArtifacts {
   private final List<SignedAttestation> signedAttestations;
 
   public SignedArtifacts(
-      @JsonProperty(value = "pubKey", required = true) final String publicKey,
+      @JsonProperty(value = "pubkey", required = true) final String publicKey,
       @JsonProperty(value = "signed_blocks", required = true) final List<SignedBlock> signedBlocks,
       @JsonProperty(value = "signed_attestations", required = true)
           final List<SignedAttestation> signedAttestations) {
