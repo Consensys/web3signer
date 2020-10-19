@@ -36,8 +36,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class FilecoinJsonRpcEndpoint {
 
-  public static final int BLS_SIGTYPE = 1;
-  public static final int SECP_SIGTYPE = 2;
+  public static final String BLS_SIGTYPE = "bls";
+  public static final String SECP_SIGTYPE = "secp256k1";
 
   // This is required to be set if operating against a full Lotus node (as opposed to dev-lotus).
   private static final Optional<String> authToken =
@@ -54,7 +54,7 @@ public abstract class FilecoinJsonRpcEndpoint {
     this.rpcPath = rpcPath;
   }
 
-  public String walletNew(int sigType) {
+  public String walletNew(final String sigType) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletNew")

@@ -16,7 +16,7 @@ import static tech.pegasys.web3signer.core.signing.filecoin.exceptions.InvalidFi
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcError;
 
-@JsonRpcError(code = -32700, message = MESSAGE)
+@JsonRpcError(code = -32700, message = InvalidFilecoinNetworkException.MESSAGE)
 public class InvalidFilecoinNetworkException extends RuntimeException {
   static final String MESSAGE = "Unknown Filecoin network";
 
