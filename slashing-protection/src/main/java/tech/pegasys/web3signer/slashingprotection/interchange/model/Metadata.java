@@ -43,7 +43,7 @@ public class Metadata {
     return format;
   }
 
-  @JsonGetter(value = "interchange_version")
+  @JsonGetter(value = "interchange_format_version")
   public int getFormatVersion() {
     return formatVersion;
   }

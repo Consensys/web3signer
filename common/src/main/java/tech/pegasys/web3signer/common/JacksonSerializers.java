@@ -10,12 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service;
-
-import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
-
-import java.io.IOException;
-import java.math.BigInteger;
+package tech.pegasys.web3signer.common;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -23,6 +18,8 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import java.io.IOException;
+import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 
@@ -35,7 +32,7 @@ public class JacksonSerializers {
       try {
         return Bytes.fromBase64String(p.getValueAsString());
       } catch (final Exception e) {
-        throw new SigningMetadataException("Invalid hex value for private key", e);
+        throw new RuntimeException("Failed to decode as a Base64 string.", e);
       }
     }
   }
@@ -56,7 +53,7 @@ public class JacksonSerializers {
       try {
         return Bytes.fromHexString(p.getValueAsString());
       } catch (final Exception e) {
-        throw new SigningMetadataException("Invalid hex value for private key", e);
+        throw new RuntimeException("Failed to decode as a hex string", e);
       }
     }
   }
@@ -77,7 +74,7 @@ public class JacksonSerializers {
       try {
         return new BigInteger(p.getValueAsString());
       } catch (final Exception e) {
-        throw new SigningMetadataException("Invalid hex value for private key", e);
+        throw new RuntimeException("Failed to parse string as a BigInteger", e);
       }
     }
   }
@@ -97,7 +94,7 @@ public class JacksonSerializers {
       try {
         return UInt64.valueOf(p.getBigIntegerValue());
       } catch (final Exception e) {
-        throw new SigningMetadataException("Invalid hex value for private key", e);
+        throw new RuntimeException("Failed to parse integer as as UInt64", e);
       }
     }
   }
@@ -117,7 +114,7 @@ public class JacksonSerializers {
       try {
         return UInt64.valueOf(new BigInteger(p.getValueAsString()));
       } catch (final Exception e) {
-        throw new SigningMetadataException("Invalid hex value for private key", e);
+        throw new RuntimeException("Failed to parse string as a UInt64", e);
       }
     }
   }

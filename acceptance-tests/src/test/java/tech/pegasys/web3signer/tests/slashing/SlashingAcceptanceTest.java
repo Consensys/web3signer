@@ -253,6 +253,8 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     final Signer exportSigner = new Signer(builder.build(), null);
     exportSigner.start();
     waitFor(() -> assertThat(exportSigner.isRunning()).isFalse());
+
+    // TODO(tmm): do some validation on file content
   }
 
   @Test

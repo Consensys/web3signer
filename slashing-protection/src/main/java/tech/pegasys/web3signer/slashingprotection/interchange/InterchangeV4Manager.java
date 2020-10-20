@@ -90,9 +90,9 @@ public class InterchangeV4Manager implements InterchangeManager {
                     a ->
                         new tech.pegasys.web3signer.slashingprotection.interchange.model
                             .SignedAttestation(
-                            a.getSourceEpoch().toString(),
-                            a.getTargetEpoch().toString(),
-                            a.getSigningRoot().map(Bytes::toHexString).orElse(null)))
+                            a.getSourceEpoch(),
+                            a.getTargetEpoch(),
+                            a.getSigningRoot().orElse(null)))
                 .collect(Collectors.toList());
 
     return new SignedArtifacts(validator.getPublicKey().toHexString(), blocks, attestations);

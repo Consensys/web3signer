@@ -33,7 +33,7 @@ public class SignedArtifacts {
     this.signedAttestations = signedAttestations;
   }
 
-  @JsonGetter(value = "pubKey")
+  @JsonGetter(value = "pubkey")
   public String getPublicKey() {
     return publicKey;
   }

@@ -198,7 +198,6 @@ public abstract class Runner implements Runnable {
             .setIdleTimeout(config.getIdleConnectionTimeoutSeconds())
             .setIdleTimeoutUnit(TimeUnit.SECONDS)
             .setReuseAddress(true)
-            .setLogActivity(true)
             .setReusePort(true);
     final HttpServerOptions tlsServerOptions = applyConfigTlsSettingsTo(serverOptions);
     final HttpServer httpServer = vertx.createHttpServer(tlsServerOptions);

@@ -13,35 +13,39 @@
 package tech.pegasys.web3signer.slashingprotection.interchange.model;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SignedAttestation {
 
-  private final String sourceEpoch;
-  private final String targetEpoch;
-  public String signingRoot;
+  private final UInt64 sourceEpoch;
+  private final UInt64 targetEpoch;
+  public Bytes signingRoot;
 
   public SignedAttestation(
-      @JsonProperty(value = "source_epoch", required = true) final String sourceEpoch,
-      @JsonProperty(value = "target_epoch", required = true) final String targetEpoch,
-      @JsonProperty(value = "signing_root") final String signingRoot) {
+      @JsonProperty(value = "source_epoch", required = true) final UInt64 sourceEpoch,
+      @JsonProperty(value = "target_epoch", required = true) final UInt64 targetEpoch,
+      @JsonProperty(value = "signing_root") final Bytes signingRoot) {
     this.sourceEpoch = sourceEpoch;
     this.targetEpoch = targetEpoch;
     this.signingRoot = signingRoot;
   }
 
   @JsonGetter(value = "source_epoch")
-  public String getSourceEpoch() {
+  public UInt64 getSourceEpoch() {
     return sourceEpoch;
   }
 
   @JsonGetter(value = "target_epoch")
-  public String getTargetEpoch() {
+  public UInt64 getTargetEpoch() {
     return targetEpoch;
   }
 
   @JsonGetter(value = "signing_root")
-  public String getSigningRoot() {
+  public Bytes getSigningRoot() {
     return signingRoot;
   }
 }

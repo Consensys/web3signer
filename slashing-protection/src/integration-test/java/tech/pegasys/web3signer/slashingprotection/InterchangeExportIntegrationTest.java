@@ -38,7 +38,7 @@ import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 
-public class InterchangeExport {
+public class InterchangeExportIntegrationTest {
 
   private final SignedBlocksDao signedBlocks = new SignedBlocksDao();
   private final SignedAttestationsDao signedAttestations = new SignedAttestationsDao();
