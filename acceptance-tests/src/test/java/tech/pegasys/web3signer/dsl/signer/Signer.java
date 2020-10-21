@@ -33,7 +33,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.atlassian.oai.validator.restassured.OpenApiValidationFilter;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -124,7 +123,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   public Response eth1Sign(final String publicKey, final Bytes dataToSign) {
     return given()
         .baseUri(getUrl())
-        .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
         .body(new JsonObject().put("data", dataToSign.toHexString()).toString())
@@ -135,7 +133,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
       throws JsonProcessingException {
     return given()
         .baseUri(getUrl())
-        .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
         .body(eth2InterfaceObjectMapper.writeValueAsString(ethSignBody))
@@ -146,7 +143,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
       final String publicKey, final Bytes dataToSign, final ArtifactType type) {
     return given()
         .baseUri(getUrl())
-        .filter(getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
         .body(
@@ -158,10 +154,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   }
 
   public Response callApiPublicKeys(final KeyType keyType) {
-    return given()
-        .filter(getOpenApiValidationFilter())
-        .baseUri(getUrl())
-        .get(publicKeysPath(keyType));
+    return given().baseUri(getUrl()).get(publicKeysPath(keyType));
   }
 
   public static String publicKeysPath(final KeyType keyType) {
@@ -170,11 +163,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
 
   public static String signPath(final KeyType keyType) {
     return keyType == BLS ? ETH2_SIGN_ENDPOINT : ETH1_SIGN_ENDPOINT;
-  }
-
-  public OpenApiValidationFilter getOpenApiValidationFilter() {
-    final String swaggerUrl = getUrl() + "/swagger-ui/web3signer.yaml";
-    return new OpenApiValidationFilter(swaggerUrl);
   }
 
   public Set<String> getMetricsMatching(final List<String> metricsOfInterest) {
