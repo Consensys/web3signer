@@ -177,7 +177,17 @@ public class SignedAttestationsDaoTest {
     assertThat(existingAttestation.get().getSigningRoot()).isEmpty();
   }
 
-  // TODO tests for minSourceEpoch, minTargetEpoch
+  @Test
+  public void determinesMinimumSourceEpoch() {
+    insertAttestation(handle, Bytes.of(100), 1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
+    assertThat(signedAttestationsDao.minimumSourceEpoch(handle, 1)).hasValue(UInt64.valueOf(3));
+  }
+
+  @Test
+  public void determinesMinimumTargetEpoch() {
+    insertAttestation(handle, Bytes.of(100), 1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
+    assertThat(signedAttestationsDao.minimumTargetEpoch(handle, 1)).hasValue(UInt64.valueOf(4));
+  }
 
   private void insertAttestation(
       final Handle h,
