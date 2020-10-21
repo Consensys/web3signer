@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.tests.slashing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
@@ -36,8 +38,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  private final BLSKeyPair keyPair = BLSKeyPair.random(0);
+  protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  protected final BLSKeyPair keyPair = BLSKeyPair.random(0);
 
   final List<String> attestationSlashingMetrics =
       List.of(
@@ -216,7 +218,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void signingBlockWithDifferentSigningRootForPreviousSlotFailsWith403(@TempDir Path testDirectory)
-      throws JsonProcessingException {
+      throws IOException {
     setupSigner(testDirectory, true);
 
     final Eth2SigningRequestBody initialRequest =
@@ -238,23 +240,6 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
     assertThat(signer.getMetricsMatching(blockSlashingMetrics))
         .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 1.0");
-
-    final Path exportFile = testDirectory.resolve("dbExport.json");
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withMode("eth2");
-    builder.withSlashingEnabled(true);
-    builder.withSlashingProtectionDbUrl(signer.getSlashingDbUrl());
-    builder.withSlashingProtectionDbUsername("postgres");
-    builder.withSlashingProtectionDbPassword("postgres");
-    builder.withKeyStoreDirectory(testDirectory);
-    builder.withPostfix("export --to=" + exportFile.toAbsolutePath().toString());
-    builder.withHttpPort(12345); // prevent wait for Ports file in AT
-
-    final Signer exportSigner = new Signer(builder.build(), null);
-    exportSigner.start();
-    waitFor(() -> assertThat(exportSigner.isRunning()).isFalse());
-
-    // TODO(tmm): do some validation on file content
   }
 
   @Test
