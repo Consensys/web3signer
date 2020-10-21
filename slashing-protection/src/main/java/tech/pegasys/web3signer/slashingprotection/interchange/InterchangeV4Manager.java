@@ -55,7 +55,7 @@ public class InterchangeV4Manager implements InterchangeManager {
 
   @Override
   public void exportTo(final OutputStream out) throws IOException {
-    final Metadata metadata = new Metadata(Format.COMPLETE, 4, "notApplicable");
+    final Metadata metadata = new Metadata(Format.COMPLETE, 4, Bytes.fromHexString("FFFFFFFF"));
     final List<SignedArtifacts> signedArtifacts = generateModelFromDatabase();
 
     final InterchangeV4Format toExport = new InterchangeV4Format(metadata, signedArtifacts);
@@ -79,8 +79,7 @@ public class InterchangeV4Manager implements InterchangeManager {
             .map(
                 b ->
                     new tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock(
-                        b.getSlot().toString(),
-                        b.getSigningRoot().map(Bytes::toHexString).orElse(null)))
+                        b.getSlot(), b.getSigningRoot().orElse(null)))
             .collect(Collectors.toList());
 
     final List<tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation>

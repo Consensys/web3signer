@@ -12,13 +12,14 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Deserializer;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Serialiser;
+
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class InterchangeModule extends SimpleModule {
 

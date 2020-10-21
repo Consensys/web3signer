@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.slashingprotection.interchange.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
 
 public class Metadata {
 
@@ -25,14 +26,14 @@ public class Metadata {
 
   private final Format format;
   private final int formatVersion;
-  private final String genesisValidatorsRoot;
+  private final Bytes genesisValidatorsRoot;
 
   @JsonCreator
   public Metadata(
       @JsonProperty(value = "interchange_format", required = true) final Format format,
       @JsonProperty(value = "interchange_format_version", required = true) final int formatVersion,
       @JsonProperty(value = "genesis_validators_root", required = true)
-          final String genesisValidatorsRoot) {
+          final Bytes genesisValidatorsRoot) {
     this.format = format;
     this.formatVersion = formatVersion;
     this.genesisValidatorsRoot = genesisValidatorsRoot;
@@ -44,12 +45,12 @@ public class Metadata {
   }
 
   @JsonGetter(value = "interchange_format_version")
-  public int getFormatVersion() {
-    return formatVersion;
+  public String getFormatVersionAsString() {
+    return Integer.toString(formatVersion);
   }
 
   @JsonGetter(value = "genesis_validators_root")
-  public String getGenesisValidatorsRoot() {
+  public Bytes getGenesisValidatorsRoot() {
     return genesisValidatorsRoot;
   }
 }

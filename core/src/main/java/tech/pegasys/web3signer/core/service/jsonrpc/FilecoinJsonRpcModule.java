@@ -12,12 +12,12 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc;
 
-import tech.pegasys.web3signer.core.service.JacksonSerializers.Base64Deserialiser;
-import tech.pegasys.web3signer.core.service.JacksonSerializers.Base64Serialiser;
-import tech.pegasys.web3signer.core.service.JacksonSerializers.BigIntegerDecimalStringDeserialiser;
-import tech.pegasys.web3signer.core.service.JacksonSerializers.BigIntegerDecimalStringSerialiser;
-import tech.pegasys.web3signer.core.service.JacksonSerializers.NumberUInt64Deserializer;
-import tech.pegasys.web3signer.core.service.JacksonSerializers.NumberUInt64Serialiser;
+import tech.pegasys.web3signer.common.JacksonSerializers.Base64Deserialiser;
+import tech.pegasys.web3signer.common.JacksonSerializers.Base64Serialiser;
+import tech.pegasys.web3signer.common.JacksonSerializers.BigIntegerDecimalStringDeserialiser;
+import tech.pegasys.web3signer.common.JacksonSerializers.BigIntegerDecimalStringSerialiser;
+import tech.pegasys.web3signer.common.JacksonSerializers.NumberUInt64Deserializer;
+import tech.pegasys.web3signer.common.JacksonSerializers.NumberUInt64Serialiser;
 
 import java.math.BigInteger;
 

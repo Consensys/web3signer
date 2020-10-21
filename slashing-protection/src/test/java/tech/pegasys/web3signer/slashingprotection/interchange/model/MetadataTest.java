@@ -15,44 +15,30 @@ package tech.pegasys.web3signer.slashingprotection.interchange.model;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
+import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata.Format;
 
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
-class SignedAttestationTest {
+class MetadataTest {
 
   private final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
 
   @Test
   @SuppressWarnings("unchecked")
-  void fieldNamesAlignWithSpec() throws JsonProcessingException {
-    final SignedAttestation attestation =
-        new SignedAttestation(UInt64.valueOf(1), UInt64.valueOf(2), Bytes.fromHexString("0x01"));
-
-    final String jsonOutput = mapper.writeValueAsString(attestation);
+  void metadataHasCorrectlyNamedFields() throws JsonProcessingException {
+    final Metadata medataData = new Metadata(Format.COMPLETE, 4, Bytes.fromHexString("0x123456"));
+    final String jsonOutput = mapper.writeValueAsString(medataData);
     final Map<String, String> jsonContent = new ObjectMapper().readValue(jsonOutput, Map.class);
 
-    assertThat(jsonContent.get("source_epoch")).isEqualTo(attestation.getSourceEpoch().toString());
-    assertThat(jsonContent.get("target_epoch")).isEqualTo(attestation.getTargetEpoch().toString());
-    assertThat(jsonContent.get("signing_root"))
-        .isEqualTo(attestation.getSigningRoot().toHexString());
-  }
-
-  @Test
-  @SuppressWarnings("unchecked")
-  void nullSigningRootIsNotWrittenToJson() throws JsonProcessingException {
-    final SignedAttestation attestation =
-        new SignedAttestation(UInt64.valueOf(1), UInt64.valueOf(2), null);
-
-    final String jsonOutput = mapper.writeValueAsString(attestation);
-
-    final Map<String, String> jsonContent = new ObjectMapper().readValue(jsonOutput, Map.class);
-
-    assertThat(jsonContent.keySet()).doesNotContain("signing_root");
+    assertThat(jsonContent.get("interchange_format")).isEqualTo(medataData.getFormat().toString());
+    assertThat(jsonContent.get("interchange_format_version"))
+        .isEqualTo(medataData.getFormatVersionAsString());
+    assertThat(jsonContent.get("genesis_validators_root"))
+        .isEqualTo(medataData.getGenesisValidatorsRoot().toHexString());
   }
 }

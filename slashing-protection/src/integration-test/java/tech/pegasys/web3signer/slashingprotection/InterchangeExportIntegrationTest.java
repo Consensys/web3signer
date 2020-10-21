@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.InterchangeV4Format;
 
 import java.io.ByteArrayOutputStream;
@@ -107,7 +108,7 @@ public class InterchangeExportIntegrationTest {
     slashingProtection.exportTo(exportOutput);
     exportOutput.close();
 
-    final ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
 
     final InterchangeV4Format outputObject =
         mapper.readValue(exportOutput.toString(), InterchangeV4Format.class);

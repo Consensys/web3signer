@@ -22,6 +22,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV4Manager;
 
 import java.io.IOException;
@@ -78,7 +79,11 @@ public class DbSlashingProtection implements SlashingProtection {
     this.registeredValidators = registeredValidators;
     this.interchangeManager =
         new InterchangeV4Manager(
-            jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, new ObjectMapper());
+            jdbi,
+            validatorsDao,
+            signedBlocksDao,
+            signedAttestationsDao,
+            new ObjectMapper().registerModule(new InterchangeModule()));
   }
 
   @Override

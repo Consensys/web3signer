@@ -24,32 +24,29 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
-class SignedAttestationTest {
+class SignedBlockTest {
 
   private final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
 
   @Test
   @SuppressWarnings("unchecked")
   void fieldNamesAlignWithSpec() throws JsonProcessingException {
-    final SignedAttestation attestation =
-        new SignedAttestation(UInt64.valueOf(1), UInt64.valueOf(2), Bytes.fromHexString("0x01"));
+    final SignedBlock block = new SignedBlock(UInt64.valueOf(1), Bytes.fromHexString("0x01"));
 
-    final String jsonOutput = mapper.writeValueAsString(attestation);
+    final String jsonOutput = mapper.writeValueAsString(block);
+
     final Map<String, String> jsonContent = new ObjectMapper().readValue(jsonOutput, Map.class);
 
-    assertThat(jsonContent.get("source_epoch")).isEqualTo(attestation.getSourceEpoch().toString());
-    assertThat(jsonContent.get("target_epoch")).isEqualTo(attestation.getTargetEpoch().toString());
-    assertThat(jsonContent.get("signing_root"))
-        .isEqualTo(attestation.getSigningRoot().toHexString());
+    assertThat(jsonContent.get("slot")).isEqualTo(block.getSlot().toString());
+    assertThat(jsonContent.get("signing_root")).isEqualTo(block.getSigningRoot().toHexString());
   }
 
   @Test
   @SuppressWarnings("unchecked")
   void nullSigningRootIsNotWrittenToJson() throws JsonProcessingException {
-    final SignedAttestation attestation =
-        new SignedAttestation(UInt64.valueOf(1), UInt64.valueOf(2), null);
+    final SignedBlock block = new SignedBlock(UInt64.valueOf(1), null);
 
-    final String jsonOutput = mapper.writeValueAsString(attestation);
+    final String jsonOutput = mapper.writeValueAsString(block);
 
     final Map<String, String> jsonContent = new ObjectMapper().readValue(jsonOutput, Map.class);
 
