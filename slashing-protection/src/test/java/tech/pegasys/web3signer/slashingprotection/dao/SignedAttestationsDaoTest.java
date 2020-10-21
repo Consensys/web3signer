@@ -177,6 +177,8 @@ public class SignedAttestationsDaoTest {
     assertThat(existingAttestation.get().getSigningRoot()).isEmpty();
   }
 
+  // TODO tests for minSourceEpoch, minTargetEpoch
+
   private void insertAttestation(
       final Handle h,
       final Bytes publicKey,

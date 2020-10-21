@@ -108,6 +108,13 @@ public class SignedBlocksDaoTest {
     assertThat(block.get().getSigningRoot()).isEmpty();
   }
 
+  @Test
+  public void determineSlotGreaterThanMinSlot() {
+    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+    insertBlock(handle, Bytes.of(100), 1, 2, null);
+    assertThat(signedBlocksDao.minimumSlot(handle, 1)).hasValue(UInt64.valueOf(2));
+  }
+
   private void insertBlock(
       final Handle h,
       final Bytes publicKey,

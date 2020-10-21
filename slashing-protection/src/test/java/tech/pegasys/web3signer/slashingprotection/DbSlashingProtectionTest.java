@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
@@ -290,5 +291,89 @@ public class DbSlashingProtectionTest {
     final boolean result = dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT);
 
     assertThat(result).isFalse();
+  }
+
+  @Test
+  public void slashingProtectionEnactedIfBlockWithSlotLessThanMinSlot() {
+    when(signedBlocksDao.minimumSlot(any(), anyInt())).thenReturn(Optional.of(UInt64.valueOf(2)));
+
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, UInt64.ONE)).isFalse();
+
+    verify(signedBlocksDao).minimumSlot(any(), eq(VALIDATOR_ID));
+    verifyNoMoreInteractions(signedBlocksDao);
+  }
+
+  @Test
+  public void slashingProtectionEnactedIfBlockWithSlotEqualToMinSlot() {
+    when(signedBlocksDao.minimumSlot(any(), anyInt())).thenReturn(Optional.of(SLOT));
+
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isFalse();
+
+    verify(signedBlocksDao).minimumSlot(any(), eq(VALIDATOR_ID));
+    verifyNoMoreInteractions(signedBlocksDao);
+  }
+
+  @Test
+  public void slashingProtectionEnactedIfAttestationWithSourceEpochLessThanMin() {
+    when(signedAttestationsDao.minimumSourceEpoch(any(), anyInt()))
+        .thenReturn(Optional.of(UInt64.valueOf(2)));
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, UInt64.ZERO, UInt64.ZERO))
+        .isFalse();
+
+    verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
+    verifyNoMoreInteractions(signedAttestationsDao);
+  }
+
+  @Test
+  public void attestationCanBeSignedWithSourceEpochEqualToMin() {
+    when(signedAttestationsDao.minimumSourceEpoch(any(), anyInt()))
+        .thenReturn(Optional.of(SOURCE_EPOCH));
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+        .isTrue();
+
+    verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
+    final SignedAttestation attestation =
+        new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
+    verify(signedAttestationsDao).insertAttestation(any(), refEq(attestation));
+  }
+
+  @Test
+  public void slashingProtectionEnactedIfAttestationWithTargetEpochLessThanMin() {
+    when(signedAttestationsDao.minimumSourceEpoch(any(), anyInt()))
+        .thenReturn(Optional.of(UInt64.valueOf(2)));
+    when(signedAttestationsDao.minimumTargetEpoch(any(), anyInt()))
+        .thenReturn(Optional.of(UInt64.valueOf(5)));
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(3), UInt64.valueOf(4)))
+        .isFalse();
+
+    verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
+    verify(signedAttestationsDao).minimumTargetEpoch(any(), eq(VALIDATOR_ID));
+    verifyNoMoreInteractions(signedAttestationsDao);
+  }
+
+  @Test
+  public void slashingProtectionEnactedIfAttestationWithTargetEpochEqualToMin() {
+    when(signedAttestationsDao.minimumSourceEpoch(any(), anyInt()))
+        .thenReturn(Optional.of(UInt64.valueOf(2)));
+    when(signedAttestationsDao.minimumTargetEpoch(any(), anyInt()))
+        .thenReturn(Optional.of(UInt64.valueOf(4)));
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(3), UInt64.valueOf(4)))
+        .isFalse();
+
+    verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
+    verify(signedAttestationsDao).minimumTargetEpoch(any(), eq(VALIDATOR_ID));
+    verifyNoMoreInteractions(signedAttestationsDao);
   }
 }
