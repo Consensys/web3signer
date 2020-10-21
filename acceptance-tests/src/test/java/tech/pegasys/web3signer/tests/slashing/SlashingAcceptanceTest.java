@@ -13,15 +13,11 @@
 package tech.pegasys.web3signer.tests.slashing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
-import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
@@ -218,7 +214,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void signingBlockWithDifferentSigningRootForPreviousSlotFailsWith403(@TempDir Path testDirectory)
-      throws IOException {
+      throws JsonProcessingException {
     setupSigner(testDirectory, true);
 
     final Eth2SigningRequestBody initialRequest =
