@@ -195,7 +195,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     setupSigner("eth2", env);
 
     // openapi
-    final Eth2SigningRequestBody request = Eth2RequestUtils.createRequest(artifactType);
+    final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
     final Response response = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     final Bytes signature = verifyAndGetSignatureResponse(response);
     final BLSSignature expectedSignature =

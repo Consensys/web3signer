@@ -19,14 +19,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class DepositMessage {
-  public final BLSPubKey pubkey;
-  public final Bytes32 withdrawalCredentials;
-  public final UInt64 amount;
+  private final BLSPubKey pubkey;
+  private final Bytes32 withdrawalCredentials;
+  private final UInt64 amount;
 
   public DepositMessage(
-      @JsonProperty("pubkey") final BLSPubKey pubkey,
-      @JsonProperty("withdrawal_credentials") final Bytes32 withdrawalCredentials,
-      @JsonProperty("amount") final UInt64 amount) {
+      @JsonProperty(value = "pubkey", required = true) final BLSPubKey pubkey,
+      @JsonProperty(value = "withdrawal_credentials", required = true)
+          final Bytes32 withdrawalCredentials,
+      @JsonProperty(value = "amount", required = true) final UInt64 amount) {
     this.pubkey = pubkey;
     this.withdrawalCredentials = withdrawalCredentials;
     this.amount = amount;

@@ -21,7 +21,7 @@ public class AggregationSlot {
   private final UInt64 slot;
 
   @JsonCreator
-  public AggregationSlot(@JsonProperty("slot") final UInt64 slot) {
+  public AggregationSlot(@JsonProperty(value = "slot", required = true) final UInt64 slot) {
     this.slot = slot;
   }
 

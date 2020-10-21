@@ -24,8 +24,9 @@ public class ForkInfo {
 
   @JsonCreator
   public ForkInfo(
-      @JsonProperty("fork") final Fork fork,
-      @JsonProperty("genesis_validators_root") Bytes32 genesisValidatorsRoot) {
+      @JsonProperty(value = "fork", required = true) final Fork fork,
+      @JsonProperty(value = "genesis_validators_root", required = true)
+          Bytes32 genesisValidatorsRoot) {
     this.fork = fork;
     this.genesisValidatorsRoot = genesisValidatorsRoot;
   }

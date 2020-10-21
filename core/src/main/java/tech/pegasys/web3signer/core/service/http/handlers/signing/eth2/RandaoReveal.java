@@ -21,7 +21,7 @@ public class RandaoReveal {
   private final UInt64 epoch;
 
   @JsonCreator
-  public RandaoReveal(@JsonProperty("epoch") final UInt64 epoch) {
+  public RandaoReveal(@JsonProperty(value = "epoch", required = true) final UInt64 epoch) {
     this.epoch = epoch;
   }
 

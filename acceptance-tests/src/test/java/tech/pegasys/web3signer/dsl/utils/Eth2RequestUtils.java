@@ -46,7 +46,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class Eth2RequestUtils {
 
-  public static Eth2SigningRequestBody createRequest(final ArtifactType artifactType) {
+  public static Eth2SigningRequestBody createCannedRequest(final ArtifactType artifactType) {
     switch (artifactType) {
       case DEPOSIT:
         return createDepositRequest();
