@@ -1,0 +1,43 @@
+
+apply plugin: 'java-library'
+apply plugin: 'java-test-fixtures'
+
+jar {
+  archiveBaseName = 'web3signer-common'
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
+}
+
+dependencies {
+
+  implementation 'com.google.guava:guava'
+  implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.logging.log4j:log4j-core'
+  implementation 'commons-io:commons-io'
+  implementation 'commons-lang:commons-lang'
+
+  implementation 'org.apache.tuweni:tuweni-bytes'
+  implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'org.web3j:core'
+
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
+
+  runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
+  runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
+
+  runtimeOnly 'tech.pegasys:jblst'
+
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
+
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+}
