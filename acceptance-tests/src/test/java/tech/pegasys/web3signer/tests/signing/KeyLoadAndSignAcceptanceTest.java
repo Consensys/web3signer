@@ -58,7 +58,6 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final String body = createBody(keyType);
     given()
         .baseUri(signer.getUrl())
-        .filter(signer.getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(body)
@@ -144,7 +143,6 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
 
     given()
         .baseUri(signer.getUrl())
-        .filter(signer.getOpenApiValidationFilter())
         .contentType(ContentType.JSON)
         .pathParam("identifier", keyPair.getPublicKey().toString())
         .body(

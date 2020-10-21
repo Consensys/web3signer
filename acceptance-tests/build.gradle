@@ -42,13 +42,13 @@ dependencies {
   testImplementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   testImplementation 'tech.pegasys.signers.internal:bls-keystore'
   testImplementation 'tech.pegasys.teku.internal:bls'
-  testImplementation 'com.atlassian.oai:swagger-request-validator-restassured'
   testImplementation 'org.web3j:core'
   testImplementation 'org.apache.tuweni:tuweni-bytes'
   testImplementation 'com.github.arteam:simple-json-rpc-server'
   testImplementation 'com.github.arteam:simple-json-rpc-client'
   testImplementation 'org.flywaydb:flyway-core'
   testImplementation 'com.opentable.components:otj-pg-embedded'
+  testImplementation 'io.rest-assured:rest-assured'
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'keystorage-hashicorp', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'acceptance-tests', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'signing-secp256k1-impl', classifier: 'test-fixtures')
