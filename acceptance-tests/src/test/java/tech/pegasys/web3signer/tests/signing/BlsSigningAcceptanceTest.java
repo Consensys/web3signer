@@ -181,7 +181,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final Response response =
         signer.eth2Sign(keyPair.getPublicKey().toString(), requestWithMismatchedSigningRoot);
-    assertThat(response.getStatusCode()).isEqualTo(500);
+    assertThat(response.getStatusCode()).isEqualTo(200);
   }
 
   private void signAndVerifySignature(final ArtifactType artifactType)

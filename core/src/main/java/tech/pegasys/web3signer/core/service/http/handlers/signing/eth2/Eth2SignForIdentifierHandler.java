@@ -29,6 +29,7 @@ import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -86,39 +87,57 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             signingRoot);
       }
 
+      final String normalisedIdentifier = normaliseIdentifier(identifier);
       if (slashingProtection.isPresent()) {
-        signerForIdentifier
-            .sign(normaliseIdentifier(identifier), signingRoot)
-            .ifPresentOrElse(
-                signature -> {
-                  try {
-                    if (maySign(
-                        Bytes.fromHexString(identifier), signingRoot, eth2SigningRequestBody)) {
-                      slashingMetrics.incrementSigningsPermitted();
-                      respondWithSignature(routingContext, signature);
-                    } else {
-                      slashingMetrics.incrementSigningsPrevented();
-                      LOG.debug("Signing not allowed due to slashing protection rules failing");
-                      routingContext.fail(403);
-                    }
-                  } catch (final IllegalArgumentException e) {
-                    handleInvalidRequest(routingContext, e);
-                  }
-                },
-                () -> {
-                  httpMetrics.getMissingSignerCounter().inc();
-                  routingContext.fail(404);
-                });
+        handleSigning(
+            routingContext,
+            signingRoot,
+            normalisedIdentifier,
+            signature ->
+                signWithSlashingProtection(
+                    routingContext, identifier, eth2SigningRequestBody, signingRoot, signature));
       } else {
-        signerForIdentifier
-            .sign(normaliseIdentifier(identifier), eth2SigningRequestBody.getSigningRoot())
-            .ifPresentOrElse(
-                signature -> respondWithSignature(routingContext, signature),
-                () -> {
-                  httpMetrics.getMissingSignerCounter().inc();
-                  routingContext.fail(404);
-                });
+        handleSigning(
+            routingContext,
+            signingRoot,
+            normalisedIdentifier,
+            signature -> respondWithSignature(routingContext, signature));
       }
+    }
+  }
+
+  private void handleSigning(
+      final RoutingContext routingContext,
+      final Bytes signingRoot,
+      final String normalisedIdentifier,
+      final Consumer<String> signatureConsumer) {
+    signerForIdentifier
+        .sign(normalisedIdentifier, signingRoot)
+        .ifPresentOrElse(
+            signatureConsumer,
+            () -> {
+              httpMetrics.getMissingSignerCounter().inc();
+              routingContext.fail(404);
+            });
+  }
+
+  private void signWithSlashingProtection(
+      final RoutingContext routingContext,
+      final String identifier,
+      final Eth2SigningRequestBody eth2SigningRequestBody,
+      final Bytes signingRoot,
+      final String signature) {
+    try {
+      if (maySign(Bytes.fromHexString(identifier), signingRoot, eth2SigningRequestBody)) {
+        slashingMetrics.incrementSigningsPermitted();
+        respondWithSignature(routingContext, signature);
+      } else {
+        slashingMetrics.incrementSigningsPrevented();
+        LOG.debug("Signing not allowed due to slashing protection rules failing");
+        routingContext.fail(403);
+      }
+    } catch (final IllegalArgumentException e) {
+      handleInvalidRequest(routingContext, e);
     }
   }
 
