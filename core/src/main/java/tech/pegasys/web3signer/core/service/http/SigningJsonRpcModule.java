@@ -12,6 +12,10 @@
  */
 package tech.pegasys.web3signer.core.service.http;
 
+import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
+import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
+import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Deserializer;
+import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Serialiser;
 import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.api.schema.BLSSignature;
 import tech.pegasys.teku.provider.BLSPubKeyDeserializer;
