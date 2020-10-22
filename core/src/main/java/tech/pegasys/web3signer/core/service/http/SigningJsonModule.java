@@ -38,9 +38,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class SigningJsonRpcModule extends SimpleModule {
+public class SigningJsonModule extends SimpleModule {
 
-  public SigningJsonRpcModule() {
+  public SigningJsonModule() {
     super("SigningJsonRpcModule");
     addDeserializer(Bytes.class, new HexDeserialiser());
     addSerializer(Bytes.class, new HexSerialiser());

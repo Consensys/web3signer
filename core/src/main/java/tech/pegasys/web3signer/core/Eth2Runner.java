@@ -29,7 +29,7 @@ import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
-import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
+import tech.pegasys.web3signer.core.service.http.SigningJsonModule;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SignForIdentifierHandler;
@@ -132,7 +132,7 @@ public class Eth2Runner extends Runner {
         new ObjectMapper()
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .registerModule(new SigningJsonRpcModule());
+            .registerModule(new SigningJsonModule());
 
     addPublicKeysListHandler(
         routerFactory, blsSignerProvider.availableIdentifiers(), ETH2_LIST.name(), errorHandler);
