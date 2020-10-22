@@ -160,4 +160,8 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         .filter(line -> metricsOfInterest.contains(Iterables.get(Splitter.on(' ').split(line), 0)))
         .collect(Collectors.toSet());
   }
+
+  public String getSlashingDbUrl() {
+    return runner.getSlashingDbUrl();
+  }
 }
