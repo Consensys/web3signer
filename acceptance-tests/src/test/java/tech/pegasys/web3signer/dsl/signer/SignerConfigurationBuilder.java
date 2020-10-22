@@ -41,7 +41,7 @@ public class SignerConfigurationBuilder {
   private AzureKeyVaultParameters azureKeyVaultParameters;
   private Map<String, String> web3SignerEnvironment;
   private boolean enableSlashing = false;
-  private String postfix;
+  private Path slashingExportPath;
   private String slashingProtectionDbUrl;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
@@ -95,12 +95,6 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withSlashingProtectionDbUrl(
-      final String slashingProtectionDbUrl) {
-    this.slashingProtectionDbUrl = slashingProtectionDbUrl;
-    return this;
-  }
-
   public SignerConfigurationBuilder withSlashingProtectionDbUsername(
       final String slashingProtectionDbUsername) {
     this.slashingProtectionDbUsername = slashingProtectionDbUsername;
@@ -123,8 +117,14 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withPostfix(final String postfix) {
-    this.postfix = postfix;
+  public SignerConfigurationBuilder withSlashingExportPath(final Path slashingExportPath) {
+    this.slashingExportPath = slashingExportPath;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withSlashingProtectionDbUrl(
+      final String slashingProtectionDbUrl) {
+    this.slashingProtectionDbUrl = slashingProtectionDbUrl;
     return this;
   }
 
@@ -149,6 +149,6 @@ public class SignerConfigurationBuilder {
         mode,
         Optional.ofNullable(web3SignerEnvironment),
         enableSlashing,
-        postfix);
+        Optional.ofNullable(slashingExportPath));
   }
 }

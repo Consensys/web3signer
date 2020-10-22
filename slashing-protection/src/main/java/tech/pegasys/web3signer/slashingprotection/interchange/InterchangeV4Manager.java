@@ -68,7 +68,7 @@ public class InterchangeV4Manager implements InterchangeManager {
     jdbi.useTransaction(
         h ->
             validatorsDao
-                .retrieveAllValidators(h)
+                .getAllValidators(h)
                 .forEach(validator -> result.add(extractSigningsFor(h, validator))));
     return result;
   }

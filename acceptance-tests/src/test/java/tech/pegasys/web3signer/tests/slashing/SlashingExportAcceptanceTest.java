@@ -54,7 +54,7 @@ public class SlashingExportAcceptanceTest extends SlashingAcceptanceTest {
     builder.withSlashingProtectionDbUsername("postgres");
     builder.withSlashingProtectionDbPassword("postgres");
     builder.withKeyStoreDirectory(testDirectory);
-    builder.withPostfix("export --to=" + exportFile.toAbsolutePath().toString());
+    builder.withSlashingExportPath(exportFile);
     builder.withHttpPort(12345); // prevent wait for Ports file in AT
 
     final Signer exportSigner = new Signer(builder.build(), null);

@@ -148,9 +148,6 @@ public abstract class Web3SignerRunner {
         params.add(azureParams.getTenantId());
       }
     }
-    if (signerConfig.getPostfix() != null) {
-      params.addAll(List.of(signerConfig.getPostfix().split(" ")));
-    }
 
     return params;
   }
@@ -207,6 +204,12 @@ public abstract class Web3SignerRunner {
       params.add(signerConfig.getSlashingProtectionDbUsername());
       params.add("--slashing-protection-db-password");
       params.add(signerConfig.getSlashingProtectionDbPassword());
+    }
+
+    if (signerConfig.getSlashingExportPath().isPresent()) {
+      params.add("export");
+      params.add("--to");
+      params.add(signerConfig.getSlashingExportPath().get().toAbsolutePath().toString());
     }
 
     return params;

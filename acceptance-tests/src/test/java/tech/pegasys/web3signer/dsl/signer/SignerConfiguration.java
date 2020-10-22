@@ -41,7 +41,7 @@ public class SignerConfiguration {
   private final String slashingProtectionDbPassword;
   private final Optional<Map<String, String>> web3SignerEnvironment;
   private final boolean enableSlashing;
-  private final String postfix;
+  private final Optional<Path> slashingExportPath;
 
   public SignerConfiguration(
       final String hostname,
@@ -60,7 +60,7 @@ public class SignerConfiguration {
       final String mode,
       final Optional<Map<String, String>> web3SignerEnvironment,
       final boolean enableSlashing,
-      final String postfix) {
+      final Optional<Path> slashingExportPath) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
     this.httpHostAllowList = httpHostAllowList;
@@ -77,7 +77,7 @@ public class SignerConfiguration {
     this.mode = mode;
     this.web3SignerEnvironment = web3SignerEnvironment;
     this.enableSlashing = enableSlashing;
-    this.postfix = postfix;
+    this.slashingExportPath = slashingExportPath;
   }
 
   public String hostname() {
@@ -152,7 +152,7 @@ public class SignerConfiguration {
     return web3SignerEnvironment;
   }
 
-  public String getPostfix() {
-    return postfix;
+  public Optional<Path> getSlashingExportPath() {
+    return slashingExportPath;
   }
 }
