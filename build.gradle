@@ -461,7 +461,7 @@ tasks.register("dockerDistUntar") {
 task distDocker(type: Exec) {
   dependsOn dockerDistUntar
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def imageName = "quorumengineering/web3signer"
+  def imageName = "consensys/web3signer"
   def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
   def dockerBuildDir = "build/docker-web3signer/"
   workingDir "${dockerBuildDir}"
@@ -495,7 +495,7 @@ task testDocker(type: Exec) {
 task dockerUpload(type: Exec) {
   dependsOn distDocker
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def imageName = "quorumengineering/web3signer"
+  def imageName = "consensys/web3signer"
   def image = "${imageName}:${dockerBuildVersion}"
   def cmd = "docker push '${image}'"
 
