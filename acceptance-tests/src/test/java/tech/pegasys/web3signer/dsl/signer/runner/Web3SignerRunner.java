@@ -148,9 +148,6 @@ public abstract class Web3SignerRunner {
         params.add(azureParams.getTenantId());
       }
     }
-    if (signerConfig.getPostfix() != null) {
-      params.addAll(List.of(signerConfig.getPostfix().split(" ")));
-    }
 
     return params;
   }
@@ -301,7 +298,6 @@ public abstract class Web3SignerRunner {
   protected SignerConfiguration getSignerConfig() {
     return signerConfig;
   }
-
 
   protected File getProjectPath() {
     // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
