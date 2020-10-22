@@ -32,10 +32,6 @@ import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Deserializer;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Serialiser;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.SigningMetadataModule.Bytes32Serializer;
-import tech.pegasys.web3signer.core.service.JacksonSerializers.HexDeserialiser;
-import tech.pegasys.web3signer.core.service.JacksonSerializers.HexSerialiser;
-import tech.pegasys.web3signer.core.service.JacksonSerializers.StringUInt64Deserializer;
-import tech.pegasys.web3signer.core.service.JacksonSerializers.StringUInt64Serialiser;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;
