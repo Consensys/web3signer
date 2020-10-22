@@ -186,16 +186,8 @@ public abstract class Web3SignerRunner {
     params.add(Boolean.toString(signerConfig.isSlashingProtectionEnabled()));
 
     if (signerConfig.isSlashingProtectionEnabled()) {
-      final EmbeddedPostgres slashingDatabase;
       if (signerConfig.getSlashingProtectionDbUrl() == null) {
-        try {
-          slashingDatabase = EmbeddedPostgres.start();
-          createSlashingDatabase(slashingDatabase.getPostgresDatabase());
-        } catch (final IOException e) {
-          throw new RuntimeException("Unable to start embedded postgres db", e);
-        }
-        slashingProtectionDbUrl =
-            String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
+        slashingProtectionDbUrl = createEmbeddedDatabase();
       } else {
         slashingProtectionDbUrl = signerConfig.getSlashingProtectionDbUrl();
       }
@@ -210,6 +202,32 @@ public abstract class Web3SignerRunner {
     }
 
     return params;
+  }
+
+  private String createEmbeddedDatabase() {
+    try {
+      final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
+      createSchemaInDataSource(slashingDatabase.getPostgresDatabase());
+      return String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
+    } catch (final IOException e) {
+      throw new RuntimeException("Unable to start embedded postgres db", e);
+    }
+  }
+
+  private void createSchemaInDataSource(final DataSource dataSource) {
+    final Path migrationPath =
+        getProjectPath()
+            .toPath()
+            .resolve(
+                Path.of(
+                    "slashing-protection", "src", "main", "resources", "migrations", "postgresql"));
+
+    final Flyway flyway =
+        Flyway.configure()
+            .locations("filesystem:" + migrationPath.toString())
+            .dataSource(dataSource)
+            .load();
+    flyway.migrate();
   }
 
   private String createAllowList(final List<String> httpHostAllowList) {
@@ -284,23 +302,6 @@ public abstract class Web3SignerRunner {
     return signerConfig;
   }
 
-  // Assumes database already exists, just enforces the tables exist as necessary.
-  @SuppressWarnings("UnusedVariable")
-  private void createSlashingDatabase(final DataSource dataSource) {
-    final Path migrationPath =
-        getProjectPath()
-            .toPath()
-            .resolve(
-                Path.of(
-                    "slashing-protection", "src", "main", "resources", "migrations", "postgresql"));
-
-    final Flyway flyway =
-        Flyway.configure()
-            .locations("filesystem:" + migrationPath.toString())
-            .dataSource(dataSource)
-            .load();
-    flyway.migrate();
-  }
 
   protected File getProjectPath() {
     // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
