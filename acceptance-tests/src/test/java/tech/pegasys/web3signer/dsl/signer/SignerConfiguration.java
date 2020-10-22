@@ -36,10 +36,12 @@ public class SignerConfiguration {
   private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
   private final String mode;
+  private final String slashingProtectionDbUrl;
   private final String slashingProtectionDbUsername;
   private final String slashingProtectionDbPassword;
   private final Optional<Map<String, String>> web3SignerEnvironment;
   private final boolean enableSlashing;
+  private final String postfix;
 
   public SignerConfiguration(
       final String hostname,
@@ -52,11 +54,13 @@ public class SignerConfiguration {
       final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
+      final String slashingProtectionDbUrl,
       final String slashingProtectionDbUsername,
       final String slashingProtectionDbPassword,
       final String mode,
       final Optional<Map<String, String>> web3SignerEnvironment,
-      final boolean enableSlashing) {
+      final boolean enableSlashing,
+      final String postfix) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
     this.httpHostAllowList = httpHostAllowList;
@@ -67,11 +71,13 @@ public class SignerConfiguration {
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.serverTlsOptions = serverTlsOptions;
     this.overriddenCaTrustStore = overriddenCaTrustStore;
+    this.slashingProtectionDbUrl = slashingProtectionDbUrl;
     this.slashingProtectionDbUsername = slashingProtectionDbUsername;
     this.slashingProtectionDbPassword = slashingProtectionDbPassword;
     this.mode = mode;
     this.web3SignerEnvironment = web3SignerEnvironment;
     this.enableSlashing = enableSlashing;
+    this.postfix = postfix;
   }
 
   public String hostname() {
@@ -126,6 +132,10 @@ public class SignerConfiguration {
     return mode;
   }
 
+  public String getSlashingProtectionDbUrl() {
+    return slashingProtectionDbUrl;
+  }
+
   public boolean isSlashingProtectionEnabled() {
     return enableSlashing;
   }
@@ -140,5 +150,9 @@ public class SignerConfiguration {
 
   public Optional<Map<String, String>> getWeb3SignerEnvironment() {
     return web3SignerEnvironment;
+  }
+
+  public String getPostfix() {
+    return postfix;
   }
 }
