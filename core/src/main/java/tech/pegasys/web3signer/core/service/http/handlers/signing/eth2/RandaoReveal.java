@@ -10,14 +10,23 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http;
+package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
-public enum ArtifactType {
-  BLOCK,
-  ATTESTATION,
-  AGGREGATION_SLOT,
-  AGGREGATE_AND_PROOF,
-  DEPOSIT,
-  RANDAO_REVEAL,
-  VOLUNTARY_EXIT
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class RandaoReveal {
+  private final UInt64 epoch;
+
+  @JsonCreator
+  public RandaoReveal(@JsonProperty(value = "epoch", required = true) final UInt64 epoch) {
+    this.epoch = epoch;
+  }
+
+  @JsonProperty("epoch")
+  public UInt64 getEpoch() {
+    return epoch;
+  }
 }
