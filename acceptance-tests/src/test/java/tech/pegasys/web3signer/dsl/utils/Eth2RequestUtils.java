@@ -181,7 +181,7 @@ public class Eth2RequestUtils {
     return new Eth2SigningRequestBody(
         ArtifactType.DEPOSIT,
         signingRoot,
-        forkInfo,
+        null,
         null,
         null,
         null,

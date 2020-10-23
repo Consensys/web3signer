@@ -167,19 +167,21 @@ components:
           required:
             - block
     DepositSigning:
-      allOf:
-        - $ref: '#/components/schemas/Signing'
-        - type: object
+      type: object
+      properties:
+        deposit:
+          type: object
           properties:
-            deposit:
-              type: object
-              properties:
-                pubkey:
-                  type: "string"
-                withdrawal_credentials:
-                  type: "string"
-                amount:
-                  type: "string"
+            type:
+              type: "string"
+            signingRoot:
+              type: "string"
+            pubkey:
+              type: "string"
+            withdrawal_credentials:
+              type: "string"
+            amount:
+              type: "string"
       required:
         - deposit
     RandaoRevealSigning:
