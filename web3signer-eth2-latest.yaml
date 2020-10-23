@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Web3Signer ETH2 Api'
   description: 'Sign Eth2 Artifacts'
-  version: '0.1.1-dev-561b1fd3'
+  version: '0.1.1-dev-f5e09eb9'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -167,19 +167,21 @@ components:
           required:
             - block
     DepositSigning:
-      allOf:
-        - $ref: '#/components/schemas/Signing'
-        - type: object
+      type: object
+      properties:
+        deposit:
+          type: object
           properties:
-            deposit:
-              type: object
-              properties:
-                pubkey:
-                  type: "string"
-                withdrawal_credentials:
-                  type: "string"
-                amount:
-                  type: "string"
+            type:
+              type: "string"
+            signingRoot:
+              type: "string"
+            pubkey:
+              type: "string"
+            withdrawal_credentials:
+              type: "string"
+            amount:
+              type: "string"
       required:
         - deposit
     RandaoRevealSigning:
