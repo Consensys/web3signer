@@ -168,7 +168,6 @@ public class Eth2RequestUtils {
   }
 
   private static Eth2SigningRequestBody createDepositRequest() {
-    final ForkInfo forkInfo = forkInfo();
     final DepositMessage depositMessage =
         new DepositMessage(
             BLSPubKey.fromHexString(
