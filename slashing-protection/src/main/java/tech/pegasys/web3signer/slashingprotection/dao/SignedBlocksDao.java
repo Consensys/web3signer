@@ -42,7 +42,7 @@ public class SignedBlocksDao {
 
   public Optional<UInt64> minimumSlot(final Handle handle, final int validatorId) {
     return handle
-        .createQuery("SELECT slot FROM signed_blocks WHERE validator_id = ? ORDER BY slot LIMIT 1")
+        .createQuery("SELECT MIN(slot) FROM signed_blocks WHERE validator_id = ?")
         .bind(0, validatorId)
         .mapTo(UInt64.class)
         .findFirst();

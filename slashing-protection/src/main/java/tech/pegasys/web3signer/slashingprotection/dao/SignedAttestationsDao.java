@@ -82,8 +82,7 @@ public class SignedAttestationsDao {
 
   public Optional<UInt64> minimumSourceEpoch(final Handle handle, final int validatorId) {
     return handle
-        .createQuery(
-            "SELECT source_epoch FROM signed_attestations WHERE validator_id = ? ORDER BY source_epoch LIMIT 1")
+        .createQuery("SELECT MIN(source_epoch) FROM signed_attestations WHERE validator_id = ?")
         .bind(0, validatorId)
         .mapTo(UInt64.class)
         .findFirst();
@@ -91,8 +90,7 @@ public class SignedAttestationsDao {
 
   public Optional<UInt64> minimumTargetEpoch(final Handle handle, final int validatorId) {
     return handle
-        .createQuery(
-            "SELECT target_epoch FROM signed_attestations WHERE validator_id = ? ORDER BY target_epoch LIMIT 1")
+        .createQuery("SELECT MIN(target_epoch) FROM signed_attestations WHERE validator_id = ?")
         .bind(0, validatorId)
         .mapTo(UInt64.class)
         .findFirst();
