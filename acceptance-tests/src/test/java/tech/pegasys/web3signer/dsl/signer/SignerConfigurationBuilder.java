@@ -143,7 +143,7 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(azureKeyVaultParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),
-        slashingProtectionDbUrl,
+        Optional.ofNullable(slashingProtectionDbUrl),
         slashingProtectionDbUsername,
         slashingProtectionDbPassword,
         mode,

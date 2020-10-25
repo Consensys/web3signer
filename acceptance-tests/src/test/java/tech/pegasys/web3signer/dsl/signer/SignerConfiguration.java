@@ -36,7 +36,7 @@ public class SignerConfiguration {
   private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
   private final String mode;
-  private final String slashingProtectionDbUrl;
+  private final Optional<String> slashingProtectionDbUrl;
   private final String slashingProtectionDbUsername;
   private final String slashingProtectionDbPassword;
   private final Optional<Map<String, String>> web3SignerEnvironment;
@@ -54,7 +54,7 @@ public class SignerConfiguration {
       final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
-      final String slashingProtectionDbUrl,
+      final Optional<String> slashingProtectionDbUrl,
       final String slashingProtectionDbUsername,
       final String slashingProtectionDbPassword,
       final String mode,
@@ -132,7 +132,7 @@ public class SignerConfiguration {
     return mode;
   }
 
-  public String getSlashingProtectionDbUrl() {
+  public Optional<String> getSlashingProtectionDbUrl() {
     return slashingProtectionDbUrl;
   }
 
