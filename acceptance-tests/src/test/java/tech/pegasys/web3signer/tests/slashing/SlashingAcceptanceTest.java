@@ -13,10 +13,12 @@
 package tech.pegasys.web3signer.tests.slashing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
+import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createBlockRequest;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.web3signer.core.service.http.ArtifactType;
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -27,8 +29,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.response.Response;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -70,13 +71,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
     setupSigner(testDirectory, true);
 
-    final Eth2SigningRequestBody request =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x01"),
-            ArtifactType.ATTESTATION,
-            null,
-            UInt64.valueOf(5L),
-            UInt64.valueOf(6L));
+    final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
 
     final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
@@ -98,13 +93,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
       throws JsonProcessingException {
     setupSigner(testDirectory, true);
 
-    final Eth2SigningRequestBody initialRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x01"),
-            ArtifactType.ATTESTATION,
-            null,
-            UInt64.valueOf(5L),
-            UInt64.valueOf(6L));
+    final Eth2SigningRequestBody initialRequest = createAttestationRequest(5, 6, UInt64.ZERO);
 
     final Response initialResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
@@ -114,13 +103,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
         .containsOnly(
             attestationSlashingMetrics.get(0) + " 1.0", attestationSlashingMetrics.get(1) + " 0.0");
 
-    final Eth2SigningRequestBody secondRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x02"),
-            ArtifactType.ATTESTATION,
-            null,
-            UInt64.valueOf(5L),
-            UInt64.valueOf(6L));
+    final Eth2SigningRequestBody secondRequest = createAttestationRequest(5, 6, UInt64.ONE);
 
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
@@ -136,25 +119,13 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
       throws JsonProcessingException {
     setupSigner(testDirectory, true);
 
-    final Eth2SigningRequestBody initialRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x01"),
-            ArtifactType.ATTESTATION,
-            null,
-            UInt64.valueOf(3L),
-            UInt64.valueOf(6L));
+    final Eth2SigningRequestBody initialRequest = createAttestationRequest(3, 6, UInt64.ONE);
     final Response initialResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
     // attempt a surrounded Request
-    final Eth2SigningRequestBody surroundedRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x01"),
-            ArtifactType.ATTESTATION,
-            null,
-            UInt64.valueOf(4L),
-            UInt64.valueOf(5L));
+    final Eth2SigningRequestBody surroundedRequest = createAttestationRequest(4, 5, UInt64.ONE);
 
     final Response surroundedResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), surroundedRequest);
@@ -166,25 +137,13 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
       throws JsonProcessingException {
     setupSigner(testDirectory, true);
 
-    final Eth2SigningRequestBody initialRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x01"),
-            ArtifactType.ATTESTATION,
-            null,
-            UInt64.valueOf(3L),
-            UInt64.valueOf(6L));
+    final Eth2SigningRequestBody initialRequest = createAttestationRequest(3, 6, UInt64.ONE);
     final Response initialResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
     // attempt a surrounding Request
-    final Eth2SigningRequestBody surroundingRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x01"),
-            ArtifactType.ATTESTATION,
-            null,
-            UInt64.valueOf(2L),
-            UInt64.valueOf(7L));
+    final Eth2SigningRequestBody surroundingRequest = createAttestationRequest(2, 7, UInt64.ONE);
 
     final Response surroundingResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), surroundingRequest);
@@ -198,8 +157,10 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     setupSigner(testDirectory, true);
 
     final Eth2SigningRequestBody request =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x01"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
+        createBlockRequest(
+            UInt64.valueOf(3L),
+            Bytes32.fromHexString(
+                "0x2b530d6262576277f1cc0dbe341fd919f9f8c5c92fc9140dff6db4ef34edea0d"));
 
     final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
@@ -218,8 +179,10 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     setupSigner(testDirectory, true);
 
     final Eth2SigningRequestBody initialRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x01"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
+        createBlockRequest(
+            UInt64.valueOf(3L),
+            Bytes32.fromHexString(
+                "0x2b530d6262576277f1cc0dbe341fd919f9f8c5c92fc9140dff6db4ef34edea0d"));
 
     final Response initialResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
@@ -228,34 +191,15 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
         .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 0.0");
 
     final Eth2SigningRequestBody secondRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x02"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
+        createBlockRequest(
+            UInt64.valueOf(3L),
+            Bytes32.fromHexString(
+                "0xb2eedb01adbd02c828d5eec09b4c70cbba12ffffba525ebf48aca33028e8ad89"));
 
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
     assertThat(signer.getMetricsMatching(blockSlashingMetrics))
         .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 1.0");
-  }
-
-  @Test
-  void twoDifferentBlocksCanBeSignedForSameSlotIfSlashingIsDisabled(@TempDir Path testDirectory)
-      throws JsonProcessingException {
-    setupSigner(testDirectory, false);
-    final Eth2SigningRequestBody initialRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x01"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
-
-    final Response initialResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
-    assertThat(initialResponse.getStatusCode()).isEqualTo(200);
-
-    final Eth2SigningRequestBody secondRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x02"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
-
-    final Response secondResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
-    assertThat(secondResponse.getStatusCode()).isEqualTo(200);
   }
 }

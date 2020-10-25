@@ -132,7 +132,7 @@ public class SignerConfiguration {
     return mode;
   }
 
-  public Optional<String> getSlashingProtectionDbUrl() {
+  public String getSlashingProtectionDbUrl() {
     return slashingProtectionDbUrl;
   }
 

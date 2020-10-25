@@ -190,6 +190,8 @@ public abstract class Web3SignerRunner {
       }
 
       // Default embeddedPostgres uses a database, username and password of "postgres"
+      final String dbUrl =
+          String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
       params.add("--slashing-protection-db-url");
       params.add(slashingProtectionDbUrl);
       params.add("--slashing-protection-db-username");

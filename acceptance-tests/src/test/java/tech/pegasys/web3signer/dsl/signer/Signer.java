@@ -19,9 +19,8 @@ import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpeci
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
-import tech.pegasys.web3signer.core.service.http.ArtifactType;
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
-import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
+import tech.pegasys.web3signer.core.service.http.SigningJsonModule;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
@@ -56,6 +55,10 @@ public class Signer extends FilecoinJsonRpcEndpoint {
       "/api/v1/eth2/sign/{identifier}"; // using bls keys
   public static final String ETH1_PUBLIC_KEYS = "/api/v1/eth1/publicKeys"; // secp keys
   public static final String ETH2_PUBLIC_KEYS = "/api/v1/eth2/publicKeys"; // bls keys
+  public static final ObjectMapper ETH_2_INTERFACE_OBJECT_MAPPER =
+      new ObjectMapper()
+          .registerModule(new SigningJsonModule())
+          .setSerializationInclusion(Include.NON_NULL);
   private static final String METRICS_ENDPOINT = "/metrics";
 
   private final Web3SignerRunner runner;
@@ -63,7 +66,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   private final Vertx vertx;
   private final String urlFormatting;
   private final Optional<ClientTlsConfig> clientTlsConfig;
-  private final ObjectMapper eth2InterfaceObjectMapper;
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
     super(JSON_RPC_PATH + "/filecoin");
@@ -73,10 +75,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         signerConfig.getServerTlsOptions().isPresent() ? "https://%s:%s" : "http://%s:%s";
     this.clientTlsConfig = Optional.ofNullable(clientTlsConfig);
     vertx = Vertx.vertx();
-    eth2InterfaceObjectMapper =
-        new ObjectMapper()
-            .registerModule(new SigningJsonRpcModule())
-            .setSerializationInclusion(Include.NON_NULL);
   }
 
   public void start() {
@@ -135,21 +133,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         .baseUri(getUrl())
         .contentType(ContentType.JSON)
         .pathParam("identifier", publicKey)
-        .body(eth2InterfaceObjectMapper.writeValueAsString(ethSignBody))
-        .post(signPath(KeyType.BLS));
-  }
-
-  public Response eth2Sign(
-      final String publicKey, final Bytes dataToSign, final ArtifactType type) {
-    return given()
-        .baseUri(getUrl())
-        .contentType(ContentType.JSON)
-        .pathParam("identifier", publicKey)
-        .body(
-            new JsonObject()
-                .put("signingRoot", dataToSign.toHexString())
-                .put("type", type)
-                .toString())
+        .body(ETH_2_INTERFACE_OBJECT_MAPPER.writeValueAsString(ethSignBody))
         .post(signPath(KeyType.BLS));
   }
 
