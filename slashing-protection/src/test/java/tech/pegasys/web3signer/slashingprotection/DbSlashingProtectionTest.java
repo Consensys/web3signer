@@ -21,7 +21,6 @@ import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
@@ -300,7 +299,7 @@ public class DbSlashingProtectionTest {
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, UInt64.ONE)).isFalse();
 
     verify(signedBlocksDao).minimumSlot(any(), eq(VALIDATOR_ID));
-    verifyNoMoreInteractions(signedBlocksDao);
+    verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
   }
 
   @Test
@@ -310,7 +309,7 @@ public class DbSlashingProtectionTest {
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isFalse();
 
     verify(signedBlocksDao).minimumSlot(any(), eq(VALIDATOR_ID));
-    verifyNoMoreInteractions(signedBlocksDao);
+    verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
   }
 
   @Test
@@ -324,7 +323,7 @@ public class DbSlashingProtectionTest {
         .isFalse();
 
     verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
-    verifyNoMoreInteractions(signedAttestationsDao);
+    verify(signedAttestationsDao, never()).insertAttestation(any(), any());
   }
 
   @Test
@@ -357,7 +356,7 @@ public class DbSlashingProtectionTest {
 
     verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
     verify(signedAttestationsDao).minimumTargetEpoch(any(), eq(VALIDATOR_ID));
-    verifyNoMoreInteractions(signedAttestationsDao);
+    verify(signedAttestationsDao, never()).insertAttestation(any(), any());
   }
 
   @Test
@@ -374,6 +373,6 @@ public class DbSlashingProtectionTest {
 
     verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
     verify(signedAttestationsDao).minimumTargetEpoch(any(), eq(VALIDATOR_ID));
-    verifyNoMoreInteractions(signedAttestationsDao);
+    verify(signedAttestationsDao, never()).insertAttestation(any(), any());
   }
 }
