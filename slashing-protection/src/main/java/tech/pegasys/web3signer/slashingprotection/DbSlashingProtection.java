@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
@@ -23,7 +24,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
-import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV4Manager;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -78,12 +79,14 @@ public class DbSlashingProtection implements SlashingProtection {
     this.signedAttestationsDao = signedAttestationsDao;
     this.registeredValidators = registeredValidators;
     this.interchangeManager =
-        new InterchangeV4Manager(
+        new InterchangeV5Manager(
             jdbi,
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
-            new ObjectMapper().registerModule(new InterchangeModule()));
+            new ObjectMapper()
+                .registerModule(new InterchangeModule())
+                .configure(FLUSH_AFTER_WRITE_VALUE, true));
   }
 
   @Override

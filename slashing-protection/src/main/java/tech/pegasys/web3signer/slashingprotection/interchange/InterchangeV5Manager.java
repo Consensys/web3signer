@@ -17,7 +17,6 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
-import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata.Format;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,7 +27,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
-public class InterchangeV4Manager implements InterchangeManager {
+public class InterchangeV5Manager implements InterchangeManager {
+
+  private static final int FORMAT_VERSION = 5;
 
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
@@ -36,7 +37,7 @@ public class InterchangeV4Manager implements InterchangeManager {
   private final SignedAttestationsDao signedAttestationsDao;
   private final ObjectMapper mapper;
 
-  public InterchangeV4Manager(
+  public InterchangeV5Manager(
       final Jdbi jdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
@@ -51,17 +52,12 @@ public class InterchangeV4Manager implements InterchangeManager {
 
   @Override
   public void exportTo(final OutputStream out) throws IOException {
-
     try (final JsonGenerator jsonGenerator = mapper.getFactory().createGenerator(out)) {
       jsonGenerator.writeStartObject();
-      //jsonGenerator.flush();
 
-      final Metadata metadata = new Metadata(Format.COMPLETE, 4, Bytes.fromHexString("FFFFFFFF"));
-      //jsonGenerator.writeObjectFieldStart("metadata");
+      final Metadata metadata = new Metadata(FORMAT_VERSION, Bytes.fromHexString("FFFFFFFF"));
 
       jsonGenerator.writeFieldName("metadata");
-      //jsonGenerator.writeStartObject();
-      jsonGenerator.flush();
       mapper.writeValue(jsonGenerator, metadata);
 
       jsonGenerator.writeArrayFieldStart("data");

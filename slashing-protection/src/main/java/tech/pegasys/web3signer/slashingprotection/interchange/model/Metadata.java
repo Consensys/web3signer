@@ -19,29 +19,16 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class Metadata {
 
-  public enum Format {
-    COMPLETE,
-    MINIMAL;
-  }
-
-  private final Format format;
   private final int formatVersion;
   private final Bytes genesisValidatorsRoot;
 
   @JsonCreator
   public Metadata(
-      @JsonProperty(value = "interchange_format", required = true) final Format format,
       @JsonProperty(value = "interchange_format_version", required = true) final int formatVersion,
       @JsonProperty(value = "genesis_validators_root", required = true)
           final Bytes genesisValidatorsRoot) {
-    this.format = format;
     this.formatVersion = formatVersion;
     this.genesisValidatorsRoot = genesisValidatorsRoot;
-  }
-
-  @JsonGetter(value = "interchange_format")
-  public Format getFormat() {
-    return format;
   }
 
   @JsonGetter(value = "interchange_format_version")

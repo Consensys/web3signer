@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.slashingprotection.interchange.model;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
-import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata.Format;
 
 import java.util.Map;
 
@@ -31,11 +30,10 @@ class MetadataTest {
   @Test
   @SuppressWarnings("unchecked")
   void metadataHasCorrectlyNamedFields() throws JsonProcessingException {
-    final Metadata medataData = new Metadata(Format.COMPLETE, 4, Bytes.fromHexString("0x123456"));
+    final Metadata medataData = new Metadata(5, Bytes.fromHexString("0x123456"));
     final String jsonOutput = mapper.writeValueAsString(medataData);
     final Map<String, String> jsonContent = new ObjectMapper().readValue(jsonOutput, Map.class);
 
-    assertThat(jsonContent.get("interchange_format")).isEqualTo(medataData.getFormat().toString());
     assertThat(jsonContent.get("interchange_format_version"))
         .isEqualTo(medataData.getFormatVersionAsString());
     assertThat(jsonContent.get("genesis_validators_root"))
