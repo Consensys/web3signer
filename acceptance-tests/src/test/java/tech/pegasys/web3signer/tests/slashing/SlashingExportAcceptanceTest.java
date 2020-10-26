@@ -13,10 +13,11 @@
 package tech.pegasys.web3signer.tests.slashing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
-import tech.pegasys.web3signer.core.service.http.ArtifactType;
-import tech.pegasys.web3signer.core.service.http.Eth2SigningRequestBody;
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 
@@ -25,8 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import io.restassured.response.Response;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -36,12 +35,9 @@ public class SlashingExportAcceptanceTest extends SlashingAcceptanceTest {
   void slashingDataIsExported(@TempDir Path testDirectory) throws IOException {
     setupSigner(testDirectory, true);
 
-    final Eth2SigningRequestBody initialRequest =
-        new Eth2SigningRequestBody(
-            Bytes.fromHexString("0x01"), ArtifactType.BLOCK, UInt64.valueOf(3L), null, null);
+    final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
 
-    final Response initialResponse =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
+    final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
     assertThat(signer.getMetricsMatching(blockSlashingMetrics))
         .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 0.0");

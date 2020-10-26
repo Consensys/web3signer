@@ -118,6 +118,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withSlashingExportPath(final Path slashingExportPath) {
+    this.slashingExportPath = slashingExportPath;
+    return this;
+  }
+
   public SignerConfigurationBuilder withEnvironment(final Map<String, String> environment) {
     this.web3SignerEnvironment = environment;
     return this;

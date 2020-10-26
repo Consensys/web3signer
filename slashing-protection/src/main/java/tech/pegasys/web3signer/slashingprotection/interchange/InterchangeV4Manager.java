@@ -16,18 +16,14 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.model.InterchangeV4Format;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata.Format;
-import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedArtifacts;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
-import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -55,45 +51,96 @@ public class InterchangeV4Manager implements InterchangeManager {
 
   @Override
   public void exportTo(final OutputStream out) throws IOException {
-    final Metadata metadata = new Metadata(Format.COMPLETE, 4, Bytes.fromHexString("FFFFFFFF"));
-    final List<SignedArtifacts> signedArtifacts = generateModelFromDatabase();
 
-    final InterchangeV4Format toExport = new InterchangeV4Format(metadata, signedArtifacts);
+    try (final JsonGenerator jsonGenerator = mapper.getFactory().createGenerator(out)) {
+      jsonGenerator.writeStartObject();
+      //jsonGenerator.flush();
 
-    mapper.writerWithDefaultPrettyPrinter().writeValue(out, toExport);
+      final Metadata metadata = new Metadata(Format.COMPLETE, 4, Bytes.fromHexString("FFFFFFFF"));
+      //jsonGenerator.writeObjectFieldStart("metadata");
+
+      jsonGenerator.writeFieldName("metadata");
+      //jsonGenerator.writeStartObject();
+      jsonGenerator.flush();
+      mapper.writeValue(jsonGenerator, metadata);
+
+      jsonGenerator.writeArrayFieldStart("data");
+      populateInterchangeData(jsonGenerator);
+      jsonGenerator.writeEndArray();
+
+      jsonGenerator.writeEndObject();
+    }
   }
 
-  private List<SignedArtifacts> generateModelFromDatabase() {
-    final List<SignedArtifacts> result = Lists.newArrayList();
+  private void populateInterchangeData(final JsonGenerator jsonGenerator) {
     jdbi.useTransaction(
         h ->
             validatorsDao
                 .getAllValidators(h)
-                .forEach(validator -> result.add(extractSigningsFor(h, validator))));
-    return result;
+                .forEach(
+                    validator -> {
+                      try {
+                        populateValidatorRecord(h, validator, jsonGenerator);
+                      } catch (IOException e) {
+                        throw new RuntimeException("Failed to construct a validator entry in json");
+                      }
+                    }));
   }
 
-  private SignedArtifacts extractSigningsFor(final Handle h, final Validator validator) {
-    final List<tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock> blocks =
-        signedBlocksDao.getAllBlockSignedBy(h, validator.getId()).stream()
-            .map(
-                b ->
-                    new tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock(
-                        b.getSlot(), b.getSigningRoot().orElse(null)))
-            .collect(Collectors.toList());
+  private void populateValidatorRecord(
+      final Handle h, final Validator validator, final JsonGenerator jsonGenerator)
+      throws IOException {
+    jsonGenerator.writeStartObject();
+    jsonGenerator.writeStringField("pubkey", validator.getPublicKey().toHexString());
+    writeBlocks(h, validator, jsonGenerator);
+    writeAttestations(h, validator, jsonGenerator);
+    jsonGenerator.writeEndObject();
+  }
 
-    final List<tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation>
-        attestations =
-            signedAttestationsDao.getAllAttestationsSignedBy(h, validator.getId()).stream()
-                .map(
-                    a ->
-                        new tech.pegasys.web3signer.slashingprotection.interchange.model
-                            .SignedAttestation(
-                            a.getSourceEpoch(),
-                            a.getTargetEpoch(),
-                            a.getSigningRoot().orElse(null)))
-                .collect(Collectors.toList());
+  private void writeBlocks(
+      final Handle h, final Validator validator, final JsonGenerator jsonGenerator)
+      throws IOException {
+    jsonGenerator.writeArrayFieldStart("signed_blocks");
 
-    return new SignedArtifacts(validator.getPublicKey().toHexString(), blocks, attestations);
+    signedBlocksDao
+        .getAllBlockSignedBy(h, validator.getId())
+        .forEach(
+            b -> {
+              final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock
+                  jsonBlock =
+                      new tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock(
+                          b.getSlot(), b.getSigningRoot().orElse(null));
+              try {
+                mapper.writeValue(jsonGenerator, jsonBlock);
+              } catch (IOException e) {
+                throw new RuntimeException("Failed to construct a signed_blocks entry in json");
+              }
+            });
+
+    jsonGenerator.writeEndArray();
+  }
+
+  private void writeAttestations(
+      final Handle h, final Validator validator, final JsonGenerator jsonGenerator)
+      throws IOException {
+    jsonGenerator.writeArrayFieldStart("signed_attestations");
+
+    signedAttestationsDao
+        .getAllAttestationsSignedBy(h, validator.getId())
+        .forEach(
+            a -> {
+              final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation
+                  jsonAttestation =
+                      new tech.pegasys.web3signer.slashingprotection.interchange.model
+                          .SignedAttestation(
+                          a.getSourceEpoch(), a.getTargetEpoch(), a.getSigningRoot().orElse(null));
+              try {
+                mapper.writeValue(jsonGenerator, jsonAttestation);
+              } catch (IOException e) {
+                throw new RuntimeException(
+                    "Failed to construct a signed_attestations entry in json");
+              }
+            });
+    jsonGenerator.writeEndArray();
   }
 }
