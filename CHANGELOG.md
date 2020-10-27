@@ -9,7 +9,7 @@
 - Use yaml configuration of signing keys
 - Support for Filecoin JSON RPCs
 - Azure secret vault support for eth2 keys to load all secrets from a given vault
-- Added a Prometheus metrics endpoint, reporting basic application metrics
+- Added a Prometheus metrics endpoint
 - Use native BLS signing and verification
 - Added helm charts
 
