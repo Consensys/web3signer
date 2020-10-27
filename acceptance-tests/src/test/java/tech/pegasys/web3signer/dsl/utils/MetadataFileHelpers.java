@@ -180,10 +180,10 @@ public class MetadataFileHelpers {
   }
 
   public void createInterlockYamlFileAt(
-          final Path metadataFilePath,
-          final Path knownServersFile,
-          final Path keyPath,
-          final KeyType keyType) {
+      final Path metadataFilePath,
+      final Path knownServersFile,
+      final Path keyPath,
+      final KeyType keyType) {
     final Map<String, String> yaml = new HashMap<>();
     yaml.put("type", "interlock");
     yaml.put("interlockUrl", "https://10.0.0.1");

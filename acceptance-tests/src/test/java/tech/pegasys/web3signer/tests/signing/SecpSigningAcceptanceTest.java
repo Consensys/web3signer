@@ -137,7 +137,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path knownServersFile = testDirectory.resolve("interlockKnownServer.txt");
 
     metadataFileHelpers.createInterlockYamlFileAt(
-            configFile, knownServersFile, Path.of("/secp/key1.txt"), KeyType.SECP256K1);
+        configFile, knownServersFile, Path.of("/secp/key1.txt"), KeyType.SECP256K1);
 
     signAndVerifySignature();
   }

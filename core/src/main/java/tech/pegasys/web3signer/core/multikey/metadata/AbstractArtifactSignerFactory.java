@@ -91,14 +91,14 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
 
   protected Bytes extractBytesFromInterlock(final InterlockSigningMetadata metadata) {
     final InterlockSessionFactoryImpl interlockSessionFactory =
-            InterlockSessionFactoryProvider.newInstance(vertx, metadata.getKnownServersFile());
+        InterlockSessionFactoryProvider.newInstance(vertx, metadata.getKnownServersFile());
     try (final InterlockSession session =
-                 interlockSessionFactory.newSession(
-                         metadata.getInterlockUrl(), metadata.getVolume(), metadata.getPassword())) {
+        interlockSessionFactory.newSession(
+            metadata.getInterlockUrl(), metadata.getVolume(), metadata.getPassword())) {
       return session.fetchKey(metadata.getKeyPath());
     } catch (final RuntimeException e) {
       throw new SigningMetadataException(
-              "Failed to fetch secret from Interlock: " + e.getMessage(), e);
+          "Failed to fetch secret from Interlock: " + e.getMessage(), e);
     }
   }
 

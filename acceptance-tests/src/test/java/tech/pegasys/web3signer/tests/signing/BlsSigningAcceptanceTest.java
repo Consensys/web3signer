@@ -127,7 +127,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path knownServersFile = testDirectory.resolve("interlockKnownServer.txt");
 
     metadataFileHelpers.createInterlockYamlFileAt(
-            configFile, knownServersFile, Path.of("/bls/key1.txt"), KeyType.BLS);
+        configFile, knownServersFile, Path.of("/bls/key1.txt"), KeyType.BLS);
 
     signAndVerifySignature(ArtifactType.BLOCK);
   }

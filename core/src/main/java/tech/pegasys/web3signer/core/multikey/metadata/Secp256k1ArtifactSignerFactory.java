@@ -101,7 +101,7 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   @Override
   public ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
     final Credentials credentials =
-            Credentials.create(extractBytesFromInterlock(interlockSigningMetadata).toHexString());
+        Credentials.create(extractBytesFromInterlock(interlockSigningMetadata).toHexString());
     return createCredentialSigner(credentials);
   }
 
