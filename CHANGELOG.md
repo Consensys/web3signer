@@ -3,12 +3,15 @@
 ## 0.2.0
 
 ### Features Added
+- Eth2 slashing protection. Requires a PostgreSQL database to store eth2 signed blocks and attestations
 - Ethereuem secp256k1 signing of data
 - Use yaml configuration of signing keys
-- Filecoin support as an external signer
-- Separate application into eth2, eth and filecoin commands that can be run independently
-- Eth2 slashing protection. Requires a PostgreSQL database to store eth2 signed blocks and attestations
-- Azure secret vault support to load all secrets from a given vault
+- Support for Filecoin JSON RPCs
+- Separate application into eth2, eth and Filecoin commands that can be run independently
+- Azure secret vault support for eth2 keys to load all secrets from a given vault
+- Added a Prometheus metrics endpoint, reporting basic application metrics
+- Use native BLS signing and verification
+- Added helm charts
 
 ## 0.1.0
 
