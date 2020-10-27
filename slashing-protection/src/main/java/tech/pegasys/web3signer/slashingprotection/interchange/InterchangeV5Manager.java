@@ -51,7 +51,7 @@ public class InterchangeV5Manager implements InterchangeManager {
   }
 
   @Override
-  public void exportTo(final OutputStream out) throws IOException {
+  public void export(final OutputStream out) throws IOException {
     try (final JsonGenerator jsonGenerator = mapper.getFactory().createGenerator(out)) {
       jsonGenerator.writeStartObject();
 

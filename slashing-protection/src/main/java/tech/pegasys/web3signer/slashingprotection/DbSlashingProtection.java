@@ -92,7 +92,7 @@ public class DbSlashingProtection implements SlashingProtection {
   @Override
   public void export(final OutputStream output) {
     try {
-      interchangeManager.exportTo(output);
+      interchangeManager.export(output);
     } catch (IOException e) {
       throw new RuntimeException("Failed to export database content", e);
     }

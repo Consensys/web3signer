@@ -20,13 +20,13 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class InterchangeV4Format {
+public class InterchangeV5Format {
 
   private final Metadata metadata;
   private final List<SignedArtifacts> signedArtifacts;
 
   @JsonCreator
-  public InterchangeV4Format(
+  public InterchangeV5Format(
       @JsonProperty(value = "metadata", required = true) final Metadata metadata,
       @JsonProperty(value = "data", required = true) final List<SignedArtifacts> signedArtifacts) {
     this.metadata = metadata;

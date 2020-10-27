@@ -32,7 +32,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
-import dsl.InterchangeV4Format;
+import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -111,8 +111,8 @@ public class InterchangeExportIntegrationTest {
 
     final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
 
-    final InterchangeV4Format outputObject =
-        mapper.readValue(exportOutput.toString(), InterchangeV4Format.class);
+    final InterchangeV5Format outputObject =
+        mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
 
     final List<SignedArtifacts> signedArtifacts = outputObject.getSignedArtifacts();
     assertThat(signedArtifacts).hasSize(2);
