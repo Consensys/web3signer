@@ -118,7 +118,7 @@ class CommandlineParserTest {
   @Test
   void missingAzureKeyVaultParamsProducesSuitableError() {
     String cmdline = validBaseCommandOptions();
-    cmdline = cmdline + "eth2 --azure-vault-enabled=true";
+    cmdline = cmdline + "eth2 --slashing-protection-enabled=false --azure-vault-enabled=true";
     parser.registerSubCommands(new MockEth2SubCommand());
     final int result = parser.parseCommandLine(cmdline.split(" "));
     assertThat(result).isNotZero();
