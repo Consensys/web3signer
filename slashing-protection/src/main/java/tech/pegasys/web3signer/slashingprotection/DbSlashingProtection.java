@@ -128,7 +128,7 @@ public class DbSlashingProtection implements SlashingProtection {
 
     final Optional<UInt64> minimumSourceEpoch =
         signedAttestationsDao.minimumSourceEpoch(h, validatorId);
-    if (minimumSourceEpoch.filter(minEpoch -> sourceEpoch.compareTo(minEpoch) < 0).isPresent()) {
+    if (minimumSourceEpoch.map(minEpoch -> sourceEpoch.compareTo(minEpoch) < 0).orElse(false)) {
       LOG.warn(
           "Attestation source epoch {} is below minimum existing attestation source epoch {}",
           sourceEpoch,
@@ -138,7 +138,7 @@ public class DbSlashingProtection implements SlashingProtection {
 
     final Optional<UInt64> minimumTargetEpoch =
         signedAttestationsDao.minimumTargetEpoch(h, validatorId);
-    if (minimumTargetEpoch.filter(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).isPresent()) {
+    if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).orElse(false)) {
       LOG.warn(
           "Attestation target epoch {} is below minimum existing attestation target epoch {}",
           targetEpoch,
@@ -217,7 +217,7 @@ public class DbSlashingProtection implements SlashingProtection {
     }
 
     final Optional<UInt64> minimumSlot = signedBlocksDao.minimumSlot(handle, validatorId);
-    if (minimumSlot.filter(slot -> blockSlot.compareTo(slot) <= 0).isPresent()) {
+    if (minimumSlot.map(slot -> blockSlot.compareTo(slot) <= 0).orElse(false)) {
       LOG.warn(
           "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
       return false;
