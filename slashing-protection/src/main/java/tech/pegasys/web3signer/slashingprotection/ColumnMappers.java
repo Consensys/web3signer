@@ -50,7 +50,9 @@ public class ColumnMappers {
       return Optional.of(
           (ColumnMapper<UInt64>)
               (r, columnNumber, ctx) ->
-                  UInt64.valueOf(r.getBigDecimal(columnNumber).toBigInteger()));
+                  r.getBigDecimal(columnNumber) == null
+                      ? null
+                      : UInt64.valueOf(r.getBigDecimal(columnNumber).toBigInteger()));
     }
   }
 }

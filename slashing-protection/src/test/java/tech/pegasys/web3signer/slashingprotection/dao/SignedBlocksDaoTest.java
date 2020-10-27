@@ -51,7 +51,8 @@ public class SignedBlocksDaoTest {
 
   @Test
   public void findsExistingBlockInDb() {
-    insertBlock(handle, Bytes.of(100), 1, 2, Bytes.of(3));
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 2, Bytes.of(3));
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
 
     final Optional<SignedBlock> existingBlock =
@@ -64,7 +65,8 @@ public class SignedBlocksDaoTest {
 
   @Test
   public void returnsEmptyForNonExistingBlockInDb() {
-    insertBlock(handle, Bytes.of(100), 1, 2, Bytes.of(3));
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 2, Bytes.of(3));
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
     assertThat(signedBlocksDao.findExistingBlock(handle, 1, UInt64.valueOf(1))).isEmpty();
     assertThat(signedBlocksDao.findExistingBlock(handle, 2, UInt64.valueOf(2))).isEmpty();
@@ -102,23 +104,31 @@ public class SignedBlocksDaoTest {
   @Test
   public void canCreateBlocksWithNoSigningRoot() {
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
-    insertBlock(handle, Bytes.of(100), 1, 2, null);
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 2, null);
     Optional<SignedBlock> block = signedBlocksDao.findExistingBlock(handle, 1, UInt64.valueOf(2));
     assertThat(block).isNotEmpty();
     assertThat(block.get().getSigningRoot()).isEmpty();
   }
 
-  private void insertBlock(
-      final Handle h,
-      final Bytes publicKey,
-      final int validatorId,
-      final int slot,
-      final Bytes signingRoot) {
-    h.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
-    h.execute(
+  @Test
+  public void determinesMinimumSlot() {
+    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 2, null);
+    insertBlock(1, 3, null);
+    assertThat(signedBlocksDao.minimumSlot(handle, 1)).hasValue(UInt64.valueOf(2));
+  }
+
+  private void insertBlock(final int validatorId, final int slot, final Bytes signingRoot) {
+    handle.execute(
         "INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)",
         validatorId,
         slot,
         signingRoot);
+  }
+
+  private void insertValidator(final Bytes publicKey, final int validatorId) {
+    handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
   }
 }
