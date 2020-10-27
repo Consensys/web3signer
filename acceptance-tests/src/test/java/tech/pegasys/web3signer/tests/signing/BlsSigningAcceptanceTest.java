@@ -120,14 +120,6 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  public void ableToSignUsingYubiHsm() throws JsonProcessingException {
-    final Path configFile = testDirectory.resolve("yubihsm_1.yaml");
-    metadataFileHelpers.createYubiHsmYamlFileAt(configFile, KeyType.BLS);
-
-    signAndVerifySignature(ArtifactType.BLOCK, yubiHsmShellEnvMap());
-  }
-
-  @Test
   public void failsIfSigningRootDoesNotMatchSigningData() throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
 

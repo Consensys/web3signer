@@ -22,7 +22,6 @@ import tech.pegasys.signers.hashicorp.TrustStoreType;
 import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
-import tech.pegasys.signers.yubihsm2.YubiHsm2;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.FileNotFoundException;
@@ -37,7 +36,6 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
 
   final HashicorpConnectionFactory connectionFactory;
   final Path configsDirectory;
-  final YubiHsmShellArgs yubiHsmShellArgs = new YubiHsmShellArgs();
 
   protected AbstractArtifactSignerFactory(
       final HashicorpConnectionFactory connectionFactory, final Path configsDirectory) {
@@ -83,26 +81,6 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
       return Bytes.fromHexString(secret);
     } catch (final Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
-    }
-  }
-
-  protected Bytes extractBytesFromVault(final YubiHsm2SigningMetadata metadata) {
-    final YubiHsm2 yubiHsm2 =
-        new YubiHsm2(
-            yubiHsmShellArgs.getArgs(),
-            Optional.empty(),
-            metadata.getConnectorUrl(),
-            metadata.getAuthKey(),
-            metadata.getPassword(),
-            metadata.getCaCertPath(),
-            metadata.getProxyUrl());
-    try {
-      final String secret =
-          yubiHsm2.fetchOpaqueData(metadata.getOpaqueObjId(), metadata.getOutputFormat());
-      return Bytes.fromHexString(secret);
-    } catch (final RuntimeException e) {
-      throw new SigningMetadataException(
-          "Failed to fetch secret from YubiHSM2: " + e.getMessage(), e);
     }
   }
 

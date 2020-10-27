@@ -66,19 +66,13 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
 
   @ParameterizedTest
-  @ValueSource(strings = {"file-raw", "yubihsm2"})
+  @ValueSource(strings = {"file-raw"})
   void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint(final String metadataType) {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    switch (metadataType) {
-      case "file-raw":
-        metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
-        setupSigner("filecoin");
-        break;
-      case "yubihsm2":
-        metadataFileHelpers.createYubiHsmYamlFileAt(keyConfigFile, KeyType.BLS);
-        setupSigner("filecoin", yubiHsmShellEnvMap());
-        break;
+    if ("file-raw".equals(metadataType)) {
+      metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+      setupSigner("filecoin");
     }
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
