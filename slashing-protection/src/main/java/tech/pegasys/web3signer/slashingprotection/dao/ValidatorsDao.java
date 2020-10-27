@@ -39,7 +39,7 @@ public class ValidatorsDao {
         .list();
   }
 
-  public Stream<Validator> getAllValidators(final Handle handle) {
+  public Stream<Validator> findAllValidators(final Handle handle) {
     return handle.createQuery("SELECT id, public_key FROM validators").mapToBean(Validator.class)
         .stream();
   }

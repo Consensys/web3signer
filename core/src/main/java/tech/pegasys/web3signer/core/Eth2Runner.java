@@ -87,7 +87,7 @@ public class Eth2Runner extends Runner {
 
   public void exportSigningsPerformed(final OutputStream output) {
     LOG.info("Starting export of database.");
-    slashingProtection.orElseThrow().exportTo(output);
+    slashingProtection.orElseThrow().export(output);
     LOG.info("Export Complete.");
   }
 

@@ -72,7 +72,7 @@ public class InterchangeV5Manager implements InterchangeManager {
     jdbi.useTransaction(
         h ->
             validatorsDao
-                .getAllValidators(h)
+                .findAllValidators(h)
                 .forEach(
                     validator -> {
                       try {
@@ -99,7 +99,7 @@ public class InterchangeV5Manager implements InterchangeManager {
     jsonGenerator.writeArrayFieldStart("signed_blocks");
 
     signedBlocksDao
-        .getAllBlockSignedBy(h, validator.getId())
+        .findAllBlockSignedBy(h, validator.getId())
         .forEach(
             b -> {
               final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock
@@ -122,7 +122,7 @@ public class InterchangeV5Manager implements InterchangeManager {
     jsonGenerator.writeArrayFieldStart("signed_attestations");
 
     signedAttestationsDao
-        .getAllAttestationsSignedBy(h, validator.getId())
+        .findAllAttestationsSignedBy(h, validator.getId())
         .forEach(
             a -> {
               final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation

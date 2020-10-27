@@ -81,7 +81,7 @@ public class SignedAttestationsDao {
         .execute();
   }
 
-  public Stream<SignedAttestation> getAllAttestationsSignedBy(
+  public Stream<SignedAttestation> findAllAttestationsSignedBy(
       final Handle handle, final int validatorId) {
     return handle
         .createQuery(

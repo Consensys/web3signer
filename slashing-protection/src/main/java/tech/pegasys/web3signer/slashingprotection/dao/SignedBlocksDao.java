@@ -41,7 +41,7 @@ public class SignedBlocksDao {
         .execute();
   }
 
-  public Stream<SignedBlock> getAllBlockSignedBy(final Handle handle, final int validatorId) {
+  public Stream<SignedBlock> findAllBlockSignedBy(final Handle handle, final int validatorId) {
     return handle
         .createQuery(
             "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ?")

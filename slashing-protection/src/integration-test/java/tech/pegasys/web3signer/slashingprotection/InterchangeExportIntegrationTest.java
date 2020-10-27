@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.InterchangeV4Format;
+import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.flywaydb.core.Flyway;
@@ -105,7 +106,7 @@ public class InterchangeExportIntegrationTest {
     final OutputStream exportOutput = new ByteArrayOutputStream();
     final SlashingProtection slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
-    slashingProtection.exportTo(exportOutput);
+    slashingProtection.export(exportOutput);
     exportOutput.close();
 
     final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
@@ -113,16 +114,15 @@ public class InterchangeExportIntegrationTest {
     final InterchangeV4Format outputObject =
         mapper.readValue(exportOutput.toString(), InterchangeV4Format.class);
 
-    assertThat(outputObject.getSignedArtifacts()).hasSize(2);
-    assertThat(outputObject.getSignedArtifacts().get(0).getSignedBlocks())
-        .hasSize(TOTAL_BLOCKS_SIGNED / 2);
-    assertThat(outputObject.getSignedArtifacts().get(0).getSignedAttestations())
+    final List<SignedArtifacts> signedArtifacts = outputObject.getSignedArtifacts();
+    assertThat(signedArtifacts).hasSize(2);
+    assertThat(signedArtifacts.get(0).getSignedBlocks()).hasSize(TOTAL_BLOCKS_SIGNED / 2);
+    assertThat(signedArtifacts.get(0).getSignedAttestations())
         .hasSize(TOTAL_ATTESTATIONS_SIGNED / 2);
-    assertThat(outputObject.getSignedArtifacts().get(0).getPublicKey()).isEqualTo("0x01");
-    assertThat(outputObject.getSignedArtifacts().get(1).getSignedBlocks())
-        .hasSize(TOTAL_BLOCKS_SIGNED / 2);
-    assertThat(outputObject.getSignedArtifacts().get(1).getSignedAttestations())
+    assertThat(signedArtifacts.get(0).getPublicKey()).isEqualTo("0x01");
+    assertThat(signedArtifacts.get(1).getSignedBlocks()).hasSize(TOTAL_BLOCKS_SIGNED / 2);
+    assertThat(signedArtifacts.get(1).getSignedAttestations())
         .hasSize(TOTAL_ATTESTATIONS_SIGNED / 2);
-    assertThat(outputObject.getSignedArtifacts().get(1).getPublicKey()).isEqualTo("0x02");
+    assertThat(signedArtifacts.get(1).getPublicKey()).isEqualTo("0x02");
   }
 }

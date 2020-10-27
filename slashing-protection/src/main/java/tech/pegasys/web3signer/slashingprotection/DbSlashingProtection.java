@@ -90,7 +90,7 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void exportTo(final OutputStream output) {
+  public void export(final OutputStream output) {
     try {
       interchangeManager.exportTo(output);
     } catch (IOException e) {
