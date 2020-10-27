@@ -57,7 +57,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
-  private static final FilecoinNetwork network = FilecoinNetwork.TESTNET;
+  private static final FilecoinNetwork network = FilecoinNetwork.MAINNET;
   private static final FcBlsArtifactSigner signatureGenerator =
       new FcBlsArtifactSigner(keyPair, network);
   private static final BlsArtifactSignature expectedSignature =
@@ -66,26 +66,20 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
 
   @ParameterizedTest
-  @ValueSource(strings = {"file-raw", "yubihsm2"})
+  @ValueSource(strings = {"file-raw"})
   void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint(final String metadataType) {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    switch (metadataType) {
-      case "file-raw":
-        metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
-        setupSigner("filecoin");
-        break;
-      case "yubihsm2":
-        metadataFileHelpers.createYubiHsmYamlFileAt(keyConfigFile, KeyType.BLS);
-        setupSigner("filecoin", yubiHsmShellEnvMap());
-        break;
+    if ("file-raw".equals(metadataType)) {
+      metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+      setupSigner("filecoin");
     }
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     ObjectMapper mapper = new ObjectMapper();
     final JsonNode params =
         mapper.convertValue(
-            List.of(identifier.encode(FilecoinNetwork.TESTNET), dataString), JsonNode.class);
+            List.of(identifier.encode(FilecoinNetwork.MAINNET), dataString), JsonNode.class);
 
     final Request request = new Request("2.0", "Filecoin.WalletSign", params, id);
     final Response response =

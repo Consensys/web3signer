@@ -70,7 +70,7 @@ public class FcSecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     ObjectMapper mapper = new ObjectMapper();
     final JsonNode params =
         mapper.convertValue(
-            List.of(identifier.encode(FilecoinNetwork.TESTNET), dataString), JsonNode.class);
+            List.of(identifier.encode(FilecoinNetwork.MAINNET), dataString), JsonNode.class);
 
     final Request request = new Request("2.0", "Filecoin.WalletSign", params, id);
     final Response response =

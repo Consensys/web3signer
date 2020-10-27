@@ -17,6 +17,7 @@ jar {
 dependencies {
 
   implementation project(':slashing-protection')
+  implementation project(':common')
   implementation 'info.picocli:picocli'
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'
@@ -42,10 +43,13 @@ dependencies {
   implementation 'tech.pegasys.signers.internal:bls-keystore'
 
   implementation 'tech.pegasys.teku.internal:bls'
+  implementation 'tech.pegasys.teku.internal:core'
+  implementation 'tech.pegasys.teku.internal:datastructures'
+  implementation 'tech.pegasys.teku.internal:serializer'
+  implementation 'tech.pegasys.teku.internal:unsigned'
 
   implementation 'tech.pegasys.signers.internal:keystorage-hashicorp'
   implementation 'tech.pegasys.signers.internal:keystorage-azure'
-  implementation 'tech.pegasys.signers.internal:keystorage-yubihsm2'
   implementation 'tech.pegasys.signers.internal:keystorage-interlock'
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-impl'

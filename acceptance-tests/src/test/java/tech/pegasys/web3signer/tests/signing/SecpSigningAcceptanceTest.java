@@ -126,12 +126,8 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     signAndVerifySignature();
   }
 
-  @Test
-  public void ableToSignUsingYubiHsm() {
-    final Path configFile = testDirectory.resolve("yubihsm_2.yaml");
-    metadataFileHelpers.createYubiHsmYamlFileAt(configFile, KeyType.SECP256K1);
-
-    signAndVerifySignature(yubiHsmShellEnvMap());
+  private void signAndVerifySignature() {
+    signAndVerifySignature(null);
   }
 
   @Test
@@ -141,13 +137,9 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path knownServersFile = testDirectory.resolve("interlockKnownServer.txt");
 
     metadataFileHelpers.createInterlockYamlFileAt(
-        configFile, knownServersFile, Path.of("/secp/key1.txt"), KeyType.SECP256K1);
+            configFile, knownServersFile, Path.of("/secp/key1.txt"), KeyType.SECP256K1);
 
-    signAndVerifySignature(yubiHsmShellEnvMap());
-  }
-
-  private void signAndVerifySignature() {
-    signAndVerifySignature(null);
+    signAndVerifySignature();
   }
 
   private void signAndVerifySignature(final Map<String, String> env) {

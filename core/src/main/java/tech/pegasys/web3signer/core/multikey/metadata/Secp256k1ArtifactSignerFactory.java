@@ -99,16 +99,9 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   }
 
   @Override
-  public ArtifactSigner create(final YubiHsm2SigningMetadata yubiHsm2SigningMetadata) {
-    final Bytes privateKeyBytes = extractBytesFromVault(yubiHsm2SigningMetadata);
-    final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
-    return createCredentialSigner(credentials);
-  }
-
-  @Override
   public ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
     final Credentials credentials =
-        Credentials.create(extractBytesFromInterlock(interlockSigningMetadata).toHexString());
+            Credentials.create(extractBytesFromInterlock(interlockSigningMetadata).toHexString());
     return createCredentialSigner(credentials);
   }
 

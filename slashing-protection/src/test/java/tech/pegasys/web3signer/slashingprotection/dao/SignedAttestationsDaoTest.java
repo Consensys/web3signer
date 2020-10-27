@@ -53,7 +53,8 @@ public class SignedAttestationsDaoTest {
 
   @Test
   public void findsExistingAttestationInDb() {
-    insertAttestation(handle, Bytes.of(100), 1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
 
     final Optional<SignedAttestation> existingAttestation =
         signedAttestationsDao.findExistingAttestation(handle, 1, UInt64.valueOf(4));
@@ -177,14 +178,31 @@ public class SignedAttestationsDaoTest {
     assertThat(existingAttestation.get().getSigningRoot()).isEmpty();
   }
 
+  @Test
+  public void determinesMinimumSourceEpoch() {
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, Bytes.of(2), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
+    assertThat(signedAttestationsDao.minimumSourceEpoch(handle, 1)).hasValue(UInt64.valueOf(2));
+  }
+
+  @Test
+  public void determinesMinimumTargetEpoch() {
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, Bytes.of(2), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
+    assertThat(signedAttestationsDao.minimumTargetEpoch(handle, 1)).hasValue(UInt64.valueOf(3));
+  }
+
+  private void insertValidator(final Bytes publicKey, final int validatorId) {
+    handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
+  }
+
   private void insertAttestation(
-      final Handle h,
-      final Bytes publicKey,
       final int validatorId,
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
-    h.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
     handle.execute(
         "INSERT INTO signed_attestations "
             + "(validator_id, signing_root, source_epoch, target_epoch) "

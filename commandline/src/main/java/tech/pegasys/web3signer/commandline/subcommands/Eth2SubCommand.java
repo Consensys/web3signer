@@ -44,11 +44,10 @@ public class Eth2SubCommand extends ModeSubCommand {
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  private boolean slashingProtectionEnabled = false;
+  private boolean slashingProtectionEnabled = true;
 
   @Option(
       names = {"--slashing-protection-db-url"},
-      hidden = true,
       description = "The jdbc url to use to connect to the slashing protection database",
       paramLabel = "<jdbc url>",
       arity = "1")
@@ -56,14 +55,12 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Option(
       names = {"--slashing-protection-db-username"},
-      hidden = true,
       description = "The username to use when connecting to the slashing protection database",
       paramLabel = "<jdbc user>")
   private String slashingProtectionDbUsername;
 
   @Option(
       names = {"--slashing-protection-db-password"},
-      hidden = true,
       description = "The password to use when connecting to the slashing protection database",
       paramLabel = "<jdbc password>")
   private String slashingProtectionDbPassword;

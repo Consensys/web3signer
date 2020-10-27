@@ -25,7 +25,6 @@ import tech.pegasys.signers.hashicorp.config.TlsOptions;
 import tech.pegasys.signers.interlock.InterlockSession;
 import tech.pegasys.signers.interlock.InterlockSessionFactoryProvider;
 import tech.pegasys.signers.interlock.vertx.InterlockSessionFactoryImpl;
-import tech.pegasys.signers.yubihsm2.YubiHsm2;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.FileNotFoundException;
@@ -42,7 +41,6 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   final Vertx vertx;
   final HashicorpConnectionFactory hashicorpConnectionFactory;
   final Path configsDirectory;
-  final YubiHsmShellArgs yubiHsmShellArgs = new YubiHsmShellArgs();
 
   protected AbstractArtifactSignerFactory(final Vertx vertx, final Path configsDirectory) {
     this.vertx = vertx;
@@ -91,36 +89,16 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
     }
   }
 
-  protected Bytes extractBytesFromVault(final YubiHsm2SigningMetadata metadata) {
-    final YubiHsm2 yubiHsm2 =
-        new YubiHsm2(
-            yubiHsmShellArgs.getArgs(),
-            Optional.empty(),
-            metadata.getConnectorUrl(),
-            metadata.getAuthKey(),
-            metadata.getPassword(),
-            metadata.getCaCertPath(),
-            metadata.getProxyUrl());
-    try {
-      final String secret =
-          yubiHsm2.fetchOpaqueData(metadata.getOpaqueObjId(), metadata.getOutputFormat());
-      return Bytes.fromHexString(secret);
-    } catch (final RuntimeException e) {
-      throw new SigningMetadataException(
-          "Failed to fetch secret from YubiHSM2: " + e.getMessage(), e);
-    }
-  }
-
   protected Bytes extractBytesFromInterlock(final InterlockSigningMetadata metadata) {
     final InterlockSessionFactoryImpl interlockSessionFactory =
-        InterlockSessionFactoryProvider.newInstance(vertx, metadata.getKnownServersFile());
+            InterlockSessionFactoryProvider.newInstance(vertx, metadata.getKnownServersFile());
     try (final InterlockSession session =
-        interlockSessionFactory.newSession(
-            metadata.getInterlockUrl(), metadata.getVolume(), metadata.getPassword())) {
+                 interlockSessionFactory.newSession(
+                         metadata.getInterlockUrl(), metadata.getVolume(), metadata.getPassword())) {
       return session.fetchKey(metadata.getKeyPath());
     } catch (final RuntimeException e) {
       throw new SigningMetadataException(
-          "Failed to fetch secret from Interlock: " + e.getMessage(), e);
+              "Failed to fetch secret from Interlock: " + e.getMessage(), e);
     }
   }
 

@@ -89,16 +89,6 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
   }
 
   @Override
-  public ArtifactSigner create(final YubiHsm2SigningMetadata yubiHsm2SigningMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("yubihsm2").startTimer()) {
-      final Bytes privateKeyBytes = extractBytesFromVault(yubiHsm2SigningMetadata);
-      final BLSKeyPair keyPair =
-          new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
-      return signerFactory.apply(keyPair);
-    }
-  }
-
-  @Override
   public ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("interlock").startTimer()) {
 

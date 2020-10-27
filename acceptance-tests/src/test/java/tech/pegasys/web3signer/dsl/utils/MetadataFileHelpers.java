@@ -179,25 +179,11 @@ public class MetadataFileHelpers {
     }
   }
 
-  public void createYubiHsmYamlFileAt(final Path metadataFilePath, final KeyType keyType) {
-    final int opaqueObjId = keyType == KeyType.BLS ? 1 : 2;
-
-    final Map<String, String> yaml = new HashMap<>();
-    yaml.put("type", "yubihsm2");
-    yaml.put("connectorUrl", "http://localhost:12345");
-    yaml.put("authKey", String.valueOf(1));
-    yaml.put("password", "password");
-    yaml.put("opaqueObjId", String.valueOf(opaqueObjId));
-    yaml.put("keyType", keyType.name());
-
-    createYamlFile(metadataFilePath, yaml);
-  }
-
   public void createInterlockYamlFileAt(
-      final Path metadataFilePath,
-      final Path knownServersFile,
-      final Path keyPath,
-      final KeyType keyType) {
+          final Path metadataFilePath,
+          final Path knownServersFile,
+          final Path keyPath,
+          final KeyType keyType) {
     final Map<String, String> yaml = new HashMap<>();
     yaml.put("type", "interlock");
     yaml.put("interlockUrl", "https://10.0.0.1");
