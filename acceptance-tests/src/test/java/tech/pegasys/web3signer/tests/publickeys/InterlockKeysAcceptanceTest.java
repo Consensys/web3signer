@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.tests.publickeys;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
-import org.junit.jupiter.api.Disabled;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -25,6 +24,7 @@ import java.util.List;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 @Disabled("Requires physical access to Interlock on USB Armory II")
