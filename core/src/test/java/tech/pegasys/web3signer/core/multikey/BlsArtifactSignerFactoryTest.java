@@ -23,6 +23,7 @@ import tech.pegasys.signers.bls.keystore.model.CipherFunction;
 import tech.pegasys.signers.bls.keystore.model.KdfParam;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.signers.bls.keystore.model.SCryptParam;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.web3signer.core.multikey.metadata.ArtifactSignerFactory;
@@ -82,7 +83,11 @@ class BlsArtifactSignerFactoryTest {
 
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
-            vertx, configDir, new NoOpMetricsSystem(), BlsArtifactSigner::new);
+            configDir,
+            new NoOpMetricsSystem(),
+            new HashicorpConnectionFactory(vertx),
+            vertx,
+            BlsArtifactSigner::new);
   }
 
   @AfterEach

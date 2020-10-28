@@ -16,6 +16,7 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
@@ -99,19 +100,23 @@ public class FilecoinRunner extends Runner {
   private ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+    final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory(vertx);
 
     final AbstractArtifactSignerFactory blsArtifactSignerFactory =
         new BlsArtifactSignerFactory(
-            vertx,
             config.getKeyConfigPath(),
             metricsSystem,
+            hashicorpConnectionFactory,
+            vertx,
             keyPair -> new FcBlsArtifactSigner(keyPair, network));
 
     final AbstractArtifactSignerFactory secpArtifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(
-            vertx,
+            hashicorpConnectionFactory,
             config.getKeyConfigPath(),
             azureFactory,
+            vertx,
             signer -> new FcSecpArtifactSigner(signer, network),
             false);
 

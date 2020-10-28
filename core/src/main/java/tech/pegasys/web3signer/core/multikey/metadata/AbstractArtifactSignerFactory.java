@@ -36,14 +36,17 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
 
-  final Vertx vertx;
+  final Vertx vertx; // required for Interlock
   final HashicorpConnectionFactory hashicorpConnectionFactory;
   final Path configsDirectory;
 
-  protected AbstractArtifactSignerFactory(final Vertx vertx, final Path configsDirectory) {
-    this.vertx = vertx;
-    this.hashicorpConnectionFactory = new HashicorpConnectionFactory(vertx);
+  protected AbstractArtifactSignerFactory(
+      final HashicorpConnectionFactory hashicorpConnectionFactory,
+      final Path configsDirectory,
+      final Vertx vertx) {
+    this.hashicorpConnectionFactory = hashicorpConnectionFactory;
     this.configsDirectory = configsDirectory;
+    this.vertx = vertx;
   }
 
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {

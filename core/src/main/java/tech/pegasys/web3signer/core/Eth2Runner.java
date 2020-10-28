@@ -18,6 +18,7 @@ import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.i
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.signers.azure.AzureKeyVault;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
@@ -155,10 +156,16 @@ public class Eth2Runner extends Runner {
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
 
     final List<ArtifactSigner> signers = Lists.newArrayList();
+    final HashicorpConnectionFactory hashicorpConnectionFactory =
+        new HashicorpConnectionFactory(vertx);
 
     final AbstractArtifactSignerFactory artifactSignerFactory =
         new BlsArtifactSignerFactory(
-            vertx, config.getKeyConfigPath(), metricsSystem, BlsArtifactSigner::new);
+            config.getKeyConfigPath(),
+            metricsSystem,
+            hashicorpConnectionFactory,
+            vertx,
+            BlsArtifactSigner::new);
 
     signers.addAll(
         SignerLoader.load(

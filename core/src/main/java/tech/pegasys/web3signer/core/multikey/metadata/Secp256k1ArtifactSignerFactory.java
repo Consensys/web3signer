@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.api.Signer;
 import tech.pegasys.signers.secp256k1.azure.AzureConfig;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
@@ -38,12 +39,13 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   private final boolean needToHash;
 
   public Secp256k1ArtifactSignerFactory(
-      final Vertx vertx,
+      final HashicorpConnectionFactory hashicorpConnectionFactory,
       final Path configsDirectory,
       final AzureKeyVaultSignerFactory azureCloudSignerFactory,
+      final Vertx vertx,
       final Function<Signer, ArtifactSigner> signerFactory,
       final boolean needToHash) {
-    super(vertx, configsDirectory);
+    super(hashicorpConnectionFactory, configsDirectory, vertx);
     this.azureCloudSignerFactory = azureCloudSignerFactory;
     this.signerFactory = signerFactory;
     this.needToHash = needToHash;

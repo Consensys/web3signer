@@ -16,6 +16,7 @@ import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
@@ -39,11 +40,12 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
   private final Function<BLSKeyPair, ArtifactSigner> signerFactory;
 
   public BlsArtifactSignerFactory(
-      final Vertx vertx,
       final Path configsDirectory,
       final MetricsSystem metricsSystem,
+      final HashicorpConnectionFactory connectionFactory,
+      final Vertx vertx,
       final Function<BLSKeyPair, ArtifactSigner> signerFactory) {
-    super(vertx, configsDirectory);
+    super(connectionFactory, configsDirectory, vertx);
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
             Web3SignerMetricCategory.SIGNING,
