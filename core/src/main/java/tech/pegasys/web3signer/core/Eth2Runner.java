@@ -85,12 +85,6 @@ public class Eth2Runner extends Runner {
     this.azureKeyVaultParameters = azureKeyVaultParameters;
   }
 
-  public void exportSigningsPerformed(final OutputStream output) {
-    LOG.info("Starting export of database.");
-    slashingProtection.orElseThrow().export(output);
-    LOG.info("Export Complete.");
-  }
-
   private Optional<SlashingProtection> createSlashingProtection(
       final boolean slashingProtectionEnabled,
       final String slashingProtectionDbUrl,

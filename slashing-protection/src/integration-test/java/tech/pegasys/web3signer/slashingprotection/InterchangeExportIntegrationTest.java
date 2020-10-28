@@ -74,34 +74,34 @@ public class InterchangeExportIntegrationTest {
 
     final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
 
-    jdbi.useTransaction(
-        h -> {
-          validators.registerValidators(h, List.of(Bytes.fromHexString("0x01")));
-          validators.registerValidators(h, List.of(Bytes.fromHexString("0x02")));
-        });
-
+    final int VALIDATOR_COUNT = 2;
     final int TOTAL_BLOCKS_SIGNED = 6;
-    jdbi.useTransaction(
-        h -> {
-          for (int i = 0; i < TOTAL_BLOCKS_SIGNED; i++) {
-            signedBlocks.insertBlockProposal(
-                h, new SignedBlock((i % 2) + 1, UInt64.valueOf(i), Bytes.fromHexString("0x01")));
-          }
-        });
-
     final int TOTAL_ATTESTATIONS_SIGNED = 8;
-    jdbi.useTransaction(
-        h -> {
-          for (int i = 0; i < TOTAL_ATTESTATIONS_SIGNED; i++) {
-            signedAttestations.insertAttestation(
-                h,
-                new SignedAttestation(
-                    (i % 2) + 1,
-                    UInt64.valueOf(i),
-                    UInt64.valueOf(i),
-                    Bytes.fromHexString("0x01")));
-          }
-        });
+
+    for (int i = 0; i < VALIDATOR_COUNT; i++) {
+      final int validatorId = i + 1;
+      final Bytes validatorPublicKey = Bytes.of(validatorId);
+      jdbi.useTransaction(h -> validators.registerValidators(h, List.of(validatorPublicKey)));
+      jdbi.useTransaction(
+          h -> {
+            for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
+              signedBlocks.insertBlockProposal(
+                  h, new SignedBlock(validatorId, UInt64.valueOf(b), Bytes.fromHexString("0x01")));
+            }
+          });
+      jdbi.useTransaction(
+          h -> {
+            for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
+              signedAttestations.insertAttestation(
+                  h,
+                  new SignedAttestation(
+                      validatorId,
+                      UInt64.valueOf(a),
+                      UInt64.valueOf(a),
+                      Bytes.fromHexString("0x01")));
+            }
+          });
+    }
 
     final OutputStream exportOutput = new ByteArrayOutputStream();
     final SlashingProtection slashingProtection =
@@ -116,13 +116,26 @@ public class InterchangeExportIntegrationTest {
 
     final List<SignedArtifacts> signedArtifacts = outputObject.getSignedArtifacts();
     assertThat(signedArtifacts).hasSize(2);
-    assertThat(signedArtifacts.get(0).getSignedBlocks()).hasSize(TOTAL_BLOCKS_SIGNED / 2);
-    assertThat(signedArtifacts.get(0).getSignedAttestations())
-        .hasSize(TOTAL_ATTESTATIONS_SIGNED / 2);
-    assertThat(signedArtifacts.get(0).getPublicKey()).isEqualTo("0x01");
-    assertThat(signedArtifacts.get(1).getSignedBlocks()).hasSize(TOTAL_BLOCKS_SIGNED / 2);
-    assertThat(signedArtifacts.get(1).getSignedAttestations())
-        .hasSize(TOTAL_ATTESTATIONS_SIGNED / 2);
-    assertThat(signedArtifacts.get(1).getPublicKey()).isEqualTo("0x02");
+    for (int i = 0; i < VALIDATOR_COUNT; i++) {
+      final int validatorId = i + 1;
+      final SignedArtifacts signedArtifact = signedArtifacts.get(i);
+      assertThat(signedArtifact.getPublicKey()).isEqualTo(String.format("0x0%x", validatorId));
+      assertThat(signedArtifact.getSignedBlocks()).hasSize(TOTAL_BLOCKS_SIGNED);
+      for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
+        final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock block =
+            signedArtifact.getSignedBlocks().get(b);
+        assertThat(block.getSigningRoot()).isEqualTo(Bytes.fromHexString("0x01"));
+        assertThat(block.getSlot()).isEqualTo(UInt64.valueOf(b));
+      }
+      
+      assertThat(signedArtifact.getSignedAttestations()).hasSize(TOTAL_ATTESTATIONS_SIGNED);
+      for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
+        final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation
+            attestation = signedArtifact.getSignedAttestations().get(a);
+        assertThat(attestation.getSigningRoot()).isEqualTo(Bytes.fromHexString("0x01"));
+        assertThat(attestation.getSourceEpoch()).isEqualTo(UInt64.valueOf(a));
+        assertThat(attestation.getTargetEpoch()).isEqualTo(UInt64.valueOf(a));
+      }
+    }
   }
 }
