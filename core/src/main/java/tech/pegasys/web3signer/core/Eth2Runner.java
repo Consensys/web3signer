@@ -28,6 +28,7 @@ import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.service.http.SigningJsonModule;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
@@ -158,13 +159,14 @@ public class Eth2Runner extends Runner {
     final List<ArtifactSigner> signers = Lists.newArrayList();
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
+    final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
 
     final AbstractArtifactSignerFactory artifactSignerFactory =
         new BlsArtifactSignerFactory(
             config.getKeyConfigPath(),
             metricsSystem,
             hashicorpConnectionFactory,
-            vertx,
+            interlockKeyProvider,
             BlsArtifactSigner::new);
 
     signers.addAll(
@@ -172,6 +174,9 @@ public class Eth2Runner extends Runner {
             config.getKeyConfigPath(),
             "yaml",
             new YamlSignerParser(List.of(artifactSignerFactory))));
+
+    // required as we are manually maintaining them in cache
+    interlockKeyProvider.closeAllSessions();
 
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
       signers.addAll(loadAzureSigners());

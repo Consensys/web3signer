@@ -55,8 +55,6 @@ public class SignerLoader {
           .collect(Collectors.toSet());
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
-    } finally {
-      InterlockKeyProvider.INSTANCE.closeAllSessions();
     }
     return emptySet();
   }

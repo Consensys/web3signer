@@ -17,12 +17,14 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
+import jnr.ffi.annotations.In;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
@@ -83,13 +85,14 @@ public class Eth1Runner extends Runner {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
+    final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
 
     final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
         new Secp256k1ArtifactSignerFactory(
             hashicorpConnectionFactory,
             config.getKeyConfigPath(),
             azureFactory,
-            vertx,
+            interlockKeyProvider,
             EthSecpArtifactSigner::new,
             true);
 
@@ -98,6 +101,9 @@ public class Eth1Runner extends Runner {
             config.getKeyConfigPath(),
             "yaml",
             new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
+
+    // required as we are manually maintaining them in cache
+    interlockKeyProvider.closeAllSessions();
 
     return DefaultArtifactSignerProvider.create(signers);
   }

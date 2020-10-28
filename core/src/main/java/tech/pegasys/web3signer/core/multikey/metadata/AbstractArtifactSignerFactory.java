@@ -12,9 +12,8 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
-import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
-
+import com.google.common.io.Files;
+import org.apache.tuweni.bytes.Bytes;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnection;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -30,23 +29,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import com.google.common.io.Files;
-import io.vertx.core.Vertx;
-import org.apache.tuweni.bytes.Bytes;
+import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
 
-  final Vertx vertx; // required for Interlock
   final HashicorpConnectionFactory hashicorpConnectionFactory;
   final Path configsDirectory;
+  private final InterlockKeyProvider interlockKeyProvider;
 
   protected AbstractArtifactSignerFactory(
       final HashicorpConnectionFactory hashicorpConnectionFactory,
       final Path configsDirectory,
-      final Vertx vertx) {
+      final InterlockKeyProvider interlockKeyProvider) {
     this.hashicorpConnectionFactory = hashicorpConnectionFactory;
     this.configsDirectory = configsDirectory;
-    this.vertx = vertx;
+    this.interlockKeyProvider = interlockKeyProvider;
   }
 
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
@@ -92,7 +90,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
 
   protected Bytes extractBytesFromInterlock(final InterlockSigningMetadata metadata) {
     try {
-      return InterlockKeyProvider.INSTANCE.fetchKey(vertx, metadata);
+      return interlockKeyProvider.fetchKey(metadata);
     } catch (final RuntimeException e) {
       throw new SigningMetadataException(
           "Failed to fetch secret from Interlock: " + e.getMessage(), e);

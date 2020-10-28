@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.multikey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.in;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
 import tech.pegasys.signers.bls.keystore.KeyStore;
@@ -31,6 +32,7 @@ import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.HashicorpSigningMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -63,6 +65,7 @@ class BlsArtifactSignerFactoryTest {
   private ArtifactSignerFactory artifactSignerFactory;
 
   private Vertx vertx;
+  private InterlockKeyProvider interlockKeyProvider;
 
   @BeforeAll
   static void setupKeystoreFiles() throws IOException {
@@ -80,18 +83,20 @@ class BlsArtifactSignerFactoryTest {
   @BeforeEach
   void setup() throws IOException {
     vertx = Vertx.vertx();
+    interlockKeyProvider = new InterlockKeyProvider(vertx);
 
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
             configDir,
             new NoOpMetricsSystem(),
             new HashicorpConnectionFactory(vertx),
-            vertx,
+            interlockKeyProvider,
             BlsArtifactSigner::new);
   }
 
   @AfterEach
   void cleanup() {
+    interlockKeyProvider.closeAllSessions();
     vertx.close();
   }
 

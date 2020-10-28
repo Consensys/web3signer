@@ -27,7 +27,7 @@ public class InterlockSigningMetadata extends SigningMetadata {
 
   private final String volume;
   private final String password;
-  private final Path keyPath;
+  private final String keyPath;
 
   @JsonCreator
   public InterlockSigningMetadata(
@@ -43,7 +43,7 @@ public class InterlockSigningMetadata extends SigningMetadata {
     this.knownServersFile = Path.of(knownServersFile);
     this.volume = volume;
     this.password = password;
-    this.keyPath = Path.of(keyPath);
+    this.keyPath = keyPath;
   }
 
   public URI getInterlockUrl() {
@@ -62,7 +62,7 @@ public class InterlockSigningMetadata extends SigningMetadata {
     return password;
   }
 
-  public Path getKeyPath() {
+  public String getKeyPath() {
     return keyPath;
   }
 

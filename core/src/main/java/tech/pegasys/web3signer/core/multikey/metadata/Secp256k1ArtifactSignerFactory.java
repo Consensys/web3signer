@@ -12,24 +12,23 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.web3j.crypto.CipherException;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.WalletUtils;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.api.Signer;
 import tech.pegasys.signers.secp256k1.azure.AzureConfig;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.signers.secp256k1.filebased.CredentialSigner;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Function;
-
-import io.vertx.core.Vertx;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.web3j.crypto.CipherException;
-import org.web3j.crypto.Credentials;
-import org.web3j.crypto.WalletUtils;
 
 public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
@@ -42,10 +41,10 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
       final HashicorpConnectionFactory hashicorpConnectionFactory,
       final Path configsDirectory,
       final AzureKeyVaultSignerFactory azureCloudSignerFactory,
-      final Vertx vertx,
+      final InterlockKeyProvider interlockKeyProvider,
       final Function<Signer, ArtifactSigner> signerFactory,
       final boolean needToHash) {
-    super(hashicorpConnectionFactory, configsDirectory, vertx);
+    super(hashicorpConnectionFactory, configsDirectory, interlockKeyProvider);
     this.azureCloudSignerFactory = azureCloudSignerFactory;
     this.signerFactory = signerFactory;
     this.needToHash = needToHash;

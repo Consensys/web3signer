@@ -20,6 +20,7 @@ import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -43,9 +44,9 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final Path configsDirectory,
       final MetricsSystem metricsSystem,
       final HashicorpConnectionFactory connectionFactory,
-      final Vertx vertx,
+      final InterlockKeyProvider interlockKeyProvider,
       final Function<BLSKeyPair, ArtifactSigner> signerFactory) {
-    super(connectionFactory, configsDirectory, vertx);
+    super(connectionFactory, configsDirectory, interlockKeyProvider);
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
             Web3SignerMetricCategory.SIGNING,

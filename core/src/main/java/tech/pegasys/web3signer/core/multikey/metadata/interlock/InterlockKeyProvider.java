@@ -17,24 +17,28 @@ import tech.pegasys.signers.interlock.InterlockSessionFactoryProvider;
 import tech.pegasys.signers.interlock.vertx.InterlockSessionFactoryImpl;
 import tech.pegasys.web3signer.core.multikey.metadata.InterlockSigningMetadata;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 
-public enum InterlockKeyProvider {
-  INSTANCE;
-
+public class InterlockKeyProvider {
   // maintains a cache of interlock sessions as they don't allow multiple sessions to be open
   // simultaneously
   private final Map<InterlockIdentifier, InterlockSession> sessionMap = new ConcurrentHashMap<>();
+  private final Vertx vertx;
 
-  public synchronized Bytes fetchKey(final Vertx vertx, final InterlockSigningMetadata metadata) {
+  public InterlockKeyProvider(final Vertx vertx) {
+    this.vertx = vertx;
+  }
+
+  public synchronized Bytes fetchKey(final InterlockSigningMetadata metadata) {
     final InterlockSession interlockSession =
         sessionMap.computeIfAbsent(
             InterlockIdentifier.fromMetadata(metadata), identifier -> newSession(metadata, vertx));
-    return interlockSession.fetchKey(metadata.getKeyPath());
+    return interlockSession.fetchKey(Path.of(metadata.getKeyPath())); //TODO: Remove Path.of
   }
 
   private InterlockSession newSession(final InterlockSigningMetadata metadata, final Vertx vertx) {
@@ -45,7 +49,7 @@ public enum InterlockKeyProvider {
         metadata.getInterlockUrl(), metadata.getVolume(), metadata.getPassword());
   }
 
-  // must be called after all abstract signers are handled (see SignerLoader)
+  // must be called after all signers are loaded
   public void closeAllSessions() {
     if (!sessionMap.isEmpty()) {
       sessionMap.forEach((identifier, interlockSession) -> interlockSession.close());
