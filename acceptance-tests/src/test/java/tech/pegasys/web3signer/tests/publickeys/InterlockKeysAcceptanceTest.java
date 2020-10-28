@@ -33,7 +33,7 @@ public class InterlockKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBas
 
   // following keys are expected to be pre-loaded in USB Armory/Interlock under path
   // /bls/key<1..n>.txt
-  private static final List<String> PRE_LOADED_KEYS =
+  private static final List<String> PRE_LOADED_PRIVATE_KEYS =
       List.of(
           "0x000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
           "0x73d51abbd89cb8196f0efb6892f94d68fccc2c35f0b84609e5f12c55dd85aba8",
@@ -52,7 +52,7 @@ public class InterlockKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBas
     final Path knownServersFile = testDirectory.resolve("interlockKnownServer.txt");
 
     // create meta configuration files
-    for (int i = 1; i <= PRE_LOADED_KEYS.size(); i++) {
+    for (int i = 1; i <= PRE_LOADED_PRIVATE_KEYS.size(); i++) {
       final Path configFile = testDirectory.resolve("interlock_" + i + ".yaml");
       final String keyPathOnInterlock = String.format("/bls/key%d.txt", i);
       metadataFileHelpers.createInterlockYamlFileAt(
@@ -66,7 +66,7 @@ public class InterlockKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBas
   public void blsKeysAreLoadedFromInterlockUsbArmory() {
     final Response response = signer.callApiPublicKeys(KeyType.BLS);
     final String[] expectedPublicKeys =
-        PRE_LOADED_KEYS.stream()
+        PRE_LOADED_PRIVATE_KEYS.stream()
             .map(key -> BLSSecretKey.fromBytes(Bytes32.fromHexString(key)).toPublicKey().toString())
             .toArray(String[]::new);
     validateApiResponse(response, containsInAnyOrder(expectedPublicKeys));

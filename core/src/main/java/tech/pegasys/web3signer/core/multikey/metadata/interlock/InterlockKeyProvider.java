@@ -17,7 +17,6 @@ import tech.pegasys.signers.interlock.InterlockSessionFactoryProvider;
 import tech.pegasys.signers.interlock.vertx.InterlockSessionFactoryImpl;
 import tech.pegasys.web3signer.core.multikey.metadata.InterlockSigningMetadata;
 
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,7 +37,7 @@ public class InterlockKeyProvider {
     final InterlockSession interlockSession =
         sessionMap.computeIfAbsent(
             InterlockIdentifier.fromMetadata(metadata), identifier -> newSession(metadata, vertx));
-    return interlockSession.fetchKey(Path.of(metadata.getKeyPath())); // TODO: Remove Path.of
+    return interlockSession.fetchKey(metadata.getKeyPath());
   }
 
   private InterlockSession newSession(final InterlockSigningMetadata metadata, final Vertx vertx) {
