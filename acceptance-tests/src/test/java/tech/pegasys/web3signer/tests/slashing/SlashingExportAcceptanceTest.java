@@ -20,12 +20,17 @@ import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
+import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dsl.InterchangeV5Format;
+import dsl.SignedArtifacts;
 import io.restassured.response.Response;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -57,7 +62,26 @@ public class SlashingExportAcceptanceTest extends SlashingAcceptanceTest {
     exportSigner.start();
     waitFor(() -> assertThat(exportSigner.isRunning()).isFalse());
 
-    final String exportData = Files.readString(exportFile);
-    assertThat(exportData).contains(keyPair.getPublicKey().toString());
+    final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
+
+    final InterchangeV5Format mappedData =
+        mapper.readValue(exportFile.toFile(), InterchangeV5Format.class);
+
+    assertThat(mappedData.getMetadata().getFormatVersionAsString()).isEqualTo("5");
+    assertThat(mappedData.getMetadata().getGenesisValidatorsRoot())
+        .isEqualTo(Bytes.fromHexString("FFFFFFFF"));
+
+    assertThat(mappedData.getSignedArtifacts()).hasSize(1);
+    final SignedArtifacts artifacts = mappedData.getSignedArtifacts().get(0);
+
+    assertThat(artifacts.getSignedBlocks()).hasSize(0);
+
+    assertThat(artifacts.getSignedAttestations()).hasSize(1);
+    final SignedAttestation attestation = artifacts.getSignedAttestations().get(0);
+    assertThat(attestation.getSourceEpoch().toLong())
+        .isEqualTo(request.getAttestation().source.epoch.longValue());
+    assertThat(attestation.getTargetEpoch().toLong())
+        .isEqualTo(request.getAttestation().target.epoch.longValue());
+    assertThat(attestation.getSigningRoot()).isNotNull();
   }
 }

@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -25,6 +23,8 @@ import java.io.OutputStream;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -79,7 +79,8 @@ public class InterchangeV5Manager implements InterchangeManager {
                 .findAllValidators(h)
                 .forEach(
                     validator -> {
-                      LOG.info("Exporting entries for validator {}",
+                      LOG.info(
+                          "Exporting entries for validator {}",
                           validator.getPublicKey().toHexString());
                       try {
                         populateValidatorRecord(h, validator, jsonGenerator);
@@ -110,8 +111,8 @@ public class InterchangeV5Manager implements InterchangeManager {
             b -> {
               final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock
                   jsonBlock =
-                  new tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock(
-                      b.getSlot(), b.getSigningRoot().orElse(null));
+                      new tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock(
+                          b.getSlot(), b.getSigningRoot().orElse(null));
               try {
                 mapper.writeValue(jsonGenerator, jsonBlock);
               } catch (IOException e) {
@@ -133,9 +134,9 @@ public class InterchangeV5Manager implements InterchangeManager {
             a -> {
               final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation
                   jsonAttestation =
-                  new tech.pegasys.web3signer.slashingprotection.interchange.model
-                      .SignedAttestation(
-                      a.getSourceEpoch(), a.getTargetEpoch(), a.getSigningRoot().orElse(null));
+                      new tech.pegasys.web3signer.slashingprotection.interchange.model
+                          .SignedAttestation(
+                          a.getSourceEpoch(), a.getTargetEpoch(), a.getSigningRoot().orElse(null));
               try {
                 mapper.writeValue(jsonGenerator, jsonAttestation);
               } catch (IOException e) {

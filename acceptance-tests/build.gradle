@@ -57,6 +57,7 @@ dependencies {
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'keystorage-hashicorp', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'acceptance-tests', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'signing-secp256k1-impl', classifier: 'test-fixtures')
+  testImplementation (testFixtures(project(":slashing-protection")))
 
   gatlingImplementation configurations.getByName("testImplementation")
 }

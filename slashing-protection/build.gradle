@@ -48,6 +48,7 @@ dependencies {
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
   testFixturesImplementation 'commons-lang:commons-lang'
+  testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
@@ -55,6 +56,7 @@ dependencies {
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation 'org.flywaydb:flyway-core'
   integrationTestImplementation 'com.opentable.components:otj-pg-embedded'
+  integrationTestImplementation sourceSets.testFixtures.output
 }
 
 artifacts {

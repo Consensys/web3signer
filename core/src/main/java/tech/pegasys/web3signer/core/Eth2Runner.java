@@ -41,7 +41,6 @@ import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
-import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;

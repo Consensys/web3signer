@@ -16,6 +16,7 @@ import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFacto
 
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -29,7 +30,6 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 @Command(
     name = Eth2SubCommand.COMMAND_NAME,
@@ -45,9 +45,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   public void exportSlashingDb(@Option(names = "--to") File output) {
     final SlashingProtection slashingProtection =
         createSlashingProtection(
-            slashingProtectionDbUrl,
-            slashingProtectionDbUsername,
-            slashingProtectionDbPassword);
+            slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
     try {
       slashingProtection.export(new FileOutputStream(output));
     } catch (final FileNotFoundException e) {

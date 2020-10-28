@@ -105,5 +105,4 @@ public class SignedAttestationsDao {
         .mapTo(UInt64.class)
         .findFirst();
   }
-
 }

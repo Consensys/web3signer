@@ -114,6 +114,10 @@ public class InterchangeExportIntegrationTest {
     final InterchangeV5Format outputObject =
         mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
 
+    assertThat(outputObject.getMetadata().getFormatVersionAsString()).isEqualTo("5");
+    assertThat(outputObject.getMetadata().getGenesisValidatorsRoot())
+        .isEqualTo(Bytes.fromHexString("FFFFFFFF"));
+
     final List<SignedArtifacts> signedArtifacts = outputObject.getSignedArtifacts();
     assertThat(signedArtifacts).hasSize(2);
     for (int i = 0; i < VALIDATOR_COUNT; i++) {
@@ -127,7 +131,7 @@ public class InterchangeExportIntegrationTest {
         assertThat(block.getSigningRoot()).isEqualTo(Bytes.fromHexString("0x01"));
         assertThat(block.getSlot()).isEqualTo(UInt64.valueOf(b));
       }
-      
+
       assertThat(signedArtifact.getSignedAttestations()).hasSize(TOTAL_ATTESTATIONS_SIGNED);
       for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
         final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation
