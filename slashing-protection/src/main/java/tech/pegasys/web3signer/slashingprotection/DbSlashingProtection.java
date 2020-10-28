@@ -152,6 +152,26 @@ public class DbSlashingProtection implements SlashingProtection {
       }
     }
 
+    final Optional<UInt64> minimumSourceEpoch =
+        signedAttestationsDao.minimumSourceEpoch(h, validatorId);
+    if (minimumSourceEpoch.map(minEpoch -> sourceEpoch.compareTo(minEpoch) < 0).orElse(false)) {
+      LOG.warn(
+          "Attestation source epoch {} is below minimum existing attestation source epoch {}",
+          sourceEpoch,
+          minimumSourceEpoch.get());
+      return false;
+    }
+
+    final Optional<UInt64> minimumTargetEpoch =
+        signedAttestationsDao.minimumTargetEpoch(h, validatorId);
+    if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).orElse(false)) {
+      LOG.warn(
+          "Attestation target epoch {} is below minimum existing attestation target epoch {}",
+          targetEpoch,
+          minimumTargetEpoch.get());
+      return false;
+    }
+
     // check that no previous vote is surrounding the attestation
     final Optional<SignedAttestation> surroundingAttestation =
         signedAttestationsDao.findSurroundingAttestation(h, validatorId, sourceEpoch, targetEpoch);
@@ -206,24 +226,32 @@ public class DbSlashingProtection implements SlashingProtection {
       final int validatorId) {
     final Optional<SignedBlock> existingBlock =
         signedBlocksDao.findExistingBlock(handle, validatorId, blockSlot);
+    if (existingBlock.isPresent()) {
+      if (existingBlock.get().getSigningRoot().isEmpty()) {
+        LOG.warn(
+            "Signed block ({}, {}) exists with no signing root",
+            publicKey,
+            existingBlock.get().getSlot());
+        return false;
+      } else if (existingBlock.get().getSigningRoot().get().equals(signingRoot)) {
+        // same slot and signing_root is allowed for broadcasting previously signed block
+        return true;
+      } else {
+        LOG.warn("Detected double signed block {} for {}", existingBlock.get(), publicKey);
+        return false;
+      }
+    }
 
-    if (existingBlock.isEmpty()) {
-      final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
-      signedBlocksDao.insertBlockProposal(handle, signedBlock);
-      return true;
-    } else if (existingBlock.get().getSigningRoot().isEmpty()) {
+    final Optional<UInt64> minimumSlot = signedBlocksDao.minimumSlot(handle, validatorId);
+    if (minimumSlot.map(slot -> blockSlot.compareTo(slot) <= 0).orElse(false)) {
       LOG.warn(
-          "Signed block ({}, {}) exists with no signing root",
-          publicKey,
-          existingBlock.get().getSlot());
-      return false;
-    } else if (existingBlock.get().getSigningRoot().get().equals(signingRoot)) {
-      // same slot and signing_root is allowed for broadcasting previously signed block
-      return true;
-    } else {
-      LOG.warn("Detected double signed block {} for {}", existingBlock.get(), publicKey);
+          "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
       return false;
     }
+
+    final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
+    signedBlocksDao.insertBlockProposal(handle, signedBlock);
+    return true;
   }
 
   @Override

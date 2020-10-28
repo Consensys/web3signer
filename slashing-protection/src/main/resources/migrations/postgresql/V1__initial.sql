@@ -1,7 +1,7 @@
 CREATE TABLE validators (
-  id SERIAL PRIMARY KEY,
-  public_key BYTEA NOT NULL,
-  UNIQUE(public_key)
+    id SERIAL PRIMARY KEY,
+    public_key BYTEA NOT NULL,
+    UNIQUE(public_key)
 );
 CREATE TABLE signed_blocks (
     validator_id INTEGER NOT NULL,

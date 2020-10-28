@@ -21,7 +21,7 @@ import org.jdbi.v3.core.Handle;
 public class SignedBlocksDao {
 
   public Optional<SignedBlock> findExistingBlock(
-      final Handle handle, int validatorId, final UInt64 slot) {
+      final Handle handle, final int validatorId, final UInt64 slot) {
     return handle
         .createQuery(
             "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ?")
@@ -39,6 +39,14 @@ public class SignedBlocksDao {
         .bind(1, signedBlock.getSlot())
         .bind(2, signedBlock.getSigningRoot())
         .execute();
+  }
+
+  public Optional<UInt64> minimumSlot(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery("SELECT MIN(slot) FROM signed_blocks WHERE validator_id = ?")
+        .bind(0, validatorId)
+        .mapTo(UInt64.class)
+        .findFirst();
   }
 
   public Stream<SignedBlock> findAllBlockSignedBy(final Handle handle, final int validatorId) {

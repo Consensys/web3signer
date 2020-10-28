@@ -98,13 +98,6 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
     return signerFactory.apply(azureCloudSignerFactory.createSigner(config));
   }
 
-  @Override
-  public ArtifactSigner create(final YubiHsm2SigningMetadata yubiHsm2SigningMetadata) {
-    final Bytes privateKeyBytes = extractBytesFromVault(yubiHsm2SigningMetadata);
-    final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
-    return createCredentialSigner(credentials);
-  }
-
   private ArtifactSigner createCredentialSigner(final Credentials credentials) {
     return signerFactory.apply(new CredentialSigner(credentials, needToHash));
   }
