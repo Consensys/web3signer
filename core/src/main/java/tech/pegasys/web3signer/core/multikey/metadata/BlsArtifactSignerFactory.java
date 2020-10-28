@@ -91,7 +91,6 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
   @Override
   public ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
     try (TimingContext ignored = privateKeyRetrievalTimer.labels("interlock").startTimer()) {
-
       final Bytes32 keyBytes = Bytes32.wrap(extractBytesFromInterlock(interlockSigningMetadata));
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(keyBytes));
       return signerFactory.apply(keyPair);
