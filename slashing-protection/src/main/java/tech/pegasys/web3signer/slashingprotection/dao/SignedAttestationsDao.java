@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection.dao;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
@@ -78,6 +79,15 @@ public class SignedAttestationsDao {
         .bind(2, signedAttestation.getSourceEpoch())
         .bind(3, signedAttestation.getTargetEpoch())
         .execute();
+  }
+
+  public Stream<SignedAttestation> findAllAttestationsSignedBy(
+      final Handle handle, final int validatorId) {
+    return handle
+        .createQuery(
+            "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                + "FROM signed_attestations WHERE validator_id = ?")
+        .bind(0, validatorId).mapToBean(SignedAttestation.class).stream();
   }
 
   public Optional<UInt64> minimumSourceEpoch(final Handle handle, final int validatorId) {

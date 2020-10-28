@@ -10,22 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.slashingprotection;
+package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
+public interface InterchangeManager {
 
-public interface SlashingProtection {
-
-  boolean maySignAttestation(
-      Bytes publicKey, Bytes signingRoot, UInt64 sourceEpoch, UInt64 targetEpoch);
-
-  boolean maySignBlock(Bytes publicKey, Bytes signingRoot, UInt64 blockSlot);
-
-  void registerValidators(List<Bytes> validators);
-
-  void export(OutputStream output);
+  void export(OutputStream out) throws IOException;
 }

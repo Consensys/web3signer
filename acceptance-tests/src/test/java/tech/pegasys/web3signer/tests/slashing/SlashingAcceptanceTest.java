@@ -36,7 +36,7 @@ import org.junit.jupiter.api.io.TempDir;
 public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  private final BLSKeyPair keyPair = BLSKeyPair.random(0);
+  protected final BLSKeyPair keyPair = BLSKeyPair.random(0);
 
   final List<String> attestationSlashingMetrics =
       List.of(

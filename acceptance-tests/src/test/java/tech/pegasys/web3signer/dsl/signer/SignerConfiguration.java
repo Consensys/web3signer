@@ -36,11 +36,12 @@ public class SignerConfiguration {
   private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
   private final String mode;
-  private final String slashingProtectionDbUrl;
+  private final Optional<String> slashingProtectionDbUrl;
   private final String slashingProtectionDbUsername;
   private final String slashingProtectionDbPassword;
   private final Optional<Map<String, String>> web3SignerEnvironment;
   private final boolean enableSlashing;
+  private final Optional<Path> slashingExportPath;
 
   public SignerConfiguration(
       final String hostname,
@@ -53,12 +54,13 @@ public class SignerConfiguration {
       final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
-      final String slashingProtectionDbUrl,
+      final Optional<String> slashingProtectionDbUrl,
       final String slashingProtectionDbUsername,
       final String slashingProtectionDbPassword,
       final String mode,
       final Optional<Map<String, String>> web3SignerEnvironment,
-      final boolean enableSlashing) {
+      final boolean enableSlashing,
+      final Optional<Path> slashingExportPath) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
     this.httpHostAllowList = httpHostAllowList;
@@ -75,6 +77,7 @@ public class SignerConfiguration {
     this.mode = mode;
     this.web3SignerEnvironment = web3SignerEnvironment;
     this.enableSlashing = enableSlashing;
+    this.slashingExportPath = slashingExportPath;
   }
 
   public String hostname() {
@@ -129,7 +132,7 @@ public class SignerConfiguration {
     return mode;
   }
 
-  public String getSlashingProtectionDbUrl() {
+  public Optional<String> getSlashingProtectionDbUrl() {
     return slashingProtectionDbUrl;
   }
 
@@ -147,5 +150,9 @@ public class SignerConfiguration {
 
   public Optional<Map<String, String>> getWeb3SignerEnvironment() {
     return web3SignerEnvironment;
+  }
+
+  public Optional<Path> getSlashingExportPath() {
+    return slashingExportPath;
   }
 }

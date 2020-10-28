@@ -42,6 +42,7 @@ public class SignerConfigurationBuilder {
   private Map<String, String> web3SignerEnvironment;
   private boolean enableSlashing = false;
   private String slashingProtectionDbUrl;
+  private Path slashingExportPath;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -117,6 +118,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withSlashingExportPath(final Path slashingExportPath) {
+    this.slashingExportPath = slashingExportPath;
+    return this;
+  }
+
   public SignerConfigurationBuilder withEnvironment(final Map<String, String> environment) {
     this.web3SignerEnvironment = environment;
     return this;
@@ -137,11 +143,12 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(azureKeyVaultParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),
-        slashingProtectionDbUrl,
+        Optional.ofNullable(slashingProtectionDbUrl),
         slashingProtectionDbUsername,
         slashingProtectionDbPassword,
         mode,
         Optional.ofNullable(web3SignerEnvironment),
-        enableSlashing);
+        enableSlashing,
+        Optional.ofNullable(slashingExportPath));
   }
 }

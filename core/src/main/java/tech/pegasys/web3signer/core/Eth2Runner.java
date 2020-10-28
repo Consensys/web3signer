@@ -38,7 +38,6 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.slashingprotection.DbConnection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
@@ -60,7 +59,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.jdbi.v3.core.Jdbi;
 
 public class Eth2Runner extends Runner {
 
@@ -92,10 +90,9 @@ public class Eth2Runner extends Runner {
       final String slashingProtectionDbUser,
       final String slashingProtectionDbPassword) {
     if (slashingProtectionEnabled) {
-      final Jdbi jdbi =
-          DbConnection.createConnection(
-              slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
-      return Optional.of(SlashingProtectionFactory.createSlashingProtection(jdbi));
+      return Optional.of(
+          SlashingProtectionFactory.createSlashingProtection(
+              slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword));
     } else {
       return Optional.empty();
     }

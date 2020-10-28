@@ -183,19 +183,24 @@ public abstract class Web3SignerRunner {
     params.add(Boolean.toString(signerConfig.isSlashingProtectionEnabled()));
 
     if (signerConfig.isSlashingProtectionEnabled()) {
-      if (signerConfig.getSlashingProtectionDbUrl() == null) {
+      if (signerConfig.getSlashingProtectionDbUrl().isEmpty()) {
         slashingProtectionDbUrl = createEmbeddedDatabase();
       } else {
-        slashingProtectionDbUrl = signerConfig.getSlashingProtectionDbUrl();
+        slashingProtectionDbUrl = signerConfig.getSlashingProtectionDbUrl().get();
       }
 
-      // Default embeddedPostgres uses a database, username and password of "postgres"
       params.add("--slashing-protection-db-url");
-      params.add(getSlashingDbUrl());
+      params.add(slashingProtectionDbUrl);
       params.add("--slashing-protection-db-username");
       params.add(signerConfig.getSlashingProtectionDbUsername());
       params.add("--slashing-protection-db-password");
       params.add(signerConfig.getSlashingProtectionDbPassword());
+    }
+
+    if (signerConfig.getSlashingExportPath().isPresent()) {
+      params.add("export");
+      params.add("--to");
+      params.add(signerConfig.getSlashingExportPath().get().toAbsolutePath().toString());
     }
 
     return params;

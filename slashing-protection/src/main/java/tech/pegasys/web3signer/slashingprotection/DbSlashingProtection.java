@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
@@ -21,7 +22,12 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Streams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,6 +52,7 @@ public class DbSlashingProtection implements SlashingProtection {
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
   private final Map<Bytes, Integer> registeredValidators;
+  private final InterchangeManager interchangeManager;
 
   private enum LockType {
     BLOCK,
@@ -70,6 +78,26 @@ public class DbSlashingProtection implements SlashingProtection {
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
     this.registeredValidators = registeredValidators;
+    this.interchangeManager =
+        new InterchangeV5Manager(
+            jdbi,
+            validatorsDao,
+            signedBlocksDao,
+            signedAttestationsDao,
+            new ObjectMapper()
+                .registerModule(new InterchangeModule())
+                .configure(FLUSH_AFTER_WRITE_VALUE, true));
+  }
+
+  @Override
+  public void export(final OutputStream output) {
+    try {
+      LOG.info("Exporting slashing protection database");
+      interchangeManager.export(output);
+      LOG.info("Export complete");
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to export database content", e);
+    }
   }
 
   @Override

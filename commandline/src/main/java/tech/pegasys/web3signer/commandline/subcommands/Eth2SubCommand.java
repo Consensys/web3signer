@@ -12,9 +12,15 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory.createSlashingProtection;
+
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -34,6 +40,18 @@ public class Eth2SubCommand extends ModeSubCommand {
   public static final String COMMAND_NAME = "eth2";
 
   @Spec CommandSpec spec;
+
+  @Command(name = "export", description = "Export slashing protection db to json file")
+  public void exportSlashingDb(@Option(names = "--to") File output) {
+    final SlashingProtection slashingProtection =
+        createSlashingProtection(
+            slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
+    try {
+      slashingProtection.export(new FileOutputStream(output));
+    } catch (final FileNotFoundException e) {
+      throw new RuntimeException("Unable to find output target file", e);
+    }
+  }
 
   @Option(
       names = {"--slashing-protection-enabled"},
