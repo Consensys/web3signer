@@ -16,8 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.OBJECT_MAPPER;
 
-import com.google.common.io.Resources;
-import org.jetbrains.annotations.NotNull;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.IOException;
@@ -26,6 +24,7 @@ import java.net.URL;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 
 class InterlockSigningMetadataFileParsingTest {
@@ -41,8 +40,7 @@ class InterlockSigningMetadataFileParsingTest {
 
     final InterlockSigningMetadata metadata = (InterlockSigningMetadata) signingMetadata;
     assertThat(metadata.getInterlockUrl()).isEqualTo(URI.create("https://testhost"));
-    assertThat(metadata.getKnownServersFile())
-        .isEqualTo(Path.of("./testFile.txt"));
+    assertThat(metadata.getKnownServersFile()).isEqualTo(Path.of("./testFile.txt"));
     assertThat(metadata.getVolume()).isEqualTo("test");
     assertThat(metadata.getPassword()).isEqualTo("test");
     assertThat(metadata.getKeyPath()).isEqualTo("/test.txt");

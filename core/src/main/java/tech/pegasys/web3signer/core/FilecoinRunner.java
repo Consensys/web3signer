@@ -12,13 +12,10 @@
  */
 package tech.pegasys.web3signer.core;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
-import io.vertx.core.Vertx;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
-import io.vertx.ext.web.handler.BodyHandler;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
+import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
+
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
@@ -41,9 +38,13 @@ import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 import java.util.Collection;
 import java.util.List;
 
-import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
-import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
+import io.vertx.ext.web.handler.BodyHandler;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
 

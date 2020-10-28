@@ -27,7 +27,6 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;

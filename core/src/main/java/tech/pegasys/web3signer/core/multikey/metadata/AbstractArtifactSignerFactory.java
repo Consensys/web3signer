@@ -12,8 +12,9 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
-import com.google.common.io.Files;
-import org.apache.tuweni.bytes.Bytes;
+import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnection;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -29,8 +30,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import com.google.common.io.Files;
+import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
 

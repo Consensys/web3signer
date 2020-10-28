@@ -17,7 +17,6 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
-import jnr.ffi.annotations.In;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;

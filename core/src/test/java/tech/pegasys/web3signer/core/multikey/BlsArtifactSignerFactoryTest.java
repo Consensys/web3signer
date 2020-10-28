@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.core.multikey;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.in;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
 import tech.pegasys.signers.bls.keystore.KeyStore;

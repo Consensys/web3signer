@@ -38,7 +38,7 @@ public class InterlockKeyProvider {
     final InterlockSession interlockSession =
         sessionMap.computeIfAbsent(
             InterlockIdentifier.fromMetadata(metadata), identifier -> newSession(metadata, vertx));
-    return interlockSession.fetchKey(Path.of(metadata.getKeyPath())); //TODO: Remove Path.of
+    return interlockSession.fetchKey(Path.of(metadata.getKeyPath())); // TODO: Remove Path.of
   }
 
   private InterlockSession newSession(final InterlockSigningMetadata metadata, final Vertx vertx) {
