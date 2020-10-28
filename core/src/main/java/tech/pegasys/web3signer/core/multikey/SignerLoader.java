@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.multikey;
 
 import static java.util.Collections.emptySet;
 
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 
@@ -54,6 +55,8 @@ public class SignerLoader {
           .collect(Collectors.toSet());
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
+    } finally {
+      InterlockKeyProvider.INSTANCE.closeAllSessions();
     }
     return emptySet();
   }

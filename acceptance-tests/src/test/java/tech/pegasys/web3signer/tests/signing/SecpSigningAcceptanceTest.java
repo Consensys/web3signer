@@ -133,7 +133,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @Test
   @Disabled("Requires access to Interlock on Armory II")
   public void secpSingingUsingInterlock() {
-    final Path configFile = testDirectory.resolve("interlock_2.yaml");
+    final Path configFile = testDirectory.resolve("interlock_secp.yaml");
     final Path knownServersFile = testDirectory.resolve("interlockKnownServer.txt");
 
     metadataFileHelpers.createInterlockYamlFileAt(

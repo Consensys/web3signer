@@ -22,9 +22,7 @@ import tech.pegasys.signers.hashicorp.TrustStoreType;
 import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
-import tech.pegasys.signers.interlock.InterlockSession;
-import tech.pegasys.signers.interlock.InterlockSessionFactoryProvider;
-import tech.pegasys.signers.interlock.vertx.InterlockSessionFactoryImpl;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.FileNotFoundException;
@@ -90,12 +88,8 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   }
 
   protected Bytes extractBytesFromInterlock(final InterlockSigningMetadata metadata) {
-    final InterlockSessionFactoryImpl interlockSessionFactory =
-        InterlockSessionFactoryProvider.newInstance(vertx, metadata.getKnownServersFile());
-    try (final InterlockSession session =
-        interlockSessionFactory.newSession(
-            metadata.getInterlockUrl(), metadata.getVolume(), metadata.getPassword())) {
-      return session.fetchKey(metadata.getKeyPath());
+    try {
+      return InterlockKeyProvider.INSTANCE.fetchKey(vertx, metadata);
     } catch (final RuntimeException e) {
       throw new SigningMetadataException(
           "Failed to fetch secret from Interlock: " + e.getMessage(), e);

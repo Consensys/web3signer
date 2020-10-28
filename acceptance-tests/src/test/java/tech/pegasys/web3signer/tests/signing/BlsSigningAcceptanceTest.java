@@ -36,7 +36,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -116,18 +115,6 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createAzureYamlFileAt(
         keyConfigFile, clientId, clientSecret, tenantId, keyVaultName, secretName);
-
-    signAndVerifySignature(ArtifactType.BLOCK);
-  }
-
-  @Test
-  @Disabled("Requires access to Interlock on Armory II")
-  public void blsSingingUsingInterlock() throws JsonProcessingException {
-    final Path configFile = testDirectory.resolve("interlock_1.yaml");
-    final Path knownServersFile = testDirectory.resolve("interlockKnownServer.txt");
-
-    metadataFileHelpers.createInterlockYamlFileAt(
-        configFile, knownServersFile, Path.of("/bls/key1.txt"), KeyType.BLS);
 
     signAndVerifySignature(ArtifactType.BLOCK);
   }
