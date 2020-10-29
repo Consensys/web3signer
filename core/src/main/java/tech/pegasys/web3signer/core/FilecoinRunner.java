@@ -103,34 +103,31 @@ public class FilecoinRunner extends Runner {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
-    final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
 
-    final AbstractArtifactSignerFactory blsArtifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            interlockKeyProvider,
-            keyPair -> new FcBlsArtifactSigner(keyPair, network));
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx)) {
+      final AbstractArtifactSignerFactory blsArtifactSignerFactory =
+          new BlsArtifactSignerFactory(
+              config.getKeyConfigPath(),
+              metricsSystem,
+              hashicorpConnectionFactory,
+              interlockKeyProvider,
+              keyPair -> new FcBlsArtifactSigner(keyPair, network));
 
-    final AbstractArtifactSignerFactory secpArtifactSignerFactory =
-        new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            config.getKeyConfigPath(),
-            azureFactory,
-            interlockKeyProvider,
-            signer -> new FcSecpArtifactSigner(signer, network),
-            false);
+      final AbstractArtifactSignerFactory secpArtifactSignerFactory =
+          new Secp256k1ArtifactSignerFactory(
+              hashicorpConnectionFactory,
+              config.getKeyConfigPath(),
+              azureFactory,
+              interlockKeyProvider,
+              signer -> new FcSecpArtifactSigner(signer, network),
+              false);
 
-    final Collection<ArtifactSigner> signers =
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
-
-    // required as we are manually maintaining them in cache
-    interlockKeyProvider.closeAllSessions();
-
-    return DefaultArtifactSignerProvider.create(signers);
+      final Collection<ArtifactSigner> signers =
+          SignerLoader.load(
+              config.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+      return DefaultArtifactSignerProvider.create(signers);
+    }
   }
 }

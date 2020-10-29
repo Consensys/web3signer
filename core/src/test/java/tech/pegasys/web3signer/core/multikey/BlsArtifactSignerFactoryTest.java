@@ -95,7 +95,7 @@ class BlsArtifactSignerFactoryTest {
 
   @AfterEach
   void cleanup() {
-    interlockKeyProvider.closeAllSessions();
+    interlockKeyProvider.close();
     vertx.close();
   }
 

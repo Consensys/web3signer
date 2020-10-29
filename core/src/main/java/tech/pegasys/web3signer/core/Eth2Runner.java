@@ -159,24 +159,22 @@ public class Eth2Runner extends Runner {
     final List<ArtifactSigner> signers = Lists.newArrayList();
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
-    final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
 
-    final AbstractArtifactSignerFactory artifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            interlockKeyProvider,
-            BlsArtifactSigner::new);
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx)) {
+      final AbstractArtifactSignerFactory artifactSignerFactory =
+          new BlsArtifactSignerFactory(
+              config.getKeyConfigPath(),
+              metricsSystem,
+              hashicorpConnectionFactory,
+              interlockKeyProvider,
+              BlsArtifactSigner::new);
 
-    signers.addAll(
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(artifactSignerFactory))));
-
-    // required as we are manually maintaining them in cache
-    interlockKeyProvider.closeAllSessions();
+      signers.addAll(
+          SignerLoader.load(
+              config.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(List.of(artifactSignerFactory))));
+    }
 
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
       signers.addAll(loadAzureSigners());

@@ -84,27 +84,23 @@ public class Eth1Runner extends Runner {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
-    final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx)) {
+      final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
+          new Secp256k1ArtifactSignerFactory(
+              hashicorpConnectionFactory,
+              config.getKeyConfigPath(),
+              azureFactory,
+              interlockKeyProvider,
+              EthSecpArtifactSigner::new,
+              true);
 
-    final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
-        new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            config.getKeyConfigPath(),
-            azureFactory,
-            interlockKeyProvider,
-            EthSecpArtifactSigner::new,
-            true);
-
-    final Collection<ArtifactSigner> signers =
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
-
-    // required as we are manually maintaining them in cache
-    interlockKeyProvider.closeAllSessions();
-
-    return DefaultArtifactSignerProvider.create(signers);
+      final Collection<ArtifactSigner> signers =
+          SignerLoader.load(
+              config.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
+      return DefaultArtifactSignerProvider.create(signers);
+    }
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {

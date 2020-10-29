@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 
-public class InterlockKeyProvider {
+public class InterlockKeyProvider implements AutoCloseable {
   // maintains a cache of interlock sessions as they don't allow multiple sessions to be open
   // simultaneously
   private final Map<InterlockIdentifier, InterlockSession> sessionMap = new ConcurrentHashMap<>();
@@ -48,8 +48,8 @@ public class InterlockKeyProvider {
         metadata.getInterlockUrl(), metadata.getVolume(), metadata.getPassword());
   }
 
-  // must be called after all signers are loaded
-  public void closeAllSessions() {
+  @Override
+  public void close() {
     if (!sessionMap.isEmpty()) {
       sessionMap.forEach((identifier, interlockSession) -> interlockSession.close());
       sessionMap.clear();
