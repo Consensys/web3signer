@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.List;
@@ -53,6 +54,19 @@ public class Eth2SubCommand extends ModeSubCommand {
     }
   }
 
+  @Command(name = "import", description = "Import json file to the slashing db")
+  public void importSlashingDb(@Option(names = "--from") File input) {
+    final SlashingProtection slashingProtection =
+        createSlashingProtection(
+            slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
+
+    try {
+      slashingProtection.importData(new FileInputStream(input));
+    } catch (final FileNotFoundException e) {
+      throw new RuntimeException("Unable to find output target file", e);
+    }
+  }
+
   @Option(
       names = {"--slashing-protection-enabled"},
       hidden = true,
@@ -62,10 +76,11 @@ public class Eth2SubCommand extends ModeSubCommand {
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  private boolean slashingProtectionEnabled = true;
+  private boolean slashingProtectionEnabled = false;
 
   @Option(
       names = {"--slashing-protection-db-url"},
+      hidden = true,
       description = "The jdbc url to use to connect to the slashing protection database",
       paramLabel = "<jdbc url>",
       arity = "1")
@@ -73,12 +88,14 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Option(
       names = {"--slashing-protection-db-username"},
+      hidden = true,
       description = "The username to use when connecting to the slashing protection database",
       paramLabel = "<jdbc user>")
   private String slashingProtectionDbUsername;
 
   @Option(
       names = {"--slashing-protection-db-password"},
+      hidden = true,
       description = "The password to use when connecting to the slashing protection database",
       paramLabel = "<jdbc password>")
   private String slashingProtectionDbPassword;

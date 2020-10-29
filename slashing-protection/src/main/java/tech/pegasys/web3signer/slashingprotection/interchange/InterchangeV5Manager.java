@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -35,6 +36,8 @@ public class InterchangeV5Manager implements InterchangeManager {
 
   private static final int FORMAT_VERSION = 5;
 
+  private final InterchangeV5Importer importer;
+
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
@@ -47,11 +50,19 @@ public class InterchangeV5Manager implements InterchangeManager {
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
       final ObjectMapper mapper) {
+    importer =
+        new InterchangeV5Importer(
+            jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, mapper);
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
     this.mapper = mapper;
+  }
+
+  @Override
+  public void importData(final InputStream in) throws IOException {
+    importer.importData(in);
   }
 
   @Override

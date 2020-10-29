@@ -27,6 +27,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -87,6 +88,15 @@ public class DbSlashingProtection implements SlashingProtection {
             new ObjectMapper()
                 .registerModule(new InterchangeModule())
                 .configure(FLUSH_AFTER_WRITE_VALUE, true));
+  }
+
+  @Override
+  public void importData(final InputStream input) {
+    try {
+      interchangeManager.importData(input);
+    } catch (final IOException e) {
+      throw new RuntimeException("Failed to import database content", e);
+    }
   }
 
   @Override
