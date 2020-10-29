@@ -1,5 +1,11 @@
 # Changelog
 
+## Next Release
+
+### Features Added
+
+- Interlock/Armory II HSM keystore support
+
 ## 0.2.0
 
 ### Features Added
