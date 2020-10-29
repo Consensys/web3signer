@@ -16,16 +16,20 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.MapperFeature;
+import dsl.SignedArtifacts;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
+import java.util.stream.Collectors;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.model.TestFileModel;
 
 import java.io.IOException;
@@ -47,7 +51,9 @@ import org.junit.jupiter.api.Test;
 
 public class ReferenceTesetRunner {
 
-  final ObjectMapper objectMapper = new ObjectMapper().enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+  final ObjectMapper objectMapper =
+      new ObjectMapper().registerModule(new InterchangeModule())
+          .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
   private final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
   private final SignedAttestationsDao signedAttestationsDao = new SignedAttestationsDao();
   private final ValidatorsDao validators = new ValidatorsDao();
@@ -93,50 +99,71 @@ public class ReferenceTesetRunner {
               final String databaseUrl =
                   String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
 
-              final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
-              DbConnection.configureJdbi(jdbi);
-              model
-                  .getBlocks()
-                  .forEach(
-                      block -> {
-                        jdbi.useTransaction(
-                            h -> {
-                              final Validator v =
-                                  validators.insertIfNotExist(
-                                      h, Bytes.fromHexString(block.getPublickKey()));
-                              signedBlocksDao.insertBlockProposal(
-                                  h,
-                                  new SignedBlock(
-                                      v.getId(), UInt64.valueOf(block.getSlot()), null));
-                            });
-                      });
-              model.getAttestations().forEach(
-                  attestation -> {
-                    jdbi.useTransaction(
-                        h -> {
-                          final Validator v =
-                              validators.insertIfNotExist(
-                                  h, Bytes.fromHexString(attestation.getPublickKey()));
-                          signedAttestationsDao.insertAttestation(
-                              h,
-                              new SignedAttestation(
-                                  v.getId(), UInt64.valueOf(attestation.getSourceEpoch()),
-                                  UInt64.valueOf(attestation.getTargetEpoch()), null));
-                        });
-                  });
-
               final SlashingProtection slashingProtection =
                   SlashingProtectionFactory.createSlashingProtection(
                       databaseUrl, "postgres", "postgres");
 
-              final OutputStream output = new ByteArrayOutputStream();
-              slashingProtection.exportTo(output);
-              assertThat(output.toString()).isEqualTo(interchangeContent);
-            } catch (IOException | URISyntaxException e) {
-              e.printStackTrace();
-              throw new RuntimeException("setup failed for test");
-            }
-          });
-    }
+              slashingProtection
+                  .importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+
+              final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
+
+              final List<String>
+                  validatorsInImport =
+                  model.getInterchangeContent().getSignedArtifacts().stream().map(
+                      SignedArtifacts::getPublicKey).collect(Collectors.toList());
+
+              final List<String> publicKeysInDb = jdbi.inTransaction(
+                  h -> validators.findAllValidators(h).map(v -> v.getPublicKey().toHexString())
+                      .collect(Collectors.toList()));
+
+            assertThat(validatorsInImport).containsExactlyInAnyOrderElementsOf(publicKeysInDb);
+
+
+
+//              DbConnection.configureJdbi(jdbi);
+//              model
+//                  .getBlocks()
+//                  .forEach(
+//                      block -> {
+//                        jdbi.useTransaction(
+//                            h -> {
+//                              final Validator v =
+//                                  validators.insertIfNotExist(
+//                                      h, Bytes.fromHexString(block.getPublickKey()));
+//                              signedBlocksDao.insertBlockProposal(
+//                                  h,
+//                                  new SignedBlock(
+//                                      v.getId(), UInt64.valueOf(block.getSlot()), null));
+//                            });
+//                      });
+//              model.getAttestations().forEach(
+//                  attestation -> {
+//                    jdbi.useTransaction(
+//                        h -> {
+//                          final Validator v =
+//                              validators.insertIfNotExist(
+//                                  h, Bytes.fromHexString(attestation.getPublickKey()));
+//                          signedAttestationsDao.insertAttestation(
+//                              h,
+//                              new SignedAttestation(
+//                                  v.getId(), UInt64.valueOf(attestation.getSourceEpoch()),
+//                                  UInt64.valueOf(attestation.getTargetEpoch()), null));
+//                        });
+//                  });
+//
+//              final SlashingProtection slashingProtection =
+//                  SlashingProtectionFactory.createSlashingProtection(
+//                      databaseUrl, "postgres", "postgres");
+//
+//              final OutputStream output = new ByteArrayOutputStream();
+//              slashingProtection.export(output);
+//              assertThat(output.toString()).isEqualTo(interchangeContent);
+          } catch(IOException | URISyntaxException e){
+        e.printStackTrace();
+        throw new RuntimeException("setup failed for test");
+      }
+    });
   }
+}
 }
