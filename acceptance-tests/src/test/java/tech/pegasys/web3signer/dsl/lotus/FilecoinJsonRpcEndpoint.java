@@ -96,7 +96,7 @@ public abstract class FilecoinJsonRpcEndpoint {
         .createRequest()
         .method("Filecoin.WalletSign")
         .id(101)
-        .params(address, data) // metaData is not support on FC local wallet signing API impl
+        .params(address, data) // metaData is not supported on FC local wallet signing API impl
         .returnAs(FilecoinSignature.class)
         .execute();
   }
