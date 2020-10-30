@@ -45,7 +45,7 @@ public class FcJsonRpc {
 
   private final ArtifactSignerProvider fcSigners;
   private final FcJsonRpcMetrics metrics;
-  private final FcMessageEncoder fcMessageEncoder = new FcMessageEncoder();
+  private final FcCidEncoder fcCidEncoder = new FcCidEncoder();
 
   public FcJsonRpc(final ArtifactSignerProvider fcSigners, final FcJsonRpcMetrics metrics) {
     this.fcSigners = fcSigners;
@@ -65,9 +65,11 @@ public class FcJsonRpc {
       @JsonRpcParam("meta") final FilecoinMessageMsgMeta meta) {
     LOG.debug("Received FC sign request id = {}; data = {}", filecoinAddress, dataToSign);
 
-    if (meta.getExtra() != null) {
-      final Bytes cidBytes = fcMessageEncoder.createFilecoinRawCid(meta.getExtra());
-      checkArgument(dataToSign.equals(cidBytes), "Message not valid");
+    if (meta != null && meta.getExtra() != null) {
+      final Bytes cidBytes = fcCidEncoder.createCid(meta.getExtra());
+      checkArgument(
+          dataToSign.equals(cidBytes),
+          "Message invalid the data to sign doesn't match the CID of MsgMeta.extra");
     }
 
     final Optional<ArtifactSigner> signer = fcSigners.getSigner(filecoinAddress);
@@ -102,20 +104,6 @@ public class FcJsonRpc {
   public boolean filecoinWalletHas(@JsonRpcParam("address") final String address) {
     metrics.incWalletHasRequestCounter();
     return fcSigners.availableIdentifiers().contains(address);
-  }
-
-  @JsonRpcMethod("Filecoin.WalletSignMessage")
-  public FilecoinSignedMessage filecoinSignMessage(
-      @JsonRpcParam("identifier") final String identifier,
-      @JsonRpcParam("message") final FilecoinMessage message) {
-    metrics.incWalletSignMessageRequestCounter();
-    final FcMessageEncoder encoder = new FcMessageEncoder();
-    final Bytes fcCid = encoder.createFilecoinCid(message);
-
-    final FilecoinSignature signature =
-        filecoinWalletSign(identifier, fcCid, new FilecoinMessageMsgMeta(null, null));
-
-    return new FilecoinSignedMessage(message, signature);
   }
 
   @JsonRpcMethod("Filecoin.WalletVerify")

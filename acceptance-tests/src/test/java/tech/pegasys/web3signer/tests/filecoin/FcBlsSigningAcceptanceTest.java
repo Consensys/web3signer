@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.equalTo;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.core.service.jsonrpc.FcCidEncoder;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.FcBlsArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -29,7 +30,6 @@ import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.signing.SigningAcceptanceTestBase;
 
 import java.nio.file.Path;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -47,8 +47,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
-  private static final String dataString =
-      Base64.getEncoder().encodeToString("Hello World".getBytes(UTF_8));
+  private static final Bytes DATA = Bytes.wrap("Hello World".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
@@ -60,8 +59,6 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final FilecoinNetwork network = FilecoinNetwork.MAINNET;
   private static final FcBlsArtifactSigner signatureGenerator =
       new FcBlsArtifactSigner(keyPair, network);
-  private static final BlsArtifactSignature expectedSignature =
-      signatureGenerator.sign(Bytes.fromBase64String(dataString));
 
   final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
 
@@ -77,10 +74,12 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final ObjectMapper mapper = new ObjectMapper();
-    final Map<String, String> metaData = Map.of("type", "unknown");
+    final Bytes dataToSign = new FcCidEncoder().createCid(DATA);
+    final Map<String, String> metaData = Map.of("type", "message", "extra", DATA.toBase64String());
     final JsonNode params =
         mapper.convertValue(
-            List.of(identifier.encode(FilecoinNetwork.MAINNET), dataString, metaData),
+            List.of(
+                identifier.encode(FilecoinNetwork.MAINNET), dataToSign.toBase64String(), metaData),
             JsonNode.class);
 
     final Request request = new Request("2.0", "Filecoin.WalletSign", params, id);
@@ -92,6 +91,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("jsonrpc", equalTo("2.0"), "id", equalTo(id.asInt()));
 
+    final BlsArtifactSignature expectedSignature = signatureGenerator.sign(dataToSign);
     final Map<String, Object> result = response.body().jsonPath().get("result");
     assertThat(result.get("Type")).isEqualTo(2);
     assertThat(result.get("Data"))
