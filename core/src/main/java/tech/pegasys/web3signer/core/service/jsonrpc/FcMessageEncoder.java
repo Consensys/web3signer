@@ -43,6 +43,12 @@ public class FcMessageEncoder {
     return createFilecoinCid(encodedHashAndCode);
   }
 
+  public Bytes createFilecoinRawCid(final Bytes cborEncodedBytes) {
+    final Bytes messageHash = Blake2b.sum256(cborEncodedBytes);
+    final Bytes encodedHashAndCode = encodeHashWithCode(messageHash);
+    return createFilecoinCid(encodedHashAndCode);
+  }
+
   private Bytes cborEncode(final FilecoinMessage message) {
 
     final CBORFactory cborFactory = new CBORFactory();

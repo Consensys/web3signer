@@ -45,6 +45,7 @@ public class FcJsonRpc {
 
   private final ArtifactSignerProvider fcSigners;
   private final FcJsonRpcMetrics metrics;
+  private final FcMessageEncoder fcMessageEncoder = new FcMessageEncoder();
 
   public FcJsonRpc(final ArtifactSignerProvider fcSigners, final FcJsonRpcMetrics metrics) {
     this.fcSigners = fcSigners;
@@ -60,8 +61,14 @@ public class FcJsonRpc {
   @JsonRpcMethod("Filecoin.WalletSign")
   public FilecoinSignature filecoinWalletSign(
       @JsonRpcParam("identifier") final String filecoinAddress,
-      @JsonRpcParam("data") final Bytes dataToSign) {
+      @JsonRpcParam("data") final Bytes dataToSign,
+      @JsonRpcParam("meta") final FilecoinMessageMsgMeta meta) {
     LOG.debug("Received FC sign request id = {}; data = {}", filecoinAddress, dataToSign);
+
+    if (meta.getExtra() != null) {
+      final Bytes cidBytes = fcMessageEncoder.createFilecoinRawCid(meta.getExtra());
+      checkArgument(dataToSign.equals(cidBytes), "Message not valid");
+    }
 
     final Optional<ArtifactSigner> signer = fcSigners.getSigner(filecoinAddress);
 
@@ -105,7 +112,8 @@ public class FcJsonRpc {
     final FcMessageEncoder encoder = new FcMessageEncoder();
     final Bytes fcCid = encoder.createFilecoinCid(message);
 
-    final FilecoinSignature signature = filecoinWalletSign(identifier, fcCid);
+    final FilecoinSignature signature =
+        filecoinWalletSign(identifier, fcCid, new FilecoinMessageMsgMeta(null, null));
 
     return new FilecoinSignedMessage(message, signature);
   }

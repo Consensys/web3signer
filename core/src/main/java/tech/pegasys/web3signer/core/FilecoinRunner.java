@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
@@ -37,6 +38,8 @@ import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 import java.util.Collection;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import io.vertx.core.Vertx;
@@ -47,7 +50,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
 
-  private static final String FC_JSON_RPC_PATH = JSON_RPC_PATH + "/filecoin";
+  private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
 
   public FilecoinRunner(final Config config, final FilecoinNetwork network) {
@@ -79,7 +82,12 @@ public class FilecoinRunner extends Runner {
 
     final FcJsonRpcMetrics fcJsonRpcMetrics = new FcJsonRpcMetrics(metricsSystem);
     final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, fcJsonRpcMetrics);
-    final ObjectMapper mapper = new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
+    final ObjectMapper mapper =
+        new ObjectMapper()
+            .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+            .enable(ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .registerModule(new FilecoinJsonRpcModule());
     final JsonRpcServer jsonRpcServer = JsonRpcServer.withMapper(mapper);
 
     router

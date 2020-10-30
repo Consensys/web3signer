@@ -91,8 +91,7 @@ public class FcSignMessageAcceptanceTest extends SigningAcceptanceTestBase {
             "Filecoin.WalletSignMessage",
             mapper.convertValue(paramList, JsonNode.class),
             id);
-    final Response response =
-        given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH + "/filecoin");
+    final Response response = given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);
 
     response
         .then()

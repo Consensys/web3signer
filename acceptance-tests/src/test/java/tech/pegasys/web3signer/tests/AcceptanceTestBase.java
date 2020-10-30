@@ -23,7 +23,7 @@ import org.junit.jupiter.api.AfterEach;
 public class AcceptanceTestBase {
 
   protected Signer signer;
-  public static final String JSON_RPC_PATH = "/rpc/v1";
+  public static final String JSON_RPC_PATH = "/rpc/v0";
 
   protected void startSigner(final SignerConfiguration config) {
     signer = new Signer(config, null);
