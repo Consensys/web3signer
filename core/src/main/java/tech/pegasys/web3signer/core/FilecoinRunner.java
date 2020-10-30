@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
@@ -111,27 +112,30 @@ public class FilecoinRunner extends Runner {
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
 
-    final AbstractArtifactSignerFactory blsArtifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            keyPair -> new FcBlsArtifactSigner(keyPair, network));
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx)) {
+      final AbstractArtifactSignerFactory blsArtifactSignerFactory =
+          new BlsArtifactSignerFactory(
+              config.getKeyConfigPath(),
+              metricsSystem,
+              hashicorpConnectionFactory,
+              interlockKeyProvider,
+              keyPair -> new FcBlsArtifactSigner(keyPair, network));
 
-    final AbstractArtifactSignerFactory secpArtifactSignerFactory =
-        new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            config.getKeyConfigPath(),
-            azureFactory,
-            signer -> new FcSecpArtifactSigner(signer, network),
-            false);
+      final AbstractArtifactSignerFactory secpArtifactSignerFactory =
+          new Secp256k1ArtifactSignerFactory(
+              hashicorpConnectionFactory,
+              config.getKeyConfigPath(),
+              azureFactory,
+              interlockKeyProvider,
+              signer -> new FcSecpArtifactSigner(signer, network),
+              false);
 
-    final Collection<ArtifactSigner> signers =
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
-
-    return DefaultArtifactSignerProvider.create(signers);
+      final Collection<ArtifactSigner> signers =
+          SignerLoader.load(
+              config.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+      return DefaultArtifactSignerProvider.create(signers);
+    }
   }
 }

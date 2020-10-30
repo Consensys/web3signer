@@ -22,6 +22,7 @@ import tech.pegasys.signers.hashicorp.TrustStoreType;
 import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.FileNotFoundException;
@@ -34,13 +35,17 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
 
-  final HashicorpConnectionFactory connectionFactory;
+  final HashicorpConnectionFactory hashicorpConnectionFactory;
   final Path configsDirectory;
+  private final InterlockKeyProvider interlockKeyProvider;
 
   protected AbstractArtifactSignerFactory(
-      final HashicorpConnectionFactory connectionFactory, final Path configsDirectory) {
-    this.connectionFactory = connectionFactory;
+      final HashicorpConnectionFactory hashicorpConnectionFactory,
+      final Path configsDirectory,
+      final InterlockKeyProvider interlockKeyProvider) {
+    this.hashicorpConnectionFactory = hashicorpConnectionFactory;
     this.configsDirectory = configsDirectory;
+    this.interlockKeyProvider = interlockKeyProvider;
   }
 
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
@@ -65,7 +70,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
 
     try {
       final HashicorpConnection connection =
-          connectionFactory.create(
+          hashicorpConnectionFactory.create(
               new ConnectionParameters(
                   metadata.getServerHost(),
                   Optional.ofNullable(metadata.getServerPort()),
@@ -81,6 +86,15 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
       return Bytes.fromHexString(secret);
     } catch (final Exception e) {
       throw new SigningMetadataException("Failed to fetch secret from hashicorp vault", e);
+    }
+  }
+
+  protected Bytes extractBytesFromInterlock(final InterlockSigningMetadata metadata) {
+    try {
+      return interlockKeyProvider.fetchKey(metadata);
+    } catch (final RuntimeException e) {
+      throw new SigningMetadataException(
+          "Failed to fetch secret from Interlock: " + e.getMessage(), e);
     }
   }
 

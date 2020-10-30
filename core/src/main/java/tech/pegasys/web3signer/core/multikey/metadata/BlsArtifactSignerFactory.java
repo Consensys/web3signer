@@ -20,6 +20,7 @@ import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -42,8 +43,9 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final Path configsDirectory,
       final MetricsSystem metricsSystem,
       final HashicorpConnectionFactory connectionFactory,
+      final InterlockKeyProvider interlockKeyProvider,
       final Function<BLSKeyPair, ArtifactSigner> signerFactory) {
-    super(connectionFactory, configsDirectory);
+    super(connectionFactory, configsDirectory, interlockKeyProvider);
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
             Web3SignerMetricCategory.SIGNING,
@@ -84,6 +86,15 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final Bytes privateKeyBytes = extractBytesFromVault(azureSecretSigningMetadata);
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
+      return signerFactory.apply(keyPair);
+    }
+  }
+
+  @Override
+  public ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
+    try (TimingContext ignored = privateKeyRetrievalTimer.labels("interlock").startTimer()) {
+      final Bytes32 keyBytes = Bytes32.wrap(extractBytesFromInterlock(interlockSigningMetadata));
+      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(keyBytes));
       return signerFactory.apply(keyPair);
     }
   }

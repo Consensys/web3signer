@@ -17,6 +17,7 @@ import tech.pegasys.signers.secp256k1.api.Signer;
 import tech.pegasys.signers.secp256k1.azure.AzureConfig;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.signers.secp256k1.filebased.CredentialSigner;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -38,12 +39,13 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   private final boolean needToHash;
 
   public Secp256k1ArtifactSignerFactory(
-      final HashicorpConnectionFactory connectionFactory,
+      final HashicorpConnectionFactory hashicorpConnectionFactory,
       final Path configsDirectory,
       final AzureKeyVaultSignerFactory azureCloudSignerFactory,
+      final InterlockKeyProvider interlockKeyProvider,
       final Function<Signer, ArtifactSigner> signerFactory,
       final boolean needToHash) {
-    super(connectionFactory, configsDirectory);
+    super(hashicorpConnectionFactory, configsDirectory, interlockKeyProvider);
     this.azureCloudSignerFactory = azureCloudSignerFactory;
     this.signerFactory = signerFactory;
     this.needToHash = needToHash;
@@ -96,6 +98,13 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
             azureSigningMetadata.getTenantId());
 
     return signerFactory.apply(azureCloudSignerFactory.createSigner(config));
+  }
+
+  @Override
+  public ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
+    final Credentials credentials =
+        Credentials.create(extractBytesFromInterlock(interlockSigningMetadata).toHexString());
+    return createCredentialSigner(credentials);
   }
 
   private ArtifactSigner createCredentialSigner(final Credentials credentials) {

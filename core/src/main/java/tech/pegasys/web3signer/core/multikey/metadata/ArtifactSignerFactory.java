@@ -40,4 +40,9 @@ public interface ArtifactSignerFactory {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
+
+  default ArtifactSigner create(InterlockSigningMetadata interlockSigningMetadata) {
+    throw new UnsupportedOperationException(
+        "Unable to generate a signer of requested type from supplied metadata");
+  }
 }
