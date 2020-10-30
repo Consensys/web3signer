@@ -31,6 +31,7 @@ import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.HashicorpSigningMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -63,6 +64,7 @@ class BlsArtifactSignerFactoryTest {
   private ArtifactSignerFactory artifactSignerFactory;
 
   private Vertx vertx;
+  private InterlockKeyProvider interlockKeyProvider;
 
   @BeforeAll
   static void setupKeystoreFiles() throws IOException {
@@ -80,17 +82,20 @@ class BlsArtifactSignerFactoryTest {
   @BeforeEach
   void setup() throws IOException {
     vertx = Vertx.vertx();
+    interlockKeyProvider = new InterlockKeyProvider(vertx);
 
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
             configDir,
             new NoOpMetricsSystem(),
             new HashicorpConnectionFactory(vertx),
+            interlockKeyProvider,
             BlsArtifactSigner::new);
   }
 
   @AfterEach
   void cleanup() {
+    interlockKeyProvider.close();
     vertx.close();
   }
 

@@ -69,7 +69,6 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Option(
       names = {"--slashing-protection-enabled"},
-      hidden = true,
       description =
           "Set to true if all Eth2 signing operations should be validated against historic data, "
               + "prior to responding with signatures"

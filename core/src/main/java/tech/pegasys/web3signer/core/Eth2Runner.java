@@ -28,6 +28,7 @@ import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.service.http.SigningJsonModule;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
@@ -156,18 +157,21 @@ public class Eth2Runner extends Runner {
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
 
-    final AbstractArtifactSignerFactory artifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            BlsArtifactSigner::new);
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx)) {
+      final AbstractArtifactSignerFactory artifactSignerFactory =
+          new BlsArtifactSignerFactory(
+              config.getKeyConfigPath(),
+              metricsSystem,
+              hashicorpConnectionFactory,
+              interlockKeyProvider,
+              BlsArtifactSigner::new);
 
-    signers.addAll(
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(artifactSignerFactory))));
+      signers.addAll(
+          SignerLoader.load(
+              config.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(List.of(artifactSignerFactory))));
+    }
 
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
       signers.addAll(loadAzureSigners());

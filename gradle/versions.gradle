@@ -67,8 +67,6 @@ dependencyManagement {
     dependency 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
     dependency 'org.junit.jupiter:junit-jupiter-params:5.6.0'
 
-    dependency 'org.mock-server:mockserver-netty:5.9.0'
-
     dependency 'org.mockito:mockito-core:3.2.4'
     dependency 'org.mockito:mockito-inline:3.2.4'
     dependency 'org.mockito:mockito-junit-jupiter:3.2.4'
@@ -88,10 +86,11 @@ dependencyManagement {
 
     dependency 'tech.pegasys:jblst:0.2.0-RELEASE'
 
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.9') {
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.13') {
       entry 'bls-keystore'
       entry 'keystorage-hashicorp'
       entry 'keystorage-azure'
+      entry 'keystorage-interlock'
       entry 'signing-secp256k1-api'
       entry 'signing-secp256k1-impl'
       entry 'acceptance-tests'
