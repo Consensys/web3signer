@@ -1,5 +1,12 @@
 # Changelog
 
+## Next Release
+
+### Features Added
+
+- Interlock/Armory II HSM keystore support
+- Eth2 slashing protection data able to be imported from json file (Interchange format V5)
+
 ## 0.2.0
 
 ### Features Added
