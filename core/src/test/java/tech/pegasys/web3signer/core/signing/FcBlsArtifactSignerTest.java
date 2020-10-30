@@ -35,7 +35,6 @@ class FcBlsArtifactSignerTest {
     final Bytes fcPrivateKey = Bytes.fromBase64String(FC_BLS_PRIVATE_KEY);
     // Filecoin private keys are serialised in little endian so must convert to big endian
     final Bytes32 privateKey = Bytes32.wrap(fcPrivateKey.reverse());
-    System.out.println("privateKey = " + privateKey);
     final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
     fcBlsArtifactSigner = new FcBlsArtifactSigner(keyPair, FilecoinNetwork.TESTNET);
   }
