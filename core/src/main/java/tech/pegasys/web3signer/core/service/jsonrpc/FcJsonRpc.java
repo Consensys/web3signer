@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
 import org.apache.logging.log4j.LogManager;
@@ -62,7 +63,7 @@ public class FcJsonRpc {
   public FilecoinSignature filecoinWalletSign(
       @JsonRpcParam("identifier") final String filecoinAddress,
       @JsonRpcParam("data") final Bytes dataToSign,
-      @JsonRpcParam("meta") final FilecoinMessageMsgMeta meta) {
+      @JsonRpcOptional @JsonRpcParam("meta") final FilecoinMessageMsgMeta meta) {
     LOG.debug("Received FC sign request id = {}; data = {}", filecoinAddress, dataToSign);
 
     if (meta != null && meta.getExtra() != null) {
