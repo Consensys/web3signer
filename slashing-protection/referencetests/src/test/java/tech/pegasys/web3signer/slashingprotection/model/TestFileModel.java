@@ -12,9 +12,10 @@
  */
 package tech.pegasys.web3signer.slashingprotection.model;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dsl.InterchangeV5Format;
-import java.util.List;
 
 public class TestFileModel {
 
@@ -30,7 +31,8 @@ public class TestFileModel {
   public TestFileModel(
       @JsonProperty(value = "name", required = true) final String name,
       @JsonProperty(value = "should_succeed", required = true) boolean shouldSucceed,
-      @JsonProperty(value = "genesis_validators_root", required = true) String genesis_validators_root,
+      @JsonProperty(value = "genesis_validators_root", required = true)
+          String genesis_validators_root,
       @JsonProperty(value = "interchange", required = true) InterchangeV5Format interchangeContent,
       @JsonProperty(value = "blocks", required = true) List<BlockTestModel> blocks,
       @JsonProperty(value = "attestations", required = true)
