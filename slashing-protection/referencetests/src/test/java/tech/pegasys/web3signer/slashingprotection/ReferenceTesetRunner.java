@@ -15,33 +15,33 @@ package tech.pegasys.web3signer.slashingprotection;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
+import tech.pegasys.web3signer.slashingprotection.model.TestFileModel;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.SignedArtifacts;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
-import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
-import tech.pegasys.web3signer.slashingprotection.model.TestFileModel;
 
 public class ReferenceTesetRunner {
 
- // private static final Logger LOG = LogManager.getLogger();
+  // private static final Logger LOG = LogManager.getLogger();
 
   private static final ObjectMapper objectMapper =
       new ObjectMapper()
@@ -54,8 +54,10 @@ public class ReferenceTesetRunner {
 
     final String migrationsFile = Path.of("migrations", "postgresql", "V1__initial.sql").toString();
     System.out.println("migrations = " + migrationsFile);
-   // final Path schemaPath = Paths.get(Resources.getResource(migrationsFile).toURI());
-    final Path schemaPath = Path.of("/Users/tmm/projects/web3signer/slashing-protection/src/main/resources/migrations/postgresql/V1__initial.sql");
+    // final Path schemaPath = Paths.get(Resources.getResource(migrationsFile).toURI());
+    final Path schemaPath =
+        Path.of(
+            "/Users/tmm/projects/web3signer/slashing-protection/src/main/resources/migrations/postgresql/V1__initial.sql");
 
     final Path migrationPath = schemaPath.getParent();
 
