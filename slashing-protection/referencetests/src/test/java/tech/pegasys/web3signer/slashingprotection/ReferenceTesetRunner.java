@@ -54,8 +54,6 @@ public class ReferenceTesetRunner {
   final ObjectMapper objectMapper =
       new ObjectMapper().registerModule(new InterchangeModule())
           .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
-  private final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
-  private final SignedAttestationsDao signedAttestationsDao = new SignedAttestationsDao();
   private final ValidatorsDao validators = new ValidatorsDao();
 
   private EmbeddedPostgres setup() throws IOException, URISyntaxException {
@@ -84,86 +82,63 @@ public class ReferenceTesetRunner {
             Path.of("slashing-protection-interchange-tests", "tests", "generated").toString());
 
     final Path testFilesPath = Path.of(refTestPath.getPath());
-
-    try (final Stream<Path> fileStream = Files.list(testFilesPath)) {
-      fileStream.forEach(
-          path -> {
-            System.out.println("File = " + path.toString());
-            try {
-              final TestFileModel model =
-                  objectMapper.readValue(path.toFile(), TestFileModel.class);
-              final String interchangeContent =
-                  objectMapper.writeValueAsString(model.getInterchangeContent());
-
-              final EmbeddedPostgres db = setup();
-              final String databaseUrl =
-                  String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-
-              final SlashingProtection slashingProtection =
-                  SlashingProtectionFactory.createSlashingProtection(
-                      databaseUrl, "postgres", "postgres");
-
-              slashingProtection
-                  .importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
-
-              final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
-
-              final List<String>
-                  validatorsInImport =
-                  model.getInterchangeContent().getSignedArtifacts().stream().map(
-                      SignedArtifacts::getPublicKey).collect(Collectors.toList());
-
-              final List<String> publicKeysInDb = jdbi.inTransaction(
-                  h -> validators.findAllValidators(h).map(v -> v.getPublicKey().toHexString())
-                      .collect(Collectors.toList()));
-
-            assertThat(validatorsInImport).containsExactlyInAnyOrderElementsOf(publicKeysInDb);
-
-
-
-//              DbConnection.configureJdbi(jdbi);
-//              model
-//                  .getBlocks()
-//                  .forEach(
-//                      block -> {
-//                        jdbi.useTransaction(
-//                            h -> {
-//                              final Validator v =
-//                                  validators.insertIfNotExist(
-//                                      h, Bytes.fromHexString(block.getPublickKey()));
-//                              signedBlocksDao.insertBlockProposal(
-//                                  h,
-//                                  new SignedBlock(
-//                                      v.getId(), UInt64.valueOf(block.getSlot()), null));
-//                            });
-//                      });
-//              model.getAttestations().forEach(
-//                  attestation -> {
-//                    jdbi.useTransaction(
-//                        h -> {
-//                          final Validator v =
-//                              validators.insertIfNotExist(
-//                                  h, Bytes.fromHexString(attestation.getPublickKey()));
-//                          signedAttestationsDao.insertAttestation(
-//                              h,
-//                              new SignedAttestation(
-//                                  v.getId(), UInt64.valueOf(attestation.getSourceEpoch()),
-//                                  UInt64.valueOf(attestation.getTargetEpoch()), null));
-//                        });
-//                  });
-//
-//              final SlashingProtection slashingProtection =
-//                  SlashingProtectionFactory.createSlashingProtection(
-//                      databaseUrl, "postgres", "postgres");
-//
-//              final OutputStream output = new ByteArrayOutputStream();
-//              slashingProtection.export(output);
-//              assertThat(output.toString()).isEqualTo(interchangeContent);
-          } catch(IOException | URISyntaxException e){
-        e.printStackTrace();
-        throw new RuntimeException("setup failed for test");
-      }
-    });
+    Files.list(testFilesPath).forEach(this::executeFile);
   }
-}
+
+  private void executeFile(final Path inputFile) {
+    System.out.println(inputFile.toString());
+    try {
+      final TestFileModel model =
+          objectMapper.readValue(inputFile.toFile(), TestFileModel.class);
+      final String interchangeContent =
+          objectMapper.writeValueAsString(model.getInterchangeContent());
+
+      final EmbeddedPostgres db = setup();
+      final String databaseUrl =
+          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
+
+      final SlashingProtection slashingProtection =
+          SlashingProtectionFactory.createSlashingProtection(
+              databaseUrl, "postgres", "postgres");
+
+      slashingProtection
+          .importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+
+      final List<String>
+          validatorsInImport =
+          model.getInterchangeContent().getSignedArtifacts().stream().map(
+              SignedArtifacts::getPublicKey).collect(Collectors.toList());
+
+      final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
+      final List<String> publicKeysInDb = jdbi.inTransaction(
+          h -> validators.findAllValidators(h).map(v -> v.getPublicKey().toHexString())
+              .collect(Collectors.toList()));
+
+      assertThat(validatorsInImport).containsExactlyInAnyOrderElementsOf(publicKeysInDb);
+
+      // need to register the validators with slashingProtection before testing blocks/attestations
+      if(validatorsInImport.isEmpty()) {
+        return;
+      }
+      slashingProtection.registerValidators(validatorsInImport.stream().map(Bytes::fromHexString).collect(
+          Collectors.toList()));
+
+      model.getAttestations().forEach(attestation -> {
+        final boolean result = slashingProtection
+            .maySignAttestation(attestation.getPublickKey(), attestation.getSigningRoot(),
+                attestation.getSourceEpoch(), attestation.getTargetEpoch());
+        assertThat(result).isEqualTo(attestation.isShouldSucceed());
+      });
+
+      model.getBlocks().forEach(block -> {
+        final boolean result = slashingProtection
+            .maySignBlock(block.getPublickKey(), block.getSigningRoot(),
+                block.getSlot());
+        assertThat(result).isEqualTo(block.isShouldSucceed());
+      });
+    } catch (IOException | URISyntaxException e) {
+      e.printStackTrace();
+      throw new RuntimeException("setup failed for test");
+    }
+  }
 }

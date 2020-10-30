@@ -13,28 +13,37 @@
 package tech.pegasys.web3signer.slashingprotection.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class BlockTestModel {
 
-  private final String publickKey;
-  private final int slot;
+  private final Bytes publickKey;
+  private final UInt64 slot;
+  private final Bytes signingRoot;
   private final boolean shouldSucceed;
 
   public BlockTestModel(
-      @JsonProperty(value = "pubkey", required = true) final String publickKey,
-      @JsonProperty(value = "slot", required = true) int slot,
-      @JsonProperty(value = "should_succeed", required = true) boolean shouldSucceed) {
+      @JsonProperty(value = "pubkey", required = true) final Bytes publickKey,
+      @JsonProperty(value = "slot", required = true) UInt64 slot,
+      @JsonProperty(value = "should_succeed", required = true) boolean shouldSucceed,
+      @JsonProperty(value = "signing_root") Bytes signingRoot) {
     this.publickKey = publickKey;
     this.slot = slot;
     this.shouldSucceed = shouldSucceed;
+    this.signingRoot = signingRoot;
   }
 
-  public String getPublickKey() {
+  public Bytes getPublickKey() {
     return publickKey;
   }
 
-  public int getSlot() {
+  public UInt64 getSlot() {
     return slot;
+  }
+
+  public Bytes getSigningRoot() {
+    return signingRoot;
   }
 
   public boolean isShouldSucceed() {

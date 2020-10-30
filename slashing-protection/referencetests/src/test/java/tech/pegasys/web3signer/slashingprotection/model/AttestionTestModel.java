@@ -13,21 +13,23 @@
 package tech.pegasys.web3signer.slashingprotection.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public class AttestionTestModel {
 
-  private final String publickKey;
-  private final int sourceEpoch;
-  private final int targetEpoch;
+  private final Bytes publickKey;
+  private final UInt64 sourceEpoch;
+  private final UInt64 targetEpoch;
   private final boolean shouldSucceed;
-  private final String signingRoot;
+  private final Bytes signingRoot;
 
   public AttestionTestModel(
-      @JsonProperty(value = "pubkey", required = true) final String publickKey,
-      @JsonProperty(value = "source_epoch", required = true) int sourceEpoch,
-      @JsonProperty(value = "target_epoch", required = true) int targetEpoch,
+      @JsonProperty(value = "pubkey", required = true) final Bytes publickKey,
+      @JsonProperty(value = "source_epoch", required = true) UInt64 sourceEpoch,
+      @JsonProperty(value = "target_epoch", required = true) UInt64 targetEpoch,
       @JsonProperty(value = "should_succeed", required = true) boolean shouldSucceed,
-      @JsonProperty(value = "signing_root") String signingRoot) {
+      @JsonProperty(value = "signing_root") Bytes signingRoot) {
     this.publickKey = publickKey;
     this.sourceEpoch = sourceEpoch;
     this.targetEpoch = targetEpoch;
@@ -35,16 +37,20 @@ public class AttestionTestModel {
     this.signingRoot = signingRoot;
   }
 
-  public String getPublickKey() {
+  public Bytes getPublickKey() {
     return publickKey;
   }
 
-  public int getSourceEpoch() {
+  public UInt64 getSourceEpoch() {
     return sourceEpoch;
   }
 
-  public int getTargetEpoch() {
+  public UInt64 getTargetEpoch() {
     return targetEpoch;
+  }
+
+  public Bytes getSigningRoot() {
+    return signingRoot;
   }
 
   public boolean isShouldSucceed() {
