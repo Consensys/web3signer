@@ -21,8 +21,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class FcCidEncoder {
 
-  private static final byte FILECOIN_MESSAGE_PREFIX = (byte) 138;
-  // aka Blake2b-256
   private static final BigInteger FC_HASHING_ALGO_CODE = BigInteger.valueOf(0xb220);
   private static final byte CID_VERSION = (byte) 1;
   private static final byte DagCBOR_CODEC_ID = (byte) 113;
