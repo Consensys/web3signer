@@ -217,18 +217,8 @@ public abstract class Web3SignerRunner {
   }
 
   private void createSchemaInDataSource(final DataSource dataSource) {
-    final Path migrationPath =
-        getProjectPath()
-            .toPath()
-            .resolve(
-                Path.of(
-                    "slashing-protection", "src", "main", "resources", "migrations", "postgresql"));
-
     final Flyway flyway =
-        Flyway.configure()
-            .locations("filesystem:" + migrationPath.toString())
-            .dataSource(dataSource)
-            .load();
+        Flyway.configure().locations("/migrations/postgresql/").dataSource(dataSource).load();
     flyway.migrate();
   }
 
