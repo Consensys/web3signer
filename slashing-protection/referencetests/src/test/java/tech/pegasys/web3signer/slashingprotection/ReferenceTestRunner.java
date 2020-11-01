@@ -21,7 +21,6 @@ import tech.pegasys.web3signer.slashingprotection.model.TestFileModel;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,14 +33,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.SignedArtifacts;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 
-public class ReferenceTesetRunner {
+@SuppressWarnings("UnusedVariable")
+public class ReferenceTestRunner {
 
-  // private static final Logger LOG = LogManager.getLogger();
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final ObjectMapper objectMapper =
       new ObjectMapper()
@@ -49,21 +51,12 @@ public class ReferenceTesetRunner {
           .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
   private final ValidatorsDao validators = new ValidatorsDao();
 
-  private EmbeddedPostgres setup() throws IOException, URISyntaxException {
+  private EmbeddedPostgres setup() throws IOException {
     final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
-
-    final String migrationsFile = Path.of("migrations", "postgresql", "V1__initial.sql").toString();
-    System.out.println("migrations = " + migrationsFile);
-    // final Path schemaPath = Paths.get(Resources.getResource(migrationsFile).toURI());
-    final Path schemaPath =
-        Path.of(
-            "/Users/tmm/projects/web3signer/slashing-protection/src/main/resources/migrations/postgresql/V1__initial.sql");
-
-    final Path migrationPath = schemaPath.getParent();
 
     final Flyway flyway =
         Flyway.configure()
-            .locations("filesystem:" + migrationPath.toString())
+            .locations("/migrations/postgresql/")
             .dataSource(slashingDatabase.getPostgresDatabase())
             .load();
     flyway.migrate();
@@ -84,7 +77,7 @@ public class ReferenceTesetRunner {
   }
 
   private void executeFile(final Path inputFile) {
-    System.out.println(inputFile.toString());
+    LOG.info(inputFile.toString());
     try {
       final TestFileModel model = objectMapper.readValue(inputFile.toFile(), TestFileModel.class);
       final String interchangeContent =
@@ -144,7 +137,7 @@ public class ReferenceTesetRunner {
                         block.getPublickKey(), block.getSigningRoot(), block.getSlot());
                 assertThat(result).isEqualTo(block.isShouldSucceed());
               });
-    } catch (IOException | URISyntaxException e) {
+    } catch (IOException e) {
       e.printStackTrace();
       throw new RuntimeException("setup failed for test");
     }

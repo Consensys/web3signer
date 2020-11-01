@@ -58,7 +58,3 @@ dependencies {
   integrationTestImplementation 'com.opentable.components:otj-pg-embedded'
   integrationTestImplementation sourceSets.testFixtures.output
 }
-
-artifacts {
-  testSupportArtifacts testSupportJar
-}
