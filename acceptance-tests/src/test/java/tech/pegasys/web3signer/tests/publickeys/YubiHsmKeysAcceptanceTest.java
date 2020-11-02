@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 public class YubiHsmKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
   // update following path with exact location of yubi pkcs11 module
   private static final String MODULE_PATH =
-      "/Users/usmansaleem/dev/yubihsm2-sdk/lib/pkcs11/yubihsm_pkcs11.dylib";
+      "/Users/dev/yubihsm2-sdk/lib/pkcs11/yubihsm_pkcs11.dylib";
 
   // following keys are expected to be pre-loaded in YubiHSM as Opaque Data (HEX informat). Opaque
   // Id 1..N.
