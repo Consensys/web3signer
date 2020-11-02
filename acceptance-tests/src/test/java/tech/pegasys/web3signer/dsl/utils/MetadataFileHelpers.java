@@ -30,6 +30,7 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
@@ -197,6 +198,27 @@ public class MetadataFileHelpers {
     createYamlFile(metadataFilePath, yaml);
   }
 
+  public void createYubihsmYamlFileAt(
+      final Path metadataFilePath,
+      final String pkcs11ModulePath,
+      final String connectorUrl,
+      final short authId,
+      final String password,
+      final short opaqueDataId,
+      final KeyType keyType) {
+    // these are default credentials of Interlock on USB Armory
+    final Map<String, Serializable> yaml = new HashMap<>();
+    yaml.put("type", "yubihsm");
+    yaml.put("pkcs11ModulePath", pkcs11ModulePath);
+    yaml.put("connectorUrl", connectorUrl);
+    yaml.put("authId", authId);
+    yaml.put("password", password);
+    yaml.put("opaqueDataId", opaqueDataId);
+    yaml.put("keyType", keyType.name());
+
+    createYamlFile(metadataFilePath, yaml);
+  }
+
   private void createPasswordFile(final Path passwordFilePath, final String password) {
     try {
       Files.writeString(passwordFilePath, password);
@@ -225,7 +247,8 @@ public class MetadataFileHelpers {
     }
   }
 
-  private void createYamlFile(final Path filePath, final Map<String, String> signingMetadata) {
+  private void createYamlFile(
+      final Path filePath, final Map<String, ? extends Serializable> signingMetadata) {
     try {
       YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), signingMetadata);
     } catch (final IOException e) {
