@@ -23,6 +23,7 @@ import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
 import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.FileNotFoundException;
@@ -38,14 +39,17 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   final HashicorpConnectionFactory hashicorpConnectionFactory;
   final Path configsDirectory;
   private final InterlockKeyProvider interlockKeyProvider;
+  private final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
 
   protected AbstractArtifactSignerFactory(
       final HashicorpConnectionFactory hashicorpConnectionFactory,
       final Path configsDirectory,
-      final InterlockKeyProvider interlockKeyProvider) {
+      final InterlockKeyProvider interlockKeyProvider,
+      final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider) {
     this.hashicorpConnectionFactory = hashicorpConnectionFactory;
     this.configsDirectory = configsDirectory;
     this.interlockKeyProvider = interlockKeyProvider;
+    this.yubiHsmOpaqueDataProvider = yubiHsmOpaqueDataProvider;
   }
 
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
@@ -95,6 +99,15 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
     } catch (final RuntimeException e) {
       throw new SigningMetadataException(
           "Failed to fetch secret from Interlock: " + e.getMessage(), e);
+    }
+  }
+
+  protected Bytes extractOpaqueDataFromYubiHsm(YubiHsmSigningMetadata yubiHsmSigningMetadata) {
+    try {
+      return yubiHsmOpaqueDataProvider.fetchOpaqueData(yubiHsmSigningMetadata);
+    } catch (final RuntimeException e) {
+      throw new SigningMetadataException(
+          "Failed to fetch opaque data from YubiHSM: " + e.getMessage(), e);
     }
   }
 

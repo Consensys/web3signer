@@ -1,0 +1,5 @@
+type: yubihsm
+pkcs11ModulePath: /path/to/yubihsm_pkcs11.so
+authId: 1
+password: test
+opaqueDataId: 1

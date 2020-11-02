@@ -26,6 +26,7 @@ import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
@@ -104,13 +105,17 @@ public class FilecoinRunner extends Runner {
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
 
-    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx)) {
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+            new YubiHsmOpaqueDataProvider()) {
+
       final AbstractArtifactSignerFactory blsArtifactSignerFactory =
           new BlsArtifactSignerFactory(
               config.getKeyConfigPath(),
               metricsSystem,
               hashicorpConnectionFactory,
               interlockKeyProvider,
+              yubiHsmOpaqueDataProvider,
               keyPair -> new FcBlsArtifactSigner(keyPair, network));
 
       final AbstractArtifactSignerFactory secpArtifactSignerFactory =
@@ -119,6 +124,7 @@ public class FilecoinRunner extends Runner {
               config.getKeyConfigPath(),
               azureFactory,
               interlockKeyProvider,
+              yubiHsmOpaqueDataProvider,
               signer -> new FcSecpArtifactSigner(signer, network),
               false);
 
