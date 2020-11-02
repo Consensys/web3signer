@@ -206,7 +206,6 @@ public class MetadataFileHelpers {
       final String password,
       final short opaqueDataId,
       final KeyType keyType) {
-    // these are default credentials of Interlock on USB Armory
     final Map<String, Serializable> yaml = new HashMap<>();
     yaml.put("type", "yubihsm");
     yaml.put("pkcs11ModulePath", pkcs11ModulePath);
