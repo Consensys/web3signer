@@ -15,8 +15,6 @@ package tech.pegasys.web3signer.core.multikey.metadata;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
-import java.util.Optional;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -53,10 +51,12 @@ public class YubiHsmSigningMetadata extends SigningMetadata {
     return pkcs11ModulePath;
   }
 
-  public String getInitConfig() {
-    return String.format(
-            "connector=%s %s", connectorUrl, Optional.ofNullable(additionalInitConfig).orElse(""))
-        .trim();
+  public String getConnectorUrl() {
+    return connectorUrl;
+  }
+
+  public String getAdditionalInitConfig() {
+    return additionalInitConfig;
   }
 
   public short getAuthId() {

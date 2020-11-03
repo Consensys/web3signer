@@ -202,6 +202,7 @@ public class MetadataFileHelpers {
       final Path metadataFilePath,
       final String pkcs11ModulePath,
       final String connectorUrl,
+      final String additionalInitConfig,
       final short authId,
       final String password,
       final short opaqueDataId,
@@ -210,6 +211,7 @@ public class MetadataFileHelpers {
     yaml.put("type", "yubihsm");
     yaml.put("pkcs11ModulePath", pkcs11ModulePath);
     yaml.put("connectorUrl", connectorUrl);
+    yaml.put("additionalInitConfig", additionalInitConfig);
     yaml.put("authId", authId);
     yaml.put("password", password);
     yaml.put("opaqueDataId", opaqueDataId);

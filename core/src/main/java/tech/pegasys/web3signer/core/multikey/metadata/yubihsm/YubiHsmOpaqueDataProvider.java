@@ -15,43 +15,60 @@ package tech.pegasys.web3signer.core.multikey.metadata.yubihsm;
 import tech.pegasys.signers.yubihsm.pkcs11.Pkcs11Module;
 import tech.pegasys.signers.yubihsm.pkcs11.Pkcs11Session;
 import tech.pegasys.signers.yubihsm.pkcs11.Pkcs11YubiHsm;
+import tech.pegasys.signers.yubihsm.pkcs11.Pkcs11YubiHsmPin;
 import tech.pegasys.web3signer.core.multikey.metadata.YubiHsmSigningMetadata;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tuweni.bytes.Bytes;
 
+// Note: PKCS11 Sun provider has a limitation that one loaded module can only connect to one YubiHSM
+// device
+// In order to connect to multiple YubiHSM devices (in parallel), different module
+// installations/path must be used.
 public class YubiHsmOpaqueDataProvider implements AutoCloseable {
   // maintains a cache of YubiHSM PKCS11 module and session to avoid module/session duplication
   private final Map<String, Pkcs11Module> pkcs11ModuleMap = new ConcurrentHashMap<>();
-  private final Map<YubiHsmIdentifier, Pkcs11Session> pkcs11SessionMap = new ConcurrentHashMap<>();
+  private final Map<String, Pkcs11Session> pkcs11SessionMap = new ConcurrentHashMap<>();
 
-  public synchronized Bytes fetchOpaqueData(final YubiHsmSigningMetadata yubiHsmSigningMetadata) {
-    final Pkcs11Session pkcs11Session = getPkcs11Session(yubiHsmSigningMetadata);
-    return new Pkcs11YubiHsm(pkcs11Session)
-        .fetchOpaqueData(yubiHsmSigningMetadata.getOpaqueDataId());
+  public synchronized Bytes fetchOpaqueData(final YubiHsmSigningMetadata metadata) {
+    final Pkcs11Session pkcs11Session = getPkcs11Session(metadata);
+    return new Pkcs11YubiHsm(pkcs11Session).fetchOpaqueData(metadata.getOpaqueDataId());
   }
 
-  private Pkcs11Session getPkcs11Session(final YubiHsmSigningMetadata yubiHsmSigningMetadata) {
-    final Pkcs11Module pkcs11Module = getPkcs11Module(yubiHsmSigningMetadata);
-
-    final YubiHsmIdentifier identifier =
-        new YubiHsmIdentifier(
-            yubiHsmSigningMetadata.getAuthId(), yubiHsmSigningMetadata.getPassword());
+  private Pkcs11Session getPkcs11Session(final YubiHsmSigningMetadata metadata) {
+    final Pkcs11Module pkcs11Module = getPkcs11Module(metadata);
 
     return pkcs11SessionMap.computeIfAbsent(
-        identifier, i -> pkcs11Module.createSession(i.convertToPkcs11Pin()));
+        getSessionIdentifier(metadata),
+        identifier -> pkcs11Module.createSession(getPkcs11Pin(metadata)));
   }
 
-  private Pkcs11Module getPkcs11Module(final YubiHsmSigningMetadata yubiHsmSigningMetadata) {
+  private Pkcs11Module getPkcs11Module(final YubiHsmSigningMetadata metadata) {
     return pkcs11ModuleMap.computeIfAbsent(
-        yubiHsmSigningMetadata.getPkcs11ModulePath(),
-        s ->
-            Pkcs11Module.createPkcs11Module(
-                Path.of(yubiHsmSigningMetadata.getPkcs11ModulePath()),
-                yubiHsmSigningMetadata.getInitConfig()));
+        metadata.getPkcs11ModulePath(),
+        modulePath ->
+            Pkcs11Module.createPkcs11Module(Path.of(modulePath), getPkcs11InitConfig(metadata)));
+  }
+
+  private String getSessionIdentifier(final YubiHsmSigningMetadata metadata) {
+    return String.format(
+        "%s%s%d", metadata.getPkcs11ModulePath(), metadata.getConnectorUrl(), metadata.getAuthId());
+  }
+
+  private Pkcs11YubiHsmPin getPkcs11Pin(final YubiHsmSigningMetadata metadata) {
+    return new Pkcs11YubiHsmPin(metadata.getAuthId(), metadata.getPassword());
+  }
+
+  private String getPkcs11InitConfig(final YubiHsmSigningMetadata metadata) {
+    return String.format(
+            "connector=%s %s",
+            metadata.getConnectorUrl(),
+            Optional.ofNullable(metadata.getAdditionalInitConfig()).orElse(""))
+        .trim();
   }
 
   @Override

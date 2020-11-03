@@ -51,8 +51,8 @@ public class YubiHsmKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBase 
 
   // Using usb connector
   private static final String CONNECTOR_URL = "yhusb://";
+  private static final String ADDITIONAL_INIT_CONFIG = "debug libdebug";
 
-  // Using default credentials
   private static final short AUTH_ID = 1;
   private static final String PASSWORD = "password";
 
@@ -67,7 +67,14 @@ public class YubiHsmKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBase 
         opaqueDataId++) {
       final Path configFile = testDirectory.resolve("yubihsm_" + opaqueDataId + ".yaml");
       METADATA_FILE_HELPERS.createYubihsmYamlFileAt(
-          configFile, MODULE_PATH, CONNECTOR_URL, AUTH_ID, PASSWORD, opaqueDataId, KeyType.BLS);
+          configFile,
+          MODULE_PATH,
+          CONNECTOR_URL,
+          ADDITIONAL_INIT_CONFIG,
+          AUTH_ID,
+          PASSWORD,
+          opaqueDataId,
+          KeyType.BLS);
     }
 
     initAndStartSigner(calculateMode(KeyType.BLS));
