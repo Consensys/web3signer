@@ -38,7 +38,8 @@ class YubiHsmSigningMetadataFileParsingTest {
 
     final YubiHsmSigningMetadata metadata = (YubiHsmSigningMetadata) signingMetadata;
     assertThat(metadata.getPkcs11ModulePath()).isEqualTo("/path/to/yubihsm_pkcs11.so");
-    assertThat(metadata.getInitConfig()).isEqualTo("connector=http://localhost:12345");
+    assertThat(metadata.getConnectorUrl()).isEqualTo("http://localhost:12345");
+    assertThat(metadata.getAdditionalInitConfig()).isNull();
     assertThat(metadata.getAuthId()).isEqualTo((short) 1);
     assertThat(metadata.getOpaqueDataId()).isEqualTo((short) 1);
     assertThat(metadata.getKeyType()).isEqualTo(KeyType.BLS);
@@ -55,8 +56,8 @@ class YubiHsmSigningMetadataFileParsingTest {
 
     final YubiHsmSigningMetadata metadata = (YubiHsmSigningMetadata) signingMetadata;
     assertThat(metadata.getPkcs11ModulePath()).isEqualTo("/path/to/yubihsm_pkcs11.so");
-    assertThat(metadata.getInitConfig())
-        .isEqualTo("connector=http://localhost:12345 debug libdebug");
+    assertThat(metadata.getConnectorUrl()).isEqualTo("http://localhost:12345");
+    assertThat(metadata.getAdditionalInitConfig()).isEqualTo("debug libdebug");
     assertThat(metadata.getAuthId()).isEqualTo((short) 1);
     assertThat(metadata.getOpaqueDataId()).isEqualTo((short) 1);
     assertThat(metadata.getKeyType()).isEqualTo(KeyType.SECP256K1);
