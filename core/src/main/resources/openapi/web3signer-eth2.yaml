@@ -169,20 +169,23 @@ components:
     DepositSigning:
       type: object
       properties:
+        type:
+          type: "string"
         deposit:
           type: object
           properties:
-            type:
-              type: "string"
-            signingRoot:
-              type: "string"
             pubkey:
               type: "string"
             withdrawal_credentials:
               type: "string"
             amount:
               type: "string"
+            signingRoot:
+              description: 'signing root for optional verification if field present'
+              type: "string"
+
       required:
+        - type
         - deposit
     RandaoRevealSigning:
       allOf:
