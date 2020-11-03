@@ -59,7 +59,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
       return signerFactory.apply(
           new BLSKeyPair(BLSSecretKey.fromBytes(fileRawSigningMetadata.getPrivateKeyBytes())));
     }
@@ -67,14 +67,15 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-keystore").startTimer()) {
+    try (final TimingContext ignored =
+        privateKeyRetrievalTimer.labels("file-keystore").startTimer()) {
       return createKeystoreArtifact(fileKeyStoreMetadata);
     }
   }
 
   @Override
   public ArtifactSigner create(final HashicorpSigningMetadata hashicorpMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("hashicorp").startTimer()) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("hashicorp").startTimer()) {
       final Bytes privateKeyBytes = extractBytesFromVault(hashicorpMetadata);
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
@@ -84,7 +85,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final AzureSecretSigningMetadata azureSecretSigningMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("azure").startTimer()) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("azure").startTimer()) {
       final Bytes privateKeyBytes = extractBytesFromVault(azureSecretSigningMetadata);
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
@@ -94,7 +95,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("interlock").startTimer()) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("interlock").startTimer()) {
       final Bytes32 keyBytes = Bytes32.wrap(extractBytesFromInterlock(interlockSigningMetadata));
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(keyBytes));
       return signerFactory.apply(keyPair);
@@ -103,7 +104,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final YubiHsmSigningMetadata yubiHsmSigningMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("interlock").startTimer()) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("yubihsm").startTimer()) {
       final Bytes32 keyBytes = Bytes32.wrap(extractOpaqueDataFromYubiHsm(yubiHsmSigningMetadata));
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(keyBytes));
       return signerFactory.apply(keyPair);
