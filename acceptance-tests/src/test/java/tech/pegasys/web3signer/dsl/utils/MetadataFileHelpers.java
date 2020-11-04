@@ -205,7 +205,7 @@ public class MetadataFileHelpers {
       final String additionalInitConfig,
       final short authId,
       final String password,
-      final short opaqueDataId,
+      final int opaqueDataId,
       final KeyType keyType) {
     final Map<String, Serializable> yaml = new HashMap<>();
     yaml.put("type", "yubihsm");

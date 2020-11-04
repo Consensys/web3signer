@@ -26,6 +26,8 @@ import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 
 class YubiHsmSigningMetadataFileParsingTest {
+  private static final short EXPECTED_AUTH_ID = (short) 1;
+  private static final short EXPECTED_OPAQUE_ID = (short) 1;
 
   @Test
   void yamlFileWithRequiredValuesIsSuccessfullyParsed() throws IOException {
@@ -40,8 +42,8 @@ class YubiHsmSigningMetadataFileParsingTest {
     assertThat(metadata.getPkcs11ModulePath()).isEqualTo("/path/to/yubihsm_pkcs11.so");
     assertThat(metadata.getConnectorUrl()).isEqualTo("http://localhost:12345");
     assertThat(metadata.getAdditionalInitConfig()).isNull();
-    assertThat(metadata.getAuthId()).isEqualTo((short) 1);
-    assertThat(metadata.getOpaqueDataId()).isEqualTo((short) 1);
+    assertThat(metadata.getAuthId()).isEqualTo(EXPECTED_AUTH_ID);
+    assertThat(metadata.getOpaqueDataId()).isEqualTo(EXPECTED_OPAQUE_ID);
     assertThat(metadata.getKeyType()).isEqualTo(KeyType.BLS);
   }
 
@@ -58,8 +60,8 @@ class YubiHsmSigningMetadataFileParsingTest {
     assertThat(metadata.getPkcs11ModulePath()).isEqualTo("/path/to/yubihsm_pkcs11.so");
     assertThat(metadata.getConnectorUrl()).isEqualTo("http://localhost:12345");
     assertThat(metadata.getAdditionalInitConfig()).isEqualTo("debug libdebug");
-    assertThat(metadata.getAuthId()).isEqualTo((short) 1);
-    assertThat(metadata.getOpaqueDataId()).isEqualTo((short) 1);
+    assertThat(metadata.getAuthId()).isEqualTo(EXPECTED_AUTH_ID);
+    assertThat(metadata.getOpaqueDataId()).isEqualTo(EXPECTED_OPAQUE_ID);
     assertThat(metadata.getKeyType()).isEqualTo(KeyType.SECP256K1);
   }
 

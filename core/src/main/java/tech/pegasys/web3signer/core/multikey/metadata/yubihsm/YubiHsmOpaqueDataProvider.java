@@ -32,7 +32,8 @@ import org.apache.tuweni.bytes.Bytes;
 public class YubiHsmOpaqueDataProvider implements AutoCloseable {
   // maintains a cache of YubiHSM PKCS11 module and session to avoid module/session duplication
   private final Map<String, Pkcs11Module> pkcs11ModuleMap = new ConcurrentHashMap<>();
-  private final Map<String, Pkcs11Session> pkcs11SessionMap = new ConcurrentHashMap<>();
+  private final Map<YubiHsmSessionIdentifier, Pkcs11Session> pkcs11SessionMap =
+      new ConcurrentHashMap<>();
 
   public synchronized Bytes fetchOpaqueData(final YubiHsmSigningMetadata metadata) {
     final Pkcs11Session pkcs11Session = getPkcs11Session(metadata);
@@ -43,7 +44,7 @@ public class YubiHsmOpaqueDataProvider implements AutoCloseable {
     final Pkcs11Module pkcs11Module = getPkcs11Module(metadata);
 
     return pkcs11SessionMap.computeIfAbsent(
-        getSessionIdentifier(metadata),
+        YubiHsmSessionIdentifier.buildFrom(metadata),
         identifier -> pkcs11Module.createSession(getPkcs11Pin(metadata)));
   }
 
@@ -52,11 +53,6 @@ public class YubiHsmOpaqueDataProvider implements AutoCloseable {
         metadata.getPkcs11ModulePath(),
         modulePath ->
             Pkcs11Module.createPkcs11Module(Path.of(modulePath), getPkcs11InitConfig(metadata)));
-  }
-
-  private String getSessionIdentifier(final YubiHsmSigningMetadata metadata) {
-    return String.format(
-        "%s%s%d", metadata.getPkcs11ModulePath(), metadata.getConnectorUrl(), metadata.getAuthId());
   }
 
   private Pkcs11YubiHsmPin getPkcs11Pin(final YubiHsmSigningMetadata metadata) {
