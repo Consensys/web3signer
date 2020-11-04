@@ -45,4 +45,9 @@ public interface ArtifactSignerFactory {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
+
+  default ArtifactSigner create(YubiHsmSigningMetadata yubiHsmSigningMetadata) {
+    throw new UnsupportedOperationException(
+        "Unable to generate a signer of requested type from supplied metadata");
+  }
 }

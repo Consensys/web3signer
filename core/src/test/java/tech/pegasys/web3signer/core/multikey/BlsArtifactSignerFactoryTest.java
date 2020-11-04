@@ -32,6 +32,7 @@ import tech.pegasys.web3signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.HashicorpSigningMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -65,6 +66,7 @@ class BlsArtifactSignerFactoryTest {
 
   private Vertx vertx;
   private InterlockKeyProvider interlockKeyProvider;
+  private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
 
   @BeforeAll
   static void setupKeystoreFiles() throws IOException {
@@ -83,6 +85,7 @@ class BlsArtifactSignerFactoryTest {
   void setup() throws IOException {
     vertx = Vertx.vertx();
     interlockKeyProvider = new InterlockKeyProvider(vertx);
+    yubiHsmOpaqueDataProvider = new YubiHsmOpaqueDataProvider();
 
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
@@ -90,12 +93,14 @@ class BlsArtifactSignerFactoryTest {
             new NoOpMetricsSystem(),
             new HashicorpConnectionFactory(vertx),
             interlockKeyProvider,
+            yubiHsmOpaqueDataProvider,
             BlsArtifactSigner::new);
   }
 
   @AfterEach
   void cleanup() {
     interlockKeyProvider.close();
+    yubiHsmOpaqueDataProvider.close();
     vertx.close();
   }
 

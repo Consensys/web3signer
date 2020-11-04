@@ -91,6 +91,7 @@ dependencyManagement {
       entry 'keystorage-hashicorp'
       entry 'keystorage-azure'
       entry 'keystorage-interlock'
+      entry 'keystorage-yubihsm2'
       entry 'signing-secp256k1-api'
       entry 'signing-secp256k1-impl'
       entry 'acceptance-tests'

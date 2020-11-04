@@ -30,6 +30,7 @@ import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFact
 import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.service.http.SigningJsonModule;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
@@ -157,13 +158,16 @@ public class Eth2Runner extends Runner {
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
 
-    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx)) {
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+            new YubiHsmOpaqueDataProvider()) {
       final AbstractArtifactSignerFactory artifactSignerFactory =
           new BlsArtifactSignerFactory(
               config.getKeyConfigPath(),
               metricsSystem,
               hashicorpConnectionFactory,
               interlockKeyProvider,
+              yubiHsmOpaqueDataProvider,
               BlsArtifactSigner::new);
 
       signers.addAll(
