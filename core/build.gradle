@@ -32,6 +32,8 @@ dependencies {
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 
+  implementation 'com.github.ipld:java-cid'
+
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
   implementation 'io.vertx:vertx-web-client'

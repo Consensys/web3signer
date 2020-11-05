@@ -13,37 +13,17 @@
 package tech.pegasys.web3signer.core.service.jsonrpc;
 
 import tech.pegasys.web3signer.core.util.Blake2b;
-import tech.pegasys.web3signer.core.util.ByteUtils;
 
-import java.math.BigInteger;
-
+import io.ipfs.cid.Cid;
+import io.ipfs.cid.Cid.Codec;
+import io.ipfs.multihash.Multihash.Type;
 import org.apache.tuweni.bytes.Bytes;
 
 public class FcCidEncoder {
 
-  private static final BigInteger FC_HASHING_ALGO_CODE = BigInteger.valueOf(0xb220);
-  private static final byte CID_VERSION = (byte) 1;
-  private static final byte DagCBOR_CODEC_ID = (byte) 113;
-
-  public Bytes createCid(final Bytes cborEncodedBytes) {
-    final Bytes messageHash = Blake2b.sum256(cborEncodedBytes);
-    final Bytes encodedHashAndCode = encodeHashWithCode(messageHash);
-    return createFilecoinCid(encodedHashAndCode);
-  }
-
-  // Roughly corresponds with filecoin:multhash:Encode
-  private Bytes encodeHashWithCode(final Bytes hashBytes) {
-    return Bytes.concatenate(
-        ByteUtils.putUVariant(FC_HASHING_ALGO_CODE),
-        ByteUtils.putUVariant(BigInteger.valueOf(hashBytes.size())),
-        hashBytes);
-  }
-
-  // Roughly corresponds to NewCidV1
-  private Bytes createFilecoinCid(final Bytes encodedHashAndCode) {
-    return Bytes.concatenate(
-        Bytes.wrap(new byte[] {CID_VERSION}),
-        Bytes.wrap(new byte[] {DagCBOR_CODEC_ID}),
-        encodedHashAndCode);
+  public Bytes createCid(final Bytes data) {
+    final Bytes messageHash = Blake2b.sum256(data);
+    final Cid cid = Cid.buildCidV1(Codec.DagCbor, Type.blake2b_256, messageHash.toArrayUnsafe());
+    return Bytes.wrap(cid.toBytes());
   }
 }
