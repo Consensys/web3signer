@@ -16,7 +16,6 @@ import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WR
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
-import tech.pegasys.web3signer.slashingprotection.AttestationValidator.MATCHES_PRIOR;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
@@ -26,6 +25,9 @@ import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
+import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
+import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
+import tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,7 +35,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -127,11 +128,11 @@ public class DbSlashingProtection implements SlashingProtection {
           }
 
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
-          final MATCHES_PRIOR priorMatch =
+          final MatchesPrior priorMatch =
               attestationValidator.matchesPriorAttestationAtTargetEpoch();
-          if (priorMatch == MATCHES_PRIOR.DOES_NOT_MATCH) {
+          if (priorMatch == MatchesPrior.DOES_NOT_MATCH) {
             return false;
-          } else if (priorMatch == MATCHES_PRIOR.MATCHES) {
+          } else if (priorMatch == MatchesPrior.MATCHES) {
             return true;
           }
 
@@ -157,45 +158,24 @@ public class DbSlashingProtection implements SlashingProtection {
     return jdbi.inTransaction(
         READ_COMMITTED,
         h -> {
+          final BlockValidator blockValidator =
+              new BlockValidator(
+                  h, publicKey, signingRoot, blockSlot, validatorId, signedBlocksDao);
+
           lockForValidator(h, LockType.BLOCK, validatorId);
-          return checkAndInsertBlock(h, publicKey, signingRoot, blockSlot, validatorId);
+          final MatchesPrior priorMatch = blockValidator.matchesPriorBlockAtSlot();
+          if (priorMatch == MatchesPrior.DOES_NOT_MATCH) {
+            return false;
+          } else if (priorMatch == MatchesPrior.MATCHES) {
+            return true;
+          }
+          final boolean conflictsWithExistingAttestations = blockValidator.isOlderThanWatermark();
+          if (!conflictsWithExistingAttestations) {
+            final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
+            signedBlocksDao.insertBlockProposal(h, signedBlock);
+          }
+          return !conflictsWithExistingAttestations;
         });
-  }
-
-  private boolean checkAndInsertBlock(
-      final Handle handle,
-      final Bytes publicKey,
-      final Bytes signingRoot,
-      final UInt64 blockSlot,
-      final int validatorId) {
-    final Optional<SignedBlock> existingBlock =
-        signedBlocksDao.findExistingBlock(handle, validatorId, blockSlot);
-    if (existingBlock.isPresent()) {
-      if (existingBlock.get().getSigningRoot().isEmpty()) {
-        LOG.warn(
-            "Signed block ({}, {}) exists with no signing root",
-            publicKey,
-            existingBlock.get().getSlot());
-        return false;
-      } else if (existingBlock.get().getSigningRoot().get().equals(signingRoot)) {
-        // same slot and signing_root is allowed for broadcasting previously signed block
-        return true;
-      } else {
-        LOG.warn("Detected double signed block {} for {}", existingBlock.get(), publicKey);
-        return false;
-      }
-    }
-
-    final Optional<UInt64> minimumSlot = signedBlocksDao.minimumSlot(handle, validatorId);
-    if (minimumSlot.map(slot -> blockSlot.compareTo(slot) <= 0).orElse(false)) {
-      LOG.warn(
-          "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
-      return false;
-    }
-
-    final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
-    signedBlocksDao.insertBlockProposal(handle, signedBlock);
-    return true;
   }
 
   @Override

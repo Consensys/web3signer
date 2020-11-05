@@ -10,11 +10,11 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.slashingprotection;
+package tech.pegasys.web3signer.slashingprotection.validator;
 
-import static tech.pegasys.web3signer.slashingprotection.AttestationValidator.MATCHES_PRIOR.DOES_NOT_MATCH;
-import static tech.pegasys.web3signer.slashingprotection.AttestationValidator.MATCHES_PRIOR.MATCHES;
-import static tech.pegasys.web3signer.slashingprotection.AttestationValidator.MATCHES_PRIOR.NO_PRIOR;
+import static tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior.DOES_NOT_MATCH;
+import static tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior.MATCHES;
+import static tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior.NO_PRIOR;
 
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -38,12 +38,6 @@ public class AttestationValidator {
   private final UInt64 targetEpoch;
   private final int validatorId;
   private final SignedAttestationsDao signedAttestationsDao;
-
-  public static enum MATCHES_PRIOR {
-    NO_PRIOR,
-    MATCHES,
-    DOES_NOT_MATCH
-  }
 
   public AttestationValidator(
       final Handle h,
@@ -74,7 +68,7 @@ public class AttestationValidator {
     return true;
   }
 
-  public MATCHES_PRIOR matchesPriorAttestationAtTargetEpoch() {
+  public MatchesPrior matchesPriorAttestationAtTargetEpoch() {
     final Optional<SignedAttestation> existingAttestation =
         signedAttestationsDao.findExistingAttestation(h, validatorId, targetEpoch);
     if (existingAttestation.isPresent()) {
