@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -147,8 +148,12 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     assertThat(response.getStatusCode()).isEqualTo(500);
   }
 
-  @Test
-  public void ableToSignWithoutSigningRootField() throws JsonProcessingException {
+  @ParameterizedTest
+  @EnumSource(
+      value = ContentType.class,
+      names = {"TEXT", "JSON"})
+  public void ableToSignWithoutSigningRootField(final ContentType acceptableContentType)
+      throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
@@ -171,9 +176,14 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.getRandaoReveal(),
             request.getDeposit());
 
-    final Response response =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), requestWithMismatchedSigningRoot);
-    assertThat(response.getStatusCode()).isEqualTo(200);
+    signer
+        .eth2Sign(
+            keyPair.getPublicKey().toString(),
+            requestWithMismatchedSigningRoot,
+            acceptableContentType)
+        .then()
+        .contentType(acceptableContentType)
+        .statusCode(200);
   }
 
   private void signAndVerifySignature(final ArtifactType artifactType)

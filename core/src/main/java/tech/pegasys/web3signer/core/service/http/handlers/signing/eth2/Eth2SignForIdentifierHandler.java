@@ -17,6 +17,7 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_domain;
 import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_signing_root;
 import static tech.pegasys.teku.util.config.Constants.DOMAIN_DEPOSIT;
+import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
@@ -33,7 +34,9 @@ import java.util.function.Consumer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Objects;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
@@ -213,7 +216,17 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   }
 
   private void respondWithSignature(final RoutingContext routingContext, final String signature) {
-    routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end(signature);
+    final String acceptableContentType = routingContext.getAcceptableContentType();
+    final String contentType;
+    final String body;
+    if (Objects.equal("application/json", acceptableContentType)) {
+      contentType = JSON_UTF_8;
+      body = new JsonObject().put("signature", signature).encode();
+    } else {
+      contentType = TEXT_PLAIN_UTF_8;
+      body = signature;
+    }
+    routingContext.response().putHeader(CONTENT_TYPE, contentType).end(body);
   }
 
   private Eth2SigningRequestBody getSigningRequest(final RequestParameters params)
