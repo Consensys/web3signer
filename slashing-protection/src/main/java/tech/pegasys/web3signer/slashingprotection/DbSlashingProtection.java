@@ -136,10 +136,10 @@ public class DbSlashingProtection implements SlashingProtection {
           }
 
           final boolean conflictsWithExistingAttestations =
-              attestationValidator.hasSourceOlderThanWatermark() ||
-                  attestationValidator.hasTargetOlderThanWatermark() ||
-                  attestationValidator.isSurroundedByExistingAttestation() ||
-                  attestationValidator.surroundsExistingAttestation();
+              attestationValidator.hasSourceOlderThanWatermark()
+                  || attestationValidator.hasTargetOlderThanWatermark()
+                  || attestationValidator.isSurroundedByExistingAttestation()
+                  || attestationValidator.surroundsExistingAttestation();
 
           if (!conflictsWithExistingAttestations) {
             final SignedAttestation signedAttestation =
