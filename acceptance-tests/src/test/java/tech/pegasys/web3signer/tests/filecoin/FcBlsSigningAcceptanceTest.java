@@ -20,7 +20,6 @@ import static org.hamcrest.Matchers.equalTo;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.web3signer.core.service.jsonrpc.FcCidEncoder;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.FcBlsArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -47,7 +46,9 @@ import org.junit.jupiter.api.Test;
 public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   private static final Bytes DATA = Bytes.wrap("Hello World".getBytes(UTF_8));
-  private static final Bytes CID = Bytes.fromHexString("0x0171a0e402201dc01772ee0171f5f614c673e3c7fa1107a8cf727bdf5a6dadb379e93c0d1d00");
+  private static final Bytes CID =
+      Bytes.fromHexString(
+          "0x0171a0e402201dc01772ee0171f5f614c673e3c7fa1107a8cf727bdf5a6dadb379e93c0d1d00");
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
@@ -74,8 +75,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Map<String, String> metaData = Map.of("type", "message", "extra", DATA.toBase64String());
     final JsonNode params =
         mapper.convertValue(
-            List.of(
-                identifier.encode(FilecoinNetwork.MAINNET), CID.toBase64String(), metaData),
+            List.of(identifier.encode(FilecoinNetwork.MAINNET), CID.toBase64String(), metaData),
             JsonNode.class);
 
     final Request request = new Request("2.0", "Filecoin.WalletSign", params, id);
