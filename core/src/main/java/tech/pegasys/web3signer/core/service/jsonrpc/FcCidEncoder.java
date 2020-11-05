@@ -16,14 +16,14 @@ import tech.pegasys.web3signer.core.util.Blake2b;
 
 import io.ipfs.cid.Cid;
 import io.ipfs.cid.Cid.Codec;
-import io.ipfs.multihash.Multihash.Type;
+import io.ipfs.multihash.Multihash;
 import org.apache.tuweni.bytes.Bytes;
 
 public class FcCidEncoder {
 
   public Bytes createCid(final Bytes data) {
-    final Bytes messageHash = Blake2b.sum256(data);
-    final Cid cid = Cid.buildCidV1(Codec.DagCbor, Type.blake2b_256, messageHash.toArrayUnsafe());
+    final Bytes hash = Blake2b.sum256(data);
+    final Cid cid = Cid.buildCidV1(Codec.DagCbor, Multihash.Type.blake2b_256, hash.toArrayUnsafe());
     return Bytes.wrap(cid.toBytes());
   }
 }

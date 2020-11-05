@@ -47,6 +47,7 @@ import org.junit.jupiter.api.Test;
 public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   private static final Bytes DATA = Bytes.wrap("Hello World".getBytes(UTF_8));
+  private static final Bytes CID = Bytes.fromHexString("0x0171a0e402201dc01772ee0171f5f614c673e3c7fa1107a8cf727bdf5a6dadb379e93c0d1d00");
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
@@ -70,12 +71,11 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final ObjectMapper mapper = new ObjectMapper();
-    final Bytes dataToSign = new FcCidEncoder().createCid(DATA);
     final Map<String, String> metaData = Map.of("type", "message", "extra", DATA.toBase64String());
     final JsonNode params =
         mapper.convertValue(
             List.of(
-                identifier.encode(FilecoinNetwork.MAINNET), dataToSign.toBase64String(), metaData),
+                identifier.encode(FilecoinNetwork.MAINNET), CID.toBase64String(), metaData),
             JsonNode.class);
 
     final Request request = new Request("2.0", "Filecoin.WalletSign", params, id);
@@ -87,7 +87,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("jsonrpc", equalTo("2.0"), "id", equalTo(id.asInt()));
 
-    final BlsArtifactSignature expectedSignature = signatureGenerator.sign(dataToSign);
+    final BlsArtifactSignature expectedSignature = signatureGenerator.sign(CID);
     final Map<String, Object> result = response.body().jsonPath().get("result");
     assertThat(result.get("Type")).isEqualTo(2);
     assertThat(result.get("Data"))
