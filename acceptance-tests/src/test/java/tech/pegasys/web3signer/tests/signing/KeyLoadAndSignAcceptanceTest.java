@@ -158,9 +158,9 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         .when()
         .post(Signer.signPath(KeyType.BLS))
         .then()
-        .assertThat()
         .statusCode(200)
-        .body(equalToIgnoringCase(expectedSignature));
+        .contentType(ContentType.JSON)
+        .body("signature", equalToIgnoringCase(expectedSignature));
   }
 
   private String createBody(final KeyType keyType) throws JsonProcessingException {

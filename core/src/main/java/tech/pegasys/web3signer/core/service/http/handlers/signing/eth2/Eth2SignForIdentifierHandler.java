@@ -21,6 +21,7 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JS
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
+import io.vertx.ext.web.MIMEHeader;
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
@@ -29,6 +30,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -219,6 +221,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     final String acceptableContentType = routingContext.getAcceptableContentType();
     final String contentType;
     final String body;
+
+    LOG.trace("Acceptable Content Type {}", acceptableContentType);
     if (Objects.equal("application/json", acceptableContentType)) {
       contentType = JSON_UTF_8;
       body = new JsonObject().put("signature", signature).encode();
