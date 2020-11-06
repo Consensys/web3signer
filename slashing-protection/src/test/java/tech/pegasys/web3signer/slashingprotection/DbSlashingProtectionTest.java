@@ -384,4 +384,52 @@ public class DbSlashingProtectionTest {
     verify(signedAttestationsDao).minimumTargetEpoch(any(), eq(VALIDATOR_ID));
     verify(signedAttestationsDao, never()).insertAttestation(any(), any());
   }
+
+  @Test
+  public void slashingProtectionEnactedIfAttestationWithInvalidGvr() {
+    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(Bytes.of(1)));
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+        .isFalse();
+
+    verify(metadataDao).findGenesisValidatorsRoot(any());
+    verify(signedAttestationsDao, never()).insertAttestation(any(), any());
+  }
+
+  @Test
+  public void slashingProtectionEnactedIfBlockWithInvalidGvr() {
+    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(Bytes.of(1)));
+
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
+
+    verify(metadataDao).findGenesisValidatorsRoot(any());
+    verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
+  }
+
+  @Test
+  public void registersGenesisValidatorsRootIfItDoesNotExist() {
+    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.empty());
+    dbSlashingProtection.registerGenesisValidatorsRoot(GVR);
+    verify(metadataDao).insertGenesisValidatorsRoot(any(), eq(GVR));
+  }
+
+  @Test
+  public void registeringSkippedForGenesisValidatorsRootIfAlreadyExists() {
+    dbSlashingProtection.registerGenesisValidatorsRoot(GVR);
+    verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
+  }
+
+  @Test
+  public void registeringFailsForGenesisValidatorsRootIfDifferent() {
+    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(Bytes.of(1)));
+    assertThatThrownBy(() -> dbSlashingProtection.registerGenesisValidatorsRoot(GVR))
+        .hasMessage(
+            "Genesis validators root "
+                + GVR
+                + " does not match slashing protection db validators root")
+        .isInstanceOf(IllegalStateException.class);
+    verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
+  }
 }

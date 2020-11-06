@@ -116,8 +116,8 @@ public class DbSlashingProtection implements SlashingProtection {
           if (!validGvr.orElse(true)) {
             throw new IllegalStateException(
                 String.format(
-                    "Genesis validators root %s does not match database value %s",
-                    genesisValidatorsRoot, dbGenesisValidatorsRoot));
+                    "Genesis validators root %s does not match slashing protection db validators root",
+                    genesisValidatorsRoot));
           } else if (dbGenesisValidatorsRoot.isEmpty()) {
             metadataDao.insertGenesisValidatorsRoot(h, genesisValidatorsRoot);
           }
