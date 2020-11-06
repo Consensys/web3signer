@@ -62,12 +62,12 @@ public class InterchangeV5Manager implements InterchangeManager {
   @Override
   public void export(final OutputStream out) throws IOException {
     try (final JsonGenerator jsonGenerator = mapper.getFactory().createGenerator(out)) {
-      jsonGenerator.writeStartObject();
-
       final Optional<Bytes> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
       if (gvr.isEmpty()) {
         throw new RuntimeException("No genesis validators root for slashing protection data");
       }
+
+      jsonGenerator.writeStartObject();
 
       final Metadata metadata = new Metadata(FORMAT_VERSION, gvr.get());
 

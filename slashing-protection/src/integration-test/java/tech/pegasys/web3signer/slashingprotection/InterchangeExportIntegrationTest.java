@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
@@ -39,6 +40,8 @@ import org.junit.jupiter.api.Test;
 
 public class InterchangeExportIntegrationTest {
 
+  private static final String DB_USERNAME = "postgres";
+  private static final String DB_PASSWORD = "postgres";
   private final SignedBlocksDao signedBlocks = new SignedBlocksDao();
   private final SignedAttestationsDao signedAttestations = new SignedAttestationsDao();
   private final ValidatorsDao validators = new ValidatorsDao();
@@ -60,11 +63,8 @@ public class InterchangeExportIntegrationTest {
   @Test
   void canCreateDatabaseWithEntries() throws IOException {
     final EmbeddedPostgres db = setup();
-
-    final String databaseUrl =
-        String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-
-    final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
+    final String databaseUrl = getDatabaseUrl(db);
+    final Jdbi jdbi = DbConnection.createConnection(databaseUrl, DB_USERNAME, DB_PASSWORD);
 
     jdbi.useTransaction(
         h -> metadata.insertGenesisValidatorsRoot(h, Bytes.fromHexString("FFFFFFFF")));
@@ -136,5 +136,24 @@ public class InterchangeExportIntegrationTest {
         assertThat(attestation.getTargetEpoch()).isEqualTo(UInt64.valueOf(a));
       }
     }
+  }
+
+  @Test
+  void failToExportIfGenesisValidatorRootDoesNotExist() throws IOException {
+    final EmbeddedPostgres db = setup();
+    final String databaseUrl = getDatabaseUrl(db);
+
+    final OutputStream exportOutput = new ByteArrayOutputStream();
+    final SlashingProtection slashingProtection =
+        SlashingProtectionFactory.createSlashingProtection(databaseUrl, DB_USERNAME, DB_PASSWORD);
+    assertThatThrownBy(() -> slashingProtection.export(exportOutput))
+        .hasMessage("No genesis validators root for slashing protection data")
+        .isInstanceOf(RuntimeException.class);
+    exportOutput.close();
+    assertThat(exportOutput.toString()).isEmpty();
+  }
+
+  private String getDatabaseUrl(final EmbeddedPostgres db) {
+    return String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
   }
 }
