@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
@@ -24,13 +25,9 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.Resources;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
@@ -45,19 +42,14 @@ public class InterchangeExportIntegrationTest {
   private final SignedBlocksDao signedBlocks = new SignedBlocksDao();
   private final SignedAttestationsDao signedAttestations = new SignedAttestationsDao();
   private final ValidatorsDao validators = new ValidatorsDao();
+  private final MetadataDao metadata = new MetadataDao();
 
-  private EmbeddedPostgres setup() throws IOException, URISyntaxException {
+  private EmbeddedPostgres setup() throws IOException {
     final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
-
-    final String migrationsFile = Path.of("migrations", "postgresql", "V1__initial.sql").toString();
-
-    final Path schemaPath = Paths.get(Resources.getResource(migrationsFile).toURI());
-
-    final Path migrationPath = schemaPath.getParent();
 
     final Flyway flyway =
         Flyway.configure()
-            .locations("filesystem:" + migrationPath.toString())
+            .locations("migrations/postgresql")
             .dataSource(slashingDatabase.getPostgresDatabase())
             .load();
     flyway.migrate();
@@ -66,13 +58,16 @@ public class InterchangeExportIntegrationTest {
   }
 
   @Test
-  void canCreateDatabaseWithEntries() throws IOException, URISyntaxException {
+  void canCreateDatabaseWithEntries() throws IOException {
     final EmbeddedPostgres db = setup();
 
     final String databaseUrl =
         String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
 
     final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
+
+    jdbi.useTransaction(
+        h -> metadata.insertGenesisValidatorsRoot(h, Bytes.fromHexString("FFFFFFFF")));
 
     final int VALIDATOR_COUNT = 2;
     final int TOTAL_BLOCKS_SIGNED = 6;
