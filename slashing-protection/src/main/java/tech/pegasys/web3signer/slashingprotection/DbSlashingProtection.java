@@ -111,28 +111,26 @@ public class DbSlashingProtection implements SlashingProtection {
     jdbi.useTransaction(
         SERIALIZABLE,
         h -> {
-          final Optional<Boolean> validGvr = isValidGenesisValidatorsRoot(genesisValidatorsRoot, h);
-          final Optional<Bytes> dbGenesisValidatorsRoot = metadataDao.findGenesisValidatorsRoot(h);
-          if (!validGvr.orElse(true)) {
+          final Optional<Bytes> dbGvr = metadataDao.findGenesisValidatorsRoot(h);
+          final Optional<Boolean> isValidGvr = dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot));
+          if (!isValidGvr.orElse(true)) {
             throw new IllegalStateException(
                 String.format(
                     "Genesis validators root %s does not match slashing protection db validators root",
                     genesisValidatorsRoot));
-          } else if (dbGenesisValidatorsRoot.isEmpty()) {
+          } else if (dbGvr.isEmpty()) {
             metadataDao.insertGenesisValidatorsRoot(h, genesisValidatorsRoot);
           }
         });
   }
 
-  private boolean validateGenesisValidatorsRoot(final Bytes genesisValidatorsRoot) {
+  private boolean isValidGenesisValidatorsRoot(final Bytes genesisValidatorsRoot) {
     return jdbi.inTransaction(
-        SERIALIZABLE, h -> isValidGenesisValidatorsRoot(genesisValidatorsRoot, h).orElse(false));
-  }
-
-  private Optional<Boolean> isValidGenesisValidatorsRoot(
-      final Bytes genesisValidatorsRoot, final Handle h) {
-    final Optional<Bytes> dbGenesisValidatorsRoot = metadataDao.findGenesisValidatorsRoot(h);
-    return dbGenesisValidatorsRoot.map(gvr -> gvr.equals(genesisValidatorsRoot));
+        SERIALIZABLE,
+        h -> {
+          final Optional<Bytes> dbGvr = metadataDao.findGenesisValidatorsRoot(h);
+          return dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(false);
+        });
   }
 
   @Override
@@ -153,7 +151,7 @@ public class DbSlashingProtection implements SlashingProtection {
       return false;
     }
 
-    if (!validateGenesisValidatorsRoot(genesisValidatorsRoot)) {
+    if (!isValidGenesisValidatorsRoot(genesisValidatorsRoot)) {
       LOG.warn(
           "Genesis validators root {} does not match slashing protection db validators root",
           genesisValidatorsRoot);
@@ -257,7 +255,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes signingRoot,
       final UInt64 blockSlot,
       final Bytes genesisValidatorsRoot) {
-    if (!validateGenesisValidatorsRoot(genesisValidatorsRoot)) {
+    if (!isValidGenesisValidatorsRoot(genesisValidatorsRoot)) {
       LOG.warn(
           "Genesis validators root {} does not match slashing protection db validators root",
           genesisValidatorsRoot);
