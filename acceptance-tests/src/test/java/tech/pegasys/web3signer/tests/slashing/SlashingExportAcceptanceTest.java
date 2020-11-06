@@ -18,6 +18,7 @@ import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.core.signing.Eth2Network;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
@@ -30,7 +31,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
 import io.restassured.response.Response;
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -69,7 +69,7 @@ public class SlashingExportAcceptanceTest extends SlashingAcceptanceTest {
 
     assertThat(mappedData.getMetadata().getFormatVersionAsString()).isEqualTo("5");
     assertThat(mappedData.getMetadata().getGenesisValidatorsRoot())
-        .isEqualTo(Bytes.fromHexString("FFFFFFFF"));
+        .isEqualTo(Eth2Network.MEDALLA.getGenesisValidatorsRoot());
 
     assertThat(mappedData.getSignedArtifacts()).hasSize(1);
     final SignedArtifacts artifacts = mappedData.getSignedArtifacts().get(0);
