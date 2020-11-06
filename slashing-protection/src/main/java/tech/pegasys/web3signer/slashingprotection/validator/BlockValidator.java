@@ -24,6 +24,7 @@ import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 
 public class BlockValidator {
+
   private static final Logger LOG = LogManager.getLogger();
 
   private final Handle handle;
@@ -51,9 +52,15 @@ public class BlockValidator {
         .isEmpty();
   }
 
+  public boolean existsInDatabase() {
+    return signedBlocksDao
+        .findMatchingBlock(handle, validatorId, blockSlot, signingRoot)
+        .isPresent();
+  }
+
   public boolean isOlderThanWatermark() {
     final Optional<UInt64> minimumSlot = signedBlocksDao.minimumSlot(handle, validatorId);
-    if (minimumSlot.map(slot -> blockSlot.compareTo(slot) < 0).orElse(false)) {
+    if (minimumSlot.map(slot -> blockSlot.compareTo(slot) <= 0).orElse(false)) {
       LOG.warn(
           "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
       return true;
@@ -61,10 +68,8 @@ public class BlockValidator {
     return false;
   }
 
-  public void insertIfNotExist() {
-    if (signedBlocksDao.findMatchingBlock(handle, validatorId, blockSlot, signingRoot).isEmpty()) {
-      final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
-      signedBlocksDao.insertBlockProposal(handle, signedBlock);
-    }
+  public void insertToDatabase() {
+    final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
+    signedBlocksDao.insertBlockProposal(handle, signedBlock);
   }
 }

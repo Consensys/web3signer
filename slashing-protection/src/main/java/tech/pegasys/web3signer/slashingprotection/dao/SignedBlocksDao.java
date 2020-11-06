@@ -38,7 +38,7 @@ public class SignedBlocksDao {
       final Handle handle, final int validatorId, final UInt64 slot, final Bytes signingRoot) {
     return handle
         .createQuery(
-            "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root == ?")
+            "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root = ?")
         .bind(0, validatorId)
         .bind(1, slot)
         .bind(2, signingRoot)

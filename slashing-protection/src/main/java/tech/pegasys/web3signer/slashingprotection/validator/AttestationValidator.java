@@ -64,14 +64,16 @@ public class AttestationValidator {
     return true;
   }
 
-  public void insertIfNotExist() {
-    if (signedAttestationsDao
+  public boolean existsInDatabase() {
+    return signedAttestationsDao
         .findMatchingAttestation(handle, validatorId, targetEpoch, signingRoot)
-        .isEmpty()) {
-      final SignedAttestation signedAttestation =
-          new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
-      signedAttestationsDao.insertAttestation(handle, signedAttestation);
-    }
+        .isPresent();
+  }
+
+  public void insertToDatabase() {
+    final SignedAttestation signedAttestation =
+        new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
+    signedAttestationsDao.insertAttestation(handle, signedAttestation);
   }
 
   public boolean directlyConflictsWithExistingEntry() {
@@ -97,7 +99,7 @@ public class AttestationValidator {
   public boolean hasTargetOlderThanWatermark() {
     final Optional<UInt64> minimumTargetEpoch =
         signedAttestationsDao.minimumTargetEpoch(handle, validatorId);
-    if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) < 0).orElse(false)) {
+    if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).orElse(false)) {
       LOG.warn(
           "Attestation target epoch {} is below minimum existing attestation target epoch {}",
           targetEpoch,

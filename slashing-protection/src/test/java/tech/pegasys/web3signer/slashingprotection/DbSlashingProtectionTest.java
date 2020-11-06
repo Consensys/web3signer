@@ -315,6 +315,10 @@ public class DbSlashingProtectionTest {
   @Test
   public void slashingProtectionEnactedIfBlockWithSlotLessThanMinSlot() {
     when(signedBlocksDao.minimumSlot(any(), anyInt())).thenReturn(Optional.of(UInt64.valueOf(2)));
+    when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
+        .thenReturn(emptyList());
+    when(signedBlocksDao.findMatchingBlock(any(), anyInt(), any(), any()))
+        .thenReturn(Optional.empty());
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, UInt64.ONE)).isFalse();
 

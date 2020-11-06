@@ -126,17 +126,18 @@ public class DbSlashingProtection implements SlashingProtection {
 
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
 
-          final boolean conflictsWithExistingAttestations =
-              attestationValidator.directlyConflictsWithExistingEntry()
-                  || attestationValidator.hasSourceOlderThanWatermark()
-                  || attestationValidator.hasTargetOlderThanWatermark()
-                  || attestationValidator.isSurroundedByExistingAttestation()
-                  || attestationValidator.surroundsExistingAttestation();
-
-          if (!conflictsWithExistingAttestations) {
-            attestationValidator.insertIfNotExist();
+          if (attestationValidator.directlyConflictsWithExistingEntry()
+              || attestationValidator.isSurroundedByExistingAttestation()
+              || attestationValidator.surroundsExistingAttestation()) {
+            return false;
+          } else if (attestationValidator.existsInDatabase()) {
+            return true;
+          } else if (attestationValidator.hasSourceOlderThanWatermark()
+              || attestationValidator.hasTargetOlderThanWatermark()) {
+            return false;
           }
-          return !conflictsWithExistingAttestations;
+          attestationValidator.insertToDatabase();
+          return true;
         });
   }
 
@@ -152,14 +153,15 @@ public class DbSlashingProtection implements SlashingProtection {
 
           lockForValidator(h, LockType.BLOCK, validatorId);
 
-          final boolean conflictsWithExistingEntries =
-              blockValidator.directlyConflictsWithExistingEntry()
-                  || blockValidator.isOlderThanWatermark();
-
-          if (!conflictsWithExistingEntries) {
-            blockValidator.insertIfNotExist();
+          if (blockValidator.directlyConflictsWithExistingEntry()) {
+            return false;
+          } else if (blockValidator.existsInDatabase()) {
+            return true;
+          } else if (blockValidator.isOlderThanWatermark()) {
+            return false;
           }
-          return !conflictsWithExistingEntries;
+          blockValidator.insertToDatabase();
+          return true;
         });
   }
 
