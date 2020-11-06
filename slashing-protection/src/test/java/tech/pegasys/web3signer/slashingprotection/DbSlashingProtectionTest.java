@@ -78,11 +78,14 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
-  public void blockCanSignWhenNoMatchForPublicKey() {
-    when(signedBlocksDao.findExistingBlock(any(), anyInt(), any())).thenReturn(Optional.empty());
+  public void blockCanSignWhenNoMatchForValidator() {
+    when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
+        .thenReturn(emptyList());
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isTrue();
-    verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
+    verify(signedBlocksDao)
+        .findBlockForSlotWithDifferentSigningRoot(
+            any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
     verify(signedBlocksDao)
         .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
   }
@@ -90,22 +93,28 @@ public class DbSlashingProtectionTest {
   @Test
   public void blockCanSignWhenExactlyMatchesBlock() {
     final SignedBlock signedBlock = new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT);
-    when(signedBlocksDao.findExistingBlock(any(), anyInt(), any()))
-        .thenReturn(Optional.of(signedBlock));
+    when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
+        .thenReturn(emptyList());
+    when(signedBlocksDao.findMatchingBlock(any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT))).thenReturn(
+        Optional.of(signedBlock));
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isTrue();
-    verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
+    verify(signedBlocksDao)
+        .findBlockForSlotWithDifferentSigningRoot(
+            any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
     verify(signedBlocksDao, never()).insertBlockProposal(any(), refEq(signedBlock));
   }
 
   @Test
   public void blockCannotSignWhenSamePublicKeyAndSlotButDifferentSigningRoot() {
     final SignedBlock signedBlock = new SignedBlock(VALIDATOR_ID, SLOT, Bytes.of(4));
-    when(signedBlocksDao.findExistingBlock(any(), anyInt(), any()))
-        .thenReturn(Optional.of(signedBlock));
+    when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
+        .thenReturn(List.of(signedBlock));
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isFalse();
-    verify(signedBlocksDao).findExistingBlock(any(), eq(VALIDATOR_ID), eq(SLOT));
+    verify(signedBlocksDao)
+        .findBlockForSlotWithDifferentSigningRoot(
+            any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
     verify(signedBlocksDao, never())
         .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
   }
@@ -295,8 +304,8 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void slashingProtectionEnactedIfBlockWithNullSigningRootExists() {
-    when(signedBlocksDao.findExistingBlock(any(), anyInt(), any()))
-        .thenReturn(Optional.of(new SignedBlock(1, UInt64.valueOf(1), null)));
+    when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
+        .thenReturn(List.of(new SignedBlock(1, UInt64.valueOf(1), null)));
 
     final boolean result = dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT);
 

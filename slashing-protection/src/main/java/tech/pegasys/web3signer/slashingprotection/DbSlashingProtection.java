@@ -17,7 +17,6 @@ import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMIT
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
@@ -26,7 +25,6 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
 import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
-import tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -150,22 +148,18 @@ public class DbSlashingProtection implements SlashingProtection {
         READ_COMMITTED,
         h -> {
           final BlockValidator blockValidator =
-              new BlockValidator(
-                  h, publicKey, signingRoot, blockSlot, validatorId, signedBlocksDao);
+              new BlockValidator(h, signingRoot, blockSlot, validatorId, signedBlocksDao);
 
           lockForValidator(h, LockType.BLOCK, validatorId);
-          final MatchesPrior priorMatch = blockValidator.matchesPriorBlockAtSlot();
-          if (priorMatch == MatchesPrior.DOES_NOT_MATCH) {
-            return false;
-          } else if (priorMatch == MatchesPrior.MATCHES) {
-            return true;
+
+          final boolean conflictsWithExistingEntries =
+              blockValidator.directlyConflictsWithExistingEntry()
+                  || blockValidator.isOlderThanWatermark();
+
+          if (!conflictsWithExistingEntries) {
+            blockValidator.insertIfNotExist();
           }
-          final boolean conflictsWithExistingAttestations = blockValidator.isOlderThanWatermark();
-          if (!conflictsWithExistingAttestations) {
-            final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
-            signedBlocksDao.insertBlockProposal(h, signedBlock);
-          }
-          return !conflictsWithExistingAttestations;
+          return !conflictsWithExistingEntries;
         });
   }
 

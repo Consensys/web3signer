@@ -12,10 +12,6 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
-import static tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior.DOES_NOT_MATCH;
-import static tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior.MATCHES;
-import static tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior.NO_PRIOR;
-
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 
@@ -31,7 +27,6 @@ public class BlockValidator {
   private static final Logger LOG = LogManager.getLogger();
 
   private final Handle handle;
-  private final Bytes publicKey;
   private final Bytes signingRoot;
   private final UInt64 blockSlot;
   private final int validatorId;
@@ -39,38 +34,21 @@ public class BlockValidator {
 
   public BlockValidator(
       final Handle handle,
-      final Bytes publicKey,
       final Bytes signingRoot,
       final UInt64 blockSlot,
       final int validatorId,
       final SignedBlocksDao signedBlocksDao) {
     this.handle = handle;
-    this.publicKey = publicKey;
     this.signingRoot = signingRoot;
     this.blockSlot = blockSlot;
     this.validatorId = validatorId;
     this.signedBlocksDao = signedBlocksDao;
   }
 
-  public MatchesPrior matchesPriorBlockAtSlot() {
-    final Optional<SignedBlock> existingBlock =
-        signedBlocksDao.findExistingBlock(handle, validatorId, blockSlot);
-    if (existingBlock.isPresent()) {
-      if (existingBlock.get().getSigningRoot().isEmpty()) {
-        LOG.warn(
-            "Signed block ({}, {}) exists with no signing root",
-            publicKey,
-            existingBlock.get().getSlot());
-        return DOES_NOT_MATCH;
-      } else if (!existingBlock.get().getSigningRoot().get().equals(signingRoot)) {
-        LOG.warn("Detected double signed block {} for {}", existingBlock.get(), publicKey);
-        // same slot and signing_root is allowed for broadcasting previously signed block
-        return DOES_NOT_MATCH;
-      } else {
-        return MATCHES;
-      }
-    }
-    return NO_PRIOR;
+  public boolean directlyConflictsWithExistingEntry() {
+    return !signedBlocksDao
+        .findBlockForSlotWithDifferentSigningRoot(handle, validatorId, blockSlot, signingRoot)
+        .isEmpty();
   }
 
   public boolean isOlderThanWatermark() {
@@ -81,5 +59,12 @@ public class BlockValidator {
       return true;
     }
     return false;
+  }
+
+  public void insertIfNotExist() {
+    if (signedBlocksDao.findMatchingBlock(handle, validatorId, blockSlot, signingRoot).isEmpty()) {
+      final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
+      signedBlocksDao.insertBlockProposal(handle, signedBlock);
+    }
   }
 }

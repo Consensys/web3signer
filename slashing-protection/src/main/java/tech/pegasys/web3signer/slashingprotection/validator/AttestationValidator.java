@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.slashingprotection.validator;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -28,7 +27,7 @@ public class AttestationValidator {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final Handle h;
+  private final Handle handle;
   private final Bytes publicKey;
   private final Bytes signingRoot;
   private final UInt64 sourceEpoch;
@@ -37,14 +36,14 @@ public class AttestationValidator {
   private final SignedAttestationsDao signedAttestationsDao;
 
   public AttestationValidator(
-      final Handle h,
+      final Handle handle,
       final Bytes publicKey,
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch,
       final int validatorId,
       final SignedAttestationsDao signedAttestationsDao) {
-    this.h = h;
+    this.handle = handle;
     this.publicKey = publicKey;
     this.signingRoot = signingRoot;
     this.sourceEpoch = sourceEpoch;
@@ -67,25 +66,24 @@ public class AttestationValidator {
 
   public void insertIfNotExist() {
     if (signedAttestationsDao
-        .findMatchingAttestation(h, validatorId, targetEpoch, signingRoot)
+        .findMatchingAttestation(handle, validatorId, targetEpoch, signingRoot)
         .isEmpty()) {
       final SignedAttestation signedAttestation =
           new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
-      signedAttestationsDao.insertAttestation(h, signedAttestation);
+      signedAttestationsDao.insertAttestation(handle, signedAttestation);
     }
   }
 
   public boolean directlyConflictsWithExistingEntry() {
-    final List<SignedAttestation> signedAttestationList =
-        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
-            h, validatorId, targetEpoch, signingRoot);
-
-    return !signedAttestationList.isEmpty();
+    return !signedAttestationsDao
+        .findAttestationsForEpochWithDifferentSigningRoot(
+            handle, validatorId, targetEpoch, signingRoot)
+        .isEmpty();
   }
 
   public boolean hasSourceOlderThanWatermark() {
     final Optional<UInt64> minimumSourceEpoch =
-        signedAttestationsDao.minimumSourceEpoch(h, validatorId);
+        signedAttestationsDao.minimumSourceEpoch(handle, validatorId);
     if (minimumSourceEpoch.map(minEpoch -> sourceEpoch.compareTo(minEpoch) < 0).orElse(false)) {
       LOG.warn(
           "Attestation source epoch {} is below minimum existing attestation source epoch {}",
@@ -98,7 +96,7 @@ public class AttestationValidator {
 
   public boolean hasTargetOlderThanWatermark() {
     final Optional<UInt64> minimumTargetEpoch =
-        signedAttestationsDao.minimumTargetEpoch(h, validatorId);
+        signedAttestationsDao.minimumTargetEpoch(handle, validatorId);
     if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).orElse(false)) {
       LOG.warn(
           "Attestation target epoch {} is below minimum existing attestation target epoch {}",
@@ -112,7 +110,8 @@ public class AttestationValidator {
   public boolean surroundsExistingAttestation() {
     // check that no previous vote is surrounded by attestation
     final Optional<SignedAttestation> surroundedAttestation =
-        signedAttestationsDao.findSurroundedAttestation(h, validatorId, sourceEpoch, targetEpoch);
+        signedAttestationsDao.findSurroundedAttestation(
+            handle, validatorId, sourceEpoch, targetEpoch);
     if (surroundedAttestation.isPresent()) {
       LOG.warn(
           "Detected surrounded attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
@@ -129,7 +128,8 @@ public class AttestationValidator {
   public boolean isSurroundedByExistingAttestation() {
     // check that no previous vote is surrounding the attestation
     final Optional<SignedAttestation> surroundingAttestation =
-        signedAttestationsDao.findSurroundingAttestation(h, validatorId, sourceEpoch, targetEpoch);
+        signedAttestationsDao.findSurroundingAttestation(
+            handle, validatorId, sourceEpoch, targetEpoch);
     if (surroundingAttestation.isPresent()) {
       LOG.warn(
           "Detected surrounding attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
