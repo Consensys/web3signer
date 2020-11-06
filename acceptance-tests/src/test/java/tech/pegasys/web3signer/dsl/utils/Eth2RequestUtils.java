@@ -264,7 +264,7 @@ public class Eth2RequestUtils {
             Bytes4.fromHexString("0x00000001"),
             UInt64.valueOf(1));
     final Bytes32 genesisValidatorsRoot =
-        Bytes32.fromHexString("0x270d43e74ce340de4bca2b1936beca0f4f5408d9e78aec4850920baf659d5b69");
+        Bytes32.fromHexString("0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673");
     return new ForkInfo(fork, genesisValidatorsRoot);
   }
 }
