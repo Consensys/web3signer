@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -20,6 +21,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +41,7 @@ public class InterchangeV5Manager implements InterchangeManager {
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
+  private final MetadataDao metadataDao;
   private final ObjectMapper mapper;
 
   public InterchangeV5Manager(
@@ -46,11 +49,13 @@ public class InterchangeV5Manager implements InterchangeManager {
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
+      final MetadataDao metadataDao,
       final ObjectMapper mapper) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
+    this.metadataDao = metadataDao;
     this.mapper = mapper;
   }
 
@@ -59,7 +64,12 @@ public class InterchangeV5Manager implements InterchangeManager {
     try (final JsonGenerator jsonGenerator = mapper.getFactory().createGenerator(out)) {
       jsonGenerator.writeStartObject();
 
-      final Metadata metadata = new Metadata(FORMAT_VERSION, Bytes.fromHexString("FFFFFFFF"));
+      final Optional<Bytes> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
+      if (gvr.isEmpty()) {
+        throw new RuntimeException("No genesis validators root for slashing protection data");
+      }
+
+      final Metadata metadata = new Metadata(FORMAT_VERSION, gvr.get());
 
       jsonGenerator.writeFieldName("metadata");
       mapper.writeValue(jsonGenerator, metadata);

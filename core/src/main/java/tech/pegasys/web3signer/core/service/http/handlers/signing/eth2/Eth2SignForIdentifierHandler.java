@@ -151,12 +151,17 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       final Bytes publicKey,
       final Bytes signingRoot,
       final Eth2SigningRequestBody eth2SigningRequestBody) {
+    final Optional<Bytes> gvr =
+        Optional.ofNullable(eth2SigningRequestBody.getForkInfo())
+            .map(ForkInfo::getGenesisValidatorsRoot);
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
+        checkArgument(gvr.isPresent(), "genesis_validators_root must be specified");
         final BeaconBlock beaconBlock = eth2SigningRequestBody.getBlock();
         final UInt64 blockSlot = UInt64.valueOf(beaconBlock.slot.bigIntegerValue());
-        return slashingProtection.get().maySignBlock(publicKey, signingRoot, blockSlot);
+        return slashingProtection.get().maySignBlock(publicKey, signingRoot, blockSlot, gvr.get());
       case ATTESTATION:
+        checkArgument(gvr.isPresent(), "genesis_validators_root must be specified");
         final AttestationData attestation = eth2SigningRequestBody.getAttestation();
         return slashingProtection
             .get()
@@ -164,7 +169,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                 publicKey,
                 signingRoot,
                 toUInt64(attestation.source.epoch),
-                toUInt64(attestation.target.epoch));
+                toUInt64(attestation.target.epoch),
+                gvr.get());
       default:
         return true;
     }

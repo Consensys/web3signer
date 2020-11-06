@@ -10,29 +10,23 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.slashingprotection;
+package tech.pegasys.web3signer.core.signing;
 
-import java.io.OutputStream;
-import java.util.List;
+import static org.apache.tuweni.bytes.Bytes32.fromHexString;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt64;
+import org.apache.tuweni.bytes.Bytes32;
 
-public interface SlashingProtection {
+public enum Eth2Network {
+  MEDALLA(fromHexString("0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"));
 
-  boolean maySignAttestation(
-      Bytes publicKey,
-      Bytes signingRoot,
-      UInt64 sourceEpoch,
-      UInt64 targetEpoch,
-      Bytes genesisValidatorsRoot);
+  private final Bytes gvr;
 
-  boolean maySignBlock(
-      Bytes publicKey, Bytes signingRoot, UInt64 blockSlot, Bytes genesisValidatorsRoot);
+  Eth2Network(final Bytes32 gvr) {
+    this.gvr = gvr;
+  }
 
-  void registerValidators(List<Bytes> validators);
-
-  void export(OutputStream output);
-
-  void registerGenesisValidatorsRoot(Bytes genesisValidatorsRoot);
+  public Bytes getGenesisValidatorsRoot() {
+    return gvr;
+  }
 }

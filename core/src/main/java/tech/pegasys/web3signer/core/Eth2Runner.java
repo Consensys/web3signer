@@ -40,6 +40,7 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.core.signing.Eth2Network;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
@@ -68,6 +69,7 @@ public class Eth2Runner extends Runner {
   private final AzureKeyVaultParameters azureKeyVaultParameters;
 
   private static final Logger LOG = LogManager.getLogger();
+  private final Eth2Network network;
 
   public Eth2Runner(
       final Config config,
@@ -75,8 +77,10 @@ public class Eth2Runner extends Runner {
       final String slashingProtectionDbUrl,
       final String slashingProtectionDbUser,
       final String slashingProtectionDbPassword,
-      final AzureKeyVaultParameters azureKeyVaultParameters) {
+      final AzureKeyVaultParameters azureKeyVaultParameters,
+      final Eth2Network network) {
     super(config);
+    this.network = network;
     this.slashingProtection =
         createSlashingProtection(
             slashingProtectionEnabled,
@@ -187,7 +191,10 @@ public class Eth2Runner extends Runner {
             .map(Bytes::fromHexString)
             .collect(Collectors.toList());
     slashingProtection.ifPresent(
-        slashingProtection -> slashingProtection.registerValidators(validators));
+        slashingProtection -> {
+          slashingProtection.registerGenesisValidatorsRoot(network.getGenesisValidatorsRoot());
+          slashingProtection.registerValidators(validators);
+        });
 
     return DefaultArtifactSignerProvider.create(signers);
   }

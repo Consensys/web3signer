@@ -16,6 +16,7 @@ import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFacto
 
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
+import tech.pegasys.web3signer.core.signing.Eth2Network;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.File;
@@ -82,6 +83,14 @@ public class Eth2SubCommand extends ModeSubCommand {
       paramLabel = "<jdbc password>")
   private String slashingProtectionDbPassword;
 
+  @Option(
+      names = {"--network"},
+      description =
+          "The Eth2 network that is being used for signing, the corresponding genesis_validator_root will be used to validate signing requests are from the correct chain",
+      paramLabel = "<network name>",
+      arity = "1")
+  private Eth2Network network = Eth2Network.MEDALLA;
+
   @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
@@ -93,7 +102,8 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionDbUrl,
         slashingProtectionDbUsername,
         slashingProtectionDbPassword,
-        azureKeyVaultParameters);
+        azureKeyVaultParameters,
+        network);
   }
 
   private void validateArgs() {
