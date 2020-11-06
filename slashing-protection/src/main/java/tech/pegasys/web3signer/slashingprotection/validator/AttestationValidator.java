@@ -97,7 +97,7 @@ public class AttestationValidator {
   public boolean hasTargetOlderThanWatermark() {
     final Optional<UInt64> minimumTargetEpoch =
         signedAttestationsDao.minimumTargetEpoch(handle, validatorId);
-    if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).orElse(false)) {
+    if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) < 0).orElse(false)) {
       LOG.warn(
           "Attestation target epoch {} is below minimum existing attestation target epoch {}",
           targetEpoch,

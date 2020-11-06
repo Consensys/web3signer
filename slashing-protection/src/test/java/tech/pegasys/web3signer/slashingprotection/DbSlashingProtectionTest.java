@@ -95,8 +95,8 @@ public class DbSlashingProtectionTest {
     final SignedBlock signedBlock = new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT);
     when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
         .thenReturn(emptyList());
-    when(signedBlocksDao.findMatchingBlock(any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT))).thenReturn(
-        Optional.of(signedBlock));
+    when(signedBlocksDao.findMatchingBlock(any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT)))
+        .thenReturn(Optional.of(signedBlock));
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isTrue();
     verify(signedBlocksDao)
