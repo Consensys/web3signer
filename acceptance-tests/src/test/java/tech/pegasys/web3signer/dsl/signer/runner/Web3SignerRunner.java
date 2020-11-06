@@ -206,7 +206,7 @@ public abstract class Web3SignerRunner {
     return params;
   }
 
-  private String createEmbeddedDatabase() {
+  public static String createEmbeddedDatabase() {
     try {
       final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
       createSchemaInDataSource(slashingDatabase.getPostgresDatabase());
@@ -216,7 +216,7 @@ public abstract class Web3SignerRunner {
     }
   }
 
-  private void createSchemaInDataSource(final DataSource dataSource) {
+  private static void createSchemaInDataSource(final DataSource dataSource) {
     final Path migrationPath =
         getProjectPath()
             .toPath()
@@ -304,7 +304,7 @@ public abstract class Web3SignerRunner {
     return signerConfig;
   }
 
-  protected File getProjectPath() {
+  protected static File getProjectPath() {
     // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
     final String userDir = System.getProperty("user.dir");
     return userDir.toLowerCase().endsWith("web3signer")
