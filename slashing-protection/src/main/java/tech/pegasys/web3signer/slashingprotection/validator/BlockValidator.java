@@ -38,12 +38,12 @@ public class BlockValidator {
   private final SignedBlocksDao signedBlocksDao;
 
   public BlockValidator(
-      Handle handle,
-      Bytes publicKey,
-      Bytes signingRoot,
-      UInt64 blockSlot,
-      int validatorId,
-      SignedBlocksDao signedBlocksDao) {
+      final Handle handle,
+      final Bytes publicKey,
+      final Bytes signingRoot,
+      final UInt64 blockSlot,
+      final int validatorId,
+      final SignedBlocksDao signedBlocksDao) {
     this.handle = handle;
     this.publicKey = publicKey;
     this.signingRoot = signingRoot;

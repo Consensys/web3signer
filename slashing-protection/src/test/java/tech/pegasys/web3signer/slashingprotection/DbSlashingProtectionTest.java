@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -127,7 +128,10 @@ public class DbSlashingProtectionTest {
   public void attestationCanSignWhenExactlyMatchesExistingAttestation() {
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
-    when(signedAttestationsDao.findExistingAttestation(any(), anyInt(), any()))
+    when(signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            any(), anyInt(), any(), any()))
+        .thenReturn(emptyList());
+    when(signedAttestationsDao.findMatchingAttestation(any(), anyInt(), any(), eq(SIGNING_ROOT)))
         .thenReturn(Optional.of(attestation));
 
     assertThat(
@@ -135,7 +139,8 @@ public class DbSlashingProtectionTest {
                 PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
         .isTrue();
     verify(signedAttestationsDao)
-        .findExistingAttestation(any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH));
+        .findAttestationsForEpochWithDifferentSigningRoot(
+            any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH), eq(SIGNING_ROOT));
     verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
   }
 
@@ -143,8 +148,9 @@ public class DbSlashingProtectionTest {
   public void attestationCannotSignWhenPreviousIsSurroundingAttestation() {
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
-    when(signedAttestationsDao.findExistingAttestation(any(), anyInt(), any()))
-        .thenReturn(Optional.empty());
+    when(signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            any(), anyInt(), any(), any()))
+        .thenReturn(emptyList());
     final SignedAttestation surroundingAttestation =
         new SignedAttestation(
             VALIDATOR_ID, SOURCE_EPOCH.subtract(1), TARGET_EPOCH.subtract(1), SIGNING_ROOT);
@@ -156,7 +162,8 @@ public class DbSlashingProtectionTest {
                 PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
         .isFalse();
     verify(signedAttestationsDao)
-        .findExistingAttestation(any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH));
+        .findAttestationsForEpochWithDifferentSigningRoot(
+            any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH), eq(SIGNING_ROOT));
     verify(signedAttestationsDao)
         .findSurroundingAttestation(any(), eq(VALIDATOR_ID), eq(SOURCE_EPOCH), eq(TARGET_EPOCH));
     verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
@@ -166,8 +173,9 @@ public class DbSlashingProtectionTest {
   public void attestationCannotSignWhenPreviousIsSurroundedByAttestation() {
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
-    when(signedAttestationsDao.findExistingAttestation(any(), anyInt(), any()))
-        .thenReturn(Optional.empty());
+    when(signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            any(), anyInt(), any(), any()))
+        .thenReturn(emptyList());
     when(signedAttestationsDao.findSurroundingAttestation(any(), anyInt(), any(), any()))
         .thenReturn(Optional.empty());
     final SignedAttestation surroundedAttestation =
@@ -180,7 +188,8 @@ public class DbSlashingProtectionTest {
                 PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
         .isFalse();
     verify(signedAttestationsDao)
-        .findExistingAttestation(any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH));
+        .findAttestationsForEpochWithDifferentSigningRoot(
+            any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH), eq(SIGNING_ROOT));
     verify(signedAttestationsDao)
         .findSurroundingAttestation(any(), eq(VALIDATOR_ID), eq(SOURCE_EPOCH), eq(TARGET_EPOCH));
     verify(signedAttestationsDao)
@@ -192,8 +201,9 @@ public class DbSlashingProtectionTest {
   public void attestationCanSignWhenNoSurroundingOrSurroundedByAttestation() {
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
-    when(signedAttestationsDao.findExistingAttestation(any(), anyInt(), any()))
-        .thenReturn(Optional.empty());
+    when(signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            any(), anyInt(), any(), any()))
+        .thenReturn(emptyList());
     when(signedAttestationsDao.findSurroundingAttestation(any(), anyInt(), any(), any()))
         .thenReturn(Optional.empty());
     when(signedAttestationsDao.findSurroundedAttestation(any(), anyInt(), any(), any()))
@@ -204,7 +214,8 @@ public class DbSlashingProtectionTest {
                 PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
         .isTrue();
     verify(signedAttestationsDao)
-        .findExistingAttestation(any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH));
+        .findAttestationsForEpochWithDifferentSigningRoot(
+            any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH), eq(SIGNING_ROOT));
     verify(signedAttestationsDao)
         .findSurroundingAttestation(any(), eq(VALIDATOR_ID), eq(SOURCE_EPOCH), eq(TARGET_EPOCH));
     verify(signedAttestationsDao)
@@ -271,9 +282,9 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void slashingProtectionEnactedIfAttestationWithNullSigningRootExists() {
-    when(signedAttestationsDao.findExistingAttestation(any(), anyInt(), any()))
-        .thenReturn(
-            Optional.of(new SignedAttestation(1, UInt64.valueOf(1), UInt64.valueOf(2), null)));
+    when(signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            any(), anyInt(), any(), any()))
+        .thenReturn(List.of(new SignedAttestation(1, UInt64.valueOf(1), UInt64.valueOf(2), null)));
 
     final boolean result =
         dbSlashingProtection.maySignAttestation(

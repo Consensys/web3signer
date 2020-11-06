@@ -52,23 +52,29 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void findsExistingAttestationInDb() {
+  public void findsNonMatchingAttestationInDb() {
     insertValidator(Bytes.of(100), 1);
     insertAttestation(1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
 
-    final Optional<SignedAttestation> existingAttestation =
-        signedAttestationsDao.findExistingAttestation(handle, 1, UInt64.valueOf(4));
+    final List<SignedAttestation> existingAttestation =
+        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(4), Bytes.of(3));
     assertThat(existingAttestation).isNotEmpty();
-    assertThat(existingAttestation.get())
+    assertThat(existingAttestation).hasSize(1);
+    assertThat(existingAttestation.get(0))
         .isEqualToComparingFieldByField(
             new SignedAttestation(1, UInt64.valueOf(3), UInt64.valueOf(4), Bytes.of(2)));
   }
 
   @Test
   public void returnsEmptyForNonExistingAttestationInDb() {
-    assertThat(signedAttestationsDao.findExistingAttestation(handle, 1, UInt64.valueOf(1)))
+    assertThat(
+            signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+                handle, 1, UInt64.valueOf(1), Bytes.of(2)))
         .isEmpty();
-    assertThat(signedAttestationsDao.findExistingAttestation(handle, 2, UInt64.valueOf(2)))
+    assertThat(
+            signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+                handle, 2, UInt64.valueOf(2), Bytes.of(3)))
         .isEmpty();
   }
 
@@ -171,11 +177,13 @@ public class SignedAttestationsDaoTest {
         new SignedAttestation(1, UInt64.valueOf(3), UInt64.valueOf(4), null);
     signedAttestationsDao.insertAttestation(handle, attestation);
 
-    final Optional<SignedAttestation> existingAttestation =
-        signedAttestationsDao.findExistingAttestation(handle, 1, UInt64.valueOf(4));
+    final List<SignedAttestation> existingAttestations =
+        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(4), Bytes.of(2));
 
-    assertThat(existingAttestation).isNotEmpty();
-    assertThat(existingAttestation.get().getSigningRoot()).isEmpty();
+    assertThat(existingAttestations).isNotEmpty();
+    assertThat(existingAttestations).hasSize(1);
+    assertThat(existingAttestations.get(0).getSigningRoot()).isEmpty();
   }
 
   @Test

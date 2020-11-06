@@ -12,13 +12,10 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
-import static tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior.DOES_NOT_MATCH;
-import static tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior.MATCHES;
-import static tech.pegasys.web3signer.slashingprotection.validator.MatchesPrior.NO_PRIOR;
-
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -56,7 +53,7 @@ public class AttestationValidator {
     this.signedAttestationsDao = signedAttestationsDao;
   }
 
-  public boolean isValid() {
+  public boolean sourceGreaterThanTargetEpoch() {
     if (sourceEpoch.compareTo(targetEpoch) > 0) {
       LOG.warn(
           "Detected sourceEpoch {} greater than targetEpoch {} for {}",
@@ -68,26 +65,22 @@ public class AttestationValidator {
     return true;
   }
 
-  public MatchesPrior matchesPriorAttestationAtTargetEpoch() {
-    final Optional<SignedAttestation> existingAttestation =
-        signedAttestationsDao.findExistingAttestation(h, validatorId, targetEpoch);
-    if (existingAttestation.isPresent()) {
-      if (existingAttestation.get().getSigningRoot().isEmpty()) {
-        LOG.warn(
-            "Existing signed attestation ({}, {}, {}) exists with no signing root",
-            publicKey,
-            existingAttestation.get().getSourceEpoch(),
-            existingAttestation.get().getTargetEpoch());
-        return DOES_NOT_MATCH;
-      }
-      if (!existingAttestation.get().getSigningRoot().get().equals(signingRoot)) {
-        LOG.warn(
-            "Detected double signed attestation {} for {}", existingAttestation.get(), publicKey);
-        return DOES_NOT_MATCH;
-      }
-      return MATCHES;
+  public void insertIfNotExist() {
+    if (signedAttestationsDao
+        .findMatchingAttestation(h, validatorId, targetEpoch, signingRoot)
+        .isEmpty()) {
+      final SignedAttestation signedAttestation =
+          new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
+      signedAttestationsDao.insertAttestation(h, signedAttestation);
     }
-    return NO_PRIOR;
+  }
+
+  public boolean directlyConflictsWithExistingEntry() {
+    final List<SignedAttestation> signedAttestationList =
+        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            h, validatorId, targetEpoch, signingRoot);
+
+    return !signedAttestationList.isEmpty();
   }
 
   public boolean hasSourceOlderThanWatermark() {

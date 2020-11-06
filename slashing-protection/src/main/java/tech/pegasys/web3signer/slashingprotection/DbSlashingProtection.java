@@ -16,7 +16,6 @@ import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WR
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
@@ -123,29 +122,21 @@ public class DbSlashingProtection implements SlashingProtection {
                   validatorId,
                   signedAttestationsDao);
 
-          if (!attestationValidator.isValid()) {
+          if (!attestationValidator.sourceGreaterThanTargetEpoch()) {
             return false;
           }
 
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
-          final MatchesPrior priorMatch =
-              attestationValidator.matchesPriorAttestationAtTargetEpoch();
-          if (priorMatch == MatchesPrior.DOES_NOT_MATCH) {
-            return false;
-          } else if (priorMatch == MatchesPrior.MATCHES) {
-            return true;
-          }
 
           final boolean conflictsWithExistingAttestations =
-              attestationValidator.hasSourceOlderThanWatermark()
+              attestationValidator.directlyConflictsWithExistingEntry()
+                  || attestationValidator.hasSourceOlderThanWatermark()
                   || attestationValidator.hasTargetOlderThanWatermark()
                   || attestationValidator.isSurroundedByExistingAttestation()
                   || attestationValidator.surroundsExistingAttestation();
 
           if (!conflictsWithExistingAttestations) {
-            final SignedAttestation signedAttestation =
-                new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
-            signedAttestationsDao.insertAttestation(handle, signedAttestation);
+            attestationValidator.insertIfNotExist();
           }
           return !conflictsWithExistingAttestations;
         });
