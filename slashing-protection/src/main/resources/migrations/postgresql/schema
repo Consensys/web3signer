@@ -1,0 +1,177 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 12.4
+-- Dumped by pg_dump version 12.4
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: flyway_schema_history; Type: TABLE; Schema: public; Owner: tmm
+--
+
+CREATE TABLE public.flyway_schema_history (
+    installed_rank integer NOT NULL,
+    version character varying(50),
+    description character varying(200) NOT NULL,
+    type character varying(20) NOT NULL,
+    script character varying(1000) NOT NULL,
+    checksum integer,
+    installed_by character varying(100) NOT NULL,
+    installed_on timestamp without time zone DEFAULT now() NOT NULL,
+    execution_time integer NOT NULL,
+    success boolean NOT NULL
+);
+
+
+ALTER TABLE public.flyway_schema_history OWNER TO tmm;
+
+--
+-- Name: signed_attestations; Type: TABLE; Schema: public; Owner: tmm
+--
+
+CREATE TABLE public.signed_attestations (
+    validator_id integer,
+    source_epoch numeric(20,0) NOT NULL,
+    target_epoch numeric(20,0) NOT NULL,
+    signing_root bytea NOT NULL
+);
+
+
+ALTER TABLE public.signed_attestations OWNER TO tmm;
+
+--
+-- Name: signed_blocks; Type: TABLE; Schema: public; Owner: tmm
+--
+
+CREATE TABLE public.signed_blocks (
+    validator_id integer NOT NULL,
+    slot numeric(20,0) NOT NULL,
+    signing_root bytea NOT NULL
+);
+
+
+ALTER TABLE public.signed_blocks OWNER TO tmm;
+
+--
+-- Name: validators; Type: TABLE; Schema: public; Owner: tmm
+--
+
+CREATE TABLE public.validators (
+    id integer NOT NULL,
+    public_key bytea NOT NULL
+);
+
+
+ALTER TABLE public.validators OWNER TO tmm;
+
+--
+-- Name: validators_id_seq; Type: SEQUENCE; Schema: public; Owner: tmm
+--
+
+CREATE SEQUENCE public.validators_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.validators_id_seq OWNER TO tmm;
+
+--
+-- Name: validators_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: tmm
+--
+
+ALTER SEQUENCE public.validators_id_seq OWNED BY public.validators.id;
+
+
+--
+-- Name: validators id; Type: DEFAULT; Schema: public; Owner: tmm
+--
+
+ALTER TABLE ONLY public.validators ALTER COLUMN id SET DEFAULT nextval('public.validators_id_seq'::regclass);
+
+
+--
+-- Name: flyway_schema_history flyway_schema_history_pk; Type: CONSTRAINT; Schema: public; Owner: tmm
+--
+
+ALTER TABLE ONLY public.flyway_schema_history
+    ADD CONSTRAINT flyway_schema_history_pk PRIMARY KEY (installed_rank);
+
+
+--
+-- Name: signed_attestations signed_attestations_validator_id_target_epoch_key; Type: CONSTRAINT; Schema: public; Owner: tmm
+--
+
+ALTER TABLE ONLY public.signed_attestations
+    ADD CONSTRAINT signed_attestations_validator_id_target_epoch_key UNIQUE (validator_id, target_epoch);
+
+
+--
+-- Name: signed_blocks signed_blocks_validator_id_slot_key; Type: CONSTRAINT; Schema: public; Owner: tmm
+--
+
+ALTER TABLE ONLY public.signed_blocks
+    ADD CONSTRAINT signed_blocks_validator_id_slot_key UNIQUE (validator_id, slot);
+
+
+--
+-- Name: validators validators_pkey; Type: CONSTRAINT; Schema: public; Owner: tmm
+--
+
+ALTER TABLE ONLY public.validators
+    ADD CONSTRAINT validators_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: validators validators_public_key_key; Type: CONSTRAINT; Schema: public; Owner: tmm
+--
+
+ALTER TABLE ONLY public.validators
+    ADD CONSTRAINT validators_public_key_key UNIQUE (public_key);
+
+
+--
+-- Name: flyway_schema_history_s_idx; Type: INDEX; Schema: public; Owner: tmm
+--
+
+CREATE INDEX flyway_schema_history_s_idx ON public.flyway_schema_history USING btree (success);
+
+
+--
+-- Name: signed_attestations signed_attestations_validator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tmm
+--
+
+ALTER TABLE ONLY public.signed_attestations
+    ADD CONSTRAINT signed_attestations_validator_id_fkey FOREIGN KEY (validator_id) REFERENCES public.validators(id);
+
+
+--
+-- Name: signed_blocks signed_blocks_validator_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tmm
+--
+
+ALTER TABLE ONLY public.signed_blocks
+    ADD CONSTRAINT signed_blocks_validator_id_fkey FOREIGN KEY (validator_id) REFERENCES public.validators(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
