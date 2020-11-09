@@ -87,7 +87,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
-    // this is same as not setting accept type at all - the client defaults to */* aka ANY accept type
+    // this is same as not setting accept type at all - the client defaults to */* aka ANY
     signAndVerifySignature(artifactType, ANY, null);
   }
 
