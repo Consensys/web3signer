@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcMethod;
+import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcOptional;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcParam;
 import com.github.arteam.simplejsonrpc.core.annotation.JsonRpcService;
 import org.apache.logging.log4j.LogManager;
@@ -45,6 +46,7 @@ public class FcJsonRpc {
 
   private final ArtifactSignerProvider fcSigners;
   private final FcJsonRpcMetrics metrics;
+  private final FcCidEncoder fcCidEncoder = new FcCidEncoder();
 
   public FcJsonRpc(final ArtifactSignerProvider fcSigners, final FcJsonRpcMetrics metrics) {
     this.fcSigners = fcSigners;
@@ -60,8 +62,16 @@ public class FcJsonRpc {
   @JsonRpcMethod("Filecoin.WalletSign")
   public FilecoinSignature filecoinWalletSign(
       @JsonRpcParam("identifier") final String filecoinAddress,
-      @JsonRpcParam("data") final Bytes dataToSign) {
+      @JsonRpcParam("data") final Bytes dataToSign,
+      @JsonRpcOptional @JsonRpcParam("meta") final FilecoinMessageMsgMeta meta) {
     LOG.debug("Received FC sign request id = {}; data = {}", filecoinAddress, dataToSign);
+
+    if (meta != null && meta.getExtra() != null) {
+      final Bytes cidBytes = fcCidEncoder.createCid(meta.getExtra());
+      checkArgument(
+          dataToSign.equals(cidBytes),
+          "Message invalid the data to sign doesn't match the CID of MsgMeta.extra");
+    }
 
     final Optional<ArtifactSigner> signer = fcSigners.getSigner(filecoinAddress);
 
@@ -95,19 +105,6 @@ public class FcJsonRpc {
   public boolean filecoinWalletHas(@JsonRpcParam("address") final String address) {
     metrics.incWalletHasRequestCounter();
     return fcSigners.availableIdentifiers().contains(address);
-  }
-
-  @JsonRpcMethod("Filecoin.WalletSignMessage")
-  public FilecoinSignedMessage filecoinSignMessage(
-      @JsonRpcParam("identifier") final String identifier,
-      @JsonRpcParam("message") final FilecoinMessage message) {
-    metrics.incWalletSignMessageRequestCounter();
-    final FcMessageEncoder encoder = new FcMessageEncoder();
-    final Bytes fcCid = encoder.createFilecoinCid(message);
-
-    final FilecoinSignature signature = filecoinWalletSign(identifier, fcCid);
-
-    return new FilecoinSignedMessage(message, signature);
   }
 
   @JsonRpcMethod("Filecoin.WalletVerify")

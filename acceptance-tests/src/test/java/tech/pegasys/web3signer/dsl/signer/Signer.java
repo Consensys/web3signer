@@ -68,7 +68,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   private final Optional<ClientTlsConfig> clientTlsConfig;
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
-    super(JSON_RPC_PATH + "/filecoin");
+    super(JSON_RPC_PATH);
     this.runner = Web3SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
     this.urlFormatting =
