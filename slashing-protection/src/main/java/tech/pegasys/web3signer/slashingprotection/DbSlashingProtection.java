@@ -16,6 +16,7 @@ import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WR
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -23,7 +24,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
-import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
+import tech.pegasys.web3signer.slashingprotection.validator.AttestationSigningRecords;
 import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
 
 import java.io.IOException;
@@ -110,33 +111,29 @@ public class DbSlashingProtection implements SlashingProtection {
     return jdbi.inTransaction(
         READ_COMMITTED,
         handle -> {
-          final AttestationValidator attestationValidator =
-              new AttestationValidator(
-                  handle,
-                  publicKey,
-                  signingRoot,
-                  sourceEpoch,
-                  targetEpoch,
-                  validatorId,
-                  signedAttestationsDao);
+          final SignedAttestation receivedAttestation =
+              new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
 
-          if (!attestationValidator.sourceGreaterThanTargetEpoch()) {
+          final AttestationSigningRecords signingRecords =
+              new AttestationSigningRecords(handle, signedAttestationsDao);
+
+          if (!signingRecords.sourceGreaterThanTargetEpoch(receivedAttestation)) {
             return false;
           }
 
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
 
-          if (attestationValidator.directlyConflictsWithExistingEntry()
-              || attestationValidator.isSurroundedByExistingAttestation()
-              || attestationValidator.surroundsExistingAttestation()) {
+          if (signingRecords.directlyConflictsWithExistingEntry(receivedAttestation)
+              || signingRecords.isSurroundedByExistingAttestation(receivedAttestation)
+              || signingRecords.surroundsExistingAttestation(receivedAttestation)) {
             return false;
-          } else if (attestationValidator.existsInDatabase()) {
+          } else if (signingRecords.existsInDatabase(receivedAttestation)) {
             return true;
-          } else if (attestationValidator.hasSourceOlderThanWatermark()
-              || attestationValidator.hasTargetOlderThanWatermark()) {
+          } else if (signingRecords.hasSourceOlderThanWatermark(receivedAttestation)
+              || signingRecords.hasTargetOlderThanWatermark(receivedAttestation)) {
             return false;
           }
-          attestationValidator.insertToDatabase();
+          signingRecords.add(receivedAttestation);
           return true;
         });
   }

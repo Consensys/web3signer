@@ -54,7 +54,7 @@ public class SignedAttestationsDao {
         .findFirst();
   }
 
-  public Optional<SignedAttestation> findSurroundingAttestation(
+  public List<SignedAttestation> findSurroundingAttestations(
       final Handle handle,
       final int validatorId,
       final UInt64 sourceEpoch,
@@ -70,10 +70,10 @@ public class SignedAttestationsDao {
         .bind(1, sourceEpoch)
         .bind(2, targetEpoch)
         .mapToBean(SignedAttestation.class)
-        .findFirst();
+        .list();
   }
 
-  public Optional<SignedAttestation> findSurroundedAttestation(
+  public List<SignedAttestation> findSurroundedAttestations(
       final Handle handle,
       final int validatorId,
       final UInt64 sourceEpoch,
@@ -89,7 +89,7 @@ public class SignedAttestationsDao {
         .bind(1, sourceEpoch)
         .bind(2, targetEpoch)
         .mapToBean(SignedAttestation.class)
-        .findFirst();
+        .list();
   }
 
   public void insertAttestation(final Handle handle, final SignedAttestation signedAttestation) {
