@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.tests.slashing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner.createEmbeddedDatabase;
 import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
 import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createBlockRequest;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
@@ -24,6 +23,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2Signi
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.web3signer.dsl.utils.EmbeddedDatabaseUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
@@ -212,7 +212,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void cannotStartWeb3SignerIfGenesisValidatorRootConflicts() {
-    final String dbUrl = createEmbeddedDatabase();
+    final String dbUrl = EmbeddedDatabaseUtils.createEmbeddedDatabase();
     final Jdbi jdbi = Jdbi.create(dbUrl, DB_USERNAME, DB_PASSWORD);
     final byte[] gvr = Bytes.of(42).toArrayUnsafe();
     jdbi.useHandle(

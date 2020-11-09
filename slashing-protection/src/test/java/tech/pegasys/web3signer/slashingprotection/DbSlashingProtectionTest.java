@@ -425,10 +425,7 @@ public class DbSlashingProtectionTest {
   public void registeringFailsForGenesisValidatorsRootIfDifferent() {
     when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(Bytes.of(1)));
     assertThatThrownBy(() -> dbSlashingProtection.registerGenesisValidatorsRoot(GVR))
-        .hasMessage(
-            "Genesis validators root "
-                + GVR
-                + " does not match slashing protection db validators root")
+        .hasMessage("Supplied genesis validators root " + GVR + " does not match value in database")
         .isInstanceOf(IllegalStateException.class);
     verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
   }
