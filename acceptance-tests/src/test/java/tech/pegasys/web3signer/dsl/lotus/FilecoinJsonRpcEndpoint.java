@@ -13,9 +13,7 @@
 package tech.pegasys.web3signer.dsl.lotus;
 
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
-import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignature;
-import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignedMessage;
 
 import java.io.IOException;
 import java.util.List;
@@ -98,7 +96,7 @@ public abstract class FilecoinJsonRpcEndpoint {
         .createRequest()
         .method("Filecoin.WalletSign")
         .id(101)
-        .params(address, data)
+        .params(address, data) // metaData is not supported on FC local wallet signing API impl
         .returnAs(FilecoinSignature.class)
         .execute();
   }
@@ -111,17 +109,6 @@ public abstract class FilecoinJsonRpcEndpoint {
         .id(202)
         .params(address, data, signature)
         .returnAs(Boolean.class)
-        .execute();
-  }
-
-  public FilecoinSignedMessage walletSignMessage(
-      final String address, final FilecoinMessage message) {
-    return jsonRpcClient
-        .createRequest()
-        .method("Filecoin.WalletSignMessage")
-        .id(101)
-        .params(address, message)
-        .returnAs(FilecoinSignedMessage.class)
         .execute();
   }
 
