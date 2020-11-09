@@ -398,10 +398,10 @@ components:
     AggregateAndProof:
       type: object
       properties:
-        index:
+        aggregator_index:
           type: string
           format: uint64
-        attestation:
+        aggregate:
           "$ref": "#/components/schemas/Attestation"
         selection_proof:
           type: string
