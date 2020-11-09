@@ -120,6 +120,7 @@ allprojects {
     mavenCentral()
     maven { url "https://hyperledger-org.bintray.com/besu-repo/" }
     maven { url  "https://consensys.bintray.com/pegasys-repo" }
+    maven { url "https://jitpack.io" }
   }
 
   dependencies { errorprone("com.google.errorprone:error_prone_core") }
