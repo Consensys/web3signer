@@ -29,14 +29,16 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Objects;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.MIMEHeader;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
@@ -216,24 +218,33 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   }
 
   private void respondWithSignature(final RoutingContext routingContext, final String signature) {
-    final String acceptableContentType = routingContext.getAcceptableContentType();
-    final String contentType;
-    final String body;
-
+    final String acceptableContentType =
+        getAcceptableContentType(routingContext.parsedHeaders().accept());
     LOG.trace("Acceptable Content Type {}", acceptableContentType);
-    if (Objects.equal("application/json", acceptableContentType)) {
-      contentType = JSON_UTF_8;
-      body = new JsonObject().put("signature", signature).encode();
-    } else {
-      contentType = TEXT_PLAIN_UTF_8;
-      body = signature;
-    }
-    routingContext.response().putHeader(CONTENT_TYPE, contentType).end(body);
+    final String body =
+        acceptableContentType.equals(JSON_UTF_8)
+            ? new JsonObject().put("signature", signature).encode()
+            : signature;
+    routingContext.response().putHeader(CONTENT_TYPE, acceptableContentType).end(body);
   }
 
   private Eth2SigningRequestBody getSigningRequest(final RequestParameters params)
       throws JsonProcessingException {
     final String body = params.body().toString();
     return objectMapper.readValue(body, Eth2SigningRequestBody.class);
+  }
+
+  private String getAcceptableContentType(final List<MIMEHeader> mimeHeaders) {
+    return mimeHeaders.stream()
+        .filter(this::isJsonCompatibleHeader)
+        .findAny()
+        .map(mimeHeader -> JSON_UTF_8)
+        .orElse(TEXT_PLAIN_UTF_8);
+  }
+
+  private boolean isJsonCompatibleHeader(final MIMEHeader mimeHeader) {
+    final String mimeComponent = mimeHeader.component() + "/" + mimeHeader.subComponent();
+    return Objects.equals("application/json", mimeComponent)
+        || Objects.equals("*/*", mimeComponent);
   }
 }

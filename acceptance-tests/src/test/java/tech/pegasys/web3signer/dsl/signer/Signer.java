@@ -143,6 +143,8 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         .accept(acceptMediaType)
         .pathParam("identifier", publicKey)
         .body(ETH_2_INTERFACE_OBJECT_MAPPER.writeValueAsString(ethSignBody))
+        .log()
+        .all(true)
         .post(signPath(KeyType.BLS));
   }
 

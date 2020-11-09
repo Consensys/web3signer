@@ -41,10 +41,10 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   protected Bytes verifyAndGetSignatureResponse(
-      final Response response, final ContentType contentType) {
-    response.then().contentType(contentType).statusCode(200);
+      final Response response, final ContentType expectedContentType) {
+    response.then().contentType(expectedContentType).statusCode(200);
     final String signature;
-    if (contentType == ContentType.JSON) {
+    if (expectedContentType == ContentType.JSON) {
       signature = response.body().jsonPath().getString("signature");
     } else {
       signature = response.body().print();
