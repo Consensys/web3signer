@@ -86,7 +86,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Option(
       names = {"--network"},
       description =
-          "The Eth2 network that is being used for signing, the corresponding genesis_validator_root will be used to validate signing requests are from the correct chain",
+          "The Eth2 network that is being used for signing, the corresponding genesis_validator_root will be used to validate signing requests are from the correct network",
       paramLabel = "<network name>",
       arity = "1")
   private Eth2Network network = Eth2Network.MEDALLA;
