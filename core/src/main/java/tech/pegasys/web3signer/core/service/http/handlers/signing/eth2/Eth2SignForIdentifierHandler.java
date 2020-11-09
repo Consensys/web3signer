@@ -39,7 +39,6 @@ import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
@@ -152,17 +151,15 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       final Bytes publicKey,
       final Bytes signingRoot,
       final Eth2SigningRequestBody eth2SigningRequestBody) {
-    final Optional<Bytes32> gvr =
-        Optional.ofNullable(eth2SigningRequestBody.getForkInfo())
-            .map(ForkInfo::getGenesisValidatorsRoot);
+    final ForkInfo forkInfo = eth2SigningRequestBody.getForkInfo();
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
-        checkArgument(gvr.isPresent(), "genesis_validators_root must be specified");
         final BeaconBlock beaconBlock = eth2SigningRequestBody.getBlock();
         final UInt64 blockSlot = UInt64.valueOf(beaconBlock.slot.bigIntegerValue());
-        return slashingProtection.get().maySignBlock(publicKey, signingRoot, blockSlot, gvr.get());
+        return slashingProtection
+            .get()
+            .maySignBlock(publicKey, signingRoot, blockSlot, forkInfo.getGenesisValidatorsRoot());
       case ATTESTATION:
-        checkArgument(gvr.isPresent(), "genesis_validators_root must be specified");
         final AttestationData attestation = eth2SigningRequestBody.getAttestation();
         return slashingProtection
             .get()
@@ -171,7 +168,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                 signingRoot,
                 toUInt64(attestation.source.epoch),
                 toUInt64(attestation.target.epoch),
-                gvr.get());
+                forkInfo.getGenesisValidatorsRoot());
       default:
         return true;
     }
