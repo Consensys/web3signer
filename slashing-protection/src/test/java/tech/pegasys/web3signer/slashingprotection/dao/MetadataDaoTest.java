@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.testing.JdbiRule;
 import org.jdbi.v3.testing.Migration;
@@ -51,12 +52,12 @@ public class MetadataDaoTest {
 
   @Test
   public void findsExistingGvrInDb() {
-    insertGvr(Bytes.of(3));
-    insertGvr(Bytes.of(4));
+    insertGvr(Bytes32.leftPad(Bytes.of(3)));
+    insertGvr(Bytes32.leftPad(Bytes.of(4)));
 
-    final Optional<Bytes> existingGvr = metadataDao.findGenesisValidatorsRoot(handle);
+    final Optional<Bytes32> existingGvr = metadataDao.findGenesisValidatorsRoot(handle);
     assertThat(existingGvr).isNotEmpty();
-    assertThat(existingGvr).contains(Bytes.of(3));
+    assertThat(existingGvr).contains(Bytes32.leftPad(Bytes.of(3)));
   }
 
   @Test
@@ -66,11 +67,13 @@ public class MetadataDaoTest {
 
   @Test
   public void insertsGvrIntoDb() {
-    metadataDao.insertGenesisValidatorsRoot(handle, Bytes.of(4));
+    final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(4));
+    metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
 
-    final List<Bytes> gvrs = handle.createQuery("SELECT * FROM metadata").mapTo(Bytes.class).list();
+    final List<Bytes32> gvrs =
+        handle.createQuery("SELECT * FROM metadata").mapTo(Bytes32.class).list();
     assertThat(gvrs.size()).isEqualTo(1);
-    assertThat(gvrs.get(0)).isEqualTo(Bytes.of(4));
+    assertThat(gvrs.get(0)).isEqualTo(genesisValidatorsRoot);
   }
 
   private void insertGvr(final Bytes genesisValidatorsRoot) {

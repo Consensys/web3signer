@@ -33,6 +33,7 @@ import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
@@ -66,8 +67,8 @@ public class InterchangeExportIntegrationTest {
     final String databaseUrl = getDatabaseUrl(db);
     final Jdbi jdbi = DbConnection.createConnection(databaseUrl, DB_USERNAME, DB_PASSWORD);
 
-    jdbi.useTransaction(
-        h -> metadata.insertGenesisValidatorsRoot(h, Bytes.fromHexString("FFFFFFFF")));
+    final Bytes32 gvr = Bytes32.fromHexString("FFFFFFFF");
+    jdbi.useTransaction(h -> metadata.insertGenesisValidatorsRoot(h, gvr));
 
     final int VALIDATOR_COUNT = 2;
     final int TOTAL_BLOCKS_SIGNED = 6;
@@ -110,8 +111,7 @@ public class InterchangeExportIntegrationTest {
         mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
 
     assertThat(outputObject.getMetadata().getFormatVersionAsString()).isEqualTo("5");
-    assertThat(outputObject.getMetadata().getGenesisValidatorsRoot())
-        .isEqualTo(Bytes.fromHexString("FFFFFFFF"));
+    assertThat(outputObject.getMetadata().getGenesisValidatorsRoot()).isEqualTo(gvr);
 
     final List<SignedArtifacts> signedArtifacts = outputObject.getSignedArtifacts();
     assertThat(signedArtifacts).hasSize(2);

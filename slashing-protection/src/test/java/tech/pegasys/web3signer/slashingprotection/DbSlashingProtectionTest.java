@@ -59,7 +59,7 @@ public class DbSlashingProtectionTest {
   private static final Bytes SIGNING_ROOT = Bytes.of(3);
   private static final UInt64 SOURCE_EPOCH = UInt64.valueOf(10);
   private static final UInt64 TARGET_EPOCH = UInt64.valueOf(20);
-  private static final Bytes GVR = Bytes32.leftPad(Bytes.of(100));
+  private static final Bytes32 GVR = Bytes32.leftPad(Bytes.of(100));
 
   @Mock private ValidatorsDao validatorsDao;
   @Mock private SignedBlocksDao signedBlocksDao;
@@ -387,7 +387,8 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void slashingProtectionEnactedIfAttestationWithInvalidGvr() {
-    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(Bytes.of(1)));
+    when(metadataDao.findGenesisValidatorsRoot(any()))
+        .thenReturn(Optional.of(Bytes32.leftPad(Bytes.of(1))));
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
@@ -400,7 +401,8 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void slashingProtectionEnactedIfBlockWithInvalidGvr() {
-    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(Bytes.of(1)));
+    when(metadataDao.findGenesisValidatorsRoot(any()))
+        .thenReturn(Optional.of(Bytes32.leftPad(Bytes.of(1))));
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
 
@@ -423,7 +425,8 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void registeringFailsForGenesisValidatorsRootIfDifferent() {
-    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(Bytes.of(1)));
+    when(metadataDao.findGenesisValidatorsRoot(any()))
+        .thenReturn(Optional.of(Bytes32.leftPad(Bytes.of(1))));
     assertThatThrownBy(() -> dbSlashingProtection.registerGenesisValidatorsRoot(GVR))
         .hasMessage("Supplied genesis validators root " + GVR + " does not match value in database")
         .isInstanceOf(IllegalStateException.class);

@@ -14,19 +14,20 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
 
 public class MetadataDao {
 
-  public Optional<Bytes> findGenesisValidatorsRoot(final Handle handle) {
+  public Optional<Bytes32> findGenesisValidatorsRoot(final Handle handle) {
     return handle
         .createQuery("SELECT genesis_validators_root FROM metadata")
-        .mapTo(Bytes.class)
+        .mapTo(Bytes32.class)
         .findFirst();
   }
 
-  public void insertGenesisValidatorsRoot(final Handle handle, final Bytes genesisValidatorsRoot) {
+  public void insertGenesisValidatorsRoot(
+      final Handle handle, final Bytes32 genesisValidatorsRoot) {
     handle
         .createUpdate("INSERT INTO metadata (genesis_validators_root) VALUES (?)")
         .bind(0, genesisValidatorsRoot)

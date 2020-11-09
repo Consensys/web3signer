@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.BytesArgumentFactory;
 import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.UInt64ArgumentFactory;
+import tech.pegasys.web3signer.slashingprotection.ColumnMappers.Bytes32ColumnMapper;
 import tech.pegasys.web3signer.slashingprotection.ColumnMappers.BytesColumnMapper;
 import tech.pegasys.web3signer.slashingprotection.ColumnMappers.UInt64ColumnMapper;
 
@@ -41,6 +42,7 @@ public class DbConnection {
         .register(new UInt64ArgumentFactory());
     jdbi.getConfig(ColumnMappers.class)
         .register(new BytesColumnMapper())
+        .register(new Bytes32ColumnMapper())
         .register(new UInt64ColumnMapper());
     jdbi.setTransactionHandler(new SerializableTransactionRunner());
   }

@@ -39,6 +39,7 @@ import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
@@ -151,7 +152,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       final Bytes publicKey,
       final Bytes signingRoot,
       final Eth2SigningRequestBody eth2SigningRequestBody) {
-    final Optional<Bytes> gvr =
+    final Optional<Bytes32> gvr =
         Optional.ofNullable(eth2SigningRequestBody.getForkInfo())
             .map(ForkInfo::getGenesisValidatorsRoot);
     switch (eth2SigningRequestBody.getType()) {

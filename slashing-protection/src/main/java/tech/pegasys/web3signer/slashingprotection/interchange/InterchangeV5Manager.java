@@ -27,7 +27,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
@@ -62,7 +62,7 @@ public class InterchangeV5Manager implements InterchangeManager {
   @Override
   public void export(final OutputStream out) throws IOException {
     try (final JsonGenerator jsonGenerator = mapper.getFactory().createGenerator(out)) {
-      final Optional<Bytes> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
+      final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
       if (gvr.isEmpty()) {
         throw new RuntimeException("No genesis validators root for slashing protection data");
       }

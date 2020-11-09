@@ -41,6 +41,7 @@ import com.google.common.collect.Streams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -107,11 +108,11 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void registerGenesisValidatorsRoot(final Bytes genesisValidatorsRoot) {
+  public void registerGenesisValidatorsRoot(final Bytes32 genesisValidatorsRoot) {
     jdbi.useTransaction(
         SERIALIZABLE,
         h -> {
-          final Optional<Bytes> dbGvr = metadataDao.findGenesisValidatorsRoot(h);
+          final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(h);
           final Optional<Boolean> isValidGvr = dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot));
           if (!isValidGvr.orElse(true)) {
             throw new IllegalStateException(
@@ -130,7 +131,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch,
-      final Bytes genesisValidatorsRoot) {
+      final Bytes32 genesisValidatorsRoot) {
     final int validatorId = validatorId(publicKey);
 
     if (sourceEpoch.compareTo(targetEpoch) > 0) {
@@ -242,7 +243,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes publicKey,
       final Bytes signingRoot,
       final UInt64 blockSlot,
-      final Bytes genesisValidatorsRoot) {
+      final Bytes32 genesisValidatorsRoot) {
     if (!isValidGenesisValidatorsRoot(genesisValidatorsRoot)) {
       return false;
     }
@@ -319,7 +320,7 @@ public class DbSlashingProtection implements SlashingProtection {
     return jdbi.inTransaction(
         SERIALIZABLE,
         h -> {
-          final Optional<Bytes> dbGvr = metadataDao.findGenesisValidatorsRoot(h);
+          final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(h);
           final Boolean isValidGvr =
               dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(false);
           if (!isValidGvr) {

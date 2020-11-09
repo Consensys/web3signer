@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public interface SlashingProtection {
@@ -25,14 +26,14 @@ public interface SlashingProtection {
       Bytes signingRoot,
       UInt64 sourceEpoch,
       UInt64 targetEpoch,
-      Bytes genesisValidatorsRoot);
+      Bytes32 genesisValidatorsRoot);
 
   boolean maySignBlock(
-      Bytes publicKey, Bytes signingRoot, UInt64 blockSlot, Bytes genesisValidatorsRoot);
+      Bytes publicKey, Bytes signingRoot, UInt64 blockSlot, Bytes32 genesisValidatorsRoot);
 
   void registerValidators(List<Bytes> validators);
 
   void export(OutputStream output);
 
-  void registerGenesisValidatorsRoot(Bytes genesisValidatorsRoot);
+  void registerGenesisValidatorsRoot(Bytes32 genesisValidatorsRoot);
 }

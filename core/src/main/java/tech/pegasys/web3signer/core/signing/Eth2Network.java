@@ -14,19 +14,18 @@ package tech.pegasys.web3signer.core.signing;
 
 import static org.apache.tuweni.bytes.Bytes32.fromHexString;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public enum Eth2Network {
   MEDALLA(fromHexString("0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"));
 
-  private final Bytes gvr;
+  private final Bytes32 gvr;
 
   Eth2Network(final Bytes32 gvr) {
     this.gvr = gvr;
   }
 
-  public Bytes getGenesisValidatorsRoot() {
+  public Bytes32 getGenesisValidatorsRoot() {
     return gvr;
   }
 }
