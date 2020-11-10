@@ -62,6 +62,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             .withSlashingEnabled(enableSlashing)
             .withSlashingProtectionDbUsername(DB_USERNAME)
             .withSlashingProtectionDbPassword(DB_PASSWORD)
+            .withSlashingProtectionNetwork("MEDALLA")
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory);
 

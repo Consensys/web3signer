@@ -54,6 +54,7 @@ public class SlashingExportAcceptanceTest extends SlashingAcceptanceTest {
     builder.withSlashingProtectionDbUrl(signer.getSlashingDbUrl());
     builder.withSlashingProtectionDbUsername("postgres");
     builder.withSlashingProtectionDbPassword("postgres");
+    builder.withSlashingProtectionNetwork("MEDALLA");
     builder.withKeyStoreDirectory(testDirectory);
     builder.withSlashingExportPath(exportFile);
     builder.withHttpPort(12345); // prevent wait for Ports file in AT
