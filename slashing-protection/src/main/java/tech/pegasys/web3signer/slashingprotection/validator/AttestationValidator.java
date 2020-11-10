@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
-import java.util.List;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;

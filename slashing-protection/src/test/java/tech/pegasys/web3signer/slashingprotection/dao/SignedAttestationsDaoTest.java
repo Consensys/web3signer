@@ -14,10 +14,10 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Optional;
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -69,12 +69,12 @@ public class SignedAttestationsDaoTest {
   @Test
   public void returnsEmptyForNonExistingAttestationInDb() {
     assertThat(
-        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
-            handle, 1, UInt64.valueOf(1), Bytes.of(2)))
+            signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+                handle, 1, UInt64.valueOf(1), Bytes.of(2)))
         .isEmpty();
     assertThat(
-        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
-            handle, 2, UInt64.valueOf(2), Bytes.of(3)))
+            signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+                handle, 2, UInt64.valueOf(2), Bytes.of(3)))
         .isEmpty();
   }
 
@@ -116,20 +116,20 @@ public class SignedAttestationsDaoTest {
 
     // target epoch is outside of the existing attestations target epoch
     assertThat(
-        signedAttestationsDao.findSurroundingAttestations(
-            handle, 1, UInt64.valueOf(3), UInt64.valueOf(10)))
+            signedAttestationsDao.findSurroundingAttestations(
+                handle, 1, UInt64.valueOf(3), UInt64.valueOf(10)))
         .isEmpty();
 
     // source epoch is outside of the existing attestations source epoch
     assertThat(
-        signedAttestationsDao.findSurroundingAttestations(
-            handle, 1, UInt64.valueOf(1), UInt64.valueOf(7)))
+            signedAttestationsDao.findSurroundingAttestations(
+                handle, 1, UInt64.valueOf(1), UInt64.valueOf(7)))
         .isEmpty();
 
     // both source and target epochs are outside existing attestations epochs
     assertThat(
-        signedAttestationsDao.findSurroundingAttestations(
-            handle, 1, UInt64.valueOf(1), UInt64.valueOf(10)))
+            signedAttestationsDao.findSurroundingAttestations(
+                handle, 1, UInt64.valueOf(1), UInt64.valueOf(10)))
         .isEmpty();
   }
 
@@ -153,20 +153,20 @@ public class SignedAttestationsDaoTest {
 
     // target epoch is not outside of the existing attestations
     assertThat(
-        signedAttestationsDao.findSurroundingAttestations(
-            handle, 1, UInt64.valueOf(1), UInt64.valueOf(5)))
+            signedAttestationsDao.findSurroundingAttestations(
+                handle, 1, UInt64.valueOf(1), UInt64.valueOf(5)))
         .isEmpty();
 
     // source epoch is not outside of the existing attestations
     assertThat(
-        signedAttestationsDao.findSurroundingAttestations(
-            handle, 1, UInt64.valueOf(2), UInt64.valueOf(7)))
+            signedAttestationsDao.findSurroundingAttestations(
+                handle, 1, UInt64.valueOf(2), UInt64.valueOf(7)))
         .isEmpty();
 
     // both source and target are within the existing attestation source and target epochs
     assertThat(
-        signedAttestationsDao.findSurroundingAttestations(
-            handle, 1, UInt64.valueOf(2), UInt64.valueOf(5)))
+            signedAttestationsDao.findSurroundingAttestations(
+                handle, 1, UInt64.valueOf(2), UInt64.valueOf(5)))
         .isEmpty();
   }
 
@@ -207,8 +207,9 @@ public class SignedAttestationsDaoTest {
     insertValidator(Bytes.of(100), 1);
     insertAttestation(1, Bytes.of(2), UInt64.valueOf(2), UInt64.valueOf(4));
     insertAttestation(1, Bytes.of(3), UInt64.valueOf(3), UInt64.valueOf(4));
-    final List<SignedAttestation> result = signedAttestationsDao
-        .findAttestationsForEpochWithDifferentSigningRoot(handle, 1, UInt64.valueOf(4), null);
+    final List<SignedAttestation> result =
+        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(4), null);
     assertThat(result).hasSize(2);
     assertThat(result.get(0).getSigningRoot()).isEqualTo(Optional.of(Bytes.of(2)));
     assertThat(result.get(1).getSigningRoot()).isEqualTo(Optional.of(Bytes.of(3)));
