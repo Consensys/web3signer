@@ -211,9 +211,7 @@ public class SignedAttestationsDaoTest {
         .findAttestationsForEpochWithDifferentSigningRoot(handle, 1, UInt64.valueOf(4), null);
     assertThat(result).hasSize(2);
     assertThat(result.get(0).getSigningRoot()).isEqualTo(Optional.of(Bytes.of(2)));
-    assertThat(result.get(0).getSigningRoot()).isEqualTo(Optional.of(Bytes.of(3)));
-
-
+    assertThat(result.get(1).getSigningRoot()).isEqualTo(Optional.of(Bytes.of(3)));
   }
 
   private void insertValidator(final Bytes publicKey, final int validatorId) {
