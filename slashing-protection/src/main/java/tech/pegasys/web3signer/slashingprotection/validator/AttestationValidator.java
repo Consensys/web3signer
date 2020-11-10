@@ -130,7 +130,7 @@ public class AttestationValidator {
   public boolean isSurroundedByExistingAttestation() {
     // check that no previous vote is surrounding the attestation
     final List<SignedAttestation> surroundingAttestation =
-        signedAttestationsDao.findSurroundedAttestations(
+        signedAttestationsDao.findSurroundingAttestations(
             handle, validatorId, sourceEpoch, targetEpoch);
     if (!surroundingAttestation.isEmpty()) {
       LOG.warn(

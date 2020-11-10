@@ -202,19 +202,6 @@ public class SignedAttestationsDaoTest {
     assertThat(signedAttestationsDao.minimumTargetEpoch(handle, 1)).hasValue(UInt64.valueOf(3));
   }
 
-  @Test
-  public void nullSigningRootResultsInAllEntriesForTargetEpochToBeReturned() {
-    insertValidator(Bytes.of(100), 1);
-    insertAttestation(1, Bytes.of(2), UInt64.valueOf(2), UInt64.valueOf(4));
-    insertAttestation(1, Bytes.of(3), UInt64.valueOf(3), UInt64.valueOf(4));
-    final List<SignedAttestation> result =
-        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
-            handle, 1, UInt64.valueOf(4), null);
-    assertThat(result).hasSize(2);
-    assertThat(result.get(0).getSigningRoot()).isEqualTo(Optional.of(Bytes.of(2)));
-    assertThat(result.get(1).getSigningRoot()).isEqualTo(Optional.of(Bytes.of(3)));
-  }
-
   private void insertValidator(final Bytes publicKey, final int validatorId) {
     handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
   }
