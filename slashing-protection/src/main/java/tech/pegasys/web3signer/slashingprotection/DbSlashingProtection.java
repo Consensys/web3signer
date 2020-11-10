@@ -113,8 +113,7 @@ public class DbSlashingProtection implements SlashingProtection {
         SERIALIZABLE,
         h -> {
           final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(h);
-          final Optional<Boolean> isValidGvr = dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot));
-          if (!isValidGvr.orElse(true)) {
+          if (!dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(true)) {
             throw new IllegalStateException(
                 String.format(
                     "Supplied genesis validators root %s does not match value in database",
@@ -151,11 +150,11 @@ public class DbSlashingProtection implements SlashingProtection {
             return false;
           }
 
-          if (!isValidGenesisValidatorsRoot(genesisValidatorsRoot)) {
+          lockForValidator(handle, LockType.ATTESTATION, validatorId);
+
+          if (!isValidGenesisValidatorsRoot(handle, genesisValidatorsRoot)) {
             return false;
           }
-
-          lockForValidator(handle, LockType.ATTESTATION, validatorId);
 
           if (attestationValidator.directlyConflictsWithExistingEntry()
               || attestationValidator.isSurroundedByExistingAttestation()
@@ -178,10 +177,6 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes signingRoot,
       final UInt64 blockSlot,
       final Bytes32 genesisValidatorsRoot) {
-    if (!isValidGenesisValidatorsRoot(genesisValidatorsRoot)) {
-      return false;
-    }
-
     final int validatorId = validatorId(publicKey);
     return jdbi.inTransaction(
         READ_COMMITTED,
@@ -190,6 +185,10 @@ public class DbSlashingProtection implements SlashingProtection {
               new BlockValidator(h, signingRoot, blockSlot, validatorId, signedBlocksDao);
 
           lockForValidator(h, LockType.BLOCK, validatorId);
+
+          if (!isValidGenesisValidatorsRoot(h, genesisValidatorsRoot)) {
+            return false;
+          }
 
           if (blockValidator.directlyConflictsWithExistingEntry()) {
             return false;
@@ -226,20 +225,15 @@ public class DbSlashingProtection implements SlashingProtection {
         });
   }
 
-  private boolean isValidGenesisValidatorsRoot(final Bytes genesisValidatorsRoot) {
-    return jdbi.inTransaction(
-        SERIALIZABLE,
-        h -> {
-          final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(h);
-          final Boolean isValidGvr =
-              dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(false);
-          if (!isValidGvr) {
-            LOG.warn(
-                "Supplied genesis validators root {} does not match value in database",
-                genesisValidatorsRoot);
-          }
-          return isValidGvr;
-        });
+  private boolean isValidGenesisValidatorsRoot(final Handle handle, Bytes genesisValidatorsRoot) {
+    final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(handle);
+    final boolean isValidGvr = dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(false);
+    if (!isValidGvr) {
+      LOG.warn(
+          "Supplied genesis validators root {} does not match value in database",
+          genesisValidatorsRoot);
+    }
+    return isValidGvr;
   }
 
   private int validatorId(final Bytes publicKey) {
