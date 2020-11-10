@@ -457,8 +457,8 @@ public class DbSlashingProtectionTest {
         .thenReturn(Optional.of(Bytes32.leftPad(Bytes.of(1))));
 
     assertThat(
-        dbSlashingProtection.maySignAttestation(
-            PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
         .isFalse();
 
     verify(metadataDao).findGenesisValidatorsRoot(any());
