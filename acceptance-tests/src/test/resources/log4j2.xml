@@ -14,8 +14,14 @@
     </Console>
   </Appenders>
   <Loggers>
+    <Logger name="com.networknt.schema" level="INFO" additivity="false">
+      <AppenderRef ref="Console"/>
+    </Logger>
     <Logger name="tech.pegasys.web3signer.SubProcessLog" level="INFO" additivity="false">
       <AppenderRef ref="SubProcessConsole" />
+    </Logger>
+    <Logger name="com.networknt.schema" level="${sys:dependency.log.level}" additivity="false">
+      <AppenderRef ref="Console"/>
     </Logger>
     <Logger name="com.zaxxer.hikari" level="${sys:dependency.log.level}" additivity="false">
       <AppenderRef ref="Console" />
