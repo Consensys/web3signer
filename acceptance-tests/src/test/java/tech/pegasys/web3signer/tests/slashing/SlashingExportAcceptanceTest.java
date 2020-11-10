@@ -16,16 +16,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.Eth2Network;
+import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation;
+import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dsl.InterchangeV5Format;
@@ -34,7 +39,35 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-public class SlashingExportAcceptanceTest extends SlashingAcceptanceTest {
+public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
+
+  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  public static final String DB_USERNAME = "postgres";
+  public static final String DB_PASSWORD = "postgres";
+  protected final BLSKeyPair keyPair = BLSKeyPair.random(0);
+
+  final List<String> blockSlashingMetrics =
+      List.of(
+          "eth2_slashingprotection_permitted_signings",
+          "eth2_slashingprotection_prevented_signings");
+
+  void setupSigner(final Path testDirectory, final boolean enableSlashing) {
+    final SignerConfigurationBuilder builder =
+        new SignerConfigurationBuilder()
+            .withMode("eth2")
+            .withSlashingEnabled(enableSlashing)
+            .withSlashingProtectionDbUsername(DB_USERNAME)
+            .withSlashingProtectionDbPassword(DB_PASSWORD)
+            .withSlashingProtectionNetwork("MEDALLA")
+            .withMetricsEnabled(true)
+            .withKeyStoreDirectory(testDirectory);
+
+    final Path keyConfigFile = testDirectory.resolve("keyfile.yaml");
+    metadataFileHelpers.createUnencryptedYamlFileAt(
+        keyConfigFile, keyPair.getSecretKey().toBytes().toHexString(), KeyType.BLS);
+
+    startSigner(builder.build());
+  }
 
   @Test
   void slashingDataIsExported(@TempDir Path testDirectory) throws IOException {
