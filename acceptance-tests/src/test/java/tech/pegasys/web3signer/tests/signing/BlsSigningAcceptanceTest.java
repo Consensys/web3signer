@@ -82,7 +82,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @ParameterizedTest
   @EnumSource(ArtifactType.class)
-  public void signDataWithANYAcceptTypeWithKeyLoadedFromUnencryptedFile(
+  public void signDataWithDefaultAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
