@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,6 +29,7 @@ public class TestFileModel {
   final List<BlockTestModel> blocks;
   final List<AttestionTestModel> attestations;
 
+  @JsonCreator
   public TestFileModel(
       @JsonProperty(value = "name", required = true) final String name,
       @JsonProperty(value = "should_succeed", required = true) boolean shouldSucceed,
