@@ -226,6 +226,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             .withSlashingProtectionDbUrl(dbUrl)
             .withSlashingProtectionDbUsername(DB_USERNAME)
             .withSlashingProtectionDbPassword(DB_PASSWORD)
+            .withSlashingProtectionNetwork("MEDALLA")
             .withHttpPort(9000); // Requires arbitrary port to avoid waiting for Ports file
     signer = new Signer(builder.withMode("eth2").build(), null);
     signer.start();
