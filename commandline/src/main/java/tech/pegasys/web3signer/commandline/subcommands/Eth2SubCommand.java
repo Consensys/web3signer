@@ -22,6 +22,7 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -84,12 +85,13 @@ public class Eth2SubCommand extends ModeSubCommand {
   private String slashingProtectionDbPassword;
 
   @Option(
-      names = {"--network"},
+      names = {"--slashing-protection-network"},
       description =
-          "The Eth2 network that is being used for signing, the corresponding genesis_validator_root will be used to validate signing requests are from the correct network",
+          "The Eth2 network that is being used for signing, the corresponding genesis_validator_root "
+              + "will be used to validate signing requests are from the correct network",
       paramLabel = "<network name>",
       arity = "1")
-  private Eth2Network network = Eth2Network.MEDALLA;
+  private Eth2Network slashingProtectionNetwork;
 
   @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
@@ -103,17 +105,29 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionDbUsername,
         slashingProtectionDbPassword,
         azureKeyVaultParameters,
-        network);
+        slashingProtectionNetwork);
   }
 
   private void validateArgs() {
-    if (slashingProtectionEnabled && slashingProtectionDbUrl == null) {
-      throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
+    if (slashingProtectionEnabled) {
+      final List<String> missingSlashingProtectionFields = new ArrayList<>();
+      if (slashingProtectionDbUrl == null) {
+        missingSlashingProtectionFields.add("--slashing-protection-db-url");
+      }
+      if (slashingProtectionNetwork == null) {
+        missingSlashingProtectionFields.add("--slashing-protection-network");
+      }
+      if (missingSlashingProtectionFields.size() != 0) {
+        final String errorMsg =
+            String.format(
+                "Slashing protection was enabled, but the following parameters were missing [%s].",
+                String.join(",", missingSlashingProtectionFields));
+        throw new ParameterException(spec.commandLine(), errorMsg);
+      }
     }
 
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-
-      List<String> missingAzureFields = Lists.newArrayList();
+      final List<String> missingAzureFields = Lists.newArrayList();
 
       if (azureKeyVaultParameters.getClientSecret() == null) {
         missingAzureFields.add("--azure-client-secret");
