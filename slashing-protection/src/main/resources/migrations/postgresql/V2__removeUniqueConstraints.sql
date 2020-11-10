@@ -15,5 +15,7 @@ DECLARE
 BEGIN
   EXECUTE 'ALTER TABLE signed_blocks DROP CONSTRAINT ' || _signed_block_conn;
   EXECUTE 'ALTER TABLE signed_attestations DROP CONSTRAINT ' || _signed_attestation_conn;
+  EXECUTE 'ALTER TABLE signed_blocks ADD COLUMN id SERIAL PRIMARY KEY';
+  EXECUTE 'ALTER TABLE signed_attestations ADD COLUMN id SERIAL PRIMARY KEY';
 END
 $body$
