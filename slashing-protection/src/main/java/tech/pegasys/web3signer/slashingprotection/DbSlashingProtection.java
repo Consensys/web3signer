@@ -16,15 +16,15 @@ import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WR
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
+import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
+import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -108,104 +107,38 @@ public class DbSlashingProtection implements SlashingProtection {
       final UInt64 targetEpoch) {
     final int validatorId = validatorId(publicKey);
 
-    if (sourceEpoch.compareTo(targetEpoch) > 0) {
-      LOG.warn(
-          "Detected sourceEpoch {} greater than targetEpoch {} for {}",
-          sourceEpoch,
-          targetEpoch,
-          publicKey);
-      return false;
-    }
-
     return jdbi.inTransaction(
         READ_COMMITTED,
         handle -> {
+          final AttestationValidator attestationValidator =
+              new AttestationValidator(
+                  handle,
+                  publicKey,
+                  signingRoot,
+                  sourceEpoch,
+                  targetEpoch,
+                  validatorId,
+                  signedAttestationsDao);
+
+          if (!attestationValidator.sourceGreaterThanTargetEpoch()) {
+            return false;
+          }
+
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
-          return checkAndInsertAttestation(
-              handle, publicKey, signingRoot, sourceEpoch, targetEpoch, validatorId);
+
+          if (attestationValidator.directlyConflictsWithExistingEntry()
+              || attestationValidator.isSurroundedByExistingAttestation()
+              || attestationValidator.surroundsExistingAttestation()) {
+            return false;
+          } else if (attestationValidator.existsInDatabase()) {
+            return true;
+          } else if (attestationValidator.hasSourceOlderThanWatermark()
+              || attestationValidator.hasTargetOlderThanWatermark()) {
+            return false;
+          }
+          attestationValidator.insertToDatabase();
+          return true;
         });
-  }
-
-  private boolean checkAndInsertAttestation(
-      final Handle h,
-      final Bytes publicKey,
-      final Bytes signingRoot,
-      final UInt64 sourceEpoch,
-      final UInt64 targetEpoch,
-      final int validatorId) {
-    final Optional<SignedAttestation> existingAttestation =
-        signedAttestationsDao.findExistingAttestation(h, validatorId, targetEpoch);
-    if (existingAttestation.isPresent()) {
-      if (existingAttestation.get().getSigningRoot().isEmpty()) {
-        LOG.warn(
-            "Existing signed attestation ({}, {}, {}) exists with no signing root",
-            publicKey,
-            existingAttestation.get().getSourceEpoch(),
-            existingAttestation.get().getTargetEpoch());
-        return false;
-      }
-      if (!existingAttestation.get().getSigningRoot().get().equals(signingRoot)) {
-        LOG.warn(
-            "Detected double signed attestation {} for {}", existingAttestation.get(), publicKey);
-        return false;
-      } else {
-        // same slot and signing_root is allowed for broadcasting previous attestation
-        return true;
-      }
-    }
-
-    final Optional<UInt64> minimumSourceEpoch =
-        signedAttestationsDao.minimumSourceEpoch(h, validatorId);
-    if (minimumSourceEpoch.map(minEpoch -> sourceEpoch.compareTo(minEpoch) < 0).orElse(false)) {
-      LOG.warn(
-          "Attestation source epoch {} is below minimum existing attestation source epoch {}",
-          sourceEpoch,
-          minimumSourceEpoch.get());
-      return false;
-    }
-
-    final Optional<UInt64> minimumTargetEpoch =
-        signedAttestationsDao.minimumTargetEpoch(h, validatorId);
-    if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).orElse(false)) {
-      LOG.warn(
-          "Attestation target epoch {} is below minimum existing attestation target epoch {}",
-          targetEpoch,
-          minimumTargetEpoch.get());
-      return false;
-    }
-
-    // check that no previous vote is surrounding the attestation
-    final Optional<SignedAttestation> surroundingAttestation =
-        signedAttestationsDao.findSurroundingAttestation(h, validatorId, sourceEpoch, targetEpoch);
-    if (surroundingAttestation.isPresent()) {
-      LOG.warn(
-          "Detected surrounding attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
-          surroundingAttestation.get(),
-          signingRoot,
-          sourceEpoch,
-          targetEpoch,
-          publicKey);
-      return false;
-    }
-
-    // check that no previous vote is surrounded by attestation
-    final Optional<SignedAttestation> surroundedAttestation =
-        signedAttestationsDao.findSurroundedAttestation(h, validatorId, sourceEpoch, targetEpoch);
-    if (surroundedAttestation.isPresent()) {
-      LOG.warn(
-          "Detected surrounded attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
-          surroundedAttestation.get(),
-          signingRoot,
-          sourceEpoch,
-          targetEpoch,
-          publicKey);
-      return false;
-    }
-
-    final SignedAttestation signedAttestation =
-        new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
-    signedAttestationsDao.insertAttestation(h, signedAttestation);
-    return true;
   }
 
   @Override
@@ -215,45 +148,21 @@ public class DbSlashingProtection implements SlashingProtection {
     return jdbi.inTransaction(
         READ_COMMITTED,
         h -> {
+          final BlockValidator blockValidator =
+              new BlockValidator(h, signingRoot, blockSlot, validatorId, signedBlocksDao);
+
           lockForValidator(h, LockType.BLOCK, validatorId);
-          return checkAndInsertBlock(h, publicKey, signingRoot, blockSlot, validatorId);
+
+          if (blockValidator.directlyConflictsWithExistingEntry()) {
+            return false;
+          } else if (blockValidator.existsInDatabase()) {
+            return true;
+          } else if (blockValidator.isOlderThanWatermark()) {
+            return false;
+          }
+          blockValidator.insertToDatabase();
+          return true;
         });
-  }
-
-  private boolean checkAndInsertBlock(
-      final Handle handle,
-      final Bytes publicKey,
-      final Bytes signingRoot,
-      final UInt64 blockSlot,
-      final int validatorId) {
-    final Optional<SignedBlock> existingBlock =
-        signedBlocksDao.findExistingBlock(handle, validatorId, blockSlot);
-    if (existingBlock.isPresent()) {
-      if (existingBlock.get().getSigningRoot().isEmpty()) {
-        LOG.warn(
-            "Signed block ({}, {}) exists with no signing root",
-            publicKey,
-            existingBlock.get().getSlot());
-        return false;
-      } else if (existingBlock.get().getSigningRoot().get().equals(signingRoot)) {
-        // same slot and signing_root is allowed for broadcasting previously signed block
-        return true;
-      } else {
-        LOG.warn("Detected double signed block {} for {}", existingBlock.get(), publicKey);
-        return false;
-      }
-    }
-
-    final Optional<UInt64> minimumSlot = signedBlocksDao.minimumSlot(handle, validatorId);
-    if (minimumSlot.map(slot -> blockSlot.compareTo(slot) <= 0).orElse(false)) {
-      LOG.warn(
-          "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
-      return false;
-    }
-
-    final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
-    signedBlocksDao.insertBlockProposal(handle, signedBlock);
-    return true;
   }
 
   @Override
