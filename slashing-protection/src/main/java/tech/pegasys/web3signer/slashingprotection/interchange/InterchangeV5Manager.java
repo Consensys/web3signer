@@ -40,7 +40,7 @@ public class InterchangeV5Manager implements InterchangeManager {
   }
 
   @Override
-  public void importData(InputStream in) throws IOException {
+  public void importData(final InputStream in) throws IOException {
     throw new NotImplementedException(
         "Importing of interchange data to be performed in later release");
   }

@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,11 +43,11 @@ public class InterchangeV5Exporter {
   private final ObjectMapper mapper;
 
   public InterchangeV5Exporter(
-      Jdbi jdbi,
-      ValidatorsDao validatorsDao,
-      SignedBlocksDao signedBlocksDao,
-      SignedAttestationsDao signedAttestationsDao,
-      ObjectMapper mapper) {
+      final Jdbi jdbi,
+      final ValidatorsDao validatorsDao,
+      final SignedBlocksDao signedBlocksDao,
+      final SignedAttestationsDao signedAttestationsDao,
+      final ObjectMapper mapper) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
@@ -83,8 +84,9 @@ public class InterchangeV5Exporter {
                           validator.getPublicKey().toHexString());
                       try {
                         populateValidatorRecord(h, validator, jsonGenerator);
-                      } catch (IOException e) {
-                        throw new RuntimeException("Failed to construct a validator entry in json");
+                      } catch (final IOException e) {
+                        throw new UncheckedIOException(
+                            "Failed to construct a validator entry in json", e);
                       }
                     }));
   }
@@ -114,8 +116,9 @@ public class InterchangeV5Exporter {
                           b.getSlot(), b.getSigningRoot().orElse(null));
               try {
                 mapper.writeValue(jsonGenerator, jsonBlock);
-              } catch (IOException e) {
-                throw new RuntimeException("Failed to construct a signed_blocks entry in json");
+              } catch (final IOException e) {
+                throw new UncheckedIOException(
+                    "Failed to construct a signed_blocks entry in json", e);
               }
             });
 
@@ -138,9 +141,9 @@ public class InterchangeV5Exporter {
                           a.getSourceEpoch(), a.getTargetEpoch(), a.getSigningRoot().orElse(null));
               try {
                 mapper.writeValue(jsonGenerator, jsonAttestation);
-              } catch (IOException e) {
-                throw new RuntimeException(
-                    "Failed to construct a signed_attestations entry in json");
+              } catch (final IOException e) {
+                throw new UncheckedIOException(
+                    "Failed to construct a signed_attestations entry in json", e);
               }
             });
     jsonGenerator.writeEndArray();
