@@ -1,0 +1,40 @@
+
+apply plugin: 'java-library'
+apply plugin: 'java-test-fixtures'
+
+jar {
+  archiveBaseName = 'web3signer-slashing-protection-reference-tests'
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
+}
+
+dependencies {
+  testImplementation project(':slashing-protection')
+  testImplementation (testFixtures(project(":slashing-protection")))
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testImplementation 'org.junit.jupiter:junit-jupiter-migrationsupport'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'org.jdbi:jdbi3-testing'
+  testImplementation 'com.opentable.components:otj-pg-embedded'
+  testImplementation 'org.flywaydb:flyway-core'
+  testImplementation 'org.apache.tuweni:tuweni-units'
+  testImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  testImplementation 'org.apache.logging.log4j:log4j-api'
+  testImplementation 'org.apache.logging.log4j:log4j-core'
+
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.7.0'
+
+  testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
+  testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
+  testFixturesImplementation 'commons-lang:commons-lang'
+  testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
+}
