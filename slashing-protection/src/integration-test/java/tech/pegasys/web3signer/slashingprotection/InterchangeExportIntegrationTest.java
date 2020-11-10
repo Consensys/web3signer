@@ -19,51 +19,22 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.Resources;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 
-public class InterchangeExportIntegrationTest {
-
-  private final SignedBlocksDao signedBlocks = new SignedBlocksDao();
-  private final SignedAttestationsDao signedAttestations = new SignedAttestationsDao();
-  private final ValidatorsDao validators = new ValidatorsDao();
-
-  private EmbeddedPostgres setup() throws IOException, URISyntaxException {
-    final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
-
-    final String migrationsFile = Path.of("migrations", "postgresql", "V1__initial.sql").toString();
-
-    final Path schemaPath = Paths.get(Resources.getResource(migrationsFile).toURI());
-
-    final Path migrationPath = schemaPath.getParent();
-
-    final Flyway flyway =
-        Flyway.configure()
-            .locations("filesystem:" + migrationPath.toString())
-            .dataSource(slashingDatabase.getPostgresDatabase())
-            .load();
-    flyway.migrate();
-
-    return slashingDatabase;
-  }
+public class InterchangeExportIntegrationTest extends InterchangeBaseIntegrationTest {
 
   @Test
   void canCreateDatabaseWithEntries() throws IOException, URISyntaxException {
@@ -108,8 +79,6 @@ public class InterchangeExportIntegrationTest {
         SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
     slashingProtection.export(exportOutput);
     exportOutput.close();
-
-    final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
 
     final InterchangeV5Format outputObject =
         mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);

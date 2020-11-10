@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.List;
@@ -50,6 +51,19 @@ public class Eth2SubCommand extends ModeSubCommand {
       slashingProtection.export(new FileOutputStream(output));
     } catch (final FileNotFoundException e) {
       throw new RuntimeException("Unable to find output target file", e);
+    }
+  }
+
+  @Command(name = "import", description = "Import json file to the slashing protection db")
+  public void importSlashingDb(@Option(names = "--from") File input) {
+    final SlashingProtection slashingProtection =
+        createSlashingProtection(
+            slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
+
+    try {
+      slashingProtection.importData(new FileInputStream(input));
+    } catch (final FileNotFoundException e) {
+      throw new RuntimeException("Unable to write to specified input file", e);
     }
   }
 

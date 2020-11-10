@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Streams;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -92,8 +91,13 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public void importData(final InputStream input) {
-    throw new NotImplementedException(
-        "Importing of interchange data to be performed in later release");
+    try {
+      LOG.info("Importing slashing protection database");
+      interchangeManager.importData(input);
+      LOG.info("Import complete");
+    } catch (final IOException | UnsupportedOperationException e) {
+      throw new RuntimeException("Failed to import database content", e);
+    }
   }
 
   @Override
