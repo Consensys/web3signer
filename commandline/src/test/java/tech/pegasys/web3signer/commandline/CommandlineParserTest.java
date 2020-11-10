@@ -105,14 +105,17 @@ class CommandlineParserTest {
   }
 
   @Test
-  void eth2SubcommandRequiresSlashingDatabaseUrlWhenSlashingEnabled() {
+  void missingSlashingProtectionParamsProducesSuitableError() {
     String cmdline = validBaseCommandOptions();
     cmdline = cmdline + "eth2 --slashing-protection-enabled=true";
 
     parser.registerSubCommands(new MockEth2SubCommand());
     final int result = parser.parseCommandLine(cmdline.split(" "));
     assertThat(result).isNotZero();
-    assertThat(commandError.toString()).contains("Missing slashing protection database url");
+    assertThat(commandError.toString())
+        .startsWith("Slashing protection was enabled, but the following parameters were missing");
+    assertThat(commandError.toString()).contains("--slashing-protection-db-url");
+    assertThat(commandError.toString()).contains("--slashing-protection-network");
   }
 
   @Test
