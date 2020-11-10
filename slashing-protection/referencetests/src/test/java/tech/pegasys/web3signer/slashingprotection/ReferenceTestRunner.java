@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.slashingprotection;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Disabled;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.model.TestFileModel;
@@ -74,6 +75,7 @@ public class ReferenceTestRunner {
   }
 
   @Test
+  @Disabled("Until interchange import is available")
   void execute() throws IOException {
     final URL refTestPath =
         Resources.getResource(
