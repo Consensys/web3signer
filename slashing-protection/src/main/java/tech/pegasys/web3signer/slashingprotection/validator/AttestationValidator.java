@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import java.util.List;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 
@@ -111,13 +112,12 @@ public class AttestationValidator {
 
   public boolean surroundsExistingAttestation() {
     // check that no previous vote is surrounded by attestation
-    final Optional<SignedAttestation> surroundedAttestation =
-        signedAttestationsDao.findSurroundedAttestation(
+    final List<SignedAttestation> surroundedAttestations =
+        signedAttestationsDao.findSurroundedAttestations(
             handle, validatorId, sourceEpoch, targetEpoch);
-    if (surroundedAttestation.isPresent()) {
+    if (!surroundedAttestations.isEmpty()) {
       LOG.warn(
-          "Detected surrounded attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
-          surroundedAttestation.get(),
+          "Detected surrounded attestations for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
           signingRoot,
           sourceEpoch,
           targetEpoch,
@@ -129,13 +129,12 @@ public class AttestationValidator {
 
   public boolean isSurroundedByExistingAttestation() {
     // check that no previous vote is surrounding the attestation
-    final Optional<SignedAttestation> surroundingAttestation =
-        signedAttestationsDao.findSurroundingAttestation(
+    final List<SignedAttestation> surroundingAttestation =
+        signedAttestationsDao.findSurroundedAttestations(
             handle, validatorId, sourceEpoch, targetEpoch);
-    if (surroundingAttestation.isPresent()) {
+    if (!surroundingAttestation.isEmpty()) {
       LOG.warn(
-          "Detected surrounding attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
-          surroundingAttestation.get(),
+          "Detected surrounding attestations for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
           signingRoot,
           sourceEpoch,
           targetEpoch,
