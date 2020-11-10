@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.slashingprotection;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.Disabled;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.model.TestFileModel;
@@ -41,6 +40,7 @@ import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class ReferenceTestRunner {
