@@ -215,7 +215,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
   void cannotStartWeb3SignerIfGenesisValidatorRootConflicts() {
     final String dbUrl = EmbeddedDatabaseUtils.createEmbeddedDatabase();
     final Jdbi jdbi = Jdbi.create(dbUrl, DB_USERNAME, DB_PASSWORD);
-    final byte[] gvr = Bytes.of(42).toArrayUnsafe();
+    final byte[] gvr = Bytes32.leftPad(Bytes.of(42)).toArrayUnsafe();
     jdbi.useHandle(
         h -> h.execute("INSERT INTO metadata (genesis_validators_root) VALUES (?)", gvr));
 
