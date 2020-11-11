@@ -59,7 +59,6 @@ public class ReferenceTestRunner {
   private EmbeddedPostgres slashingDatabase;
   private String databaseUrl;
 
-
   @BeforeEach
   public void setup() throws IOException {
     slashingDatabase = EmbeddedPostgres.start();
@@ -91,8 +90,9 @@ public class ReferenceTestRunner {
     final Path testFilesPath = Path.of(refTestPath.getPath());
 
     try {
-      return Files.list(testFilesPath)
-          .map(tf -> DynamicTest.dynamicTest(tf.toString(), () -> executeFile(tf)));
+      try (final Stream<Path> files = Files.list(testFilesPath)) {
+        return files.map(tf -> DynamicTest.dynamicTest(tf.toString(), () -> executeFile(tf)));
+      }
     } catch (final IOException e) {
       throw new RuntimeException("Failed to create dynamic tests", e);
     }
@@ -156,10 +156,10 @@ public class ReferenceTestRunner {
   private List<String> getValidatorPublicKeysFromDb() {
     final Jdbi jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
     return jdbi.withHandle(
-            h ->
-                validators
-                    .findAllValidators(h)
-                    .map(v -> v.getPublicKey().toHexString())
-                    .collect(Collectors.toList()));
+        h ->
+            validators
+                .findAllValidators(h)
+                .map(v -> v.getPublicKey().toHexString())
+                .collect(Collectors.toList()));
   }
 }
