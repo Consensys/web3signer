@@ -50,26 +50,34 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void findsExistingBlockInDb() {
+  public void findBlockWithDifferentSigningRootInDb() {
     insertValidator(Bytes.of(100), 1);
     insertBlock(1, 2, Bytes.of(3));
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
 
-    final Optional<SignedBlock> existingBlock =
-        signedBlocksDao.findExistingBlock(handle, 1, UInt64.valueOf(2));
-    assertThat(existingBlock).isNotEmpty();
-    assertThat(existingBlock.get().getValidatorId()).isEqualTo(1);
-    assertThat(existingBlock.get().getSlot()).isEqualTo(UInt64.valueOf(2));
-    assertThat(existingBlock.get().getSigningRoot()).isEqualTo(Optional.of(Bytes.of(3)));
+    final List<SignedBlock> existingBlocks =
+        signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(2), Bytes.of(4));
+    assertThat(existingBlocks).isNotEmpty();
+    assertThat(existingBlocks).hasSize(1);
+    assertThat(existingBlocks.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(existingBlocks.get(0).getSlot()).isEqualTo(UInt64.valueOf(2));
+    assertThat(existingBlocks.get(0).getSigningRoot()).isEqualTo(Optional.of(Bytes.of(3)));
   }
 
   @Test
-  public void returnsEmptyForNonExistingBlockInDb() {
+  public void returnsEmptyIfTheOnlyBlockInSlotMatchesRequestedValue() {
     insertValidator(Bytes.of(100), 1);
     insertBlock(1, 2, Bytes.of(3));
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
-    assertThat(signedBlocksDao.findExistingBlock(handle, 1, UInt64.valueOf(1))).isEmpty();
-    assertThat(signedBlocksDao.findExistingBlock(handle, 2, UInt64.valueOf(2))).isEmpty();
+    assertThat(
+            signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+                handle, 1, UInt64.valueOf(2), Bytes.of(3)))
+        .isEmpty();
+    assertThat(
+            signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+                handle, 2, UInt64.valueOf(2), Bytes.of(3)))
+        .isEmpty();
   }
 
   @Test
@@ -106,9 +114,12 @@ public class SignedBlocksDaoTest {
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
     insertValidator(Bytes.of(100), 1);
     insertBlock(1, 2, null);
-    Optional<SignedBlock> block = signedBlocksDao.findExistingBlock(handle, 1, UInt64.valueOf(2));
-    assertThat(block).isNotEmpty();
-    assertThat(block.get().getSigningRoot()).isEmpty();
+    final List<SignedBlock> blocks =
+        signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(2), Bytes.of(3));
+    assertThat(blocks).isNotEmpty();
+    assertThat(blocks).hasSize(1);
+    assertThat(blocks.get(0).getSigningRoot()).isEmpty();
   }
 
   @Test
