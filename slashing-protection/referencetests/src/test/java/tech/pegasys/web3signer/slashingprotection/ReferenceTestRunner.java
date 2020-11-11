@@ -17,6 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
+import tech.pegasys.web3signer.slashingprotection.model.AttestionTestModel;
+import tech.pegasys.web3signer.slashingprotection.model.BlockTestModel;
 import tech.pegasys.web3signer.slashingprotection.model.TestFileModel;
 
 import java.io.ByteArrayInputStream;
@@ -58,6 +60,7 @@ public class ReferenceTestRunner {
   private final ValidatorsDao validators = new ValidatorsDao();
   private EmbeddedPostgres slashingDatabase;
   private String databaseUrl;
+  private SlashingProtection slashingProtection;
 
   @BeforeEach
   public void setup() throws IOException {
@@ -70,6 +73,8 @@ public class ReferenceTestRunner {
     flyway.migrate();
     databaseUrl =
         String.format("jdbc:postgresql://localhost:%d/postgres", slashingDatabase.getPort());
+    slashingProtection =
+        SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
   }
 
   @AfterEach
@@ -83,7 +88,7 @@ public class ReferenceTestRunner {
 
   @TestFactory
   @Disabled("Until interchange import is available")
-  Stream<DynamicTest> executeEachReferenceTestFile() {
+  public Stream<DynamicTest> executeEachReferenceTestFile() {
     final URL refTestPath =
         Resources.getResource(
             Path.of("slashing-protection-interchange-tests", "tests", "generated").toString());
@@ -103,54 +108,27 @@ public class ReferenceTestRunner {
     final String interchangeContent =
         objectMapper.writeValueAsString(model.getInterchangeContent());
 
-    final SlashingProtection slashingProtection =
-        SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
-
     slashingProtection.importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
 
-    executeTestModelVerifications(model, slashingProtection);
+    verifyImport(model);
   }
 
-  private void executeTestModelVerifications(
-      final TestFileModel model, final SlashingProtection slashingProtection) {
-    final List<String> validatorsInImport =
+  private void verifyImport(final TestFileModel model) {
+    final List<String> validatorsInModel =
         model.getInterchangeContent().getSignedArtifacts().stream()
             .map(SignedArtifacts::getPublicKey)
             .collect(Collectors.toList());
 
     final List<String> publicKeysInDb = getValidatorPublicKeysFromDb();
 
-    assertThat(validatorsInImport).containsExactlyInAnyOrderElementsOf(publicKeysInDb);
+    assertThat(validatorsInModel).containsExactlyInAnyOrderElementsOf(publicKeysInDb);
 
     // need to register the validators with slashingProtection before testing blocks/attestations
-    if (validatorsInImport.isEmpty()) {
-      return;
-    }
     slashingProtection.registerValidators(
-        validatorsInImport.stream().map(Bytes::fromHexString).collect(Collectors.toList()));
+        validatorsInModel.stream().map(Bytes::fromHexString).collect(Collectors.toList()));
 
-    model
-        .getAttestations()
-        .forEach(
-            attestation -> {
-              final boolean result =
-                  slashingProtection.maySignAttestation(
-                      attestation.getPublickKey(),
-                      attestation.getSigningRoot(),
-                      attestation.getSourceEpoch(),
-                      attestation.getTargetEpoch());
-              assertThat(result).isEqualTo(attestation.isShouldSucceed());
-            });
-
-    model
-        .getBlocks()
-        .forEach(
-            block -> {
-              final boolean result =
-                  slashingProtection.maySignBlock(
-                      block.getPublickKey(), block.getSigningRoot(), block.getSlot());
-              assertThat(result).isEqualTo(block.isShouldSucceed());
-            });
+    validateAttestations(model.getAttestations());
+    validateBlocks(model.getBlocks());
   }
 
   private List<String> getValidatorPublicKeysFromDb() {
@@ -161,5 +139,28 @@ public class ReferenceTestRunner {
                 .findAllValidators(h)
                 .map(v -> v.getPublicKey().toHexString())
                 .collect(Collectors.toList()));
+  }
+
+  private void validateAttestations(final List<AttestionTestModel> attestations) {
+    attestations.forEach(
+        attestation -> {
+          final boolean result =
+              slashingProtection.maySignAttestation(
+                  attestation.getPublickKey(),
+                  attestation.getSigningRoot(),
+                  attestation.getSourceEpoch(),
+                  attestation.getTargetEpoch());
+          assertThat(result).isEqualTo(attestation.isShouldSucceed());
+        });
+  }
+
+  private void validateBlocks(final List<BlockTestModel> blocks) {
+    blocks.forEach(
+        block -> {
+          final boolean result =
+              slashingProtection.maySignBlock(
+                  block.getPublickKey(), block.getSigningRoot(), block.getSlot());
+          assertThat(result).isEqualTo(block.isShouldSucceed());
+        });
   }
 }
