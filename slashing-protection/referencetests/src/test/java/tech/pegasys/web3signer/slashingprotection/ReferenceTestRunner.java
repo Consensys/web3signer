@@ -38,14 +38,18 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
 
 public class ReferenceTestRunner {
 
   private static final Logger LOG = LogManager.getLogger();
+
+  private static final String USERNAME = "postgres";
+  private static final String PASSWORD = "postgres";
 
   private static final ObjectMapper objectMapper =
       new ObjectMapper()
@@ -53,9 +57,11 @@ public class ReferenceTestRunner {
           .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
   private final ValidatorsDao validators = new ValidatorsDao();
   private EmbeddedPostgres slashingDatabase;
+  private String databaseUrl;
 
-  @Before
-  void setup() throws IOException {
+
+  @BeforeEach
+  public void setup() throws IOException {
     slashingDatabase = EmbeddedPostgres.start();
     final Flyway flyway =
         Flyway.configure()
@@ -63,10 +69,12 @@ public class ReferenceTestRunner {
             .dataSource(slashingDatabase.getPostgresDatabase())
             .load();
     flyway.migrate();
+    databaseUrl =
+        String.format("jdbc:postgresql://localhost:%d/postgres", slashingDatabase.getPort());
   }
 
-  @After
-  void cleanup() {
+  @AfterEach
+  public void cleanup() {
     try {
       slashingDatabase.close();
     } catch (final IOException e) {
@@ -74,82 +82,84 @@ public class ReferenceTestRunner {
     }
   }
 
-  @Test
+  @TestFactory
   @Disabled("Until interchange import is available")
-  void execute() throws IOException {
+  Stream<DynamicTest> executeEachReferenceTestFile() {
     final URL refTestPath =
         Resources.getResource(
             Path.of("slashing-protection-interchange-tests", "tests", "generated").toString());
-
     final Path testFilesPath = Path.of(refTestPath.getPath());
-    try (Stream<Path> testFiles = Files.list(testFilesPath)) {
-      testFiles.forEach(this::executeFile);
+
+    try {
+      return Files.list(testFilesPath)
+          .map(tf -> DynamicTest.dynamicTest(tf.toString(), () -> executeFile(tf)));
+    } catch (final IOException e) {
+      throw new RuntimeException("Failed to create dynamic tests", e);
     }
   }
 
-  private void executeFile(final Path inputFile) {
-    LOG.info(inputFile.toString());
-    try {
-      final TestFileModel model = objectMapper.readValue(inputFile.toFile(), TestFileModel.class);
-      final String interchangeContent =
-          objectMapper.writeValueAsString(model.getInterchangeContent());
+  private void executeFile(final Path inputFile) throws IOException {
+    final TestFileModel model = objectMapper.readValue(inputFile.toFile(), TestFileModel.class);
+    final String interchangeContent =
+        objectMapper.writeValueAsString(model.getInterchangeContent());
 
-      setup();
-      final String databaseUrl =
-          String.format("jdbc:postgresql://localhost:%d/postgres", slashingDatabase.getPort());
+    final SlashingProtection slashingProtection =
+        SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
 
-      final SlashingProtection slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
+    slashingProtection.importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
 
-      slashingProtection.importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+    executeTestModelVerifications(model, slashingProtection);
+  }
 
-      final List<String> validatorsInImport =
-          model.getInterchangeContent().getSignedArtifacts().stream()
-              .map(SignedArtifacts::getPublicKey)
-              .collect(Collectors.toList());
+  private void executeTestModelVerifications(
+      final TestFileModel model, final SlashingProtection slashingProtection) {
+    final List<String> validatorsInImport =
+        model.getInterchangeContent().getSignedArtifacts().stream()
+            .map(SignedArtifacts::getPublicKey)
+            .collect(Collectors.toList());
 
-      final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
-      final List<String> publicKeysInDb =
-          jdbi.withHandle(
-              h ->
-                  validators
-                      .findAllValidators(h)
-                      .map(v -> v.getPublicKey().toHexString())
-                      .collect(Collectors.toList()));
+    final List<String> publicKeysInDb = getValidatorPublicKeysFromDb();
 
-      assertThat(validatorsInImport).containsExactlyInAnyOrderElementsOf(publicKeysInDb);
+    assertThat(validatorsInImport).containsExactlyInAnyOrderElementsOf(publicKeysInDb);
 
-      // need to register the validators with slashingProtection before testing blocks/attestations
-      if (validatorsInImport.isEmpty()) {
-        return;
-      }
-      slashingProtection.registerValidators(
-          validatorsInImport.stream().map(Bytes::fromHexString).collect(Collectors.toList()));
-
-      model
-          .getAttestations()
-          .forEach(
-              attestation -> {
-                final boolean result =
-                    slashingProtection.maySignAttestation(
-                        attestation.getPublickKey(),
-                        attestation.getSigningRoot(),
-                        attestation.getSourceEpoch(),
-                        attestation.getTargetEpoch());
-                assertThat(result).isEqualTo(attestation.isShouldSucceed());
-              });
-
-      model
-          .getBlocks()
-          .forEach(
-              block -> {
-                final boolean result =
-                    slashingProtection.maySignBlock(
-                        block.getPublickKey(), block.getSigningRoot(), block.getSlot());
-                assertThat(result).isEqualTo(block.isShouldSucceed());
-              });
-    } catch (final IOException e) {
-      throw new RuntimeException("setup failed for test");
+    // need to register the validators with slashingProtection before testing blocks/attestations
+    if (validatorsInImport.isEmpty()) {
+      return;
     }
+    slashingProtection.registerValidators(
+        validatorsInImport.stream().map(Bytes::fromHexString).collect(Collectors.toList()));
+
+    model
+        .getAttestations()
+        .forEach(
+            attestation -> {
+              final boolean result =
+                  slashingProtection.maySignAttestation(
+                      attestation.getPublickKey(),
+                      attestation.getSigningRoot(),
+                      attestation.getSourceEpoch(),
+                      attestation.getTargetEpoch());
+              assertThat(result).isEqualTo(attestation.isShouldSucceed());
+            });
+
+    model
+        .getBlocks()
+        .forEach(
+            block -> {
+              final boolean result =
+                  slashingProtection.maySignBlock(
+                      block.getPublickKey(), block.getSigningRoot(), block.getSlot());
+              assertThat(result).isEqualTo(block.isShouldSucceed());
+            });
+  }
+
+  private List<String> getValidatorPublicKeysFromDb() {
+    final Jdbi jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
+    return jdbi.withHandle(
+            h ->
+                validators
+                    .findAllValidators(h)
+                    .map(v -> v.getPublicKey().toHexString())
+                    .collect(Collectors.toList()));
   }
 }
