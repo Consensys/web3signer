@@ -21,7 +21,6 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Impor
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.jdbi.v3.core.Jdbi;
@@ -44,7 +43,7 @@ class InterchangeV5ImporterIntegrationTest extends InterchangeBaseIntegrationTes
 
   @Test
   void basicJsonIsParsed() throws IOException {
-    try(final EmbeddedPostgres db = setup()) {
+    try (final EmbeddedPostgres db = setup()) {
 
       final String databaseUrl =
           String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
@@ -53,7 +52,10 @@ class InterchangeV5ImporterIntegrationTest extends InterchangeBaseIntegrationTes
 
       final InterchangeV5Importer importer =
           new InterchangeV5Importer(
-              jdbi, new ValidatorsDao(), new SignedBlocksDao(), new SignedAttestationsDao(),
+              jdbi,
+              new ValidatorsDao(),
+              new SignedBlocksDao(),
+              new SignedAttestationsDao(),
               mapper);
 
       final ByteArrayInputStream inputStream = new ByteArrayInputStream(basicJson.getBytes(UTF_8));

@@ -95,7 +95,7 @@ public class DbSlashingProtection implements SlashingProtection {
       LOG.info("Importing slashing protection database");
       interchangeManager.importData(input);
       LOG.info("Import complete");
-    } catch (final IOException | UnsupportedOperationException e) {
+    } catch (final IOException | UnsupportedOperationException | IllegalArgumentException e) {
       throw new RuntimeException("Failed to import database content", e);
     }
   }

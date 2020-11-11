@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.NotImplementedException;
 import org.jdbi.v3.core.Jdbi;
 
 public class InterchangeV5Manager implements InterchangeManager {

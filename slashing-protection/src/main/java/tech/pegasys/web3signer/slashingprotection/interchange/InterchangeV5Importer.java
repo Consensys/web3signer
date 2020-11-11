@@ -29,11 +29,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 public class InterchangeV5Importer {
+
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final int FORMAT_VERSION = 5;
 
@@ -73,8 +77,13 @@ public class InterchangeV5Importer {
       jdbi.useTransaction(
           h -> {
             for (int i = 0; i < dataNode.size(); i++) {
-              final JsonNode validatorNode = dataNode.get(i);
-              parseValidator(h, validatorNode);
+              try {
+                final JsonNode validatorNode = dataNode.get(i);
+                parseValidator(h, validatorNode);
+              } catch (final IllegalArgumentException e) {
+                LOG.error("Failed to parse validator {}, due to {}", i, e.getMessage());
+                throw e;
+              }
             }
           });
     }
@@ -114,8 +123,10 @@ public class InterchangeV5Importer {
       final SignedAttestation jsonAttestation =
           mapper.treeToValue(signedAttestationNode.get(i), SignedAttestation.class);
       if (jsonAttestation.getSourceEpoch().compareTo(jsonAttestation.getTargetEpoch()) > 0) {
-        throw new RuntimeException(
-            String.format("Attestation #%d for validator %d - source is great than target epoch"));
+        throw new IllegalArgumentException(
+            String.format(
+                "Attestation #%d for validator %s - source is great than target epoch",
+                i, validator.getPublicKey()));
       }
 
       signedAttestationsDao.insertAttestation(

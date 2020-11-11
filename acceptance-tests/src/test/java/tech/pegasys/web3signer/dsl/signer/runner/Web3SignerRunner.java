@@ -200,8 +200,8 @@ public abstract class Web3SignerRunner {
     if (signerConfig.getSlashingExportPath().isPresent()) {
       params.add("export");
       params.add("--to");
-      params.add(signerConfig.getSlashingExportPath().get().toAbsolutePath().toString());    
-    } else if(signerConfig.getSlashingImportPath().isPresent() {
+      params.add(signerConfig.getSlashingExportPath().get().toAbsolutePath().toString());
+    } else if (signerConfig.getSlashingImportPath().isPresent()) {
       params.add("import");
       params.add("--from");
       params.add(signerConfig.getSlashingImportPath().get().toAbsolutePath().toString());

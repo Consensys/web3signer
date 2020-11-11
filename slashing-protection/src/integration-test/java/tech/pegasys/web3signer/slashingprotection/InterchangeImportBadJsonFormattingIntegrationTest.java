@@ -9,22 +9,21 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.google.common.io.Resources;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import java.io.IOException;
 import java.net.URL;
+
+import com.google.common.io.Resources;
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 
-public class InterchangeImportBadJsonFormattingIntegrationTest extends
-    InterchangeBaseIntegrationTest {
+public class InterchangeImportBadJsonFormattingIntegrationTest
+    extends InterchangeBaseIntegrationTest {
 
   @Test
   void incorrectlyTypedDataFieldThrowsException() throws IOException {
@@ -38,7 +37,7 @@ public class InterchangeImportBadJsonFormattingIntegrationTest extends
       final URL importFile = Resources.getResource("interchange/dataFieldNotArray.json");
       assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
           .isInstanceOf(RuntimeException.class)
-          .withFailMessage("Failed to import database content");
+          .hasMessage("Failed to import database content");
       assertDbIsEmpty(jdbi);
     }
   }
@@ -91,7 +90,7 @@ public class InterchangeImportBadJsonFormattingIntegrationTest extends
       final URL importFile = Resources.getResource("interchange/errorInSecondBlock.json");
       assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
           .isInstanceOf(RuntimeException.class)
-          .withFailMessage("Failed to import database content");
+          .hasMessage(("Failed to import database content"));
       assertDbIsEmpty(jdbi);
     }
   }
@@ -110,7 +109,7 @@ public class InterchangeImportBadJsonFormattingIntegrationTest extends
       final URL importFile = Resources.getResource("interchange/missingPublicKey.json");
       assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
           .isInstanceOf(RuntimeException.class)
-          .withFailMessage("Failed to import database content");
+          .hasMessage(("Failed to import database content"));
       assertDbIsEmpty(jdbi);
     }
   }
