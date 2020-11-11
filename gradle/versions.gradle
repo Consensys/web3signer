@@ -76,7 +76,7 @@ dependencyManagement {
     dependency 'org.hyperledger.besu.internal:metrics-core:1.4.0'
     dependency 'org.hyperledger.besu:plugin-api:1.4.0'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '0.12.11') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '0.12.14-SNAPSHOT') {
       entry 'bls'
       entry 'core'
       entry 'datastructures'
