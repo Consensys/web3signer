@@ -16,13 +16,11 @@ import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFacto
 
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
-import tech.pegasys.web3signer.core.signing.Eth2Network;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -84,15 +82,6 @@ public class Eth2SubCommand extends ModeSubCommand {
       paramLabel = "<jdbc password>")
   private String slashingProtectionDbPassword;
 
-  @Option(
-      names = {"--slashing-protection-network"},
-      description =
-          "The Eth2 network that is being used for signing, the corresponding genesis_validator_root "
-              + "will be used to validate signing requests are from the correct network",
-      paramLabel = "<network name>",
-      arity = "1")
-  private Eth2Network slashingProtectionNetwork;
-
   @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
@@ -104,30 +93,17 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionDbUrl,
         slashingProtectionDbUsername,
         slashingProtectionDbPassword,
-        azureKeyVaultParameters,
-        slashingProtectionNetwork);
+        azureKeyVaultParameters);
   }
 
   private void validateArgs() {
-    if (slashingProtectionEnabled) {
-      final List<String> missingSlashingProtectionFields = new ArrayList<>();
-      if (slashingProtectionDbUrl == null) {
-        missingSlashingProtectionFields.add("--slashing-protection-db-url");
-      }
-      if (slashingProtectionNetwork == null) {
-        missingSlashingProtectionFields.add("--slashing-protection-network");
-      }
-      if (missingSlashingProtectionFields.size() != 0) {
-        final String errorMsg =
-            String.format(
-                "Slashing protection was enabled, but the following parameters were missing [%s].",
-                String.join(",", missingSlashingProtectionFields));
-        throw new ParameterException(spec.commandLine(), errorMsg);
-      }
+    if (slashingProtectionEnabled && slashingProtectionDbUrl == null) {
+      throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
     }
 
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-      final List<String> missingAzureFields = Lists.newArrayList();
+
+      List<String> missingAzureFields = Lists.newArrayList();
 
       if (azureKeyVaultParameters.getClientSecret() == null) {
         missingAzureFields.add("--azure-client-secret");

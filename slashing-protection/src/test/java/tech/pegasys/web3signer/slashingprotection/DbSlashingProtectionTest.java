@@ -475,27 +475,4 @@ public class DbSlashingProtectionTest {
     verify(metadataDao).findGenesisValidatorsRoot(any());
     verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
   }
-
-  @Test
-  public void registersGenesisValidatorsRootIfItDoesNotExist() {
-    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.empty());
-    dbSlashingProtection.registerGenesisValidatorsRoot(GVR);
-    verify(metadataDao).insertGenesisValidatorsRoot(any(), eq(GVR));
-  }
-
-  @Test
-  public void registeringSkippedForGenesisValidatorsRootIfAlreadyExists() {
-    dbSlashingProtection.registerGenesisValidatorsRoot(GVR);
-    verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
-  }
-
-  @Test
-  public void registeringFailsForGenesisValidatorsRootIfDifferent() {
-    when(metadataDao.findGenesisValidatorsRoot(any()))
-        .thenReturn(Optional.of(Bytes32.leftPad(Bytes.of(1))));
-    assertThatThrownBy(() -> dbSlashingProtection.registerGenesisValidatorsRoot(GVR))
-        .hasMessage("Supplied genesis validators root " + GVR + " does not match value in database")
-        .isInstanceOf(IllegalStateException.class);
-    verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
-  }
 }

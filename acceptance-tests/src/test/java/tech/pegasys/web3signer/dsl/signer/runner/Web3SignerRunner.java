@@ -193,8 +193,6 @@ public abstract class Web3SignerRunner {
       params.add(signerConfig.getSlashingProtectionDbUsername());
       params.add("--slashing-protection-db-password");
       params.add(signerConfig.getSlashingProtectionDbPassword());
-      params.add("--slashing-protection-network");
-      params.add(signerConfig.getSlashingProtectionNetwork());
     }
 
     if (signerConfig.getSlashingExportPath().isPresent()) {

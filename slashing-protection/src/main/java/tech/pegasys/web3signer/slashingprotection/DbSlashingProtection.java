@@ -116,23 +116,6 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void registerGenesisValidatorsRoot(final Bytes32 genesisValidatorsRoot) {
-    jdbi.useTransaction(
-        SERIALIZABLE,
-        h -> {
-          final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(h);
-          if (!dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(true)) {
-            throw new IllegalStateException(
-                String.format(
-                    "Supplied genesis validators root %s does not match value in database",
-                    genesisValidatorsRoot));
-          } else if (dbGvr.isEmpty()) {
-            metadataDao.insertGenesisValidatorsRoot(h, genesisValidatorsRoot);
-          }
-        });
-  }
-
-  @Override
   public boolean maySignAttestation(
       final Bytes publicKey,
       final Bytes signingRoot,
@@ -233,13 +216,15 @@ public class DbSlashingProtection implements SlashingProtection {
         });
   }
 
-  private boolean isValidGenesisValidatorsRoot(final Handle handle, Bytes genesisValidatorsRoot) {
+  private boolean isValidGenesisValidatorsRoot(final Handle handle, Bytes32 genesisValidatorsRoot) {
     final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(handle);
-    final boolean isValidGvr = dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(false);
+    final boolean isValidGvr = dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(true);
     if (!isValidGvr) {
       LOG.warn(
           "Supplied genesis validators root {} does not match value in database",
           genesisValidatorsRoot);
+    } else if (dbGvr.isEmpty()) {
+      metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
     }
     return isValidGvr;
   }

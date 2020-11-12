@@ -15,15 +15,12 @@ package tech.pegasys.web3signer.tests.slashing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
 import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createBlockRequest;
-import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
-import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.web3signer.dsl.utils.EmbeddedDatabaseUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
@@ -32,9 +29,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.response.Response;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -62,7 +57,6 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
             .withSlashingEnabled(enableSlashing)
             .withSlashingProtectionDbUsername(DB_USERNAME)
             .withSlashingProtectionDbPassword(DB_PASSWORD)
-            .withSlashingProtectionNetwork("MEDALLA")
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory);
 
@@ -209,28 +203,5 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
     assertThat(secondResponse.getStatusCode()).isEqualTo(403);
     assertThat(signer.getMetricsMatching(blockSlashingMetrics))
         .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 1.0");
-  }
-
-  @Test
-  void cannotStartWeb3SignerIfGenesisValidatorRootConflicts() {
-    final String dbUrl = EmbeddedDatabaseUtils.createEmbeddedDatabase();
-    final Jdbi jdbi = Jdbi.create(dbUrl, DB_USERNAME, DB_PASSWORD);
-    final byte[] gvr = Bytes32.leftPad(Bytes.of(42)).toArrayUnsafe();
-    jdbi.useHandle(
-        h -> h.execute("INSERT INTO metadata (genesis_validators_root) VALUES (?)", gvr));
-
-    final SignerConfigurationBuilder builder =
-        new SignerConfigurationBuilder()
-            .withMode("eth2")
-            .withSlashingEnabled(true)
-            .withSlashingProtectionDbUrl(dbUrl)
-            .withSlashingProtectionDbUsername(DB_USERNAME)
-            .withSlashingProtectionDbPassword(DB_PASSWORD)
-            .withSlashingProtectionNetwork("MEDALLA")
-            .withHttpPort(9000); // Requires arbitrary port to avoid waiting for Ports file
-    signer = new Signer(builder.withMode("eth2").build(), null);
-    signer.start();
-
-    waitFor(() -> assertThat(signer.isRunning()).isFalse());
   }
 }

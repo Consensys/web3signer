@@ -13,13 +13,13 @@
 package tech.pegasys.web3signer.tests.slashing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.GENESIS_VALIDATORS_ROOT;
 import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
-import tech.pegasys.web3signer.core.signing.Eth2Network;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
@@ -36,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
 import io.restassured.response.Response;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -58,7 +59,6 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
             .withSlashingEnabled(enableSlashing)
             .withSlashingProtectionDbUsername(DB_USERNAME)
             .withSlashingProtectionDbPassword(DB_PASSWORD)
-            .withSlashingProtectionNetwork("MEDALLA")
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory);
 
@@ -87,7 +87,6 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
     builder.withSlashingProtectionDbUrl(signer.getSlashingDbUrl());
     builder.withSlashingProtectionDbUsername("postgres");
     builder.withSlashingProtectionDbPassword("postgres");
-    builder.withSlashingProtectionNetwork("MEDALLA");
     builder.withKeyStoreDirectory(testDirectory);
     builder.withSlashingExportPath(exportFile);
     builder.withHttpPort(12345); // prevent wait for Ports file in AT
@@ -103,7 +102,7 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
 
     assertThat(mappedData.getMetadata().getFormatVersionAsString()).isEqualTo("5");
     assertThat(mappedData.getMetadata().getGenesisValidatorsRoot())
-        .isEqualTo(Eth2Network.MEDALLA.getGenesisValidatorsRoot());
+        .isEqualTo(Bytes.fromHexString(GENESIS_VALIDATORS_ROOT));
 
     assertThat(mappedData.getSignedArtifacts()).hasSize(1);
     final SignedArtifacts artifacts = mappedData.getSignedArtifacts().get(0);

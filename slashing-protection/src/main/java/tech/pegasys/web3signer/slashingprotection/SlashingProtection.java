@@ -37,6 +37,4 @@ public interface SlashingProtection {
   void export(OutputStream output);
 
   void importData(InputStream output);
-
-  void registerGenesisValidatorsRoot(Bytes32 genesisValidatorsRoot);
 }

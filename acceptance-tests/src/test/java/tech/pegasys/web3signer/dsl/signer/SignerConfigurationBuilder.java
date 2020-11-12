@@ -43,7 +43,6 @@ public class SignerConfigurationBuilder {
   private boolean enableSlashing = false;
   private String slashingProtectionDbUrl;
   private Path slashingExportPath;
-  private String slashingProtectionNetwork;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -119,11 +118,6 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withSlashingProtectionNetwork(final String network) {
-    this.slashingProtectionNetwork = network;
-    return this;
-  }
-
   public SignerConfigurationBuilder withSlashingExportPath(final Path slashingExportPath) {
     this.slashingExportPath = slashingExportPath;
     return this;
@@ -155,7 +149,6 @@ public class SignerConfigurationBuilder {
         mode,
         Optional.ofNullable(web3SignerEnvironment),
         enableSlashing,
-        slashingProtectionNetwork,
         Optional.ofNullable(slashingExportPath));
   }
 }
