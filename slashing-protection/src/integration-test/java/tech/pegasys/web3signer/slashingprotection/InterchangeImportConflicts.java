@@ -30,9 +30,6 @@ import org.junit.jupiter.api.Test;
 public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
 
   @Test
-  void canImportFileWhichContainsConflictingBlockAndBothInDatabase() {}
-
-  @Test
   void duplicateEntriesAreNotInsertedToDatabase() throws IOException {
     final URL importFile = Resources.getResource("interchange/singleValidBlock.json");
     slashingProtection.importData(importFile.openStream());
@@ -127,6 +124,36 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
           assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
           assertThat(attestationsInDb.get(0).getSigningRoot())
               .isEqualTo(Optional.of(Bytes.fromHexString("0x123456")));
+        });
+  }
+
+  @Test
+  void canLoadInterchangeFormatWithMissingSigningRootForBlock() throws IOException {
+    final URL importFile = Resources.getResource("interchange/singleNullSigningRootBlock.json");
+    slashingProtection.importData(importFile.openStream());
+    jdbi.useHandle(
+        handle -> {
+          final List<SignedBlock> blocksInDb = findAllBlocks(handle);
+          assertThat(blocksInDb).hasSize(1);
+          assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
+          assertThat(blocksInDb.get(0).getSigningRoot()).isEmpty();
+        });
+  }
+
+  @Test
+  void canLoadInterchangFormatWithMissingSigningRootForAttestation() throws IOException {
+    final URL importFile =
+        Resources.getResource("interchange/singleNullSigningROotAttestation.json");
+    slashingProtection.importData(importFile.openStream());
+    jdbi.useHandle(
+        handle -> {
+          final List<SignedAttestation> attestationsInDb = findAllAttestations(handle);
+          assertThat(attestationsInDb).hasSize(1);
+          assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
+          assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
+          assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
+          assertThat(attestationsInDb.get(0).getSigningRoot()).isEmpty();
         });
   }
 }
