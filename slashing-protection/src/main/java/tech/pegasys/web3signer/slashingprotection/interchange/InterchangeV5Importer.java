@@ -119,13 +119,7 @@ public class InterchangeV5Importer {
               validator.getId(),
               signedBlocksDao);
 
-      if (blockValidator.existsInDatabase()) {
-        LOG.debug(
-            "Block {} for validator {} already exists in database, not imported",
-            i,
-            validator.getPublicKey());
-        continue; // DO NOT duplicate import.
-      } else if (blockValidator.directlyConflictsWithExistingEntry()) {
+      if (blockValidator.directlyConflictsWithExistingEntry()) {
         LOG.debug(
             "Block {} for validator {} conflicts with on slot {} in database",
             i,
@@ -133,10 +127,15 @@ public class InterchangeV5Importer {
             jsonBlock.getSlot());
       }
 
-      signedBlocksDao.insertBlockProposal(
-          h,
-          new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
-              validator.getId(), jsonBlock.getSlot(), jsonBlock.getSigningRoot()));
+      if (blockValidator.existsInDatabase()) {
+        LOG.debug("Block {} for validator {} already exists in database, not imported", i,
+            validator.getPublicKey());
+      } else {
+        signedBlocksDao.insertBlockProposal(
+            h,
+            new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
+                validator.getId(), jsonBlock.getSlot(), jsonBlock.getSigningRoot()));
+      }
     }
   }
 
@@ -157,32 +156,38 @@ public class InterchangeV5Importer {
               signedAttestationsDao);
 
       if (attestationValidator.sourceGreaterThanTargetEpoch()) {
-        // exit
         throw new IllegalArgumentException(
-            String.format(
-                "Attestation #%d for validator %s - source is great than target epoch",
+            String.format("Attestation #%d for validator %s - source is great than target epoch",
                 i, validator.getPublicKey()));
-      } else if (attestationValidator.existsInDatabase()) {
-        continue; // do not re-insert
-      } else if (attestationValidator.isSurroundedByExistingAttestation()) {
-        LOG.warn(
-            "Attestation {} of validator {} is surrounded by existing entries",
-            i,
-            validator.getPublicKey());
-      } else if (attestationValidator.surroundsExistingAttestation()) {
-        LOG.warn(
-            "Attestation {} of validator {} surrounds an existing entry",
-            i,
+      }
+
+      if(attestationValidator.directlyConflictsWithExistingEntry()) {
+        LOG.warn("Attestation {} of validator {} conflicts with an existing entry", i,
             validator.getPublicKey());
       }
 
-      signedAttestationsDao.insertAttestation(
-          h,
-          new tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation(
-              validator.getId(),
-              jsonAttestation.getSourceEpoch(),
-              jsonAttestation.getTargetEpoch(),
-              jsonAttestation.getSigningRoot()));
+      if (attestationValidator.isSurroundedByExistingAttestation()) {
+        LOG.warn("Attestation {} of validator {} is surrounded by existing entries", i,
+            validator.getPublicKey());
+      }
+
+      if (attestationValidator.surroundsExistingAttestation()) {
+        LOG.warn("Attestation {} of validator {} surrounds an existing entry", i,
+            validator.getPublicKey());
+      }
+
+      if (attestationValidator.existsInDatabase()) {
+        LOG.debug("Attestation {} for validator {} already exists in database, not imported", i,
+            validator.getPublicKey());
+      } else {
+        signedAttestationsDao.insertAttestation(
+            h,
+            new tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation(
+                validator.getId(),
+                jsonAttestation.getSourceEpoch(),
+                jsonAttestation.getTargetEpoch(),
+                jsonAttestation.getSigningRoot()));
+      }
     }
   }
 }
