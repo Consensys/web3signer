@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
-public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
+public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIntegrationTest {
 
   @Test
   void duplicateEntriesAreNotInsertedToDatabase() throws IOException {
@@ -111,7 +111,7 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
   }
 
   @Test
-  void canLoadAFileWithDuplicateAttesationsButOnlyOneInserted() throws IOException {
+  void canLoadAFileWithDuplicateAttestationsButOnlyOneInserted() throws IOException {
     final URL importFile = Resources.getResource("interchange/duplicateAttestation.json");
     slashingProtection.importData(importFile.openStream());
     slashingProtection.importData(importFile.openStream()); // attempt to reimport
@@ -129,7 +129,7 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
 
   @Test
   void canLoadInterchangeFormatWithMissingSigningRootForBlock() throws IOException {
-    final URL importFile = Resources.getResource("interchange/singleNullSigningRootBlock.json");
+    final URL importFile = Resources.getResource("interchange/multipleNullSigningRootBlock.json");
     slashingProtection.importData(importFile.openStream());
     jdbi.useHandle(
         handle -> {
@@ -146,9 +146,28 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
   }
 
   @Test
-  void canLoadInterchangFormatWithMissingSigningRootForAttestation() throws IOException {
+  void duplicateNullEntriesAreNotCreatedOnReImport() throws IOException {
+    final URL importFile = Resources.getResource("interchange/multipleNullSigningRootBlock.json");
+    slashingProtection.importData(importFile.openStream());
+    slashingProtection.importData(importFile.openStream());
+    jdbi.useHandle(
+        handle -> {
+          final List<SignedBlock> blocksInDb = findAllBlocks(handle);
+          assertThat(blocksInDb).hasSize(2);
+          assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
+          assertThat(blocksInDb.get(0).getSigningRoot()).isEmpty();
+
+          assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12346));
+          assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
+          assertThat(blocksInDb.get(1).getSigningRoot()).isEmpty();
+        });
+  }
+
+  @Test
+  void canLoadInterchangeFormatWithMissingSigningRootForAttestation() throws IOException {
     final URL importFile =
-        Resources.getResource("interchange/singleNullSigningRootAttestation.json");
+        Resources.getResource("interchange/multipleNullSigningRootAttestation.json");
     slashingProtection.importData(importFile.openStream());
     jdbi.useHandle(
         handle -> {
