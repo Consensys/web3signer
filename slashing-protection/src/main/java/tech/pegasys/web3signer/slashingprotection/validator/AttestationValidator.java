@@ -60,9 +60,9 @@ public class AttestationValidator {
           sourceEpoch,
           targetEpoch,
           publicKey);
-      return false;
+      return true;
     }
-    return true;
+    return false;
   }
 
   public boolean existsInDatabase() {

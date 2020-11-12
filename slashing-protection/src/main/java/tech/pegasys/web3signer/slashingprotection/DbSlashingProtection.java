@@ -132,7 +132,7 @@ public class DbSlashingProtection implements SlashingProtection {
                   validatorId,
                   signedAttestationsDao);
 
-          if (!attestationValidator.sourceGreaterThanTargetEpoch()) {
+          if (attestationValidator.sourceGreaterThanTargetEpoch()) {
             return false;
           }
 

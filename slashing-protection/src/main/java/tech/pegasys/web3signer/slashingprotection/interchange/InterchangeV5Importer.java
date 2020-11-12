@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
+import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
 
 import java.io.IOException;
@@ -145,11 +146,34 @@ public class InterchangeV5Importer {
     for (int i = 0; i < signedAttestationNode.size(); i++) {
       final SignedAttestation jsonAttestation =
           mapper.treeToValue(signedAttestationNode.get(i), SignedAttestation.class);
-      if (jsonAttestation.getSourceEpoch().compareTo(jsonAttestation.getTargetEpoch()) > 0) {
+      final AttestationValidator attestationValidator =
+          new AttestationValidator(
+              h,
+              validator.getPublicKey(),
+              jsonAttestation.getSigningRoot(),
+              jsonAttestation.getSourceEpoch(),
+              jsonAttestation.getTargetEpoch(),
+              validator.getId(),
+              signedAttestationsDao);
+
+      if (attestationValidator.sourceGreaterThanTargetEpoch()) {
+        // exit
         throw new IllegalArgumentException(
             String.format(
                 "Attestation #%d for validator %s - source is great than target epoch",
                 i, validator.getPublicKey()));
+      } else if (attestationValidator.existsInDatabase()) {
+        continue; // do not re-insert
+      } else if (attestationValidator.isSurroundedByExistingAttestation()) {
+        LOG.warn(
+            "Attestation {} of validator {} is surrounded by existing entries",
+            i,
+            validator.getPublicKey());
+      } else if (attestationValidator.surroundsExistingAttestation()) {
+        LOG.warn(
+            "Attestation {} of validator {} surrounds an existing entry",
+            i,
+            validator.getPublicKey());
       }
 
       signedAttestationsDao.insertAttestation(

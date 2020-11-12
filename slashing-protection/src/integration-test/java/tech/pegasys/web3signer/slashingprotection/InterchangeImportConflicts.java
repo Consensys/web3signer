@@ -44,8 +44,9 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
           assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
           assertThat(blocksInDb.get(0).getSigningRoot())
               .isEqualTo(
-                  Optional.of(Bytes.fromHexString(
-                      "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
+                  Optional.of(
+                      Bytes.fromHexString(
+                          "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
         });
   }
 
