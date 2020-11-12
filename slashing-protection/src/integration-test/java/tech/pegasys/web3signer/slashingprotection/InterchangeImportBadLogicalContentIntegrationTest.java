@@ -15,6 +15,9 @@ package tech.pegasys.web3signer.slashingprotection;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.UncheckedIOException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation;
 
@@ -33,44 +36,68 @@ import org.junit.jupiter.api.Test;
 public class InterchangeImportBadLogicalContentIntegrationTest
     extends InterchangeBaseIntegrationTest {
 
-  @Test
-  void attestationHasSourceGreaterThanTargetEpoch() throws IOException {
-    try (final EmbeddedPostgres db = setup()) {
-      final String databaseUrl =
+  private EmbeddedPostgres db;
+  private String databaseUrl;
+  private Jdbi jdbi;
+  private SlashingProtection slashingProtection;
+  private final String USERNAME = "postgres";
+  private final String PASSWORD = "postgres";
+
+  @BeforeEach
+  public void setupTest() {
+    try {
+      db = setup();
+      databaseUrl =
           String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-      final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
-      final SlashingProtection slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
-
-      final InterchangeV5Format interchangeData =
-          new InterchangeV5Format(
-              new Metadata(5, Bytes.fromHexString("0x123456")),
-              List.of(
-                  new SignedArtifacts(
-                      "0x12345678",
-                      emptyList(),
-                      List.of(
-                          new SignedAttestation(
-                              UInt64.valueOf(6),
-                              UInt64.valueOf(5),
-                              Bytes.fromHexString("0x01"))))));
-
-      final byte[] jsonInput = mapper.writeValueAsBytes(interchangeData);
-
-      assertThatThrownBy(() -> slashingProtection.importData(new ByteArrayInputStream(jsonInput)))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessage("Failed to import database content");
-      assertDbIsEmpty(jdbi);
+      jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
+      slashingProtection =
+          SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
+    } catch (final IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 
-  @Test
-  void
-      attemptingToImportABlockWithDifferentSigningRootToExistingEntryThrowsExceptionAndUnchangedDb() {}
+  @AfterEach()
+  public void cleanup() {
+    if (db != null) {
+      try {
+        db.close();
+      } catch (final IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      db = null;
+    }
+  }
+
 
   @Test
-  void attemptingToImportABlockWithSameSigningRootAsExistingContinuesImport() {}
+  void attestationHasSourceGreaterThanTargetEpoch() throws IOException {
+    final InterchangeV5Format interchangeData =
+        new InterchangeV5Format(
+            new Metadata(5, Bytes.fromHexString("0x123456")),
+            List.of(
+                new SignedArtifacts(
+                    "0x12345678",
+                    emptyList(),
+                    List.of(
+                        new SignedAttestation(
+                            UInt64.valueOf(6),
+                            UInt64.valueOf(5),
+                            Bytes.fromHexString("0x01"))))));
+
+    final byte[] jsonInput = mapper.writeValueAsBytes(interchangeData);
+
+    assertThatThrownBy(() -> slashingProtection.importData(new ByteArrayInputStream(jsonInput)))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("Failed to import database content");
+    assertDbIsEmpty(jdbi);
+  }
 
   @Test
-  void attemptingToImportABlockWithANullSigningRootForSameExistingSlotContinuesImport() {}
+  void attemptingToImportABlockWithSameSigningRootAsExistingContinuesImport() {
+  }
+
+  @Test
+  void attemptingToImportABlockWithANullSigningRootForSameExistingSlotContinuesImport() {
+  }
 }

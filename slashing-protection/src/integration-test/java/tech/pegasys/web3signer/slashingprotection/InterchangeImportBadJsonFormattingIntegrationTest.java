@@ -28,41 +28,6 @@ import org.junit.jupiter.api.Test;
 public class InterchangeImportBadJsonFormattingIntegrationTest
     extends InterchangeBaseIntegrationTest {
 
-  private EmbeddedPostgres db;
-  private String databaseUrl;
-  private Jdbi jdbi;
-  private SlashingProtection slashingProtection;
-
-  private final String USERNAME = "postgres";
-  private final String PASSWORD = "postgres";
-
-  @BeforeEach
-  public void setupTest() {
-    try {
-      db = setup();
-      databaseUrl =
-          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-      jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
-      slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
-    } catch (final IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @AfterEach()
-  public void cleanup() {
-    if (db != null) {
-      try {
-        db.close();
-      } catch (final IOException e) {
-        throw new UncheckedIOException(e);
-      }
-      db = null;
-    }
-  }
-
-
   @Test
   void incorrectlyTypedDataFieldThrowsException() {
     final URL importFile = Resources.getResource("interchange/dataFieldNotArray.json");

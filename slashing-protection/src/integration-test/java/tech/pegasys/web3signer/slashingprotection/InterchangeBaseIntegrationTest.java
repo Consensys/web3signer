@@ -14,6 +14,9 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.UncheckedIOException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
@@ -37,6 +40,42 @@ public class InterchangeBaseIntegrationTest {
   protected final SignedBlocksDao signedBlocks = new SignedBlocksDao();
   protected final SignedAttestationsDao signedAttestations = new SignedAttestationsDao();
   protected final ValidatorsDao validators = new ValidatorsDao();
+
+  protected EmbeddedPostgres db;
+  protected String databaseUrl;
+  protected Jdbi jdbi;
+  protected SlashingProtection slashingProtection;
+
+  private final String USERNAME = "postgres";
+  private final String PASSWORD = "postgres";
+
+  @BeforeEach
+  public void setupTest() {
+    try {
+      db = setup();
+      databaseUrl =
+          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
+      jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
+      slashingProtection =
+          SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
+    } catch (final IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  @AfterEach()
+  public void cleanup() {
+    if (db != null) {
+      try {
+        db.close();
+      } catch (final IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      db = null;
+    }
+  }
+
+
 
   protected EmbeddedPostgres setup() throws IOException {
     final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
