@@ -144,7 +144,7 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
   @Test
   void canLoadInterchangFormatWithMissingSigningRootForAttestation() throws IOException {
     final URL importFile =
-        Resources.getResource("interchange/singleNullSigningROotAttestation.json");
+        Resources.getResource("interchange/singleNullSigningRootAttestation.json");
     slashingProtection.importData(importFile.openStream());
     jdbi.useHandle(
         handle -> {
