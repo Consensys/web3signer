@@ -41,6 +41,8 @@ import org.junit.jupiter.api.Test;
 
 public class InterchangeExportIntegrationTest {
 
+  private static final String GENESIS_VALIDATORS_ROOT =
+      "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
   private static final String DB_USERNAME = "postgres";
   private static final String DB_PASSWORD = "postgres";
   private final SignedBlocksDao signedBlocks = new SignedBlocksDao();
@@ -67,7 +69,7 @@ public class InterchangeExportIntegrationTest {
     final String databaseUrl = getDatabaseUrl(db);
     final Jdbi jdbi = DbConnection.createConnection(databaseUrl, DB_USERNAME, DB_PASSWORD);
 
-    final Bytes32 gvr = Bytes32.fromHexString("FFFFFFFF");
+    final Bytes32 gvr = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
     jdbi.useTransaction(h -> metadata.insertGenesisValidatorsRoot(h, gvr));
 
     final int VALIDATOR_COUNT = 2;

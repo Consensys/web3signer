@@ -463,6 +463,7 @@ public class DbSlashingProtectionTest {
 
     verify(metadataDao).findGenesisValidatorsRoot(any());
     verify(signedAttestationsDao, never()).insertAttestation(any(), any());
+    verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
   }
 
   @Test
@@ -474,5 +475,27 @@ public class DbSlashingProtectionTest {
 
     verify(metadataDao).findGenesisValidatorsRoot(any());
     verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
+    verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
+  }
+
+  @Test
+  public void registersGVRForBlockIfItDoesNotExist() {
+    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.empty());
+
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isTrue();
+
+    verify(metadataDao).insertGenesisValidatorsRoot(any(), eq(GVR));
+  }
+
+  @Test
+  public void registersGVRForAttestationIfItDoesNotExist() {
+    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.empty());
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+        .isTrue();
+
+    verify(metadataDao).insertGenesisValidatorsRoot(any(), eq(GVR));
   }
 }
