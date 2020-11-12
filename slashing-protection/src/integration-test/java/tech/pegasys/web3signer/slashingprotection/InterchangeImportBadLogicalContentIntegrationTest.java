@@ -20,53 +20,16 @@ import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttest
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class InterchangeImportBadLogicalContentIntegrationTest
     extends InterchangeBaseIntegrationTest {
-
-  private EmbeddedPostgres db;
-  private String databaseUrl;
-  private Jdbi jdbi;
-  private SlashingProtection slashingProtection;
-  private final String USERNAME = "postgres";
-  private final String PASSWORD = "postgres";
-
-  @BeforeEach
-  public void setupTest() {
-    try {
-      db = setup();
-      databaseUrl = String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-      jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
-      slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
-    } catch (final IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @AfterEach()
-  public void cleanup() {
-    if (db != null) {
-      try {
-        db.close();
-      } catch (final IOException e) {
-        throw new UncheckedIOException(e);
-      }
-      db = null;
-    }
-  }
 
   @Test
   void attestationHasSourceGreaterThanTargetEpoch() throws IOException {
@@ -88,10 +51,4 @@ public class InterchangeImportBadLogicalContentIntegrationTest
         .hasMessage("Failed to import database content");
     assertDbIsEmpty(jdbi);
   }
-
-  @Test
-  void attemptingToImportABlockWithSameSigningRootAsExistingContinuesImport() {}
-
-  @Test
-  void attemptingToImportABlockWithANullSigningRootForSameExistingSlotContinuesImport() {}
 }

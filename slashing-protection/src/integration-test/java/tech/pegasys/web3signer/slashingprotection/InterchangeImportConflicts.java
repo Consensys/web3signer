@@ -41,11 +41,11 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
           final List<SignedBlock> blocksInDb = findAllBlocks(handle);
           assertThat(blocksInDb).hasSize(1);
           assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
-          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(UInt64.valueOf(1));
+          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
           assertThat(blocksInDb.get(0).getSigningRoot())
               .isEqualTo(
-                  Bytes.fromHexString(
-                      "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b"));
+                  Optional.of(Bytes.fromHexString(
+                      "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
         });
   }
 
