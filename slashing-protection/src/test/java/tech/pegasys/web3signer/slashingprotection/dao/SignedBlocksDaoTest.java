@@ -136,7 +136,9 @@ public class SignedBlocksDaoTest {
     insertBlock(1, 3, Bytes.of(11));
     insertBlock(1, 3, null);
 
-    final List<SignedBlock> nonMatchingAttestations = signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(handle, 1, UInt64.valueOf(3), null);
+    final List<SignedBlock> nonMatchingAttestations =
+        signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(3), null);
 
     assertThat(nonMatchingAttestations).hasSize(2);
   }
@@ -147,7 +149,6 @@ public class SignedBlocksDaoTest {
     insertBlock(1, 3, null);
     assertThat(signedBlocksDao.findMatchingBlock(handle, 1, UInt64.valueOf(3), null)).isNotEmpty();
   }
-
 
   private void insertBlock(final int validatorId, final int slot, final Bytes signingRoot) {
     handle.execute(

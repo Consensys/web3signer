@@ -28,18 +28,20 @@ public class SignedBlocksDao {
 
     final Query query;
     if (signingRoot == null) {
-      query = handle
-          .createQuery(
-              "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root IS NOT NULL")
-          .bind(0, validatorId)
-          .bind(1, slot);
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root IS NOT NULL")
+              .bind(0, validatorId)
+              .bind(1, slot);
     } else {
-      query = handle
-          .createQuery(
-              "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE (validator_id = ? AND slot = ?) AND (signing_root <> ? OR signing_root IS NULL)")
-          .bind(0, validatorId)
-          .bind(1, slot)
-          .bind(2, signingRoot);
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE (validator_id = ? AND slot = ?) AND (signing_root <> ? OR signing_root IS NULL)")
+              .bind(0, validatorId)
+              .bind(1, slot)
+              .bind(2, signingRoot);
     }
 
     return query.mapToBean(SignedBlock.class).list();
@@ -50,17 +52,21 @@ public class SignedBlocksDao {
 
     final Query query;
 
-    if(signingRoot == null) {
-      query = handle.createQuery("SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root IS NULL")
-          .bind(0, validatorId)
-          .bind(1, slot);
+    if (signingRoot == null) {
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root IS NULL")
+              .bind(0, validatorId)
+              .bind(1, slot);
     } else {
-      query = handle
-          .createQuery(
-              "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root = ?")
-          .bind(0, validatorId)
-          .bind(1, slot)
-          .bind(2, signingRoot);
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root = ?")
+              .bind(0, validatorId)
+              .bind(1, slot)
+              .bind(2, signingRoot);
     }
 
     return query.mapToBean(SignedBlock.class).findFirst();
