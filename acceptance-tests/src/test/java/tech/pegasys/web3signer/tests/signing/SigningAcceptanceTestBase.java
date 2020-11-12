@@ -37,7 +37,16 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   protected Bytes verifyAndGetSignatureResponse(final Response response) {
-    response.then().contentType(ContentType.TEXT).statusCode(200);
-    return Bytes.fromHexString(response.body().print());
+    return verifyAndGetSignatureResponse(response, ContentType.TEXT);
+  }
+
+  protected Bytes verifyAndGetSignatureResponse(
+      final Response response, final ContentType expectedContentType) {
+    response.then().contentType(expectedContentType).statusCode(200);
+    final String signature =
+        expectedContentType == ContentType.JSON
+            ? response.body().jsonPath().getString("signature")
+            : response.body().print();
+    return Bytes.fromHexString(signature);
   }
 }
