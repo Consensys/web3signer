@@ -9,6 +9,10 @@
       "signed_blocks": [
         {
           "slot": "12345"
+        },
+        {
+          "slot": "12346",
+          "signing_root": null
         }
       ],
       "signed_attestations": []

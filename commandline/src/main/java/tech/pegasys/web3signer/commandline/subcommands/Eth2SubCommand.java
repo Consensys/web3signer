@@ -63,7 +63,7 @@ public class Eth2SubCommand extends ModeSubCommand {
     try {
       slashingProtection.importData(new FileInputStream(input));
     } catch (final FileNotFoundException e) {
-      throw new RuntimeException("Unable to write to specified input file", e);
+      throw new RuntimeException("Unable to find input file", e);
     }
   }
 

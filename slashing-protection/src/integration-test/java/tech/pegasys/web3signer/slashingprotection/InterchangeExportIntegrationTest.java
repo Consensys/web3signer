@@ -20,7 +20,6 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URISyntaxException;
 import java.util.List;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
@@ -34,7 +33,7 @@ import org.junit.jupiter.api.Test;
 public class InterchangeExportIntegrationTest extends InterchangeBaseIntegrationTest {
 
   @Test
-  void canCreateDatabaseWithEntries() throws IOException, URISyntaxException {
+  void canCreateDatabaseWithEntries() throws IOException {
     final EmbeddedPostgres db = setup();
 
     final String databaseUrl =

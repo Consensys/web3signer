@@ -46,8 +46,8 @@ public class InterchangeBaseIntegrationTest {
   protected Jdbi jdbi;
   protected SlashingProtection slashingProtection;
 
-  private final String USERNAME = "postgres";
-  private final String PASSWORD = "postgres";
+  private static final String USERNAME = "postgres";
+  private static final String PASSWORD = "postgres";
 
   @BeforeEach
   public void setupTest() {

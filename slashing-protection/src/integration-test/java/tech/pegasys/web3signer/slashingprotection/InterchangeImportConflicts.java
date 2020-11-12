@@ -134,10 +134,14 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
     jdbi.useHandle(
         handle -> {
           final List<SignedBlock> blocksInDb = findAllBlocks(handle);
-          assertThat(blocksInDb).hasSize(1);
+          assertThat(blocksInDb).hasSize(2);
           assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
           assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
           assertThat(blocksInDb.get(0).getSigningRoot()).isEmpty();
+
+          assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12346));
+          assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
+          assertThat(blocksInDb.get(1).getSigningRoot()).isEmpty();
         });
   }
 
@@ -149,11 +153,40 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
     jdbi.useHandle(
         handle -> {
           final List<SignedAttestation> attestationsInDb = findAllAttestations(handle);
-          assertThat(attestationsInDb).hasSize(1);
+          assertThat(attestationsInDb).hasSize(2);
           assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
           assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
           assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
           assertThat(attestationsInDb.get(0).getSigningRoot()).isEmpty();
+
+          assertThat(attestationsInDb.get(1).getSourceEpoch()).isEqualTo(UInt64.valueOf(7));
+          assertThat(attestationsInDb.get(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(8));
+          assertThat(attestationsInDb.get(1).getValidatorId()).isEqualTo(1);
+          assertThat(attestationsInDb.get(1).getSigningRoot()).isEmpty();
+        });
+  }
+
+  @Test
+  void canInsertANewBlockForExistingValidator() throws IOException {
+    final URL importFile = Resources.getResource("interchange/singleValidBlock.json");
+    jdbi.useHandle(
+        h ->
+            h.execute(
+                "INSERT INTO validators (id, public_key) VALUES (1, ?)",
+                Bytes.fromHexString(
+                    "0xb845089a1457f811bfc000588fbb4e713669be8ce060ea6be3c6ece09afc3794106c91ca73acda5e5457122d58723bed")));
+    slashingProtection.importData(importFile.openStream());
+    jdbi.useHandle(
+        handle -> {
+          final List<SignedBlock> blocksInDb = findAllBlocks(handle);
+          assertThat(blocksInDb).hasSize(1);
+          assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
+          assertThat(blocksInDb.get(0).getSigningRoot())
+              .isEqualTo(
+                  Optional.of(
+                      Bytes.fromHexString(
+                          "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
         });
   }
 }
