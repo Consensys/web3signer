@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 
 import java.io.IOException;
@@ -92,6 +93,40 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
                   Optional.of(
                       Bytes.fromHexString(
                           "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
+        });
+  }
+
+  @Test
+  void doNotDuplicateAttestations() throws IOException {
+    final URL importFile = Resources.getResource("interchange/singleValidAttestation.json");
+    slashingProtection.importData(importFile.openStream());
+    slashingProtection.importData(importFile.openStream()); // attempt to reimport
+    jdbi.useHandle(
+        handle -> {
+          final List<SignedAttestation> attestationsInDb = findAllAttestations(handle);
+          assertThat(attestationsInDb).hasSize(1);
+          assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
+          assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
+          assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
+          assertThat(attestationsInDb.get(0).getSigningRoot())
+              .isEqualTo(Optional.of(Bytes.fromHexString("0x123456")));
+        });
+  }
+
+  @Test
+  void canLoadAFileWithDuplicateAttesationsButOnlyOneInserted() throws IOException {
+    final URL importFile = Resources.getResource("interchange/duplicateAttestation.json");
+    slashingProtection.importData(importFile.openStream());
+    slashingProtection.importData(importFile.openStream()); // attempt to reimport
+    jdbi.useHandle(
+        handle -> {
+          final List<SignedAttestation> attestationsInDb = findAllAttestations(handle);
+          assertThat(attestationsInDb).hasSize(1);
+          assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
+          assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
+          assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
+          assertThat(attestationsInDb.get(0).getSigningRoot())
+              .isEqualTo(Optional.of(Bytes.fromHexString("0x123456")));
         });
   }
 }
