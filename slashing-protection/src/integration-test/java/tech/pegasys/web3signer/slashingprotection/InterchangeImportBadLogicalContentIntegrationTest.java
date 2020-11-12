@@ -15,14 +15,12 @@ package tech.pegasys.web3signer.slashingprotection;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.io.UncheckedIOException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
@@ -31,6 +29,8 @@ import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class InterchangeImportBadLogicalContentIntegrationTest
@@ -47,8 +47,7 @@ public class InterchangeImportBadLogicalContentIntegrationTest
   public void setupTest() {
     try {
       db = setup();
-      databaseUrl =
-          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
+      databaseUrl = String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
       jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
       slashingProtection =
           SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
@@ -69,7 +68,6 @@ public class InterchangeImportBadLogicalContentIntegrationTest
     }
   }
 
-
   @Test
   void attestationHasSourceGreaterThanTargetEpoch() throws IOException {
     final InterchangeV5Format interchangeData =
@@ -81,9 +79,7 @@ public class InterchangeImportBadLogicalContentIntegrationTest
                     emptyList(),
                     List.of(
                         new SignedAttestation(
-                            UInt64.valueOf(6),
-                            UInt64.valueOf(5),
-                            Bytes.fromHexString("0x01"))))));
+                            UInt64.valueOf(6), UInt64.valueOf(5), Bytes.fromHexString("0x01"))))));
 
     final byte[] jsonInput = mapper.writeValueAsBytes(interchangeData);
 
@@ -94,10 +90,8 @@ public class InterchangeImportBadLogicalContentIntegrationTest
   }
 
   @Test
-  void attemptingToImportABlockWithSameSigningRootAsExistingContinuesImport() {
-  }
+  void attemptingToImportABlockWithSameSigningRootAsExistingContinuesImport() {}
 
   @Test
-  void attemptingToImportABlockWithANullSigningRootForSameExistingSlotContinuesImport() {
-  }
+  void attemptingToImportABlockWithANullSigningRootForSameExistingSlotContinuesImport() {}
 }

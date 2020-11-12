@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
+import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +35,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
-import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
 
 public class InterchangeV5Importer {
 
@@ -110,16 +110,26 @@ public class InterchangeV5Importer {
       throws JsonProcessingException {
     for (int i = 0; i < signedBlocksNode.size(); i++) {
       final SignedBlock jsonBlock = mapper.treeToValue(signedBlocksNode.get(i), SignedBlock.class);
-      final BlockValidator blockValidator = new BlockValidator(
-          h, jsonBlock.getSigningRoot(), jsonBlock.getSlot(), validator.getId(), signedBlocksDao);
+      final BlockValidator blockValidator =
+          new BlockValidator(
+              h,
+              jsonBlock.getSigningRoot(),
+              jsonBlock.getSlot(),
+              validator.getId(),
+              signedBlocksDao);
 
       if (blockValidator.existsInDatabase()) {
-        LOG.debug("Block {} for validator {} already exists in database, not imported", i,
+        LOG.debug(
+            "Block {} for validator {} already exists in database, not imported",
+            i,
             validator.getPublicKey());
         continue; // DO NOT duplicate import.
       } else if (blockValidator.directlyConflictsWithExistingEntry()) {
-        LOG.debug("Block {} for validator {} conflicts with on slot {} in database", i,
-            validator.getPublicKey(), jsonBlock.getSlot());
+        LOG.debug(
+            "Block {} for validator {} conflicts with on slot {} in database",
+            i,
+            validator.getPublicKey(),
+            jsonBlock.getSlot());
       }
 
       signedBlocksDao.insertBlockProposal(

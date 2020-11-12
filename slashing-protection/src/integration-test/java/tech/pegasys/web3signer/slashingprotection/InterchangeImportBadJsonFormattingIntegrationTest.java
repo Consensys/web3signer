@@ -15,14 +15,9 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URL;
 
 import com.google.common.io.Resources;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
-import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class InterchangeImportBadJsonFormattingIntegrationTest
@@ -53,19 +48,19 @@ public class InterchangeImportBadJsonFormattingIntegrationTest
 
   @Test
   void anErrorInSubsequentBlockRollsbackToAnEmptyDatabase() {
-      final URL importFile = Resources.getResource("interchange/errorInSecondBlock.json");
-      assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessage(("Failed to import database content"));
-      assertDbIsEmpty(jdbi);
+    final URL importFile = Resources.getResource("interchange/errorInSecondBlock.json");
+    assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage(("Failed to import database content"));
+    assertDbIsEmpty(jdbi);
   }
 
   @Test
   void missingPublicKeyFieldThrowsExceptionAndLeavesDbEmpty() {
-      final URL importFile = Resources.getResource("interchange/missingPublicKey.json");
-      assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessage(("Failed to import database content"));
-      assertDbIsEmpty(jdbi);
+    final URL importFile = Resources.getResource("interchange/missingPublicKey.json");
+    assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage(("Failed to import database content"));
+    assertDbIsEmpty(jdbi);
   }
 }

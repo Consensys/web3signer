@@ -14,9 +14,6 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.UncheckedIOException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
@@ -25,6 +22,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,6 +30,8 @@ import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 public class InterchangeBaseIntegrationTest {
 
@@ -53,8 +53,7 @@ public class InterchangeBaseIntegrationTest {
   public void setupTest() {
     try {
       db = setup();
-      databaseUrl =
-          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
+      databaseUrl = String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
       jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
       slashingProtection =
           SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
@@ -74,8 +73,6 @@ public class InterchangeBaseIntegrationTest {
       db = null;
     }
   }
-
-
 
   protected EmbeddedPostgres setup() throws IOException {
     final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
