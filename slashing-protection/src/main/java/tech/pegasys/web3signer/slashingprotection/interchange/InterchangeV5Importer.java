@@ -128,7 +128,9 @@ public class InterchangeV5Importer {
       }
 
       if (blockValidator.existsInDatabase()) {
-        LOG.debug("Block {} for validator {} already exists in database, not imported", i,
+        LOG.debug(
+            "Block {} for validator {} already exists in database, not imported",
+            i,
             validator.getPublicKey());
       } else {
         signedBlocksDao.insertBlockProposal(
@@ -157,27 +159,36 @@ public class InterchangeV5Importer {
 
       if (attestationValidator.sourceGreaterThanTargetEpoch()) {
         throw new IllegalArgumentException(
-            String.format("Attestation #%d for validator %s - source is great than target epoch",
+            String.format(
+                "Attestation #%d for validator %s - source is great than target epoch",
                 i, validator.getPublicKey()));
       }
 
-      if(attestationValidator.directlyConflictsWithExistingEntry()) {
-        LOG.warn("Attestation {} of validator {} conflicts with an existing entry", i,
+      if (attestationValidator.directlyConflictsWithExistingEntry()) {
+        LOG.warn(
+            "Attestation {} of validator {} conflicts with an existing entry",
+            i,
             validator.getPublicKey());
       }
 
       if (attestationValidator.isSurroundedByExistingAttestation()) {
-        LOG.warn("Attestation {} of validator {} is surrounded by existing entries", i,
+        LOG.warn(
+            "Attestation {} of validator {} is surrounded by existing entries",
+            i,
             validator.getPublicKey());
       }
 
       if (attestationValidator.surroundsExistingAttestation()) {
-        LOG.warn("Attestation {} of validator {} surrounds an existing entry", i,
+        LOG.warn(
+            "Attestation {} of validator {} surrounds an existing entry",
+            i,
             validator.getPublicKey());
       }
 
       if (attestationValidator.existsInDatabase()) {
-        LOG.debug("Attestation {} for validator {} already exists in database, not imported", i,
+        LOG.debug(
+            "Attestation {} for validator {} already exists in database, not imported",
+            i,
             validator.getPublicKey());
       } else {
         signedAttestationsDao.insertAttestation(
