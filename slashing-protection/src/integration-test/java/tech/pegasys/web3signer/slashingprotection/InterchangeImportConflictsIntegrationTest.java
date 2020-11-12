@@ -146,7 +146,7 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
   }
 
   @Test
-  void duplicateNullEntriesAreNotCreatedOnReImport() throws IOException {
+  void duplicateNullBlockEntriesAreNotCreatedOnReImport() throws IOException {
     final URL importFile = Resources.getResource("interchange/multipleNullSigningRootBlock.json");
     slashingProtection.importData(importFile.openStream());
     slashingProtection.importData(importFile.openStream());
@@ -168,6 +168,28 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
   void canLoadInterchangeFormatWithMissingSigningRootForAttestation() throws IOException {
     final URL importFile =
         Resources.getResource("interchange/multipleNullSigningRootAttestation.json");
+    slashingProtection.importData(importFile.openStream());
+    jdbi.useHandle(
+        handle -> {
+          final List<SignedAttestation> attestationsInDb = findAllAttestations(handle);
+          assertThat(attestationsInDb).hasSize(2);
+          assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
+          assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
+          assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
+          assertThat(attestationsInDb.get(0).getSigningRoot()).isEmpty();
+
+          assertThat(attestationsInDb.get(1).getSourceEpoch()).isEqualTo(UInt64.valueOf(7));
+          assertThat(attestationsInDb.get(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(8));
+          assertThat(attestationsInDb.get(1).getValidatorId()).isEqualTo(1);
+          assertThat(attestationsInDb.get(1).getSigningRoot()).isEmpty();
+        });
+  }
+
+  @Test
+  void duplicateNullAttestationEntriesAreNotCreatedOnReImport() throws IOException {
+    final URL importFile =
+        Resources.getResource("interchange/multipleNullSigningRootAttestation.json");
+    slashingProtection.importData(importFile.openStream());
     slashingProtection.importData(importFile.openStream());
     jdbi.useHandle(
         handle -> {
