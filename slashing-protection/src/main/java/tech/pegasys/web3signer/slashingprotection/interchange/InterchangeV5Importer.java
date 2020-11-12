@@ -116,15 +116,16 @@ public class InterchangeV5Importer {
       if (blockValidator.existsInDatabase()) {
         LOG.debug("Block {} for validator {} already exists in database, not imported", i,
             validator.getPublicKey());
+        continue; // DO NOT duplicate import.
       } else if (blockValidator.directlyConflictsWithExistingEntry()) {
         LOG.debug("Block {} for validator {} conflicts with on slot {} in database", i,
             validator.getPublicKey(), jsonBlock.getSlot());
-      } else {
-        signedBlocksDao.insertBlockProposal(
-            h,
-            new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
-                validator.getId(), jsonBlock.getSlot(), jsonBlock.getSigningRoot()));
       }
+
+      signedBlocksDao.insertBlockProposal(
+          h,
+          new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
+              validator.getId(), jsonBlock.getSlot(), jsonBlock.getSigningRoot()));
     }
   }
 

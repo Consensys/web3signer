@@ -19,7 +19,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
+import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 
 public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
 
@@ -33,8 +38,34 @@ public class InterchangeImportConflicts extends InterchangeBaseIntegrationTest {
   void duplicateEntriesAreNotInsertedToDatabase() throws IOException {
     final URL importFile = Resources.getResource("interchange/singleValidBlock.json");
     slashingProtection.importData(importFile.openStream());
+    slashingProtection.importData(importFile.openStream()); //attempt to reimport
+    jdbi.useHandle(handle -> {
+      final List<SignedBlock> blocksInDb = findAllBlocks(handle);
+      assertThat(blocksInDb).hasSize(1);
+      assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+      assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(UInt64.valueOf(1));
+      assertThat(blocksInDb.get(0).getSigningRoot()).isEqualTo(Bytes
+          .fromHexString("0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b"));
+    });
+  }
+
+  @Test
+  void canloadConflictingBlocksInSameSlot() throws IOException {
+    final URL importFile = Resources.getResource("interchange/conflictingBlocks.json");
     slashingProtection.importData(importFile.openStream());
-    jdbi.useHandle(handle -> assertThat(findAllBlocks(handle)).hasSize(1));
+    jdbi.useHandle(handle -> {
+      final List<SignedBlock> blocksInDb = findAllBlocks(handle);
+      assertThat(blocksInDb).hasSize(2);
+      assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+      assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
+      assertThat(blocksInDb.get(0).getSigningRoot()).isEqualTo(Optional.of(Bytes
+          .fromHexString("0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
+
+      assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12345));
+      assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
+      assertThat(blocksInDb.get(1).getSigningRoot()).isEqualTo(Optional.of(Bytes
+          .fromHexString("0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850c")));
+    });
   }
 
 
