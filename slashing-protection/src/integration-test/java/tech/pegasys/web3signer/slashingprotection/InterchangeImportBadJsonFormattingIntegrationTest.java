@@ -15,102 +15,92 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URL;
 
 import com.google.common.io.Resources;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.jdbi.v3.core.Jdbi;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class InterchangeImportBadJsonFormattingIntegrationTest
     extends InterchangeBaseIntegrationTest {
 
-  @Test
-  void incorrectlyTypedDataFieldThrowsException() throws IOException {
-    try (final EmbeddedPostgres db = setup()) {
-      final String databaseUrl =
-          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-      final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
-      final SlashingProtection slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
+  private EmbeddedPostgres db;
+  private String databaseUrl;
+  private Jdbi jdbi;
+  private SlashingProtection slashingProtection;
 
-      final URL importFile = Resources.getResource("interchange/dataFieldNotArray.json");
-      assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessage("Failed to import database content");
-      assertDbIsEmpty(jdbi);
+  private final String USERNAME = "postgres";
+  private final String PASSWORD = "postgres";
+
+  @BeforeEach
+  public void setupTest() {
+    try {
+      db = setup();
+      databaseUrl =
+          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
+      jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
+      slashingProtection =
+          SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
+    } catch (final IOException e) {
+      throw new UncheckedIOException(e);
     }
+  }
+
+  @AfterEach()
+  public void cleanup() {
+    if (db != null) {
+      try {
+        db.close();
+      } catch (final IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      db = null;
+    }
+  }
+
+
+  @Test
+  void incorrectlyTypedDataFieldThrowsException() {
+    final URL importFile = Resources.getResource("interchange/dataFieldNotArray.json");
+    assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
+        .isInstanceOf(RuntimeException.class)
+        .hasMessage("Failed to import database content");
+    assertDbIsEmpty(jdbi);
   }
 
   @Test
   void missingDataSectionInImportResultsInAnEmptyDatabase() throws IOException {
-    try (final EmbeddedPostgres db = setup()) {
-      final String databaseUrl =
-          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-
-      final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
-
-      final SlashingProtection slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
-
-      final URL importFile = Resources.getResource("interchange/missingDataField.json");
-      slashingProtection.importData(importFile.openStream());
-      assertDbIsEmpty(jdbi);
-    }
+    final URL importFile = Resources.getResource("interchange/missingDataField.json");
+    slashingProtection.importData(importFile.openStream());
+    assertDbIsEmpty(jdbi);
   }
 
   @Test
   void emptyDataSectionInImportResultsInAnEmptyDatabase() throws IOException {
-    try (final EmbeddedPostgres db = setup()) {
-      final String databaseUrl =
-          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-
-      final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
-
-      final SlashingProtection slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
-
-      final URL importFile = Resources.getResource("interchange/emptyDataArray.json");
-      slashingProtection.importData(importFile.openStream());
-      assertDbIsEmpty(jdbi);
-    }
+    final URL importFile = Resources.getResource("interchange/emptyDataArray.json");
+    slashingProtection.importData(importFile.openStream());
+    assertDbIsEmpty(jdbi);
   }
 
   @Test
-  void anErrorInSubsequentBlockRollsbackToAnEmptyDatabase() throws IOException {
-    try (final EmbeddedPostgres db = setup()) {
-      final String databaseUrl =
-          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-
-      final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
-
-      final SlashingProtection slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
-
+  void anErrorInSubsequentBlockRollsbackToAnEmptyDatabase() {
       final URL importFile = Resources.getResource("interchange/errorInSecondBlock.json");
       assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
           .isInstanceOf(RuntimeException.class)
           .hasMessage(("Failed to import database content"));
       assertDbIsEmpty(jdbi);
-    }
   }
 
   @Test
-  void missingPublicKeyFieldThrowsExceptionAndLeavesDbEmpty() throws IOException {
-    try (final EmbeddedPostgres db = setup()) {
-      final String databaseUrl =
-          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-
-      final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
-
-      final SlashingProtection slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
-
+  void missingPublicKeyFieldThrowsExceptionAndLeavesDbEmpty() {
       final URL importFile = Resources.getResource("interchange/missingPublicKey.json");
       assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
           .isInstanceOf(RuntimeException.class)
           .hasMessage(("Failed to import database content"));
       assertDbIsEmpty(jdbi);
-    }
   }
 }
