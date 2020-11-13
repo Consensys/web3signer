@@ -15,21 +15,23 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
-import dsl.InterchangeV5Format;
-import dsl.SignedArtifacts;
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import dsl.InterchangeV5Format;
+import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
-import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 
 public class InterchangeExportIntegrationTest extends InterchangeBaseIntegrationTest {
   private static final String GENESIS_VALIDATORS_ROOT =

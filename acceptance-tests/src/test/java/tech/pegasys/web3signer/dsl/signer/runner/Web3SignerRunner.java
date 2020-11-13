@@ -208,22 +208,6 @@ public abstract class Web3SignerRunner {
     return params;
   }
 
-  private String createEmbeddedDatabase() {
-    try {
-      final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
-      createSchemaInDataSource(slashingDatabase.getPostgresDatabase());
-      return String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
-    } catch (final IOException e) {
-      throw new RuntimeException("Unable to start embedded postgres db", e);
-    }
-  }
-
-  private void createSchemaInDataSource(final DataSource dataSource) {
-    final Flyway flyway =
-        Flyway.configure().locations("/migrations/postgresql/").dataSource(dataSource).load();
-    flyway.migrate();
-  }
-
   private String createAllowList(final List<String> httpHostAllowList) {
     return String.join(",", httpHostAllowList);
   }

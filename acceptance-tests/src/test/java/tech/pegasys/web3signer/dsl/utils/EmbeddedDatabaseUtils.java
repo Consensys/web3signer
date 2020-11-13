@@ -12,9 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import javax.sql.DataSource;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
@@ -33,26 +31,8 @@ public class EmbeddedDatabaseUtils {
   }
 
   private static void createSchemaInDataSource(final DataSource dataSource) {
-    final Path migrationPath =
-        getProjectPath()
-            .toPath()
-            .resolve(
-                Path.of(
-                    "slashing-protection", "src", "main", "resources", "migrations", "postgresql"));
-
     final Flyway flyway =
-        Flyway.configure()
-            .locations("filesystem:" + migrationPath.toString())
-            .dataSource(dataSource)
-            .load();
+        Flyway.configure().locations("/migrations/postgresql/").dataSource(dataSource).load();
     flyway.migrate();
-  }
-
-  protected static File getProjectPath() {
-    // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
-    final String userDir = System.getProperty("user.dir");
-    return userDir.toLowerCase().endsWith("web3signer")
-        ? new File(userDir)
-        : new File(userDir).getParentFile();
   }
 }
