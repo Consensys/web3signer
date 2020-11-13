@@ -36,6 +36,8 @@ public class BlockValidator {
   private final SignedBlocksDao signedBlocksDao;
   private final LowWatermarkDao lowWatermarkDao;
 
+  private final Optional<SigningWatermark> watermark;
+
   public BlockValidator(
       final Handle handle,
       final Bytes signingRoot,
@@ -49,6 +51,7 @@ public class BlockValidator {
     this.validatorId = validatorId;
     this.signedBlocksDao = signedBlocksDao;
     this.lowWatermarkDao = lowWatermarkDao;
+    watermark = lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId);
   }
 
   public boolean directlyConflictsWithExistingEntry() {
@@ -64,10 +67,7 @@ public class BlockValidator {
   }
 
   public boolean isOlderThanWatermark() {
-    final Optional<UInt64> minimumSlot =
-        lowWatermarkDao
-            .findLowWatermarkForValidator(handle, validatorId)
-            .map(SigningWatermark::getSlot);
+    final Optional<UInt64> minimumSlot = watermark.map(SigningWatermark::getSlot);
     if (minimumSlot.map(slot -> blockSlot.compareTo(slot) <= 0).orElse(false)) {
       LOG.warn(
           "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
@@ -81,9 +81,7 @@ public class BlockValidator {
     signedBlocksDao.insertBlockProposal(handle, signedBlock);
 
     // update the watermark if is otherwise blank
-    final Optional<SigningWatermark> watermark =
-        lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId);
-    if (watermark.isEmpty() || (watermark.get().getSourceEpoch() == null)) {
+    if (watermark.isEmpty() || (watermark.get().getSlot() == null)) {
       lowWatermarkDao.updateSlotWatermarkFor(handle, validatorId, blockSlot);
     }
   }
