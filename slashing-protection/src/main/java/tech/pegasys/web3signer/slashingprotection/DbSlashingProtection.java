@@ -26,6 +26,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
 import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
+import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRootValidator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +35,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -140,6 +140,8 @@ public class DbSlashingProtection implements SlashingProtection {
                   targetEpoch,
                   validatorId,
                   signedAttestationsDao);
+          final GenesisValidatorRootValidator gvrValidator =
+              new GenesisValidatorRootValidator(handle, metadataDao);
 
           if (attestationValidator.sourceGreaterThanTargetEpoch()) {
             return false;
@@ -147,7 +149,7 @@ public class DbSlashingProtection implements SlashingProtection {
 
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
 
-          if (!checkGenesisValidatorsRootAndInsertIfEmpty(handle, genesisValidatorsRoot)) {
+          if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
             return false;
           }
 
@@ -178,10 +180,12 @@ public class DbSlashingProtection implements SlashingProtection {
         h -> {
           final BlockValidator blockValidator =
               new BlockValidator(h, signingRoot, blockSlot, validatorId, signedBlocksDao);
+          final GenesisValidatorRootValidator gvrValidator =
+              new GenesisValidatorRootValidator(h, metadataDao);
 
           lockForValidator(h, LockType.BLOCK, validatorId);
 
-          if (!checkGenesisValidatorsRootAndInsertIfEmpty(h, genesisValidatorsRoot)) {
+          if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
             return false;
           }
 
@@ -218,20 +222,6 @@ public class DbSlashingProtection implements SlashingProtection {
           Streams.concat(existingRegisteredValidators.stream(), newlyRegisteredValidators.stream())
               .forEach(v -> registeredValidators.put(v.getPublicKey(), v.getId()));
         });
-  }
-
-  private boolean checkGenesisValidatorsRootAndInsertIfEmpty(
-      final Handle handle, Bytes32 genesisValidatorsRoot) {
-    final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(handle);
-    final boolean isValidGvr = dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(true);
-    if (!isValidGvr) {
-      LOG.warn(
-          "Supplied genesis validators root {} does not match value in database",
-          genesisValidatorsRoot);
-    } else if (dbGvr.isEmpty()) {
-      metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
-    }
-    return isValidGvr;
   }
 
   private int validatorId(final Bytes publicKey) {

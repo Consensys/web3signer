@@ -38,6 +38,7 @@ import dsl.SignedArtifacts;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
@@ -127,8 +128,9 @@ public class ReferenceTestRunner {
     slashingProtection.registerValidators(
         validatorsInModel.stream().map(Bytes::fromHexString).collect(Collectors.toList()));
 
-    validateAttestations(model.getAttestations());
-    validateBlocks(model.getBlocks());
+    final Bytes32 gvr = Bytes32.fromHexString(model.getGenesis_validators_root());
+    validateAttestations(model.getAttestations(), gvr);
+    validateBlocks(model.getBlocks(), gvr);
   }
 
   private List<String> getValidatorPublicKeysFromDb() {
@@ -141,7 +143,8 @@ public class ReferenceTestRunner {
                 .collect(Collectors.toList()));
   }
 
-  private void validateAttestations(final List<AttestionTestModel> attestations) {
+  private void validateAttestations(
+      final List<AttestionTestModel> attestations, final Bytes32 gvr) {
     attestations.forEach(
         attestation -> {
           final boolean result =
@@ -149,17 +152,18 @@ public class ReferenceTestRunner {
                   attestation.getPublickKey(),
                   attestation.getSigningRoot(),
                   attestation.getSourceEpoch(),
-                  attestation.getTargetEpoch());
+                  attestation.getTargetEpoch(),
+                  gvr);
           assertThat(result).isEqualTo(attestation.isShouldSucceed());
         });
   }
 
-  private void validateBlocks(final List<BlockTestModel> blocks) {
+  private void validateBlocks(final List<BlockTestModel> blocks, final Bytes32 gvr) {
     blocks.forEach(
         block -> {
           final boolean result =
               slashingProtection.maySignBlock(
-                  block.getPublickKey(), block.getSigningRoot(), block.getSlot());
+                  block.getPublickKey(), block.getSigningRoot(), block.getSlot(), gvr);
           assertThat(result).isEqualTo(block.isShouldSucceed());
         });
   }
