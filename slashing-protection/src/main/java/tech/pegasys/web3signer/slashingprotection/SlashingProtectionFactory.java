@@ -33,6 +33,10 @@ public class SlashingProtectionFactory {
 
   private static SlashingProtection createSlashingProtection(final Jdbi jdbi) {
     return new DbSlashingProtection(
-        jdbi, new ValidatorsDao(), new SignedBlocksDao(), new SignedAttestationsDao(), new LowWatermarkDao());
+        jdbi,
+        new ValidatorsDao(),
+        new SignedBlocksDao(),
+        new SignedAttestationsDao(),
+        new LowWatermarkDao());
   }
 }

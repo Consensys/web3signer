@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -47,6 +48,7 @@ public class InterchangeV5Importer {
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
+  private final LowWatermarkDao lowWatermarkDao;
   private final ObjectMapper mapper;
 
   public InterchangeV5Importer(
@@ -54,11 +56,13 @@ public class InterchangeV5Importer {
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
+      final LowWatermarkDao lowWatermarkDao,
       final ObjectMapper mapper) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
+    this.lowWatermarkDao = lowWatermarkDao;
     this.mapper = mapper;
   }
 
@@ -117,7 +121,8 @@ public class InterchangeV5Importer {
               jsonBlock.getSigningRoot(),
               jsonBlock.getSlot(),
               validator.getId(),
-              signedBlocksDao);
+              signedBlocksDao,
+              lowWatermarkDao);
 
       if (blockValidator.directlyConflictsWithExistingEntry()) {
         LOG.debug(
@@ -127,7 +132,7 @@ public class InterchangeV5Importer {
             jsonBlock.getSlot());
       }
 
-      if (blockValidator.existsInDatabase()) {
+      if (blockValidator.alreadyExists()) {
         LOG.debug(
             "Block {} for validator {} already exists in database, not imported",
             i,
@@ -155,7 +160,8 @@ public class InterchangeV5Importer {
               jsonAttestation.getSourceEpoch(),
               jsonAttestation.getTargetEpoch(),
               validator.getId(),
-              signedAttestationsDao);
+              signedAttestationsDao,
+              lowWatermarkDao);
 
       if (attestationValidator.sourceGreaterThanTargetEpoch()) {
         throw new IllegalArgumentException(
@@ -185,7 +191,7 @@ public class InterchangeV5Importer {
             validator.getPublicKey());
       }
 
-      if (attestationValidator.existsInDatabase()) {
+      if (attestationValidator.alreadyExists()) {
         LOG.debug(
             "Attestation {} for validator {} already exists in database, not imported",
             i,

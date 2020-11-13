@@ -67,7 +67,13 @@ public class DbSlashingProtection implements SlashingProtection {
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
       final LowWatermarkDao lowWatermarkDao) {
-    this(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, lowWatermarkDao, new HashMap<>());
+    this(
+        jdbi,
+        validatorsDao,
+        signedBlocksDao,
+        signedAttestationsDao,
+        lowWatermarkDao,
+        new HashMap<>());
   }
 
   public DbSlashingProtection(
@@ -89,6 +95,7 @@ public class DbSlashingProtection implements SlashingProtection {
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
+            lowWatermarkDao,
             new ObjectMapper()
                 .registerModule(new InterchangeModule())
                 .configure(FLUSH_AFTER_WRITE_VALUE, true));
@@ -148,13 +155,13 @@ public class DbSlashingProtection implements SlashingProtection {
               || attestationValidator.isSurroundedByExistingAttestation()
               || attestationValidator.surroundsExistingAttestation()) {
             return false;
-          } else if (attestationValidator.existsInDatabase()) {
+          } else if (attestationValidator.alreadyExists()) {
             return true;
           } else if (attestationValidator.hasSourceOlderThanWatermark()
               || attestationValidator.hasTargetOlderThanWatermark()) {
             return false;
           }
-          attestationValidator.insertToDatabase();
+          attestationValidator.persist();
           return true;
         });
   }
@@ -167,18 +174,19 @@ public class DbSlashingProtection implements SlashingProtection {
         READ_COMMITTED,
         h -> {
           final BlockValidator blockValidator =
-              new BlockValidator(h, signingRoot, blockSlot, validatorId, signedBlocksDao);
+              new BlockValidator(
+                  h, signingRoot, blockSlot, validatorId, signedBlocksDao, lowWatermarkDao);
 
           lockForValidator(h, LockType.BLOCK, validatorId);
 
           if (blockValidator.directlyConflictsWithExistingEntry()) {
             return false;
-          } else if (blockValidator.existsInDatabase()) {
+          } else if (blockValidator.alreadyExists()) {
             return true;
           } else if (blockValidator.isOlderThanWatermark()) {
             return false;
           }
-          blockValidator.insertToDatabase();
+          blockValidator.persist();
           return true;
         });
   }

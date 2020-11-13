@@ -12,8 +12,10 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.util.Optional;
 
@@ -32,18 +34,21 @@ public class BlockValidator {
   private final UInt64 blockSlot;
   private final int validatorId;
   private final SignedBlocksDao signedBlocksDao;
+  private final LowWatermarkDao lowWatermarkDao;
 
   public BlockValidator(
       final Handle handle,
       final Bytes signingRoot,
       final UInt64 blockSlot,
       final int validatorId,
-      final SignedBlocksDao signedBlocksDao) {
+      final SignedBlocksDao signedBlocksDao,
+      final LowWatermarkDao lowWatermarkDao) {
     this.handle = handle;
     this.signingRoot = signingRoot;
     this.blockSlot = blockSlot;
     this.validatorId = validatorId;
     this.signedBlocksDao = signedBlocksDao;
+    this.lowWatermarkDao = lowWatermarkDao;
   }
 
   public boolean directlyConflictsWithExistingEntry() {
@@ -52,14 +57,17 @@ public class BlockValidator {
         .isEmpty();
   }
 
-  public boolean existsInDatabase() {
+  public boolean alreadyExists() {
     return signedBlocksDao
         .findMatchingBlock(handle, validatorId, blockSlot, signingRoot)
         .isPresent();
   }
 
   public boolean isOlderThanWatermark() {
-    final Optional<UInt64> minimumSlot = signedBlocksDao.minimumSlot(handle, validatorId);
+    final Optional<UInt64> minimumSlot =
+        lowWatermarkDao
+            .findLowWatermarkForValidator(handle, validatorId)
+            .map(SigningWatermark::getSlot);
     if (minimumSlot.map(slot -> blockSlot.compareTo(slot) <= 0).orElse(false)) {
       LOG.warn(
           "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
@@ -68,8 +76,15 @@ public class BlockValidator {
     return false;
   }
 
-  public void insertToDatabase() {
+  public void persist() {
     final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
     signedBlocksDao.insertBlockProposal(handle, signedBlock);
+
+    // update the watermark if is otherwise blank
+    final Optional<SigningWatermark> watermark =
+        lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId);
+    if (watermark.isEmpty() || (watermark.get().getSourceEpoch() == null)) {
+      lowWatermarkDao.updateSlotWatermarkFor(handle, validatorId, blockSlot);
+    }
   }
 }

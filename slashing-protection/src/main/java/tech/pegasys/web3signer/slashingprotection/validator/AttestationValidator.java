@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.slashingprotection.validator;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.util.List;
 import java.util.Optional;
@@ -69,19 +70,23 @@ public class AttestationValidator {
     return false;
   }
 
-  public boolean existsInDatabase() {
+  public boolean alreadyExists() {
     return signedAttestationsDao
         .findMatchingAttestation(handle, validatorId, targetEpoch, signingRoot)
         .isPresent();
   }
 
-  public void insertToDatabase() {
+  public void persist() {
     final SignedAttestation signedAttestation =
         new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
     signedAttestationsDao.insertAttestation(handle, signedAttestation);
 
-    //update the watermark?
-
+    // update the watermark if is otherwise blank
+    final Optional<SigningWatermark> watermark =
+        lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId);
+    if (watermark.isEmpty() || (watermark.get().getSourceEpoch() == null)) {
+      lowWatermarkDao.updateEpochWatermarksFor(handle, validatorId, sourceEpoch, targetEpoch);
+    }
   }
 
   public boolean directlyConflictsWithExistingEntry() {
@@ -93,7 +98,9 @@ public class AttestationValidator {
 
   public boolean hasSourceOlderThanWatermark() {
     final Optional<UInt64> minimumSourceEpoch =
-        signedAttestationsDao.minimumSourceEpoch(handle, validatorId);
+        lowWatermarkDao
+            .findLowWatermarkForValidator(handle, validatorId)
+            .map(SigningWatermark::getSourceEpoch);
     if (minimumSourceEpoch.map(minEpoch -> sourceEpoch.compareTo(minEpoch) < 0).orElse(false)) {
       LOG.warn(
           "Attestation source epoch {} is below minimum existing attestation source epoch {}",
@@ -106,7 +113,9 @@ public class AttestationValidator {
 
   public boolean hasTargetOlderThanWatermark() {
     final Optional<UInt64> minimumTargetEpoch =
-        signedAttestationsDao.minimumTargetEpoch(handle, validatorId);
+        lowWatermarkDao
+            .findLowWatermarkForValidator(handle, validatorId)
+            .map(SigningWatermark::getTargetEpoch);
     if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).orElse(false)) {
       LOG.warn(
           "Attestation target epoch {} is below minimum existing attestation target epoch {}",
