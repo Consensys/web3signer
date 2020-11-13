@@ -36,6 +36,8 @@ import org.junit.jupiter.api.io.TempDir;
 public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  public static final String DB_USERNAME = "postgres";
+  public static final String DB_PASSWORD = "postgres";
   protected final BLSKeyPair keyPair = BLSKeyPair.random(0);
 
   final List<String> attestationSlashingMetrics =
@@ -53,8 +55,8 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withMode("eth2")
             .withSlashingEnabled(enableSlashing)
-            .withSlashingProtectionDbUsername("postgres")
-            .withSlashingProtectionDbPassword("postgres")
+            .withSlashingProtectionDbUsername(DB_USERNAME)
+            .withSlashingProtectionDbPassword(DB_PASSWORD)
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory);
 

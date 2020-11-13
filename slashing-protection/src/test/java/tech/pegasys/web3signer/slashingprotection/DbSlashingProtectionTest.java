@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.testing.JdbiRule;
 import org.junit.Before;
@@ -58,10 +60,12 @@ public class DbSlashingProtectionTest {
   private static final Bytes SIGNING_ROOT = Bytes.of(3);
   private static final UInt64 SOURCE_EPOCH = UInt64.valueOf(10);
   private static final UInt64 TARGET_EPOCH = UInt64.valueOf(20);
+  private static final Bytes32 GVR = Bytes32.leftPad(Bytes.of(100));
 
   @Mock private ValidatorsDao validatorsDao;
   @Mock private SignedBlocksDao signedBlocksDao;
   @Mock private SignedAttestationsDao signedAttestationsDao;
+  @Mock private MetadataDao metadataDao;
   @Rule public JdbiRule db = JdbiRule.embeddedPostgres();
 
   private DbSlashingProtection dbSlashingProtection;
@@ -74,7 +78,9 @@ public class DbSlashingProtectionTest {
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
+            metadataDao,
             Map.of(PUBLIC_KEY1, VALIDATOR_ID));
+    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(GVR));
   }
 
   @Test
@@ -82,7 +88,7 @@ public class DbSlashingProtectionTest {
     when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
         .thenReturn(emptyList());
 
-    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isTrue();
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isTrue();
     verify(signedBlocksDao)
         .findBlockForSlotWithDifferentSigningRoot(
             any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
@@ -98,7 +104,7 @@ public class DbSlashingProtectionTest {
     when(signedBlocksDao.findMatchingBlock(any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT)))
         .thenReturn(Optional.of(signedBlock));
 
-    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isTrue();
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isTrue();
     verify(signedBlocksDao)
         .findBlockForSlotWithDifferentSigningRoot(
             any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
@@ -111,7 +117,7 @@ public class DbSlashingProtectionTest {
     when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
         .thenReturn(List.of(signedBlock));
 
-    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isFalse();
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
     verify(signedBlocksDao)
         .findBlockForSlotWithDifferentSigningRoot(
             any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
@@ -123,9 +129,10 @@ public class DbSlashingProtectionTest {
   public void blockCannotSignWhenNoRegisteredValidator() {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
-            db.getJdbi(), validatorsDao, signedBlocksDao, signedAttestationsDao);
+            db.getJdbi(), validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao);
 
-    assertThatThrownBy(() -> dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT))
+    assertThatThrownBy(
+            () -> dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR))
         .hasMessage("Unregistered validator for " + PUBLIC_KEY1)
         .isInstanceOf(IllegalStateException.class);
 
@@ -145,7 +152,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
         .isTrue();
     verify(signedAttestationsDao)
         .findAttestationsForEpochWithDifferentSigningRoot(
@@ -168,7 +175,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
         .isFalse();
     verify(signedAttestationsDao)
         .findAttestationsForEpochWithDifferentSigningRoot(
@@ -194,7 +201,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
         .isFalse();
     verify(signedAttestationsDao)
         .findAttestationsForEpochWithDifferentSigningRoot(
@@ -220,7 +227,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
         .isTrue();
     verify(signedAttestationsDao)
         .findAttestationsForEpochWithDifferentSigningRoot(
@@ -236,12 +243,12 @@ public class DbSlashingProtectionTest {
   public void attestationCannotSignWhenNoRegisteredValidator() {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
-            db.getJdbi(), validatorsDao, signedBlocksDao, signedAttestationsDao);
+            db.getJdbi(), validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao);
 
     assertThatThrownBy(
             () ->
                 dbSlashingProtection.maySignAttestation(
-                    PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+                    PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
         .hasMessage("Unregistered validator for " + PUBLIC_KEY1)
         .isInstanceOf(IllegalStateException.class);
     final SignedAttestation attestation =
@@ -257,7 +264,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, sourceEpoch, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, sourceEpoch, TARGET_EPOCH, GVR))
         .isFalse();
     verifyNoInteractions(signedAttestationsDao);
     verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
@@ -273,6 +280,7 @@ public class DbSlashingProtectionTest {
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
+            metadataDao,
             registeredValidators);
 
     when(validatorsDao.retrieveValidators(any(), any()))
@@ -297,7 +305,7 @@ public class DbSlashingProtectionTest {
 
     final boolean result =
         dbSlashingProtection.maySignAttestation(
-            PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH);
+            PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR);
 
     assertThat(result).isFalse();
   }
@@ -307,7 +315,7 @@ public class DbSlashingProtectionTest {
     when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
         .thenReturn(List.of(new SignedBlock(1, UInt64.valueOf(1), null)));
 
-    final boolean result = dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT);
+    final boolean result = dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR);
 
     assertThat(result).isFalse();
   }
@@ -320,7 +328,8 @@ public class DbSlashingProtectionTest {
     when(signedBlocksDao.findMatchingBlock(any(), anyInt(), any(), any()))
         .thenReturn(Optional.empty());
 
-    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, UInt64.ONE)).isFalse();
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, UInt64.ONE, GVR))
+        .isFalse();
 
     verify(signedBlocksDao).minimumSlot(any(), eq(VALIDATOR_ID));
     verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
@@ -330,7 +339,7 @@ public class DbSlashingProtectionTest {
   public void slashingProtectionEnactedIfBlockWithSlotEqualToMinSlot() {
     when(signedBlocksDao.minimumSlot(any(), anyInt())).thenReturn(Optional.of(SLOT));
 
-    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT)).isFalse();
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
 
     verify(signedBlocksDao).minimumSlot(any(), eq(VALIDATOR_ID));
     verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
@@ -343,7 +352,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, UInt64.ZERO, UInt64.ZERO))
+                PUBLIC_KEY1, SIGNING_ROOT, UInt64.ZERO, UInt64.ZERO, GVR))
         .isFalse();
 
     verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
@@ -357,7 +366,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH))
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
         .isTrue();
 
     verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
@@ -375,7 +384,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(3), UInt64.valueOf(4)))
+                PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(3), UInt64.valueOf(4), GVR))
         .isFalse();
 
     verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
@@ -392,7 +401,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(3), UInt64.valueOf(4)))
+                PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(3), UInt64.valueOf(4), GVR))
         .isFalse();
 
     verify(signedAttestationsDao).minimumSourceEpoch(any(), eq(VALIDATOR_ID));
@@ -413,7 +422,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(3), UInt64.valueOf(4)))
+                PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(3), UInt64.valueOf(4), GVR))
         .isFalse();
 
     verify(signedAttestationsDao, never()).findMatchingAttestation(any(), anyInt(), any(), any());
@@ -434,11 +443,59 @@ public class DbSlashingProtectionTest {
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
-                PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(2), UInt64.valueOf(5)))
+                PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(2), UInt64.valueOf(5), GVR))
         .isFalse();
 
     verify(signedAttestationsDao, never()).findMatchingAttestation(any(), anyInt(), any(), any());
     verify(signedAttestationsDao).findSurroundedAttestations(any(), anyInt(), any(), any());
     verify(signedAttestationsDao, never()).insertAttestation(any(), any());
+  }
+
+  @Test
+  public void slashingProtectionEnactedIfAttestationWithInvalidGvr() {
+    when(metadataDao.findGenesisValidatorsRoot(any()))
+        .thenReturn(Optional.of(Bytes32.leftPad(Bytes.of(1))));
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+        .isFalse();
+
+    verify(metadataDao).findGenesisValidatorsRoot(any());
+    verify(signedAttestationsDao, never()).insertAttestation(any(), any());
+    verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
+  }
+
+  @Test
+  public void slashingProtectionEnactedIfBlockWithInvalidGvr() {
+    when(metadataDao.findGenesisValidatorsRoot(any()))
+        .thenReturn(Optional.of(Bytes32.leftPad(Bytes.of(1))));
+
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
+
+    verify(metadataDao).findGenesisValidatorsRoot(any());
+    verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
+    verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
+  }
+
+  @Test
+  public void registersGVRForBlockIfItDoesNotExist() {
+    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.empty());
+
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isTrue();
+
+    verify(metadataDao).insertGenesisValidatorsRoot(any(), eq(GVR));
+  }
+
+  @Test
+  public void registersGVRForAttestationIfItDoesNotExist() {
+    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.empty());
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+        .isTrue();
+
+    verify(metadataDao).insertGenesisValidatorsRoot(any(), eq(GVR));
   }
 }

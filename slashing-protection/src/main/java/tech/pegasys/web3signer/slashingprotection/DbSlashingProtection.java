@@ -16,6 +16,7 @@ import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WR
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -25,6 +26,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
 import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
+import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRootValidator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +42,7 @@ import com.google.common.collect.Streams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -53,6 +56,7 @@ public class DbSlashingProtection implements SlashingProtection {
   private final SignedAttestationsDao signedAttestationsDao;
   private final Map<Bytes, Integer> registeredValidators;
   private final InterchangeManager interchangeManager;
+  private final MetadataDao metadataDao;
 
   private enum LockType {
     BLOCK,
@@ -63,8 +67,9 @@ public class DbSlashingProtection implements SlashingProtection {
       final Jdbi jdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
-      final SignedAttestationsDao signedAttestationsDao) {
-    this(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, new HashMap<>());
+      final SignedAttestationsDao signedAttestationsDao,
+      final MetadataDao metadataDao) {
+    this(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao, new HashMap<>());
   }
 
   public DbSlashingProtection(
@@ -72,11 +77,13 @@ public class DbSlashingProtection implements SlashingProtection {
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
+      final MetadataDao metadataDao,
       final Map<Bytes, Integer> registeredValidators) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
+    this.metadataDao = metadataDao;
     this.registeredValidators = registeredValidators;
     this.interchangeManager =
         new InterchangeV5Manager(
@@ -84,6 +91,7 @@ public class DbSlashingProtection implements SlashingProtection {
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
+            metadataDao,
             new ObjectMapper()
                 .registerModule(new InterchangeModule())
                 .configure(FLUSH_AFTER_WRITE_VALUE, true));
@@ -116,7 +124,8 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes publicKey,
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
-      final UInt64 targetEpoch) {
+      final UInt64 targetEpoch,
+      final Bytes32 genesisValidatorsRoot) {
     final int validatorId = validatorId(publicKey);
 
     return jdbi.inTransaction(
@@ -131,12 +140,18 @@ public class DbSlashingProtection implements SlashingProtection {
                   targetEpoch,
                   validatorId,
                   signedAttestationsDao);
+          final GenesisValidatorRootValidator gvrValidator =
+              new GenesisValidatorRootValidator(handle, metadataDao);
 
           if (attestationValidator.sourceGreaterThanTargetEpoch()) {
             return false;
           }
 
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
+
+          if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
+            return false;
+          }
 
           if (attestationValidator.directlyConflictsWithExistingEntry()
               || attestationValidator.isSurroundedByExistingAttestation()
@@ -155,15 +170,24 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public boolean maySignBlock(
-      final Bytes publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
+      final Bytes publicKey,
+      final Bytes signingRoot,
+      final UInt64 blockSlot,
+      final Bytes32 genesisValidatorsRoot) {
     final int validatorId = validatorId(publicKey);
     return jdbi.inTransaction(
         READ_COMMITTED,
         h -> {
           final BlockValidator blockValidator =
               new BlockValidator(h, signingRoot, blockSlot, validatorId, signedBlocksDao);
+          final GenesisValidatorRootValidator gvrValidator =
+              new GenesisValidatorRootValidator(h, metadataDao);
 
           lockForValidator(h, LockType.BLOCK, validatorId);
+
+          if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
+            return false;
+          }
 
           if (blockValidator.directlyConflictsWithExistingEntry()) {
             return false;

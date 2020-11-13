@@ -16,6 +16,7 @@ import java.lang.reflect.Type;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.config.ConfigRegistry;
 import org.jdbi.v3.core.generic.GenericTypes;
@@ -36,6 +37,21 @@ public class ColumnMappers {
           (ColumnMapper<Bytes>)
               (r, columnNumber, ctx) ->
                   r.getBytes(columnNumber) == null ? null : Bytes.wrap(r.getBytes(columnNumber)));
+    }
+  }
+
+  public static class Bytes32ColumnMapper implements ColumnMapperFactory {
+
+    @Override
+    public Optional<ColumnMapper<?>> build(final Type type, final ConfigRegistry config) {
+      if (!Bytes32.class.equals(GenericTypes.getErasedType(type))) {
+        return Optional.empty();
+      }
+
+      return Optional.of(
+          (ColumnMapper<Bytes>)
+              (r, columnNumber, ctx) ->
+                  r.getBytes(columnNumber) == null ? null : Bytes32.wrap(r.getBytes(columnNumber)));
     }
   }
 

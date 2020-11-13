@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -21,6 +22,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttest
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
+import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRootValidator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +36,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
@@ -47,6 +50,7 @@ public class InterchangeV5Importer {
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
+  private final MetadataDao metadataDao;
   private final ObjectMapper mapper;
 
   public InterchangeV5Importer(
@@ -54,11 +58,13 @@ public class InterchangeV5Importer {
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
+      final MetadataDao metadataDao,
       final ObjectMapper mapper) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
+    this.metadataDao = metadataDao;
     this.mapper = mapper;
   }
 
@@ -78,6 +84,15 @@ public class InterchangeV5Importer {
       final ArrayNode dataNode = rootNode.withArray("data");
       jdbi.useTransaction(
           h -> {
+            final Bytes32 gvr = Bytes32.wrap(metadata.getGenesisValidatorsRoot());
+            final GenesisValidatorRootValidator genesisValidatorRootValidator =
+                new GenesisValidatorRootValidator(h, metadataDao);
+            if (!genesisValidatorRootValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr)) {
+              throw new IllegalArgumentException(
+                  String.format(
+                      "Supplied genesis validators root %s does not match value in database", gvr));
+            }
+
             for (int i = 0; i < dataNode.size(); i++) {
               try {
                 final JsonNode validatorNode = dataNode.get(i);

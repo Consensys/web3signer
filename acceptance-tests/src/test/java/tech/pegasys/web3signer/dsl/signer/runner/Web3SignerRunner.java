@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.dsl.signer.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.dsl.utils.EmbeddedDatabaseUtils.createEmbeddedDatabase;
 import static tech.pegasys.web3signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
 
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
@@ -32,15 +33,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-import javax.sql.DataSource;
 
 import com.google.common.collect.Lists;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import org.flywaydb.core.Flyway;
 
 public abstract class Web3SignerRunner {
 
@@ -210,22 +208,6 @@ public abstract class Web3SignerRunner {
     return params;
   }
 
-  private String createEmbeddedDatabase() {
-    try {
-      final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
-      createSchemaInDataSource(slashingDatabase.getPostgresDatabase());
-      return String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
-    } catch (final IOException e) {
-      throw new RuntimeException("Unable to start embedded postgres db", e);
-    }
-  }
-
-  private void createSchemaInDataSource(final DataSource dataSource) {
-    final Flyway flyway =
-        Flyway.configure().locations("/migrations/postgresql/").dataSource(dataSource).load();
-    flyway.migrate();
-  }
-
   private String createAllowList(final List<String> httpHostAllowList) {
     return String.join(",", httpHostAllowList);
   }
@@ -296,14 +278,6 @@ public abstract class Web3SignerRunner {
 
   protected SignerConfiguration getSignerConfig() {
     return signerConfig;
-  }
-
-  protected File getProjectPath() {
-    // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
-    final String userDir = System.getProperty("user.dir");
-    return userDir.toLowerCase().endsWith("web3signer")
-        ? new File(userDir)
-        : new File(userDir).getParentFile();
   }
 
   public String getSlashingDbUrl() {
