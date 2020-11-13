@@ -31,6 +31,10 @@ public class Metadata {
     this.genesisValidatorsRoot = genesisValidatorsRoot;
   }
 
+  public int getFormatVersion() {
+    return formatVersion;
+  }
+
   @JsonGetter(value = "interchange_format_version")
   public String getFormatVersionAsString() {
     return Integer.toString(formatVersion);
