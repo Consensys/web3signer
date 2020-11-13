@@ -201,6 +201,10 @@ public abstract class Web3SignerRunner {
       params.add("export");
       params.add("--to");
       params.add(signerConfig.getSlashingExportPath().get().toAbsolutePath().toString());
+    } else if (signerConfig.getSlashingImportPath().isPresent()) {
+      params.add("import");
+      params.add("--from");
+      params.add(signerConfig.getSlashingImportPath().get().toAbsolutePath().toString());
     }
 
     return params;
@@ -217,18 +221,8 @@ public abstract class Web3SignerRunner {
   }
 
   private void createSchemaInDataSource(final DataSource dataSource) {
-    final Path migrationPath =
-        getProjectPath()
-            .toPath()
-            .resolve(
-                Path.of(
-                    "slashing-protection", "src", "main", "resources", "migrations", "postgresql"));
-
     final Flyway flyway =
-        Flyway.configure()
-            .locations("filesystem:" + migrationPath.toString())
-            .dataSource(dataSource)
-            .load();
+        Flyway.configure().locations("/migrations/postgresql/").dataSource(dataSource).load();
     flyway.migrate();
   }
 

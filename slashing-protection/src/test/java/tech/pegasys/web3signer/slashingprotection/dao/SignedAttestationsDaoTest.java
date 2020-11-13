@@ -201,6 +201,40 @@ public class SignedAttestationsDaoTest {
     assertThat(signedAttestationsDao.minimumTargetEpoch(handle, 1)).hasValue(UInt64.valueOf(3));
   }
 
+  @Test
+  public void existingCheckMatchesOnNullSigningRoot() {
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, null, UInt64.valueOf(2), UInt64.valueOf(3));
+    assertThat(signedAttestationsDao.findMatchingAttestation(handle, 1, UInt64.valueOf(3), null))
+        .isNotEmpty();
+  }
+
+  @Test
+  public void nullSigningRootInDatabaseDoesNotExactMatchARealValue() {
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, Bytes.of(10), UInt64.valueOf(2), UInt64.valueOf(3));
+    assertThat(signedAttestationsDao.findMatchingAttestation(handle, 1, UInt64.valueOf(3), null))
+        .isEmpty();
+    assertThat(
+            signedAttestationsDao.findMatchingAttestation(
+                handle, 1, UInt64.valueOf(3), Bytes.of(10)))
+        .isNotEmpty();
+  }
+
+  @Test
+  public void allNonNullEntriesAtTargetEpochAreReturnedIfCheckingAgainstNull() {
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, Bytes.of(10), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(1, Bytes.of(11), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(1, null, UInt64.valueOf(2), UInt64.valueOf(3));
+
+    final List<SignedAttestation> nonMatchingAttestations =
+        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(3), null);
+
+    assertThat(nonMatchingAttestations).hasSize(2);
+  }
+
   private void insertValidator(final Bytes publicKey, final int validatorId) {
     handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
   }

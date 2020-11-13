@@ -37,6 +37,7 @@ public class SignedBlocksDaoTest {
           .withMigration(Migration.before().withPath("migrations/postgresql"));
 
   private Handle handle;
+  final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
 
   @Before
   public void setup() {
@@ -82,7 +83,6 @@ public class SignedBlocksDaoTest {
 
   @Test
   public void storesBlockInDb() {
-    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
     final ValidatorsDao validatorsDao = new ValidatorsDao();
 
     validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
@@ -111,7 +111,6 @@ public class SignedBlocksDaoTest {
 
   @Test
   public void canCreateBlocksWithNoSigningRoot() {
-    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
     insertValidator(Bytes.of(100), 1);
     insertBlock(1, 2, null);
     final List<SignedBlock> blocks =
@@ -124,11 +123,31 @@ public class SignedBlocksDaoTest {
 
   @Test
   public void determinesMinimumSlot() {
-    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
     insertValidator(Bytes.of(100), 1);
     insertBlock(1, 2, null);
     insertBlock(1, 3, null);
     assertThat(signedBlocksDao.minimumSlot(handle, 1)).hasValue(UInt64.valueOf(2));
+  }
+
+  @Test
+  public void allNonNullEntriesAtTargetEpochAreReturnedIfCheckingAgainstNull() {
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 3, Bytes.of(10));
+    insertBlock(1, 3, Bytes.of(11));
+    insertBlock(1, 3, null);
+
+    final List<SignedBlock> nonMatchingAttestations =
+        signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(3), null);
+
+    assertThat(nonMatchingAttestations).hasSize(2);
+  }
+
+  @Test
+  public void existingCheckMatchesOnNullSigningRoot() {
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 3, null);
+    assertThat(signedBlocksDao.findMatchingBlock(handle, 1, UInt64.valueOf(3), null)).isNotEmpty();
   }
 
   private void insertBlock(final int validatorId, final int slot, final Bytes signingRoot) {
