@@ -45,6 +45,8 @@ public class SlashingImportAcceptanceTest extends AcceptanceTestBase {
       "0x8f3f44b74d316c3293cced0c48c72e021ef8d145d136f2908931090e7181c3b777498128a348d07b0b9cd3921b5ca537";
   public static final String ATTESTATION_SIGNING_ROOT =
       "0x30752da173420e64a66f6ca6b97c55a96390a3158a755ecd277812488bb84e57";
+  public static final String BLOCK_SIGNING_ROOT =
+      "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b";
 
   protected final BLSKeyPair keyPair = BLSKeyPair.random(0);
 
@@ -109,5 +111,13 @@ public class SlashingImportAcceptanceTest extends AcceptanceTestBase {
     assertThat(signedAttestations.get(0).get("target_epoch")).isEqualTo(BigDecimal.valueOf(6));
     assertThat(signedAttestations.get(0).get("signing_root"))
         .isEqualTo(Bytes.fromHexString(ATTESTATION_SIGNING_ROOT).toArray());
+
+    final List<Map<String, Object>> signedBlocks =
+        jdbi.withHandle(h -> h.select("SELECT * from signed_blocks").mapToMap().list());
+    assertThat(signedBlocks).hasSize(1);
+    assertThat(signedBlocks.get(0).get("validator_id")).isEqualTo(1);
+    assertThat(signedBlocks.get(0).get("slot")).isEqualTo(BigDecimal.valueOf(12345));
+    assertThat(signedBlocks.get(0).get("signing_root"))
+        .isEqualTo(Bytes.fromHexString(BLOCK_SIGNING_ROOT).toArray());
   }
 }
