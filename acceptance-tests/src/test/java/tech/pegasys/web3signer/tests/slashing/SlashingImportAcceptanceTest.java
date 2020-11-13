@@ -73,7 +73,7 @@ public class SlashingImportAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void slashingDataIsExported(@TempDir Path testDirectory) throws URISyntaxException, IOException {
+  void slashingDataIsImported(@TempDir Path testDirectory) throws URISyntaxException, IOException {
     setupSigner(testDirectory, true);
 
     final Path importFile =
