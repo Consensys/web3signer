@@ -69,8 +69,17 @@ public class DbSlashingProtection implements SlashingProtection {
       final Jdbi jdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
-      final SignedAttestationsDao signedAttestationsDao) {
-    this(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, new HashMap<>());
+      final SignedAttestationsDao signedAttestationsDao,
+      final MetadataDao metadataDao,
+      final LowWatermarkDao lowWatermarkDao) {
+    this(
+        jdbi,
+        validatorsDao,
+        signedBlocksDao,
+        signedAttestationsDao,
+        metadataDao,
+        lowWatermarkDao,
+        new HashMap<>());
   }
 
   public DbSlashingProtection(
@@ -145,6 +154,7 @@ public class DbSlashingProtection implements SlashingProtection {
                   validatorId,
                   signedAttestationsDao,
                   lowWatermarkDao);
+
           final GenesisValidatorRootValidator gvrValidator =
               new GenesisValidatorRootValidator(handle, metadataDao);
 
@@ -153,6 +163,10 @@ public class DbSlashingProtection implements SlashingProtection {
           }
 
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
+
+          if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
+            return false;
+          }
 
           if (attestationValidator.directlyConflictsWithExistingEntry()
               || attestationValidator.isSurroundedByExistingAttestation()

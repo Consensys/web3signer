@@ -43,7 +43,13 @@ public class InterchangeV5Manager implements InterchangeManager {
             jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao, mapper);
     importer =
         new InterchangeV5Importer(
-            jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao, lowWatermarkDao, mapper);
+            jdbi,
+            validatorsDao,
+            signedBlocksDao,
+            signedAttestationsDao,
+            metadataDao,
+            lowWatermarkDao,
+            mapper);
   }
 
   @Override

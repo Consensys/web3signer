@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttest
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
+import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRootValidator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +37,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 

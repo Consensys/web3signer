@@ -62,6 +62,7 @@ public class DbSlashingProtectionTest {
   private static final Bytes SIGNING_ROOT = Bytes.of(3);
   private static final UInt64 SOURCE_EPOCH = UInt64.valueOf(10);
   private static final UInt64 TARGET_EPOCH = UInt64.valueOf(20);
+  private static final Bytes32 GVR = Bytes32.leftPad(Bytes.of(100));
 
   @Mock private ValidatorsDao validatorsDao;
   @Mock private SignedBlocksDao signedBlocksDao;
@@ -132,7 +133,12 @@ public class DbSlashingProtectionTest {
   public void blockCannotSignWhenNoRegisteredValidator() {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
-            db.getJdbi(), validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao, lowWatermarkDao);
+            db.getJdbi(),
+            validatorsDao,
+            signedBlocksDao,
+            signedAttestationsDao,
+            metadataDao,
+            lowWatermarkDao);
 
     assertThatThrownBy(
             () -> dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR))
@@ -246,7 +252,12 @@ public class DbSlashingProtectionTest {
   public void attestationCannotSignWhenNoRegisteredValidator() {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
-            db.getJdbi(), validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao, lowWatermarkDao);
+            db.getJdbi(),
+            validatorsDao,
+            signedBlocksDao,
+            signedAttestationsDao,
+            metadataDao,
+            lowWatermarkDao);
 
     assertThatThrownBy(
             () ->
