@@ -49,7 +49,7 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
   }
 
   @Test
-  void canloadConflictingBlocksInSameSlot() throws IOException {
+  void canLoadConflictingBlocksInSameSlot() throws IOException {
     final URL importFile = Resources.getResource("interchange/conflictingBlocks.json");
     slashingProtection.importData(importFile.openStream());
     jdbi.useHandle(

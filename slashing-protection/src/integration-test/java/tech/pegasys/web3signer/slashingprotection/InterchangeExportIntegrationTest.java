@@ -13,7 +13,9 @@
 package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 
@@ -26,11 +28,15 @@ import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 
 public class InterchangeExportIntegrationTest extends InterchangeBaseIntegrationTest {
+  private static final String GENESIS_VALIDATORS_ROOT =
+      "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
+  private final MetadataDao metadata = new MetadataDao();
 
   @Test
   void canCreateDatabaseWithEntries() throws IOException {
@@ -40,6 +46,9 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
         String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
 
     final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
+
+    final Bytes32 gvr = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
+    jdbi.useTransaction(h -> metadata.insertGenesisValidatorsRoot(h, gvr));
 
     final int VALIDATOR_COUNT = 2;
     final int TOTAL_BLOCKS_SIGNED = 6;
@@ -80,8 +89,7 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
         mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
 
     assertThat(outputObject.getMetadata().getFormatVersionAsString()).isEqualTo("5");
-    assertThat(outputObject.getMetadata().getGenesisValidatorsRoot())
-        .isEqualTo(Bytes.fromHexString("FFFFFFFF"));
+    assertThat(outputObject.getMetadata().getGenesisValidatorsRoot()).isEqualTo(gvr);
 
     final List<SignedArtifacts> signedArtifacts = outputObject.getSignedArtifacts();
     assertThat(signedArtifacts).hasSize(2);
@@ -106,5 +114,24 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
         assertThat(attestation.getTargetEpoch()).isEqualTo(UInt64.valueOf(a));
       }
     }
+  }
+
+  @Test
+  void failToExportIfGenesisValidatorRootDoesNotExist() throws IOException {
+    final EmbeddedPostgres db = setup();
+    final String databaseUrl = getDatabaseUrl(db);
+
+    final OutputStream exportOutput = new ByteArrayOutputStream();
+    final SlashingProtection slashingProtection =
+        SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
+    assertThatThrownBy(() -> slashingProtection.export(exportOutput))
+        .hasMessage("No genesis validators root for slashing protection data")
+        .isInstanceOf(RuntimeException.class);
+    exportOutput.close();
+    assertThat(exportOutput.toString()).isEmpty();
+  }
+
+  private String getDatabaseUrl(final EmbeddedPostgres db) {
+    return String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
   }
 }

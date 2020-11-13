@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -21,12 +22,13 @@ import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
@@ -40,6 +42,7 @@ public class InterchangeV5Exporter {
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
+  private final MetadataDao metadataDao;
   private final ObjectMapper mapper;
 
   public InterchangeV5Exporter(
@@ -47,19 +50,26 @@ public class InterchangeV5Exporter {
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
+      final MetadataDao metadataDao,
       final ObjectMapper mapper) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
+    this.metadataDao = metadataDao;
     this.mapper = mapper;
   }
 
   public void export(final OutputStream out) throws IOException {
     try (final JsonGenerator jsonGenerator = mapper.getFactory().createGenerator(out)) {
+      final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
+      if (gvr.isEmpty()) {
+        throw new RuntimeException("No genesis validators root for slashing protection data");
+      }
+
       jsonGenerator.writeStartObject();
 
-      final Metadata metadata = new Metadata(FORMAT_VERSION, Bytes.fromHexString("FFFFFFFF"));
+      final Metadata metadata = new Metadata(FORMAT_VERSION, gvr.get());
 
       jsonGenerator.writeFieldName("metadata");
       mapper.writeValue(jsonGenerator, metadata);
