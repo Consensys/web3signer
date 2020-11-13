@@ -18,10 +18,12 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
 
 public class MetadataDao {
+  final int METADATA_ROW_ID = 1;
 
   public Optional<Bytes32> findGenesisValidatorsRoot(final Handle handle) {
     return handle
-        .createQuery("SELECT genesis_validators_root FROM metadata")
+        .createQuery("SELECT genesis_validators_root FROM metadata WHERE id = ?")
+        .bind(0, METADATA_ROW_ID)
         .mapTo(Bytes32.class)
         .findFirst();
   }
@@ -29,8 +31,9 @@ public class MetadataDao {
   public void insertGenesisValidatorsRoot(
       final Handle handle, final Bytes32 genesisValidatorsRoot) {
     handle
-        .createUpdate("INSERT INTO metadata (genesis_validators_root) VALUES (?)")
-        .bind(0, genesisValidatorsRoot)
+        .createUpdate("INSERT INTO metadata (id, genesis_validators_root) VALUES (?, ?)")
+        .bind(0, METADATA_ROW_ID)
+        .bind(1, genesisValidatorsRoot)
         .execute();
   }
 }

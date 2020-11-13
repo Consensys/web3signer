@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
@@ -53,7 +54,6 @@ public class MetadataDaoTest {
   @Test
   public void findsExistingGvrInDb() {
     insertGvr(Bytes32.leftPad(Bytes.of(3)));
-    insertGvr(Bytes32.leftPad(Bytes.of(4)));
 
     final Optional<Bytes32> existingGvr = metadataDao.findGenesisValidatorsRoot(handle);
     assertThat(existingGvr).isNotEmpty();
@@ -71,13 +71,27 @@ public class MetadataDaoTest {
     metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
 
     final List<Bytes32> gvrs =
-        handle.createQuery("SELECT * FROM metadata").mapTo(Bytes32.class).list();
+        handle
+            .createQuery("SELECT genesis_validators_root FROM metadata")
+            .mapTo(Bytes32.class)
+            .list();
     assertThat(gvrs.size()).isEqualTo(1);
     assertThat(gvrs.get(0)).isEqualTo(genesisValidatorsRoot);
   }
 
+  @Test
+  public void failsInsertingMultipleGvrIntoDb() {
+    final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(4));
+    metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
+
+    assertThatThrownBy(() -> metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot))
+        .hasMessageContaining("duplicate key value violates unique constraint");
+  }
+
   private void insertGvr(final Bytes genesisValidatorsRoot) {
     handle.execute(
-        "INSERT INTO metadata (genesis_validators_root) VALUES (?)", genesisValidatorsRoot);
+        "INSERT INTO metadata (id, genesis_validators_root) VALUES (?, ?)",
+        1,
+        genesisValidatorsRoot);
   }
 }

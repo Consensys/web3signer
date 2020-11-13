@@ -143,7 +143,7 @@ public class DbSlashingProtection implements SlashingProtection {
 
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
 
-          if (!isValidGenesisValidatorsRoot(handle, genesisValidatorsRoot)) {
+          if (!checkGenesisValidatorsRootAndInsertIfEmpty(handle, genesisValidatorsRoot)) {
             return false;
           }
 
@@ -177,7 +177,7 @@ public class DbSlashingProtection implements SlashingProtection {
 
           lockForValidator(h, LockType.BLOCK, validatorId);
 
-          if (!isValidGenesisValidatorsRoot(h, genesisValidatorsRoot)) {
+          if (!checkGenesisValidatorsRootAndInsertIfEmpty(h, genesisValidatorsRoot)) {
             return false;
           }
 
@@ -216,7 +216,8 @@ public class DbSlashingProtection implements SlashingProtection {
         });
   }
 
-  private boolean isValidGenesisValidatorsRoot(final Handle handle, Bytes32 genesisValidatorsRoot) {
+  private boolean checkGenesisValidatorsRootAndInsertIfEmpty(
+      final Handle handle, Bytes32 genesisValidatorsRoot) {
     final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(handle);
     final boolean isValidGvr = dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(true);
     if (!isValidGvr) {
