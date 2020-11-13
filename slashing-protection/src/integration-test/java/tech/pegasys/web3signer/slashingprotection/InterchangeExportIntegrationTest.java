@@ -15,59 +15,35 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
-import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
-
+import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import dsl.InterchangeV5Format;
+import dsl.SignedArtifacts;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
-import dsl.InterchangeV5Format;
-import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 
-public class InterchangeExportIntegrationTest {
-
+public class InterchangeExportIntegrationTest extends InterchangeBaseIntegrationTest {
   private static final String GENESIS_VALIDATORS_ROOT =
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
-  private static final String DB_USERNAME = "postgres";
-  private static final String DB_PASSWORD = "postgres";
-  private final SignedBlocksDao signedBlocks = new SignedBlocksDao();
-  private final SignedAttestationsDao signedAttestations = new SignedAttestationsDao();
-  private final ValidatorsDao validators = new ValidatorsDao();
   private final MetadataDao metadata = new MetadataDao();
-
-  private EmbeddedPostgres setup() throws IOException {
-    final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
-
-    final Flyway flyway =
-        Flyway.configure()
-            .locations("migrations/postgresql")
-            .dataSource(slashingDatabase.getPostgresDatabase())
-            .load();
-    flyway.migrate();
-
-    return slashingDatabase;
-  }
 
   @Test
   void canCreateDatabaseWithEntries() throws IOException {
     final EmbeddedPostgres db = setup();
-    final String databaseUrl = getDatabaseUrl(db);
-    final Jdbi jdbi = DbConnection.createConnection(databaseUrl, DB_USERNAME, DB_PASSWORD);
+
+    final String databaseUrl =
+        String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
+
+    final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
 
     final Bytes32 gvr = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
     jdbi.useTransaction(h -> metadata.insertGenesisValidatorsRoot(h, gvr));
@@ -107,8 +83,6 @@ public class InterchangeExportIntegrationTest {
     slashingProtection.export(exportOutput);
     exportOutput.close();
 
-    final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
-
     final InterchangeV5Format outputObject =
         mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
 
@@ -147,7 +121,7 @@ public class InterchangeExportIntegrationTest {
 
     final OutputStream exportOutput = new ByteArrayOutputStream();
     final SlashingProtection slashingProtection =
-        SlashingProtectionFactory.createSlashingProtection(databaseUrl, DB_USERNAME, DB_PASSWORD);
+        SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
     assertThatThrownBy(() -> slashingProtection.export(exportOutput))
         .hasMessage("No genesis validators root for slashing protection data")
         .isInstanceOf(RuntimeException.class);

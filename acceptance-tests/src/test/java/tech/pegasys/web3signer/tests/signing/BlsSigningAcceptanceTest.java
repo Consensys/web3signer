@@ -12,6 +12,9 @@
  */
 package tech.pegasys.web3signer.tests.signing;
 
+import static io.restassured.http.ContentType.ANY;
+import static io.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.TEXT;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,7 +36,9 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
@@ -61,7 +66,29 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    signAndVerifySignature(artifactType);
+    signAndVerifySignature(artifactType, TEXT, null);
+  }
+
+  @ParameterizedTest
+  @EnumSource(ArtifactType.class)
+  public void signDataWithJsonAcceptTypeWithKeyLoadedFromUnencryptedFile(
+      final ArtifactType artifactType) throws JsonProcessingException {
+    final String configFilename = publicKey.toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+
+    signAndVerifySignature(artifactType, JSON, null);
+  }
+
+  @ParameterizedTest
+  @EnumSource(ArtifactType.class)
+  public void signDataWithDefaultAcceptTypeWithKeyLoadedFromUnencryptedFile(
+      final ArtifactType artifactType) throws JsonProcessingException {
+    final String configFilename = publicKey.toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    // this is same as not setting accept type at all - the client defaults to */* aka ANY
+    signAndVerifySignature(artifactType, ANY, null);
   }
 
   @ParameterizedTest
@@ -147,8 +174,12 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     assertThat(response.getStatusCode()).isEqualTo(500);
   }
 
-  @Test
-  public void ableToSignWithoutSigningRootField() throws JsonProcessingException {
+  @ParameterizedTest
+  @EnumSource(
+      value = ContentType.class,
+      names = {"TEXT", "JSON", "ANY"})
+  public void ableToSignWithoutSigningRootField(final ContentType acceptableContentType)
+      throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
@@ -172,26 +203,48 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.getDeposit());
 
     final Response response =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), requestWithMismatchedSigningRoot);
-    assertThat(response.getStatusCode()).isEqualTo(200);
+        signer.eth2Sign(
+            keyPair.getPublicKey().toString(),
+            requestWithMismatchedSigningRoot,
+            acceptableContentType);
+
+    assertThat(response.statusCode()).isEqualTo(200);
+
+    // validate that for ANY and JSON we get application/json content type, and we are able to parse
+    // JSON as well.
+    if (acceptableContentType == ANY || acceptableContentType == JSON) {
+      assertThat(response.contentType()).startsWith("application/json");
+      final JsonObject jsonObject = new JsonObject(response.body().print());
+      assertThat(jsonObject.containsKey("signature")).isTrue();
+    } else {
+      assertThat(response.contentType()).startsWith("text/plain");
+    }
   }
 
   private void signAndVerifySignature(final ArtifactType artifactType)
       throws JsonProcessingException {
-    signAndVerifySignature(artifactType, null);
+    signAndVerifySignature(artifactType, TEXT, null);
   }
 
   private void signAndVerifySignature(
-      final ArtifactType artifactType, final Map<String, String> env)
+      final ArtifactType artifactType,
+      final ContentType acceptMediaType,
+      final Map<String, String> env)
       throws JsonProcessingException {
     setupSigner("eth2", env);
 
     // openapi
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
-    final Response response = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
-    final Bytes signature = verifyAndGetSignatureResponse(response);
+    final Response response =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), request, acceptMediaType);
+    final Bytes signature =
+        verifyAndGetSignatureResponse(response, expectedContentType(acceptMediaType));
     final BLSSignature expectedSignature =
         BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
+  }
+
+  private ContentType expectedContentType(final ContentType acceptMediaType) {
+    return acceptMediaType == ANY || acceptMediaType == JSON ? JSON : TEXT;
   }
 }

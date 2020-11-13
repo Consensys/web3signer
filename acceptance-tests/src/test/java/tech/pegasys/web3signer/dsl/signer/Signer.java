@@ -129,11 +129,22 @@ public class Signer extends FilecoinJsonRpcEndpoint {
 
   public Response eth2Sign(final String publicKey, final Eth2SigningRequestBody ethSignBody)
       throws JsonProcessingException {
+    return eth2Sign(publicKey, ethSignBody, ContentType.TEXT);
+  }
+
+  public Response eth2Sign(
+      final String publicKey,
+      final Eth2SigningRequestBody ethSignBody,
+      final ContentType acceptMediaType)
+      throws JsonProcessingException {
     return given()
         .baseUri(getUrl())
         .contentType(ContentType.JSON)
+        .accept(acceptMediaType)
         .pathParam("identifier", publicKey)
         .body(ETH_2_INTERFACE_OBJECT_MAPPER.writeValueAsString(ethSignBody))
+        .log()
+        .all(true)
         .post(signPath(KeyType.BLS));
   }
 

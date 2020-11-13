@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.statement.Query;
 
 public class SignedAttestationsDao {
 
@@ -27,15 +28,28 @@ public class SignedAttestationsDao {
       final int validatorId,
       final UInt64 targetEpoch,
       final Bytes signingRoot) {
-    return handle
-        .createQuery(
-            "SELECT validator_id, source_epoch, target_epoch, signing_root "
-                + "FROM signed_attestations WHERE (validator_id = ? AND target_epoch = ?) AND (signing_root <> ? OR signing_root IS NULL)")
-        .bind(0, validatorId)
-        .bind(1, targetEpoch)
-        .bind(2, signingRoot)
-        .mapToBean(SignedAttestation.class)
-        .list();
+
+    final Query query;
+    if (signingRoot == null) {
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                      + "FROM signed_attestations WHERE (validator_id = ? AND target_epoch = ?) AND (signing_root IS NOT NULL)")
+              .bind(0, validatorId)
+              .bind(1, targetEpoch);
+    } else {
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                      + "FROM signed_attestations WHERE (validator_id = ? AND target_epoch = ?) AND (signing_root <> ? OR signing_root IS NULL)")
+              .bind(0, validatorId)
+              .bind(1, targetEpoch)
+              .bind(2, signingRoot);
+    }
+
+    return query.mapToBean(SignedAttestation.class).list();
   }
 
   public Optional<SignedAttestation> findMatchingAttestation(
@@ -43,15 +57,27 @@ public class SignedAttestationsDao {
       final int validatorId,
       final UInt64 targetEpoch,
       final Bytes signingRoot) {
-    return handle
-        .createQuery(
-            "SELECT validator_id, source_epoch, target_epoch, signing_root "
-                + "FROM signed_attestations WHERE validator_id = ? AND target_epoch = ? AND signing_root = ?")
-        .bind(0, validatorId)
-        .bind(1, targetEpoch)
-        .bind(2, signingRoot)
-        .mapToBean(SignedAttestation.class)
-        .findFirst();
+    final Query query;
+    if (signingRoot == null) {
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                      + "FROM signed_attestations WHERE validator_id = ? AND target_epoch = ? AND signing_root IS NULL")
+              .bind(0, validatorId)
+              .bind(1, targetEpoch);
+    } else {
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                      + "FROM signed_attestations WHERE validator_id = ? AND target_epoch = ? AND signing_root = ?")
+              .bind(0, validatorId)
+              .bind(1, targetEpoch)
+              .bind(2, signingRoot);
+    }
+
+    return query.mapToBean(SignedAttestation.class).findFirst();
   }
 
   public List<SignedAttestation> findSurroundingAttestations(

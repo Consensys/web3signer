@@ -22,12 +22,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.NotImplementedException;
 import org.jdbi.v3.core.Jdbi;
 
 public class InterchangeV5Manager implements InterchangeManager {
 
   private final InterchangeV5Exporter exporter;
+  private final InterchangeV5Importer importer;
 
   public InterchangeV5Manager(
       final Jdbi jdbi,
@@ -39,12 +39,14 @@ public class InterchangeV5Manager implements InterchangeManager {
     exporter =
         new InterchangeV5Exporter(
             jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao, mapper);
+    importer =
+        new InterchangeV5Importer(
+            jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, mapper);
   }
 
   @Override
   public void importData(final InputStream in) throws IOException {
-    throw new NotImplementedException(
-        "Importing of interchange data to be performed in later release");
+    importer.importData(in);
   }
 
   @Override
