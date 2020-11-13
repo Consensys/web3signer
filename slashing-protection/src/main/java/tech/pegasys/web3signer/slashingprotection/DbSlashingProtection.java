@@ -16,6 +16,7 @@ import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WR
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -54,6 +55,7 @@ public class DbSlashingProtection implements SlashingProtection {
   private final SignedAttestationsDao signedAttestationsDao;
   private final Map<Bytes, Integer> registeredValidators;
   private final InterchangeManager interchangeManager;
+  private final LowWatermarkDao lowWatermarkDao;
 
   private enum LockType {
     BLOCK,
@@ -64,8 +66,9 @@ public class DbSlashingProtection implements SlashingProtection {
       final Jdbi jdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
-      final SignedAttestationsDao signedAttestationsDao) {
-    this(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, new HashMap<>());
+      final SignedAttestationsDao signedAttestationsDao,
+      final LowWatermarkDao lowWatermarkDao) {
+    this(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, lowWatermarkDao, new HashMap<>());
   }
 
   public DbSlashingProtection(
@@ -73,11 +76,13 @@ public class DbSlashingProtection implements SlashingProtection {
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
+      final LowWatermarkDao lowWatermarkDao,
       final Map<Bytes, Integer> registeredValidators) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
+    this.lowWatermarkDao = lowWatermarkDao;
     this.registeredValidators = registeredValidators;
     this.interchangeManager =
         new InterchangeV5Manager(
@@ -126,7 +131,8 @@ public class DbSlashingProtection implements SlashingProtection {
                   sourceEpoch,
                   targetEpoch,
                   validatorId,
-                  signedAttestationsDao);
+                  signedAttestationsDao,
+                  lowWatermarkDao);
 
           if (!attestationValidator.sourceGreaterThanTargetEpoch()) {
             return false;

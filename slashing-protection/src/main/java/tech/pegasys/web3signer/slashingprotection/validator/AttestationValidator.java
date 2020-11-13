@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 
@@ -35,6 +36,7 @@ public class AttestationValidator {
   private final UInt64 targetEpoch;
   private final int validatorId;
   private final SignedAttestationsDao signedAttestationsDao;
+  private final LowWatermarkDao lowWatermarkDao;
 
   public AttestationValidator(
       final Handle handle,
@@ -43,7 +45,8 @@ public class AttestationValidator {
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch,
       final int validatorId,
-      final SignedAttestationsDao signedAttestationsDao) {
+      final SignedAttestationsDao signedAttestationsDao,
+      final LowWatermarkDao lowWatermarkDao) {
     this.handle = handle;
     this.publicKey = publicKey;
     this.signingRoot = signingRoot;
@@ -51,6 +54,7 @@ public class AttestationValidator {
     this.targetEpoch = targetEpoch;
     this.validatorId = validatorId;
     this.signedAttestationsDao = signedAttestationsDao;
+    this.lowWatermarkDao = lowWatermarkDao;
   }
 
   public boolean sourceGreaterThanTargetEpoch() {
@@ -75,6 +79,9 @@ public class AttestationValidator {
     final SignedAttestation signedAttestation =
         new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
     signedAttestationsDao.insertAttestation(handle, signedAttestation);
+
+    //update the watermark?
+
   }
 
   public boolean directlyConflictsWithExistingEntry() {
