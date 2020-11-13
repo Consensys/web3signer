@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
+import static java.util.Collections.emptyMap;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
@@ -79,7 +80,7 @@ public class DbSlashingProtection implements SlashingProtection {
         signedAttestationsDao,
         metadataDao,
         lowWatermarkDao,
-        new HashMap<>());
+        emptyMap());
   }
 
   public DbSlashingProtection(
