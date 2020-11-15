@@ -13,11 +13,9 @@
 package tech.pegasys.web3signer.slashingprotection;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
-import static java.util.Collections.emptyMap;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
-import java.util.HashMap;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -35,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
