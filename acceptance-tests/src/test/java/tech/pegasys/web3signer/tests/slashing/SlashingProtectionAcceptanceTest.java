@@ -33,7 +33,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-public class SlashingAcceptanceTest extends AcceptanceTestBase {
+public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
   public static final String DB_USERNAME = "postgres";

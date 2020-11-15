@@ -17,6 +17,7 @@ import static java.util.Collections.emptyMap;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
+import java.util.HashMap;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -79,7 +80,7 @@ public class DbSlashingProtection implements SlashingProtection {
         signedAttestationsDao,
         metadataDao,
         lowWatermarkDao,
-        emptyMap());
+        new HashMap<>());
   }
 
   public DbSlashingProtection(
