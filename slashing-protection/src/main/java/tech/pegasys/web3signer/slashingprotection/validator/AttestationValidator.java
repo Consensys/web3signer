@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import com.google.common.base.Suppliers;
+import java.util.function.Supplier;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -39,7 +41,7 @@ public class AttestationValidator {
   private final SignedAttestationsDao signedAttestationsDao;
   private final LowWatermarkDao lowWatermarkDao;
 
-  private final Optional<SigningWatermark> watermark;
+  private final Supplier<Optional<SigningWatermark>> watermarkSupplier;
 
   public AttestationValidator(
       final Handle handle,
@@ -59,7 +61,8 @@ public class AttestationValidator {
     this.signedAttestationsDao = signedAttestationsDao;
     this.lowWatermarkDao = lowWatermarkDao;
 
-    watermark = lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId);
+    watermarkSupplier = Suppliers.memoize(
+        () -> lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId));
   }
 
   public boolean sourceGreaterThanTargetEpoch() {
@@ -85,8 +88,9 @@ public class AttestationValidator {
         new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
     signedAttestationsDao.insertAttestation(handle, signedAttestation);
 
-    // update the watermark if is otherwise blank
-    if (watermark.isEmpty() || (watermark.get().getSourceEpoch() == null)) {
+    // update the watermark if is otherwise blank (assumes database prevents xor on null for epochs)
+    if (watermarkSupplier.get().isEmpty() || (watermarkSupplier.get().get().getSourceEpoch() == null
+        && watermarkSupplier.get().get().getTargetEpoch() == null)) {
       lowWatermarkDao.updateEpochWatermarksFor(handle, validatorId, sourceEpoch, targetEpoch);
     }
   }
@@ -99,7 +103,8 @@ public class AttestationValidator {
   }
 
   public boolean hasSourceOlderThanWatermark() {
-    final Optional<UInt64> minimumSourceEpoch = watermark.map(SigningWatermark::getSourceEpoch);
+    final Optional<UInt64> minimumSourceEpoch =
+        watermarkSupplier.get().map(SigningWatermark::getSourceEpoch);
     if (minimumSourceEpoch.map(minEpoch -> sourceEpoch.compareTo(minEpoch) < 0).orElse(false)) {
       LOG.warn(
           "Attestation source epoch {} is below minimum existing attestation source epoch {}",
@@ -111,7 +116,8 @@ public class AttestationValidator {
   }
 
   public boolean hasTargetOlderThanWatermark() {
-    final Optional<UInt64> minimumTargetEpoch = watermark.map(SigningWatermark::getTargetEpoch);
+    final Optional<UInt64> minimumTargetEpoch =
+        watermarkSupplier.get().map(SigningWatermark::getTargetEpoch);
     if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).orElse(false)) {
       LOG.warn(
           "Attestation target epoch {} is below minimum existing attestation target epoch {}",
