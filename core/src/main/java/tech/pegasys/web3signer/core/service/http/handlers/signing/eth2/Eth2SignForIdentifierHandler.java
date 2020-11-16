@@ -56,6 +56,10 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   private final Optional<SlashingProtection> slashingProtection;
   private final ObjectMapper objectMapper;
 
+  public static final int NOT_FOUND = 404;
+  public static final int BAD_REQUEST = 400;
+  public static final int SLASHING_PROTECTION_ENFORCED = 412;
+
   public Eth2SignForIdentifierHandler(
       final SignerForIdentifier<?> signerForIdentifier,
       final HttpApiMetrics httpMetrics,
@@ -122,7 +126,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             signatureConsumer,
             () -> {
               httpMetrics.getMissingSignerCounter().inc();
-              routingContext.fail(404);
+              routingContext.fail(NOT_FOUND);
             });
   }
 
@@ -139,7 +143,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       } else {
         slashingMetrics.incrementSigningsPrevented();
         LOG.debug("Signing not allowed due to slashing protection rules failing");
-        routingContext.fail(403);
+        routingContext.fail(SLASHING_PROTECTION_ENFORCED);
       }
     } catch (final IllegalArgumentException e) {
       handleInvalidRequest(routingContext, e);
@@ -149,7 +153,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   private void handleInvalidRequest(final RoutingContext routingContext, final Exception e) {
     httpMetrics.getMalformedRequestCounter().inc();
     LOG.debug("Invalid signing request - " + routingContext.getBodyAsString(), e);
-    routingContext.fail(400);
+    routingContext.fail(BAD_REQUEST);
   }
 
   private boolean maySign(
