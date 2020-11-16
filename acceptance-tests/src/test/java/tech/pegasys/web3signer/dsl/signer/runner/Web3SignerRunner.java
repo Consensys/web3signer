@@ -108,7 +108,7 @@ public abstract class Web3SignerRunner {
     params.add(String.valueOf(signerConfig.httpPort()));
     if (!signerConfig.getHttpHostAllowList().isEmpty()) {
       params.add("--http-host-allowlist");
-      params.add(createAllowList(signerConfig.getHttpHostAllowList()));
+      params.add(createCommaSeparatedList(signerConfig.getHttpHostAllowList()));
     }
     params.add("--key-store-path");
     params.add(signerConfig.getKeyStorePath().toString());
@@ -118,7 +118,11 @@ public abstract class Web3SignerRunner {
       params.add(Integer.toString(signerConfig.getMetricsPort()));
       if (!signerConfig.getMetricsHostAllowList().isEmpty()) {
         params.add("--metrics-host-allowlist");
-        params.add(createAllowList(signerConfig.getMetricsHostAllowList()));
+        params.add(createCommaSeparatedList(signerConfig.getMetricsHostAllowList()));
+      }
+      if (!signerConfig.getMetricsCategories().isEmpty()) {
+        params.add("--metrics-category");
+        params.add(createCommaSeparatedList(signerConfig.getMetricsCategories()));
       }
     }
     if (signerConfig.isHttpDynamicPortAllocation()) {
@@ -208,8 +212,8 @@ public abstract class Web3SignerRunner {
     return params;
   }
 
-  private String createAllowList(final List<String> httpHostAllowList) {
-    return String.join(",", httpHostAllowList);
+  private String createCommaSeparatedList(final List<String> values) {
+    return String.join(",", values);
   }
 
   private void loadPortsFile() {

@@ -24,6 +24,7 @@ import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.slashingprotection.SlashingMetricCategory;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -43,7 +44,6 @@ import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
-import tech.pegasys.web3signer.slashingprotection.SlashingMetricCategory;
 
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
 @Command(

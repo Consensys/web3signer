@@ -32,6 +32,7 @@ public class SignerConfigurationBuilder {
   private Path keyStoreDirectory = Path.of("./");
   private boolean metricsEnabled;
   private List<String> metricsHostAllowList = emptyList();
+  private List<String> metricsCategories = emptyList();
   private List<String> httpHostAllowList = emptyList();
   private TlsOptions serverTlsOptions;
   private TlsCertificateDefinition overriddenCaTrustStore;
@@ -67,6 +68,11 @@ public class SignerConfigurationBuilder {
 
   public SignerConfigurationBuilder withMetricsHostAllowList(final List<String> allowHostList) {
     this.metricsHostAllowList = allowHostList;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withMetricsCategories(final List<String> metricsCategories) {
+    this.metricsCategories = metricsCategories;
     return this;
   }
 
@@ -145,6 +151,7 @@ public class SignerConfigurationBuilder {
         keyStoreDirectory,
         metricsPort,
         metricsHostAllowList,
+        metricsCategories,
         metricsEnabled,
         Optional.ofNullable(azureKeyVaultParameters),
         Optional.ofNullable(serverTlsOptions),

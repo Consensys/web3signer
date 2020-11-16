@@ -44,7 +44,11 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   @Test
   void filecoinApisAreCounted() {
     final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMetricsEnabled(true).withMode("filecoin").build();
+        new SignerConfigurationBuilder()
+            .withMetricsCategories(List.of("FILECOIN"))
+            .withMetricsEnabled(true)
+            .withMode("filecoin")
+            .build();
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest =
@@ -88,7 +92,11 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   @Test
   void missingSignerMetricIncreasesWhenUnmatchedRequestReceived() throws JsonProcessingException {
     final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMetricsEnabled(true).withMode("eth2").build();
+        new SignerConfigurationBuilder()
+            .withMetricsCategories(List.of("SIGNING"))
+            .withMetricsEnabled(true)
+            .withMode("eth2")
+            .build();
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest = List.of("signing_bls_missing_identifier_count");
@@ -117,6 +125,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
+            .withMetricsCategories(List.of("SIGNING"))
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth1")
@@ -156,6 +165,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
+            .withMetricsCategories(List.of("SIGNING"))
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth2")
@@ -180,5 +190,25 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         .containsOnly(
             "signing_" + BLS.name().toLowerCase() + "_signing_duration_count 1.0",
             "signing_" + BLS.name().toLowerCase() + "_missing_identifier_count 0.0");
+  }
+
+  @Test
+  void eth2SlashingProtectionMetricsExist() {
+    final SignerConfiguration signerConfiguration =
+        new SignerConfigurationBuilder()
+            .withMetricsCategories(List.of("ETH2_SLASHING_PROTECTION"))
+            .withMetricsEnabled(true)
+            .withMode("eth2")
+            .build();
+    startSigner(signerConfiguration);
+
+    final List<String> metricsOfInterest =
+        List.of(
+            "eth2_slashing_protection_permitted_signings",
+            "eth2_slashing_protection_prevented_signings");
+
+    final Set<String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
+    assertThat(initialMetrics).hasSize(metricsOfInterest.size());
+    assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
   }
 }
