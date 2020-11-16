@@ -43,6 +43,7 @@ import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
+import tech.pegasys.web3signer.slashingprotection.SlashingMetricCategory;
 
 @SuppressWarnings("FieldCanBeLocal") // because Picocli injected fields report false positives
 @Command(
@@ -260,6 +261,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
     public Web3signerMetricCategoryConverter() {
       addCategories(Web3SignerMetricCategory.class);
       addCategories(StandardMetricCategory.class);
+      addCategories(SlashingMetricCategory.class);
     }
   }
 }
