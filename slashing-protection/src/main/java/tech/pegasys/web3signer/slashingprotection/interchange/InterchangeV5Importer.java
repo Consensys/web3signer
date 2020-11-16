@@ -27,6 +27,7 @@ import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRoot
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -118,28 +119,19 @@ public class InterchangeV5Importer {
     final ObjectNode parentNode = (ObjectNode) node;
     final String pubKey = parentNode.required("pubkey").textValue();
     final Validator validator = validatorsDao.insertIfNotExist(h, Bytes.fromHexString(pubKey));
-    final ValidatorImportContext context =
-        new ValidatorImportContext(
-            signedBlocksDao.maximumSlot(h, validator.getId()).orElse(UInt64.ZERO),
-            signedAttestationsDao.maximumSourceEpoch(h, validator.getId()).orElse(UInt64.ZERO),
-            signedAttestationsDao.maximumTargetEpoch(h, validator.getId()).orElse(UInt64.ZERO));
 
     final ArrayNode signedBlocksNode = parentNode.withArray("signed_blocks");
-    importBlocks(h, validator, signedBlocksNode, context);
-    lowWatermarkDao.updateSlotWatermarkFor(h, validator.getId(), context.getSlotWatermark());
+    importBlocks(h, validator, signedBlocksNode);
 
     final ArrayNode signedAttestationNode = parentNode.withArray("signed_attestations");
-    importAttestations(h, validator, signedAttestationNode, context);
-    lowWatermarkDao.updateEpochWatermarksFor(
-        h, validator.getId(), context.getSourceEpochWatermark(), context.getTargetEpochWatermark());
+    importAttestations(h, validator, signedAttestationNode);
   }
 
   private void importBlocks(
-      final Handle h,
-      final Validator validator,
-      final ArrayNode signedBlocksNode,
-      final ValidatorImportContext context)
+      final Handle h, final Validator validator, final ArrayNode signedBlocksNode)
       throws JsonProcessingException {
+    final Optional<UInt64> highestKnownBlock = signedBlocksDao.maximumSlot(h, validator.getId());
+    UInt64 minBlockSlotInImport = UInt64.ZERO;
     for (int i = 0; i < signedBlocksNode.size(); i++) {
       final SignedBlock jsonBlock = mapper.treeToValue(signedBlocksNode.get(i), SignedBlock.class);
       final BlockValidator blockValidator =
@@ -169,17 +161,27 @@ public class InterchangeV5Importer {
             h,
             new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
                 validator.getId(), jsonBlock.getSlot(), jsonBlock.getSigningRoot()));
-        context.trackBlockSlot(jsonBlock.getSlot());
+
+        if (minBlockSlotInImport.compareTo(jsonBlock.getSlot()) > 0) {
+          minBlockSlotInImport = jsonBlock.getSlot();
+        }
+      }
+
+      final UInt64 thresholdForDbUpdate = highestKnownBlock.orElse(UInt64.ZERO);
+      if (minBlockSlotInImport.compareTo(thresholdForDbUpdate) > 0) {
+        lowWatermarkDao.updateSlotWatermarkFor(h, validator.getId(), minBlockSlotInImport);
       }
     }
   }
 
   private void importAttestations(
-      final Handle h,
-      final Validator validator,
-      final ArrayNode signedAttestationNode,
-      final ValidatorImportContext context)
+      final Handle h, final Validator validator, final ArrayNode signedAttestationNode)
       throws JsonProcessingException {
+    final ValidatorImportContext context =
+        new ValidatorImportContext(
+            signedAttestationsDao.maximumSourceEpoch(h, validator.getId()).orElse(UInt64.ZERO),
+            signedAttestationsDao.maximumTargetEpoch(h, validator.getId()).orElse(UInt64.ZERO));
+
     for (int i = 0; i < signedAttestationNode.size(); i++) {
       final SignedAttestation jsonAttestation =
           mapper.treeToValue(signedAttestationNode.get(i), SignedAttestation.class);
@@ -238,5 +240,8 @@ public class InterchangeV5Importer {
         context.trackEpochs(jsonAttestation.getSourceEpoch(), jsonAttestation.getSourceEpoch());
       }
     }
+    lowWatermarkDao.updateEpochWatermarksFor(
+        h, validator.getId(), context.getSourceEpochWatermark(), context.getTargetEpochWatermark());
+    ;
   }
 }

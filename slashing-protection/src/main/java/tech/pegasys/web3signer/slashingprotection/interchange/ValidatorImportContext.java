@@ -17,19 +17,13 @@ import org.apache.tuweni.units.bigints.UInt64;
 public class ValidatorImportContext {
 
   // need to track if import is above existing dataset (and thus must close gap)
-  private final UInt64 highestBlockSlot;
   private final UInt64 highestTargetEpoch;
   private final UInt64 highestSourceEpoch;
 
-  private UInt64 lowestImportedBlockSlot = UInt64.ZERO;
   private UInt64 lowestImportedTargetEpoch = UInt64.ZERO;
   private UInt64 lowestImportedSourceEpoch = UInt64.ZERO;
 
-  public ValidatorImportContext(
-      final UInt64 highestBlockSlot,
-      final UInt64 highestSourceEpoch,
-      final UInt64 highestTargetEpoch) {
-    this.highestBlockSlot = highestBlockSlot;
+  public ValidatorImportContext(final UInt64 highestSourceEpoch, final UInt64 highestTargetEpoch) {
     this.highestTargetEpoch = highestTargetEpoch;
     this.highestSourceEpoch = highestSourceEpoch;
   }
@@ -41,18 +35,6 @@ public class ValidatorImportContext {
     if (importedTargetEpoch.compareTo(lowestImportedTargetEpoch) < 0) {
       lowestImportedTargetEpoch = importedTargetEpoch;
     }
-  }
-
-  public void trackBlockSlot(final UInt64 importedBlockSlot) {
-    if (importedBlockSlot.compareTo(lowestImportedBlockSlot) < 0) {
-      lowestImportedBlockSlot = importedBlockSlot;
-    }
-  }
-
-  public UInt64 getSlotWatermark() {
-    return lowestImportedBlockSlot.compareTo(highestBlockSlot) > 0
-        ? lowestImportedBlockSlot
-        : highestBlockSlot;
   }
 
   public UInt64 getSourceEpochWatermark() {

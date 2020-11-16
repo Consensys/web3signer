@@ -103,6 +103,10 @@ public class InterchangeBaseIntegrationTest {
         .list();
   }
 
+  protected void insertValidator(final Handle handle) {
+
+  }
+
   protected void assertDbIsEmpty(final Jdbi jdbi) {
     jdbi.useHandle(
         h -> {
