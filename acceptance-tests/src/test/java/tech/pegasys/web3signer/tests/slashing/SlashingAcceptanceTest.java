@@ -54,7 +54,7 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
   void setupSigner(final Path testDirectory, final boolean enableSlashing) {
     final SignerConfigurationBuilder builder =
         new SignerConfigurationBuilder()
-            .withMetricsCategories(List.of("ETH2_SLASHING_PROTECTION"))
+            .withMetricsCategories("ETH2_SLASHING_PROTECTION")
             .withMode("eth2")
             .withSlashingEnabled(enableSlashing)
             .withSlashingProtectionDbUsername(DB_USERNAME)

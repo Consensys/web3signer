@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -71,8 +72,8 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withMetricsCategories(final List<String> metricsCategories) {
-    this.metricsCategories = metricsCategories;
+  public SignerConfigurationBuilder withMetricsCategories(final String... metricsCategories) {
+    this.metricsCategories = Arrays.asList(metricsCategories);
     return this;
   }
 

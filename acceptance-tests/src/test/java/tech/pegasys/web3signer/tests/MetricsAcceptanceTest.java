@@ -45,7 +45,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   void filecoinApisAreCounted() {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
-            .withMetricsCategories(List.of("FILECOIN"))
+            .withMetricsCategories("FILECOIN")
             .withMetricsEnabled(true)
             .withMode("filecoin")
             .build();
@@ -93,7 +93,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   void missingSignerMetricIncreasesWhenUnmatchedRequestReceived() throws JsonProcessingException {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
-            .withMetricsCategories(List.of("SIGNING"))
+            .withMetricsCategories("SIGNING")
             .withMetricsEnabled(true)
             .withMode("eth2")
             .build();
@@ -125,7 +125,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
-            .withMetricsCategories(List.of("SIGNING"))
+            .withMetricsCategories("SIGNING")
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth1")
@@ -165,7 +165,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
-            .withMetricsCategories(List.of("SIGNING"))
+            .withMetricsCategories("SIGNING")
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth2")
