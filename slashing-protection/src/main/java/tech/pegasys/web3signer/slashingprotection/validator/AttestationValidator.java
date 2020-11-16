@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
-import com.google.common.base.Suppliers;
-import java.util.function.Supplier;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -21,7 +19,9 @@ import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -61,8 +61,8 @@ public class AttestationValidator {
     this.signedAttestationsDao = signedAttestationsDao;
     this.lowWatermarkDao = lowWatermarkDao;
 
-    watermarkSupplier = Suppliers.memoize(
-        () -> lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId));
+    watermarkSupplier =
+        Suppliers.memoize(() -> lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId));
   }
 
   public boolean sourceGreaterThanTargetEpoch() {
@@ -89,8 +89,9 @@ public class AttestationValidator {
     signedAttestationsDao.insertAttestation(handle, signedAttestation);
 
     // update the watermark if is otherwise blank (assumes database prevents xor on null for epochs)
-    if (watermarkSupplier.get().isEmpty() || (watermarkSupplier.get().get().getSourceEpoch() == null
-        && watermarkSupplier.get().get().getTargetEpoch() == null)) {
+    if (watermarkSupplier.get().isEmpty()
+        || (watermarkSupplier.get().get().getSourceEpoch() == null
+            && watermarkSupplier.get().get().getTargetEpoch() == null)) {
       lowWatermarkDao.updateEpochWatermarksFor(handle, validatorId, sourceEpoch, targetEpoch);
     }
   }
