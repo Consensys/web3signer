@@ -12,40 +12,49 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import java.util.Optional;
+import javax.annotation.Nullable;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class ValidatorImportContext {
 
   // need to track if import is above existing dataset (and thus must close gap)
-  private final UInt64 highestTargetEpoch;
-  private final UInt64 highestSourceEpoch;
+  private final Optional<UInt64> highestTargetEpoch;
+  private final Optional<UInt64> highestSourceEpoch;
 
-  private UInt64 lowestImportedTargetEpoch = UInt64.ZERO;
-  private UInt64 lowestImportedSourceEpoch = UInt64.ZERO;
+  private Optional<UInt64> lowestImportedTargetEpoch = Optional.empty();
+  private Optional<UInt64> lowestImportedSourceEpoch = Optional.empty();
 
-  public ValidatorImportContext(final UInt64 highestSourceEpoch, final UInt64 highestTargetEpoch) {
-    this.highestTargetEpoch = highestTargetEpoch;
+  public ValidatorImportContext(Optional<UInt64> highestSourceEpoch,
+      Optional<UInt64> highestTargetEpoch) {
     this.highestSourceEpoch = highestSourceEpoch;
+    this.highestTargetEpoch = highestTargetEpoch;
   }
 
   public void trackEpochs(final UInt64 importedSourceEpoch, final UInt64 importedTargetEpoch) {
-    if (importedSourceEpoch.compareTo(lowestImportedSourceEpoch) < 0) {
-      lowestImportedSourceEpoch = importedSourceEpoch;
+    if ((lowestImportedTargetEpoch.isEmpty()) || (
+        importedSourceEpoch.compareTo(lowestImportedSourceEpoch.get()) < 0)) {
+      lowestImportedSourceEpoch = Optional.of(importedSourceEpoch);
     }
-    if (importedTargetEpoch.compareTo(lowestImportedTargetEpoch) < 0) {
-      lowestImportedTargetEpoch = importedTargetEpoch;
+    if ((lowestImportedTargetEpoch.isEmpty()) || (
+        importedTargetEpoch.compareTo(lowestImportedTargetEpoch.get()) < 0)) {
+      lowestImportedTargetEpoch = Optional.of(importedTargetEpoch);
     }
   }
 
-  public UInt64 getSourceEpochWatermark() {
-    return lowestImportedSourceEpoch.compareTo(highestSourceEpoch) > 0
-        ? lowestImportedSourceEpoch
-        : highestSourceEpoch;
+  public Optional<UInt64> getSourceEpochWatermark() {
+    if (NullableComparator.compareTo(lowestImportedSourceEpoch, highestSourceEpoch) > 0) {
+      return lowestImportedSourceEpoch;
+
+    }
+    return Optional.empty();
   }
 
-  public UInt64 getTargetEpochWatermark() {
-    return lowestImportedTargetEpoch.compareTo(highestTargetEpoch) > 0
-        ? lowestImportedTargetEpoch
-        : highestTargetEpoch;
+  public Optional<UInt64> getTargetEpochWatermark() {
+    if (NullableComparator.compareTo(lowestImportedTargetEpoch, highestTargetEpoch) > 0) {
+      return lowestImportedTargetEpoch;
+
+    }
+    return Optional.empty();
   }
 }
