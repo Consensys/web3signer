@@ -38,6 +38,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
@@ -117,16 +118,27 @@ public class InterchangeV5Importer {
     final ObjectNode parentNode = (ObjectNode) node;
     final String pubKey = parentNode.required("pubkey").textValue();
     final Validator validator = validatorsDao.insertIfNotExist(h, Bytes.fromHexString(pubKey));
+    final ValidatorImportContext context =
+        new ValidatorImportContext(
+            signedBlocksDao.maximumSlot(h, validator.getId()).orElse(UInt64.ZERO),
+            signedAttestationsDao.maximumSourceEpoch(h, validator.getId()).orElse(UInt64.ZERO),
+            signedAttestationsDao.maximumTargetEpoch(h, validator.getId()).orElse(UInt64.ZERO));
 
     final ArrayNode signedBlocksNode = parentNode.withArray("signed_blocks");
-    importBlocks(h, validator, signedBlocksNode);
+    importBlocks(h, validator, signedBlocksNode, context);
+    lowWatermarkDao.updateSlotWatermarkFor(h, validator.getId(), context.getSlotWatermark());
 
     final ArrayNode signedAttestationNode = parentNode.withArray("signed_attestations");
-    importAttestations(h, validator, signedAttestationNode);
+    importAttestations(h, validator, signedAttestationNode, context);
+    lowWatermarkDao.updateEpochWatermarksFor(
+        h, validator.getId(), context.getSourceEpochWatermark(), context.getTargetEpochWatermark());
   }
 
   private void importBlocks(
-      final Handle h, final Validator validator, final ArrayNode signedBlocksNode)
+      final Handle h,
+      final Validator validator,
+      final ArrayNode signedBlocksNode,
+      final ValidatorImportContext context)
       throws JsonProcessingException {
     for (int i = 0; i < signedBlocksNode.size(); i++) {
       final SignedBlock jsonBlock = mapper.treeToValue(signedBlocksNode.get(i), SignedBlock.class);
@@ -157,12 +169,16 @@ public class InterchangeV5Importer {
             h,
             new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
                 validator.getId(), jsonBlock.getSlot(), jsonBlock.getSigningRoot()));
+        context.trackBlockSlot(jsonBlock.getSlot());
       }
     }
   }
 
   private void importAttestations(
-      final Handle h, final Validator validator, final ArrayNode signedAttestationNode)
+      final Handle h,
+      final Validator validator,
+      final ArrayNode signedAttestationNode,
+      final ValidatorImportContext context)
       throws JsonProcessingException {
     for (int i = 0; i < signedAttestationNode.size(); i++) {
       final SignedAttestation jsonAttestation =
@@ -219,6 +235,7 @@ public class InterchangeV5Importer {
                 jsonAttestation.getSourceEpoch(),
                 jsonAttestation.getTargetEpoch(),
                 jsonAttestation.getSigningRoot()));
+        context.trackEpochs(jsonAttestation.getSourceEpoch(), jsonAttestation.getSourceEpoch());
       }
     }
   }

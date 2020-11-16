@@ -153,4 +153,20 @@ public class SignedAttestationsDao {
         .mapTo(UInt64.class)
         .findFirst();
   }
+
+  public Optional<UInt64> maximumTargetEpoch(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery("SELECT MAX(target_epoch) FROM signed_attestations WHERE validator_id = ?")
+        .bind(0, validatorId)
+        .mapTo(UInt64.class)
+        .findFirst();
+  }
+
+  public Optional<UInt64> maximumSourceEpoch(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery("SELECT MAX(source_epoch) FROM signed_attestations WHERE validator_id = ?")
+        .bind(0, validatorId)
+        .mapTo(UInt64.class)
+        .findFirst();
+  }
 }

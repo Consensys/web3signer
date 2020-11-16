@@ -96,4 +96,12 @@ public class SignedBlocksDao {
             "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ?")
         .bind(0, validatorId).mapToBean(SignedBlock.class).stream();
   }
+
+  public Optional<UInt64> maximumSlot(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery("SELECT MAX(slot) FROM signed_blocks WHERE validator_id = ?")
+        .bind(0, validatorId)
+        .mapTo(UInt64.class)
+        .findFirst();
+  }
 }
