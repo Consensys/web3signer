@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.tests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
+import static tech.pegasys.web3signer.tests.slashing.SlashingExportAcceptanceTest.DB_PASSWORD;
+import static tech.pegasys.web3signer.tests.slashing.SlashingExportAcceptanceTest.DB_USERNAME;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
@@ -193,22 +195,81 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void eth2SlashingProtectionMetricsExist() {
+  void eth2SlashingProtectionPermittedIncrementsWhenSignRequestSuccessful(
+      @TempDir Path testDirectory) throws JsonProcessingException {
+    final MetadataFileHelpers fileHelpers = new MetadataFileHelpers();
+    final BLSKeyPair keyPair = BLSKeyPair.random(1);
+
+    fileHelpers.createUnencryptedYamlFileAt(
+        testDirectory.resolve(keyPair.getPublicKey().toBytesCompressed().toHexString() + ".yaml"),
+        keyPair.getSecretKey().toBytes().toHexString(),
+        BLS);
+
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
             .withMetricsCategories(List.of("ETH2_SLASHING_PROTECTION"))
             .withMetricsEnabled(true)
+            .withKeyStoreDirectory(testDirectory)
             .withMode("eth2")
+            .withSlashingEnabled(true)
+            .withSlashingProtectionDbUsername(DB_USERNAME)
+            .withSlashingProtectionDbPassword(DB_PASSWORD)
             .build();
     startSigner(signerConfiguration);
 
-    final List<String> metricsOfInterest =
-        List.of(
-            "eth2_slashing_protection_permitted_signings",
-            "eth2_slashing_protection_prevented_signings");
+    final List<String> metricsOfInterest = List.of("eth2_slashing_protection_permitted_signings");
 
     final Set<String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
+
+    signer.eth2Sign(
+        keyPair.getPublicKey().toBytesCompressed().toHexString(),
+        Eth2RequestUtils.createBlockRequest(UInt64.valueOf(1), Bytes32.fromHexString("0x1111")));
+    final Set<String> metricsAfterSign = signer.getMetricsMatching(metricsOfInterest);
+
+    assertThat(metricsAfterSign).containsOnly("eth2_slashing_protection_permitted_signings 1.0");
+  }
+
+  @Test
+  void eth2SlashingProtectionPreventedIncrementsWhenSignRequestFailsDueToSlashingProtection(
+      @TempDir Path testDirectory) throws JsonProcessingException {
+    final MetadataFileHelpers fileHelpers = new MetadataFileHelpers();
+    final BLSKeyPair keyPair = BLSKeyPair.random(1);
+
+    fileHelpers.createUnencryptedYamlFileAt(
+        testDirectory.resolve(keyPair.getPublicKey().toBytesCompressed().toHexString() + ".yaml"),
+        keyPair.getSecretKey().toBytes().toHexString(),
+        BLS);
+
+    final SignerConfiguration signerConfiguration =
+        new SignerConfigurationBuilder()
+            .withMetricsCategories(List.of("ETH2_SLASHING_PROTECTION"))
+            .withMetricsEnabled(true)
+            .withKeyStoreDirectory(testDirectory)
+            .withMode("eth2")
+            .withSlashingEnabled(true)
+            .withSlashingProtectionDbUsername(DB_USERNAME)
+            .withSlashingProtectionDbPassword(DB_PASSWORD)
+            .build();
+    startSigner(signerConfiguration);
+
+    final List<String> metricsOfInterest = List.of("eth2_slashing_protection_prevented_signings");
+
+    final Set<String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
+    assertThat(initialMetrics).hasSize(metricsOfInterest.size());
+    assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
+
+    signer.eth2Sign(
+        keyPair.getPublicKey().toBytesCompressed().toHexString(),
+        Eth2RequestUtils.createBlockRequest(UInt64.valueOf(1), Bytes32.fromHexString("0x1111")));
+
+    // This conflicts with the previously signed block
+    signer.eth2Sign(
+        keyPair.getPublicKey().toBytesCompressed().toHexString(),
+        Eth2RequestUtils.createBlockRequest(UInt64.valueOf(1), Bytes32.fromHexString("0x1112")));
+    final Set<String> metricsAfterSign = signer.getMetricsMatching(metricsOfInterest);
+
+    assertThat(metricsAfterSign).containsOnly("eth2_slashing_protection_prevented_signings 1.0");
   }
 }
