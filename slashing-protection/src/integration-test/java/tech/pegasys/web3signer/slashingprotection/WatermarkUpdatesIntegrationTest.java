@@ -71,7 +71,6 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
     assertThat(getWatermark())
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
-
   }
 
   @Test
