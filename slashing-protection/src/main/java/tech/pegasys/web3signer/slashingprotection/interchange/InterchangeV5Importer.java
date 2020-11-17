@@ -245,14 +245,35 @@ public class InterchangeV5Importer {
 
     final Optional<SigningWatermark> existingWatermark =
         lowWatermarkDao.findLowWatermarkForValidator(h, validator.getId());
+
     final Optional<UInt64> newSourceWatermark = context.getSourceEpochWatermark();
     final Optional<UInt64> newTargetWatermark = context.getTargetEpochWatermark();
 
     if (newSourceWatermark.isPresent() && newTargetWatermark.isPresent()) {
-      LOG.warn("Updating Source epoch low watermark to {}", newSourceWatermark.get());
-      LOG.warn("Updating Target epoch low watermark to {}", newTargetWatermark.get());
+      LOG.warn("Initializing Source epoch low watermark to {}", newSourceWatermark.get());
+      LOG.warn("Initializing Target epoch low watermark to {}", newTargetWatermark.get());
       lowWatermarkDao.updateEpochWatermarksFor(h, validator.getId(), newSourceWatermark.get(),
           newTargetWatermark.get());
+    } else {
+      if (existingWatermark.isEmpty()) {
+        if (newSourceWatermark.isPresent() || newTargetWatermark.isPresent()) {
+          // NOTE: both missing would be ok (as file is empty)
+          throw new RuntimeException("No existing watermark, and illegal content");
+        }
+      } else {
+        if (newSourceWatermark.isPresent()) {
+          LOG.warn("Updating Source epoch low watermark to {}", newSourceWatermark.get());
+          lowWatermarkDao.updateEpochWatermarksFor(h, validator.getId(), newSourceWatermark.get(),
+              existingWatermark.get().getTargetEpoch());
+        }
+
+        if (newTargetWatermark.isPresent()) {
+          LOG.warn("Updating Target epoch low watermark to {}", newTargetWatermark.get());
+          lowWatermarkDao.updateEpochWatermarksFor(h, validator.getId(),
+              existingWatermark.get().getSourceEpoch(),
+              newTargetWatermark.get());
+        }
+      }
     }
   }
 }

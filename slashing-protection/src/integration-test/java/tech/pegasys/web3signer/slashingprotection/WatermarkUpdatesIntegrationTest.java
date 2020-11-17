@@ -23,7 +23,10 @@ import dsl.SignedArtifacts;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
@@ -37,88 +40,52 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
   final Bytes PUBLIC_KEY = Bytes.fromHexString(
       "0xb845089a1457f811bfc000588fbb4e713669be8ce060ea6be3c6ece09afc3794106c91ca73acda5e5457122d58723bed");
   final int VALIDATOR_ID = 1;
-  final UInt64 UINT64_3 = UInt64.valueOf(3);
-  final UInt64 UINT64_4 = UInt64.valueOf(4);
-
 
   @Test
   public void blockWatermarkIsUnsetAtStartupIsSetOnFirstBlock() {
+    final UInt64 blockSlot = UInt64.valueOf(3);
     Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
         lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
     assertThat(watermark).isEmpty();
 
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    assertThat(slashingProtection.maySignBlock(
-        PUBLIC_KEY,
-        Bytes.of(100),
-        UINT64_3,
-        GVR)).isTrue();
+    insertBlockAt(blockSlot);
 
     assertThat(findAllBlocks()).hasSize(1);
 
-    watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark).isNotEmpty();
-    assertThat(watermark.get().getSourceEpoch()).isNull();
-    assertThat(watermark.get().getTargetEpoch()).isNull();
-    assertThat(watermark.get().getSlot()).isEqualTo(UINT64_3);
+    watermark = jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
+    assertThat(watermark.get())
+        .isEqualToComparingFieldByField(
+            new SigningWatermark(VALIDATOR_ID, blockSlot, null, null));
   }
 
   @Test
-  public void importSetsBlockWatermarkToLowestInImportIfDoesNotExistPrior()
+  public void importSetsBlockWatermarkToLowestInImportWhenDatabaseIsEmpty()
       throws JsonProcessingException {
-    final InterchangeV5Format importData = new InterchangeV5Format(
-        new Metadata(5, GVR),
-        List.of(
-            new SignedArtifacts(
-                PUBLIC_KEY.toHexString(),
-                List.of(
-                    new SignedBlock(UInt64.valueOf(5), null),
-                    new SignedBlock(UInt64.valueOf(4), null)),
-                emptyList())));
-    final InputStream input = new ByteArrayInputStream(mapper.writeValueAsBytes(importData));
+    final InputStream input = createInputDataWith(List.of(5, 4), emptyList());
     slashingProtection.importData(input);
 
-    Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
+    final Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
         lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark).isNotEmpty();
-    assertThat(watermark.get().getSourceEpoch()).isNull();
-    assertThat(watermark.get().getTargetEpoch()).isNull();
-    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(4));
+    assertThat(watermark.get()).isEqualToComparingFieldByField(
+        new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(4), null, null));
   }
-
 
   @Test
   public void blockWaterMarkIsUpdatedIfImportHasSmallestMinimumBlockLargerValueThanExistingMaxBlock()
       throws JsonProcessingException {
+    final UInt64 initialBlockSlot = UInt64.valueOf(3);
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    assertThat(slashingProtection.maySignBlock(
-        PUBLIC_KEY,
-        Bytes.of(100),
-        UINT64_3,
-        GVR)).isTrue();
+    insertBlockAt(initialBlockSlot);
+    insertBlockAt(UInt64.valueOf(10)); // max = 10, watermark = 3 (As was first).
+
     Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
         lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(slashingProtection.maySignBlock(
-        PUBLIC_KEY,
-        Bytes.of(100),
-        UInt64.valueOf(10),
-        GVR)).isTrue();
+    assertThat(watermark.get().getSlot()).isEqualTo(initialBlockSlot);
 
-    assertThat(watermark.get().getSlot()).isEqualTo(UINT64_3);
-
-    final InterchangeV5Format importData = new InterchangeV5Format(
-        new Metadata(5, GVR),
-        List.of(
-            new SignedArtifacts(
-                PUBLIC_KEY.toHexString(),
-                List.of(
-                    new SignedBlock(UInt64.valueOf(20), null),
-                    new SignedBlock(UInt64.valueOf(19), null)),
-                emptyList())));
-    final InputStream input = new ByteArrayInputStream(mapper.writeValueAsBytes(importData));
+    final InputStream input = createInputDataWith(List.of(20, 19), emptyList());
     slashingProtection.importData(input);
 
     watermark = jdbi.withHandle(h ->
@@ -131,30 +98,19 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    assertThat(slashingProtection.maySignBlock(
-        PUBLIC_KEY,
-        Bytes.of(100),
-        UINT64_3,
-        GVR)).isTrue();
+    insertBlockAt(UInt64.valueOf(3));
+    insertBlockAt(UInt64.valueOf(10));
+
     Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
         lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get().getSlot()).isEqualTo(UINT64_3);
+    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(3));
 
-    final InterchangeV5Format importData = new InterchangeV5Format(
-        new Metadata(5, GVR),
-        List.of(
-            new SignedArtifacts(
-                PUBLIC_KEY.toHexString(),
-                List.of(
-                    new SignedBlock(UInt64.valueOf(2), null),
-                    new SignedBlock(UInt64.valueOf(50), null)),
-                emptyList())));
-    final InputStream input = new ByteArrayInputStream(mapper.writeValueAsBytes(importData));
+    final InputStream input = createInputDataWith(List.of(6, 50), emptyList());
     slashingProtection.importData(input);
 
     watermark = jdbi.withHandle(h ->
         lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get().getSlot()).isEqualTo(UINT64_3);
+    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(3));
   }
 
 
@@ -166,42 +122,25 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
 
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    assertThat(slashingProtection.maySignAttestation(
-        PUBLIC_KEY,
-        Bytes.of(100),
-        UINT64_3,
-        UINT64_4,
-        GVR)).isTrue();
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4));
     watermark = jdbi.withHandle(h ->
         lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark).isNotEmpty();
-    assertThat(watermark.get().getSourceEpoch()).isEqualTo(UINT64_3);
-    assertThat(watermark.get().getTargetEpoch()).isEqualTo(UINT64_4);
-    assertThat(watermark.get().getSlot()).isNull();
+    assertThat(watermark.get()).isEqualToComparingFieldByField(
+        new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
   }
 
   @Test
   public void importSetsAttestationWatermarkToMinimalValuesIfNoneExist()
       throws JsonProcessingException {
-    final InterchangeV5Format importData = new InterchangeV5Format(
-        new Metadata(5, GVR),
-        List.of(
-            new SignedArtifacts(
-                PUBLIC_KEY.toHexString(),
-                emptyList(),
-                List.of(
-                    new SignedAttestation(UInt64.valueOf(3), UInt64.valueOf(4), null),
-                    new SignedAttestation(UInt64.valueOf(2), UInt64.valueOf(5), null))
-            )));
-    final InputStream input = new ByteArrayInputStream(mapper.writeValueAsBytes(importData));
+    final InputStream input = createInputDataWith(emptyList(), List.of(
+        new ImmutablePair<>(3, 4),
+        new ImmutablePair<>(2, 5)));
     slashingProtection.importData(input);
 
-    Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
+    final Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
         lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark).isNotEmpty();
-    assertThat(watermark.get().getSourceEpoch()).isEqualTo(UInt64.valueOf(2));
-    assertThat(watermark.get().getTargetEpoch()).isEqualTo(UInt64.valueOf(4));
-    assertThat(watermark.get().getSlot()).isNull();
+    assertThat(watermark.get()).isEqualToComparingFieldByField(
+        new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(2), UInt64.valueOf(4)));
   }
 
   @Test
@@ -209,34 +148,20 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    assertThat(slashingProtection.maySignAttestation(
-        PUBLIC_KEY,
-        Bytes.of(100),
-        UINT64_3,
-        UINT64_4,
-        GVR)).isTrue();
-    assertThat(slashingProtection.maySignAttestation(
-        PUBLIC_KEY,
-        Bytes.of(100),
-        UInt64.valueOf(5),
-        UInt64.valueOf(6),
-        GVR)).isTrue();
-
-    final InterchangeV5Format importData = new InterchangeV5Format(
-        new Metadata(5, GVR),
-        List.of(
-            new SignedArtifacts(
-                PUBLIC_KEY.toHexString(),
-                emptyList(),
-                List.of(
-                    new SignedAttestation(UInt64.valueOf(8), UInt64.valueOf(10), null),
-                    new SignedAttestation(UInt64.valueOf(9), UInt64.valueOf(15), null))
-            )));
-
-    final InputStream input = new ByteArrayInputStream(mapper.writeValueAsBytes(importData));
-    slashingProtection.importData(input);
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4));
+    insertAttestationAt(UInt64.valueOf(7), UInt64.valueOf(8));
 
     Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
+        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
+    assertThat(watermark.get()).isEqualToComparingFieldByField(
+        new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
+
+    final InputStream input = createInputDataWith(emptyList(), List.of(
+        new ImmutablePair<>(8, 10),
+        new ImmutablePair<>(9, 15)));
+    slashingProtection.importData(input);
+
+    watermark = jdbi.withHandle(h ->
         lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
     assertThat(watermark).isNotEmpty();
     assertThat(watermark.get().getSourceEpoch()).isEqualTo(UInt64.valueOf(8));
@@ -249,37 +174,46 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    assertThat(slashingProtection.maySignAttestation(
-        PUBLIC_KEY,
-        Bytes.of(100),
-        UINT64_3,
-        UINT64_4,
-        GVR)).isTrue();
-    assertThat(slashingProtection.maySignAttestation(
-        PUBLIC_KEY,
-        Bytes.of(100),
-        UInt64.valueOf(9),
-        UInt64.valueOf(10),
-        GVR)).isTrue();
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4));
+    insertAttestationAt(UInt64.valueOf(9), UInt64.valueOf(10));
 
+    final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(7, 8)));
+    slashingProtection.importData(input);
+
+    Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
+        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
+    assertThat(watermark.get()).isEqualToComparingFieldByField(
+        new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
+  }
+
+  private void insertBlockAt(final UInt64 blockSlot) {
+    assertThat(slashingProtection.maySignBlock(
+        PUBLIC_KEY,
+        Bytes.of(100),
+        blockSlot,
+        GVR)).isTrue();
+  }
+
+  private void insertAttestationAt(final UInt64 sourceEpoch, final UInt64 targetEpoch) {
+    assertThat(slashingProtection.maySignAttestation(
+        PUBLIC_KEY,
+        Bytes.of(100),
+        sourceEpoch,
+        targetEpoch,
+        GVR)).isTrue();
+  }
+
+  private InputStream createInputDataWith(final List<Integer> blockSlots,
+      final List<Entry<Integer, Integer>> attestations) throws JsonProcessingException {
     final InterchangeV5Format importData = new InterchangeV5Format(
         new Metadata(5, GVR),
         List.of(
             new SignedArtifacts(
                 PUBLIC_KEY.toHexString(),
-                emptyList(),
-                List.of(
-                    new SignedAttestation(UInt64.valueOf(7), UInt64.valueOf(8), null)
-            ))));
-
-    final InputStream input = new ByteArrayInputStream(mapper.writeValueAsBytes(importData));
-    slashingProtection.importData(input);
-
-    Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark).isNotEmpty();
-    assertThat(watermark.get().getSourceEpoch()).isEqualTo(UINT64_3);
-    assertThat(watermark.get().getTargetEpoch()).isEqualTo(UINT64_4);
-    assertThat(watermark.get().getSlot()).isNull();
+                blockSlots.stream().map(bs -> new SignedBlock(UInt64.valueOf(bs), null)).collect(
+                    Collectors.toList()),
+                attestations.stream().map(at -> new SignedAttestation(UInt64.valueOf(at.getKey()),
+                    UInt64.valueOf(at.getValue()), null)).collect(Collectors.toList()))));
+    return new ByteArrayInputStream(mapper.writeValueAsBytes(importData));
   }
 }
