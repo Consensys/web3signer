@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
@@ -19,8 +21,6 @@ import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.util.Optional;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;

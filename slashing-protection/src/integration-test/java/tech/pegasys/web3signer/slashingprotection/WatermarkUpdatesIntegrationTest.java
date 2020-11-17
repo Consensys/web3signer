@@ -42,10 +42,10 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
     final UInt64 blockSlot = UInt64.valueOf(3);
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertBlockAt(blockSlot);
+    insertBlockAt(blockSlot, PUBLIC_KEY);
 
     assertThat(findAllBlocks()).hasSize(1);
-    assertThat(getWatermark())
+    assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(new SigningWatermark(VALIDATOR_ID, blockSlot, null, null));
   }
 
@@ -54,31 +54,31 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
 
-    insertBlockAt(UInt64.valueOf(3));
+    insertBlockAt(UInt64.valueOf(3), PUBLIC_KEY);
     assertThat(findAllBlocks()).hasSize(1);
-    assertThat(getWatermark())
+    assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
 
-    insertBlockAt(UInt64.valueOf(4));
+    insertBlockAt(UInt64.valueOf(4), PUBLIC_KEY);
     assertThat(findAllBlocks()).hasSize(2);
-    assertThat(getWatermark())
+    assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
 
-    insertBlockAt(UInt64.valueOf(5));
+    insertBlockAt(UInt64.valueOf(5), PUBLIC_KEY);
     assertThat(findAllBlocks()).hasSize(3);
-    assertThat(getWatermark())
+    assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
   }
 
   @Test
-  public void attestationWatermarkIsSetOnFirstAtestation() {
+  public void attestationWatermarkIsSetOnFirstAttestation() {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4));
-    assertThat(getWatermark())
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), PUBLIC_KEY);
+    assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
   }
@@ -87,26 +87,10 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
   public void attestationWatermarkIsNotChangedOnSubsequentAttestations() {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4));
-    insertAttestationAt(UInt64.valueOf(4), UInt64.valueOf(5));
-    assertThat(getWatermark())
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), PUBLIC_KEY);
+    insertAttestationAt(UInt64.valueOf(4), UInt64.valueOf(5), PUBLIC_KEY);
+    assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
-  }
-
-  private void insertBlockAt(final UInt64 blockSlot) {
-    assertThat(slashingProtection.maySignBlock(PUBLIC_KEY, Bytes.of(100), blockSlot, GVR)).isTrue();
-  }
-
-  private void insertAttestationAt(final UInt64 sourceEpoch, final UInt64 targetEpoch) {
-    assertThat(
-            slashingProtection.maySignAttestation(
-                PUBLIC_KEY, Bytes.of(100), sourceEpoch, targetEpoch, GVR))
-        .isTrue();
-  }
-
-  private SigningWatermark getWatermark() {
-    return jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID))
-        .get();
   }
 }

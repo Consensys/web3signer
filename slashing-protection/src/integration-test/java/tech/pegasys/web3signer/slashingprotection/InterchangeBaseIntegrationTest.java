@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
@@ -125,5 +127,21 @@ public class InterchangeBaseIntegrationTest {
           assertThat(findAllAttestations()).isEmpty();
           assertThat(findAllBlocks()).isEmpty();
         });
+  }
+
+  protected void insertBlockAt(final UInt64 blockSlot, final Bytes publicKey) {
+    assertThat(slashingProtection.maySignBlock(publicKey, Bytes.of(100), blockSlot, GVR)).isTrue();
+  }
+
+  protected void insertAttestationAt(
+      final UInt64 sourceEpoch, final UInt64 targetEpoch, final Bytes publicKey) {
+    assertThat(
+            slashingProtection.maySignAttestation(
+                publicKey, Bytes.of(100), sourceEpoch, targetEpoch, GVR))
+        .isTrue();
+  }
+
+  protected SigningWatermark getWatermark(final int validatorId) {
+    return jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, validatorId)).get();
   }
 }
