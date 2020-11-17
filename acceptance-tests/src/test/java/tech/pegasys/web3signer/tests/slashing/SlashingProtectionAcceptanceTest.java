@@ -39,6 +39,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
   protected final BLSKeyPair keyPair = BLSKeyPair.random(0);
+  static final int SLASHING_PROTECTION_ENFORCED = 412;
 
   final List<String> attestationSlashingMetrics =
       List.of(
@@ -53,6 +54,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   void setupSigner(final Path testDirectory, final boolean enableSlashing) {
     final SignerConfigurationBuilder builder =
         new SignerConfigurationBuilder()
+            .withMetricsCategories("ETH2_SLASHING_PROTECTION")
             .withMode("eth2")
             .withSlashingEnabled(enableSlashing)
             .withSlashingProtectionDbUsername(DB_USERNAME)
@@ -109,7 +111,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
 
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
-    assertThat(secondResponse.getStatusCode()).isEqualTo(403);
+    assertThat(secondResponse.getStatusCode()).isEqualTo(SLASHING_PROTECTION_ENFORCED);
 
     assertThat(signer.getMetricsMatching(attestationSlashingMetrics))
         .containsOnly(
@@ -131,7 +133,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
 
     final Response surroundedResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), surroundedRequest);
-    assertThat(surroundedResponse.getStatusCode()).isEqualTo(403);
+    assertThat(surroundedResponse.getStatusCode()).isEqualTo(SLASHING_PROTECTION_ENFORCED);
   }
 
   @Test
@@ -149,7 +151,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
 
     final Response surroundingResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), surroundingRequest);
-    assertThat(surroundingResponse.getStatusCode()).isEqualTo(403);
+    assertThat(surroundingResponse.getStatusCode()).isEqualTo(SLASHING_PROTECTION_ENFORCED);
   }
 
   @Test
@@ -176,7 +178,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void signingBlockWithDifferentSigningRootForPreviousSlotFailsWith403(@TempDir Path testDirectory)
+  void signingBlockWithDifferentSigningRootForPreviousSlotFailsWith412(@TempDir Path testDirectory)
       throws JsonProcessingException {
     setupSigner(testDirectory, true);
 
@@ -200,7 +202,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
 
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
-    assertThat(secondResponse.getStatusCode()).isEqualTo(403);
+    assertThat(secondResponse.getStatusCode()).isEqualTo(SLASHING_PROTECTION_ENFORCED);
     assertThat(signer.getMetricsMatching(blockSlashingMetrics))
         .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 1.0");
   }

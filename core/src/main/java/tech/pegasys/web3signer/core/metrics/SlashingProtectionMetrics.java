@@ -33,7 +33,7 @@ public class SlashingProtectionMetrics {
         metricsSystem.createCounter(
             ETH2_SLASHING_PROTECTION,
             "prevented_signings",
-            "The number of slashing checks which have been prevented due violation of slashing conditions.");
+            "The number of prevented signings due to violation of slashing conditions.");
   }
 
   public void incrementSigningsPrevented() {
