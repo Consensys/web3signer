@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +33,7 @@ public class SignerConfigurationBuilder {
   private Path keyStoreDirectory = Path.of("./");
   private boolean metricsEnabled;
   private List<String> metricsHostAllowList = emptyList();
+  private List<String> metricsCategories = emptyList();
   private List<String> httpHostAllowList = emptyList();
   private TlsOptions serverTlsOptions;
   private TlsCertificateDefinition overriddenCaTrustStore;
@@ -67,6 +69,11 @@ public class SignerConfigurationBuilder {
 
   public SignerConfigurationBuilder withMetricsHostAllowList(final List<String> allowHostList) {
     this.metricsHostAllowList = allowHostList;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withMetricsCategories(final String... metricsCategories) {
+    this.metricsCategories = Arrays.asList(metricsCategories);
     return this;
   }
 
@@ -145,6 +152,7 @@ public class SignerConfigurationBuilder {
         keyStoreDirectory,
         metricsPort,
         metricsHostAllowList,
+        metricsCategories,
         metricsEnabled,
         Optional.ofNullable(azureKeyVaultParameters),
         Optional.ofNullable(serverTlsOptions),

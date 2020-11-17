@@ -44,7 +44,11 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   @Test
   void filecoinApisAreCounted() {
     final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMetricsEnabled(true).withMode("filecoin").build();
+        new SignerConfigurationBuilder()
+            .withMetricsCategories("FILECOIN")
+            .withMetricsEnabled(true)
+            .withMode("filecoin")
+            .build();
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest =
@@ -88,7 +92,11 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   @Test
   void missingSignerMetricIncreasesWhenUnmatchedRequestReceived() throws JsonProcessingException {
     final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMetricsEnabled(true).withMode("eth2").build();
+        new SignerConfigurationBuilder()
+            .withMetricsCategories("SIGNING")
+            .withMetricsEnabled(true)
+            .withMode("eth2")
+            .build();
     startSigner(signerConfiguration);
 
     final List<String> metricsOfInterest = List.of("signing_bls_missing_identifier_count");
@@ -117,6 +125,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
+            .withMetricsCategories("SIGNING")
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth1")
@@ -156,6 +165,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
+            .withMetricsCategories("SIGNING")
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth2")
