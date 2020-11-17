@@ -131,8 +131,9 @@ public class InterchangeV5Importer {
   private void importBlocks(
       final Handle h, final Validator validator, final ArrayNode signedBlocksNode)
       throws JsonProcessingException {
-    final Optional<UInt64> highestKnownBlock = signedBlocksDao.maximumSlot(h, validator.getId());
-    Optional<UInt64> minBlockSlotInImport = Optional.empty();
+    final Optional<UInt64> highestPreImportBlockSlot =
+        signedBlocksDao.maximumSlot(h, validator.getId());
+    Optional<UInt64> minImportedBlockSlot = Optional.empty();
     for (int i = 0; i < signedBlocksNode.size(); i++) {
       final SignedBlock jsonBlock = mapper.treeToValue(signedBlocksNode.get(i), SignedBlock.class);
       final BlockValidator blockValidator =
@@ -163,15 +164,15 @@ public class InterchangeV5Importer {
             new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
                 validator.getId(), jsonBlock.getSlot(), jsonBlock.getSigningRoot()));
 
-        if ((minBlockSlotInImport.isEmpty())
-            || (minBlockSlotInImport.get().compareTo(jsonBlock.getSlot()) > 0)) {
-          minBlockSlotInImport = Optional.of(jsonBlock.getSlot());
+        if ((minImportedBlockSlot.isEmpty())
+            || (minImportedBlockSlot.get().compareTo(jsonBlock.getSlot()) > 0)) {
+          minImportedBlockSlot = Optional.of(jsonBlock.getSlot());
         }
       }
 
-      if (NullableComparator.compareTo(minBlockSlotInImport, highestKnownBlock) == 1) {
-        LOG.warn("Updating Block slot low watermark to {}", minBlockSlotInImport.get());
-        lowWatermarkDao.updateSlotWatermarkFor(h, validator.getId(), minBlockSlotInImport.get());
+      if (OptionalComparator.compareTo(minImportedBlockSlot, highestPreImportBlockSlot) == 1) {
+        LOG.warn("Updating Block slot low watermark to {}", minImportedBlockSlot.get());
+        lowWatermarkDao.updateSlotWatermarkFor(h, validator.getId(), minImportedBlockSlot.get());
       }
     }
   }
@@ -242,7 +243,11 @@ public class InterchangeV5Importer {
         context.trackEpochs(jsonAttestation.getSourceEpoch(), jsonAttestation.getTargetEpoch());
       }
     }
+    setAttestationWatermark(h, validator, context);
+  }
 
+  private void setAttestationWatermark(final Handle h, final Validator validator,
+      final ValidatorImportContext context) {
     final Optional<SigningWatermark> existingWatermark =
         lowWatermarkDao.findLowWatermarkForValidator(h, validator.getId());
 
@@ -250,15 +255,17 @@ public class InterchangeV5Importer {
     final Optional<UInt64> newTargetWatermark = context.getTargetEpochWatermark();
 
     if (newSourceWatermark.isPresent() && newTargetWatermark.isPresent()) {
-      LOG.warn("Initializing Source epoch low watermark to {}", newSourceWatermark.get());
-      LOG.warn("Initializing Target epoch low watermark to {}", newTargetWatermark.get());
+      LOG.warn("Setting Source epoch low watermark to {}", newSourceWatermark.get());
+      LOG.warn("Setting Target epoch low watermark to {}", newTargetWatermark.get());
       lowWatermarkDao.updateEpochWatermarksFor(
           h, validator.getId(), newSourceWatermark.get(), newTargetWatermark.get());
     } else {
       if (existingWatermark.isEmpty()) {
         if (newSourceWatermark.isPresent() || newTargetWatermark.isPresent()) {
-          // NOTE: both missing would be ok (as file is empty)
-          throw new RuntimeException("No existing watermark, and illegal content");
+          // NOTE: both missing would be ok (as file maybe empty)
+          throw new RuntimeException(
+              "Inconsistent data - no existing attestation watermark, "
+               + "and import only sets one epoch");
         }
       } else {
         if (newSourceWatermark.isPresent()) {

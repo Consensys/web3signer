@@ -43,14 +43,14 @@ public class ValidatorImportContext {
   }
 
   public Optional<UInt64> getSourceEpochWatermark() {
-    if (NullableComparator.compareTo(lowestImportedSourceEpoch, highestSourceEpoch) > 0) {
+    if (OptionalComparator.compareTo(lowestImportedSourceEpoch, highestSourceEpoch) > 0) {
       return lowestImportedSourceEpoch;
     }
     return Optional.empty();
   }
 
   public Optional<UInt64> getTargetEpochWatermark() {
-    if (NullableComparator.compareTo(lowestImportedTargetEpoch, highestTargetEpoch) > 0) {
+    if (OptionalComparator.compareTo(lowestImportedTargetEpoch, highestTargetEpoch) > 0) {
       return lowestImportedTargetEpoch;
     }
     return Optional.empty();

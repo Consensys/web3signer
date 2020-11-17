@@ -16,19 +16,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class NullableComparator {
-
-  public static Optional<UInt64> chooseLarger(
-      final Optional<UInt64> lhs, final Optional<UInt64> rhs) {
-    if (lhs.isEmpty()) {
-      return rhs;
-    } else if (rhs.isEmpty()) {
-      return lhs;
-    } else if (rhs.get().compareTo(lhs.get()) > 0) {
-      return rhs;
-    }
-    return lhs;
-  }
+public class OptionalComparator {
 
   // return 0 if lhs == rhs, 1 if lhs>rhs, -1 if rhs>lhs
   public static int compareTo(final Optional<UInt64> lhs, final Optional<UInt64> rhs) {

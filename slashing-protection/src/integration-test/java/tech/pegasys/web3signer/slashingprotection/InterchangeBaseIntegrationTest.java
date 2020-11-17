@@ -14,11 +14,13 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.apache.tuweni.units.bigints.UInt64;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 
@@ -97,8 +99,8 @@ public class InterchangeBaseIntegrationTest {
     return jdbi.withHandle(
         h ->
             h.createQuery(
-                    "SELECT validator_id, source_epoch, target_epoch, signing_root "
-                        + "FROM signed_attestations")
+                "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                    + "FROM signed_attestations")
                 .mapToBean(SignedAttestation.class)
                 .list());
   }
@@ -125,5 +127,22 @@ public class InterchangeBaseIntegrationTest {
           assertThat(findAllAttestations()).isEmpty();
           assertThat(findAllBlocks()).isEmpty();
         });
+  }
+
+  protected void insertBlockAt(final UInt64 blockSlot, final Bytes publicKey) {
+    assertThat(slashingProtection.maySignBlock(publicKey, Bytes.of(100), blockSlot, GVR)).isTrue();
+  }
+
+  protected void insertAttestationAt(final UInt64 sourceEpoch, final UInt64 targetEpoch,
+      final Bytes publicKey) {
+    assertThat(
+        slashingProtection.maySignAttestation(
+            publicKey, Bytes.of(100), sourceEpoch, targetEpoch, GVR))
+        .isTrue();
+  }
+
+  protected SigningWatermark getWatermark(final int validatorId) {
+    return jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, validatorId))
+        .get();
   }
 }
