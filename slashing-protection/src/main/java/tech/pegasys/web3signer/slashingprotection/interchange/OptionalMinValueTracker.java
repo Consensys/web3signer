@@ -14,20 +14,29 @@ package tech.pegasys.web3signer.slashingprotection.interchange;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.util.PropertySource.Comparator;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class OptionalComparator {
+public class OptionalMinValueTracker {
+
+  private Optional<UInt64> trackedMinValue = Optional.empty();
+
+  public void trackValue(final UInt64 value) {
+    if(trackedMinValue.isEmpty() || value.compareTo(trackedMinValue.get()) < 0) {
+      trackedMinValue = Optional.of(value);
+    }
+  }
+
+  public Optional<UInt64> getTrackedMinValue() {
+    return trackedMinValue;
+  }
 
   // return 0 if lhs == rhs, 1 if lhs>rhs, -1 if rhs>lhs
-  public static int compareTo(final Optional<UInt64> lhs, final Optional<UInt64> rhs) {
-    if (lhs.isPresent()) {
-      if (rhs.isPresent()) {
-        return lhs.get().compareTo(rhs.get());
-      }
-      return 1;
-    } else if (rhs.isEmpty()) {
-      return 0;
+  public int compareTrackedValueTo(final Optional<UInt64> rhs) {
+    if (rhs.isEmpty()) {
+      return trackedMinValue.isEmpty() ? 0 : 1;
+    } else {
+      return trackedMinValue.isEmpty() ? -1 : trackedMinValue.get().compareTo(rhs.get());
     }
-    return -1;
   }
 }
