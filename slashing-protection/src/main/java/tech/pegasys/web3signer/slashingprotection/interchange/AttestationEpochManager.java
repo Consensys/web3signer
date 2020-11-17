@@ -74,52 +74,34 @@ public class AttestationEpochManager {
     final Optional<SigningWatermark> existingWatermark =
         lowWatermarkDao.findLowWatermarkForValidator(h, validator.getId());
 
-    final Optional<UInt64> newSourceWatermark;
-    final Optional<UInt64> newTargetWatermark;
-    if(minSourceTracker.compareTrackedValueTo(highestSourceEpoch) > 0) {
-      newSourceWatermark = minSourceTracker.getTrackedMinValue();
-    } else {
-      newSourceWatermark = Optional.empty();
-    }
+    final Optional<UInt64> newSourceWatermark = findBestSourceEpochWatermark(
+        existingWatermark.flatMap(watermark -> Optional.ofNullable(watermark.getSourceEpoch())));
+    final Optional<UInt64> newTargetWatermark = findBestTargetEpochWatermark(
+        existingWatermark.flatMap(watermark -> Optional.ofNullable(watermark.getTargetEpoch())));
 
-    if(minTargetTracker.compareTrackedValueTo((highestTargetEpoch)) > 0) {
-      newTargetWatermark = minTargetTracker.getTrackedMinValue();
-    } else {
-      newTargetWatermark = Optional.empty();
-    }
-
-    if (newSourceWatermark.isPresent() && newTargetWatermark.isPresent()) {
-      LOG.warn("Setting Source epoch low watermark to {}", newSourceWatermark.get());
-      LOG.warn("Setting Target epoch low watermark to {}", newTargetWatermark.get());
+    if(newSourceWatermark.isPresent() && newTargetWatermark.isPresent()) {
       lowWatermarkDao.updateEpochWatermarksFor(
           h, validator.getId(), newSourceWatermark.get(), newTargetWatermark.get());
-    } else {
-      if (existingWatermark.isEmpty()) {
-        if (newSourceWatermark.isPresent() || newTargetWatermark.isPresent()) {
-          // NOTE: both missing would be ok (as file maybe empty)
-          throw new RuntimeException(
-              "Inconsistent data - no existing attestation watermark, "
-                  + "and import only sets one epoch");
-        }
-      } else {
-        if (newSourceWatermark.isPresent()) {
-          LOG.warn("Updating Source epoch low watermark to {}", newSourceWatermark.get());
-          lowWatermarkDao.updateEpochWatermarksFor(
-              h,
-              validator.getId(),
-              newSourceWatermark.get(),
-              existingWatermark.get().getTargetEpoch());
-        }
+    } else if(newSourceWatermark.isPresent() != newTargetWatermark.isPresent()) {
+      throw new RuntimeException(
+          "Inconsistent data - no existing attestation watermark, "
+              + "and import only sets one epoch");
+    }
+  }
 
-        if (newTargetWatermark.isPresent()) {
-          LOG.warn("Updating Target epoch low watermark to {}", newTargetWatermark.get());
-          lowWatermarkDao.updateEpochWatermarksFor(
-              h,
-              validator.getId(),
-              existingWatermark.get().getSourceEpoch(),
-              newTargetWatermark.get());
-        }
-      }
+  private Optional<UInt64> findBestSourceEpochWatermark(final Optional<UInt64> currentWatermark) {
+    if (minSourceTracker.compareTrackedValueTo(highestSourceEpoch) > 0) {
+      return minSourceTracker.getTrackedMinValue();
+    } else {
+      return currentWatermark;
+    }
+  }
+
+  private Optional<UInt64> findBestTargetEpochWatermark(final Optional<UInt64> currentWatermark) {
+    if (minTargetTracker.compareTrackedValueTo(highestSourceEpoch) > 0) {
+      return minTargetTracker.getTrackedMinValue();
+    } else {
+      return currentWatermark;
     }
   }
 }
