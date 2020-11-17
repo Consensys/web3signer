@@ -86,7 +86,7 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
   }
 
   @Test
-  public void attestationWatermarkIsSetOnFirstAtestation() {
+  public void attestationWatermarkIsSetOnFirstAttestation() {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
     insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4));
@@ -100,10 +100,7 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
       throws JsonProcessingException {
     final InputStream input = createInputDataWith(List.of(5, 4), emptyList());
     slashingProtection.importData(input);
-
-    final Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get()).isEqualToComparingFieldByField(
+    assertThat(getWatermark()).isEqualToComparingFieldByField(
         new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(4), null, null));
   }
 
@@ -115,17 +112,11 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
     insertBlockAt(initialBlockSlot);
     insertBlockAt(UInt64.valueOf(10)); // max = 10, watermark = 3 (As was first).
-
-    Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get().getSlot()).isEqualTo(initialBlockSlot);
+    assertThat(getWatermark().getSlot()).isEqualTo(initialBlockSlot);
 
     final InputStream input = createInputDataWith(List.of(20, 19), emptyList());
     slashingProtection.importData(input);
-
-    watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(19));
+    assertThat(getWatermark().getSlot()).isEqualTo(UInt64.valueOf(19));
   }
 
   @Test
@@ -135,33 +126,11 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
     insertBlockAt(UInt64.valueOf(3));
     insertBlockAt(UInt64.valueOf(10));
-
-    Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(3));
+    assertThat(getWatermark().getSlot()).isEqualTo(UInt64.valueOf(3));
 
     final InputStream input = createInputDataWith(List.of(6, 50), emptyList());
     slashingProtection.importData(input);
-
-    watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(3));
-  }
-
-
-  @Test
-  public void attestationWatermarkIsEmptyAtStartupSetOnFirstAtestation() {
-    Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark).isEmpty();
-
-    insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4));
-    watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get()).isEqualToComparingFieldByField(
-        new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
+    assertThat(getWatermark().getSlot()).isEqualTo(UInt64.valueOf(3));
   }
 
   @Test
@@ -171,10 +140,7 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
         new ImmutablePair<>(3, 4),
         new ImmutablePair<>(2, 5)));
     slashingProtection.importData(input);
-
-    final Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get()).isEqualToComparingFieldByField(
+    assertThat(getWatermark()).isEqualToComparingFieldByField(
         new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(2), UInt64.valueOf(4)));
   }
 
@@ -186,9 +152,7 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
     insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4));
     insertAttestationAt(UInt64.valueOf(7), UInt64.valueOf(8));
 
-    Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get()).isEqualToComparingFieldByField(
+    assertThat(getWatermark()).isEqualToComparingFieldByField(
         new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
 
     final InputStream input = createInputDataWith(emptyList(), List.of(
@@ -196,12 +160,8 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
         new ImmutablePair<>(9, 15)));
     slashingProtection.importData(input);
 
-    watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark).isNotEmpty();
-    assertThat(watermark.get().getSourceEpoch()).isEqualTo(UInt64.valueOf(8));
-    assertThat(watermark.get().getTargetEpoch()).isEqualTo(UInt64.valueOf(10));
-    assertThat(watermark.get().getSlot()).isNull();
+    assertThat(getWatermark()).isEqualToComparingFieldByField(
+        new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(8), UInt64.valueOf(10)));
   }
 
   @Test
@@ -214,10 +174,7 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
 
     final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(7, 8)));
     slashingProtection.importData(input);
-
-    Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get()).isEqualToComparingFieldByField(
+    assertThat(getWatermark()).isEqualToComparingFieldByField(
         new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
   }
 
@@ -250,5 +207,10 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
                 attestations.stream().map(at -> new SignedAttestation(UInt64.valueOf(at.getKey()),
                     UInt64.valueOf(at.getValue()), null)).collect(Collectors.toList()))));
     return new ByteArrayInputStream(mapper.writeValueAsBytes(importData));
+  }
+
+  private SigningWatermark getWatermark() {
+    return jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID))
+        .get();
   }
 }
