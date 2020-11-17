@@ -43,13 +43,13 @@ public class SlashingAcceptanceTest extends AcceptanceTestBase {
 
   final List<String> attestationSlashingMetrics =
       List.of(
-          "eth2_slashing_protection_permitted_signings",
-          "eth2_slashing_protection_prevented_signings");
+          "eth2_slashingprotection_permitted_signings",
+          "eth2_slashingprotection_prevented_signings");
 
   final List<String> blockSlashingMetrics =
       List.of(
-          "eth2_slashing_protection_permitted_signings",
-          "eth2_slashing_protection_prevented_signings");
+          "eth2_slashingprotection_permitted_signings",
+          "eth2_slashingprotection_prevented_signings");
 
   void setupSigner(final Path testDirectory, final boolean enableSlashing) {
     final SignerConfigurationBuilder builder =
