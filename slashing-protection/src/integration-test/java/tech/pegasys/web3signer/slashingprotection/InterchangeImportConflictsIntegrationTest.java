@@ -16,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
-import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.io.IOException;
 import java.net.URL;
