@@ -31,7 +31,6 @@ import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.flywaydb.core.Flyway;
-import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -95,24 +94,28 @@ public class InterchangeBaseIntegrationTest {
   }
 
   protected List<SignedAttestation> findAllAttestations() {
-    return jdbi.withHandle(h ->
-        h.createQuery(
-            "SELECT validator_id, source_epoch, target_epoch, signing_root "
-                + "FROM signed_attestations")
-        .mapToBean(SignedAttestation.class)
-        .list());
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                        + "FROM signed_attestations")
+                .mapToBean(SignedAttestation.class)
+                .list());
   }
 
   protected List<SignedBlock> findAllBlocks() {
-    return jdbi.withHandle(h ->
-        h.createQuery("SELECT validator_id, slot, signing_root FROM signed_blocks")
-            .mapToBean(SignedBlock.class)
-            .list());
+    return jdbi.withHandle(
+        h ->
+            h.createQuery("SELECT validator_id, slot, signing_root FROM signed_blocks")
+                .mapToBean(SignedBlock.class)
+                .list());
   }
 
   protected void insertValidator(final Bytes publicKey, final int validatorId) {
-    jdbi.useHandle(h -> h
-        .execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey));
+    jdbi.useHandle(
+        h ->
+            h.execute(
+                "INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey));
   }
 
   protected void assertDbIsEmpty(final Jdbi jdbi) {

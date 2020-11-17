@@ -163,16 +163,15 @@ public class InterchangeV5Importer {
             new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
                 validator.getId(), jsonBlock.getSlot(), jsonBlock.getSigningRoot()));
 
-        if ((minBlockSlotInImport.isEmpty()) ||
-            (minBlockSlotInImport.get().compareTo(jsonBlock.getSlot()) > 0)) {
+        if ((minBlockSlotInImport.isEmpty())
+            || (minBlockSlotInImport.get().compareTo(jsonBlock.getSlot()) > 0)) {
           minBlockSlotInImport = Optional.of(jsonBlock.getSlot());
         }
       }
 
       if (NullableComparator.compareTo(minBlockSlotInImport, highestKnownBlock) == 1) {
         LOG.warn("Updating Block slot low watermark to {}", minBlockSlotInImport.get());
-        lowWatermarkDao
-            .updateSlotWatermarkFor(h, validator.getId(), minBlockSlotInImport.get());
+        lowWatermarkDao.updateSlotWatermarkFor(h, validator.getId(), minBlockSlotInImport.get());
       }
     }
   }
@@ -180,9 +179,10 @@ public class InterchangeV5Importer {
   private void importAttestations(
       final Handle h, final Validator validator, final ArrayNode signedAttestationNode)
       throws JsonProcessingException {
-    final ValidatorImportContext context = new ValidatorImportContext(
-        signedAttestationsDao.maximumSourceEpoch(h, validator.getId()),
-        signedAttestationsDao.maximumTargetEpoch(h, validator.getId()));
+    final ValidatorImportContext context =
+        new ValidatorImportContext(
+            signedAttestationsDao.maximumSourceEpoch(h, validator.getId()),
+            signedAttestationsDao.maximumTargetEpoch(h, validator.getId()));
 
     for (int i = 0; i < signedAttestationNode.size(); i++) {
       final SignedAttestation jsonAttestation =
@@ -252,8 +252,8 @@ public class InterchangeV5Importer {
     if (newSourceWatermark.isPresent() && newTargetWatermark.isPresent()) {
       LOG.warn("Initializing Source epoch low watermark to {}", newSourceWatermark.get());
       LOG.warn("Initializing Target epoch low watermark to {}", newTargetWatermark.get());
-      lowWatermarkDao.updateEpochWatermarksFor(h, validator.getId(), newSourceWatermark.get(),
-          newTargetWatermark.get());
+      lowWatermarkDao.updateEpochWatermarksFor(
+          h, validator.getId(), newSourceWatermark.get(), newTargetWatermark.get());
     } else {
       if (existingWatermark.isEmpty()) {
         if (newSourceWatermark.isPresent() || newTargetWatermark.isPresent()) {
@@ -263,13 +263,18 @@ public class InterchangeV5Importer {
       } else {
         if (newSourceWatermark.isPresent()) {
           LOG.warn("Updating Source epoch low watermark to {}", newSourceWatermark.get());
-          lowWatermarkDao.updateEpochWatermarksFor(h, validator.getId(), newSourceWatermark.get(),
+          lowWatermarkDao.updateEpochWatermarksFor(
+              h,
+              validator.getId(),
+              newSourceWatermark.get(),
               existingWatermark.get().getTargetEpoch());
         }
 
         if (newTargetWatermark.isPresent()) {
           LOG.warn("Updating Target epoch low watermark to {}", newTargetWatermark.get());
-          lowWatermarkDao.updateEpochWatermarksFor(h, validator.getId(),
+          lowWatermarkDao.updateEpochWatermarksFor(
+              h,
+              validator.getId(),
               existingWatermark.get().getSourceEpoch(),
               newTargetWatermark.get());
         }
