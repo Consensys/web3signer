@@ -14,12 +14,14 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
+
 import java.util.List;
 import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
-import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationTest {
 

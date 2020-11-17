@@ -246,8 +246,8 @@ public class InterchangeV5Importer {
     setAttestationWatermark(h, validator, context);
   }
 
-  private void setAttestationWatermark(final Handle h, final Validator validator,
-      final ValidatorImportContext context) {
+  private void setAttestationWatermark(
+      final Handle h, final Validator validator, final ValidatorImportContext context) {
     final Optional<SigningWatermark> existingWatermark =
         lowWatermarkDao.findLowWatermarkForValidator(h, validator.getId());
 
@@ -265,7 +265,7 @@ public class InterchangeV5Importer {
           // NOTE: both missing would be ok (as file maybe empty)
           throw new RuntimeException(
               "Inconsistent data - no existing attestation watermark, "
-               + "and import only sets one epoch");
+                  + "and import only sets one epoch");
         }
       } else {
         if (newSourceWatermark.isPresent()) {

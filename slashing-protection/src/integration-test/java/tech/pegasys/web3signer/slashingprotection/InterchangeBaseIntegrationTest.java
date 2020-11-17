@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.apache.tuweni.units.bigints.UInt64;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -32,6 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
@@ -99,8 +99,8 @@ public class InterchangeBaseIntegrationTest {
     return jdbi.withHandle(
         h ->
             h.createQuery(
-                "SELECT validator_id, source_epoch, target_epoch, signing_root "
-                    + "FROM signed_attestations")
+                    "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                        + "FROM signed_attestations")
                 .mapToBean(SignedAttestation.class)
                 .list());
   }
@@ -133,16 +133,15 @@ public class InterchangeBaseIntegrationTest {
     assertThat(slashingProtection.maySignBlock(publicKey, Bytes.of(100), blockSlot, GVR)).isTrue();
   }
 
-  protected void insertAttestationAt(final UInt64 sourceEpoch, final UInt64 targetEpoch,
-      final Bytes publicKey) {
+  protected void insertAttestationAt(
+      final UInt64 sourceEpoch, final UInt64 targetEpoch, final Bytes publicKey) {
     assertThat(
-        slashingProtection.maySignAttestation(
-            publicKey, Bytes.of(100), sourceEpoch, targetEpoch, GVR))
+            slashingProtection.maySignAttestation(
+                publicKey, Bytes.of(100), sourceEpoch, targetEpoch, GVR))
         .isTrue();
   }
 
   protected SigningWatermark getWatermark(final int validatorId) {
-    return jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, validatorId))
-        .get();
+    return jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, validatorId)).get();
   }
 }
