@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
@@ -36,7 +38,7 @@ public class BlockValidator {
   private final SignedBlocksDao signedBlocksDao;
   private final LowWatermarkDao lowWatermarkDao;
 
-  private final Optional<SigningWatermark> watermark;
+  private final Supplier<Optional<SigningWatermark>> watermarkSupplier;
 
   public BlockValidator(
       final Handle handle,
@@ -51,7 +53,8 @@ public class BlockValidator {
     this.validatorId = validatorId;
     this.signedBlocksDao = signedBlocksDao;
     this.lowWatermarkDao = lowWatermarkDao;
-    watermark = lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId);
+    watermarkSupplier =
+        Suppliers.memoize(() -> lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId));
   }
 
   public boolean directlyConflictsWithExistingEntry() {
@@ -67,7 +70,7 @@ public class BlockValidator {
   }
 
   public boolean isOlderThanWatermark() {
-    final Optional<UInt64> minimumSlot = watermark.map(SigningWatermark::getSlot);
+    final Optional<UInt64> minimumSlot = watermarkSupplier.get().map(SigningWatermark::getSlot);
     if (minimumSlot.map(slot -> blockSlot.compareTo(slot) <= 0).orElse(false)) {
       LOG.warn(
           "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
@@ -81,7 +84,7 @@ public class BlockValidator {
     signedBlocksDao.insertBlockProposal(handle, signedBlock);
 
     // update the watermark if is otherwise blank
-    if (watermark.isEmpty() || (watermark.get().getSlot() == null)) {
+    if (watermarkSupplier.get().isEmpty() || (watermarkSupplier.get().get().getSlot() == null)) {
       lowWatermarkDao.updateSlotWatermarkFor(handle, validatorId, blockSlot);
     }
   }
