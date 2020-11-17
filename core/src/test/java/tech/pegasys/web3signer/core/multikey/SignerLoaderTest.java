@@ -250,7 +250,7 @@ class SignerLoaderTest {
       createFileInConfigsDirectory(PUBLIC_KEY1);
       SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
-      assertThat(logAppender.getLogMessagesReceived().get(0).getMessage().getFormattedMessage())
+      assertThat(logAppender.getLogMessagesReceived().get(1).getMessage().getFormattedMessage())
           .contains(rootCause.getMessage());
     } finally {
       logger.removeAppender(logAppender);
