@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.io.IOException;
 import java.net.URL;
@@ -34,44 +35,46 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     final URL importFile = Resources.getResource("interchange/singleValidBlock.json");
     slashingProtection.importData(importFile.openStream());
     slashingProtection.importData(importFile.openStream()); // attempt to reimport
-    jdbi.useHandle(
-        handle -> {
-          final List<SignedBlock> blocksInDb = findAllBlocks(handle);
-          assertThat(blocksInDb).hasSize(1);
-          assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
-          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
-          assertThat(blocksInDb.get(0).getSigningRoot())
-              .isEqualTo(
-                  Optional.of(
-                      Bytes.fromHexString(
-                          "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
-        });
+    final List<SignedBlock> blocksInDb = findAllBlocks();
+    assertThat(blocksInDb).hasSize(1);
+    assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+    assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(blocksInDb.get(0).getSigningRoot())
+        .isEqualTo(
+            Optional.of(
+                Bytes.fromHexString(
+                    "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
+
+    final Optional<SigningWatermark> watermark =
+        jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, 1));
+    assertThat(watermark).isNotEmpty();
+    assertThat(watermark.get().getSourceEpoch()).isNull();
+    assertThat(watermark.get().getTargetEpoch()).isNull();
+    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(12345));
   }
 
   @Test
   void canLoadConflictingBlocksInSameSlot() throws IOException {
     final URL importFile = Resources.getResource("interchange/conflictingBlocks.json");
     slashingProtection.importData(importFile.openStream());
-    jdbi.useHandle(
-        handle -> {
-          final List<SignedBlock> blocksInDb = findAllBlocks(handle);
-          assertThat(blocksInDb).hasSize(2);
-          assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
-          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
-          assertThat(blocksInDb.get(0).getSigningRoot())
-              .isEqualTo(
-                  Optional.of(
-                      Bytes.fromHexString(
-                          "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
 
-          assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12345));
-          assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
-          assertThat(blocksInDb.get(1).getSigningRoot())
-              .isEqualTo(
-                  Optional.of(
-                      Bytes.fromHexString(
-                          "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850c")));
-        });
+    final List<SignedBlock> blocksInDb = findAllBlocks();
+    assertThat(blocksInDb).hasSize(2);
+    assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+    assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(blocksInDb.get(0).getSigningRoot())
+        .isEqualTo(
+            Optional.of(
+                Bytes.fromHexString(
+                    "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
+
+    assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12345));
+    assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
+    assertThat(blocksInDb.get(1).getSigningRoot())
+        .isEqualTo(
+            Optional.of(
+                Bytes.fromHexString(
+                    "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850c")));
   }
 
   @Test
@@ -79,18 +82,16 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     final URL importFile = Resources.getResource("interchange/duplicateBlocks.json");
     slashingProtection.importData(importFile.openStream());
     slashingProtection.importData(importFile.openStream()); // attempt to reimport
-    jdbi.useHandle(
-        handle -> {
-          final List<SignedBlock> blocksInDb = findAllBlocks(handle);
-          assertThat(blocksInDb).hasSize(1);
-          assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
-          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
-          assertThat(blocksInDb.get(0).getSigningRoot())
-              .isEqualTo(
-                  Optional.of(
-                      Bytes.fromHexString(
-                          "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
-        });
+
+    final List<SignedBlock> blocksInDb = findAllBlocks();
+    assertThat(blocksInDb).hasSize(1);
+    assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+    assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(blocksInDb.get(0).getSigningRoot())
+        .isEqualTo(
+            Optional.of(
+                Bytes.fromHexString(
+                    "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
   }
 
   @Test
@@ -98,16 +99,14 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     final URL importFile = Resources.getResource("interchange/singleValidAttestation.json");
     slashingProtection.importData(importFile.openStream());
     slashingProtection.importData(importFile.openStream()); // attempt to reimport
-    jdbi.useHandle(
-        handle -> {
-          final List<SignedAttestation> attestationsInDb = findAllAttestations(handle);
-          assertThat(attestationsInDb).hasSize(1);
-          assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
-          assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
-          assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
-          assertThat(attestationsInDb.get(0).getSigningRoot())
-              .isEqualTo(Optional.of(Bytes.fromHexString("0x123456")));
-        });
+
+    final List<SignedAttestation> attestationsInDb = findAllAttestations();
+    assertThat(attestationsInDb).hasSize(1);
+    assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
+    assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
+    assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(attestationsInDb.get(0).getSigningRoot())
+        .isEqualTo(Optional.of(Bytes.fromHexString("0x123456")));
   }
 
   @Test
@@ -115,34 +114,30 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     final URL importFile = Resources.getResource("interchange/duplicateAttestation.json");
     slashingProtection.importData(importFile.openStream());
     slashingProtection.importData(importFile.openStream()); // attempt to reimport
-    jdbi.useHandle(
-        handle -> {
-          final List<SignedAttestation> attestationsInDb = findAllAttestations(handle);
-          assertThat(attestationsInDb).hasSize(1);
-          assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
-          assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
-          assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
-          assertThat(attestationsInDb.get(0).getSigningRoot())
-              .isEqualTo(Optional.of(Bytes.fromHexString("0x123456")));
-        });
+
+    final List<SignedAttestation> attestationsInDb = findAllAttestations();
+    assertThat(attestationsInDb).hasSize(1);
+    assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
+    assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
+    assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(attestationsInDb.get(0).getSigningRoot())
+        .isEqualTo(Optional.of(Bytes.fromHexString("0x123456")));
   }
 
   @Test
   void canLoadInterchangeFormatWithMissingSigningRootForBlock() throws IOException {
     final URL importFile = Resources.getResource("interchange/multipleNullSigningRootBlock.json");
     slashingProtection.importData(importFile.openStream());
-    jdbi.useHandle(
-        handle -> {
-          final List<SignedBlock> blocksInDb = findAllBlocks(handle);
-          assertThat(blocksInDb).hasSize(2);
-          assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
-          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
-          assertThat(blocksInDb.get(0).getSigningRoot()).isEmpty();
 
-          assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12346));
-          assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
-          assertThat(blocksInDb.get(1).getSigningRoot()).isEmpty();
-        });
+    final List<SignedBlock> blocksInDb = findAllBlocks();
+    assertThat(blocksInDb).hasSize(2);
+    assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+    assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(blocksInDb.get(0).getSigningRoot()).isEmpty();
+
+    assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12346));
+    assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
+    assertThat(blocksInDb.get(1).getSigningRoot()).isEmpty();
   }
 
   @Test
@@ -150,18 +145,16 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     final URL importFile = Resources.getResource("interchange/multipleNullSigningRootBlock.json");
     slashingProtection.importData(importFile.openStream());
     slashingProtection.importData(importFile.openStream());
-    jdbi.useHandle(
-        handle -> {
-          final List<SignedBlock> blocksInDb = findAllBlocks(handle);
-          assertThat(blocksInDb).hasSize(2);
-          assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
-          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
-          assertThat(blocksInDb.get(0).getSigningRoot()).isEmpty();
 
-          assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12346));
-          assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
-          assertThat(blocksInDb.get(1).getSigningRoot()).isEmpty();
-        });
+    final List<SignedBlock> blocksInDb = findAllBlocks();
+    assertThat(blocksInDb).hasSize(2);
+    assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+    assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(blocksInDb.get(0).getSigningRoot()).isEmpty();
+
+    assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12346));
+    assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
+    assertThat(blocksInDb.get(1).getSigningRoot()).isEmpty();
   }
 
   @Test
@@ -169,20 +162,18 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     final URL importFile =
         Resources.getResource("interchange/multipleNullSigningRootAttestation.json");
     slashingProtection.importData(importFile.openStream());
-    jdbi.useHandle(
-        handle -> {
-          final List<SignedAttestation> attestationsInDb = findAllAttestations(handle);
-          assertThat(attestationsInDb).hasSize(2);
-          assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
-          assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
-          assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
-          assertThat(attestationsInDb.get(0).getSigningRoot()).isEmpty();
 
-          assertThat(attestationsInDb.get(1).getSourceEpoch()).isEqualTo(UInt64.valueOf(7));
-          assertThat(attestationsInDb.get(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(8));
-          assertThat(attestationsInDb.get(1).getValidatorId()).isEqualTo(1);
-          assertThat(attestationsInDb.get(1).getSigningRoot()).isEmpty();
-        });
+    final List<SignedAttestation> attestationsInDb = findAllAttestations();
+    assertThat(attestationsInDb).hasSize(2);
+    assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
+    assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
+    assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(attestationsInDb.get(0).getSigningRoot()).isEmpty();
+
+    assertThat(attestationsInDb.get(1).getSourceEpoch()).isEqualTo(UInt64.valueOf(7));
+    assertThat(attestationsInDb.get(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(8));
+    assertThat(attestationsInDb.get(1).getValidatorId()).isEqualTo(1);
+    assertThat(attestationsInDb.get(1).getSigningRoot()).isEmpty();
   }
 
   @Test
@@ -191,20 +182,18 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
         Resources.getResource("interchange/multipleNullSigningRootAttestation.json");
     slashingProtection.importData(importFile.openStream());
     slashingProtection.importData(importFile.openStream());
-    jdbi.useHandle(
-        handle -> {
-          final List<SignedAttestation> attestationsInDb = findAllAttestations(handle);
-          assertThat(attestationsInDb).hasSize(2);
-          assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
-          assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
-          assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
-          assertThat(attestationsInDb.get(0).getSigningRoot()).isEmpty();
 
-          assertThat(attestationsInDb.get(1).getSourceEpoch()).isEqualTo(UInt64.valueOf(7));
-          assertThat(attestationsInDb.get(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(8));
-          assertThat(attestationsInDb.get(1).getValidatorId()).isEqualTo(1);
-          assertThat(attestationsInDb.get(1).getSigningRoot()).isEmpty();
-        });
+    final List<SignedAttestation> attestationsInDb = findAllAttestations();
+    assertThat(attestationsInDb).hasSize(2);
+    assertThat(attestationsInDb.get(0).getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
+    assertThat(attestationsInDb.get(0).getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
+    assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(attestationsInDb.get(0).getSigningRoot()).isEmpty();
+
+    assertThat(attestationsInDb.get(1).getSourceEpoch()).isEqualTo(UInt64.valueOf(7));
+    assertThat(attestationsInDb.get(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(8));
+    assertThat(attestationsInDb.get(1).getValidatorId()).isEqualTo(1);
+    assertThat(attestationsInDb.get(1).getSigningRoot()).isEmpty();
   }
 
   @Test
@@ -217,17 +206,14 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
                 Bytes.fromHexString(
                     "0xb845089a1457f811bfc000588fbb4e713669be8ce060ea6be3c6ece09afc3794106c91ca73acda5e5457122d58723bed")));
     slashingProtection.importData(importFile.openStream());
-    jdbi.useHandle(
-        handle -> {
-          final List<SignedBlock> blocksInDb = findAllBlocks(handle);
-          assertThat(blocksInDb).hasSize(1);
-          assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
-          assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
-          assertThat(blocksInDb.get(0).getSigningRoot())
-              .isEqualTo(
-                  Optional.of(
-                      Bytes.fromHexString(
-                          "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
-        });
+    final List<SignedBlock> blocksInDb = findAllBlocks();
+    assertThat(blocksInDb).hasSize(1);
+    assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
+    assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(blocksInDb.get(0).getSigningRoot())
+        .isEqualTo(
+            Optional.of(
+                Bytes.fromHexString(
+                    "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
   }
 }
