@@ -84,6 +84,17 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
             new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
   }
 
+  @Test
+  public void attestationWatermarkIsNotChangedOnSubsequentAttestations() {
+    insertValidator(PUBLIC_KEY, VALIDATOR_ID);
+    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4));
+    insertAttestationAt(UInt64.valueOf(4), UInt64.valueOf(5));
+    assertThat(getWatermark())
+        .isEqualToComparingFieldByField(
+            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
+  }
+
   private void insertBlockAt(final UInt64 blockSlot) {
     assertThat(slashingProtection.maySignBlock(PUBLIC_KEY, Bytes.of(100), blockSlot, GVR)).isTrue();
   }
