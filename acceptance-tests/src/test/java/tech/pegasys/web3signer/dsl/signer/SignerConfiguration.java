@@ -30,6 +30,7 @@ public class SignerConfiguration {
   private final List<String> httpHostAllowList;
   private final Path keyStorePath;
   private final List<String> metricsHostAllowList;
+  private final List<String> metricsCategories;
   private final boolean metricsEnabled;
   private final Optional<AzureKeyVaultParameters> azureKeyVaultParameters;
   private Optional<TlsOptions> serverTlsOptions;
@@ -51,6 +52,7 @@ public class SignerConfiguration {
       final Path keyStorePath,
       final int metricsPort,
       final List<String> metricsHostAllowList,
+      final List<String> metricsCategories,
       final boolean metricsEnabled,
       final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
       final Optional<TlsOptions> serverTlsOptions,
@@ -69,6 +71,7 @@ public class SignerConfiguration {
     this.keyStorePath = keyStorePath;
     this.metricsPort = metricsPort;
     this.metricsHostAllowList = metricsHostAllowList;
+    this.metricsCategories = metricsCategories;
     this.metricsEnabled = metricsEnabled;
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.serverTlsOptions = serverTlsOptions;
@@ -113,6 +116,10 @@ public class SignerConfiguration {
 
   public List<String> getMetricsHostAllowList() {
     return metricsHostAllowList;
+  }
+
+  public List<String> getMetricsCategories() {
+    return metricsCategories;
   }
 
   public Optional<TlsOptions> getServerTlsOptions() {
