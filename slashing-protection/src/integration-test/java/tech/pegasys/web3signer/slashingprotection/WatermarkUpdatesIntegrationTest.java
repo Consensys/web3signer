@@ -42,22 +42,57 @@ public class WatermarkUpdatesIntegrationTest extends InterchangeBaseIntegrationT
   final int VALIDATOR_ID = 1;
 
   @Test
-  public void blockWatermarkIsUnsetAtStartupIsSetOnFirstBlock() {
-    final UInt64 blockSlot = UInt64.valueOf(3);
-    Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
+  public void watermarkIsEmptyAtStartup() {
+    Optional<SigningWatermark> watermark =
+        jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
     assertThat(watermark).isEmpty();
+  }
 
+  @Test
+  public void blockWatermarkIsSetOnFirstBlock() {
+    final UInt64 blockSlot = UInt64.valueOf(3);
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
     insertBlockAt(blockSlot);
 
     assertThat(findAllBlocks()).hasSize(1);
+    assertThat(getWatermark())
+        .isEqualToComparingFieldByField(new SigningWatermark(VALIDATOR_ID, blockSlot, null, null));
+  }
 
-    watermark = jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
-    assertThat(watermark.get())
+  @Test
+  public void blockWatermarkDoesNotChangeOnSecondBlock() {
+    insertValidator(PUBLIC_KEY, VALIDATOR_ID);
+    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+
+    insertBlockAt(UInt64.valueOf(3));
+    assertThat(findAllBlocks()).hasSize(1);
+    assertThat(getWatermark())
         .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, blockSlot, null, null));
+            new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
+
+    insertBlockAt(UInt64.valueOf(4));
+    assertThat(findAllBlocks()).hasSize(2);
+    assertThat(getWatermark())
+        .isEqualToComparingFieldByField(
+            new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
+
+    insertBlockAt(UInt64.valueOf(5));
+    assertThat(findAllBlocks()).hasSize(3);
+    assertThat(getWatermark())
+        .isEqualToComparingFieldByField(
+            new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
+
+  }
+
+  @Test
+  public void attestationWatermarkIsSetOnFirstAtestation() {
+    insertValidator(PUBLIC_KEY, VALIDATOR_ID);
+    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4));
+    assertThat(getWatermark())
+        .isEqualToComparingFieldByField(
+            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
   }
 
   @Test

@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.io.IOException;
 import java.net.URL;
@@ -26,7 +27,6 @@ import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
-import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIntegrationTest {
 
@@ -45,8 +45,8 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
                 Bytes.fromHexString(
                     "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
 
-    final Optional<SigningWatermark> watermark = jdbi.withHandle(h ->
-        lowWatermarkDao.findLowWatermarkForValidator(h, 1));
+    final Optional<SigningWatermark> watermark =
+        jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, 1));
     assertThat(watermark).isNotEmpty();
     assertThat(watermark.get().getSourceEpoch()).isNull();
     assertThat(watermark.get().getTargetEpoch()).isNull();
@@ -75,7 +75,6 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
             Optional.of(
                 Bytes.fromHexString(
                     "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850c")));
-
   }
 
   @Test
@@ -93,7 +92,6 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
             Optional.of(
                 Bytes.fromHexString(
                     "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
-
   }
 
   @Test
@@ -109,7 +107,6 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
     assertThat(attestationsInDb.get(0).getSigningRoot())
         .isEqualTo(Optional.of(Bytes.fromHexString("0x123456")));
-
   }
 
   @Test
@@ -125,7 +122,6 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     assertThat(attestationsInDb.get(0).getValidatorId()).isEqualTo(1);
     assertThat(attestationsInDb.get(0).getSigningRoot())
         .isEqualTo(Optional.of(Bytes.fromHexString("0x123456")));
-
   }
 
   @Test
@@ -142,7 +138,6 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12346));
     assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
     assertThat(blocksInDb.get(1).getSigningRoot()).isEmpty();
-
   }
 
   @Test
@@ -160,7 +155,6 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12346));
     assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
     assertThat(blocksInDb.get(1).getSigningRoot()).isEmpty();
-
   }
 
   @Test
@@ -180,7 +174,6 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     assertThat(attestationsInDb.get(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(8));
     assertThat(attestationsInDb.get(1).getValidatorId()).isEqualTo(1);
     assertThat(attestationsInDb.get(1).getSigningRoot()).isEmpty();
-
   }
 
   @Test
@@ -201,7 +194,6 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
     assertThat(attestationsInDb.get(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(8));
     assertThat(attestationsInDb.get(1).getValidatorId()).isEqualTo(1);
     assertThat(attestationsInDb.get(1).getSigningRoot()).isEmpty();
-
   }
 
   @Test
