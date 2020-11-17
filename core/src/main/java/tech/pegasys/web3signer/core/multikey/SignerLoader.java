@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,16 +34,24 @@ import org.apache.logging.log4j.Logger;
 public class SignerLoader {
 
   private static final Logger LOG = LogManager.getLogger();
+  private static final long FILES_PROCESSED_TO_REPORT = 10;
 
   public static Collection<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
 
+    LOG.info("Loading signer configuration files from {}", configsDirectory);
+    final AtomicLong configFilesHandled = new AtomicLong();
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
-          .parallel()
+          .collect(Collectors.toList())
+          .parallelStream()
           .filter(path -> matchesFileExtension(fileExtension, path))
           .flatMap(
               signerConfigFile -> {
+                final long filesProcessed = configFilesHandled.incrementAndGet();
+                if (filesProcessed % FILES_PROCESSED_TO_REPORT == 0) {
+                  LOG.info("{} signer configuration files processed", filesProcessed);
+                }
                 try {
                   return signerParser.parse(signerConfigFile).stream();
                 } catch (final Exception e) {
@@ -54,6 +63,9 @@ public class SignerLoader {
           .collect(Collectors.toSet());
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
+    } finally {
+      LOG.info(
+          "Loading signer configuration files completed with {} files", configFilesHandled.get());
     }
     return emptySet();
   }
