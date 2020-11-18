@@ -16,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
-import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.io.IOException;
 import java.net.URL;
@@ -44,13 +43,6 @@ public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIn
             Optional.of(
                 Bytes.fromHexString(
                     "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
-
-    final Optional<SigningWatermark> watermark =
-        jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, 1));
-    assertThat(watermark).isNotEmpty();
-    assertThat(watermark.get().getSourceEpoch()).isNull();
-    assertThat(watermark.get().getTargetEpoch()).isNull();
-    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(12345));
   }
 
   @Test
