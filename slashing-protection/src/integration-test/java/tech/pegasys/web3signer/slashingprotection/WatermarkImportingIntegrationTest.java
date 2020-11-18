@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -143,6 +144,31 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
+  }
+
+  @Test
+  public void emptyImportIsSuccessfulAndDoesnotUpdateWatermarks() throws JsonProcessingException {
+    insertValidator(PUBLIC_KEY, VALIDATOR_ID);
+    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), PUBLIC_KEY);
+    insertBlockAt(UInt64.valueOf(6), PUBLIC_KEY);
+
+    final InputStream input = createInputDataWith(emptyList(), emptyList());
+    slashingProtection.importData(input);
+    assertThat(getWatermark(VALIDATOR_ID))
+        .isEqualToComparingFieldByField(
+            new SigningWatermark(
+                VALIDATOR_ID, UInt64.valueOf(6), UInt64.valueOf(3), UInt64.valueOf(4)));
+  }
+
+  @Test
+  public void emptyImportToAnEmptyDatabaseIsSuccessfulAndDoesNotUpdateWatermark()
+      throws JsonProcessingException {
+    final InputStream input = createInputDataWith(emptyList(), emptyList());
+    slashingProtection.importData(input);
+    Optional<SigningWatermark> watermark =
+        jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
+    assertThat(watermark).isEmpty();
   }
 
   private InputStream createInputDataWith(
