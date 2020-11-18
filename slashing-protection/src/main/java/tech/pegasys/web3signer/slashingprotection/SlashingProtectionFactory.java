@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
@@ -37,6 +38,7 @@ public class SlashingProtectionFactory {
         new ValidatorsDao(),
         new SignedBlocksDao(),
         new SignedAttestationsDao(),
-        new MetadataDao());
+        new MetadataDao(),
+        new LowWatermarkDao());
   }
 }

@@ -12,12 +12,16 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -35,6 +39,9 @@ public class AttestationValidator {
   private final UInt64 targetEpoch;
   private final int validatorId;
   private final SignedAttestationsDao signedAttestationsDao;
+  private final LowWatermarkDao lowWatermarkDao;
+
+  private final Supplier<Optional<SigningWatermark>> watermarkSupplier;
 
   public AttestationValidator(
       final Handle handle,
@@ -43,7 +50,8 @@ public class AttestationValidator {
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch,
       final int validatorId,
-      final SignedAttestationsDao signedAttestationsDao) {
+      final SignedAttestationsDao signedAttestationsDao,
+      final LowWatermarkDao lowWatermarkDao) {
     this.handle = handle;
     this.publicKey = publicKey;
     this.signingRoot = signingRoot;
@@ -51,6 +59,10 @@ public class AttestationValidator {
     this.targetEpoch = targetEpoch;
     this.validatorId = validatorId;
     this.signedAttestationsDao = signedAttestationsDao;
+    this.lowWatermarkDao = lowWatermarkDao;
+
+    watermarkSupplier =
+        Suppliers.memoize(() -> lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId));
   }
 
   public boolean sourceGreaterThanTargetEpoch() {
@@ -65,16 +77,23 @@ public class AttestationValidator {
     return false;
   }
 
-  public boolean existsInDatabase() {
+  public boolean alreadyExists() {
     return signedAttestationsDao
         .findMatchingAttestation(handle, validatorId, targetEpoch, signingRoot)
         .isPresent();
   }
 
-  public void insertToDatabase() {
+  public void persist() {
     final SignedAttestation signedAttestation =
         new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
     signedAttestationsDao.insertAttestation(handle, signedAttestation);
+
+    // update the watermark if is otherwise blank (assumes database prevents xor on null for epochs)
+    if (watermarkSupplier.get().isEmpty()
+        || (watermarkSupplier.get().get().getSourceEpoch() == null
+            && watermarkSupplier.get().get().getTargetEpoch() == null)) {
+      lowWatermarkDao.updateEpochWatermarksFor(handle, validatorId, sourceEpoch, targetEpoch);
+    }
   }
 
   public boolean directlyConflictsWithExistingEntry() {
@@ -86,7 +105,7 @@ public class AttestationValidator {
 
   public boolean hasSourceOlderThanWatermark() {
     final Optional<UInt64> minimumSourceEpoch =
-        signedAttestationsDao.minimumSourceEpoch(handle, validatorId);
+        watermarkSupplier.get().map(SigningWatermark::getSourceEpoch);
     if (minimumSourceEpoch.map(minEpoch -> sourceEpoch.compareTo(minEpoch) < 0).orElse(false)) {
       LOG.warn(
           "Attestation source epoch {} is below minimum existing attestation source epoch {}",
@@ -99,7 +118,7 @@ public class AttestationValidator {
 
   public boolean hasTargetOlderThanWatermark() {
     final Optional<UInt64> minimumTargetEpoch =
-        signedAttestationsDao.minimumTargetEpoch(handle, validatorId);
+        watermarkSupplier.get().map(SigningWatermark::getTargetEpoch);
     if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).orElse(false)) {
       LOG.warn(
           "Attestation target epoch {} is below minimum existing attestation target epoch {}",

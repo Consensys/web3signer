@@ -12,11 +12,15 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -32,18 +36,25 @@ public class BlockValidator {
   private final UInt64 blockSlot;
   private final int validatorId;
   private final SignedBlocksDao signedBlocksDao;
+  private final LowWatermarkDao lowWatermarkDao;
+
+  private final Supplier<Optional<SigningWatermark>> watermarkSupplier;
 
   public BlockValidator(
       final Handle handle,
       final Bytes signingRoot,
       final UInt64 blockSlot,
       final int validatorId,
-      final SignedBlocksDao signedBlocksDao) {
+      final SignedBlocksDao signedBlocksDao,
+      final LowWatermarkDao lowWatermarkDao) {
     this.handle = handle;
     this.signingRoot = signingRoot;
     this.blockSlot = blockSlot;
     this.validatorId = validatorId;
     this.signedBlocksDao = signedBlocksDao;
+    this.lowWatermarkDao = lowWatermarkDao;
+    watermarkSupplier =
+        Suppliers.memoize(() -> lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId));
   }
 
   public boolean directlyConflictsWithExistingEntry() {
@@ -52,14 +63,14 @@ public class BlockValidator {
         .isEmpty();
   }
 
-  public boolean existsInDatabase() {
+  public boolean alreadyExists() {
     return signedBlocksDao
         .findMatchingBlock(handle, validatorId, blockSlot, signingRoot)
         .isPresent();
   }
 
   public boolean isOlderThanWatermark() {
-    final Optional<UInt64> minimumSlot = signedBlocksDao.minimumSlot(handle, validatorId);
+    final Optional<UInt64> minimumSlot = watermarkSupplier.get().map(SigningWatermark::getSlot);
     if (minimumSlot.map(slot -> blockSlot.compareTo(slot) <= 0).orElse(false)) {
       LOG.warn(
           "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
@@ -68,8 +79,13 @@ public class BlockValidator {
     return false;
   }
 
-  public void insertToDatabase() {
+  public void persist() {
     final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
     signedBlocksDao.insertBlockProposal(handle, signedBlock);
+
+    // update the watermark if is otherwise blank
+    if (watermarkSupplier.get().isEmpty() || (watermarkSupplier.get().get().getSlot() == null)) {
+      lowWatermarkDao.updateSlotWatermarkFor(handle, validatorId, blockSlot);
+    }
   }
 }

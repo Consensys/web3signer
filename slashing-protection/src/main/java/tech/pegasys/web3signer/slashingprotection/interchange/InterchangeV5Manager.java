@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
@@ -35,13 +36,20 @@ public class InterchangeV5Manager implements InterchangeManager {
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
       final MetadataDao metadataDao,
+      final LowWatermarkDao lowWatermarkDao,
       final ObjectMapper mapper) {
     exporter =
         new InterchangeV5Exporter(
             jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao, mapper);
     importer =
         new InterchangeV5Importer(
-            jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao, mapper);
+            jdbi,
+            validatorsDao,
+            signedBlocksDao,
+            signedAttestationsDao,
+            metadataDao,
+            lowWatermarkDao,
+            mapper);
   }
 
   @Override

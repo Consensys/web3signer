@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
@@ -21,6 +22,7 @@ import java.util.Optional;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import org.jdbi.v3.testing.JdbiRule;
 import org.jdbi.v3.testing.Migration;
 import org.junit.After;
@@ -143,6 +145,17 @@ public class LowWatermarkDaoTest {
     assertThat(secondValidator.get().getSlot()).isEqualTo(UInt64.valueOf(7));
     assertThat(secondValidator.get().getSourceEpoch()).isEqualTo(UInt64.valueOf(5));
     assertThat(secondValidator.get().getTargetEpoch()).isEqualTo(UInt64.valueOf(6));
+  }
+
+  @Test
+  public void ensureBothWatermarksMustBeNonNull() {
+    insertValidator(Bytes.of(100), 1);
+    assertThatThrownBy(
+            () -> lowWatermarkDao.updateEpochWatermarksFor(handle, 1, null, UInt64.valueOf(3)))
+        .isInstanceOf(UnableToExecuteStatementException.class);
+    assertThatThrownBy(
+            () -> lowWatermarkDao.updateEpochWatermarksFor(handle, 1, UInt64.valueOf(2), null))
+        .isInstanceOf(UnableToExecuteStatementException.class);
   }
 
   private void insertValidator(final Bytes publicKey, final int validatorId) {
