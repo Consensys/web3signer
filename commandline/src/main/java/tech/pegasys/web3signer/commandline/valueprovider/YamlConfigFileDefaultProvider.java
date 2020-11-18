@@ -19,8 +19,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -33,9 +35,11 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.logging.log4j.util.Strings;
 import picocli.CommandLine;
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.Model.ArgSpec;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Model.OptionSpec;
 import picocli.CommandLine.ParameterException;
 
@@ -111,8 +115,8 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
 
     // subcommands options
     final Set<String> subCommandsOptions =
-        commandLine.getSubcommands().values().stream()
-            .flatMap(YamlConfigFileDefaultProvider::subCommandOptions)
+        subCommandValues(commandLine)
+            .flatMap(YamlConfigFileDefaultProvider::allSubCommandOptions)
             .map(YamlConfigFileDefaultProvider::buildQualifiedOptionName)
             .collect(Collectors.toSet());
 
@@ -162,12 +166,26 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
     return String.valueOf(value);
   }
 
-  private static Stream<OptionSpec> subCommandOptions(final CommandLine subcommand) {
-    return subcommand.getCommandSpec().options().stream();
+  private static Stream<CommandLine> subCommandValues(final CommandLine c) {
+    return c.getSubcommands().values().stream();
+  }
+
+  private static Stream<OptionSpec> allSubCommandOptions(final CommandLine subcommand) {
+    return Stream.concat(
+        subcommand.getCommandSpec().options().stream(),
+        subCommandValues(subcommand).flatMap(YamlConfigFileDefaultProvider::allSubCommandOptions));
   }
 
   private static String buildQualifiedOptionName(final OptionSpec optionSpec) {
-    return optionSpec.command().name() + "." + buildOptionName(optionSpec);
+    final List<String> parents = new ArrayList<>();
+    CommandSpec command = optionSpec.command();
+    do {
+      parents.add(command.name());
+      command = command.parent();
+    } while (command.parent() != null);
+    Collections.reverse(parents);
+
+    return Strings.join(parents, '.') + "." + buildOptionName(optionSpec);
   }
 
   private static String buildOptionName(final OptionSpec optionSpec) {
