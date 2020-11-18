@@ -22,6 +22,7 @@ import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -117,7 +118,7 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
     final Set<String> subCommandsOptions =
         subCommandValues(commandLine)
             .flatMap(YamlConfigFileDefaultProvider::allSubCommandOptions)
-            .map(optionSpec -> buildQualifiedOptionName(optionSpec, commandLine.getCommandSpec()))
+            .map(YamlConfigFileDefaultProvider::buildQualifiedOptionName)
             .collect(Collectors.toSet());
 
     picoCliOptionsKeys.addAll(mainCommandOptions);
@@ -150,7 +151,7 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
       keyName = buildOptionName(optionSpec);
     } else {
       // subcommand option
-      keyName = buildQualifiedOptionName(optionSpec, commandLine.getCommandSpec());
+      keyName = buildQualifiedOptionName(optionSpec);
     }
 
     final Object value = result.get(keyName);
@@ -176,16 +177,13 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
         subCommandValues(subcommand).flatMap(YamlConfigFileDefaultProvider::allSubCommandOptions));
   }
 
-  private static String buildQualifiedOptionName(
-      final OptionSpec optionSpec, final CommandSpec baseCommandSpec) {
+  private static String buildQualifiedOptionName(final OptionSpec optionSpec) {
     final List<String> parents = new ArrayList<>();
     CommandSpec command = optionSpec.command();
     do {
-      if (!command.equals(baseCommandSpec)) {
-        parents.add(command.name());
-      }
+      parents.add(command.name());
       command = command.parent();
-    } while (command != null);
+    } while (command.parent() != null);
     Collections.reverse(parents);
 
     return Strings.join(parents, '.') + "." + buildOptionName(optionSpec);

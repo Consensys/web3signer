@@ -77,7 +77,7 @@ class YamlConfigFileDefaultProviderTest {
   }
 
   @Test
-  void valuesFromConfigFileWithSubSubcommandArePopulated(@TempDir final Path tempDir)
+  void valuesFromConfigFileWithNestedSubcommandArePopulated(@TempDir final Path tempDir)
       throws IOException {
     final String subcommandOptions =
         String.join(
