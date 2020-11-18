@@ -23,7 +23,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -82,6 +82,21 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
   }
 
   @Test
+  public void watermarkDoesNotMoveIfAnyImportedBlockIsLessThanPriorMax()
+      throws JsonProcessingException {
+    final UInt64 initialBlockSlot = UInt64.valueOf(3);
+    insertValidator(PUBLIC_KEY, VALIDATOR_ID);
+    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    insertBlockAt(initialBlockSlot, PUBLIC_KEY);
+    insertBlockAt(UInt64.valueOf(10), PUBLIC_KEY); // max = 10, watermark = 3 (As was first).
+    assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(initialBlockSlot);
+
+    final InputStream input = createInputDataWith(List.of(20, 9), emptyList());
+    slashingProtection.importData(input);
+    assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(3));
+  }
+
+  @Test
   public void importSetsAttestationWatermarkToMinimalValuesIfNoneExist()
       throws JsonProcessingException {
     final InputStream input =
@@ -131,7 +146,7 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
   }
 
   private InputStream createInputDataWith(
-      final List<Integer> blockSlots, final List<Entry<Integer, Integer>> attestations)
+      final List<Integer> blockSlots, final List<Map.Entry<Integer, Integer>> attestations)
       throws JsonProcessingException {
     final InterchangeV5Format importData =
         new InterchangeV5Format(

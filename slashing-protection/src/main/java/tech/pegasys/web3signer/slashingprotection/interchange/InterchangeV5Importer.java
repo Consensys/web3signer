@@ -16,7 +16,6 @@ import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
@@ -168,13 +167,13 @@ public class InterchangeV5Importer {
 
         minSlotTracker.trackValue(jsonBlock.getSlot());
       }
+    }
 
-      if (minSlotTracker.compareTrackedValueTo(highestPreImportBlockSlot) == 1) {
-        LOG.warn("Updating Block slot low watermark to {}",
-            minSlotTracker.getTrackedMinValue().get());
-        lowWatermarkDao.updateSlotWatermarkFor(h, validator.getId(),
-            minSlotTracker.getTrackedMinValue().get());
-      }
+    if (minSlotTracker.compareTrackedValueTo(highestPreImportBlockSlot) > 0) {
+      LOG.warn(
+          "Updating Block slot low watermark to {}", minSlotTracker.getTrackedMinValue().get());
+      lowWatermarkDao.updateSlotWatermarkFor(
+          h, validator.getId(), minSlotTracker.getTrackedMinValue().get());
     }
   }
 
@@ -182,11 +181,8 @@ public class InterchangeV5Importer {
       final Handle h, final Validator validator, final ArrayNode signedAttestationNode)
       throws JsonProcessingException {
 
-    final AttestationEpochManager attestationEpochManager = AttestationEpochManager.create(
-        signedAttestationsDao, lowWatermarkDao, validator, h);
-
-    final OptionalMinValueTracker minSourceTracker = new OptionalMinValueTracker();
-    final OptionalMinValueTracker minTargetTracker = new OptionalMinValueTracker();
+    final AttestationEpochManager attestationEpochManager =
+        AttestationEpochManager.create(signedAttestationsDao, lowWatermarkDao, validator, h);
 
     for (int i = 0; i < signedAttestationNode.size(); i++) {
       final SignedAttestation jsonAttestation =
@@ -243,8 +239,8 @@ public class InterchangeV5Importer {
                 jsonAttestation.getSourceEpoch(),
                 jsonAttestation.getTargetEpoch(),
                 jsonAttestation.getSigningRoot()));
-        attestationEpochManager
-            .trackEpochs(jsonAttestation.getSourceEpoch(), jsonAttestation.getTargetEpoch());
+        attestationEpochManager.trackEpochs(
+            jsonAttestation.getSourceEpoch(), jsonAttestation.getTargetEpoch());
       }
     }
     attestationEpochManager.persist();

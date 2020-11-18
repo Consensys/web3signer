@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.slashingprotection.interchange;
 
 import java.util.Optional;
 
-import org.apache.logging.log4j.util.PropertySource.Comparator;
 import org.apache.tuweni.units.bigints.UInt64;
 
 public class OptionalMinValueTracker {
@@ -22,7 +21,7 @@ public class OptionalMinValueTracker {
   private Optional<UInt64> trackedMinValue = Optional.empty();
 
   public void trackValue(final UInt64 value) {
-    if(trackedMinValue.isEmpty() || value.compareTo(trackedMinValue.get()) < 0) {
+    if (trackedMinValue.isEmpty() || value.compareTo(trackedMinValue.get()) < 0) {
       trackedMinValue = Optional.of(value);
     }
   }
