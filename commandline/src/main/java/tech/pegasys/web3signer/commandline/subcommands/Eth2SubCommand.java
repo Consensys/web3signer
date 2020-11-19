@@ -42,7 +42,10 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Spec CommandSpec spec;
 
-  @Command(name = "export", description = "Export slashing protection db to json file")
+  @Command(
+      name = "export",
+      description = "Export slashing protection db to json file",
+      mixinStandardHelpOptions = true)
   public void exportSlashingDb(@Option(names = "--to") File output) {
     final SlashingProtection slashingProtection =
         createSlashingProtection(
@@ -54,7 +57,10 @@ public class Eth2SubCommand extends ModeSubCommand {
     }
   }
 
-  @Command(name = "import", description = "Import json file to the slashing protection db")
+  @Command(
+      name = "import",
+      description = "Import json file to the slashing protection db",
+      mixinStandardHelpOptions = true)
   public void importSlashingDb(@Option(names = "--from") File input) {
     final SlashingProtection slashingProtection =
         createSlashingProtection(

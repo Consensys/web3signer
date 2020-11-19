@@ -16,9 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
@@ -41,8 +39,6 @@ public class InterchangeBaseIntegrationTest {
 
   protected final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
 
-  protected final SignedBlocksDao signedBlocks = new SignedBlocksDao();
-  protected final SignedAttestationsDao signedAttestations = new SignedAttestationsDao();
   protected final ValidatorsDao validators = new ValidatorsDao();
   protected final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
 
@@ -51,8 +47,8 @@ public class InterchangeBaseIntegrationTest {
   protected Jdbi jdbi;
   protected SlashingProtection slashingProtection;
 
-  private static final String USERNAME = "postgres";
-  private static final String PASSWORD = "postgres";
+  protected static final String USERNAME = "postgres";
+  protected static final String PASSWORD = "postgres";
   protected static final String GENESIS_VALIDATORS_ROOT =
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
   protected static final Bytes32 GVR = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);

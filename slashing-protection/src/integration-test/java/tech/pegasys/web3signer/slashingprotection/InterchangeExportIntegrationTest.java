@@ -16,13 +16,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
+import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.InterchangeV5Format;
@@ -30,7 +30,6 @@ import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 
 public class InterchangeExportIntegrationTest extends InterchangeBaseIntegrationTest {
@@ -39,13 +38,6 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
 
   @Test
   void canCreateDatabaseWithEntries() throws IOException {
-    final EmbeddedPostgres db = setup();
-
-    final String databaseUrl =
-        String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-
-    final Jdbi jdbi = DbConnection.createConnection(databaseUrl, "postgres", "postgres");
-
     final Bytes32 gvr = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
     jdbi.useTransaction(h -> metadata.insertGenesisValidatorsRoot(h, gvr));
 
@@ -56,41 +48,23 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
     for (int i = 0; i < VALIDATOR_COUNT; i++) {
       final int validatorId = i + 1;
       final Bytes validatorPublicKey = Bytes.of(validatorId);
-      jdbi.useTransaction(h -> validators.registerValidators(h, List.of(validatorPublicKey)));
+      slashingProtection.registerValidators(List.of(validatorPublicKey));
+
+      for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
+        insertBlockAt(UInt64.valueOf(b), validatorPublicKey);
+      }
+      for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
+        insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a), validatorPublicKey);
+      }
+
       jdbi.useTransaction(
           h -> {
-            for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
-              signedBlocks.insertBlockProposal(
-                  h, new SignedBlock(validatorId, UInt64.valueOf(b), Bytes.fromHexString("0x01")));
-            }
+            lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, UInt64.ZERO);
+            lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, UInt64.ZERO, UInt64.ZERO);
           });
-      jdbi.useTransaction(
-          h -> {
-            for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
-              signedAttestations.insertAttestation(
-                  h,
-                  new SignedAttestation(
-                      validatorId,
-                      UInt64.valueOf(a),
-                      UInt64.valueOf(a),
-                      Bytes.fromHexString("0x01")));
-            }
-          });
-      jdbi.useTransaction(h ->
-          lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, UInt64.ZERO));
-      jdbi.useTransaction(h ->
-          lowWatermarkDao
-              .updateEpochWatermarksFor(h, validatorId, UInt64.ZERO, UInt64.ZERO));
     }
 
-    final OutputStream exportOutput = new ByteArrayOutputStream();
-    final SlashingProtection slashingProtection =
-        SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
-    slashingProtection.export(exportOutput);
-    exportOutput.close();
-
-    final InterchangeV5Format outputObject =
-        mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
+    final InterchangeV5Format outputObject = getExportObjectFromDatabase();
 
     assertThat(outputObject.getMetadata().getFormatVersionAsString()).isEqualTo("5");
     assertThat(outputObject.getMetadata().getGenesisValidatorsRoot()).isEqualTo(gvr);
@@ -105,7 +79,7 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
       for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
         final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock block =
             signedArtifact.getSignedBlocks().get(b);
-        assertThat(block.getSigningRoot()).isEqualTo(Bytes.fromHexString("0x01"));
+        assertThat(block.getSigningRoot()).isEqualTo(Bytes.of(100));
         assertThat(block.getSlot()).isEqualTo(UInt64.valueOf(b));
       }
 
@@ -113,7 +87,7 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
       for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
         final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation
             attestation = signedArtifact.getSignedAttestations().get(a);
-        assertThat(attestation.getSigningRoot()).isEqualTo(Bytes.fromHexString("0x01"));
+        assertThat(attestation.getSigningRoot()).isEqualTo(Bytes.of(100));
         assertThat(attestation.getSourceEpoch()).isEqualTo(UInt64.valueOf(a));
         assertThat(attestation.getTargetEpoch()).isEqualTo(UInt64.valueOf(a));
       }
@@ -133,6 +107,84 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
         .isInstanceOf(RuntimeException.class);
     exportOutput.close();
     assertThat(exportOutput.toString()).isEmpty();
+  }
+
+  @Test
+  void onlyExportBlocksWithSlotEqualToOrGreaterThanEpoch() throws IOException {
+    final int TOTAL_BLOCKS_SIGNED = 6;
+    final UInt64 BLOCK_SLOT_WATER_MARK = UInt64.valueOf(3);
+    final Bytes validatorPublicKey = Bytes.of(1);
+    slashingProtection.registerValidators(List.of(validatorPublicKey));
+    for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
+      insertBlockAt(UInt64.valueOf(b), validatorPublicKey);
+    }
+    jdbi.useTransaction(h -> lowWatermarkDao.updateSlotWatermarkFor(h, 1, BLOCK_SLOT_WATER_MARK));
+
+    final InterchangeV5Format outputObject = getExportObjectFromDatabase();
+
+    assertThat(outputObject.getSignedArtifacts()).hasSize(1);
+    assertThat(outputObject.getSignedArtifacts().get(0).getSignedBlocks())
+        .hasSize(TOTAL_BLOCKS_SIGNED - BLOCK_SLOT_WATER_MARK.intValue());
+
+    final Optional<UInt64> minBlockSlotInExport =
+        outputObject.getSignedArtifacts().get(0).getSignedBlocks().stream()
+            .map(SignedBlock::getSlot)
+            .min(UInt64::compareTo);
+    assertThat(minBlockSlotInExport).isNotEmpty();
+    assertThat(minBlockSlotInExport.get()).isEqualTo(BLOCK_SLOT_WATER_MARK);
+  }
+
+  @Test
+  void onlyAttestationsWhichAreAboveBothSourceAndTargetWatermarksAreImported() throws IOException {
+    final Bytes validatorPublicKey = Bytes.of(1);
+    slashingProtection.registerValidators(List.of(validatorPublicKey));
+    final int TOTAL_ATTESTATIONS_SIGNED = 6;
+    final int EPOCH_OFFSET = 10;
+    final UInt64 ATTESTATION_SLOT_WATER_MARK = UInt64.valueOf(3);
+    for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
+      insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a + EPOCH_OFFSET), validatorPublicKey);
+    }
+    // this is an illegal watermark, but means no checks will fail against the target epoch.
+    jdbi.useTransaction(
+        h ->
+            lowWatermarkDao.updateEpochWatermarksFor(
+                h, 1, ATTESTATION_SLOT_WATER_MARK, UInt64.valueOf(0)));
+
+    final InterchangeV5Format outputObject = getExportObjectFromDatabase();
+    assertThat(outputObject.getSignedArtifacts()).hasSize(1);
+    assertThat(outputObject.getSignedArtifacts().get(0).getSignedAttestations())
+        .hasSize(TOTAL_ATTESTATIONS_SIGNED - ATTESTATION_SLOT_WATER_MARK.intValue());
+  }
+
+  @Test
+  void onlyAttestationsWhichAreAboveBothSourceAndTargetWatermarksAreImportedTargetOnly()
+      throws IOException {
+    final Bytes validatorPublicKey = Bytes.of(1);
+    slashingProtection.registerValidators(List.of(validatorPublicKey));
+    final int TOTAL_ATTESTATIONS_SIGNED = 6;
+    final int EPOCH_OFFSET = 10;
+    final UInt64 ATTESTATION_SLOT_WATER_MARK = UInt64.valueOf(12);
+    for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
+      insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a + EPOCH_OFFSET), validatorPublicKey);
+    }
+    // this is an illegal watermark, but means no checks will fail against the target epoch.
+    jdbi.useTransaction(
+        h ->
+            lowWatermarkDao.updateEpochWatermarksFor(
+                h, 1, UInt64.valueOf(0), ATTESTATION_SLOT_WATER_MARK));
+
+    final InterchangeV5Format outputObject = getExportObjectFromDatabase();
+    assertThat(outputObject.getSignedArtifacts()).hasSize(1);
+    assertThat(outputObject.getSignedArtifacts().get(0).getSignedAttestations())
+        .hasSize(TOTAL_ATTESTATIONS_SIGNED + EPOCH_OFFSET - ATTESTATION_SLOT_WATER_MARK.intValue());
+  }
+
+  private InterchangeV5Format getExportObjectFromDatabase() throws IOException {
+    final OutputStream exportOutput = new ByteArrayOutputStream();
+    slashingProtection.export(exportOutput);
+    exportOutput.close();
+
+    return mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
   }
 
   private String getDatabaseUrl(final EmbeddedPostgres db) {
