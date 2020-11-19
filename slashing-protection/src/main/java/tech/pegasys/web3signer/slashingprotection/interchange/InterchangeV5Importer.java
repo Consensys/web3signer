@@ -16,6 +16,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
@@ -39,7 +40,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
@@ -130,8 +130,6 @@ public class InterchangeV5Importer {
   private void importBlocks(
       final Handle h, final Validator validator, final ArrayNode signedBlocksNode)
       throws JsonProcessingException {
-    final Optional<UInt64> highestPreImportBlockSlot =
-        signedBlocksDao.maximumSlot(h, validator.getId());
 
     final OptionalMinValueTracker minSlotTracker = new OptionalMinValueTracker();
 
@@ -169,7 +167,10 @@ public class InterchangeV5Importer {
       }
     }
 
-    if (minSlotTracker.compareTrackedValueTo(highestPreImportBlockSlot) > 0) {
+    final Optional<SigningWatermark> watermark =
+        lowWatermarkDao.findLowWatermarkForValidator(h, validator.getId());
+
+    if (minSlotTracker.compareTrackedValueTo(watermark.map(SigningWatermark::getSlot)) > 0) {
       LOG.warn(
           "Updating Block slot low watermark to {}", minSlotTracker.getTrackedMinValue().get());
       lowWatermarkDao.updateSlotWatermarkFor(
@@ -178,18 +179,18 @@ public class InterchangeV5Importer {
   }
 
   private void importAttestations(
-      final Handle h, final Validator validator, final ArrayNode signedAttestationNode)
+      final Handle handle, final Validator validator, final ArrayNode signedAttestationNode)
       throws JsonProcessingException {
 
     final AttestationEpochManager attestationEpochManager =
-        AttestationEpochManager.create(signedAttestationsDao, lowWatermarkDao, validator, h);
+        new AttestationEpochManager(lowWatermarkDao, validator, handle);
 
     for (int i = 0; i < signedAttestationNode.size(); i++) {
       final SignedAttestation jsonAttestation =
           mapper.treeToValue(signedAttestationNode.get(i), SignedAttestation.class);
       final AttestationValidator attestationValidator =
           new AttestationValidator(
-              h,
+              handle,
               validator.getPublicKey(),
               jsonAttestation.getSigningRoot(),
               jsonAttestation.getSourceEpoch(),
@@ -233,7 +234,7 @@ public class InterchangeV5Importer {
             validator.getPublicKey());
       } else {
         signedAttestationsDao.insertAttestation(
-            h,
+            handle,
             new tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation(
                 validator.getId(),
                 jsonAttestation.getSourceEpoch(),

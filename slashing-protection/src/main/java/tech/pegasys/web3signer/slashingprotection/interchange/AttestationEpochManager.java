@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 
@@ -29,40 +28,17 @@ public class AttestationEpochManager {
   private static final Logger LOG = LogManager.getLogger();
 
   private final LowWatermarkDao lowWatermarkDao;
-
-  private final Optional<UInt64> highestSourceEpoch;
-  private final Optional<UInt64> highestTargetEpoch;
-  private final Handle h;
+  private final Handle handle;
   private final Validator validator;
 
   final OptionalMinValueTracker minSourceTracker = new OptionalMinValueTracker();
   final OptionalMinValueTracker minTargetTracker = new OptionalMinValueTracker();
 
-  private AttestationEpochManager(
-      final LowWatermarkDao lowWatermarkDao,
-      final Optional<UInt64> highestSourceEpoch,
-      final Optional<UInt64> highestTargetEpoch,
-      final Validator validator,
-      final Handle h) {
+  public AttestationEpochManager(
+      final LowWatermarkDao lowWatermarkDao, final Validator validator, final Handle handle) {
     this.lowWatermarkDao = lowWatermarkDao;
-    this.highestSourceEpoch = highestSourceEpoch;
-    this.highestTargetEpoch = highestTargetEpoch;
-    this.h = h;
+    this.handle = handle;
     this.validator = validator;
-  }
-
-  public static AttestationEpochManager create(
-      final SignedAttestationsDao signedAttestationsDao,
-      final LowWatermarkDao lowWatermarkDao,
-      final Validator validator,
-      final Handle h) {
-    final Optional<UInt64> maxTargetEpoch =
-        signedAttestationsDao.maximumTargetEpoch(h, validator.getId());
-    final Optional<UInt64> maxSourceEpoch =
-        signedAttestationsDao.maximumSourceEpoch(h, validator.getId());
-
-    return new AttestationEpochManager(
-        lowWatermarkDao, maxSourceEpoch, maxTargetEpoch, validator, h);
   }
 
   public void trackEpochs(final UInt64 importedSourceEpoch, final UInt64 importedTargetEpoch) {
@@ -72,7 +48,7 @@ public class AttestationEpochManager {
 
   public void persist() {
     final Optional<SigningWatermark> existingWatermark =
-        lowWatermarkDao.findLowWatermarkForValidator(h, validator.getId());
+        lowWatermarkDao.findLowWatermarkForValidator(handle, validator.getId());
 
     final Optional<UInt64> newSourceWatermark =
         findBestSourceEpochWatermark(
@@ -93,7 +69,7 @@ public class AttestationEpochManager {
           validator.getPublicKey(),
           newTargetWatermark.get());
       lowWatermarkDao.updateEpochWatermarksFor(
-          h, validator.getId(), newSourceWatermark.get(), newTargetWatermark.get());
+          handle, validator.getId(), newSourceWatermark.get(), newTargetWatermark.get());
     } else if (newSourceWatermark.isPresent() != newTargetWatermark.isPresent()) {
       throw new RuntimeException(
           "Inconsistent data - no existing attestation watermark, "
@@ -102,7 +78,7 @@ public class AttestationEpochManager {
   }
 
   private Optional<UInt64> findBestSourceEpochWatermark(final Optional<UInt64> currentWatermark) {
-    if (minSourceTracker.compareTrackedValueTo(highestSourceEpoch) > 0) {
+    if (minSourceTracker.compareTrackedValueTo(currentWatermark) > 0) {
       return minSourceTracker.getTrackedMinValue();
     } else {
       return currentWatermark;
@@ -110,7 +86,7 @@ public class AttestationEpochManager {
   }
 
   private Optional<UInt64> findBestTargetEpochWatermark(final Optional<UInt64> currentWatermark) {
-    if (minTargetTracker.compareTrackedValueTo(highestTargetEpoch) > 0) {
+    if (minTargetTracker.compareTrackedValueTo(currentWatermark) > 0) {
       return minTargetTracker.getTrackedMinValue();
     } else {
       return currentWatermark;

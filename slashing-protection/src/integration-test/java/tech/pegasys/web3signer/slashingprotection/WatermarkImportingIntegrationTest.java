@@ -53,23 +53,21 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
   }
 
   @Test
-  public void
-      blockWaterMarkIsUpdatedIfImportHasSmallestMinimumBlockLargerValueThanExistingMaxBlock()
-          throws JsonProcessingException {
-    final UInt64 initialBlockSlot = UInt64.valueOf(3);
+  public void blockWaterMarkIsUpdatedIfImportMinimumBlockLargerThanCurrentWatermark()
+      throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertBlockAt(initialBlockSlot, PUBLIC_KEY);
+    insertBlockAt(UInt64.valueOf(3), PUBLIC_KEY);
     insertBlockAt(UInt64.valueOf(10), PUBLIC_KEY); // max = 10, watermark = 3 (As was first).
-    assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(initialBlockSlot);
+    assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(3));
 
-    final InputStream input = createInputDataWith(List.of(20, 19), emptyList());
+    final InputStream input = createInputDataWith(List.of(4, 8), emptyList());
     slashingProtection.importData(input);
-    assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(19));
+    assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(4));
   }
 
   @Test
-  public void blockWatermarkIsNotUpdatedIfLowestBlockInImportIsLowerThanHighestBlock()
+  public void blockWatermarkIsNotUpdatedIfLowestBlockInImportIsLowerThanCurrentWatermark()
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
@@ -77,13 +75,13 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
     insertBlockAt(UInt64.valueOf(10), PUBLIC_KEY);
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(3));
 
-    final InputStream input = createInputDataWith(List.of(6, 50), emptyList());
+    final InputStream input = createInputDataWith(List.of(2, 50), emptyList());
     slashingProtection.importData(input);
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(3));
   }
 
   @Test
-  public void watermarkDoesNotMoveIfAnyImportedBlockIsLessThanPriorMax()
+  public void watermarkDoesNotMoveIfAnyImportedBlockIsLessThanCurrentWatermark()
       throws JsonProcessingException {
     final UInt64 initialBlockSlot = UInt64.valueOf(3);
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
@@ -92,7 +90,7 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
     insertBlockAt(UInt64.valueOf(10), PUBLIC_KEY); // max = 10, watermark = 3 (As was first).
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(initialBlockSlot);
 
-    final InputStream input = createInputDataWith(List.of(20, 9), emptyList());
+    final InputStream input = createInputDataWith(List.of(50, 2), emptyList());
     slashingProtection.importData(input);
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(3));
   }
@@ -132,14 +130,14 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
   }
 
   @Test
-  public void importDataIsLowerThanMaxDoesNotResultInChangeToAttestationWatermark()
+  public void importDataIsLowerThanCurrentWatermarkDoesNotResultInChangeToAttestationWatermark()
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
     insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), PUBLIC_KEY);
     insertAttestationAt(UInt64.valueOf(9), UInt64.valueOf(10), PUBLIC_KEY);
 
-    final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(7, 8)));
+    final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(1, 2)));
     slashingProtection.importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
@@ -147,7 +145,37 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
   }
 
   @Test
-  public void emptyImportIsSuccessfulAndDoesnotUpdateWatermarks() throws JsonProcessingException {
+  public void onlyTargetEpochCanBeUpdated() throws JsonProcessingException {
+    insertValidator(PUBLIC_KEY, VALIDATOR_ID);
+    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), PUBLIC_KEY);
+    insertAttestationAt(UInt64.valueOf(9), UInt64.valueOf(10), PUBLIC_KEY);
+
+    final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(3, 12)));
+
+    slashingProtection.importData(input);
+    assertThat(getWatermark(VALIDATOR_ID))
+        .isEqualToComparingFieldByField(
+            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(12)));
+  }
+
+  @Test
+  public void onlySourceEpochCanBeUpdated() throws JsonProcessingException {
+    insertValidator(PUBLIC_KEY, VALIDATOR_ID);
+    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(6), PUBLIC_KEY);
+    insertAttestationAt(UInt64.valueOf(7), UInt64.valueOf(10), PUBLIC_KEY);
+
+    final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(4, 5)));
+
+    slashingProtection.importData(input);
+    assertThat(getWatermark(VALIDATOR_ID))
+        .isEqualToComparingFieldByField(
+            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(4), UInt64.valueOf(6)));
+  }
+
+  @Test
+  public void emptyImportIsSuccessfulAndDoesNotUpdateWatermarks() throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
     insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), PUBLIC_KEY);
