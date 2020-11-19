@@ -40,6 +40,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
@@ -183,8 +184,8 @@ public class InterchangeV5Importer {
       final Handle handle, final Validator validator, final ArrayNode signedAttestationNode)
       throws JsonProcessingException {
 
-    final AttestationWatermarkUpdater attestationWatermarkUpdater =
-        new AttestationWatermarkUpdater(lowWatermarkDao, validator, handle);
+    final OptionalMinValueTracker minSourceTracker = new OptionalMinValueTracker();
+    final OptionalMinValueTracker minTargetTracker = new OptionalMinValueTracker();
 
     for (int i = 0; i < signedAttestationNode.size(); i++) {
       final SignedAttestation jsonAttestation =
@@ -241,10 +242,56 @@ public class InterchangeV5Importer {
                 jsonAttestation.getSourceEpoch(),
                 jsonAttestation.getTargetEpoch(),
                 jsonAttestation.getSigningRoot()));
-        attestationWatermarkUpdater.trackEpochs(
-            jsonAttestation.getSourceEpoch(), jsonAttestation.getTargetEpoch());
+        minSourceTracker.trackValue(jsonAttestation.getSourceEpoch());
+        minTargetTracker.trackValue(jsonAttestation.getTargetEpoch());
       }
     }
-    attestationWatermarkUpdater.persist();
+    persist(handle, validator, minSourceTracker, minTargetTracker);
+  }
+
+  public void persist(
+      final Handle handle,
+      final Validator validator,
+      final OptionalMinValueTracker minSourceTracker,
+      final OptionalMinValueTracker minTargetTracker) {
+    final Optional<SigningWatermark> existingWatermark =
+        lowWatermarkDao.findLowWatermarkForValidator(handle, validator.getId());
+
+    final Optional<UInt64> newSourceWatermark =
+        findBestEpochWatermark(
+            minSourceTracker,
+            existingWatermark.flatMap(
+                watermark -> Optional.ofNullable(watermark.getSourceEpoch())));
+    final Optional<UInt64> newTargetWatermark =
+        findBestEpochWatermark(
+            minTargetTracker,
+            existingWatermark.flatMap(
+                watermark -> Optional.ofNullable(watermark.getTargetEpoch())));
+
+    if (newSourceWatermark.isPresent() && newTargetWatermark.isPresent()) {
+      LOG.info(
+          "Updating validator {} source epoch to {}",
+          validator.getPublicKey(),
+          newSourceWatermark.get());
+      LOG.info(
+          "Updating validator {} target epoch to {}",
+          validator.getPublicKey(),
+          newTargetWatermark.get());
+      lowWatermarkDao.updateEpochWatermarksFor(
+          handle, validator.getId(), newSourceWatermark.get(), newTargetWatermark.get());
+    } else if (newSourceWatermark.isPresent() != newTargetWatermark.isPresent()) {
+      throw new RuntimeException(
+          "Inconsistent data - no existing attestation watermark, "
+              + "and import only sets one epoch");
+    }
+  }
+
+  private Optional<UInt64> findBestEpochWatermark(
+      final OptionalMinValueTracker importedMin, final Optional<UInt64> currentWatermark) {
+    if (importedMin.compareTrackedValueTo(currentWatermark) > 0) {
+      return importedMin.getTrackedMinValue();
+    } else {
+      return currentWatermark;
+    }
   }
 }
