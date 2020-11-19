@@ -167,7 +167,7 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
     for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
       insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a + EPOCH_OFFSET), validatorPublicKey);
     }
-    // this is an illegal watermark, but means no checks will fail against the target epoch.
+    // this is an illegal watermark, but means no checks will fail against the source epoch.
     jdbi.useTransaction(
         h ->
             lowWatermarkDao.updateEpochWatermarksFor(

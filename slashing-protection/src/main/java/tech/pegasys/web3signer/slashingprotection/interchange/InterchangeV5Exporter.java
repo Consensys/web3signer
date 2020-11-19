@@ -173,7 +173,7 @@ public class InterchangeV5Exporter {
 
     if (watermark.getSourceEpoch() == null || watermark.getTargetEpoch() == null) {
       LOG.warn(
-          "Missing epoch low watermark for {}, producing empty attestation listing",
+          "Missing attestation low watermark for {}, producing empty attestation listing",
           validator.getPublicKey());
     }
 
