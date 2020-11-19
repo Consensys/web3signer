@@ -122,14 +122,6 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void determinesMinimumSlot() {
-    insertValidator(Bytes.of(100), 1);
-    insertBlock(1, 2, null);
-    insertBlock(1, 3, null);
-    assertThat(signedBlocksDao.minimumSlot(handle, 1)).hasValue(UInt64.valueOf(2));
-  }
-
-  @Test
   public void allNonNullEntriesAtTargetEpochAreReturnedIfCheckingAgainstNull() {
     insertValidator(Bytes.of(100), 1);
     insertBlock(1, 3, Bytes.of(10));

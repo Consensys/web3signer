@@ -137,20 +137,4 @@ public class SignedAttestationsDao {
                 + "FROM signed_attestations WHERE validator_id = ?")
         .bind(0, validatorId).mapToBean(SignedAttestation.class).stream();
   }
-
-  public Optional<UInt64> minimumSourceEpoch(final Handle handle, final int validatorId) {
-    return handle
-        .createQuery("SELECT MIN(source_epoch) FROM signed_attestations WHERE validator_id = ?")
-        .bind(0, validatorId)
-        .mapTo(UInt64.class)
-        .findFirst();
-  }
-
-  public Optional<UInt64> minimumTargetEpoch(final Handle handle, final int validatorId) {
-    return handle
-        .createQuery("SELECT MIN(target_epoch) FROM signed_attestations WHERE validator_id = ?")
-        .bind(0, validatorId)
-        .mapTo(UInt64.class)
-        .findFirst();
-  }
 }
