@@ -12,9 +12,11 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
@@ -43,6 +45,7 @@ public class InterchangeV5Exporter {
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
   private final MetadataDao metadataDao;
+  private final LowWatermarkDao lowWatermarkDao;
   private final ObjectMapper mapper;
 
   public InterchangeV5Exporter(
@@ -51,12 +54,14 @@ public class InterchangeV5Exporter {
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
       final MetadataDao metadataDao,
+      final LowWatermarkDao lowWatermarkDao,
       final ObjectMapper mapper) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
     this.metadataDao = metadataDao;
+    this.lowWatermarkDao = lowWatermarkDao;
     this.mapper = mapper;
   }
 
@@ -102,58 +107,101 @@ public class InterchangeV5Exporter {
   }
 
   private void populateValidatorRecord(
-      final Handle h, final Validator validator, final JsonGenerator jsonGenerator)
+      final Handle handle, final Validator validator, final JsonGenerator jsonGenerator)
       throws IOException {
     jsonGenerator.writeStartObject();
     jsonGenerator.writeStringField("pubkey", validator.getPublicKey().toHexString());
-    writeBlocks(h, validator, jsonGenerator);
-    writeAttestations(h, validator, jsonGenerator);
+    final Optional<SigningWatermark> watermark =
+        lowWatermarkDao.findLowWatermarkForValidator(handle, validator.getId());
+    if (watermark.isEmpty()) {
+      LOG.warn("No low watermark available, producing empty export.");
+    } else {
+      writeBlocks(handle, watermark.get(), validator, jsonGenerator);
+      writeAttestations(handle, watermark.get(), validator, jsonGenerator);
+    }
     jsonGenerator.writeEndObject();
   }
 
   private void writeBlocks(
-      final Handle h, final Validator validator, final JsonGenerator jsonGenerator)
+      final Handle handle,
+      final SigningWatermark watermark,
+      final Validator validator,
+      final JsonGenerator jsonGenerator)
       throws IOException {
     jsonGenerator.writeArrayFieldStart("signed_blocks");
 
-    signedBlocksDao
-        .findAllBlockSignedBy(h, validator.getId())
-        .forEach(
-            b -> {
-              final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock
-                  jsonBlock =
-                      new tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock(
-                          b.getSlot(), b.getSigningRoot().orElse(null));
-              try {
-                mapper.writeValue(jsonGenerator, jsonBlock);
-              } catch (final IOException e) {
-                throw new UncheckedIOException(
-                    "Failed to construct a signed_blocks entry in json", e);
-              }
-            });
+    if (watermark.getSlot() == null) {
+      LOG.warn(
+          "No block slot low watermark exists for {}, producing empty block listing",
+          validator.getPublicKey());
+    } else {
+
+      signedBlocksDao
+          .findAllBlockSignedBy(handle, validator.getId())
+          .forEach(
+              b -> {
+                if (b.getSlot().compareTo(watermark.getSlot()) >= 0) {
+                  final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock
+                      jsonBlock =
+                          new tech.pegasys.web3signer.slashingprotection.interchange.model
+                              .SignedBlock(b.getSlot(), b.getSigningRoot().orElse(null));
+                  try {
+                    mapper.writeValue(jsonGenerator, jsonBlock);
+                  } catch (final IOException e) {
+                    throw new UncheckedIOException(
+                        "Failed to construct a signed_blocks entry in json", e);
+                  }
+                } else {
+                  LOG.debug(
+                      "Ignoring block in slot {} for validator {}, as is below watermark",
+                      b.getSlot(),
+                      validator.getPublicKey());
+                }
+              });
+    }
 
     jsonGenerator.writeEndArray();
   }
 
   private void writeAttestations(
-      final Handle h, final Validator validator, final JsonGenerator jsonGenerator)
+      final Handle handle,
+      final SigningWatermark watermark,
+      final Validator validator,
+      final JsonGenerator jsonGenerator)
       throws IOException {
     jsonGenerator.writeArrayFieldStart("signed_attestations");
 
+    if (watermark.getSourceEpoch() == null || watermark.getTargetEpoch() == null) {
+      LOG.warn(
+          "Missing epoch low watermark for {}, producing empty attestation listing",
+          validator.getPublicKey());
+    }
+
     signedAttestationsDao
-        .findAllAttestationsSignedBy(h, validator.getId())
+        .findAllAttestationsSignedBy(handle, validator.getId())
         .forEach(
             a -> {
-              final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation
-                  jsonAttestation =
-                      new tech.pegasys.web3signer.slashingprotection.interchange.model
-                          .SignedAttestation(
-                          a.getSourceEpoch(), a.getTargetEpoch(), a.getSigningRoot().orElse(null));
-              try {
-                mapper.writeValue(jsonGenerator, jsonAttestation);
-              } catch (final IOException e) {
-                throw new UncheckedIOException(
-                    "Failed to construct a signed_attestations entry in json", e);
+              if ((a.getSourceEpoch().compareTo(watermark.getSourceEpoch()) >= 0)
+                  && (a.getTargetEpoch().compareTo(watermark.getTargetEpoch()) >= 0)) {
+                final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation
+                    jsonAttestation =
+                        new tech.pegasys.web3signer.slashingprotection.interchange.model
+                            .SignedAttestation(
+                            a.getSourceEpoch(),
+                            a.getTargetEpoch(),
+                            a.getSigningRoot().orElse(null));
+                try {
+                  mapper.writeValue(jsonGenerator, jsonAttestation);
+                } catch (final IOException e) {
+                  throw new UncheckedIOException(
+                      "Failed to construct a signed_attestations entry in json", e);
+                }
+              } else {
+                LOG.debug(
+                    "Ignoring attestation with source epoch {}, and taget epoch {}, for validator {}, as is below watermark",
+                    a.getSourceEpoch(),
+                    a.getTargetEpoch(),
+                    validator.getPublicKey());
               }
             });
     jsonGenerator.writeEndArray();

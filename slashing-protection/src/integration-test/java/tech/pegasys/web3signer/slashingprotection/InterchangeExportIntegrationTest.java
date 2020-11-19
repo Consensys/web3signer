@@ -76,6 +76,11 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
                       Bytes.fromHexString("0x01")));
             }
           });
+      jdbi.useTransaction(h ->
+          lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, UInt64.ZERO));
+      jdbi.useTransaction(h ->
+          lowWatermarkDao
+              .updateEpochWatermarksFor(h, validatorId, UInt64.ZERO, UInt64.ZERO));
     }
 
     final OutputStream exportOutput = new ByteArrayOutputStream();
