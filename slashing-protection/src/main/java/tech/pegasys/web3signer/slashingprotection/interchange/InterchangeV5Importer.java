@@ -246,10 +246,10 @@ public class InterchangeV5Importer {
         minTargetTracker.trackValue(jsonAttestation.getTargetEpoch());
       }
     }
-    persist(handle, validator, minSourceTracker, minTargetTracker);
+    persistAttestationWatermark(handle, validator, minSourceTracker, minTargetTracker);
   }
 
-  public void persist(
+  public void persistAttestationWatermark(
       final Handle handle,
       final Validator validator,
       final OptionalMinValueTracker minSourceTracker,
