@@ -112,23 +112,24 @@ public class InterchangeV5Importer {
     }
   }
 
-  private void parseValidator(final Handle h, final JsonNode node) throws JsonProcessingException {
+  private void parseValidator(final Handle handle, final JsonNode node)
+      throws JsonProcessingException {
     if (node.isArray()) {
       throw new IllegalStateException("Element of 'data' was not an object");
     }
     final ObjectNode parentNode = (ObjectNode) node;
     final String pubKey = parentNode.required("pubkey").textValue();
-    final Validator validator = validatorsDao.insertIfNotExist(h, Bytes.fromHexString(pubKey));
+    final Validator validator = validatorsDao.insertIfNotExist(handle, Bytes.fromHexString(pubKey));
 
     final ArrayNode signedBlocksNode = parentNode.withArray("signed_blocks");
-    importBlocks(h, validator, signedBlocksNode);
+    importBlocks(handle, validator, signedBlocksNode);
 
     final ArrayNode signedAttestationNode = parentNode.withArray("signed_attestations");
-    importAttestations(h, validator, signedAttestationNode);
+    importAttestations(handle, validator, signedAttestationNode);
   }
 
   private void importBlocks(
-      final Handle h, final Validator validator, final ArrayNode signedBlocksNode)
+      final Handle handle, final Validator validator, final ArrayNode signedBlocksNode)
       throws JsonProcessingException {
 
     final OptionalMinValueTracker minSlotTracker = new OptionalMinValueTracker();
@@ -137,7 +138,7 @@ public class InterchangeV5Importer {
       final SignedBlock jsonBlock = mapper.treeToValue(signedBlocksNode.get(i), SignedBlock.class);
       final BlockValidator blockValidator =
           new BlockValidator(
-              h,
+              handle,
               jsonBlock.getSigningRoot(),
               jsonBlock.getSlot(),
               validator.getId(),
@@ -159,7 +160,7 @@ public class InterchangeV5Importer {
             validator.getPublicKey());
       } else {
         signedBlocksDao.insertBlockProposal(
-            h,
+            handle,
             new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
                 validator.getId(), jsonBlock.getSlot(), jsonBlock.getSigningRoot()));
 
@@ -168,13 +169,13 @@ public class InterchangeV5Importer {
     }
 
     final Optional<SigningWatermark> watermark =
-        lowWatermarkDao.findLowWatermarkForValidator(h, validator.getId());
+        lowWatermarkDao.findLowWatermarkForValidator(handle, validator.getId());
 
     if (minSlotTracker.compareTrackedValueTo(watermark.map(SigningWatermark::getSlot)) > 0) {
       LOG.warn(
           "Updating Block slot low watermark to {}", minSlotTracker.getTrackedMinValue().get());
       lowWatermarkDao.updateSlotWatermarkFor(
-          h, validator.getId(), minSlotTracker.getTrackedMinValue().get());
+          handle, validator.getId(), minSlotTracker.getTrackedMinValue().get());
     }
   }
 
@@ -182,8 +183,8 @@ public class InterchangeV5Importer {
       final Handle handle, final Validator validator, final ArrayNode signedAttestationNode)
       throws JsonProcessingException {
 
-    final AttestationEpochManager attestationEpochManager =
-        new AttestationEpochManager(lowWatermarkDao, validator, handle);
+    final AttestationWatermarkUpdater attestationWatermarkUpdater =
+        new AttestationWatermarkUpdater(lowWatermarkDao, validator, handle);
 
     for (int i = 0; i < signedAttestationNode.size(); i++) {
       final SignedAttestation jsonAttestation =
@@ -240,10 +241,10 @@ public class InterchangeV5Importer {
                 jsonAttestation.getSourceEpoch(),
                 jsonAttestation.getTargetEpoch(),
                 jsonAttestation.getSigningRoot()));
-        attestationEpochManager.trackEpochs(
+        attestationWatermarkUpdater.trackEpochs(
             jsonAttestation.getSourceEpoch(), jsonAttestation.getTargetEpoch());
       }
     }
-    attestationEpochManager.persist();
+    attestationWatermarkUpdater.persist();
   }
 }

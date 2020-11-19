@@ -186,22 +186,6 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void determinesMinimumSourceEpoch() {
-    insertValidator(Bytes.of(100), 1);
-    insertAttestation(1, Bytes.of(2), UInt64.valueOf(2), UInt64.valueOf(3));
-    insertAttestation(1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
-    assertThat(signedAttestationsDao.minimumSourceEpoch(handle, 1)).hasValue(UInt64.valueOf(2));
-  }
-
-  @Test
-  public void determinesMinimumTargetEpoch() {
-    insertValidator(Bytes.of(100), 1);
-    insertAttestation(1, Bytes.of(2), UInt64.valueOf(2), UInt64.valueOf(3));
-    insertAttestation(1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
-    assertThat(signedAttestationsDao.minimumTargetEpoch(handle, 1)).hasValue(UInt64.valueOf(3));
-  }
-
-  @Test
   public void existingCheckMatchesOnNullSigningRoot() {
     insertValidator(Bytes.of(100), 1);
     insertAttestation(1, null, UInt64.valueOf(2), UInt64.valueOf(3));

@@ -23,7 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 
-public class AttestationEpochManager {
+public class AttestationWatermarkUpdater {
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -34,7 +34,7 @@ public class AttestationEpochManager {
   final OptionalMinValueTracker minSourceTracker = new OptionalMinValueTracker();
   final OptionalMinValueTracker minTargetTracker = new OptionalMinValueTracker();
 
-  public AttestationEpochManager(
+  public AttestationWatermarkUpdater(
       final LowWatermarkDao lowWatermarkDao, final Validator validator, final Handle handle) {
     this.lowWatermarkDao = lowWatermarkDao;
     this.handle = handle;
