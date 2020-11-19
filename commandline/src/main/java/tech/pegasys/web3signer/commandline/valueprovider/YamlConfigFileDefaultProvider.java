@@ -42,6 +42,7 @@ import picocli.CommandLine.ParameterException;
 /** Yaml Configuration which is specifically written for Web3SignerCommand. */
 public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
 
+  private static final String WEB3SIGNER_CMD_PREFIX = "web3signer.";
   private final CommandLine commandLine;
   private final File configFile;
   // this will be initialized on fist call of defaultValue by PicoCLI parseArgs
@@ -173,8 +174,9 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private static String buildQualifiedOptionName(final OptionSpec optionSpec) {
-    final String prefix = optionSpec.command().qualifiedName(".").replaceAll("web3signer.", "");
-    return prefix + "." + buildOptionName(optionSpec);
+    final String cmdPrefix = optionSpec.command().qualifiedName(".");
+    final String prefixWithoutWeb3Signer = cmdPrefix.replaceFirst(WEB3SIGNER_CMD_PREFIX, "");
+    return prefixWithoutWeb3Signer + "." + buildOptionName(optionSpec);
   }
 
   private static String buildOptionName(final OptionSpec optionSpec) {
