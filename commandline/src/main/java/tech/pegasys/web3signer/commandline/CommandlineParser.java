@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.commandline;
 
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 
+import picocli.CommandLine.ParseResult;
 import tech.pegasys.web3signer.commandline.subcommands.ModeSubCommand;
 import tech.pegasys.web3signer.commandline.valueprovider.CascadingDefaultProvider;
 import tech.pegasys.web3signer.commandline.valueprovider.EnvironmentVariableDefaultProvider;
@@ -46,17 +47,6 @@ public class CommandlineParser {
 
   private final List<ModeSubCommand> modes = Lists.newArrayList();
 
-  // Allows to obtain config file by PicoCLI using two pass approach.
-  @Command(mixinStandardHelpOptions = true)
-  static class ConfigFileCommand {
-    @Option(names = CONFIG_FILE_OPTION_NAME, description = "...")
-    File configPath = null;
-
-    @SuppressWarnings("UnusedVariable")
-    @Unmatched
-    List<String> unmatched;
-  }
-
   public CommandlineParser(
       final Web3SignerBaseCommand baseCommand,
       final PrintWriter outputWriter,
@@ -73,19 +63,6 @@ public class CommandlineParser {
   }
 
   public int parseCommandLine(final String... args) {
-    // first pass to obtain config file if specified
-    final ConfigFileCommand configFileCommand = new ConfigFileCommand();
-    final CommandLine configFileCommandLine = new CommandLine(configFileCommand);
-
-    configFileCommandLine.parseArgs(args);
-    if (configFileCommandLine.isUsageHelpRequested()) {
-      return executeCommandUsageHelp();
-    } else if (configFileCommandLine.isVersionHelpRequested()) {
-      return executeCommandVersion();
-    }
-    final Optional<File> configFile = Optional.ofNullable(configFileCommand.configPath);
-
-    // final pass
     final CommandLine commandLine = new CommandLine(baseCommand);
     commandLine.setCaseInsensitiveEnumValuesAllowed(true);
     commandLine.registerConverter(Level.class, Level::valueOf);
@@ -98,8 +75,15 @@ public class CommandlineParser {
       commandLine.addSubcommand(subcommand.getCommandName(), subcommand);
     }
 
+    Optional<File> configFile = Optional.empty();
+    try {
+      final ParseResult pr = commandLine.parseArgs(args);
+      configFile = Optional.ofNullable(pr.matchedOption(CONFIG_FILE_OPTION_NAME).getValue());
+    } catch(final ParameterException e) {
+      // catch failures, which will be rethrown when commandline is run via execute().
+    }
+    commandLine.clearExecutionResults();
     commandLine.setDefaultValueProvider(defaultValueProvider(commandLine, configFile));
-
     return commandLine.execute(args);
   }
 
