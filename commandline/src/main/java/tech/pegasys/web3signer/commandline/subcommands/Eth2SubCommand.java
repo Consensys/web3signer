@@ -49,7 +49,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       description = "Export slashing protection db to json file",
       subcommands = {HelpCommand.class},
       mixinStandardHelpOptions = true)
-  public void exportSlashingDb(@Option(names = "--to") File output) {
+  public void exportSlashingDb(@Option(names = "--to", required = true) File output) {
     final SlashingProtection slashingProtection =
         createSlashingProtection(
             slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
@@ -65,7 +65,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       description = "Import json file to the slashing protection db",
       subcommands = {HelpCommand.class},
       mixinStandardHelpOptions = true)
-  public void importSlashingDb(@Option(names = "--from") File input) {
+  public void importSlashingDb(@Option(names = "--from", required = true) File input) {
     final SlashingProtection slashingProtection =
         createSlashingProtection(
             slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
