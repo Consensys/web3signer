@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.commandline;
 
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 
-import picocli.CommandLine.ParseResult;
 import tech.pegasys.web3signer.commandline.subcommands.ModeSubCommand;
 import tech.pegasys.web3signer.commandline.valueprovider.CascadingDefaultProvider;
 import tech.pegasys.web3signer.commandline.valueprovider.EnvironmentVariableDefaultProvider;
@@ -31,12 +30,10 @@ import java.util.Optional;
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.Level;
 import picocli.CommandLine;
-import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Ansi;
 import picocli.CommandLine.IDefaultValueProvider;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
-import picocli.CommandLine.Unmatched;
+import picocli.CommandLine.ParseResult;
 
 public class CommandlineParser {
 
@@ -78,8 +75,10 @@ public class CommandlineParser {
     Optional<File> configFile = Optional.empty();
     try {
       final ParseResult pr = commandLine.parseArgs(args);
-      configFile = Optional.ofNullable(pr.matchedOption(CONFIG_FILE_OPTION_NAME).getValue());
-    } catch(final ParameterException e) {
+      if (pr.matchedOption(CONFIG_FILE_OPTION_NAME) != null) {
+        configFile = Optional.ofNullable(pr.matchedOption(CONFIG_FILE_OPTION_NAME).getValue());
+      }
+    } catch (final ParameterException e) {
       // catch failures, which will be rethrown when commandline is run via execute().
     }
     commandLine.clearExecutionResults();

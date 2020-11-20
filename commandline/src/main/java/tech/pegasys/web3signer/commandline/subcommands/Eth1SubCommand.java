@@ -12,11 +12,11 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
-import picocli.CommandLine.HelpCommand;
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.Runner;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.HelpCommand;
 
 @Command(
     name = Eth1SubCommand.COMMAND_NAME,

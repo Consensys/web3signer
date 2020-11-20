@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.commandline.subcommands;
 
 import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory.createSlashingProtection;
 
-import picocli.CommandLine.HelpCommand;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
@@ -27,6 +26,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -36,17 +36,19 @@ import picocli.CommandLine.Spec;
 @Command(
     name = Eth2SubCommand.COMMAND_NAME,
     description = "Handle Ethereum-2 BLS signing operations and public key reporting",
-    subcommands = {.class},
+    subcommands = {HelpCommand.class},
     mixinStandardHelpOptions = true)
 public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
 
-  @Spec
-  CommandSpec spec;
+  @Spec CommandSpec spec;
 
-  @Command(name = "export", description = "Export slashing protection db to json file",
-      subcommands = {HelpCommand.class}, mixinStandardHelpOptions = true)
+  @Command(
+      name = "export",
+      description = "Export slashing protection db to json file",
+      subcommands = {HelpCommand.class},
+      mixinStandardHelpOptions = true)
   public void exportSlashingDb(@Option(names = "--to") File output) {
     final SlashingProtection slashingProtection =
         createSlashingProtection(
@@ -58,8 +60,11 @@ public class Eth2SubCommand extends ModeSubCommand {
     }
   }
 
-  @Command(name = "import", description = "Import json file to the slashing protection db",
-      subcommands = {HelpCommand.class}, mixinStandardHelpOptions = true)
+  @Command(
+      name = "import",
+      description = "Import json file to the slashing protection db",
+      subcommands = {HelpCommand.class},
+      mixinStandardHelpOptions = true)
   public void importSlashingDb(@Option(names = "--from") File input) {
     final SlashingProtection slashingProtection =
         createSlashingProtection(
@@ -101,8 +106,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       paramLabel = "<jdbc password>")
   private String slashingProtectionDbPassword;
 
-  @Mixin
-  public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
   public Eth2Runner createRunner() {
