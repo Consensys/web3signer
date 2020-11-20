@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import picocli.CommandLine.HelpCommand;
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.Runner;
 
@@ -20,6 +21,7 @@ import picocli.CommandLine.Command;
 @Command(
     name = Eth1SubCommand.COMMAND_NAME,
     description = "Handle Ethereum-1 SECP256k1 signing operations and public key reporting",
+    subcommands = {HelpCommand.class},
     mixinStandardHelpOptions = true)
 public class Eth1SubCommand extends ModeSubCommand {
 
