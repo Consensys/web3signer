@@ -14,8 +14,10 @@ package tech.pegasys.web3signer.commandline.subcommands;
 
 import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory.createSlashingProtection;
 
+import picocli.CommandLine.MissingParameterException;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
+import tech.pegasys.web3signer.core.InitializationException;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.File;
@@ -42,14 +44,22 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
 
-  @Spec CommandSpec spec;
+  @Spec
+  CommandSpec spec;
 
   @Command(
       name = "export",
       description = "Export slashing protection db to json file",
       subcommands = {HelpCommand.class},
       mixinStandardHelpOptions = true)
-  public void exportSlashingDb(@Option(names = "--to", required = true) File output) {
+  public void exportSlashingDb(@Option(
+      names = "--to",
+      description = "The file from which interchange formatted data is to e imported to the slashing database")
+      File output) {
+    if (output == null) {
+      throw new InitializationException("--from has not been specified");
+    }
+
     final SlashingProtection slashingProtection =
         createSlashingProtection(
             slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
@@ -65,7 +75,14 @@ public class Eth2SubCommand extends ModeSubCommand {
       description = "Import json file to the slashing protection db",
       subcommands = {HelpCommand.class},
       mixinStandardHelpOptions = true)
-  public void importSlashingDb(@Option(names = "--from", required = true) File input) {
+  public void importSlashingDb(@Option(
+      names = "--from",
+      description = "The file into which the slashing protection database is to be exported. File is in interchange format")
+      File input) {
+    if (input == null) {
+      throw new InitializationException("--from has not been specified");
+    }
+
     final SlashingProtection slashingProtection =
         createSlashingProtection(
             slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
@@ -106,7 +123,8 @@ public class Eth2SubCommand extends ModeSubCommand {
       paramLabel = "<jdbc password>")
   private String slashingProtectionDbPassword;
 
-  @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin
+  public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
   public Eth2Runner createRunner() {
