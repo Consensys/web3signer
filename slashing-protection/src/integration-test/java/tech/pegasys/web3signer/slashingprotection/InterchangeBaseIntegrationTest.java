@@ -15,8 +15,11 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
@@ -41,6 +44,9 @@ public class InterchangeBaseIntegrationTest {
 
   protected final ValidatorsDao validators = new ValidatorsDao();
   protected final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
+  protected final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+  protected final SignedAttestationsDao signedAttestationsDao = new SignedAttestationsDao();
+  protected final MetadataDao metadataDao = new MetadataDao();
 
   protected EmbeddedPostgres db;
   protected String databaseUrl;
@@ -61,6 +67,7 @@ public class InterchangeBaseIntegrationTest {
       jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
       slashingProtection =
           SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
+      insertGvr(GVR);
     } catch (final IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -125,19 +132,33 @@ public class InterchangeBaseIntegrationTest {
         });
   }
 
-  protected void insertBlockAt(final UInt64 blockSlot, final Bytes publicKey) {
-    assertThat(slashingProtection.maySignBlock(publicKey, Bytes.of(100), blockSlot, GVR)).isTrue();
+  protected void insertBlockAt(final UInt64 blockSlot, final int validatorId) {
+    jdbi.useHandle(
+        h ->
+            signedBlocksDao.insertBlockProposal(
+                h, new SignedBlock(validatorId, blockSlot, Bytes.of(100))));
   }
 
   protected void insertAttestationAt(
-      final UInt64 sourceEpoch, final UInt64 targetEpoch, final Bytes publicKey) {
-    assertThat(
-            slashingProtection.maySignAttestation(
-                publicKey, Bytes.of(100), sourceEpoch, targetEpoch, GVR))
-        .isTrue();
+      final UInt64 sourceEpoch, final UInt64 targetEpoch, final int validatorId) {
+    jdbi.useHandle(
+        h ->
+            signedAttestationsDao.insertAttestation(
+                h, new SignedAttestation(validatorId, sourceEpoch, targetEpoch, Bytes.of(100))));
   }
 
   protected SigningWatermark getWatermark(final int validatorId) {
     return jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, validatorId)).get();
+  }
+
+  protected void insertGvr(final Bytes genesisValidatorsRoot) {
+    jdbi.withHandle(
+        h ->
+            h.execute(
+                "INSERT INTO metadata (id, genesis_validators_root) VALUES (?, ?) "
+                    + "ON CONFLICT (id) DO UPDATE SET genesis_validators_root = ?",
+                1,
+                genesisValidatorsRoot,
+                genesisValidatorsRoot));
   }
 }

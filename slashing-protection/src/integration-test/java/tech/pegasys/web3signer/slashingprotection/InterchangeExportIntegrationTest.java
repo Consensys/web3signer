@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
 
 import java.io.ByteArrayOutputStream;
@@ -34,12 +33,9 @@ import org.junit.jupiter.api.Test;
 
 public class InterchangeExportIntegrationTest extends InterchangeBaseIntegrationTest {
 
-  private final MetadataDao metadata = new MetadataDao();
-
   @Test
-  void canCreateDatabaseWithEntries() throws IOException {
+  void exportedEntitiesRepresentTheEntriesStoredInTheDatabase() throws IOException {
     final Bytes32 gvr = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
-    jdbi.useTransaction(h -> metadata.insertGenesisValidatorsRoot(h, gvr));
 
     final int VALIDATOR_COUNT = 2;
     final int TOTAL_BLOCKS_SIGNED = 6;
@@ -51,10 +47,10 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
       slashingProtection.registerValidators(List.of(validatorPublicKey));
 
       for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
-        insertBlockAt(UInt64.valueOf(b), validatorPublicKey);
+        insertBlockAt(UInt64.valueOf(b), validatorId);
       }
       for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
-        insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a), validatorPublicKey);
+        insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a), validatorId);
       }
 
       jdbi.useTransaction(
@@ -116,7 +112,7 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
     final Bytes validatorPublicKey = Bytes.of(1);
     slashingProtection.registerValidators(List.of(validatorPublicKey));
     for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
-      insertBlockAt(UInt64.valueOf(b), validatorPublicKey);
+      insertBlockAt(UInt64.valueOf(b), 1);
     }
     jdbi.useTransaction(h -> lowWatermarkDao.updateSlotWatermarkFor(h, 1, BLOCK_SLOT_WATER_MARK));
 
@@ -142,7 +138,7 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
     final int EPOCH_OFFSET = 10;
     final UInt64 ATTESTATION_SLOT_WATER_MARK = UInt64.valueOf(3);
     for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
-      insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a + EPOCH_OFFSET), validatorPublicKey);
+      insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a + EPOCH_OFFSET), 1);
     }
     // this is an illegal watermark, but means no checks will fail against the target epoch.
     jdbi.useTransaction(
@@ -165,7 +161,7 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
     final int EPOCH_OFFSET = 10;
     final UInt64 ATTESTATION_SLOT_WATER_MARK = UInt64.valueOf(12);
     for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
-      insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a + EPOCH_OFFSET), validatorPublicKey);
+      insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a + EPOCH_OFFSET), 1);
     }
     // this is an illegal watermark, but means no checks will fail against the source epoch.
     jdbi.useTransaction(

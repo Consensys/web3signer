@@ -114,7 +114,9 @@ public class InterchangeV5Exporter {
     final Optional<SigningWatermark> watermark =
         lowWatermarkDao.findLowWatermarkForValidator(handle, validator.getId());
     if (watermark.isEmpty()) {
-      LOG.warn("No low watermark available, producing empty export.");
+      LOG.warn(
+          "No low watermark available, producing empty export for validator {}",
+          validator.getPublicKey());
     } else {
       writeBlocks(handle, watermark.get(), validator, jsonGenerator);
       writeAttestations(handle, watermark.get(), validator, jsonGenerator);
@@ -139,12 +141,12 @@ public class InterchangeV5Exporter {
       signedBlocksDao
           .findAllBlockSignedBy(handle, validator.getId())
           .forEach(
-              b -> {
-                if (b.getSlot().compareTo(watermark.getSlot()) >= 0) {
+              block -> {
+                if (block.getSlot().compareTo(watermark.getSlot()) >= 0) {
                   final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock
                       jsonBlock =
                           new tech.pegasys.web3signer.slashingprotection.interchange.model
-                              .SignedBlock(b.getSlot(), b.getSigningRoot().orElse(null));
+                              .SignedBlock(block.getSlot(), block.getSigningRoot().orElse(null));
                   try {
                     mapper.writeValue(jsonGenerator, jsonBlock);
                   } catch (final IOException e) {
@@ -154,7 +156,7 @@ public class InterchangeV5Exporter {
                 } else {
                   LOG.debug(
                       "Ignoring block in slot {} for validator {}, as is below watermark",
-                      b.getSlot(),
+                      block.getSlot(),
                       validator.getPublicKey());
                 }
               });
@@ -175,35 +177,36 @@ public class InterchangeV5Exporter {
       LOG.warn(
           "Missing attestation low watermark for {}, producing empty attestation listing",
           validator.getPublicKey());
-    }
-
-    signedAttestationsDao
-        .findAllAttestationsSignedBy(handle, validator.getId())
-        .forEach(
-            a -> {
-              if ((a.getSourceEpoch().compareTo(watermark.getSourceEpoch()) >= 0)
-                  && (a.getTargetEpoch().compareTo(watermark.getTargetEpoch()) >= 0)) {
-                final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation
-                    jsonAttestation =
-                        new tech.pegasys.web3signer.slashingprotection.interchange.model
-                            .SignedAttestation(
-                            a.getSourceEpoch(),
-                            a.getTargetEpoch(),
-                            a.getSigningRoot().orElse(null));
-                try {
-                  mapper.writeValue(jsonGenerator, jsonAttestation);
-                } catch (final IOException e) {
-                  throw new UncheckedIOException(
-                      "Failed to construct a signed_attestations entry in json", e);
+    } else {
+      signedAttestationsDao
+          .findAllAttestationsSignedBy(handle, validator.getId())
+          .forEach(
+              attestation -> {
+                if ((attestation.getSourceEpoch().compareTo(watermark.getSourceEpoch()) >= 0)
+                    && (attestation.getTargetEpoch().compareTo(watermark.getTargetEpoch()) >= 0)) {
+                  final tech.pegasys.web3signer.slashingprotection.interchange.model
+                          .SignedAttestation
+                      jsonAttestation =
+                          new tech.pegasys.web3signer.slashingprotection.interchange.model
+                              .SignedAttestation(
+                              attestation.getSourceEpoch(),
+                              attestation.getTargetEpoch(),
+                              attestation.getSigningRoot().orElse(null));
+                  try {
+                    mapper.writeValue(jsonGenerator, jsonAttestation);
+                  } catch (final IOException e) {
+                    throw new UncheckedIOException(
+                        "Failed to construct a signed_attestations entry in json", e);
+                  }
+                } else {
+                  LOG.debug(
+                      "Ignoring attestation with source epoch {}, and target epoch {}, for validator {}, as is below watermark",
+                      attestation.getSourceEpoch(),
+                      attestation.getTargetEpoch(),
+                      validator.getPublicKey());
                 }
-              } else {
-                LOG.debug(
-                    "Ignoring attestation with source epoch {}, and taget epoch {}, for validator {}, as is below watermark",
-                    a.getSourceEpoch(),
-                    a.getTargetEpoch(),
-                    validator.getPublicKey());
-              }
-            });
+              });
+    }
     jsonGenerator.writeEndArray();
   }
 }
