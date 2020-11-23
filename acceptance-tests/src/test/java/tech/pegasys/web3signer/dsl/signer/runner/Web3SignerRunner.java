@@ -164,7 +164,7 @@ public abstract class Web3SignerRunner {
       params.add("--tls-keystore-password-file");
       params.add(serverTlsOptions.getKeyStorePasswordFile().toString());
       if (serverTlsOptions.getClientAuthConstraints().isEmpty()) {
-        params.add("--tls-allow-any-client");
+        params.add("--tls-allow-any-client=true");
       } else {
         final ClientAuthConstraints constraints = serverTlsOptions.getClientAuthConstraints().get();
         if (constraints.getKnownClientsFile().isPresent()) {
@@ -172,7 +172,7 @@ public abstract class Web3SignerRunner {
           params.add(constraints.getKnownClientsFile().get().toString());
         }
         if (constraints.isCaAuthorizedClientAllowed()) {
-          params.add("--tls-allow-ca-clients");
+          params.add("--tls-allow-ca-clients=true");
         }
       }
     }
