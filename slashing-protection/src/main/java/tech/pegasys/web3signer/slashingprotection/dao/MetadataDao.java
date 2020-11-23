@@ -14,15 +14,19 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import java.util.Optional;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
 
 public class MetadataDao {
-  final int METADATA_ROW_ID = 1;
+  private static final Logger LOG = LogManager.getLogger();
+  private static final int METADATA_ROW_ID = 1;
 
   public Optional<Bytes32> findGenesisValidatorsRoot(final Handle handle) {
+    LOG.debug("findGenesisValidatorsRoot");
     return handle
-        .createQuery("SELECT genesis_validators_root FROM metadata WHERE id = ?")
+        .createQuery("SELECT genesis_validators_root FROM metadata WHERE id = ? FOR UPDATE")
         .bind(0, METADATA_ROW_ID)
         .mapTo(Bytes32.class)
         .findFirst();
@@ -30,6 +34,7 @@ public class MetadataDao {
 
   public void insertGenesisValidatorsRoot(
       final Handle handle, final Bytes32 genesisValidatorsRoot) {
+    LOG.debug("insertGenesisValidatorsRoot");
     handle
         .createUpdate("INSERT INTO metadata (id, genesis_validators_root) VALUES (?, ?)")
         .bind(0, METADATA_ROW_ID)
