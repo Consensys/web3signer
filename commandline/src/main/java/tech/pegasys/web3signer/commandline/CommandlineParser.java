@@ -102,11 +102,6 @@ public class CommandlineParser {
   }
 
   private int handleParseException(final ParameterException ex, final String[] args) {
-    if (baseCommand.getLogLevel() != null
-        && Level.DEBUG.isMoreSpecificThan(baseCommand.getLogLevel())) {
-      ex.printStackTrace(errorWriter);
-    }
-
     errorWriter.println("Error parsing parameters: " + ex.getMessage());
 
     if (!CommandLine.UnmatchedArgumentException.printSuggestions(ex, outputWriter)) {

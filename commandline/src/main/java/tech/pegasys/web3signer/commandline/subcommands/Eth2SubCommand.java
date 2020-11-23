@@ -56,21 +56,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       names = "--from",
       description = "The file into which the slashing protection database is to be exported. File is in interchange format")
       File input) {
-    if (input == null) {
-      throw new ParameterException(spec.commandLine(), "--from has not been specified");
-    } else if (slashingProtectionDbUrl == null) {
-      throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
-    }
 
-    final SlashingProtection slashingProtection =
-        createSlashingProtection(
-            slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
-
-    try {
-      slashingProtection.importData(new FileInputStream(input));
-    } catch (final FileNotFoundException e) {
-      throw new RuntimeException("Unable to find input file", e);
-    }
   }
 
   @Option(
