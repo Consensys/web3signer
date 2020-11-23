@@ -14,10 +14,6 @@ package tech.pegasys.web3signer.commandline;
 
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 
-import picocli.CommandLine.Command;
-import picocli.CommandLine.MissingParameterException;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Unmatched;
 import tech.pegasys.web3signer.commandline.subcommands.ModeSubCommand;
 import tech.pegasys.web3signer.commandline.valueprovider.CascadingDefaultProvider;
 import tech.pegasys.web3signer.commandline.valueprovider.EnvironmentVariableDefaultProvider;

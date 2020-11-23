@@ -9,26 +9,25 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
 import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory.createSlashingProtection;
 
+import tech.pegasys.web3signer.core.InitializationException;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.MissingParameterException;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
-import tech.pegasys.web3signer.core.InitializationException;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 @Command(
     name = "export",
@@ -37,31 +36,32 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
     mixinStandardHelpOptions = true)
 public class ExportSubCommand implements Runnable {
 
-  @Spec
-  private CommandSpec spec;
+  @Spec private CommandSpec spec;
 
-  @CommandLine.ParentCommand
-  private Eth2SubCommand eth2Config;
+  @CommandLine.ParentCommand private Eth2SubCommand eth2Config;
 
-  @Option(names = "--to",
-      description = "The file from which interchange formatted data is to e imported to the slashing database")
+  @Option(
+      names = "--to",
+      description =
+          "The file from which interchange formatted data is to e imported to the slashing database")
   File output;
-
 
   @Override
   public void run() {
     if (output == null) {
-      throw new MissingParameterException(spec.commandLine(), spec.findOption("--to"),
-          "--to has not been specified");
+      throw new MissingParameterException(
+          spec.commandLine(), spec.findOption("--to"), "--to has not been specified");
     } else if (eth2Config.slashingProtectionDbUrl == null) {
-      throw new MissingParameterException(spec.parent().commandLine(),
+      throw new MissingParameterException(
+          spec.parent().commandLine(),
           spec.findOption("--slashing-protection-db-url"),
           "Missing slashing protection database url");
     }
 
     final SlashingProtection slashingProtection =
         createSlashingProtection(
-            eth2Config.slashingProtectionDbUrl, eth2Config.slashingProtectionDbUsername,
+            eth2Config.slashingProtectionDbUrl,
+            eth2Config.slashingProtectionDbUsername,
             eth2Config.slashingProtectionDbPassword);
     try {
       slashingProtection.export(new FileOutputStream(output));
