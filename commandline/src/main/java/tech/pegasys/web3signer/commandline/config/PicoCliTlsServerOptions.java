@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline.config;
 
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_BOOL_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
@@ -20,45 +21,45 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import java.io.File;
 import java.util.Optional;
 
-import picocli.CommandLine.ArgGroup;
+import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 public class PicoCliTlsServerOptions implements TlsOptions {
 
-  static class TlsClientAuthentication {
-
-    @SuppressWarnings("UnusedVariable")
-    @ArgGroup(exclusive = false)
-    private PicoCliClientAuthConstraints clientAuthConstraints;
-
-    @Option(
-        names = "--tls-allow-any-client",
-        description =
-            "If defined, any client may connect, regardless of presented certificate. This cannot "
-                + "be set if either a whitelist or CA clients have been enabled.",
-        arity = "0")
-    private Boolean tlsAllowAnyClient = false;
-  }
+  //  static class TlsClientAuthentication {
+  //
+  //    @SuppressWarnings("UnusedVariable")
+  //    // @ArgGroup(exclusive = false)
+  //
+  //  }
 
   @Option(
       names = "--tls-keystore-file",
       description =
           "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.",
       arity = "1",
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      required = true)
-  private File keyStoreFile;
+      paramLabel = MANDATORY_FILE_FORMAT_HELP)
+  private File keyStoreFile = null;
 
   @Option(
       names = "--tls-keystore-password-file",
       description = "Path to a file containing the password used to decrypt the keystore.",
       arity = "1",
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
-      required = true)
-  private File keyStorePasswordFile;
+      paramLabel = MANDATORY_FILE_FORMAT_HELP)
+  private File keyStorePasswordFile = null;
 
-  @ArgGroup(multiplicity = "1")
-  private TlsClientAuthentication tlsClientAuthentication;
+  // @ArgGroup(multiplicity = "1")
+  // private TlsClientAuthentication tlsClientAuthentication;
+  @Option(
+      names = "--tls-allow-any-client",
+      description =
+          "If set to true, any client may connect, regardless of presented certificate. This cannot "
+              + "be set to true if either a known clients or CA clients have been enabled.",
+      paramLabel = MANDATORY_BOOL_FORMAT_HELP,
+      arity = "1")
+  private Boolean tlsAllowAnyClient = false;
+
+  @CommandLine.Mixin private PicoCliClientAuthConstraints clientAuthConstraints;
 
   @Override
   public File getKeyStoreFile() {
@@ -72,8 +73,17 @@ public class PicoCliTlsServerOptions implements TlsOptions {
 
   @Override
   public Optional<ClientAuthConstraints> getClientAuthConstraints() {
-    return tlsClientAuthentication.tlsAllowAnyClient
-        ? Optional.empty()
-        : Optional.of(tlsClientAuthentication.clientAuthConstraints);
+    // assuming custom validation method has been called.
+
+    return tlsAllowAnyClient ? Optional.empty() : Optional.of(clientAuthConstraints);
+  }
+
+  // used by validator to enforce ArgGroup style validation
+  Boolean isTlsAllowAnyClient() {
+    return tlsAllowAnyClient;
+  }
+
+  PicoCliClientAuthConstraints getPicoCliClientAuthConstraints() {
+    return clientAuthConstraints;
   }
 }

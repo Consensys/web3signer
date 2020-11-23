@@ -19,4 +19,5 @@ public interface DefaultCommandValues {
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
   String MANDATORY_LONG_FORMAT_HELP = "<LONG>";
+  String MANDATORY_BOOL_FORMAT_HELP = "<BOOL>";
 }

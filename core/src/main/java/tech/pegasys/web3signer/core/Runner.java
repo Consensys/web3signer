@@ -77,6 +77,9 @@ public abstract class Runner implements Runnable {
 
   @Override
   public void run() {
+    // custom validation for TLS options which we need to do because we can't use ArgGroups
+    config.validateConfig();
+
     if (config.getLogLevel() != null) {
       System.out.println("Setting logging level to " + config.getLogLevel().name());
       Configurator.setRootLevel(config.getLogLevel());
