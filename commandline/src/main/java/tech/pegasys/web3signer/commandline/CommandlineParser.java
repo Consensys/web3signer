@@ -48,17 +48,6 @@ public class CommandlineParser {
 
   private final List<ModeSubCommand> modes = Lists.newArrayList();
 
-  // Allows to obtain config file by PicoCLI using two pass approach.
-  @Command(mixinStandardHelpOptions = true)
-  static class ConfigFileCommand {
-    @Option(names = CONFIG_FILE_OPTION_NAME, description = "...")
-    File configPath = null;
-
-    @SuppressWarnings("UnusedVariable")
-    @Unmatched
-    List<String> unmatched;
-  }
-
   public CommandlineParser(
       final Web3SignerBaseCommand baseCommand,
       final PrintWriter outputWriter,
@@ -75,12 +64,6 @@ public class CommandlineParser {
   }
 
   public int parseCommandLine(final String... args) {
-    // Parse commandline, ignoring all fields except config file
-    final ConfigFileCommand configFileCommand = new ConfigFileCommand();
-    final CommandLine configFileCommandLine = new CommandLine(configFileCommand);
-    configFileCommandLine.parseArgs(args);
-    final Optional<File> configFile = Optional.ofNullable(configFileCommand.configPath);
-
     final CommandLine commandLine = new CommandLine(baseCommand);
     commandLine.setCaseInsensitiveEnumValuesAllowed(true);
     commandLine.registerConverter(Level.class, Level::valueOf);
@@ -91,6 +74,16 @@ public class CommandlineParser {
 
     for (final ModeSubCommand subcommand : modes) {
       commandLine.addSubcommand(subcommand.getCommandName(), subcommand);
+    }
+
+    Optional<File> configFile = Optional.empty();
+    try {
+      final ParseResult pr = commandLine.parseArgs(args);
+      if (pr.matchedOption(CONFIG_FILE_OPTION_NAME) != null) {
+        configFile = Optional.ofNullable(pr.matchedOption(CONFIG_FILE_OPTION_NAME).getValue());
+      }
+    } catch (final ParameterException e) {
+      // catch failures, which will be rethrown when commandline is run via execute().
     }
     commandLine.clearExecutionResults();
     commandLine.setDefaultValueProvider(defaultValueProvider(commandLine, configFile));
@@ -114,7 +107,7 @@ public class CommandlineParser {
       ex.printStackTrace(errorWriter);
     }
 
-    errorWriter.println(ex.getMessage());
+    errorWriter.println("Error parsing parameters: " + ex.getMessage());
 
     if (!CommandLine.UnmatchedArgumentException.printSuggestions(ex, outputWriter)) {
       ex.getCommandLine().usage(outputWriter, Ansi.AUTO);

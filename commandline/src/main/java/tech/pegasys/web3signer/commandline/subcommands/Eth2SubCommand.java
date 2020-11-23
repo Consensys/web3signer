@@ -38,7 +38,7 @@ import picocli.CommandLine.Spec;
 @Command(
     name = Eth2SubCommand.COMMAND_NAME,
     description = "Handle Ethereum-2 BLS signing operations and public key reporting",
-    subcommands = {HelpCommand.class},
+    subcommands = {HelpCommand.class, ExportSubCommand.class},
     mixinStandardHelpOptions = true)
 public class Eth2SubCommand extends ModeSubCommand {
 
@@ -46,29 +46,6 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Spec
   CommandSpec spec;
-
-  @Command(
-      name = "export",
-      description = "Export slashing protection db to json file",
-      subcommands = {HelpCommand.class},
-      mixinStandardHelpOptions = true)
-  public void exportSlashingDb(@Option(
-      names = "--to",
-      description = "The file from which interchange formatted data is to e imported to the slashing database")
-      File output) {
-    if (output == null) {
-      throw new InitializationException("--from has not been specified");
-    }
-
-    final SlashingProtection slashingProtection =
-        createSlashingProtection(
-            slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
-    try {
-      slashingProtection.export(new FileOutputStream(output));
-    } catch (final FileNotFoundException e) {
-      throw new RuntimeException("Unable to find output target file", e);
-    }
-  }
 
   @Command(
       name = "import",
@@ -80,7 +57,9 @@ public class Eth2SubCommand extends ModeSubCommand {
       description = "The file into which the slashing protection database is to be exported. File is in interchange format")
       File input) {
     if (input == null) {
-      throw new InitializationException("--from has not been specified");
+      throw new ParameterException(spec.commandLine(), "--from has not been specified");
+    } else if (slashingProtectionDbUrl == null) {
+      throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
     }
 
     final SlashingProtection slashingProtection =
@@ -102,26 +81,26 @@ public class Eth2SubCommand extends ModeSubCommand {
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  private boolean slashingProtectionEnabled = true;
+  boolean slashingProtectionEnabled = true;
 
   @Option(
       names = {"--slashing-protection-db-url"},
       description = "The jdbc url to use to connect to the slashing protection database",
       paramLabel = "<jdbc url>",
       arity = "1")
-  private String slashingProtectionDbUrl;
+  String slashingProtectionDbUrl;
 
   @Option(
       names = {"--slashing-protection-db-username"},
       description = "The username to use when connecting to the slashing protection database",
       paramLabel = "<jdbc user>")
-  private String slashingProtectionDbUsername;
+  String slashingProtectionDbUsername;
 
   @Option(
       names = {"--slashing-protection-db-password"},
       description = "The password to use when connecting to the slashing protection database",
       paramLabel = "<jdbc password>")
-  private String slashingProtectionDbPassword;
+  String slashingProtectionDbPassword;
 
   @Mixin
   public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
