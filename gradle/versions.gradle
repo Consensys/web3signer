@@ -17,10 +17,12 @@ dependencyManagement {
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.10.1'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.10.1'
 
-    dependency 'com.google.errorprone:error_prone_annotation:2.3.4'
-    dependency 'com.google.errorprone:error_prone_check_api:2.3.4'
-    dependency 'com.google.errorprone:error_prone_core:2.3.4'
-    dependency 'com.google.errorprone:error_prone_test_helpers:2.3.4'
+    dependencySet(group: 'com.google.errorprone', version: '2.4.0') {
+      entry 'error_prone_annotation'
+      entry 'error_prone_check_api'
+      entry 'error_prone_core'
+      entry 'error_prone_test_helpers'
+    }
 
     dependency 'com.google.guava:guava:28.2-jre'
 
@@ -65,8 +67,6 @@ dependencyManagement {
     dependency 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
     dependency 'org.junit.jupiter:junit-jupiter-params:5.6.0'
 
-    dependency 'org.mock-server:mockserver-netty:5.9.0'
-
     dependency 'org.mockito:mockito-core:3.2.4'
     dependency 'org.mockito:mockito-inline:3.2.4'
     dependency 'org.mockito:mockito-junit-jupiter:3.2.4'
@@ -76,20 +76,28 @@ dependencyManagement {
     dependency 'org.hyperledger.besu.internal:metrics-core:1.4.0'
     dependency 'org.hyperledger.besu:plugin-api:1.4.0'
 
-    dependency 'tech.pegasys.teku.internal:bls:0.12.6-SNAPSHOT'
-    dependency 'tech.pegasys:jblst:0.1.0-RELEASE'
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '0.12.14-SNAPSHOT') {
+      entry 'bls'
+      entry 'core'
+      entry 'datastructures'
+      entry 'serializer'
+      entry 'unsigned'
+    }
 
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.9') {
+    dependency 'tech.pegasys:jblst:0.2.0-RELEASE'
+
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.13') {
       entry 'bls-keystore'
       entry 'keystorage-hashicorp'
       entry 'keystorage-azure'
+      entry 'keystorage-interlock'
       entry 'keystorage-yubihsm2'
       entry 'signing-secp256k1-api'
       entry 'signing-secp256k1-impl'
       entry 'acceptance-tests'
     }
 
-    dependency 'com.atlassian.oai:swagger-request-validator-restassured:2.10.0'
+    dependency 'io.rest-assured:rest-assured:4.3.1'
     dependency 'org.zeroturnaround:zt-exec:1.11'
     dependency 'org.web3j:core:4.5.14'
 
@@ -112,5 +120,7 @@ dependencyManagement {
 
     dependency 'com.opentable.components:otj-pg-embedded:0.13.3'
     dependency 'org.flywaydb:flyway-core:6.1.1'
+
+    dependency 'com.github.ipld:java-cid:1.3.1'
   }
 }

@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -52,22 +51,29 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void findsExistingAttestationInDb() {
-    insertAttestation(handle, Bytes.of(100), 1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
+  public void findsNonMatchingAttestationInDb() {
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
 
-    final Optional<SignedAttestation> existingAttestation =
-        signedAttestationsDao.findExistingAttestation(handle, 1, UInt64.valueOf(4));
+    final List<SignedAttestation> existingAttestation =
+        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(4), Bytes.of(3));
     assertThat(existingAttestation).isNotEmpty();
-    assertThat(existingAttestation.get())
+    assertThat(existingAttestation).hasSize(1);
+    assertThat(existingAttestation.get(0))
         .isEqualToComparingFieldByField(
             new SignedAttestation(1, UInt64.valueOf(3), UInt64.valueOf(4), Bytes.of(2)));
   }
 
   @Test
   public void returnsEmptyForNonExistingAttestationInDb() {
-    assertThat(signedAttestationsDao.findExistingAttestation(handle, 1, UInt64.valueOf(1)))
+    assertThat(
+            signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+                handle, 1, UInt64.valueOf(1), Bytes.of(2)))
         .isEmpty();
-    assertThat(signedAttestationsDao.findExistingAttestation(handle, 2, UInt64.valueOf(2)))
+    assertThat(
+            signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+                handle, 2, UInt64.valueOf(2), Bytes.of(3)))
         .isEmpty();
   }
 
@@ -99,29 +105,29 @@ public class SignedAttestationsDaoTest {
     signedAttestationsDao.insertAttestation(handle, attestation1);
     signedAttestationsDao.insertAttestation(handle, attestation2);
 
-    final Optional<SignedAttestation> attestation =
-        signedAttestationsDao.findSurroundingAttestation(
+    final List<SignedAttestation> attestation =
+        signedAttestationsDao.findSurroundingAttestations(
             handle, 1, UInt64.valueOf(3), UInt64.valueOf(7));
     assertThat(attestation).isNotEmpty();
     // both existing attestations surround these source and target epochs but we expect that the
     // attestation with the highest target epoch is returned
-    assertThat(attestation.get()).isEqualToComparingFieldByField(attestation2);
+    assertThat(attestation.get(0)).isEqualToComparingFieldByField(attestation2);
 
     // target epoch is outside of the existing attestations target epoch
     assertThat(
-            signedAttestationsDao.findSurroundingAttestation(
+            signedAttestationsDao.findSurroundingAttestations(
                 handle, 1, UInt64.valueOf(3), UInt64.valueOf(10)))
         .isEmpty();
 
     // source epoch is outside of the existing attestations source epoch
     assertThat(
-            signedAttestationsDao.findSurroundingAttestation(
+            signedAttestationsDao.findSurroundingAttestations(
                 handle, 1, UInt64.valueOf(1), UInt64.valueOf(7)))
         .isEmpty();
 
     // both source and target epochs are outside existing attestations epochs
     assertThat(
-            signedAttestationsDao.findSurroundingAttestation(
+            signedAttestationsDao.findSurroundingAttestations(
                 handle, 1, UInt64.valueOf(1), UInt64.valueOf(10)))
         .isEmpty();
   }
@@ -136,41 +142,92 @@ public class SignedAttestationsDaoTest {
     signedAttestationsDao.insertAttestation(handle, attestation1);
     signedAttestationsDao.insertAttestation(handle, attestation2);
 
-    final Optional<SignedAttestation> attestation =
-        signedAttestationsDao.findSurroundedAttestation(
+    final List<SignedAttestation> attestations =
+        signedAttestationsDao.findSurroundedAttestations(
             handle, 1, UInt64.valueOf(1), UInt64.valueOf(7));
-    assertThat(attestation).isNotEmpty();
+    assertThat(attestations).hasSize(1);
     // both attestations are surrounded by the source and target epochs but we expect that only the
     // attestation with the highest target epoch is returned
-    assertThat(attestation.get()).isEqualToComparingFieldByField(attestation2);
+    assertThat(attestations.get(0)).isEqualToComparingFieldByField(attestation2);
 
     // target epoch is not outside of the existing attestations
     assertThat(
-            signedAttestationsDao.findSurroundingAttestation(
+            signedAttestationsDao.findSurroundingAttestations(
                 handle, 1, UInt64.valueOf(1), UInt64.valueOf(5)))
         .isEmpty();
 
     // source epoch is not outside of the existing attestations
     assertThat(
-            signedAttestationsDao.findSurroundingAttestation(
+            signedAttestationsDao.findSurroundingAttestations(
                 handle, 1, UInt64.valueOf(2), UInt64.valueOf(7)))
         .isEmpty();
 
     // both source and target are within the existing attestation source and target epochs
     assertThat(
-            signedAttestationsDao.findSurroundingAttestation(
+            signedAttestationsDao.findSurroundingAttestations(
                 handle, 1, UInt64.valueOf(2), UInt64.valueOf(5)))
         .isEmpty();
   }
 
+  @Test
+  public void canCreateAttestationsWithNoSigningRoot() {
+    validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
+    final SignedAttestation attestation =
+        new SignedAttestation(1, UInt64.valueOf(3), UInt64.valueOf(4), null);
+    signedAttestationsDao.insertAttestation(handle, attestation);
+
+    final List<SignedAttestation> existingAttestations =
+        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(4), Bytes.of(2));
+
+    assertThat(existingAttestations).isNotEmpty();
+    assertThat(existingAttestations).hasSize(1);
+    assertThat(existingAttestations.get(0).getSigningRoot()).isEmpty();
+  }
+
+  @Test
+  public void existingCheckMatchesOnNullSigningRoot() {
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, null, UInt64.valueOf(2), UInt64.valueOf(3));
+    assertThat(signedAttestationsDao.findMatchingAttestation(handle, 1, UInt64.valueOf(3), null))
+        .isNotEmpty();
+  }
+
+  @Test
+  public void nullSigningRootInDatabaseDoesNotExactMatchARealValue() {
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, Bytes.of(10), UInt64.valueOf(2), UInt64.valueOf(3));
+    assertThat(signedAttestationsDao.findMatchingAttestation(handle, 1, UInt64.valueOf(3), null))
+        .isEmpty();
+    assertThat(
+            signedAttestationsDao.findMatchingAttestation(
+                handle, 1, UInt64.valueOf(3), Bytes.of(10)))
+        .isNotEmpty();
+  }
+
+  @Test
+  public void allNonNullEntriesAtTargetEpochAreReturnedIfCheckingAgainstNull() {
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, Bytes.of(10), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(1, Bytes.of(11), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(1, null, UInt64.valueOf(2), UInt64.valueOf(3));
+
+    final List<SignedAttestation> nonMatchingAttestations =
+        signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(3), null);
+
+    assertThat(nonMatchingAttestations).hasSize(2);
+  }
+
+  private void insertValidator(final Bytes publicKey, final int validatorId) {
+    handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
+  }
+
   private void insertAttestation(
-      final Handle h,
-      final Bytes publicKey,
       final int validatorId,
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
       final UInt64 targetEpoch) {
-    h.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
     handle.execute(
         "INSERT INTO signed_attestations "
             + "(validator_id, signing_root, source_epoch, target_epoch) "

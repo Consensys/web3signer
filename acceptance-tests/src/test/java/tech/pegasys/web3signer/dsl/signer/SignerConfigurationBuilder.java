@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,6 +33,7 @@ public class SignerConfigurationBuilder {
   private Path keyStoreDirectory = Path.of("./");
   private boolean metricsEnabled;
   private List<String> metricsHostAllowList = emptyList();
+  private List<String> metricsCategories = emptyList();
   private List<String> httpHostAllowList = emptyList();
   private TlsOptions serverTlsOptions;
   private TlsCertificateDefinition overriddenCaTrustStore;
@@ -41,6 +43,9 @@ public class SignerConfigurationBuilder {
   private AzureKeyVaultParameters azureKeyVaultParameters;
   private Map<String, String> web3SignerEnvironment;
   private boolean enableSlashing = false;
+  private String slashingProtectionDbUrl;
+  private Path slashingExportPath;
+  private Path slashingImportPath;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -64,6 +69,11 @@ public class SignerConfigurationBuilder {
 
   public SignerConfigurationBuilder withMetricsHostAllowList(final List<String> allowHostList) {
     this.metricsHostAllowList = allowHostList;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withMetricsCategories(final String... metricsCategories) {
+    this.metricsCategories = Arrays.asList(metricsCategories);
     return this;
   }
 
@@ -93,6 +103,12 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withSlashingProtectionDbUrl(
+      final String slashingProtectionDbUrl) {
+    this.slashingProtectionDbUrl = slashingProtectionDbUrl;
+    return this;
+  }
+
   public SignerConfigurationBuilder withSlashingProtectionDbUsername(
       final String slashingProtectionDbUsername) {
     this.slashingProtectionDbUsername = slashingProtectionDbUsername;
@@ -107,6 +123,16 @@ public class SignerConfigurationBuilder {
 
   public SignerConfigurationBuilder withSlashingEnabled(final boolean enableSlashing) {
     this.enableSlashing = enableSlashing;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withSlashingExportPath(final Path slashingExportPath) {
+    this.slashingExportPath = slashingExportPath;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withSlashingImportPath(final Path slashingImportPath) {
+    this.slashingImportPath = slashingImportPath;
     return this;
   }
 
@@ -126,14 +152,18 @@ public class SignerConfigurationBuilder {
         keyStoreDirectory,
         metricsPort,
         metricsHostAllowList,
+        metricsCategories,
         metricsEnabled,
         Optional.ofNullable(azureKeyVaultParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),
+        Optional.ofNullable(slashingProtectionDbUrl),
         slashingProtectionDbUsername,
         slashingProtectionDbPassword,
         mode,
         Optional.ofNullable(web3SignerEnvironment),
-        enableSlashing);
+        enableSlashing,
+        Optional.ofNullable(slashingExportPath),
+        Optional.ofNullable(slashingImportPath));
   }
 }

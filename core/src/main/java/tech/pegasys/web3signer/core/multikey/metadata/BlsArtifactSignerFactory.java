@@ -20,6 +20,8 @@ import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -42,8 +44,10 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final Path configsDirectory,
       final MetricsSystem metricsSystem,
       final HashicorpConnectionFactory connectionFactory,
+      final InterlockKeyProvider interlockKeyProvider,
+      final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider,
       final Function<BLSKeyPair, ArtifactSigner> signerFactory) {
-    super(connectionFactory, configsDirectory);
+    super(connectionFactory, configsDirectory, interlockKeyProvider, yubiHsmOpaqueDataProvider);
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
             Web3SignerMetricCategory.SIGNING,
@@ -55,7 +59,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
       return signerFactory.apply(
           new BLSKeyPair(BLSSecretKey.fromBytes(fileRawSigningMetadata.getPrivateKeyBytes())));
     }
@@ -63,14 +67,15 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("file-keystore").startTimer()) {
+    try (final TimingContext ignored =
+        privateKeyRetrievalTimer.labels("file-keystore").startTimer()) {
       return createKeystoreArtifact(fileKeyStoreMetadata);
     }
   }
 
   @Override
   public ArtifactSigner create(final HashicorpSigningMetadata hashicorpMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("hashicorp").startTimer()) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("hashicorp").startTimer()) {
       final Bytes privateKeyBytes = extractBytesFromVault(hashicorpMetadata);
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
@@ -80,7 +85,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   @Override
   public ArtifactSigner create(final AzureSecretSigningMetadata azureSecretSigningMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("azure").startTimer()) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("azure").startTimer()) {
       final Bytes privateKeyBytes = extractBytesFromVault(azureSecretSigningMetadata);
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
@@ -89,11 +94,19 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
   }
 
   @Override
-  public ArtifactSigner create(final YubiHsm2SigningMetadata yubiHsm2SigningMetadata) {
-    try (TimingContext ignored = privateKeyRetrievalTimer.labels("yubihsm2").startTimer()) {
-      final Bytes privateKeyBytes = extractBytesFromVault(yubiHsm2SigningMetadata);
-      final BLSKeyPair keyPair =
-          new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
+  public ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("interlock").startTimer()) {
+      final Bytes32 keyBytes = Bytes32.wrap(extractBytesFromInterlock(interlockSigningMetadata));
+      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(keyBytes));
+      return signerFactory.apply(keyPair);
+    }
+  }
+
+  @Override
+  public ArtifactSigner create(final YubiHsmSigningMetadata yubiHsmSigningMetadata) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("yubihsm").startTimer()) {
+      final Bytes32 keyBytes = Bytes32.wrap(extractOpaqueDataFromYubiHsm(yubiHsmSigningMetadata));
+      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(keyBytes));
       return signerFactory.apply(keyPair);
     }
   }

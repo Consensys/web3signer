@@ -33,7 +33,7 @@ class FcBlsSignSimulation extends Simulation {
     .feed(feeder)
     .exec(http("signingRequest")
 
-      .post("/rpc/v1/filecoin")
+      .post("/rpc/v0/")
       .body(StringBody(
         """{
           | "jsonrpc": "2.0",
@@ -52,4 +52,6 @@ class FcBlsSignSimulation extends Simulation {
     constantUsersPerSec(constantTxRate) during (60 seconds),
     rampUsersPerSec(burstTxRate) to 0 during (5 seconds),
   ).protocols(httpProtocol))
+    .assertions(global.failedRequests.count.in(0))
+
 }

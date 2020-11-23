@@ -42,6 +42,7 @@ import picocli.CommandLine.ParameterException;
 /** Yaml Configuration which is specifically written for Web3SignerCommand. */
 public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
 
+  private static final String WEB3SIGNER_CMD_PREFIX = "web3signer.";
   private final CommandLine commandLine;
   private final File configFile;
   // this will be initialized on fist call of defaultValue by PicoCLI parseArgs
@@ -111,8 +112,8 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
 
     // subcommands options
     final Set<String> subCommandsOptions =
-        commandLine.getSubcommands().values().stream()
-            .flatMap(YamlConfigFileDefaultProvider::subCommandOptions)
+        subCommandValues(commandLine)
+            .flatMap(YamlConfigFileDefaultProvider::allSubCommandOptions)
             .map(YamlConfigFileDefaultProvider::buildQualifiedOptionName)
             .collect(Collectors.toSet());
 
@@ -162,12 +163,20 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
     return String.valueOf(value);
   }
 
-  private static Stream<OptionSpec> subCommandOptions(final CommandLine subcommand) {
-    return subcommand.getCommandSpec().options().stream();
+  private static Stream<CommandLine> subCommandValues(final CommandLine c) {
+    return c.getSubcommands().values().stream();
+  }
+
+  private static Stream<OptionSpec> allSubCommandOptions(final CommandLine subcommand) {
+    return Stream.concat(
+        subcommand.getCommandSpec().options().stream(),
+        subCommandValues(subcommand).flatMap(YamlConfigFileDefaultProvider::allSubCommandOptions));
   }
 
   private static String buildQualifiedOptionName(final OptionSpec optionSpec) {
-    return optionSpec.command().name() + "." + buildOptionName(optionSpec);
+    final String cmdPrefix = optionSpec.command().qualifiedName(".");
+    final String prefixWithoutWeb3Signer = cmdPrefix.replaceFirst(WEB3SIGNER_CMD_PREFIX, "");
+    return prefixWithoutWeb3Signer + "." + buildOptionName(optionSpec);
   }
 
   private static String buildOptionName(final OptionSpec optionSpec) {

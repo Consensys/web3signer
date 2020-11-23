@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
@@ -20,8 +22,23 @@ import org.jdbi.v3.core.Jdbi;
 
 public class SlashingProtectionFactory {
 
-  public static SlashingProtection createSlashingProtection(final Jdbi jdbi) {
+  public static SlashingProtection createSlashingProtection(
+      final String slashingProtectionDbUrl,
+      final String slashingProtectionDbUser,
+      final String slashingProtectionDbPassword) {
+    final Jdbi jdbi =
+        DbConnection.createConnection(
+            slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
+    return createSlashingProtection(jdbi);
+  }
+
+  private static SlashingProtection createSlashingProtection(final Jdbi jdbi) {
     return new DbSlashingProtection(
-        jdbi, new ValidatorsDao(), new SignedBlocksDao(), new SignedAttestationsDao());
+        jdbi,
+        new ValidatorsDao(),
+        new SignedBlocksDao(),
+        new SignedAttestationsDao(),
+        new MetadataDao(),
+        new LowWatermarkDao());
   }
 }

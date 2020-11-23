@@ -13,9 +13,7 @@
 package tech.pegasys.web3signer.dsl.lotus;
 
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
-import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinMessage;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignature;
-import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignedMessage;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,8 +34,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class FilecoinJsonRpcEndpoint {
 
-  public static final int BLS_SIGTYPE = 1;
-  public static final int SECP_SIGTYPE = 2;
+  public static final String BLS_SIGTYPE = "bls";
+  public static final String SECP_SIGTYPE = "secp256k1";
 
   // This is required to be set if operating against a full Lotus node (as opposed to dev-lotus).
   private static final Optional<String> authToken =
@@ -49,12 +47,12 @@ public abstract class FilecoinJsonRpcEndpoint {
   private final JsonRpcClient jsonRpcClient;
   private final String rpcPath;
 
-  public FilecoinJsonRpcEndpoint(final String rpcPath) {
+  protected FilecoinJsonRpcEndpoint(final String rpcPath) {
     jsonRpcClient = new JsonRpcClient(this::executeRawJsonRpcRequest, OBJECT_MAPPER);
     this.rpcPath = rpcPath;
   }
 
-  public String walletNew(int sigType) {
+  public String walletNew(final String sigType) {
     return jsonRpcClient
         .createRequest()
         .method("Filecoin.WalletNew")
@@ -98,7 +96,7 @@ public abstract class FilecoinJsonRpcEndpoint {
         .createRequest()
         .method("Filecoin.WalletSign")
         .id(101)
-        .params(address, data)
+        .params(address, data) // metaData is not supported on FC local wallet signing API impl
         .returnAs(FilecoinSignature.class)
         .execute();
   }
@@ -111,17 +109,6 @@ public abstract class FilecoinJsonRpcEndpoint {
         .id(202)
         .params(address, data, signature)
         .returnAs(Boolean.class)
-        .execute();
-  }
-
-  public FilecoinSignedMessage walletSignMessage(
-      final String address, final FilecoinMessage message) {
-    return jsonRpcClient
-        .createRequest()
-        .method("Filecoin.WalletSignMessage")
-        .id(101)
-        .params(address, message)
-        .returnAs(FilecoinSignedMessage.class)
         .execute();
   }
 

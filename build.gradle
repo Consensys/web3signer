@@ -41,9 +41,9 @@ def bintrayPackage = bintray.pkg {
   name = 'web3signer'
   userOrg = 'consensys'
   licenses = ['Apache-2.0']
-  websiteUrl = 'https://github.com/PegaSysEng/web3signer'
-  issueTrackerUrl = 'https://github.com/PegaSysEng/web3signer/issues'
-  vcsUrl = 'https://github.com/PegaSysEng/web3signer.git'
+  websiteUrl = 'https://github.com/ConsenSys/web3signer'
+  issueTrackerUrl = 'https://github.com/ConsenSys/web3signer/issues'
+  vcsUrl = 'https://github.com/ConsenSys/web3signer.git'
 
   version {
     name = project.version
@@ -100,7 +100,7 @@ allprojects {
 
   version = rootProject.version
 
-  jacoco { toolVersion = '0.8.5' }
+  jacoco { toolVersion = '0.8.6' }
 
   task sourcesJar(type: Jar, dependsOn: classes) {
     classifier = 'sources'
@@ -120,6 +120,7 @@ allprojects {
     mavenCentral()
     maven { url "https://hyperledger-org.bintray.com/besu-repo/" }
     maven { url  "https://consensys.bintray.com/pegasys-repo" }
+    maven { url "https://jitpack.io" }
   }
 
   dependencies { errorprone("com.google.errorprone:error_prone_core") }
@@ -257,7 +258,7 @@ subprojects {
           }
           pom {
             name = "web3signer - ${project.name}"
-            url = 'http://github.com/PegaSysEng/web3signer'
+            url = 'http://github.com/ConsenSys/web3signer'
             licenses {
               license {
                 name = 'The Apache License, Version 2.0'
@@ -265,9 +266,9 @@ subprojects {
               }
             }
             scm {
-              connection = 'scm:git:git://github.com/PegaSysEng/web3signer.git'
-              developerConnection = 'scm:git:ssh://github.com/PegaSysEng/web3signer.git'
-              url = 'https://github.com/PegaSysEng/web3signer'
+              connection = 'scm:git:git://github.com/ConsenSys/web3signer.git'
+              developerConnection = 'scm:git:ssh://github.com/ConsenSys/web3signer.git'
+              url = 'https://github.com/ConsenSys/web3signer'
             }
           }
         }
@@ -461,7 +462,7 @@ tasks.register("dockerDistUntar") {
 task distDocker(type: Exec) {
   dependsOn dockerDistUntar
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def imageName = "quorumengineering/web3signer"
+  def imageName = "consensys/web3signer"
   def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
   def dockerBuildDir = "build/docker-web3signer/"
   workingDir "${dockerBuildDir}"
@@ -480,7 +481,7 @@ task distDocker(type: Exec) {
 task testDocker(type: Exec) {
   dependsOn distDocker
   def dockerReportsDir = "docker/reports/"
-  def imageName = "quorumengineering/web3signer"
+  def imageName = "consensys/web3signer"
   def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
   workingDir "docker"
 
@@ -495,7 +496,7 @@ task testDocker(type: Exec) {
 task dockerUpload(type: Exec) {
   dependsOn distDocker
   def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
-  def imageName = "quorumengineering/web3signer"
+  def imageName = "consensys/web3signer"
   def image = "${imageName}:${dockerBuildVersion}"
   def cmd = "docker push '${image}'"
 

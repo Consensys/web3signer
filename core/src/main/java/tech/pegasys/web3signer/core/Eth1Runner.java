@@ -23,7 +23,9 @@ import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
@@ -83,22 +85,26 @@ public class Eth1Runner extends Runner {
     final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+            new YubiHsmOpaqueDataProvider()) {
+      final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
+          new Secp256k1ArtifactSignerFactory(
+              hashicorpConnectionFactory,
+              config.getKeyConfigPath(),
+              azureFactory,
+              interlockKeyProvider,
+              yubiHsmOpaqueDataProvider,
+              EthSecpArtifactSigner::new,
+              true);
 
-    final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
-        new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            config.getKeyConfigPath(),
-            azureFactory,
-            EthSecpArtifactSigner::new,
-            true);
-
-    final Collection<ArtifactSigner> signers =
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
-
-    return DefaultArtifactSignerProvider.create(signers);
+      final Collection<ArtifactSigner> signers =
+          SignerLoader.load(
+              config.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
+      return DefaultArtifactSignerProvider.create(signers);
+    }
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {

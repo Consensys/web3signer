@@ -24,6 +24,7 @@ import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.slashingprotection.SlashingMetricCategory;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -91,7 +92,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
       paramLabel = "<LOG VERBOSITY LEVEL>",
       description =
           "Logging verbosity levels: OFF, FATAL, WARN, INFO, DEBUG, TRACE, ALL (default: INFO)")
-  private final Level logLevel = Level.INFO;
+  private final Level logLevel = null;
 
   @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
   @Option(
@@ -260,6 +261,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
     public Web3signerMetricCategoryConverter() {
       addCategories(Web3SignerMetricCategory.class);
       addCategories(StandardMetricCategory.class);
+      addCategories(SlashingMetricCategory.class);
     }
   }
 }

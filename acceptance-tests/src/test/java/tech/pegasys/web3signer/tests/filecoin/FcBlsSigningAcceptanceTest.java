@@ -29,7 +29,6 @@ import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.tests.signing.SigningAcceptanceTestBase;
 
 import java.nio.file.Path;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -42,13 +41,14 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.Test;
 
 public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
-  private static final String dataString =
-      Base64.getEncoder().encodeToString("Hello World".getBytes(UTF_8));
+  private static final Bytes DATA = Bytes.wrap("Hello World".getBytes(UTF_8));
+  private static final Bytes CID =
+      Bytes.fromHexString(
+          "0x0171a0e402201dc01772ee0171f5f614c673e3c7fa1107a8cf727bdf5a6dadb379e93c0d1d00");
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
@@ -57,39 +57,29 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair keyPair = new BLSKeyPair(key);
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
-  private static final FilecoinNetwork network = FilecoinNetwork.TESTNET;
+  private static final FilecoinNetwork network = FilecoinNetwork.MAINNET;
   private static final FcBlsArtifactSigner signatureGenerator =
       new FcBlsArtifactSigner(keyPair, network);
-  private static final BlsArtifactSignature expectedSignature =
-      signatureGenerator.sign(Bytes.fromBase64String(dataString));
 
   final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
 
-  @ParameterizedTest
-  @ValueSource(strings = {"file-raw", "yubihsm2"})
-  void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint(final String metadataType) {
+  @Test
+  void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint() {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    switch (metadataType) {
-      case "file-raw":
-        metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
-        setupSigner("filecoin");
-        break;
-      case "yubihsm2":
-        metadataFileHelpers.createYubiHsmYamlFileAt(keyConfigFile, KeyType.BLS);
-        setupSigner("filecoin", yubiHsmShellEnvMap());
-        break;
-    }
+    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    setupSigner("filecoin");
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
-    ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = new ObjectMapper();
+    final Map<String, String> metaData = Map.of("type", "message", "extra", DATA.toBase64String());
     final JsonNode params =
         mapper.convertValue(
-            List.of(identifier.encode(FilecoinNetwork.TESTNET), dataString), JsonNode.class);
+            List.of(identifier.encode(FilecoinNetwork.MAINNET), CID.toBase64String(), metaData),
+            JsonNode.class);
 
     final Request request = new Request("2.0", "Filecoin.WalletSign", params, id);
-    final Response response =
-        given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH + "/filecoin");
+    final Response response = given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);
 
     response
         .then()
@@ -97,6 +87,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("jsonrpc", equalTo("2.0"), "id", equalTo(id.asInt()));
 
+    final BlsArtifactSignature expectedSignature = signatureGenerator.sign(CID);
     final Map<String, Object> result = response.body().jsonPath().get("result");
     assertThat(result.get("Type")).isEqualTo(2);
     assertThat(result.get("Data"))

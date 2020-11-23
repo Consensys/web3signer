@@ -71,15 +71,16 @@ public abstract class Runner implements Runnable {
 
   protected final Config config;
 
-  public Runner(final Config config) {
+  protected Runner(final Config config) {
     this.config = config;
   }
 
   @Override
   public void run() {
-    // set log level per CLI flags
-    System.out.println("Setting logging level to " + config.getLogLevel().name());
-    Configurator.setAllLevels("", config.getLogLevel());
+    if (config.getLogLevel() != null) {
+      System.out.println("Setting logging level to " + config.getLogLevel().name());
+      Configurator.setRootLevel(config.getLogLevel());
+    }
 
     final MetricsEndpoint metricsEndpoint =
         new MetricsEndpoint(

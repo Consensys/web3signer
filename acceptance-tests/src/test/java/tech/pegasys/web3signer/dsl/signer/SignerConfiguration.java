@@ -30,16 +30,20 @@ public class SignerConfiguration {
   private final List<String> httpHostAllowList;
   private final Path keyStorePath;
   private final List<String> metricsHostAllowList;
+  private final List<String> metricsCategories;
   private final boolean metricsEnabled;
   private final Optional<AzureKeyVaultParameters> azureKeyVaultParameters;
   private Optional<TlsOptions> serverTlsOptions;
   private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
   private final String mode;
+  private final Optional<String> slashingProtectionDbUrl;
   private final String slashingProtectionDbUsername;
   private final String slashingProtectionDbPassword;
   private final Optional<Map<String, String>> web3SignerEnvironment;
   private final boolean enableSlashing;
+  private final Optional<Path> slashingExportPath;
+  private final Optional<Path> slashingImportPath;
 
   public SignerConfiguration(
       final String hostname,
@@ -48,30 +52,38 @@ public class SignerConfiguration {
       final Path keyStorePath,
       final int metricsPort,
       final List<String> metricsHostAllowList,
+      final List<String> metricsCategories,
       final boolean metricsEnabled,
       final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
+      final Optional<String> slashingProtectionDbUrl,
       final String slashingProtectionDbUsername,
       final String slashingProtectionDbPassword,
       final String mode,
       final Optional<Map<String, String>> web3SignerEnvironment,
-      final boolean enableSlashing) {
+      final boolean enableSlashing,
+      final Optional<Path> slashingExportPath,
+      final Optional<Path> slashingImportPath) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
     this.httpHostAllowList = httpHostAllowList;
     this.keyStorePath = keyStorePath;
     this.metricsPort = metricsPort;
     this.metricsHostAllowList = metricsHostAllowList;
+    this.metricsCategories = metricsCategories;
     this.metricsEnabled = metricsEnabled;
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.serverTlsOptions = serverTlsOptions;
     this.overriddenCaTrustStore = overriddenCaTrustStore;
+    this.slashingProtectionDbUrl = slashingProtectionDbUrl;
     this.slashingProtectionDbUsername = slashingProtectionDbUsername;
     this.slashingProtectionDbPassword = slashingProtectionDbPassword;
     this.mode = mode;
     this.web3SignerEnvironment = web3SignerEnvironment;
     this.enableSlashing = enableSlashing;
+    this.slashingExportPath = slashingExportPath;
+    this.slashingImportPath = slashingImportPath;
   }
 
   public String hostname() {
@@ -106,6 +118,10 @@ public class SignerConfiguration {
     return metricsHostAllowList;
   }
 
+  public List<String> getMetricsCategories() {
+    return metricsCategories;
+  }
+
   public Optional<TlsOptions> getServerTlsOptions() {
     return serverTlsOptions;
   }
@@ -126,6 +142,10 @@ public class SignerConfiguration {
     return mode;
   }
 
+  public Optional<String> getSlashingProtectionDbUrl() {
+    return slashingProtectionDbUrl;
+  }
+
   public boolean isSlashingProtectionEnabled() {
     return enableSlashing;
   }
@@ -140,5 +160,13 @@ public class SignerConfiguration {
 
   public Optional<Map<String, String>> getWeb3SignerEnvironment() {
     return web3SignerEnvironment;
+  }
+
+  public Optional<Path> getSlashingExportPath() {
+    return slashingExportPath;
+  }
+
+  public Optional<Path> getSlashingImportPath() {
+    return slashingImportPath;
   }
 }

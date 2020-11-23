@@ -22,7 +22,8 @@ import tech.pegasys.signers.hashicorp.TrustStoreType;
 import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
-import tech.pegasys.signers.yubihsm2.YubiHsm2;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.FileNotFoundException;
@@ -35,14 +36,20 @@ import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
 
-  final HashicorpConnectionFactory connectionFactory;
+  final HashicorpConnectionFactory hashicorpConnectionFactory;
   final Path configsDirectory;
-  final YubiHsmShellArgs yubiHsmShellArgs = new YubiHsmShellArgs();
+  private final InterlockKeyProvider interlockKeyProvider;
+  private final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
 
-  public AbstractArtifactSignerFactory(
-      final HashicorpConnectionFactory connectionFactory, final Path configsDirectory) {
-    this.connectionFactory = connectionFactory;
+  protected AbstractArtifactSignerFactory(
+      final HashicorpConnectionFactory hashicorpConnectionFactory,
+      final Path configsDirectory,
+      final InterlockKeyProvider interlockKeyProvider,
+      final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider) {
+    this.hashicorpConnectionFactory = hashicorpConnectionFactory;
     this.configsDirectory = configsDirectory;
+    this.interlockKeyProvider = interlockKeyProvider;
+    this.yubiHsmOpaqueDataProvider = yubiHsmOpaqueDataProvider;
   }
 
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
@@ -67,7 +74,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
 
     try {
       final HashicorpConnection connection =
-          connectionFactory.create(
+          hashicorpConnectionFactory.create(
               new ConnectionParameters(
                   metadata.getServerHost(),
                   Optional.ofNullable(metadata.getServerPort()),
@@ -86,23 +93,21 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
     }
   }
 
-  protected Bytes extractBytesFromVault(final YubiHsm2SigningMetadata metadata) {
-    final YubiHsm2 yubiHsm2 =
-        new YubiHsm2(
-            yubiHsmShellArgs.getArgs(),
-            Optional.empty(),
-            metadata.getConnectorUrl(),
-            metadata.getAuthKey(),
-            metadata.getPassword(),
-            metadata.getCaCertPath(),
-            metadata.getProxyUrl());
+  protected Bytes extractBytesFromInterlock(final InterlockSigningMetadata metadata) {
     try {
-      final String secret =
-          yubiHsm2.fetchOpaqueData(metadata.getOpaqueObjId(), metadata.getOutputFormat());
-      return Bytes.fromHexString(secret);
+      return interlockKeyProvider.fetchKey(metadata);
     } catch (final RuntimeException e) {
       throw new SigningMetadataException(
-          "Failed to fetch secret from YubiHSM2: " + e.getMessage(), e);
+          "Failed to fetch secret from Interlock: " + e.getMessage(), e);
+    }
+  }
+
+  protected Bytes extractOpaqueDataFromYubiHsm(YubiHsmSigningMetadata yubiHsmSigningMetadata) {
+    try {
+      return yubiHsmOpaqueDataProvider.fetchOpaqueData(yubiHsmSigningMetadata);
+    } catch (final RuntimeException e) {
+      throw new SigningMetadataException(
+          "Failed to fetch opaque data from YubiHSM: " + e.getMessage(), e);
     }
   }
 

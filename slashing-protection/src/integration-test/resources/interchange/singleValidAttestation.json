@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "interchange_format_version": "5",
+    "genesis_validators_root": "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+  },
+  "data": [
+    {
+      "pubkey": "0xb845089a1457f811bfc000588fbb4e713669be8ce060ea6be3c6ece09afc3794106c91ca73acda5e5457122d58723bed",
+      "signed_blocks": [],
+      "signed_attestations": [{
+        "source_epoch": "5",
+        "target_epoch": "6",
+        "signing_root": "0x123456"
+      }
+      ]
+    }
+  ]
+}

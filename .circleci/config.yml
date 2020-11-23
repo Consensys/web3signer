@@ -9,8 +9,8 @@ executors:
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
         auth:
-          username: $DOCKER_USER
-          password: $DOCKER_PASSWORD      
+          username: $DOCKER_USER_RO
+          password: $DOCKER_PASSWORD_RO      
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -21,8 +21,8 @@ executors:
     docker:
       - image: circleci/openjdk:11.0.8-jdk-buster
         auth:
-          username: $DOCKER_USER
-          password: $DOCKER_PASSWORD      
+          username: $DOCKER_USER_RO
+          password: $DOCKER_PASSWORD_RO    
     resource_class: large
     working_directory: ~/project
     environment:
@@ -34,13 +34,13 @@ executors:
       # Primary container
       - image: circleci/openjdk:11.0.8-jdk-buster
         auth:
-          username: $DOCKER_USER
-          password: $DOCKER_PASSWORD      
+          username: $DOCKER_USER_RO
+          password: $DOCKER_PASSWORD_RO      
       # Secondary container running lotus as devnet on port 7777
       - image: textile/lotus-devnet
         auth:
-          username: $DOCKER_USER
-          password: $DOCKER_PASSWORD      
+          username: $DOCKER_USER_RO
+          password: $DOCKER_PASSWORD_RO        
         environment:
           TEXLOTUSDEVNET_BIGSECTORS: false
     resource_class: large
@@ -120,6 +120,7 @@ jobs:
       - run:
           name: Build
           command: |
+            git submodule update --init --recursive
             ./gradlew --no-daemon --parallel build
       - run:
           name: Test
@@ -222,7 +223,7 @@ jobs:
       - run:
           name: Publish Docker
           command: |
-            docker login --username "${DOCKER_USER}" --password "${DOCKER_PASSWORD}"
+            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
       - notify
       
@@ -255,16 +256,24 @@ workflows:
   version: 2
   default:
     jobs:
-      - build
+      - build:
+          context:
+            - dockerhub-quorumengineering-ro              
       - acceptanceTests:
           requires:
             - build
+          context:
+            - dockerhub-quorumengineering-ro                    
       - performanceTests:
           requires:
             - build
+          context:
+            - dockerhub-quorumengineering-ro                    
       - buildDocker:
           requires:
             - build
+          context:
+            - dockerhub-quorumengineering-ro                    
       - publishOpenApiSpec:
           filters:
             branches:
@@ -273,6 +282,8 @@ workflows:
                 - /^release-.*/
           requires:
             - acceptanceTests
+          context:
+            - dockerhub-quorumengineering-ro                    
       - publish:
           filters:
             branches:
@@ -281,6 +292,9 @@ workflows:
                 - /^release-.*/
           requires:
             - acceptanceTests
+          context:
+            - dockerhub-quorumengineering-ro     
+            - quorum-gradle               
       - publishDocker:
           filters:
             branches:
@@ -290,3 +304,5 @@ workflows:
           requires:
             - acceptanceTests
             - buildDocker
+          context:
+            - dockerhub-quorumengineering-rw 

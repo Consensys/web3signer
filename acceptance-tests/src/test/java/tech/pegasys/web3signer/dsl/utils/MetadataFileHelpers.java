@@ -30,6 +30,7 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
@@ -179,15 +180,41 @@ public class MetadataFileHelpers {
     }
   }
 
-  public void createYubiHsmYamlFileAt(final Path metadataFilePath, final KeyType keyType) {
-    final int opaqueObjId = keyType == KeyType.BLS ? 1 : 2;
-
+  public void createInterlockYamlFileAt(
+      final Path metadataFilePath,
+      final Path knownServersFile,
+      final String keyPath,
+      final KeyType keyType) {
+    // these are default credentials of Interlock on USB Armory
     final Map<String, String> yaml = new HashMap<>();
-    yaml.put("type", "yubihsm2");
-    yaml.put("connectorUrl", "http://localhost:12345");
-    yaml.put("authKey", String.valueOf(1));
-    yaml.put("password", "password");
-    yaml.put("opaqueObjId", String.valueOf(opaqueObjId));
+    yaml.put("type", "interlock");
+    yaml.put("interlockUrl", "https://10.0.0.1");
+    yaml.put("knownServersFile", knownServersFile.toString());
+    yaml.put("volume", "armory");
+    yaml.put("password", "usbarmory");
+    yaml.put("keyPath", keyPath);
+    yaml.put("keyType", keyType.name());
+
+    createYamlFile(metadataFilePath, yaml);
+  }
+
+  public void createYubihsmYamlFileAt(
+      final Path metadataFilePath,
+      final String pkcs11ModulePath,
+      final String connectorUrl,
+      final String additionalInitConfig,
+      final short authId,
+      final String password,
+      final int opaqueDataId,
+      final KeyType keyType) {
+    final Map<String, Serializable> yaml = new HashMap<>();
+    yaml.put("type", "yubihsm");
+    yaml.put("pkcs11ModulePath", pkcs11ModulePath);
+    yaml.put("connectorUrl", connectorUrl);
+    yaml.put("additionalInitConfig", additionalInitConfig);
+    yaml.put("authId", authId);
+    yaml.put("password", password);
+    yaml.put("opaqueDataId", opaqueDataId);
     yaml.put("keyType", keyType.name());
 
     createYamlFile(metadataFilePath, yaml);
@@ -221,7 +248,8 @@ public class MetadataFileHelpers {
     }
   }
 
-  private void createYamlFile(final Path filePath, final Map<String, String> signingMetadata) {
+  private void createYamlFile(
+      final Path filePath, final Map<String, ? extends Serializable> signingMetadata) {
     try {
       YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), signingMetadata);
     } catch (final IOException e) {

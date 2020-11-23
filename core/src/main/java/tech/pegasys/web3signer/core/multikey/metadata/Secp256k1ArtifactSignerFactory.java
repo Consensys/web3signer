@@ -17,6 +17,8 @@ import tech.pegasys.signers.secp256k1.api.Signer;
 import tech.pegasys.signers.secp256k1.azure.AzureConfig;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.signers.secp256k1.filebased.CredentialSigner;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -38,12 +40,18 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   private final boolean needToHash;
 
   public Secp256k1ArtifactSignerFactory(
-      final HashicorpConnectionFactory connectionFactory,
+      final HashicorpConnectionFactory hashicorpConnectionFactory,
       final Path configsDirectory,
       final AzureKeyVaultSignerFactory azureCloudSignerFactory,
+      final InterlockKeyProvider interlockKeyProvider,
+      final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider,
       final Function<Signer, ArtifactSigner> signerFactory,
       final boolean needToHash) {
-    super(connectionFactory, configsDirectory);
+    super(
+        hashicorpConnectionFactory,
+        configsDirectory,
+        interlockKeyProvider,
+        yubiHsmOpaqueDataProvider);
     this.azureCloudSignerFactory = azureCloudSignerFactory;
     this.signerFactory = signerFactory;
     this.needToHash = needToHash;
@@ -99,9 +107,16 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   }
 
   @Override
-  public ArtifactSigner create(final YubiHsm2SigningMetadata yubiHsm2SigningMetadata) {
-    final Bytes privateKeyBytes = extractBytesFromVault(yubiHsm2SigningMetadata);
-    final Credentials credentials = Credentials.create(privateKeyBytes.toHexString());
+  public ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
+    final Credentials credentials =
+        Credentials.create(extractBytesFromInterlock(interlockSigningMetadata).toHexString());
+    return createCredentialSigner(credentials);
+  }
+
+  @Override
+  public ArtifactSigner create(final YubiHsmSigningMetadata yubiHsmSigningMetadata) {
+    final Credentials credentials =
+        Credentials.create(extractOpaqueDataFromYubiHsm(yubiHsmSigningMetadata).toHexString());
     return createCredentialSigner(credentials);
   }
 

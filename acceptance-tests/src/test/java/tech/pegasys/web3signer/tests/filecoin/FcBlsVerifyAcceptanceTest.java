@@ -77,8 +77,7 @@ public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
             List.of(identifier.encode(network), dataString, filecoinSignature), JsonNode.class);
 
     final Request request = new Request("2.0", "Filecoin.WalletVerify", params, id);
-    final Response response =
-        given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH + "/filecoin");
+    final Response response = given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);
 
     response
         .then()

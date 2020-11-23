@@ -12,6 +12,9 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
+import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
@@ -24,7 +27,9 @@ import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
+import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
@@ -47,7 +52,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
 
-  private static final String FC_JSON_RPC_PATH = JSON_RPC_PATH + "/filecoin";
+  private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
 
   public FilecoinRunner(final Config config, final FilecoinNetwork network) {
@@ -79,7 +84,12 @@ public class FilecoinRunner extends Runner {
 
     final FcJsonRpcMetrics fcJsonRpcMetrics = new FcJsonRpcMetrics(metricsSystem);
     final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, fcJsonRpcMetrics);
-    final ObjectMapper mapper = new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
+    final ObjectMapper mapper =
+        new ObjectMapper()
+            .enable(ACCEPT_CASE_INSENSITIVE_ENUMS)
+            .enable(ACCEPT_CASE_INSENSITIVE_PROPERTIES)
+            .disable(FAIL_ON_UNKNOWN_PROPERTIES)
+            .registerModule(new FilecoinJsonRpcModule());
     final JsonRpcServer jsonRpcServer = JsonRpcServer.withMapper(mapper);
 
     router
@@ -103,27 +113,35 @@ public class FilecoinRunner extends Runner {
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
 
-    final AbstractArtifactSignerFactory blsArtifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            keyPair -> new FcBlsArtifactSigner(keyPair, network));
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+            new YubiHsmOpaqueDataProvider()) {
 
-    final AbstractArtifactSignerFactory secpArtifactSignerFactory =
-        new Secp256k1ArtifactSignerFactory(
-            hashicorpConnectionFactory,
-            config.getKeyConfigPath(),
-            azureFactory,
-            signer -> new FcSecpArtifactSigner(signer, network),
-            false);
+      final AbstractArtifactSignerFactory blsArtifactSignerFactory =
+          new BlsArtifactSignerFactory(
+              config.getKeyConfigPath(),
+              metricsSystem,
+              hashicorpConnectionFactory,
+              interlockKeyProvider,
+              yubiHsmOpaqueDataProvider,
+              keyPair -> new FcBlsArtifactSigner(keyPair, network));
 
-    final Collection<ArtifactSigner> signers =
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+      final AbstractArtifactSignerFactory secpArtifactSignerFactory =
+          new Secp256k1ArtifactSignerFactory(
+              hashicorpConnectionFactory,
+              config.getKeyConfigPath(),
+              azureFactory,
+              interlockKeyProvider,
+              yubiHsmOpaqueDataProvider,
+              signer -> new FcSecpArtifactSigner(signer, network),
+              false);
 
-    return DefaultArtifactSignerProvider.create(signers);
+      final Collection<ArtifactSigner> signers =
+          SignerLoader.load(
+              config.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+      return DefaultArtifactSignerProvider.create(signers);
+    }
   }
 }

@@ -12,9 +12,16 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory.createSlashingProtection;
+
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -35,20 +42,43 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Spec CommandSpec spec;
 
+  @Command(name = "export", description = "Export slashing protection db to json file")
+  public void exportSlashingDb(@Option(names = "--to") File output) {
+    final SlashingProtection slashingProtection =
+        createSlashingProtection(
+            slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
+    try {
+      slashingProtection.export(new FileOutputStream(output));
+    } catch (final FileNotFoundException e) {
+      throw new RuntimeException("Unable to find output target file", e);
+    }
+  }
+
+  @Command(name = "import", description = "Import json file to the slashing protection db")
+  public void importSlashingDb(@Option(names = "--from") File input) {
+    final SlashingProtection slashingProtection =
+        createSlashingProtection(
+            slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
+
+    try {
+      slashingProtection.importData(new FileInputStream(input));
+    } catch (final FileNotFoundException e) {
+      throw new RuntimeException("Unable to find input file", e);
+    }
+  }
+
   @Option(
       names = {"--slashing-protection-enabled"},
-      hidden = true,
       description =
           "Set to true if all Eth2 signing operations should be validated against historic data, "
               + "prior to responding with signatures"
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  private boolean slashingProtectionEnabled = false;
+  private boolean slashingProtectionEnabled = true;
 
   @Option(
       names = {"--slashing-protection-db-url"},
-      hidden = true,
       description = "The jdbc url to use to connect to the slashing protection database",
       paramLabel = "<jdbc url>",
       arity = "1")
@@ -56,14 +86,12 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Option(
       names = {"--slashing-protection-db-username"},
-      hidden = true,
       description = "The username to use when connecting to the slashing protection database",
       paramLabel = "<jdbc user>")
   private String slashingProtectionDbUsername;
 
   @Option(
       names = {"--slashing-protection-db-password"},
-      hidden = true,
       description = "The password to use when connecting to the slashing protection database",
       paramLabel = "<jdbc password>")
   private String slashingProtectionDbPassword;

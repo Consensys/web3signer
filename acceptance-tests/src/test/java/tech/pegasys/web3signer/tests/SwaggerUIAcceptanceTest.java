@@ -65,6 +65,6 @@ public class SwaggerUIAcceptanceTest extends AcceptanceTestBase {
         .then()
         .assertThat()
         .statusCode(200)
-        .body(StringContains.containsString("openapi: 3.0.0"));
+        .body(StringContains.containsString("openapi: 3.0"));
   }
 }

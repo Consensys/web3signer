@@ -28,17 +28,18 @@ import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
+import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
-import tech.pegasys.web3signer.core.service.http.SigningJsonRpcModule;
+import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
+import tech.pegasys.web3signer.core.service.http.SigningJsonModule;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.slashingprotection.DbConnection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
@@ -60,7 +61,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.jdbi.v3.core.Jdbi;
 
 public class Eth2Runner extends Runner {
 
@@ -92,10 +92,9 @@ public class Eth2Runner extends Runner {
       final String slashingProtectionDbUser,
       final String slashingProtectionDbPassword) {
     if (slashingProtectionEnabled) {
-      final Jdbi jdbi =
-          DbConnection.createConnection(
-              slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
-      return Optional.of(SlashingProtectionFactory.createSlashingProtection(jdbi));
+      return Optional.of(
+          SlashingProtectionFactory.createSlashingProtection(
+              slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword));
     } else {
       return Optional.empty();
     }
@@ -132,7 +131,7 @@ public class Eth2Runner extends Runner {
         new ObjectMapper()
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .registerModule(new SigningJsonRpcModule());
+            .registerModule(new SigningJsonModule());
 
     addPublicKeysListHandler(
         routerFactory, blsSignerProvider.availableIdentifiers(), ETH2_LIST.name(), errorHandler);
@@ -159,18 +158,24 @@ public class Eth2Runner extends Runner {
     final HashicorpConnectionFactory hashicorpConnectionFactory =
         new HashicorpConnectionFactory(vertx);
 
-    final AbstractArtifactSignerFactory artifactSignerFactory =
-        new BlsArtifactSignerFactory(
-            config.getKeyConfigPath(),
-            metricsSystem,
-            hashicorpConnectionFactory,
-            BlsArtifactSigner::new);
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+            new YubiHsmOpaqueDataProvider()) {
+      final AbstractArtifactSignerFactory artifactSignerFactory =
+          new BlsArtifactSignerFactory(
+              config.getKeyConfigPath(),
+              metricsSystem,
+              hashicorpConnectionFactory,
+              interlockKeyProvider,
+              yubiHsmOpaqueDataProvider,
+              BlsArtifactSigner::new);
 
-    signers.addAll(
-        SignerLoader.load(
-            config.getKeyConfigPath(),
-            "yaml",
-            new YamlSignerParser(List.of(artifactSignerFactory))));
+      signers.addAll(
+          SignerLoader.load(
+              config.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(List.of(artifactSignerFactory))));
+    }
 
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
       signers.addAll(loadAzureSigners());

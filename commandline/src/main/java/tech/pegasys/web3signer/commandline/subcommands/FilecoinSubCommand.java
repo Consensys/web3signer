@@ -32,7 +32,7 @@ public class FilecoinSubCommand extends ModeSubCommand {
       description = "Filecoin network to use for addresses (default: ${DEFAULT-VALUE})",
       paramLabel = "<network name>",
       arity = "1")
-  private final FilecoinNetwork network = FilecoinNetwork.TESTNET;
+  private final FilecoinNetwork network = FilecoinNetwork.MAINNET;
 
   @Override
   public Runner createRunner() {

@@ -37,6 +37,7 @@ public class SignedBlocksDaoTest {
           .withMigration(Migration.before().withPath("migrations/postgresql"));
 
   private Handle handle;
+  final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
 
   @Before
   public void setup() {
@@ -50,29 +51,38 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void findsExistingBlockInDb() {
-    insertBlock(handle, Bytes.of(100), 1, 2, Bytes.of(3));
+  public void findBlockWithDifferentSigningRootInDb() {
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 2, Bytes.of(3));
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
 
-    final Optional<SignedBlock> existingBlock =
-        signedBlocksDao.findExistingBlock(handle, 1, UInt64.valueOf(2));
-    assertThat(existingBlock).isNotEmpty();
-    assertThat(existingBlock.get().getValidatorId()).isEqualTo(1);
-    assertThat(existingBlock.get().getSlot()).isEqualTo(UInt64.valueOf(2));
-    assertThat(existingBlock.get().getSigningRoot()).isEqualTo(Bytes.of(3));
+    final List<SignedBlock> existingBlocks =
+        signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(2), Bytes.of(4));
+    assertThat(existingBlocks).isNotEmpty();
+    assertThat(existingBlocks).hasSize(1);
+    assertThat(existingBlocks.get(0).getValidatorId()).isEqualTo(1);
+    assertThat(existingBlocks.get(0).getSlot()).isEqualTo(UInt64.valueOf(2));
+    assertThat(existingBlocks.get(0).getSigningRoot()).isEqualTo(Optional.of(Bytes.of(3)));
   }
 
   @Test
-  public void returnsEmptyForNonExistingBlockInDb() {
-    insertBlock(handle, Bytes.of(100), 1, 2, Bytes.of(3));
+  public void returnsEmptyIfTheOnlyBlockInSlotMatchesRequestedValue() {
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 2, Bytes.of(3));
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
-    assertThat(signedBlocksDao.findExistingBlock(handle, 1, UInt64.valueOf(1))).isEmpty();
-    assertThat(signedBlocksDao.findExistingBlock(handle, 2, UInt64.valueOf(2))).isEmpty();
+    assertThat(
+            signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+                handle, 1, UInt64.valueOf(2), Bytes.of(3)))
+        .isEmpty();
+    assertThat(
+            signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+                handle, 2, UInt64.valueOf(2), Bytes.of(3)))
+        .isEmpty();
   }
 
   @Test
   public void storesBlockInDb() {
-    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
     final ValidatorsDao validatorsDao = new ValidatorsDao();
 
     validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
@@ -99,17 +109,48 @@ public class SignedBlocksDaoTest {
         .isEqualToComparingFieldByField(new SignedBlock(3, UInt64.MIN_VALUE, Bytes.of(102)));
   }
 
-  private void insertBlock(
-      final Handle h,
-      final Bytes publicKey,
-      final int validatorId,
-      final int slot,
-      final Bytes signingRoot) {
-    h.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
-    h.execute(
+  @Test
+  public void canCreateBlocksWithNoSigningRoot() {
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 2, null);
+    final List<SignedBlock> blocks =
+        signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(2), Bytes.of(3));
+    assertThat(blocks).isNotEmpty();
+    assertThat(blocks).hasSize(1);
+    assertThat(blocks.get(0).getSigningRoot()).isEmpty();
+  }
+
+  @Test
+  public void allNonNullEntriesAtTargetEpochAreReturnedIfCheckingAgainstNull() {
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 3, Bytes.of(10));
+    insertBlock(1, 3, Bytes.of(11));
+    insertBlock(1, 3, null);
+
+    final List<SignedBlock> nonMatchingAttestations =
+        signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+            handle, 1, UInt64.valueOf(3), null);
+
+    assertThat(nonMatchingAttestations).hasSize(2);
+  }
+
+  @Test
+  public void existingCheckMatchesOnNullSigningRoot() {
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 3, null);
+    assertThat(signedBlocksDao.findMatchingBlock(handle, 1, UInt64.valueOf(3), null)).isNotEmpty();
+  }
+
+  private void insertBlock(final int validatorId, final int slot, final Bytes signingRoot) {
+    handle.execute(
         "INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)",
         validatorId,
         slot,
         signingRoot);
+  }
+
+  private void insertValidator(final Bytes publicKey, final int validatorId) {
+    handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
   }
 }

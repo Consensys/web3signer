@@ -125,14 +125,6 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     signAndVerifySignature();
   }
 
-  @Test
-  public void ableToSignUsingYubiHsm() {
-    final Path configFile = testDirectory.resolve("yubihsm_2.yaml");
-    metadataFileHelpers.createYubiHsmYamlFileAt(configFile, KeyType.SECP256K1);
-
-    signAndVerifySignature(yubiHsmShellEnvMap());
-  }
-
   private void signAndVerifySignature() {
     signAndVerifySignature(null);
   }

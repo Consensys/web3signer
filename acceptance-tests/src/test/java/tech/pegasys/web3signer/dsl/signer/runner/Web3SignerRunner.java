@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.dsl.signer.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.dsl.utils.EmbeddedDatabaseUtils.createEmbeddedDatabase;
 import static tech.pegasys.web3signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
 
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
@@ -32,15 +33,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-import javax.sql.DataSource;
 
 import com.google.common.collect.Lists;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import org.flywaydb.core.Flyway;
 
 public abstract class Web3SignerRunner {
 
@@ -50,7 +48,7 @@ public abstract class Web3SignerRunner {
   private final Path dataPath;
   private final Properties portsProperties;
 
-  private EmbeddedPostgres slashingDatabase;
+  private String slashingProtectionDbUrl;
 
   private static final String PORTS_FILENAME = "web3signer.ports";
   private static final String HTTP_PORT_KEY = "http-port";
@@ -66,7 +64,7 @@ public abstract class Web3SignerRunner {
     }
   }
 
-  public Web3SignerRunner(final SignerConfiguration signerConfig) {
+  protected Web3SignerRunner(final SignerConfiguration signerConfig) {
     this.signerConfig = signerConfig;
     this.portsProperties = new Properties();
 
@@ -110,7 +108,7 @@ public abstract class Web3SignerRunner {
     params.add(String.valueOf(signerConfig.httpPort()));
     if (!signerConfig.getHttpHostAllowList().isEmpty()) {
       params.add("--http-host-allowlist");
-      params.add(createAllowList(signerConfig.getHttpHostAllowList()));
+      params.add(createCommaSeparatedList(signerConfig.getHttpHostAllowList()));
     }
     params.add("--key-store-path");
     params.add(signerConfig.getKeyStorePath().toString());
@@ -120,7 +118,11 @@ public abstract class Web3SignerRunner {
       params.add(Integer.toString(signerConfig.getMetricsPort()));
       if (!signerConfig.getMetricsHostAllowList().isEmpty()) {
         params.add("--metrics-host-allowlist");
-        params.add(createAllowList(signerConfig.getMetricsHostAllowList()));
+        params.add(createCommaSeparatedList(signerConfig.getMetricsHostAllowList()));
+      }
+      if (!signerConfig.getMetricsCategories().isEmpty()) {
+        params.add("--metrics-category");
+        params.add(createCommaSeparatedList(signerConfig.getMetricsCategories()));
       }
     }
     if (signerConfig.isHttpDynamicPortAllocation()) {
@@ -183,29 +185,35 @@ public abstract class Web3SignerRunner {
     params.add(Boolean.toString(signerConfig.isSlashingProtectionEnabled()));
 
     if (signerConfig.isSlashingProtectionEnabled()) {
-      try {
-        slashingDatabase = EmbeddedPostgres.start();
-        createSlashingDatabase(slashingDatabase.getPostgresDatabase());
-      } catch (final IOException e) {
-        throw new RuntimeException("Unable to start embedded postgres db", e);
+      if (signerConfig.getSlashingProtectionDbUrl().isEmpty()) {
+        slashingProtectionDbUrl = createEmbeddedDatabase();
+      } else {
+        slashingProtectionDbUrl = signerConfig.getSlashingProtectionDbUrl().get();
       }
 
-      // Default embeddedPostgres uses a database, username and password of "postgres"
-      final String dbUrl =
-          String.format("jdbc:postgresql://localhost:%s/postgres", slashingDatabase.getPort());
       params.add("--slashing-protection-db-url");
-      params.add(dbUrl);
+      params.add(slashingProtectionDbUrl);
       params.add("--slashing-protection-db-username");
       params.add(signerConfig.getSlashingProtectionDbUsername());
       params.add("--slashing-protection-db-password");
       params.add(signerConfig.getSlashingProtectionDbPassword());
     }
 
+    if (signerConfig.getSlashingExportPath().isPresent()) {
+      params.add("export");
+      params.add("--to");
+      params.add(signerConfig.getSlashingExportPath().get().toAbsolutePath().toString());
+    } else if (signerConfig.getSlashingImportPath().isPresent()) {
+      params.add("import");
+      params.add("--from");
+      params.add(signerConfig.getSlashingImportPath().get().toAbsolutePath().toString());
+    }
+
     return params;
   }
 
-  private String createAllowList(final List<String> httpHostAllowList) {
-    return String.join(",", httpHostAllowList);
+  private String createCommaSeparatedList(final List<String> values) {
+    return String.join(",", values);
   }
 
   private void loadPortsFile() {
@@ -276,29 +284,7 @@ public abstract class Web3SignerRunner {
     return signerConfig;
   }
 
-  // Assumes database already exists, just enforces the tables exist as necessary.
-  @SuppressWarnings("UnusedVariable")
-  private void createSlashingDatabase(final DataSource dataSource) {
-    final Path migrationPath =
-        getProjectPath()
-            .toPath()
-            .resolve(
-                Path.of(
-                    "slashing-protection", "src", "main", "resources", "migrations", "postgresql"));
-
-    final Flyway flyway =
-        Flyway.configure()
-            .locations("filesystem:" + migrationPath.toString())
-            .dataSource(dataSource)
-            .load();
-    flyway.migrate();
-  }
-
-  protected File getProjectPath() {
-    // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
-    final String userDir = System.getProperty("user.dir");
-    return userDir.toLowerCase().endsWith("web3signer")
-        ? new File(userDir)
-        : new File(userDir).getParentFile();
+  public String getSlashingDbUrl() {
+    return slashingProtectionDbUrl;
   }
 }

@@ -16,24 +16,23 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
-@JsonTypeInfo(use = Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-  @Type(value = FileRawSigningMetadata.class, name = "file-raw"),
-  @Type(value = FileKeyStoreMetadata.class, name = "file-keystore"),
-  @Type(value = HashicorpSigningMetadata.class, name = "hashicorp"),
-  @Type(value = AzureSecretSigningMetadata.class, name = "azure-secret"),
-  @Type(value = AzureKeySigningMetadata.class, name = "azure-key"),
-  @Type(value = YubiHsm2SigningMetadata.class, name = "yubihsm2"),
+  @JsonSubTypes.Type(value = FileRawSigningMetadata.class, name = "file-raw"),
+  @JsonSubTypes.Type(value = FileKeyStoreMetadata.class, name = "file-keystore"),
+  @JsonSubTypes.Type(value = HashicorpSigningMetadata.class, name = "hashicorp"),
+  @JsonSubTypes.Type(value = AzureSecretSigningMetadata.class, name = "azure-secret"),
+  @JsonSubTypes.Type(value = AzureKeySigningMetadata.class, name = "azure-key"),
+  @JsonSubTypes.Type(value = InterlockSigningMetadata.class, name = "interlock"),
+  @JsonSubTypes.Type(value = YubiHsmSigningMetadata.class, name = "yubihsm")
 })
 public abstract class SigningMetadata {
 
   private final KeyType keyType;
 
-  public SigningMetadata(final KeyType keyType) {
+  protected SigningMetadata(final KeyType keyType) {
     this.keyType = keyType;
   }
 

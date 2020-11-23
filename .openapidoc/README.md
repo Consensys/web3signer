@@ -1,7 +1,7 @@
 # Web3Signer OpenAPI Spec Publish
 
 This directory contains NodeJS project which publishes Web3Signer OpenAPI specifications to 
-[`gh-pages`](https://github.com/PegaSysEng/web3signer/tree/gh-pages) branch via CI job after build and acceptanceTests. 
+[`gh-pages`](https://github.com/ConsenSys/web3signer/tree/gh-pages) branch via CI job after build and acceptanceTests. 
 See `publishOpenApiSpec` job in `.circleci/config.yml`.
 
 ## Prerequisite 
@@ -19,7 +19,7 @@ The script performs following tasks:
 For release version, it performs following additional steps (the release version do not have `-dev-` in it)
 
 * Copy the spec to `dist` as `web3signer-<mode>-<version>.yaml`
-* Fetch `https://github.com/PegaSysEng/web3signer/raw/gh-pages/versions.json`
+* Fetch `https://github.com/ConsenSys/web3signer/raw/gh-pages/versions.json`
 * Update versions' json with release versions by updating `stable.spec` and `stable.source` to the release version and adding a new entry 
 for it. For example after adding spec version `0.0.2`, the `versions.json` would look like:
 ~~~
@@ -48,7 +48,7 @@ npm module to automate this step.
 
 ## Environment variables
 Following environment variables can be used to override defaults
-* `OA_GIT_URL`            (default: `git@github.com:PegaSysEng/web3signer.git`)
+* `OA_GIT_URL`            (default: `git@github.com:ConsenSys/web3signer.git`)
 * `OA_GH_PAGES_BRANCH`    (default: `gh-pages`)
 * `OA_GIT_USERNAME`       (default: `CircleCI Build`)
 * `OA_GIT_EMAIL`          (default: `ci-build@consensys.net`)

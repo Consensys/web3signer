@@ -62,6 +62,7 @@ public class CompareFilecoinApisAcceptanceTest extends CompareApisAcceptanceTest
   }
 
   @RepeatedTest(25)
+  @Test
   void compareWalletSignAndVerifyResponsesWithRandomDataToSign() {
 
     addressMap

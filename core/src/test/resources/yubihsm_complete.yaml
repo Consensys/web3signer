@@ -1,0 +1,8 @@
+type: yubihsm
+pkcs11ModulePath: /path/to/yubihsm_pkcs11.so
+connectorUrl: http://localhost:12345
+additionalInitConfig: debug libdebug
+authId: 1
+password: test
+opaqueDataId: 1
+keyType: SECP256K1

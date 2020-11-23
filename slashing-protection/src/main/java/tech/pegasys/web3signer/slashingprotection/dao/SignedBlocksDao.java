@@ -12,22 +12,64 @@
  */
 package tech.pegasys.web3signer.slashingprotection.dao;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.statement.Query;
 
 public class SignedBlocksDao {
 
-  public Optional<SignedBlock> findExistingBlock(
-      final Handle handle, int validatorId, final UInt64 slot) {
-    return handle
-        .createQuery(
-            "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ?")
-        .bind(0, validatorId)
-        .bind(1, slot)
-        .mapToBean(SignedBlock.class)
-        .findFirst();
+  public List<SignedBlock> findBlockForSlotWithDifferentSigningRoot(
+      final Handle handle, final int validatorId, final UInt64 slot, final Bytes signingRoot) {
+
+    final Query query;
+    if (signingRoot == null) {
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root IS NOT NULL")
+              .bind(0, validatorId)
+              .bind(1, slot);
+    } else {
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE (validator_id = ? AND slot = ?) AND (signing_root <> ? OR signing_root IS NULL)")
+              .bind(0, validatorId)
+              .bind(1, slot)
+              .bind(2, signingRoot);
+    }
+
+    return query.mapToBean(SignedBlock.class).list();
+  }
+
+  public Optional<SignedBlock> findMatchingBlock(
+      final Handle handle, final int validatorId, final UInt64 slot, final Bytes signingRoot) {
+
+    final Query query;
+
+    if (signingRoot == null) {
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root IS NULL")
+              .bind(0, validatorId)
+              .bind(1, slot);
+    } else {
+      query =
+          handle
+              .createQuery(
+                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root = ?")
+              .bind(0, validatorId)
+              .bind(1, slot)
+              .bind(2, signingRoot);
+    }
+
+    return query.mapToBean(SignedBlock.class).findFirst();
   }
 
   public void insertBlockProposal(final Handle handle, final SignedBlock signedBlock) {
@@ -38,5 +80,12 @@ public class SignedBlocksDao {
         .bind(1, signedBlock.getSlot())
         .bind(2, signedBlock.getSigningRoot())
         .execute();
+  }
+
+  public Stream<SignedBlock> findAllBlockSignedBy(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery(
+            "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ?")
+        .bind(0, validatorId).mapToBean(SignedBlock.class).stream();
   }
 }

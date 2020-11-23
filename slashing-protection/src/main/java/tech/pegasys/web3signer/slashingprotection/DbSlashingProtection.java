@@ -12,38 +12,53 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
-import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
+import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
+import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
+import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
+import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRootValidator;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Streams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 public class DbSlashingProtection implements SlashingProtection {
+
   private static final Logger LOG = LogManager.getLogger();
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
   private final Map<Bytes, Integer> registeredValidators;
+  private final InterchangeManager interchangeManager;
+  private final MetadataDao metadataDao;
+  private final LowWatermarkDao lowWatermarkDao;
 
   private enum LockType {
     BLOCK,
@@ -54,8 +69,17 @@ public class DbSlashingProtection implements SlashingProtection {
       final Jdbi jdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
-      final SignedAttestationsDao signedAttestationsDao) {
-    this(jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, new HashMap<>());
+      final SignedAttestationsDao signedAttestationsDao,
+      final MetadataDao metadataDao,
+      final LowWatermarkDao lowWatermarkDao) {
+    this(
+        jdbi,
+        validatorsDao,
+        signedBlocksDao,
+        signedAttestationsDao,
+        metadataDao,
+        lowWatermarkDao,
+        new HashMap<>());
   }
 
   public DbSlashingProtection(
@@ -63,12 +87,49 @@ public class DbSlashingProtection implements SlashingProtection {
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
+      final MetadataDao metadataDao,
+      final LowWatermarkDao lowWatermarkDao,
       final Map<Bytes, Integer> registeredValidators) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
+    this.metadataDao = metadataDao;
+    this.lowWatermarkDao = lowWatermarkDao;
     this.registeredValidators = registeredValidators;
+    this.interchangeManager =
+        new InterchangeV5Manager(
+            jdbi,
+            validatorsDao,
+            signedBlocksDao,
+            signedAttestationsDao,
+            metadataDao,
+            lowWatermarkDao,
+            new ObjectMapper()
+                .registerModule(new InterchangeModule())
+                .configure(FLUSH_AFTER_WRITE_VALUE, true));
+  }
+
+  @Override
+  public void importData(final InputStream input) {
+    try {
+      LOG.info("Importing slashing protection database");
+      interchangeManager.importData(input);
+      LOG.info("Import complete");
+    } catch (final IOException | UnsupportedOperationException | IllegalArgumentException e) {
+      throw new RuntimeException("Failed to import database content", e);
+    }
+  }
+
+  @Override
+  public void export(final OutputStream output) {
+    try {
+      LOG.info("Exporting slashing protection database");
+      interchangeManager.export(output);
+      LOG.info("Export complete");
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to export database content", e);
+    }
   }
 
   @Override
@@ -76,113 +137,85 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes publicKey,
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
-      final UInt64 targetEpoch) {
+      final UInt64 targetEpoch,
+      final Bytes32 genesisValidatorsRoot) {
     final int validatorId = validatorId(publicKey);
-
-    if (sourceEpoch.compareTo(targetEpoch) > 0) {
-      LOG.warn(
-          "Detected sourceEpoch {} greater than targetEpoch {} for {}",
-          sourceEpoch,
-          targetEpoch,
-          publicKey);
-      return false;
-    }
 
     return jdbi.inTransaction(
         READ_COMMITTED,
         handle -> {
+          final AttestationValidator attestationValidator =
+              new AttestationValidator(
+                  handle,
+                  publicKey,
+                  signingRoot,
+                  sourceEpoch,
+                  targetEpoch,
+                  validatorId,
+                  signedAttestationsDao,
+                  lowWatermarkDao);
+
+          final GenesisValidatorRootValidator gvrValidator =
+              new GenesisValidatorRootValidator(handle, metadataDao);
+
+          if (attestationValidator.sourceGreaterThanTargetEpoch()) {
+            return false;
+          }
+
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
-          return checkAndInsertAttestation(
-              handle, publicKey, signingRoot, sourceEpoch, targetEpoch, validatorId);
+
+          if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
+            return false;
+          }
+
+          if (attestationValidator.directlyConflictsWithExistingEntry()
+              || attestationValidator.isSurroundedByExistingAttestation()
+              || attestationValidator.surroundsExistingAttestation()) {
+            return false;
+          } else if (attestationValidator.alreadyExists()) {
+            return true;
+          } else if (attestationValidator.hasSourceOlderThanWatermark()
+              || attestationValidator.hasTargetOlderThanWatermark()) {
+            return false;
+          }
+          attestationValidator.persist();
+          return true;
         });
-  }
-
-  private boolean checkAndInsertAttestation(
-      final Handle h,
-      final Bytes publicKey,
-      final Bytes signingRoot,
-      final UInt64 sourceEpoch,
-      final UInt64 targetEpoch,
-      final int validatorId) {
-    final Optional<SignedAttestation> existingAttestation =
-        signedAttestationsDao.findExistingAttestation(h, validatorId, targetEpoch);
-    if (existingAttestation.isPresent()) {
-      if (!existingAttestation.get().getSigningRoot().equals(signingRoot)) {
-        LOG.warn(
-            "Detected double signed attestation {} for {}", existingAttestation.get(), publicKey);
-        return false;
-      } else {
-        // same slot and signing_root is allowed for broadcasting previous attestation
-        return true;
-      }
-    }
-
-    // check that no previous vote is surrounding the attestation
-    final Optional<SignedAttestation> surroundingAttestation =
-        signedAttestationsDao.findSurroundingAttestation(h, validatorId, sourceEpoch, targetEpoch);
-    if (surroundingAttestation.isPresent()) {
-      LOG.warn(
-          "Detected surrounding attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
-          surroundingAttestation.get(),
-          signingRoot,
-          sourceEpoch,
-          targetEpoch,
-          publicKey);
-      return false;
-    }
-
-    // check that no previous vote is surrounded by attestation
-    final Optional<SignedAttestation> surroundedAttestation =
-        signedAttestationsDao.findSurroundedAttestation(h, validatorId, sourceEpoch, targetEpoch);
-    if (surroundedAttestation.isPresent()) {
-      LOG.warn(
-          "Detected surrounded attestation {} for attestation signingRoot={} sourceEpoch={} targetEpoch={} publicKey={}",
-          surroundedAttestation.get(),
-          signingRoot,
-          sourceEpoch,
-          targetEpoch,
-          publicKey);
-      return false;
-    }
-
-    final SignedAttestation signedAttestation =
-        new SignedAttestation(validatorId, sourceEpoch, targetEpoch, signingRoot);
-    signedAttestationsDao.insertAttestation(h, signedAttestation);
-    return true;
   }
 
   @Override
   public boolean maySignBlock(
-      final Bytes publicKey, final Bytes signingRoot, final UInt64 blockSlot) {
+      final Bytes publicKey,
+      final Bytes signingRoot,
+      final UInt64 blockSlot,
+      final Bytes32 genesisValidatorsRoot) {
     final int validatorId = validatorId(publicKey);
     return jdbi.inTransaction(
         READ_COMMITTED,
         h -> {
+          final BlockValidator blockValidator =
+              new BlockValidator(
+                  h, signingRoot, blockSlot, validatorId, signedBlocksDao, lowWatermarkDao);
+
+          final GenesisValidatorRootValidator gvrValidator =
+              new GenesisValidatorRootValidator(h, metadataDao);
+
           lockForValidator(h, LockType.BLOCK, validatorId);
-          return checkAndInsertBlock(h, publicKey, signingRoot, blockSlot, validatorId);
+
+          if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
+            return false;
+          }
+
+          if (blockValidator.directlyConflictsWithExistingEntry()) {
+            return false;
+          } else if (blockValidator.alreadyExists()) {
+            return true;
+          } else if (blockValidator.isOlderThanWatermark()) {
+            return false;
+          }
+          blockValidator.persist();
+          return true;
         });
-  }
-
-  private boolean checkAndInsertBlock(
-      final Handle handle,
-      final Bytes publicKey,
-      final Bytes signingRoot,
-      final UInt64 blockSlot,
-      final int validatorId) {
-    final Optional<SignedBlock> existingBlock =
-        signedBlocksDao.findExistingBlock(handle, validatorId, blockSlot);
-
-    if (existingBlock.isEmpty()) {
-      final SignedBlock signedBlock = new SignedBlock(validatorId, blockSlot, signingRoot);
-      signedBlocksDao.insertBlockProposal(handle, signedBlock);
-      return true;
-    } else if (existingBlock.get().getSigningRoot().equals(signingRoot)) {
-      // same slot and signing_root is allowed for broadcasting previously signed block
-      return true;
-    } else {
-      LOG.warn("Detected double signed block {} for {}", existingBlock.get(), publicKey);
-      return false;
-    }
   }
 
   @Override
