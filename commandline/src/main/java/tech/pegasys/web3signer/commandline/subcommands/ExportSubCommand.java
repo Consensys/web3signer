@@ -27,6 +27,7 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
+import tech.pegasys.web3signer.core.InitializationException;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 @Command(
@@ -52,7 +53,8 @@ public class ExportSubCommand implements Runnable {
       throw new MissingParameterException(spec.commandLine(), spec.findOption("--to"),
           "--to has not been specified");
     } else if (eth2Config.slashingProtectionDbUrl == null) {
-      throw new ParameterException(spec.parent().commandLine(),
+      throw new MissingParameterException(spec.parent().commandLine(),
+          spec.findOption("--slashing-protection-db-url"),
           "Missing slashing protection database url");
     }
 
@@ -63,7 +65,10 @@ public class ExportSubCommand implements Runnable {
     try {
       slashingProtection.export(new FileOutputStream(output));
     } catch (final FileNotFoundException e) {
-      throw new RuntimeException("Unable to find output target file", e);
+      throw new InitializationException("Unable to find output target file", e);
+    } catch (final RuntimeException e) {
+      throw new InitializationException(
+          "Failed to initialise Slashing Protection: " + e.getMessage(), e);
     }
   }
 }

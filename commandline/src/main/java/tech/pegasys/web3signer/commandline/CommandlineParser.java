@@ -124,7 +124,12 @@ public class CommandlineParser {
       errorWriter.println("Failed to initialize Web3Signer");
       errorWriter.println("Cause: " + ex.getMessage());
     }
-    commandLine.usage(outputWriter);
+
+    if (baseCommand.getLogLevel() != null
+        && Level.DEBUG.isMoreSpecificThan(baseCommand.getLogLevel())) {
+      ex.printStackTrace(errorWriter);
+    }
+
     return commandLine.getCommandSpec().exitCodeOnExecutionException();
   }
 }
