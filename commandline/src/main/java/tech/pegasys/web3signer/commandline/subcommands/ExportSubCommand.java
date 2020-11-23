@@ -18,8 +18,9 @@ import tech.pegasys.web3signer.core.InitializationException;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -43,7 +44,7 @@ public class ExportSubCommand implements Runnable {
   @Option(
       names = "--to",
       description =
-          "The file from which interchange formatted data is to e imported to the slashing database")
+          "The file into which interchange formatted data is to exported from the slashing database")
   File output;
 
   @Override
@@ -63,9 +64,9 @@ public class ExportSubCommand implements Runnable {
             eth2Config.slashingProtectionDbUrl,
             eth2Config.slashingProtectionDbUsername,
             eth2Config.slashingProtectionDbPassword);
-    try {
-      slashingProtection.export(new FileOutputStream(output));
-    } catch (final FileNotFoundException e) {
+    try (final OutputStream outStream = new FileOutputStream(output)) {
+      slashingProtection.export(outStream);
+    } catch (final IOException e) {
       throw new InitializationException("Unable to find output target file", e);
     } catch (final RuntimeException e) {
       throw new InitializationException(

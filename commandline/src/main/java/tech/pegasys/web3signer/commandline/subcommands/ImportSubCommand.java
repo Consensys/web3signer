@@ -19,7 +19,8 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -44,7 +45,7 @@ public class ImportSubCommand implements Runnable {
   @Option(
       names = "--from",
       description =
-          "The file into which the slashing protection database is to be exported. File is in interchange format")
+          "The file from which the slashing protection database is to be imported. File is in interchange format")
   File input;
 
   @Override
@@ -62,9 +63,9 @@ public class ImportSubCommand implements Runnable {
             eth2Config.slashingProtectionDbUsername,
             eth2Config.slashingProtectionDbPassword);
 
-    try {
-      slashingProtection.importData(new FileInputStream(input));
-    } catch (final FileNotFoundException e) {
+    try (final InputStream inStream = new FileInputStream(input)) {
+      slashingProtection.importData(inStream);
+    } catch (final IOException e) {
       throw new RuntimeException("Unable to find input file", e);
     } catch (final RuntimeException e) {
       throw new InitializationException(
