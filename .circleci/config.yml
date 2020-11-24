@@ -258,49 +258,67 @@ workflows:
     jobs:
       - build:
           context:
-            - dockerhub-quorumengineering-ro              
+            - dockerhub-quorumengineering-ro
+          filters:
+            tags: &filters-release-tags
+              only: /^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?/
       - acceptanceTests:
           requires:
             - build
           context:
-            - dockerhub-quorumengineering-ro                    
+            - dockerhub-quorumengineering-ro
+          filters:
+            tags:
+              <<: *filters-release-tags
       - performanceTests:
           requires:
             - build
           context:
-            - dockerhub-quorumengineering-ro                    
+            - dockerhub-quorumengineering-ro
+          filters:
+            tags:
+              <<: *filters-release-tags
       - buildDocker:
           requires:
             - build
           context:
-            - dockerhub-quorumengineering-ro                    
+            - dockerhub-quorumengineering-ro
+          filters:
+            tags:
+              <<: *filters-release-tags
       - publishOpenApiSpec:
           filters:
             branches:
               only:
                 - master
                 - /^release-.*/
+            tags:
+              <<: *filters-release-tags
           requires:
             - acceptanceTests
           context:
-            - dockerhub-quorumengineering-ro                    
+            - dockerhub-quorumengineering-ro
       - publish:
           filters:
             branches:
               only:
                 - master
                 - /^release-.*/
+              tags:
+                <<: *filters-release-tags
           requires:
             - acceptanceTests
           context:
-            - dockerhub-quorumengineering-ro     
-            - quorum-gradle               
+            - dockerhub-quorumengineering-ro
+            - quorum-gradle
       - publishDocker:
           filters:
             branches:
               only:
                 - master
                 - /^release-.*/
+            tags:
+              <<: *filters-release-tags
           requires:
             - acceptanceTests
             - buildDocker
