@@ -57,8 +57,8 @@ public class DbSlashingProtection implements SlashingProtection {
   private final SignedAttestationsDao signedAttestationsDao;
   private final Map<Bytes, Integer> registeredValidators;
   private final InterchangeManager interchangeManager;
-  private final MetadataDao metadataDao;
   private final LowWatermarkDao lowWatermarkDao;
+  private final GenesisValidatorRootValidator gvrValidator;
 
   private enum LockType {
     BLOCK,
@@ -94,9 +94,9 @@ public class DbSlashingProtection implements SlashingProtection {
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
-    this.metadataDao = metadataDao;
     this.lowWatermarkDao = lowWatermarkDao;
     this.registeredValidators = registeredValidators;
+    this.gvrValidator = new GenesisValidatorRootValidator(jdbi, metadataDao);
     this.interchangeManager =
         new InterchangeV5Manager(
             jdbi,
@@ -141,7 +141,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes32 genesisValidatorsRoot) {
     final int validatorId = validatorId(publicKey);
 
-    if (!checkGvr(genesisValidatorsRoot)) {
+    if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
       return false;
     }
 
@@ -180,12 +180,6 @@ public class DbSlashingProtection implements SlashingProtection {
         });
   }
 
-  private boolean checkGvr(final Bytes32 genesisValidatorsRoot) {
-    final GenesisValidatorRootValidator gvrValidator =
-        new GenesisValidatorRootValidator(jdbi, metadataDao);
-    return gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot);
-  }
-
   @Override
   public boolean maySignBlock(
       final Bytes publicKey,
@@ -193,7 +187,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final UInt64 blockSlot,
       final Bytes32 genesisValidatorsRoot) {
     final int validatorId = validatorId(publicKey);
-    if (!checkGvr(genesisValidatorsRoot)) {
+    if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
       return false;
     }
     return jdbi.inTransaction(

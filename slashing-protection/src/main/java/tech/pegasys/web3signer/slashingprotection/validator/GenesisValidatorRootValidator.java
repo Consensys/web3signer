@@ -27,7 +27,7 @@ import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 public class GenesisValidatorRootValidator {
 
   private static final Logger LOG = LogManager.getLogger();
-  public static final int RETRY_MS = 50;
+  private static final int RETRY_MS = 50;
 
   private final Jdbi jbdi;
   private final MetadataDao metadataDao;
