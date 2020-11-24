@@ -12,20 +12,14 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
-import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory.createSlashingProtection;
-
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.util.List;
 
 import com.google.common.collect.Lists;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -35,37 +29,13 @@ import picocli.CommandLine.Spec;
 @Command(
     name = Eth2SubCommand.COMMAND_NAME,
     description = "Handle Ethereum-2 BLS signing operations and public key reporting",
+    subcommands = {HelpCommand.class, Eth2ExportSubCommand.class, Eth2ImportSubCommand.class},
     mixinStandardHelpOptions = true)
 public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
 
   @Spec CommandSpec spec;
-
-  @Command(name = "export", description = "Export slashing protection db to json file")
-  public void exportSlashingDb(@Option(names = "--to") File output) {
-    final SlashingProtection slashingProtection =
-        createSlashingProtection(
-            slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
-    try {
-      slashingProtection.export(new FileOutputStream(output));
-    } catch (final FileNotFoundException e) {
-      throw new RuntimeException("Unable to find output target file", e);
-    }
-  }
-
-  @Command(name = "import", description = "Import json file to the slashing protection db")
-  public void importSlashingDb(@Option(names = "--from") File input) {
-    final SlashingProtection slashingProtection =
-        createSlashingProtection(
-            slashingProtectionDbUrl, slashingProtectionDbUsername, slashingProtectionDbPassword);
-
-    try {
-      slashingProtection.importData(new FileInputStream(input));
-    } catch (final FileNotFoundException e) {
-      throw new RuntimeException("Unable to find input file", e);
-    }
-  }
 
   @Option(
       names = {"--slashing-protection-enabled"},
@@ -75,26 +45,26 @@ public class Eth2SubCommand extends ModeSubCommand {
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  private boolean slashingProtectionEnabled = true;
+  boolean slashingProtectionEnabled = true;
 
   @Option(
       names = {"--slashing-protection-db-url"},
       description = "The jdbc url to use to connect to the slashing protection database",
       paramLabel = "<jdbc url>",
       arity = "1")
-  private String slashingProtectionDbUrl;
+  String slashingProtectionDbUrl;
 
   @Option(
       names = {"--slashing-protection-db-username"},
       description = "The username to use when connecting to the slashing protection database",
       paramLabel = "<jdbc user>")
-  private String slashingProtectionDbUsername;
+  String slashingProtectionDbUsername;
 
   @Option(
       names = {"--slashing-protection-db-password"},
       description = "The password to use when connecting to the slashing protection database",
       paramLabel = "<jdbc password>")
-  private String slashingProtectionDbPassword;
+  String slashingProtectionDbPassword;
 
   @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
