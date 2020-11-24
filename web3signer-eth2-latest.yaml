@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: 'Web3Signer ETH2 Api'
   description: 'Sign Eth2 Artifacts'
-  version: '0.2.1-dev-e9402e48'
+  version: '0.2.1-dev-2beefcf8'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -378,6 +378,9 @@ components:
           type: "string"
         signature:
           type: "string"
+        genesis_fork_version:
+          type: "string"
+          description: Bytes4 hexadecimal
     VoluntaryExit:
       type: object
       properties:
