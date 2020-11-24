@@ -176,7 +176,8 @@ public class Eth2RequestUtils {
             BLSPubKey.fromHexString(
                 "0x8f82597c919c056571a05dfe83e6a7d32acf9ad8931be04d11384e95468cd68b40129864ae12745f774654bbac09b057"),
             Bytes32.random(new Random(2)),
-            UInt64.valueOf(32));
+            UInt64.valueOf(32),
+            Bytes4.fromHexString("0x00"));
     final Bytes signingRoot =
         compute_signing_root(
             depositMessage.asInternalDepositMessage(), compute_domain(DOMAIN_DEPOSIT));
