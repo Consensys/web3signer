@@ -18,7 +18,6 @@ import tech.pegasys.web3signer.commandline.subcommands.ModeSubCommand;
 import tech.pegasys.web3signer.commandline.valueprovider.CascadingDefaultProvider;
 import tech.pegasys.web3signer.commandline.valueprovider.EnvironmentVariableDefaultProvider;
 import tech.pegasys.web3signer.commandline.valueprovider.YamlConfigFileDefaultProvider;
-import tech.pegasys.web3signer.core.InitializationException;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -111,10 +110,8 @@ public class CommandlineParser {
       final Exception ex,
       final CommandLine commandLine,
       final CommandLine.ParseResult parseResult) {
-    if (ex instanceof InitializationException) {
-      errorWriter.println("Failed to initialize Web3Signer");
-      errorWriter.println("Cause: " + ex.getMessage());
-    }
+    errorWriter.println("Failed to initialize Web3Signer");
+    errorWriter.println("Cause: " + ex.getMessage());
 
     if (baseCommand.getLogLevel() != null
         && Level.DEBUG.isMoreSpecificThan(baseCommand.getLogLevel())) {
