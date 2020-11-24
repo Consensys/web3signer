@@ -40,7 +40,13 @@ public class InterchangeV5Manager implements InterchangeManager {
       final ObjectMapper mapper) {
     exporter =
         new InterchangeV5Exporter(
-            jdbi, validatorsDao, signedBlocksDao, signedAttestationsDao, metadataDao, mapper);
+            jdbi,
+            validatorsDao,
+            signedBlocksDao,
+            signedAttestationsDao,
+            metadataDao,
+            lowWatermarkDao,
+            mapper);
     importer =
         new InterchangeV5Importer(
             jdbi,

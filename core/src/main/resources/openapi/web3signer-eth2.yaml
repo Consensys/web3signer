@@ -378,6 +378,9 @@ components:
           type: "string"
         signature:
           type: "string"
+        genesis_fork_version:
+          type: "string"
+          description: Bytes4 hexadecimal
     VoluntaryExit:
       type: object
       properties:

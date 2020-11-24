@@ -57,8 +57,9 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertBlockAt(UInt64.valueOf(3), PUBLIC_KEY);
-    insertBlockAt(UInt64.valueOf(10), PUBLIC_KEY); // max = 10, watermark = 3 (As was first).
+    insertBlockAt(UInt64.valueOf(3), VALIDATOR_ID);
+    insertBlockAt(UInt64.valueOf(10), VALIDATOR_ID);
+    jdbi.useHandle(h -> lowWatermarkDao.updateSlotWatermarkFor(h, VALIDATOR_ID, UInt64.valueOf(3)));
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(3));
 
     final InputStream input = createInputDataWith(List.of(4, 8), emptyList());
@@ -71,9 +72,9 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertBlockAt(UInt64.valueOf(3), PUBLIC_KEY);
-    insertBlockAt(UInt64.valueOf(10), PUBLIC_KEY);
-    assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(3));
+    insertBlockAt(UInt64.valueOf(3), VALIDATOR_ID);
+    insertBlockAt(UInt64.valueOf(10), VALIDATOR_ID);
+    jdbi.useHandle(h -> lowWatermarkDao.updateSlotWatermarkFor(h, VALIDATOR_ID, UInt64.valueOf(3)));
 
     final InputStream input = createInputDataWith(List.of(2, 50), emptyList());
     slashingProtection.importData(input);
@@ -86,8 +87,9 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
     final UInt64 initialBlockSlot = UInt64.valueOf(3);
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertBlockAt(initialBlockSlot, PUBLIC_KEY);
-    insertBlockAt(UInt64.valueOf(10), PUBLIC_KEY); // max = 10, watermark = 3 (As was first).
+    insertBlockAt(initialBlockSlot, VALIDATOR_ID);
+    insertBlockAt(UInt64.valueOf(10), VALIDATOR_ID);
+    jdbi.useHandle(h -> lowWatermarkDao.updateSlotWatermarkFor(h, VALIDATOR_ID, initialBlockSlot));
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(initialBlockSlot);
 
     final InputStream input = createInputDataWith(List.of(50, 2), emptyList());
@@ -112,8 +114,12 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), PUBLIC_KEY);
-    insertAttestationAt(UInt64.valueOf(7), UInt64.valueOf(8), PUBLIC_KEY);
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), VALIDATOR_ID);
+    insertAttestationAt(UInt64.valueOf(7), UInt64.valueOf(8), VALIDATOR_ID);
+    jdbi.useHandle(
+        h ->
+            lowWatermarkDao.updateEpochWatermarksFor(
+                h, VALIDATOR_ID, UInt64.valueOf(3), UInt64.valueOf(4)));
 
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
@@ -134,8 +140,12 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), PUBLIC_KEY);
-    insertAttestationAt(UInt64.valueOf(9), UInt64.valueOf(10), PUBLIC_KEY);
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), VALIDATOR_ID);
+    insertAttestationAt(UInt64.valueOf(9), UInt64.valueOf(10), VALIDATOR_ID);
+    jdbi.useHandle(
+        h ->
+            lowWatermarkDao.updateEpochWatermarksFor(
+                h, VALIDATOR_ID, UInt64.valueOf(3), UInt64.valueOf(4)));
 
     final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(1, 2)));
     slashingProtection.importData(input);
@@ -148,8 +158,12 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
   public void onlyTargetEpochCanBeUpdated() throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), PUBLIC_KEY);
-    insertAttestationAt(UInt64.valueOf(9), UInt64.valueOf(10), PUBLIC_KEY);
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), VALIDATOR_ID);
+    insertAttestationAt(UInt64.valueOf(9), UInt64.valueOf(10), VALIDATOR_ID);
+    jdbi.useHandle(
+        h ->
+            lowWatermarkDao.updateEpochWatermarksFor(
+                h, VALIDATOR_ID, UInt64.valueOf(3), UInt64.valueOf(4)));
 
     final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(3, 12)));
 
@@ -163,8 +177,12 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
   public void onlySourceEpochCanBeUpdated() throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(6), PUBLIC_KEY);
-    insertAttestationAt(UInt64.valueOf(7), UInt64.valueOf(10), PUBLIC_KEY);
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(6), VALIDATOR_ID);
+    insertAttestationAt(UInt64.valueOf(7), UInt64.valueOf(10), VALIDATOR_ID);
+    jdbi.useHandle(
+        h ->
+            lowWatermarkDao.updateEpochWatermarksFor(
+                h, VALIDATOR_ID, UInt64.valueOf(3), UInt64.valueOf(6)));
 
     final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(4, 5)));
 
@@ -178,8 +196,14 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
   public void emptyImportIsSuccessfulAndDoesNotUpdateWatermarks() throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
     slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), PUBLIC_KEY);
-    insertBlockAt(UInt64.valueOf(6), PUBLIC_KEY);
+    insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), VALIDATOR_ID);
+    jdbi.useHandle(
+        h ->
+            lowWatermarkDao.updateEpochWatermarksFor(
+                h, VALIDATOR_ID, UInt64.valueOf(3), UInt64.valueOf(4)));
+
+    insertBlockAt(UInt64.valueOf(6), VALIDATOR_ID);
+    jdbi.useHandle(h -> lowWatermarkDao.updateSlotWatermarkFor(h, VALIDATOR_ID, UInt64.valueOf(6)));
 
     final InputStream input = createInputDataWith(emptyList(), emptyList());
     slashingProtection.importData(input);

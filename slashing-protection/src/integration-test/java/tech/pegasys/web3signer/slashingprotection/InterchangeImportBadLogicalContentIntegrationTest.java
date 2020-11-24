@@ -28,7 +28,6 @@ import dsl.SignedArtifacts;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.Test;
 
 public class InterchangeImportBadLogicalContentIntegrationTest
@@ -57,7 +56,7 @@ public class InterchangeImportBadLogicalContentIntegrationTest
 
   @Test
   void genesisValidatorRootConflictsWithExistingDbGvr() throws JsonProcessingException {
-    jdbi.useHandle(h -> insertGvr(h, Bytes32.ZERO));
+    insertGvr(Bytes32.ZERO);
 
     final InterchangeV5Format interchangeData =
         new InterchangeV5Format(
@@ -70,12 +69,5 @@ public class InterchangeImportBadLogicalContentIntegrationTest
         .isInstanceOf(RuntimeException.class)
         .hasMessage("Failed to import database content");
     assertDbIsEmpty(jdbi);
-  }
-
-  private void insertGvr(final Handle handle, final Bytes genesisValidatorsRoot) {
-    handle.execute(
-        "INSERT INTO metadata (id, genesis_validators_root) VALUES (?, ?)",
-        1,
-        genesisValidatorsRoot);
   }
 }
