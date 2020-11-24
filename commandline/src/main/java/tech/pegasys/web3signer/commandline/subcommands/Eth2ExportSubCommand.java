@@ -35,7 +35,7 @@ import picocli.CommandLine.Spec;
     description = "Exports the slashing protection database",
     subcommands = {HelpCommand.class},
     mixinStandardHelpOptions = true)
-public class ExportSubCommand implements Runnable {
+public class Eth2ExportSubCommand implements Runnable {
 
   @Spec private CommandSpec spec;
 
@@ -56,7 +56,7 @@ public class ExportSubCommand implements Runnable {
       throw new MissingParameterException(
           spec.parent().commandLine(),
           spec.findOption("--slashing-protection-db-url"),
-          "Missing slashing protection database url");
+          "--slashing-protection-db-url has not been specified");
     }
 
     final SlashingProtection slashingProtection =

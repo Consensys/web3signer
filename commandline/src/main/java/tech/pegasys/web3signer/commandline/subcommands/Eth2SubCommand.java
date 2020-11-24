@@ -29,7 +29,7 @@ import picocli.CommandLine.Spec;
 @Command(
     name = Eth2SubCommand.COMMAND_NAME,
     description = "Handle Ethereum-2 BLS signing operations and public key reporting",
-    subcommands = {HelpCommand.class, ExportSubCommand.class, ImportSubCommand.class},
+    subcommands = {HelpCommand.class, Eth2ExportSubCommand.class, Eth2ImportSubCommand.class},
     mixinStandardHelpOptions = true)
 public class Eth2SubCommand extends ModeSubCommand {
 

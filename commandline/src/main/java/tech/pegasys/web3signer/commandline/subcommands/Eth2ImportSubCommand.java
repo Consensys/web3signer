@@ -28,7 +28,6 @@ import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.MissingParameterException;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
 
 @Command(
@@ -36,7 +35,7 @@ import picocli.CommandLine.Spec;
     description = "Exports the slashing protection database",
     subcommands = {HelpCommand.class},
     mixinStandardHelpOptions = true)
-public class ImportSubCommand implements Runnable {
+public class Eth2ImportSubCommand implements Runnable {
 
   @Spec private CommandSpec spec;
 
@@ -46,15 +45,18 @@ public class ImportSubCommand implements Runnable {
       names = "--from",
       description =
           "The file from which the slashing protection database is to be imported. File is in interchange format")
-  File input;
+  File from;
 
   @Override
   public void run() {
-    if (input == null) {
+    if (from == null) {
       throw new MissingParameterException(
           spec.commandLine(), spec.findOption("--from"), "--from has not been specified");
     } else if (eth2Config.slashingProtectionDbUrl == null) {
-      throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
+      throw new MissingParameterException(
+          spec.parent().commandLine(),
+          spec.findOption("--slashing-protection-db-url"),
+          "--slashing-protection-db-url has not been specified");
     }
 
     final SlashingProtection slashingProtection =
@@ -63,7 +65,7 @@ public class ImportSubCommand implements Runnable {
             eth2Config.slashingProtectionDbUsername,
             eth2Config.slashingProtectionDbPassword);
 
-    try (final InputStream inStream = new FileInputStream(input)) {
+    try (final InputStream inStream = new FileInputStream(from)) {
       slashingProtection.importData(inStream);
     } catch (final IOException e) {
       throw new RuntimeException("Unable to find input file", e);
