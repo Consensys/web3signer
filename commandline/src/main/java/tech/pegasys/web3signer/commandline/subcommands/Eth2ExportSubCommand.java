@@ -21,7 +21,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 
+import org.apache.commons.lang.StringUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
@@ -52,7 +54,7 @@ public class Eth2ExportSubCommand implements Runnable {
     if (output == null) {
       throw new MissingParameterException(
           spec.commandLine(), spec.findOption("--to"), "--to has not been specified");
-    } else if (eth2Config.slashingProtectionDbUrl == null) {
+    } else if (StringUtils.isEmpty(eth2Config.slashingProtectionDbUrl)) {
       throw new MissingParameterException(
           spec.parent().commandLine(),
           spec.findOption("--slashing-protection-db-url"),
@@ -67,7 +69,7 @@ public class Eth2ExportSubCommand implements Runnable {
     try (final OutputStream outStream = new FileOutputStream(output)) {
       slashingProtection.export(outStream);
     } catch (final IOException e) {
-      throw new InitializationException("Unable to find output target file", e);
+      throw new UncheckedIOException("Unable to find output target file", e);
     } catch (final RuntimeException e) {
       throw new InitializationException(
           "Failed to initialise Slashing Protection: " + e.getMessage(), e);

@@ -21,7 +21,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 
+import org.apache.commons.lang.StringUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
@@ -52,7 +54,7 @@ public class Eth2ImportSubCommand implements Runnable {
     if (from == null) {
       throw new MissingParameterException(
           spec.commandLine(), spec.findOption("--from"), "--from has not been specified");
-    } else if (eth2Config.slashingProtectionDbUrl == null) {
+    } else if (StringUtils.isEmpty(eth2Config.slashingProtectionDbUrl)) {
       throw new MissingParameterException(
           spec.parent().commandLine(),
           spec.findOption("--slashing-protection-db-url"),
@@ -68,7 +70,7 @@ public class Eth2ImportSubCommand implements Runnable {
     try (final InputStream inStream = new FileInputStream(from)) {
       slashingProtection.importData(inStream);
     } catch (final IOException e) {
-      throw new RuntimeException("Unable to find input file", e);
+      throw new UncheckedIOException("Unable to find input file", e);
     } catch (final RuntimeException e) {
       throw new InitializationException(
           "Failed to initialise Slashing Protection: " + e.getMessage(), e);
