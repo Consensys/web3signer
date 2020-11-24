@@ -136,6 +136,52 @@ class CommandlineParserTest {
     assertThat(result).isZero();
   }
 
+  @Test
+  void missingToInExportShowsError() {
+    String cmdline = validBaseCommandOptions();
+    cmdline = cmdline + "eth2 export";
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString()).contains("--to has not been specified");
+  }
+
+  @Test
+  void missingFromInImportShowsError() {
+    String cmdline = validBaseCommandOptions();
+    cmdline = cmdline + "eth2 import";
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString()).contains("--from has not been specified");
+  }
+
+  @Test
+  void missingDbUrlFromImportShowsError() {
+    String cmdline = validBaseCommandOptions();
+    cmdline = cmdline + "eth2 import --from ./test.json";
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains("--slashing-protection-db-url has not been specified");
+  }
+
+  @Test
+  void missingDbUrlInExportShowsError() {
+    String cmdline = validBaseCommandOptions();
+    cmdline = cmdline + "eth2 export --to=./out.json";
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains("--slashing-protection-db-url has not been specified");
+  }
+
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(
       final String paramToRemove, final Supplier<T> actualValueGetter, final T expectedValue) {
 

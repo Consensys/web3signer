@@ -17,11 +17,13 @@ import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
 
 @Command(
     name = FilecoinSubCommand.COMMAND_NAME,
     description = "Handle Filecoin signing operations and address reporting",
+    subcommands = {HelpCommand.class},
     mixinStandardHelpOptions = true)
 public class FilecoinSubCommand extends ModeSubCommand {
 
