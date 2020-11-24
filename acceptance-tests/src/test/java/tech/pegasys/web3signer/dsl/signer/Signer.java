@@ -37,7 +37,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
-import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -151,10 +150,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
 
   public Response callApiPublicKeys(final KeyType keyType) {
     return given().baseUri(getUrl()).get(publicKeysPath(keyType));
-  }
-
-  public List<String> listPublicKeys(final KeyType keyType) {
-    return given().baseUri(getUrl()).get(publicKeysPath(keyType)).as(new TypeRef<>() {});
   }
 
   public static String publicKeysPath(final KeyType keyType) {
