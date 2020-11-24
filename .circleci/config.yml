@@ -304,8 +304,8 @@ workflows:
               only:
                 - master
                 - /^release-.*/
-              tags:
-                <<: *filters-release-tags
+            tags:
+              <<: *filters-release-tags
           requires:
             - acceptanceTests
           context:
