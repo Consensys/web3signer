@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
 import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
@@ -22,15 +23,18 @@ public class DepositMessage {
   private final BLSPubKey pubkey;
   private final Bytes32 withdrawalCredentials;
   private final UInt64 amount;
+  private final Bytes4 genesisForkVersion;
 
   public DepositMessage(
       @JsonProperty(value = "pubkey", required = true) final BLSPubKey pubkey,
       @JsonProperty(value = "withdrawal_credentials", required = true)
           final Bytes32 withdrawalCredentials,
-      @JsonProperty(value = "amount", required = true) final UInt64 amount) {
+      @JsonProperty(value = "amount", required = true) final UInt64 amount,
+      @JsonProperty(value = "genesis_fork_version", required = true) Bytes4 genesisForkVersion) {
     this.pubkey = pubkey;
     this.withdrawalCredentials = withdrawalCredentials;
     this.amount = amount;
+    this.genesisForkVersion = genesisForkVersion;
   }
 
   @JsonProperty("pubkey")
@@ -46,6 +50,11 @@ public class DepositMessage {
   @JsonProperty("amount")
   public UInt64 getAmount() {
     return amount;
+  }
+
+  @JsonProperty("genesis_fork_version")
+  public Bytes4 getGenesisForkVersion() {
+    return genesisForkVersion;
   }
 
   public tech.pegasys.teku.datastructures.operations.DepositMessage asInternalDepositMessage() {

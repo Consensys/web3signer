@@ -44,6 +44,7 @@ import io.vertx.ext.web.api.RequestParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
@@ -215,7 +216,9 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       case DEPOSIT:
         checkArgument(body.getDeposit() != null, "deposit must be specified");
         return compute_signing_root(
-            body.getDeposit().asInternalDepositMessage(), compute_domain(DOMAIN_DEPOSIT));
+            body.getDeposit().asInternalDepositMessage(),
+            compute_domain(
+                DOMAIN_DEPOSIT, body.getDeposit().getGenesisForkVersion(), Bytes32.ZERO));
       default:
         throw new IllegalStateException("Signing root unimplemented for type " + body.getType());
     }
