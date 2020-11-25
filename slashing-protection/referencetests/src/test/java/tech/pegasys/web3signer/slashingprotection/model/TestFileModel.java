@@ -16,7 +16,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import dsl.InterchangeV5Format;
 
 public class TestFileModel {
 
@@ -29,7 +28,7 @@ public class TestFileModel {
       @JsonProperty(value = "name", required = true) final String name,
       @JsonProperty(value = "genesis_validators_root", required = true)
           final String genesis_validators_root,
-      @JsonProperty(value = "steps") final List<Step> steps)  {
+      @JsonProperty(value = "steps") final List<Step> steps) {
     this.name = name;
     this.genesis_validators_root = genesis_validators_root;
     this.steps = steps;

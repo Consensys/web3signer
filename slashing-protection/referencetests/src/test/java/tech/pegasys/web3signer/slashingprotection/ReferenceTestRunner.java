@@ -15,9 +15,6 @@ package tech.pegasys.web3signer.slashingprotection;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.UncheckedIOException;
-import java.util.Collection;
-import org.junit.jupiter.api.Test;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.model.AttestionTestModel;
@@ -30,6 +27,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -45,9 +43,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -98,7 +93,9 @@ public class ReferenceTestRunner {
 
     try {
       try (final Stream<Path> files = Files.list(testFilesPath)) {
-        return files.map(tf -> DynamicTest.dynamicTest(tf.toString(), () -> executeFile(tf))).collect(Collectors.toList());
+        return files
+            .map(tf -> DynamicTest.dynamicTest(tf.toString(), () -> executeFile(tf)))
+            .collect(Collectors.toList());
       }
     } catch (final IOException e) {
       throw new RuntimeException("Failed to create dynamic tests", e);
@@ -120,7 +117,7 @@ public class ReferenceTestRunner {
         verifyImport(step, Bytes32.fromHexString(model.getGenesis_validators_root()));
       }
     } finally {
-     cleanup();
+      cleanup();
     }
   }
 

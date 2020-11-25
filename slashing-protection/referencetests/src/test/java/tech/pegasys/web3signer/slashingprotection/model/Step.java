@@ -9,14 +9,13 @@
  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
  */
 package tech.pegasys.web3signer.slashingprotection.model;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import dsl.InterchangeV5Format;
-import java.util.List;
 
 public class Step {
 
@@ -29,8 +28,10 @@ public class Step {
 
   public Step(
       @JsonProperty(value = "should_succeed", required = true) final boolean shouldSucceed,
-      @JsonProperty(value = "allow_partial_import", required = true)final boolean allowPartialImport,
-      @JsonProperty(value = "interchange", required = true) final InterchangeV5Format interchangeContent,
+      @JsonProperty(value = "allow_partial_import", required = true)
+          final boolean allowPartialImport,
+      @JsonProperty(value = "interchange", required = true)
+          final InterchangeV5Format interchangeContent,
       @JsonProperty(value = "blocks", required = true) final List<BlockTestModel> blocks,
       @JsonProperty(value = "attestations", required = true)
           final List<AttestionTestModel> attestations) {
