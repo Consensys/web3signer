@@ -128,7 +128,7 @@ public class ReferenceTestRunner {
 
         // web3signer doesn't allow for partial imports, so - if it is expected, then
         // expect import to throw.
-        if (step.isShouldSucceed() && !step.isAllowPartialImport()) {
+        if (step.isShouldSucceed()) {
           slashingProtection.importData(
               new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
           verifyImport(step, gvr);
