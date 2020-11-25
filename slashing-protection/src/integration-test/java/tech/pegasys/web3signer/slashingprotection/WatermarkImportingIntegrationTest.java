@@ -228,7 +228,7 @@ public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegratio
       throws JsonProcessingException {
     final InterchangeV5Format importData =
         new InterchangeV5Format(
-            new Metadata(5, GVR),
+            new Metadata("5", GVR),
             List.of(
                 new SignedArtifacts(
                     PUBLIC_KEY.toHexString(),

@@ -48,7 +48,7 @@ public class InterchangeV5Importer {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final int FORMAT_VERSION = 5;
+  private static final String FORMAT_VERSION = "5";
 
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
@@ -83,7 +83,7 @@ public class InterchangeV5Importer {
       final JsonNode metadataJsonNode = rootNode.get("metadata");
       final Metadata metadata = mapper.treeToValue(metadataJsonNode, Metadata.class);
 
-      if (metadata.getFormatVersion() != FORMAT_VERSION) {
+      if (!metadata.getFormatVersion().equals(FORMAT_VERSION)) {
         throw new IllegalStateException(
             "Expecting an interchange_format_version of " + FORMAT_VERSION);
       }

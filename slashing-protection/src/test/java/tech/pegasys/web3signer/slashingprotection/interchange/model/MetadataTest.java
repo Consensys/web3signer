@@ -30,12 +30,12 @@ class MetadataTest {
   @Test
   @SuppressWarnings("unchecked")
   void metadataHasCorrectlyNamedFields() throws JsonProcessingException {
-    final Metadata medataData = new Metadata(5, Bytes.fromHexString("0x123456"));
+    final Metadata medataData = new Metadata("5", Bytes.fromHexString("0x123456"));
     final String jsonOutput = mapper.writeValueAsString(medataData);
     final Map<String, String> jsonContent = new ObjectMapper().readValue(jsonOutput, Map.class);
 
     assertThat(jsonContent.get("interchange_format_version"))
-        .isEqualTo(medataData.getFormatVersionAsString());
+        .isEqualTo(medataData.getFormatVersion());
     assertThat(jsonContent.get("genesis_validators_root"))
         .isEqualTo(medataData.getGenesisValidatorsRoot().toHexString());
     assertThat(jsonContent.keySet()).hasSize(2);
