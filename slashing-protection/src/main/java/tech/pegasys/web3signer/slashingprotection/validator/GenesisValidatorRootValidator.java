@@ -16,7 +16,6 @@ import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMIT
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 
-import java.time.Duration;
 import java.util.Optional;
 
 import net.jodah.failsafe.Failsafe;
@@ -40,11 +39,7 @@ public class GenesisValidatorRootValidator {
     this.jdbi = jdbi;
     this.metadataDao = metadataDao;
     this.failsafeExecutor =
-        Failsafe.with(
-            new RetryPolicy<>()
-                .handle(StatementException.class)
-                .withDelay(Duration.ofMillis(50))
-                .withMaxRetries(3));
+        Failsafe.with(new RetryPolicy<>().handle(StatementException.class).withMaxRetries(1));
   }
 
   public boolean checkGenesisValidatorsRootAndInsertIfEmpty(Bytes32 genesisValidatorsRoot) {
