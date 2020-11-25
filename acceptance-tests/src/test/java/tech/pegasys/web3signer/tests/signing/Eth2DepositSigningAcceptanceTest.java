@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.tests.signing;
 
 import static io.restassured.http.ContentType.TEXT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
@@ -21,7 +22,6 @@ import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.io.IOException;
@@ -42,13 +42,18 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
 public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase {
-
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  private static final String PRIVATE_KEY1 =
+      "0x4b743372aedfaecec4c890fd4f6d4fc2ff751bfb6c71449f326baa80fea00a21";
+  private static final String PRIVATE_KEY2 =
+      "0x39792f5b344a4b00d8147fee77ad5d60b115130a5e2d2ef56895baae0960f880";
+  private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
   @TestFactory
   List<DynamicTest> signDepositData() {
-    loadKeystore("keystore-1");
-    loadKeystore("keystore-2");
+    metadataFileHelpers.createUnencryptedYamlFileAt(
+        testDirectory.resolve("1.yaml"), PRIVATE_KEY1, BLS);
+    metadataFileHelpers.createUnencryptedYamlFileAt(
+        testDirectory.resolve("2.yaml"), PRIVATE_KEY2, BLS);
 
     setupSigner("eth2");
 
@@ -100,12 +105,5 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
 
     final Bytes signature = verifyAndGetSignatureResponse(response, TEXT);
     assertThat(signature).isEqualTo(Bytes.fromHexString(depositData.get("signature")));
-  }
-
-  private void loadKeystore(final String keystore) {
-    final Path keystorePath =
-        Path.of(Resources.getResource("eth2/" + keystore + ".json").toString());
-    metadataFileHelpers.createKeyStoreYamlFileAt(
-        testDirectory.resolve(keystore + ".yaml"), keystorePath, "password", KeyType.BLS);
   }
 }
