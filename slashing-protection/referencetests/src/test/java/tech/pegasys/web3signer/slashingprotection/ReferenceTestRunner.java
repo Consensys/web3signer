@@ -118,15 +118,25 @@ public class ReferenceTestRunner {
             objectMapper.writeValueAsString(step.getInterchangeContent());
 
         final Bytes32 gvr = Bytes32.fromHexString(model.getGenesis_validators_root());
-        jdbi.useHandle(h -> metadataDao.insertGenesisValidatorsRoot(h, gvr));
 
-        if (step.isShouldSucceed()) {
-          slashingProtection
-              .importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+        jdbi.useHandle(
+            h -> {
+              if (metadataDao.findGenesisValidatorsRoot(h).isEmpty()) {
+                metadataDao.insertGenesisValidatorsRoot(h, gvr);
+              }
+            });
+
+        // web3signer doesn't allow for partial imports, so - if it is expected, then
+        // expect import to throw.
+        if (step.isShouldSucceed() && !step.isAllowPartialImport()) {
+          slashingProtection.importData(
+              new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
           verifyImport(step, gvr);
         } else {
-          assertThatThrownBy(() -> slashingProtection
-              .importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8))))
+          assertThatThrownBy(
+                  () ->
+                      slashingProtection.importData(
+                          new ByteArrayInputStream(interchangeContent.getBytes(UTF_8))))
               .isInstanceOf(RuntimeException.class);
         }
       }
