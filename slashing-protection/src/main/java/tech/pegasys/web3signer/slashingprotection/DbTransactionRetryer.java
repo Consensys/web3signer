@@ -35,11 +35,11 @@ public class DbTransactionRetryer {
   }
 
   public <R, X extends Exception> R handleWithTransactionRetry(
-      final TransactionIsolationLevel level, HandleCallback<R, X> callback) {
+      final TransactionIsolationLevel level, final HandleCallback<R, X> callback) {
     for (int i = 0; i <= maxRetries; i++) {
       try {
         return jdbi.inTransaction(level, callback);
-      } catch (Exception e) {
+      } catch (final Exception e) {
         if (e instanceof StatementException) {
           LOG.debug("Transaction failed. Retry #{}", i, e);
           retrySleep();
@@ -56,7 +56,7 @@ public class DbTransactionRetryer {
     try {
       final int jitter = random.nextInt(50);
       Thread.sleep(retryMs + jitter);
-    } catch (InterruptedException ie) {
+    } catch (final InterruptedException ie) {
       throw new IllegalStateException("Transaction retry thread sleep interrupted", ie);
     }
   }

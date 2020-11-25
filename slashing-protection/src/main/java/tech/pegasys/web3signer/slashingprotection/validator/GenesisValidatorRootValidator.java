@@ -30,15 +30,15 @@ public class GenesisValidatorRootValidator {
   private static final int MAX_RETRIES = 3;
   private static final int RETRY_MS = 50;
   private final MetadataDao metadataDao;
-  private final DbTransactionRetryer dbTransactionRetrier;
+  private final DbTransactionRetryer dbTransactionRetryer;
 
   public GenesisValidatorRootValidator(final Jdbi jdbi, final MetadataDao metadataDao) {
     this.metadataDao = metadataDao;
-    this.dbTransactionRetrier = new DbTransactionRetryer(jdbi, MAX_RETRIES, RETRY_MS);
+    this.dbTransactionRetryer = new DbTransactionRetryer(jdbi, MAX_RETRIES, RETRY_MS);
   }
 
   public boolean checkGenesisValidatorsRootAndInsertIfEmpty(Bytes32 genesisValidatorsRoot) {
-    return dbTransactionRetrier.handleWithTransactionRetry(
+    return dbTransactionRetryer.handleWithTransactionRetry(
         READ_COMMITTED,
         handle -> {
           final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(handle);
