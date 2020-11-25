@@ -15,10 +15,14 @@ package tech.pegasys.web3signer.slashingprotection;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.UncheckedIOException;
+import java.util.Collection;
+import org.junit.jupiter.api.Test;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.model.AttestionTestModel;
 import tech.pegasys.web3signer.slashingprotection.model.BlockTestModel;
+import tech.pegasys.web3signer.slashingprotection.model.Step;
 import tech.pegasys.web3signer.slashingprotection.model.TestFileModel;
 
 import java.io.ByteArrayInputStream;
@@ -63,7 +67,6 @@ public class ReferenceTestRunner {
   private String databaseUrl;
   private SlashingProtection slashingProtection;
 
-  @BeforeEach
   public void setup() throws IOException {
     slashingDatabase = EmbeddedPostgres.start();
     final Flyway flyway =
@@ -78,7 +81,6 @@ public class ReferenceTestRunner {
         SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
   }
 
-  @AfterEach
   public void cleanup() {
     try {
       slashingDatabase.close();
@@ -88,8 +90,7 @@ public class ReferenceTestRunner {
   }
 
   @TestFactory
-  @Disabled("Until interchange import is available")
-  public Stream<DynamicTest> executeEachReferenceTestFile() {
+  public Collection<DynamicTest> executeEachReferenceTestFile() {
     final URL refTestPath =
         Resources.getResource(
             Path.of("slashing-protection-interchange-tests", "tests", "generated").toString());
@@ -97,7 +98,7 @@ public class ReferenceTestRunner {
 
     try {
       try (final Stream<Path> files = Files.list(testFilesPath)) {
-        return files.map(tf -> DynamicTest.dynamicTest(tf.toString(), () -> executeFile(tf)));
+        return files.map(tf -> DynamicTest.dynamicTest(tf.toString(), () -> executeFile(tf))).collect(Collectors.toList());
       }
     } catch (final IOException e) {
       throw new RuntimeException("Failed to create dynamic tests", e);
@@ -105,19 +106,29 @@ public class ReferenceTestRunner {
   }
 
   private void executeFile(final Path inputFile) throws IOException {
-    final TestFileModel model = objectMapper.readValue(inputFile.toFile(), TestFileModel.class);
-    final String interchangeContent =
-        objectMapper.writeValueAsString(model.getInterchangeContent());
+    setup();
+    try {
+      System.out.println(inputFile.toString());
+      final TestFileModel model = objectMapper.readValue(inputFile.toFile(), TestFileModel.class);
 
-    slashingProtection.importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+      for (final Step step : model.getSteps()) {
+        final String interchangeContent =
+            objectMapper.writeValueAsString(step.getInterchangeContent());
 
-    verifyImport(model);
+        slashingProtection.importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+
+        verifyImport(step, Bytes32.fromHexString(model.getGenesis_validators_root()));
+      }
+    } finally {
+     cleanup();
+    }
   }
 
-  private void verifyImport(final TestFileModel model) {
+  private void verifyImport(final Step step, final Bytes32 gvr) {
     final List<String> validatorsInModel =
-        model.getInterchangeContent().getSignedArtifacts().stream()
+        step.getInterchangeContent().getSignedArtifacts().stream()
             .map(SignedArtifacts::getPublicKey)
+            .distinct()
             .collect(Collectors.toList());
 
     final List<String> publicKeysInDb = getValidatorPublicKeysFromDb();
@@ -128,9 +139,8 @@ public class ReferenceTestRunner {
     slashingProtection.registerValidators(
         validatorsInModel.stream().map(Bytes::fromHexString).collect(Collectors.toList()));
 
-    final Bytes32 gvr = Bytes32.fromHexString(model.getGenesis_validators_root());
-    validateAttestations(model.getAttestations(), gvr);
-    validateBlocks(model.getBlocks(), gvr);
+    validateAttestations(step.getAttestations(), gvr);
+    validateBlocks(step.getBlocks(), gvr);
   }
 
   private List<String> getValidatorPublicKeysFromDb() {
