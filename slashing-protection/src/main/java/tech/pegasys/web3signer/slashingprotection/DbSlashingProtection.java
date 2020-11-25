@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.Streams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -107,7 +108,8 @@ public class DbSlashingProtection implements SlashingProtection {
             lowWatermarkDao,
             new ObjectMapper()
                 .registerModule(new InterchangeModule())
-                .configure(FLUSH_AFTER_WRITE_VALUE, true));
+                .configure(FLUSH_AFTER_WRITE_VALUE, true)
+                .enable(SerializationFeature.INDENT_OUTPUT));
   }
 
   @Override
