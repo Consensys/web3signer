@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -45,7 +46,7 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
   @TestFactory
-  Stream<DynamicTest> signDepositData() {
+  List<DynamicTest> signDepositData() {
     loadKeystore("keystore-1");
     loadKeystore("keystore-2");
 
@@ -53,32 +54,29 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
 
     final ObjectMapper objectMapper = new ObjectMapper();
 
-    final Path testFilesPath = Path.of(Resources.getResource(Path.of("eth2").toString()).getPath());
-    try {
-      return Files.list(testFilesPath)
+    final Path testFilesPath = Path.of(Resources.getResource("eth2").getPath());
+    try (final Stream<Path> files = Files.list(testFilesPath)) {
+      return files
           .filter(p -> p.getFileName().toString().startsWith("deposit_data"))
-          .flatMap(
-              tf -> {
-                try {
-                  return createTest(objectMapper, tf);
-                } catch (IOException e) {
-                  throw new RuntimeException("Failed to create dynamic tests", e);
-                }
-              });
+          .flatMap(tf -> createTest(objectMapper, tf))
+          .collect(Collectors.toList());
     } catch (IOException e) {
-      throw new RuntimeException("Failed to create dynamic tests", e);
+      throw new RuntimeException("Failed to create sign deposit tests", e);
     }
   }
 
-  private Stream<DynamicTest> createTest(final ObjectMapper objectMapper, final Path tf)
-      throws IOException {
-    return objectMapper.<List<Map<String, String>>>readValue(tf.toFile(), new TypeReference<>() {})
-        .stream()
-        .map(
-            depositData -> {
-              final String displayName = testDisplayName(tf) + "-" + depositData.get("pubkey");
-              return DynamicTest.dynamicTest(displayName, () -> verifyDepositData(depositData));
-            });
+  private Stream<DynamicTest> createTest(final ObjectMapper objectMapper, final Path tf) {
+    try {
+      return objectMapper
+          .<List<Map<String, String>>>readValue(tf.toFile(), new TypeReference<>() {}).stream()
+          .map(
+              depositData -> {
+                final String displayName = testDisplayName(tf) + "-" + depositData.get("pubkey");
+                return DynamicTest.dynamicTest(displayName, () -> verifyDepositData(depositData));
+              });
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to create sign deposit tests", e);
+    }
   }
 
   private String testDisplayName(final Path tf) {
