@@ -163,7 +163,6 @@ public class Web3SignerBaseCommand implements Config, Runnable {
       arity = "1")
   private int idleConnectionTimeoutSeconds = 30;
 
-  // @ArgGroup(exclusive = false)
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
   @Override

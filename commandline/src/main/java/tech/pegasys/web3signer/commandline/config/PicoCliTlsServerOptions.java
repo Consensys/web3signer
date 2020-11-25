@@ -26,13 +26,6 @@ import picocli.CommandLine.Option;
 
 public class PicoCliTlsServerOptions implements TlsOptions {
 
-  //  static class TlsClientAuthentication {
-  //
-  //    @SuppressWarnings("UnusedVariable")
-  //    // @ArgGroup(exclusive = false)
-  //
-  //  }
-
   @Option(
       names = "--tls-keystore-file",
       description =
@@ -48,18 +41,17 @@ public class PicoCliTlsServerOptions implements TlsOptions {
       paramLabel = MANDATORY_FILE_FORMAT_HELP)
   private File keyStorePasswordFile = null;
 
-  // @ArgGroup(multiplicity = "1")
-  // private TlsClientAuthentication tlsClientAuthentication;
   @Option(
       names = "--tls-allow-any-client",
       description =
           "If set to true, any client may connect, regardless of presented certificate. This cannot "
-              + "be set to true if either a known clients or CA clients have been enabled.",
+              + "be set to true if either a known clients file is specified or CA clients have been enabled.",
       paramLabel = MANDATORY_BOOL_FORMAT_HELP,
       arity = "1")
-  private Boolean tlsAllowAnyClient = false;
+  Boolean tlsAllowAnyClient = false; // package level access for validator
 
-  @CommandLine.Mixin private PicoCliClientAuthConstraints clientAuthConstraints;
+  @CommandLine.Mixin
+  PicoCliClientAuthConstraints clientAuthConstraints; // package level access for validator
 
   @Override
   public File getKeyStoreFile() {
@@ -74,16 +66,6 @@ public class PicoCliTlsServerOptions implements TlsOptions {
   @Override
   public Optional<ClientAuthConstraints> getClientAuthConstraints() {
     // assuming custom validation method has been called.
-
     return tlsAllowAnyClient ? Optional.empty() : Optional.of(clientAuthConstraints);
-  }
-
-  // used by validator to enforce ArgGroup style validation
-  Boolean isTlsAllowAnyClient() {
-    return tlsAllowAnyClient;
-  }
-
-  PicoCliClientAuthConstraints getPicoCliClientAuthConstraints() {
-    return clientAuthConstraints;
   }
 }

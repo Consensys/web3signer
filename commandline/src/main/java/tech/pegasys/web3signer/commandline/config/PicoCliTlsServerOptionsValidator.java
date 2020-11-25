@@ -12,13 +12,15 @@
  */
 package tech.pegasys.web3signer.commandline.config;
 
+import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
+
 import java.io.File;
 
 import picocli.CommandLine;
 
 /**
- * Because of config file/environment default value provider, PicoCLI ArgGroup feature cannot be
- * used. This class provides similar set of validation for TLS options.
+ * This class provides similar validation for TLS options as PicoCli ArgGroups (which cannot be used
+ * due to limitations of config file/environment value provider).
  */
 public class PicoCliTlsServerOptionsValidator {
   private final CommandLine.Model.CommandSpec spec;
@@ -41,29 +43,32 @@ public class PicoCliTlsServerOptionsValidator {
     }
 
     // if tls keystore is specified, the password file must be specified.
-    if ((keyStoreFile != null && keyStorePasswordFile == null)
-        || (keyStoreFile == null && keyStorePasswordFile != null)) {
+    if (onlyOneInitialized(keyStoreFile, keyStorePasswordFile)) {
       throw new CommandLine.ParameterException(
           spec.commandLine(),
-          "Error: --tls-keystore-file must be specified together with --tls-keystore-password-file");
+          "--tls-keystore-file must be specified together with --tls-keystore-password-file");
     }
 
-    final PicoCliClientAuthConstraints picoCliClientAuthConstraints =
-        picoCliTlsServerOptions.getPicoCliClientAuthConstraints();
-    if (picoCliTlsServerOptions.isTlsAllowAnyClient()
+    final ClientAuthConstraints picoCliClientAuthConstraints =
+        picoCliTlsServerOptions.clientAuthConstraints;
+    if (picoCliTlsServerOptions.tlsAllowAnyClient
         && (picoCliClientAuthConstraints.getKnownClientsFile().isPresent()
             || picoCliClientAuthConstraints.isCaAuthorizedClientAllowed())) {
       throw new CommandLine.ParameterException(
           spec.commandLine(),
-          "Error: --tls-allow-any-client cannot be set to true when --tls-known-clients-file is specified or --tls-allow-ca-clients is set to true");
+          "--tls-allow-any-client cannot be set to true when --tls-known-clients-file is specified or --tls-allow-ca-clients is set to true");
     }
 
-    if (!picoCliTlsServerOptions.isTlsAllowAnyClient()
+    if (!picoCliTlsServerOptions.tlsAllowAnyClient
         && picoCliClientAuthConstraints.getKnownClientsFile().isEmpty()
         && !picoCliClientAuthConstraints.isCaAuthorizedClientAllowed()) {
       throw new CommandLine.ParameterException(
           spec.commandLine(),
-          "Error: --tls-known-clients-file must be specified if both --tls-allow-any-client and --tls-allow-ca-clients are set to false");
+          "--tls-known-clients-file must be specified if both --tls-allow-any-client and --tls-allow-ca-clients are set to false");
     }
+  }
+
+  private static boolean onlyOneInitialized(final Object o1, final Object o2) {
+    return (o1 == null) != (o2 == null);
   }
 }
