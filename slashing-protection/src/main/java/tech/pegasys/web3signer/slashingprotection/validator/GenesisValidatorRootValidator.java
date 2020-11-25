@@ -29,12 +29,14 @@ public class GenesisValidatorRootValidator {
   private static final Logger LOG = LogManager.getLogger();
   private static final int MAX_RETRIES = 3;
   private static final int RETRY_MS = 50;
+  private static final int MAX_JITTER_MS = 50;
   private final MetadataDao metadataDao;
   private final DbTransactionRetryer dbTransactionRetryer;
 
   public GenesisValidatorRootValidator(final Jdbi jdbi, final MetadataDao metadataDao) {
     this.metadataDao = metadataDao;
-    this.dbTransactionRetryer = new DbTransactionRetryer(jdbi, MAX_RETRIES, RETRY_MS);
+    this.dbTransactionRetryer =
+        new DbTransactionRetryer(jdbi, MAX_RETRIES, RETRY_MS, MAX_JITTER_MS);
   }
 
   public boolean checkGenesisValidatorsRootAndInsertIfEmpty(Bytes32 genesisValidatorsRoot) {

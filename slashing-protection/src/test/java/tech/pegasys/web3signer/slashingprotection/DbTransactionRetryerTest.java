@@ -53,7 +53,8 @@ public class DbTransactionRetryerTest {
                   }
                 });
 
-    final DbTransactionRetryer dbTransactionRetryer = new DbTransactionRetryer(db.getJdbi(), 1, 0);
+    final DbTransactionRetryer dbTransactionRetryer =
+        new DbTransactionRetryer(db.getJdbi(), 1, 0, 0);
     dbTransactionRetryer.handleWithTransactionRetry(
         TransactionIsolationLevel.READ_COMMITTED, handleCallback);
     assertThat(transactionTries.get()).isEqualTo(2);
@@ -70,7 +71,8 @@ public class DbTransactionRetryerTest {
                   throw new UnableToCreateStatementException(null, null, null);
                 });
 
-    final DbTransactionRetryer dbTransactionRetryer = new DbTransactionRetryer(db.getJdbi(), 3, 0);
+    final DbTransactionRetryer dbTransactionRetryer =
+        new DbTransactionRetryer(db.getJdbi(), 3, 0, 0);
     assertThatThrownBy(
             () ->
                 dbTransactionRetryer.handleWithTransactionRetry(
@@ -84,7 +86,8 @@ public class DbTransactionRetryerTest {
   public void doesNotRetryIfFailedNonStatementException() throws Exception {
     when(handleCallback.withHandle(any())).thenThrow(new IllegalStateException());
 
-    final DbTransactionRetryer dbTransactionRetryer = new DbTransactionRetryer(db.getJdbi(), 1, 0);
+    final DbTransactionRetryer dbTransactionRetryer =
+        new DbTransactionRetryer(db.getJdbi(), 1, 0, 0);
     assertThatThrownBy(
             () ->
                 dbTransactionRetryer.handleWithTransactionRetry(

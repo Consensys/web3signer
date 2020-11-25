@@ -22,16 +22,20 @@ import org.jdbi.v3.core.statement.StatementException;
 import org.jdbi.v3.core.transaction.TransactionIsolationLevel;
 
 public class DbTransactionRetryer {
+
   private static final Logger LOG = LogManager.getLogger();
   private final Random random = new Random();
   private final Jdbi jdbi;
   private final int maxRetries;
   private final int retryMs;
+  private final int maxJitterMs;
 
-  public DbTransactionRetryer(final Jdbi jdbi, final int maxRetries, final int retryMs) {
+  public DbTransactionRetryer(
+      final Jdbi jdbi, final int maxRetries, final int retryMs, final int maxJitterMs) {
     this.jdbi = jdbi;
     this.maxRetries = maxRetries;
     this.retryMs = retryMs;
+    this.maxJitterMs = maxJitterMs;
   }
 
   public <R, X extends Exception> R handleWithTransactionRetry(
@@ -54,7 +58,7 @@ public class DbTransactionRetryer {
 
   private void retrySleep() {
     try {
-      final int jitter = random.nextInt(50);
+      final int jitter = random.nextInt(maxJitterMs);
       Thread.sleep(retryMs + jitter);
     } catch (final InterruptedException ie) {
       throw new IllegalStateException("Transaction retry thread sleep interrupted", ie);
