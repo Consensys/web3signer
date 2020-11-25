@@ -123,5 +123,6 @@ dependencyManagement {
     dependency 'com.h2database:h2:1.4.200'
 
     dependency 'com.github.ipld:java-cid:1.3.1'
+    dependency 'net.jodah:failsafe:2.4.0'
   }
 }
