@@ -14,7 +14,9 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.model.AttestionTestModel;
@@ -58,9 +60,11 @@ public class ReferenceTestRunner {
           .registerModule(new InterchangeModule())
           .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
   private final ValidatorsDao validators = new ValidatorsDao();
+  private final MetadataDao metadataDao = new MetadataDao();
   private EmbeddedPostgres slashingDatabase;
   private String databaseUrl;
   private SlashingProtection slashingProtection;
+  private Jdbi jdbi;
 
   public void setup() throws IOException {
     slashingDatabase = EmbeddedPostgres.start();
@@ -74,6 +78,7 @@ public class ReferenceTestRunner {
         String.format("jdbc:postgresql://localhost:%d/postgres", slashingDatabase.getPort());
     slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
+    jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
   }
 
   public void cleanup() {
@@ -112,9 +117,18 @@ public class ReferenceTestRunner {
         final String interchangeContent =
             objectMapper.writeValueAsString(step.getInterchangeContent());
 
-        slashingProtection.importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+        final Bytes32 gvr = Bytes32.fromHexString(model.getGenesis_validators_root());
+        jdbi.useHandle(h -> metadataDao.insertGenesisValidatorsRoot(h, gvr));
 
-        verifyImport(step, Bytes32.fromHexString(model.getGenesis_validators_root()));
+        if (step.isShouldSucceed()) {
+          slashingProtection
+              .importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+          verifyImport(step, gvr);
+        } else {
+          assertThatThrownBy(() -> slashingProtection
+              .importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8))))
+              .isInstanceOf(RuntimeException.class);
+        }
       }
     } finally {
       cleanup();
@@ -141,7 +155,7 @@ public class ReferenceTestRunner {
   }
 
   private List<String> getValidatorPublicKeysFromDb() {
-    final Jdbi jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
+
     return jdbi.withHandle(
         h ->
             validators
