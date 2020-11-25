@@ -38,5 +38,8 @@ class MetadataTest {
         .isEqualTo(medataData.getFormatVersionAsString());
     assertThat(jsonContent.get("genesis_validators_root"))
         .isEqualTo(medataData.getGenesisValidatorsRoot().toHexString());
+    assertThat(jsonContent.keySet()).hasSize(2);
+    assertThat(jsonContent.keySet())
+        .containsOnly("interchange_format_version", "genesis_validators_root");
   }
 }
