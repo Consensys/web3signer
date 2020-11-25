@@ -120,6 +120,7 @@ dependencyManagement {
 
     dependency 'com.opentable.components:otj-pg-embedded:0.13.3'
     dependency 'org.flywaydb:flyway-core:6.1.1'
+    dependency 'com.h2database:h2:1.4.200'
 
     dependency 'com.github.ipld:java-cid:1.3.1'
   }
