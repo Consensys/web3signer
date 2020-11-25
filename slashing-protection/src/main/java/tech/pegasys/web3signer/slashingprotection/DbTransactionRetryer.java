@@ -41,7 +41,7 @@ public class DbTransactionRetryer {
         return jdbi.inTransaction(level, callback);
       } catch (Exception e) {
         if (e instanceof StatementException) {
-          LOG.debug("Transaction failed. Retry #{}", i);
+          LOG.debug("Transaction failed. Retry #{}", i, e);
           retrySleep();
         } else {
           throw new IllegalStateException("Unable to retry transaction", e);
