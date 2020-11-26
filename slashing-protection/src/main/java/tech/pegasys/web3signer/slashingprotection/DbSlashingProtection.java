@@ -58,8 +58,8 @@ public class DbSlashingProtection implements SlashingProtection {
   private final SignedAttestationsDao signedAttestationsDao;
   private final Map<Bytes, Integer> registeredValidators;
   private final InterchangeManager interchangeManager;
-  private final MetadataDao metadataDao;
   private final LowWatermarkDao lowWatermarkDao;
+  private final GenesisValidatorRootValidator gvrValidator;
 
   private enum LockType {
     BLOCK,
@@ -95,9 +95,9 @@ public class DbSlashingProtection implements SlashingProtection {
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
-    this.metadataDao = metadataDao;
     this.lowWatermarkDao = lowWatermarkDao;
     this.registeredValidators = registeredValidators;
+    this.gvrValidator = new GenesisValidatorRootValidator(jdbi, metadataDao);
     this.interchangeManager =
         new InterchangeV5Manager(
             jdbi,
@@ -143,6 +143,10 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes32 genesisValidatorsRoot) {
     final int validatorId = validatorId(publicKey);
 
+    if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
+      return false;
+    }
+
     return jdbi.inTransaction(
         READ_COMMITTED,
         handle -> {
@@ -157,18 +161,11 @@ public class DbSlashingProtection implements SlashingProtection {
                   signedAttestationsDao,
                   lowWatermarkDao);
 
-          final GenesisValidatorRootValidator gvrValidator =
-              new GenesisValidatorRootValidator(handle, metadataDao);
-
           if (attestationValidator.sourceGreaterThanTargetEpoch()) {
             return false;
           }
 
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
-
-          if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
-            return false;
-          }
 
           if (attestationValidator.directlyConflictsWithExistingEntry()
               || attestationValidator.isSurroundedByExistingAttestation()
@@ -192,6 +189,9 @@ public class DbSlashingProtection implements SlashingProtection {
       final UInt64 blockSlot,
       final Bytes32 genesisValidatorsRoot) {
     final int validatorId = validatorId(publicKey);
+    if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
+      return false;
+    }
     return jdbi.inTransaction(
         READ_COMMITTED,
         h -> {
@@ -199,14 +199,7 @@ public class DbSlashingProtection implements SlashingProtection {
               new BlockValidator(
                   h, signingRoot, blockSlot, validatorId, signedBlocksDao, lowWatermarkDao);
 
-          final GenesisValidatorRootValidator gvrValidator =
-              new GenesisValidatorRootValidator(h, metadataDao);
-
           lockForValidator(h, LockType.BLOCK, validatorId);
-
-          if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
-            return false;
-          }
 
           if (blockValidator.directlyConflictsWithExistingEntry()) {
             return false;
