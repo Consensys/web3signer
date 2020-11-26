@@ -19,25 +19,22 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class Metadata {
 
-  private final int formatVersion;
+  private final String formatVersion;
   private final Bytes genesisValidatorsRoot;
 
   @JsonCreator
   public Metadata(
-      @JsonProperty(value = "interchange_format_version", required = true) final int formatVersion,
+      @JsonProperty(value = "interchange_format_version", required = true)
+          final String formatVersion,
       @JsonProperty(value = "genesis_validators_root", required = true)
           final Bytes genesisValidatorsRoot) {
     this.formatVersion = formatVersion;
     this.genesisValidatorsRoot = genesisValidatorsRoot;
   }
 
-  public int getFormatVersion() {
-    return formatVersion;
-  }
-
   @JsonGetter(value = "interchange_format_version")
-  public String getFormatVersionAsString() {
-    return Integer.toString(formatVersion);
+  public String getFormatVersion() {
+    return formatVersion;
   }
 
   @JsonGetter(value = "genesis_validators_root")

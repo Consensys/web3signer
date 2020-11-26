@@ -37,7 +37,7 @@ public class InterchangeImportBadLogicalContentIntegrationTest
   void attestationHasSourceGreaterThanTargetEpoch() throws IOException {
     final InterchangeV5Format interchangeData =
         new InterchangeV5Format(
-            new Metadata(5, Bytes.fromHexString("0x123456")),
+            new Metadata("5", Bytes.fromHexString("0x123456")),
             List.of(
                 new SignedArtifacts(
                     "0x12345678",
@@ -60,7 +60,7 @@ public class InterchangeImportBadLogicalContentIntegrationTest
 
     final InterchangeV5Format interchangeData =
         new InterchangeV5Format(
-            new Metadata(5, Bytes32.leftPad(Bytes.fromHexString("0x123456"))),
+            new Metadata("5", Bytes32.leftPad(Bytes.fromHexString("0x123456"))),
             List.of(new SignedArtifacts("0x12345678", emptyList(), emptyList())));
 
     final byte[] jsonInput = mapper.writeValueAsBytes(interchangeData);

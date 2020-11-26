@@ -62,7 +62,7 @@ public class InterchangeExportIntegrationTest extends InterchangeBaseIntegration
 
     final InterchangeV5Format outputObject = getExportObjectFromDatabase();
 
-    assertThat(outputObject.getMetadata().getFormatVersionAsString()).isEqualTo("5");
+    assertThat(outputObject.getMetadata().getFormatVersion()).isEqualTo("5");
     assertThat(outputObject.getMetadata().getGenesisValidatorsRoot()).isEqualTo(gvr);
 
     final List<SignedArtifacts> signedArtifacts = outputObject.getSignedArtifacts();
