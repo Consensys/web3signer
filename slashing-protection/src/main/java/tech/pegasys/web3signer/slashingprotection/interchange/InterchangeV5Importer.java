@@ -201,49 +201,51 @@ public class InterchangeV5Importer {
               signedAttestationsDao,
               lowWatermarkDao);
 
+      // if the attestation is illegal formatted, it cannot be imported
       if (attestationValidator.sourceGreaterThanTargetEpoch()) {
-        throw new IllegalArgumentException(
-            String.format(
-                "Attestation #%d for validator %s - source is great than target epoch",
-                i, validator.getPublicKey()));
-      }
-
-      if (attestationValidator.directlyConflictsWithExistingEntry()) {
         LOG.warn(
-            "Attestation {} of validator {} conflicts with an existing entry",
-            i,
-            validator.getPublicKey());
-      }
-
-      if (attestationValidator.isSurroundedByExistingAttestation()) {
-        LOG.warn(
-            "Attestation {} of validator {} is surrounded by existing entries",
-            i,
-            validator.getPublicKey());
-      }
-
-      if (attestationValidator.surroundsExistingAttestation()) {
-        LOG.warn(
-            "Attestation {} of validator {} surrounds an existing entry",
-            i,
-            validator.getPublicKey());
-      }
-
-      if (attestationValidator.alreadyExists()) {
-        LOG.debug(
-            "Attestation {} for validator {} already exists in database, not imported",
+            "Attestation #{} for validator {} - source is great than target epoch",
             i,
             validator.getPublicKey());
       } else {
-        signedAttestationsDao.insertAttestation(
-            handle,
-            new tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation(
-                validator.getId(),
-                jsonAttestation.getSourceEpoch(),
-                jsonAttestation.getTargetEpoch(),
-                jsonAttestation.getSigningRoot()));
-        minSourceTracker.trackValue(jsonAttestation.getSourceEpoch());
-        minTargetTracker.trackValue(jsonAttestation.getTargetEpoch());
+
+        if (attestationValidator.directlyConflictsWithExistingEntry()) {
+          LOG.warn(
+              "Attestation {} of validator {} conflicts with an existing entry",
+              i,
+              validator.getPublicKey());
+        }
+
+        if (attestationValidator.isSurroundedByExistingAttestation()) {
+          LOG.warn(
+              "Attestation {} of validator {} is surrounded by existing entries",
+              i,
+              validator.getPublicKey());
+        }
+
+        if (attestationValidator.surroundsExistingAttestation()) {
+          LOG.warn(
+              "Attestation {} of validator {} surrounds an existing entry",
+              i,
+              validator.getPublicKey());
+        }
+
+        if (attestationValidator.alreadyExists()) {
+          LOG.debug(
+              "Attestation {} for validator {} already exists in database, not imported",
+              i,
+              validator.getPublicKey());
+        } else {
+          signedAttestationsDao.insertAttestation(
+              handle,
+              new tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation(
+                  validator.getId(),
+                  jsonAttestation.getSourceEpoch(),
+                  jsonAttestation.getTargetEpoch(),
+                  jsonAttestation.getSigningRoot()));
+          minSourceTracker.trackValue(jsonAttestation.getSourceEpoch());
+          minTargetTracker.trackValue(jsonAttestation.getTargetEpoch());
+        }
       }
     }
     persistAttestationWatermark(handle, validator, minSourceTracker, minTargetTracker);
