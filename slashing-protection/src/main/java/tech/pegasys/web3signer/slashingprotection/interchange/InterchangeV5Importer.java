@@ -88,18 +88,18 @@ public class InterchangeV5Importer {
             "Expecting an interchange_format_version of " + FORMAT_VERSION);
       }
 
+      final Bytes32 gvr = Bytes32.wrap(metadata.getGenesisValidatorsRoot());
+      final GenesisValidatorRootValidator genesisValidatorRootValidator =
+          new GenesisValidatorRootValidator(jdbi, metadataDao);
+      if (!genesisValidatorRootValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr)) {
+        throw new IllegalArgumentException(
+            String.format(
+                "Supplied genesis validators root %s does not match value in database", gvr));
+      }
+
       final ArrayNode dataNode = rootNode.withArray("data");
       jdbi.useTransaction(
           h -> {
-            final Bytes32 gvr = Bytes32.wrap(metadata.getGenesisValidatorsRoot());
-            final GenesisValidatorRootValidator genesisValidatorRootValidator =
-                new GenesisValidatorRootValidator(h, metadataDao);
-            if (!genesisValidatorRootValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr)) {
-              throw new IllegalArgumentException(
-                  String.format(
-                      "Supplied genesis validators root %s does not match value in database", gvr));
-            }
-
             for (int i = 0; i < dataNode.size(); i++) {
               try {
                 final JsonNode validatorNode = dataNode.get(i);

@@ -31,6 +31,7 @@ dependencies {
   implementation 'org.hyperledger.besu:plugin-api'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
+  implementation 'net.jodah:failsafe:2.4.0'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 

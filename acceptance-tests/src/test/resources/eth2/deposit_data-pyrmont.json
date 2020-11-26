@@ -1,0 +1,24 @@
+[
+  {
+    "pubkey":"89b54db68c6281b5919ff0167cf88f2e0077cd90b65efcd0dbbc7772ee953c6a5bc96be01c5a9a14ba45edbc933fa4c3",
+    "withdrawal_credentials":"00502e12a8ff3de168546ff8a02d03146001ee8d9eeb73797c97e2bc370ec487",
+    "amount":32000000000,
+    "signature":"aeda2f0ea8498b3df04a27a6ed33c6ac3061667c9efc08f813556bb6c4aa2cea8e4eecc668302ae5513db63cdecb004814cf7963b7a08a933330d1b28a4bd559b6c361518c00722ea37b7f4d0e2183db3272c147863b39fe27efbbf45c1274f5",
+    "deposit_message_root":"a5cef275cb5aaa248dc35ceb18032860c20edc09f9874b52bb6f572955d577f5",
+    "deposit_data_root":"69ca676cc4b8468c1baa7f919387223c023a1a7612dca2ca06173f0c028a17db",
+    "fork_version":"00002009",
+    "eth2_network_name":"pyrmont",
+    "deposit_cli_version":"1.1.0"
+  },
+  {
+    "pubkey":"948b6281ec1e6df13ba20d3f5e8ff504c134af25e994046814d2cff9ecde289ead1988ffb13d337248848f98fd33766f",
+    "withdrawal_credentials":"00a71ae74287d2e85fb65b583156debe0180ea10a033323e3d451ca2aa08a70d",
+    "amount":32000000000,
+    "signature":"967d163015aa22c93d31f8553bc20640bf7738601aaee32caab4da934a99f0f3987e3f62db31fa6ce17501c8b2cb76b4104130223e2db401ebd1909ee69634e3c76c6a40c8cd9e0da72c1c1e0aefa927fd6f5e42cc8e6e88625bbf982b5a9748",
+    "deposit_message_root":"b46e2db5f6df53697bea70fbe09da2346ab9d4f0c395d9c3b36a49b225d76f8f",
+    "deposit_data_root":"fef122bddd1d43b51b00bfafeb7daa5b2beb13423ec619a39231a6cb7588c387",
+    "fork_version":"00002009",
+    "eth2_network_name":"pyrmont",
+    "deposit_cli_version":"1.1.0"
+  }
+]

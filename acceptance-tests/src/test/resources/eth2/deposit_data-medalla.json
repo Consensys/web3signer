@@ -1,0 +1,24 @@
+[
+  {
+    "pubkey":"89b54db68c6281b5919ff0167cf88f2e0077cd90b65efcd0dbbc7772ee953c6a5bc96be01c5a9a14ba45edbc933fa4c3",
+    "withdrawal_credentials":"00502e12a8ff3de168546ff8a02d03146001ee8d9eeb73797c97e2bc370ec487",
+    "amount":32000000000,
+    "signature":"950b4ab990b9b07581c3d5e2d5341691c2d2120e6f13d032da61f824508d7e9963694385802ba3f9d3f564d7d8d66bbb071b2fea72ec6d2c9d358de06976d702f5619d7cca9fc654e1a088ca69dcd4e718a35e58c04f933e37d953761a65f792",
+    "deposit_message_root":"a5cef275cb5aaa248dc35ceb18032860c20edc09f9874b52bb6f572955d577f5",
+    "deposit_data_root":"88e716664660832fc6ef99cc3e131013923a1b83a6692a1163543b0b811cca58",
+    "fork_version":"00000001",
+    "eth2_network_name":"medalla",
+    "deposit_cli_version":"1.1.0"
+  },
+  {
+    "pubkey":"948b6281ec1e6df13ba20d3f5e8ff504c134af25e994046814d2cff9ecde289ead1988ffb13d337248848f98fd33766f",
+    "withdrawal_credentials":"00a71ae74287d2e85fb65b583156debe0180ea10a033323e3d451ca2aa08a70d",
+    "amount":32000000000,
+    "signature":"908a84cd085df7fcec4d2357b493a543ba923a148759d5d872300c5194603ffc64640a87dcb23574ef277f0334c0783014721c37814fb3b71fa30ce0ff28481cbcc8698ca636ce4612b6d73879ca0daa44b9843a34bde73419b8012adddbe2d6",
+    "deposit_message_root":"b46e2db5f6df53697bea70fbe09da2346ab9d4f0c395d9c3b36a49b225d76f8f",
+    "deposit_data_root":"9743d43038069fe74fedbf85e6910b1801648f2d1eb764250e71466d7516b6c6",
+    "fork_version":"00000001",
+    "eth2_network_name":"medalla",
+    "deposit_cli_version":"1.1.0"
+  }
+]

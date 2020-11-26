@@ -94,9 +94,6 @@ public class InterchangeV5Exporter {
                 .findAllValidators(h)
                 .forEach(
                     validator -> {
-                      LOG.info(
-                          "Exporting entries for validator {}",
-                          validator.getPublicKey().toHexString());
                       try {
                         populateValidatorRecord(h, validator, jsonGenerator);
                       } catch (final IOException e) {
@@ -109,18 +106,19 @@ public class InterchangeV5Exporter {
   private void populateValidatorRecord(
       final Handle handle, final Validator validator, final JsonGenerator jsonGenerator)
       throws IOException {
-    jsonGenerator.writeStartObject();
-    jsonGenerator.writeStringField("pubkey", validator.getPublicKey().toHexString());
     final Optional<SigningWatermark> watermark =
         lowWatermarkDao.findLowWatermarkForValidator(handle, validator.getId());
     if (watermark.isEmpty()) {
       LOG.warn(
           "No low watermark available, producing empty export for validator {}",
           validator.getPublicKey());
-    } else {
-      writeBlocks(handle, watermark.get(), validator, jsonGenerator);
-      writeAttestations(handle, watermark.get(), validator, jsonGenerator);
+      return;
     }
+    LOG.info("Exporting entries for validator {}", validator.getPublicKey().toHexString());
+    jsonGenerator.writeStartObject();
+    jsonGenerator.writeStringField("pubkey", validator.getPublicKey().toHexString());
+    writeBlocks(handle, watermark.get(), validator, jsonGenerator);
+    writeAttestations(handle, watermark.get(), validator, jsonGenerator);
     jsonGenerator.writeEndObject();
   }
 

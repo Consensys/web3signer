@@ -193,7 +193,9 @@ components:
             signingRoot:
               description: 'signing root for optional verification if field present'
               type: "string"
-
+            genesis_fork_version:
+              type: "string"
+              description: Bytes4 hexadecimal
       required:
         - type
         - deposit
@@ -378,9 +380,6 @@ components:
           type: "string"
         signature:
           type: "string"
-        genesis_fork_version:
-          type: "string"
-          description: Bytes4 hexadecimal
     VoluntaryExit:
       type: object
       properties:
