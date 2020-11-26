@@ -11,17 +11,13 @@
  * specific language governing permissions and limitations under the License.
  */
 import java.nio.file.{Files, Path}
-import java.util
 import java.util.concurrent.atomic.AtomicInteger
 
-import io.gatling.core.Predef.{rampUsersPerSec, _}
+import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-import io.restassured.common.mapper.TypeRef
-import org.apache.tuweni.bytes.Bytes
-import tech.pegasys.teku.bls.BLS
 import tech.pegasys.web3signer.core.signing.KeyType
 import tech.pegasys.web3signer.dsl.signer.{Signer, SignerConfigurationBuilder}
-import tech.pegasys.web3signer.dsl.utils.{Eth2RequestUtils, MetadataFileHelpers}
+import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers
 
 import scala.collection.JavaConverters.iterableAsScalaIterableConverter
 import scala.concurrent.duration.DurationInt
@@ -47,7 +43,7 @@ class Eth2SignSimulation extends Simulation {
   private val httpProtocol = http.baseUrl(signer.getUrl())
   private val slot = new AtomicInteger(0)
   private val slots: Iterator[Map[String, Int]] = Iterator.continually(Map("slot" -> slot.getAndIncrement()))
-  private val addresses = signer.listPublicKeys(KeyType.BLS).asScala.map(a => Map("address" -> a)).toArray.random
+  private val addresses = signer.listPublicKeys(KeyType.BLS).asScala.map(a => Map("address" -> a)).toArray.circular
 
   private val signing = scenario("Signing")
     .feed(addresses)
