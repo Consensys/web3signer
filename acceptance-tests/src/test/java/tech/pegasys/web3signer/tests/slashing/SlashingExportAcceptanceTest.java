@@ -100,7 +100,7 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
     final InterchangeV5Format mappedData =
         mapper.readValue(exportFile.toFile(), InterchangeV5Format.class);
 
-    assertThat(mappedData.getMetadata().getFormatVersionAsString()).isEqualTo("5");
+    assertThat(mappedData.getMetadata().getFormatVersion()).isEqualTo("5");
     assertThat(mappedData.getMetadata().getGenesisValidatorsRoot())
         .isEqualTo(Bytes.fromHexString(GENESIS_VALIDATORS_ROOT));
 
