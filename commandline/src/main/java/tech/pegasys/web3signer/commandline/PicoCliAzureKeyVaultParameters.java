@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline;
 
+import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 
 import picocli.CommandLine.Option;
@@ -25,6 +26,14 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
               + "(Default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>")
   private boolean azureKeyVaultEnabled = false;
+
+  @Option(
+      names = {"--azure-vault-auth-mode"},
+      description =
+          "Authentication mode for Azure Vault. Valid Values: ${COMPLETION-CANDIDATES}"
+              + "(Default: ${DEFAULT-VALUE})",
+      paramLabel = "<AUTHENTICATION_MODE>")
+  private AzureAuthenticationMode authenticationMode = AzureAuthenticationMode.CLIENT_SECRET;
 
   @Option(
       names = {"--azure-vault-name"},
@@ -53,6 +62,11 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
   @Override
   public boolean isAzureKeyVaultEnabled() {
     return azureKeyVaultEnabled;
+  }
+
+  @Override
+  public AzureAuthenticationMode getAuthenticationMode() {
+    return authenticationMode;
   }
 
   @Override

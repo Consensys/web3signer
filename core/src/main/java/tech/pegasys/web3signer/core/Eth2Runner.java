@@ -21,6 +21,7 @@ import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
@@ -193,12 +194,23 @@ public class Eth2Runner extends Runner {
   }
 
   final Collection<ArtifactSigner> loadAzureSigners() {
-    final AzureKeyVault keyVault =
-        new AzureKeyVault(
-            azureKeyVaultParameters.getClientlId(),
-            azureKeyVaultParameters.getClientSecret(),
-            azureKeyVaultParameters.getTenantId(),
-            azureKeyVaultParameters.getKeyVaultName());
+    // TODO: Use new factory method from updated signers library
+    final AzureKeyVault keyVault;
+    if (azureKeyVaultParameters.getAuthenticationMode() == AzureAuthenticationMode.CLIENT_SECRET) {
+      keyVault =
+          new AzureKeyVault(
+              azureKeyVaultParameters.getClientlId(),
+              azureKeyVaultParameters.getClientSecret(),
+              azureKeyVaultParameters.getTenantId(),
+              azureKeyVaultParameters.getKeyVaultName());
+    } else {
+      keyVault =
+          new AzureKeyVault(
+              azureKeyVaultParameters.getClientlId(),
+              azureKeyVaultParameters.getClientSecret(),
+              azureKeyVaultParameters.getTenantId(),
+              azureKeyVaultParameters.getKeyVaultName());
+    }
 
     return keyVault.mapSecrets(
         (name, value) -> {
