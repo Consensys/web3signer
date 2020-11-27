@@ -14,11 +14,14 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.model.AttestionTestModel;
 import tech.pegasys.web3signer.slashingprotection.model.BlockTestModel;
+import tech.pegasys.web3signer.slashingprotection.model.Step;
 import tech.pegasys.web3signer.slashingprotection.model.TestFileModel;
 
 import java.io.ByteArrayInputStream;
@@ -26,6 +29,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,9 +45,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -59,11 +60,12 @@ public class ReferenceTestRunner {
           .registerModule(new InterchangeModule())
           .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
   private final ValidatorsDao validators = new ValidatorsDao();
+
   private EmbeddedPostgres slashingDatabase;
   private String databaseUrl;
   private SlashingProtection slashingProtection;
+  private Jdbi jdbi;
 
-  @BeforeEach
   public void setup() throws IOException {
     slashingDatabase = EmbeddedPostgres.start();
     final Flyway flyway =
@@ -76,9 +78,9 @@ public class ReferenceTestRunner {
         String.format("jdbc:postgresql://localhost:%d/postgres", slashingDatabase.getPort());
     slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
+    jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
   }
 
-  @AfterEach
   public void cleanup() {
     try {
       slashingDatabase.close();
@@ -88,8 +90,7 @@ public class ReferenceTestRunner {
   }
 
   @TestFactory
-  @Disabled("Until interchange import is available")
-  public Stream<DynamicTest> executeEachReferenceTestFile() {
+  public Collection<DynamicTest> executeEachReferenceTestFile() {
     final URL refTestPath =
         Resources.getResource(
             Path.of("slashing-protection-interchange-tests", "tests", "generated").toString());
@@ -97,7 +98,9 @@ public class ReferenceTestRunner {
 
     try {
       try (final Stream<Path> files = Files.list(testFilesPath)) {
-        return files.map(tf -> DynamicTest.dynamicTest(tf.toString(), () -> executeFile(tf)));
+        return files
+            .map(tf -> DynamicTest.dynamicTest(tf.getFileName().toString(), () -> executeFile(tf)))
+            .collect(Collectors.toList());
       }
     } catch (final IOException e) {
       throw new RuntimeException("Failed to create dynamic tests", e);
@@ -105,19 +108,48 @@ public class ReferenceTestRunner {
   }
 
   private void executeFile(final Path inputFile) throws IOException {
-    final TestFileModel model = objectMapper.readValue(inputFile.toFile(), TestFileModel.class);
-    final String interchangeContent =
-        objectMapper.writeValueAsString(model.getInterchangeContent());
+    setup();
+    try {
+      final TestFileModel model = objectMapper.readValue(inputFile.toFile(), TestFileModel.class);
 
-    slashingProtection.importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+      for (final Step step : model.getSteps()) {
+        final String interchangeContent =
+            objectMapper.writeValueAsString(step.getInterchangeContent());
 
-    verifyImport(model);
+        final Bytes32 gvr = Bytes32.fromHexString(model.getGenesis_validators_root());
+
+        jdbi.useHandle(
+            h -> {
+              final MetadataDao metadataDao = new MetadataDao();
+              if (metadataDao.findGenesisValidatorsRoot(h).isEmpty()) {
+                metadataDao.insertGenesisValidatorsRoot(h, gvr);
+              }
+            });
+
+        // web3signer doesn't allow for partial imports, so - if it is expected, then
+        // expect import to throw.
+        if (step.isShouldSucceed()) {
+          slashingProtection.importData(
+              new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+          verifyImport(step, gvr);
+        } else {
+          assertThatThrownBy(
+                  () ->
+                      slashingProtection.importData(
+                          new ByteArrayInputStream(interchangeContent.getBytes(UTF_8))))
+              .isInstanceOf(RuntimeException.class);
+        }
+      }
+    } finally {
+      cleanup();
+    }
   }
 
-  private void verifyImport(final TestFileModel model) {
+  private void verifyImport(final Step step, final Bytes32 gvr) {
     final List<String> validatorsInModel =
-        model.getInterchangeContent().getSignedArtifacts().stream()
+        step.getInterchangeContent().getSignedArtifacts().stream()
             .map(SignedArtifacts::getPublicKey)
+            .distinct()
             .collect(Collectors.toList());
 
     final List<String> publicKeysInDb = getValidatorPublicKeysFromDb();
@@ -128,13 +160,12 @@ public class ReferenceTestRunner {
     slashingProtection.registerValidators(
         validatorsInModel.stream().map(Bytes::fromHexString).collect(Collectors.toList()));
 
-    final Bytes32 gvr = Bytes32.fromHexString(model.getGenesis_validators_root());
-    validateAttestations(model.getAttestations(), gvr);
-    validateBlocks(model.getBlocks(), gvr);
+    validateAttestations(step.getAttestations(), gvr);
+    validateBlocks(step.getBlocks(), gvr);
   }
 
   private List<String> getValidatorPublicKeysFromDb() {
-    final Jdbi jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
+
     return jdbi.withHandle(
         h ->
             validators
