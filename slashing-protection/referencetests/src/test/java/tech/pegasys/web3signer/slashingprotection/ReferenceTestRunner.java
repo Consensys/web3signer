@@ -60,7 +60,7 @@ public class ReferenceTestRunner {
           .registerModule(new InterchangeModule())
           .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
   private final ValidatorsDao validators = new ValidatorsDao();
-  private final MetadataDao metadataDao = new MetadataDao();
+
   private EmbeddedPostgres slashingDatabase;
   private String databaseUrl;
   private SlashingProtection slashingProtection;
@@ -99,7 +99,7 @@ public class ReferenceTestRunner {
     try {
       try (final Stream<Path> files = Files.list(testFilesPath)) {
         return files
-            .map(tf -> DynamicTest.dynamicTest(tf.toString(), () -> executeFile(tf)))
+            .map(tf -> DynamicTest.dynamicTest(tf.getFileName().toString(), () -> executeFile(tf)))
             .collect(Collectors.toList());
       }
     } catch (final IOException e) {
@@ -110,7 +110,6 @@ public class ReferenceTestRunner {
   private void executeFile(final Path inputFile) throws IOException {
     setup();
     try {
-      System.out.println(inputFile.toString());
       final TestFileModel model = objectMapper.readValue(inputFile.toFile(), TestFileModel.class);
 
       for (final Step step : model.getSteps()) {
@@ -121,6 +120,7 @@ public class ReferenceTestRunner {
 
         jdbi.useHandle(
             h -> {
+              final MetadataDao metadataDao = new MetadataDao();
               if (metadataDao.findGenesisValidatorsRoot(h).isEmpty()) {
                 metadataDao.insertGenesisValidatorsRoot(h, gvr);
               }

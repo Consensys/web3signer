@@ -202,39 +202,26 @@ public class InterchangeV5Importer {
               lowWatermarkDao);
 
       // if the attestation is illegal formatted, it cannot be imported
+      final String attesationIdentiferString =
+          String.format("Attestation with index %d for validator %s", i, validator.getPublicKey());
       if (attestationValidator.sourceGreaterThanTargetEpoch()) {
-        LOG.warn(
-            "Attestation #{} for validator {} - source is great than target epoch",
-            i,
-            validator.getPublicKey());
+        LOG.warn("{} - source is greater than target epoch", attesationIdentiferString);
       } else {
 
         if (attestationValidator.directlyConflictsWithExistingEntry()) {
-          LOG.warn(
-              "Attestation {} of validator {} conflicts with an existing entry",
-              i,
-              validator.getPublicKey());
+          LOG.warn("{} - conflicts with an existing entry", attesationIdentiferString);
         }
 
         if (attestationValidator.isSurroundedByExistingAttestation()) {
-          LOG.warn(
-              "Attestation {} of validator {} is surrounded by existing entries",
-              i,
-              validator.getPublicKey());
+          LOG.warn("{} - is surrounded by existing entries", attesationIdentiferString);
         }
 
         if (attestationValidator.surroundsExistingAttestation()) {
-          LOG.warn(
-              "Attestation {} of validator {} surrounds an existing entry",
-              i,
-              validator.getPublicKey());
+          LOG.warn("{} - surrounds an existing entry", attesationIdentiferString);
         }
 
         if (attestationValidator.alreadyExists()) {
-          LOG.debug(
-              "Attestation {} for validator {} already exists in database, not imported",
-              i,
-              validator.getPublicKey());
+          LOG.debug("{} - already exists in database, not imported", attesationIdentiferString);
         } else {
           signedAttestationsDao.insertAttestation(
               handle,
