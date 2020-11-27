@@ -43,7 +43,9 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
   @Option(
       names = {"--azure-client-id"},
-      description = "The ID used to authenticate with Azure key vault",
+      description =
+          "The ID used by client secret or user-assigned managed identity authentication mode to access Azure key vault. "
+              + "Optional for system-assigned managed identity.",
       paramLabel = "<CLIENT_ID>")
   private String clientId;
 
