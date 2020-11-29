@@ -37,12 +37,12 @@ public class LowWatermarkDao {
       final UInt64 targetEpoch) {
     handle
         .createUpdate(
-            "INSERT INTO low_watermarks (validator_id, source_epoch, target_epoch) VALUES (:validator_id, :source_epoch, :target_epoch) "
+            "INSERT INTO low_watermarks (validator_id, source_epoch, target_epoch) VALUES (:validator_id, :srcEpoch, :tgtEpoch) "
                 + "ON CONFLICT (validator_id) "
-                + "DO UPDATE set source_epoch = :source_epoch , target_epoch = :target_epoch")
+                + "DO UPDATE set source_epoch=:srcEpoch, target_epoch=:tgtEpoch WHERE low_watermarks.source_epoch <= :srcEpoch and low_watermarks.target_epoch <= :tgtEpoch")
         .bind("validator_id", validatorId)
-        .bind("source_epoch", sourceEpoch)
-        .bind("target_epoch", targetEpoch)
+        .bind("srcEpoch", sourceEpoch)
+        .bind("tgtEpoch", targetEpoch)
         .execute();
   }
 
@@ -52,7 +52,7 @@ public class LowWatermarkDao {
         .createUpdate(
             "INSERT INTO low_watermarks (validator_id, slot) VALUES (:validator_id, :slot) "
                 + "ON CONFLICT (validator_id) "
-                + "DO UPDATE set slot = :slot")
+                + "DO UPDATE set slot = :slot where low_watermarks.slot <= :slot")
         .bind("validator_id", validatorId)
         .bind("slot", slot)
         .execute();
