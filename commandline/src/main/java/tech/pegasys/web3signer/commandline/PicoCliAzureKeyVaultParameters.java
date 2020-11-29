@@ -32,6 +32,7 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
       description =
           "Authentication mode for Azure Vault. Valid Values: [${COMPLETION-CANDIDATES}]"
               + " (Default: ${DEFAULT-VALUE})",
+      hidden = true, // TODO: Unhide once testing in actual Azure environment is validated
       paramLabel = "<AUTHENTICATION_MODE>")
   private AzureAuthenticationMode authenticationMode = AzureAuthenticationMode.CLIENT_SECRET;
 
