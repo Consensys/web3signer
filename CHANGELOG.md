@@ -5,7 +5,7 @@
 ### Features Added
 
 - Interlock/Armory II HSM keystore support
-- Eth2 slashing protection data able to be export and imported from json file (Interchange format V5)
+- Eth2 slashing protection data able to be exported and imported from json file (Interchange format V5)
 - Eth2 signing API can now return response in json format
 - Genesis validators root is validated for eth2 signing requests. The GVR is set on first eth2 signing request.
 - Use a low watermark in Eth2 slashing protection and import/export
