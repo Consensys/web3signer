@@ -187,7 +187,7 @@ public class Eth2Runner extends Runner {
             .map(Bytes::fromHexString)
             .collect(Collectors.toList());
     if (validators.isEmpty()) {
-      LOG.warn("No keys configured. Check that the key store has key configure files");
+      LOG.warn("No BLS keys configured. Check that the key store has BLS key config files");
     }
     slashingProtection.ifPresent(
         slashingProtection -> slashingProtection.registerValidators(validators));
