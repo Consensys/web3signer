@@ -203,6 +203,24 @@ public class LowWatermarkDaoTest {
     assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(4));
   }
 
+  @Test
+  public void canUpdateAttestationWatermarkAfterBlockWatermark() {
+    Optional<SigningWatermark> watermark;
+    insertValidator(Bytes.of(100), 1);
+
+    lowWatermarkDao.updateSlotWatermarkFor(handle, 1, UInt64.valueOf(3));
+    watermark = lowWatermarkDao.findLowWatermarkForValidator(handle, 1);
+    assertThat(watermark).isNotEmpty();
+    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(3));
+
+    lowWatermarkDao.updateEpochWatermarksFor(handle, 1, UInt64.valueOf(4), UInt64.valueOf(5));
+    watermark = lowWatermarkDao.findLowWatermarkForValidator(handle, 1);
+    assertThat(watermark).isNotEmpty();
+    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(3));
+    assertThat(watermark.get().getSourceEpoch()).isEqualTo(UInt64.valueOf(4));
+    assertThat(watermark.get().getTargetEpoch()).isEqualTo(UInt64.valueOf(5));
+  }
+
   private void insertValidator(final Bytes publicKey, final int validatorId) {
     handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
   }
