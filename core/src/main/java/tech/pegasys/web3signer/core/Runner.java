@@ -104,7 +104,9 @@ public abstract class Runner implements Runnable {
 
       final Context context = new Context(routerFactory, metricsSystem, errorHandler, vertx);
       final Router router = populateRouter(context);
-      registerSwaggerUIRoute(router); // serve static openapi spec
+      if (config.isSwaggerUIEnabled()) {
+        registerSwaggerUIRoute(router); // serve static openapi spec
+      }
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       LOG.info(
@@ -170,10 +172,6 @@ public abstract class Runner implements Runnable {
   }
 
   private void registerSwaggerUIRoute(final Router router) throws IOException {
-    if (!config.isSwaggerUIEnabled()) {
-      return;
-    }
-
     final URL indexResourceUrl = Resources.getResource(OPENAPI_INDEX_RESOURCE);
     final URL openApiSpecUrl = Resources.getResource(getOpenApiSpecResource());
     final String indexHtml = Resources.toString(indexResourceUrl, Charsets.UTF_8);
