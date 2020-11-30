@@ -170,6 +170,10 @@ public abstract class Runner implements Runnable {
   }
 
   private void registerSwaggerUIRoute(final Router router) throws IOException {
+    if (!config.isSwaggerUIEnabled()) {
+      return;
+    }
+
     final URL indexResourceUrl = Resources.getResource(OPENAPI_INDEX_RESOURCE);
     final URL openApiSpecUrl = Resources.getResource(getOpenApiSpecResource());
     final String indexHtml = Resources.toString(indexResourceUrl, Charsets.UTF_8);
