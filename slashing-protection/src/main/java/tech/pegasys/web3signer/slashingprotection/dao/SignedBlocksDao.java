@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection.dao;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -25,51 +27,30 @@ public class SignedBlocksDao {
 
   public List<SignedBlock> findBlockForSlotWithDifferentSigningRoot(
       final Handle handle, final int validatorId, final UInt64 slot, final Bytes signingRoot) {
+    checkNotNull(signingRoot, "This function only accepts queries where the signing root is known");
 
-    final Query query;
-    if (signingRoot == null) {
-      query =
-          handle
-              .createQuery(
-                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root IS NOT NULL")
-              .bind(0, validatorId)
-              .bind(1, slot);
-    } else {
-      query =
-          handle
-              .createQuery(
-                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE (validator_id = ? AND slot = ?) AND (signing_root <> ? OR signing_root IS NULL)")
-              .bind(0, validatorId)
-              .bind(1, slot)
-              .bind(2, signingRoot);
-    }
-
-    return query.mapToBean(SignedBlock.class).list();
+    return handle
+        .createQuery(
+            "SELECT validator_id, slot, signing_root FROM signed_blocks "
+                + "WHERE (validator_id = ? AND slot = ?) AND "
+                + "(signing_root <> ? OR signing_root IS NULL)")
+        .bind(0, validatorId)
+        .bind(1, slot)
+        .bind(2, signingRoot)
+        .mapToBean(SignedBlock.class).list();
   }
 
   public Optional<SignedBlock> findMatchingBlock(
       final Handle handle, final int validatorId, final UInt64 slot, final Bytes signingRoot) {
-
-    final Query query;
-
-    if (signingRoot == null) {
-      query =
-          handle
-              .createQuery(
-                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root IS NULL")
-              .bind(0, validatorId)
-              .bind(1, slot);
-    } else {
-      query =
-          handle
-              .createQuery(
-                  "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ? AND slot = ? AND signing_root = ?")
-              .bind(0, validatorId)
-              .bind(1, slot)
-              .bind(2, signingRoot);
-    }
-
-    return query.mapToBean(SignedBlock.class).findFirst();
+    checkNotNull(signingRoot, "This function only accepts queries where the signing root is known");
+    return handle
+        .createQuery(
+            "SELECT validator_id, slot, signing_root FROM signed_blocks "
+                + "WHERE validator_id = ? AND slot = ? AND signing_root = ?")
+        .bind(0, validatorId)
+        .bind(1, slot)
+        .bind(2, signingRoot)
+        .mapToBean(SignedBlock.class).findFirst();
   }
 
   public void insertBlockProposal(final Handle handle, final SignedBlock signedBlock) {
