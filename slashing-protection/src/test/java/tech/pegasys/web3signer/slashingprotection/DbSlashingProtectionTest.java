@@ -404,14 +404,14 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
-  public void slashingProtectionEnactedIfBlockWithSlotEqualToMinSlot() {
+  public void blockCanBeSignedIfSlotEqualToMinSlot() {
     when(lowWatermarkDao.findLowWatermarkForValidator(any(), anyInt()))
         .thenReturn(Optional.of(new SigningWatermark(VALIDATOR_ID, SLOT, null, null)));
 
-    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isTrue();
 
     verify(lowWatermarkDao).findLowWatermarkForValidator(any(), eq(VALIDATOR_ID));
-    verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
+    verify(signedBlocksDao).insertBlockProposal(any(), any());
   }
 
   @Test
@@ -462,7 +462,7 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
-  public void slashingProtectionEnactedIfAttestationWithTargetEpochEqualToMin() {
+  public void attestationCanBeSignedIfTargetEpochEqualToMin() {
     when(lowWatermarkDao.findLowWatermarkForValidator(any(), anyInt()))
         .thenReturn(
             Optional.of(
@@ -471,10 +471,10 @@ public class DbSlashingProtectionTest {
     assertThat(
             dbSlashingProtection.maySignAttestation(
                 PUBLIC_KEY1, SIGNING_ROOT, UInt64.valueOf(3), UInt64.valueOf(4), GVR))
-        .isFalse();
+        .isTrue();
 
     verify(lowWatermarkDao).findLowWatermarkForValidator(any(), eq(VALIDATOR_ID));
-    verify(signedAttestationsDao, never()).insertAttestation(any(), any());
+    verify(signedAttestationsDao).insertAttestation(any(), any());
   }
 
   @Test
