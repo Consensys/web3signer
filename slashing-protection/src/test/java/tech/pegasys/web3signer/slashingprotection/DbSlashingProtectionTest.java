@@ -101,25 +101,41 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
-  public void blockCanSignWhenExactlyMatchesBlock() {
+  public void blockCanSignButNotInsertWhenExactlyMatchesBlockAndIsAboveWatermark() {
     final SignedBlock signedBlock = new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT);
     when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
         .thenReturn(emptyList());
     when(signedBlocksDao.findMatchingBlock(any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT)))
         .thenReturn(Optional.of(signedBlock));
+    when(lowWatermarkDao.findLowWatermarkForValidator(any(), anyInt()))
+        .thenReturn(Optional.of(new SigningWatermark(VALIDATOR_ID, SLOT.subtract(1L), null, null)));
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isTrue();
     verify(signedBlocksDao)
         .findBlockForSlotWithDifferentSigningRoot(
             any(), eq(VALIDATOR_ID), eq(SLOT), eq(SIGNING_ROOT));
     verify(signedBlocksDao, never()).insertBlockProposal(any(), refEq(signedBlock));
+    verify(lowWatermarkDao).findLowWatermarkForValidator(any(), eq(VALIDATOR_ID));
   }
 
   @Test
-  public void blockCannotSignWhenSamePublicKeyAndSlotButDifferentSigningRoot() {
+  public void blockCannotBeSignedIfMatchesBlockBelowWatermark() {
+    final SignedBlock signedBlock = new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT);
+    when(lowWatermarkDao.findLowWatermarkForValidator(any(), anyInt()))
+        .thenReturn(Optional.of(new SigningWatermark(VALIDATOR_ID, SLOT.add(1L), null, null)));
+
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
+    verify(signedBlocksDao, never()).insertBlockProposal(any(), refEq(signedBlock));
+    verify(lowWatermarkDao).findLowWatermarkForValidator(any(), eq(VALIDATOR_ID));
+  }
+
+  @Test
+  public void blockCannotSignWhenSamePublicKeyAndSlotButDifferentSigningRootAboveWatermark() {
     final SignedBlock signedBlock = new SignedBlock(VALIDATOR_ID, SLOT, Bytes.of(4));
     when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
         .thenReturn(List.of(signedBlock));
+    when(lowWatermarkDao.findLowWatermarkForValidator(any(), anyInt()))
+        .thenReturn(Optional.of(new SigningWatermark(VALIDATOR_ID, SLOT.subtract(1L), null, null)));
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
     verify(signedBlocksDao)
@@ -150,7 +166,7 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
-  public void attestationCanSignWhenExactlyMatchesExistingAttestation() {
+  public void attestationCanSignWhenExactlyMatchesExistingAttestationAndIsAboveWatermark() {
     final SignedAttestation attestation =
         new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
     when(signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
@@ -158,6 +174,10 @@ public class DbSlashingProtectionTest {
         .thenReturn(emptyList());
     when(signedAttestationsDao.findMatchingAttestation(any(), anyInt(), any(), eq(SIGNING_ROOT)))
         .thenReturn(Optional.of(attestation));
+    when(lowWatermarkDao.findLowWatermarkForValidator(any(), anyInt()))
+        .thenReturn(
+            Optional.of(
+                new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(1), UInt64.valueOf(2))));
 
     assertThat(
             dbSlashingProtection.maySignAttestation(
@@ -167,6 +187,43 @@ public class DbSlashingProtectionTest {
         .findAttestationsForEpochWithDifferentSigningRoot(
             any(), eq(VALIDATOR_ID), eq(TARGET_EPOCH), eq(SIGNING_ROOT));
     verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
+    verify(lowWatermarkDao).findLowWatermarkForValidator(any(), eq(VALIDATOR_ID));
+  }
+
+  @Test
+  public void cannotSignAttestationWhichWasPreviouslySignedButBelowSourceWatermark() {
+    final SignedAttestation attestation =
+        new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
+    when(lowWatermarkDao.findLowWatermarkForValidator(any(), anyInt()))
+        .thenReturn(
+            Optional.of(
+                new SigningWatermark(
+                    VALIDATOR_ID, null, SOURCE_EPOCH.add(1L), TARGET_EPOCH.subtract(1L))));
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+        .isFalse();
+    verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
+    verify(lowWatermarkDao).findLowWatermarkForValidator(any(), eq(VALIDATOR_ID));
+  }
+
+  @Test
+  public void cannotSignAttestationWhichWasPreviouslySignedButBelowTargetWatermark() {
+    final SignedAttestation attestation =
+        new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
+    when(lowWatermarkDao.findLowWatermarkForValidator(any(), anyInt()))
+        .thenReturn(
+            Optional.of(
+                new SigningWatermark(
+                    VALIDATOR_ID, null, SOURCE_EPOCH.subtract(1L), TARGET_EPOCH.add(1L))));
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+        .isFalse();
+    verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
+    verify(lowWatermarkDao).findLowWatermarkForValidator(any(), eq(VALIDATOR_ID));
   }
 
   @Test
@@ -339,11 +396,6 @@ public class DbSlashingProtectionTest {
   public void slashingProtectionEnactedIfBlockWithSlotLessThanMinSlot() {
     when(lowWatermarkDao.findLowWatermarkForValidator(any(), anyInt()))
         .thenReturn(Optional.of(new SigningWatermark(1, UInt64.valueOf(2), null, null)));
-    when(signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(any(), anyInt(), any(), any()))
-        .thenReturn(emptyList());
-    when(signedBlocksDao.findMatchingBlock(any(), anyInt(), any(), any()))
-        .thenReturn(Optional.empty());
-
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, UInt64.ONE, GVR))
         .isFalse();
 
