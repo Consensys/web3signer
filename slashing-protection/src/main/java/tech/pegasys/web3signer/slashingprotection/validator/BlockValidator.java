@@ -71,7 +71,7 @@ public class BlockValidator {
 
   public boolean isOlderThanWatermark() {
     final Optional<UInt64> minimumSlot = watermarkSupplier.get().map(SigningWatermark::getSlot);
-    if (minimumSlot.map(slot -> blockSlot.compareTo(slot) <= 0).orElse(false)) {
+    if (minimumSlot.map(slot -> blockSlot.compareTo(slot) < 0).orElse(false)) {
       LOG.warn(
           "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
       return true;

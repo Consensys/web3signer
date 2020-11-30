@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
-import tech.pegasys.web3signer.slashingprotection.model.AttestionTestModel;
+import tech.pegasys.web3signer.slashingprotection.model.AttestationTestModel;
 import tech.pegasys.web3signer.slashingprotection.model.BlockTestModel;
 import tech.pegasys.web3signer.slashingprotection.model.Step;
 import tech.pegasys.web3signer.slashingprotection.model.TestFileModel;
@@ -175,27 +175,44 @@ public class ReferenceTestRunner {
   }
 
   private void validateAttestations(
-      final List<AttestionTestModel> attestations, final Bytes32 gvr) {
-    attestations.forEach(
-        attestation -> {
-          final boolean result =
-              slashingProtection.maySignAttestation(
-                  attestation.getPublickKey(),
-                  attestation.getSigningRoot(),
-                  attestation.getSourceEpoch(),
-                  attestation.getTargetEpoch(),
-                  gvr);
-          assertThat(result).isEqualTo(attestation.isShouldSucceed());
-        });
+      final List<AttestationTestModel> attestations, final Bytes32 gvr) {
+    for (int i = 0; i < attestations.size(); i++) {
+      final AttestationTestModel attestation = attestations.get(i);
+      final boolean result =
+          slashingProtection.maySignAttestation(
+              attestation.getPublickKey(),
+              attestation.getSigningRoot(),
+              attestation.getSourceEpoch(),
+              attestation.getTargetEpoch(),
+              gvr);
+      if (!attestation.isShouldSucceed()) {
+        assertThat(result).isFalse();
+      } else if (!result) {
+        LOG.warn(
+            "Detected a valid signing condition which was rejected by slashing-protection (attestation {} for validator {})",
+            i,
+            attestation.getPublickKey());
+      }
+    }
   }
 
   private void validateBlocks(final List<BlockTestModel> blocks, final Bytes32 gvr) {
-    blocks.forEach(
-        block -> {
-          final boolean result =
-              slashingProtection.maySignBlock(
-                  block.getPublickKey(), block.getSigningRoot(), block.getSlot(), gvr);
-          assertThat(result).isEqualTo(block.isShouldSucceed());
-        });
+
+    for (int i = 0; i < blocks.size(); i++) {
+      final BlockTestModel block = blocks.get(i);
+      final boolean result =
+          slashingProtection.maySignBlock(
+              block.getPublickKey(), block.getSigningRoot(), block.getSlot(), gvr);
+      // NOTE: Ref tests are only fail if you sign something which is flagged as "!should_Succeed".
+      // (i.e. a "reject" response is always correct)
+      if (!block.isShouldSucceed()) {
+        assertThat(result).isFalse();
+      } else if (!result) {
+        LOG.warn(
+            "Detected a valid signing condition which was rejected by slashing-protection (block {} for validator {})",
+            i,
+            block.getPublickKey());
+      }
+    }
   }
 }

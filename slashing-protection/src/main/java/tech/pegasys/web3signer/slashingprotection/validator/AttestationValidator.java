@@ -119,7 +119,7 @@ public class AttestationValidator {
   public boolean hasTargetOlderThanWatermark() {
     final Optional<UInt64> minimumTargetEpoch =
         watermarkSupplier.get().map(SigningWatermark::getTargetEpoch);
-    if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) <= 0).orElse(false)) {
+    if (minimumTargetEpoch.map(minEpoch -> targetEpoch.compareTo(minEpoch) < 0).orElse(false)) {
       LOG.warn(
           "Attestation target epoch {} is below minimum existing attestation target epoch {}",
           targetEpoch,
