@@ -174,7 +174,9 @@ public class DbSlashingProtection implements SlashingProtection {
               || attestationValidator.surroundsExistingAttestation()) {
             return false;
           }
-          attestationValidator.persist();
+          if(!attestationValidator.alreadyExists()) {
+            attestationValidator.persist();
+          }
           return true;
         });
   }
@@ -202,7 +204,9 @@ public class DbSlashingProtection implements SlashingProtection {
               || blockValidator.directlyConflictsWithExistingEntry()) {
             return false;
           }
-          blockValidator.persist();
+          if(!blockValidator.alreadyExists()) {
+            blockValidator.persist();
+          }
           return true;
         });
   }
