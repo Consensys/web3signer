@@ -30,7 +30,6 @@ dependencies {
   implementation 'org.web3j:core'
 
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
-  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-cbor'
 
   implementation 'com.github.ipld:java-cid'
 

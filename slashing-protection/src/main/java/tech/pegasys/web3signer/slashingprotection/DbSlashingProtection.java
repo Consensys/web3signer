@@ -215,6 +215,10 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public void registerValidators(final List<Bytes> validators) {
+    if (validators.isEmpty()) {
+      return;
+    }
+
     jdbi.useTransaction(
         SERIALIZABLE,
         h -> {
