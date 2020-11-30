@@ -11,7 +11,7 @@
 - Do not sign below watermark (regardless of if matching existing entry)
 
 ### Bugs Fixed
-- Eth2 slashing protections metrics category was not working on CLI
+- Eth2 slashing protection metrics category was not working on CLI
 - Update Filecoin RPC to be compatible with Lotus remote wallet API
 - Eth2 slashing protection returns a 412 http status code for a slashing violation
 - Signing with empty slashing database would sometimes fail due multiple genesis validator root values inserting concurrently 
