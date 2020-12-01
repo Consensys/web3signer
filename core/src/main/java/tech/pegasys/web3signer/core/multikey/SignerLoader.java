@@ -50,11 +50,11 @@ public class SignerLoader {
     final List<Path> configFilesList = getConfigFilesList(configsDirectory);
     LOG.info("Processing {} files from configuration directory", configFilesList.size());
 
-    // use custom ForkJoin with 10 threads instead of common pool
+    // use custom ForkJoin with limited number of threads if default is greater than 10
     Set<ArtifactSigner> artifactSigners = Collections.emptySet();
     ForkJoinPool forkJoinPool = null;
     try {
-      forkJoinPool = new ForkJoinPool(10);
+      forkJoinPool = new ForkJoinPool(numberOfThreads());
       artifactSigners =
           forkJoinPool
               .submit(
@@ -117,5 +117,16 @@ public class SignerLoader {
         filename,
         ExceptionUtils.getRootCauseMessage(t));
     LOG.debug(ExceptionUtils.getStackTrace(t));
+  }
+
+  private static int numberOfThreads() {
+    int defaultNumberOfThreads = Runtime.getRuntime().availableProcessors() - 1;
+    // we only want to use 10 threads at max
+    if (defaultNumberOfThreads >= 10) {
+      return 10;
+    } else if (defaultNumberOfThreads < 1) {
+      return 1;
+    }
+    return defaultNumberOfThreads;
   }
 }
