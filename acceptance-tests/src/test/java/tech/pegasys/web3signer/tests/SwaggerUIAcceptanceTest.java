@@ -24,8 +24,23 @@ public class SwaggerUIAcceptanceTest extends AcceptanceTestBase {
   private static final String SWAGGER_UI_ENDPOINT = "/swagger-ui";
 
   @Test
-  void swaggerUiEndPointRespondsWith200() {
+  void swaggerUiDisabledRespondsWith404() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth2");
+    startSigner(builder.build());
+
+    given()
+        .baseUri(signer.getUrl())
+        .when()
+        .get(SWAGGER_UI_ENDPOINT)
+        .then()
+        .assertThat()
+        .statusCode(404);
+  }
+
+  @Test
+  void swaggerUiEndPointRespondsWith200() {
+    final SignerConfigurationBuilder builder =
+        new SignerConfigurationBuilder().withMode("eth2").withSwaggerUIEnabled(true);
     startSigner(builder.build());
 
     given()
@@ -40,7 +55,8 @@ public class SwaggerUIAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void swaggerUiWithTrailingSlashEndPointRespondsWith200() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth2");
+    final SignerConfigurationBuilder builder =
+        new SignerConfigurationBuilder().withMode("eth2").withSwaggerUIEnabled(true);
     startSigner(builder.build());
 
     given()
@@ -55,7 +71,8 @@ public class SwaggerUIAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void web3signerYamlEndPointRespondsWith200() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth2");
+    final SignerConfigurationBuilder builder =
+        new SignerConfigurationBuilder().withMode("eth2").withSwaggerUIEnabled(true);
     startSigner(builder.build());
 
     given()

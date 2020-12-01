@@ -167,17 +167,16 @@ public class DbSlashingProtection implements SlashingProtection {
 
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
 
-          if (attestationValidator.directlyConflictsWithExistingEntry()
+          if (attestationValidator.hasSourceOlderThanWatermark()
+              || attestationValidator.hasTargetOlderThanWatermark()
+              || attestationValidator.directlyConflictsWithExistingEntry()
               || attestationValidator.isSurroundedByExistingAttestation()
               || attestationValidator.surroundsExistingAttestation()) {
             return false;
-          } else if (attestationValidator.alreadyExists()) {
-            return true;
-          } else if (attestationValidator.hasSourceOlderThanWatermark()
-              || attestationValidator.hasTargetOlderThanWatermark()) {
-            return false;
           }
-          attestationValidator.persist();
+          if (!attestationValidator.alreadyExists()) {
+            attestationValidator.persist();
+          }
           return true;
         });
   }
@@ -201,20 +200,23 @@ public class DbSlashingProtection implements SlashingProtection {
 
           lockForValidator(h, LockType.BLOCK, validatorId);
 
-          if (blockValidator.directlyConflictsWithExistingEntry()) {
-            return false;
-          } else if (blockValidator.alreadyExists()) {
-            return true;
-          } else if (blockValidator.isOlderThanWatermark()) {
+          if (blockValidator.isOlderThanWatermark()
+              || blockValidator.directlyConflictsWithExistingEntry()) {
             return false;
           }
-          blockValidator.persist();
+          if (!blockValidator.alreadyExists()) {
+            blockValidator.persist();
+          }
           return true;
         });
   }
 
   @Override
   public void registerValidators(final List<Bytes> validators) {
+    if (validators.isEmpty()) {
+      return;
+    }
+
     jdbi.useTransaction(
         SERIALIZABLE,
         h -> {

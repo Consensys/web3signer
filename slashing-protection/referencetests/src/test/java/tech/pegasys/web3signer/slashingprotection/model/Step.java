@@ -24,7 +24,7 @@ public class Step {
   final InterchangeV5Format interchangeContent;
 
   final List<BlockTestModel> blocks;
-  final List<AttestionTestModel> attestations;
+  final List<AttestationTestModel> attestations;
 
   public Step(
       @JsonProperty(value = "should_succeed", required = true) final boolean shouldSucceed,
@@ -34,7 +34,7 @@ public class Step {
           final InterchangeV5Format interchangeContent,
       @JsonProperty(value = "blocks", required = true) final List<BlockTestModel> blocks,
       @JsonProperty(value = "attestations", required = true)
-          final List<AttestionTestModel> attestations) {
+          final List<AttestationTestModel> attestations) {
     this.shouldSucceed = shouldSucceed;
     this.allowPartialImport = allowPartialImport;
     this.interchangeContent = interchangeContent;
@@ -58,7 +58,7 @@ public class Step {
     return blocks;
   }
 
-  public List<AttestionTestModel> getAttestations() {
+  public List<AttestationTestModel> getAttestations() {
     return attestations;
   }
 }
