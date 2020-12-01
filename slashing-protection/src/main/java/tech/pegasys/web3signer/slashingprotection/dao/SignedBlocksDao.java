@@ -21,7 +21,6 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.statement.Query;
 
 public class SignedBlocksDao {
 
@@ -37,7 +36,8 @@ public class SignedBlocksDao {
         .bind(0, validatorId)
         .bind(1, slot)
         .bind(2, signingRoot)
-        .mapToBean(SignedBlock.class).list();
+        .mapToBean(SignedBlock.class)
+        .list();
   }
 
   public Optional<SignedBlock> findMatchingBlock(
@@ -50,7 +50,8 @@ public class SignedBlocksDao {
         .bind(0, validatorId)
         .bind(1, slot)
         .bind(2, signingRoot)
-        .mapToBean(SignedBlock.class).findFirst();
+        .mapToBean(SignedBlock.class)
+        .findFirst();
   }
 
   public void insertBlockProposal(final Handle handle, final SignedBlock signedBlock) {
