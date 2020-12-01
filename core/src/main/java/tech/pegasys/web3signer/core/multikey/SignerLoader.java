@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.core.multikey;
 
-import static java.util.Collections.emptySet;
+import static java.util.Collections.emptyList;
 
 import tech.pegasys.web3signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
@@ -21,7 +21,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,33 +46,62 @@ public class SignerLoader {
 
     LOG.info("Loading signer configuration files from {}", configsDirectory);
     final AtomicLong configFilesHandled = new AtomicLong();
+
+    final List<Path> configFilesList = getConfigFilesList(configsDirectory);
+    LOG.info("Processing {} files from configuration directory", configFilesList.size());
+
+    // use custom ForkJoin with 10 threads instead of common pool
+    Set<ArtifactSigner> artifactSigners = Collections.emptySet();
+    ForkJoinPool forkJoinPool = null;
+    try {
+      forkJoinPool = new ForkJoinPool(10);
+      artifactSigners =
+          forkJoinPool
+              .submit(
+                  () ->
+                      configFilesList.stream()
+                          .parallel()
+                          .filter(path -> matchesFileExtension(fileExtension, path))
+                          .flatMap(
+                              signerConfigFile -> {
+                                final long filesProcessed = configFilesHandled.incrementAndGet();
+                                if (filesProcessed % FILES_PROCESSED_TO_REPORT == 0) {
+                                  LOG.info(
+                                      "{} files processed from configuration directory",
+                                      filesProcessed);
+                                }
+                                try {
+                                  return signerParser.parse(signerConfigFile).stream();
+                                } catch (final Exception e) {
+                                  renderException(e, signerConfigFile.getFileName().toString());
+                                  return null;
+                                }
+                              })
+                          .filter(Objects::nonNull)
+                          .collect(Collectors.toSet()))
+              .get();
+    } catch (final InterruptedException | ExecutionException e) {
+      LOG.error(
+          "Unexpected error in processing configuration files in parallel: {}", e.getMessage(), e);
+    } finally {
+      if (forkJoinPool != null) {
+        forkJoinPool.shutdown();
+      }
+    }
+
+    LOG.info("Total signers loaded from configuration files: {}", artifactSigners.size());
+
+    return artifactSigners;
+  }
+
+  private static List<Path> getConfigFilesList(final Path configsDirectory) {
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
-      return fileStream
-          .collect(Collectors.toList())
-          .parallelStream()
-          .filter(path -> matchesFileExtension(fileExtension, path))
-          .flatMap(
-              signerConfigFile -> {
-                final long filesProcessed = configFilesHandled.incrementAndGet();
-                if (filesProcessed % FILES_PROCESSED_TO_REPORT == 0) {
-                  LOG.info("{} signer configuration files processed", filesProcessed);
-                }
-                try {
-                  return signerParser.parse(signerConfigFile).stream();
-                } catch (final Exception e) {
-                  renderException(e, signerConfigFile.getFileName().toString());
-                  return null;
-                }
-              })
-          .filter(Objects::nonNull)
-          .collect(Collectors.toSet());
+      return fileStream.collect(Collectors.toList());
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
-    } finally {
-      LOG.info(
-          "Loading signer configuration files completed with {} files", configFilesHandled.get());
     }
-    return emptySet();
+
+    return emptyList();
   }
 
   private static boolean matchesFileExtension(
