@@ -96,7 +96,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       }
 
       if (azureKeyVaultParameters.getAuthenticationMode() == null) {
-        missingAzureFields.add("--azure-client-auth-mode");
+        missingAzureFields.add("--azure-vault-auth-mode");
       }
 
       if (azureKeyVaultParameters.getAuthenticationMode() == CLIENT_SECRET) {
