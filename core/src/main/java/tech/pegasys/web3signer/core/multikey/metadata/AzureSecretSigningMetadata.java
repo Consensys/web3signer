@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
+import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -25,14 +26,16 @@ public class AzureSecretSigningMetadata extends SigningMetadata {
   private final String tenantId;
   private final String vaultName;
   private final String secretName;
+  private final AzureAuthenticationMode authenticationMode;
 
   @JsonCreator
   public AzureSecretSigningMetadata(
       @JsonProperty("clientId") final String clientId,
       @JsonProperty("clientSecret") final String clientSecret,
       @JsonProperty("tenantId") final String tenantId,
-      @JsonProperty("vaultName") final String vaultName,
-      @JsonProperty("secretName") final String secretName,
+      @JsonProperty(value = "vaultName", required = true) final String vaultName,
+      @JsonProperty(value = "secretName", required = true) final String secretName,
+      @JsonProperty("authenticationMode") final AzureAuthenticationMode azureAuthenticationMode,
       @JsonProperty("keyType") final KeyType keyType) {
     super(keyType != null ? keyType : KeyType.BLS);
     this.clientId = clientId;
@@ -40,6 +43,10 @@ public class AzureSecretSigningMetadata extends SigningMetadata {
     this.tenantId = tenantId;
     this.vaultName = vaultName;
     this.secretName = secretName;
+    this.authenticationMode =
+        azureAuthenticationMode == null
+            ? AzureAuthenticationMode.CLIENT_SECRET
+            : azureAuthenticationMode;
   }
 
   public String getClientId() {
@@ -60,6 +67,10 @@ public class AzureSecretSigningMetadata extends SigningMetadata {
 
   public String getSecretName() {
     return secretName;
+  }
+
+  public AzureAuthenticationMode getAuthenticationMode() {
+    return authenticationMode;
   }
 
   @Override

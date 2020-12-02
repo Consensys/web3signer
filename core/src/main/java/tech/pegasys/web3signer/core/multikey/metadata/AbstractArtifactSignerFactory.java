@@ -22,6 +22,7 @@ import tech.pegasys.signers.hashicorp.TrustStoreType;
 import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
+import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -53,13 +54,20 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   }
 
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
-    // TODO: Support for managed identity
-    final AzureKeyVault azureVault =
-        AzureKeyVault.createUsingClientSecretCredentials(
-            metadata.getClientId(),
-            metadata.getClientSecret(),
-            metadata.getTenantId(),
-            metadata.getVaultName());
+    final AzureKeyVault azureVault;
+    if (metadata.getAuthenticationMode() == AzureAuthenticationMode.CLIENT_SECRET) {
+      // TODO: validate clientid, clientsecret and tenantid exist for client-secret mode
+      azureVault =
+          AzureKeyVault.createUsingClientSecretCredentials(
+              metadata.getClientId(),
+              metadata.getClientSecret(),
+              metadata.getTenantId(),
+              metadata.getVaultName());
+    } else {
+      azureVault =
+          AzureKeyVault.createUsingManagedIdentity(
+              Optional.ofNullable(metadata.getClientId()), metadata.getVaultName());
+    }
 
     return azureVault
         .fetchSecret(metadata.getSecretName())
