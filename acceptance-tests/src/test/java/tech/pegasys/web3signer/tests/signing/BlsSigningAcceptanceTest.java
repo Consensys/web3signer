@@ -146,8 +146,9 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     signAndVerifySignature(ArtifactType.BLOCK);
   }
 
-  @Test
-  public void failsIfSigningRootDoesNotMatchSigningData() throws JsonProcessingException {
+  @ParameterizedTest
+  @EnumSource(ArtifactType.class)
+  public void failsIfSigningRootDoesNotMatchSigningData(final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
@@ -155,7 +156,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     setupSigner("eth2", null);
 
-    final Eth2SigningRequestBody request = Eth2RequestUtils.createBlockRequest();
+    final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
     final Eth2SigningRequestBody requestWithMismatchedSigningRoot =
         new Eth2SigningRequestBody(
             request.getType(),
