@@ -32,6 +32,9 @@ public class SlashingProtectionDatabaseVersionAcceptanceTest {
 
   @Test
   void missingOrWrongVersionCauseAppToHaltOnStartup(@TempDir Path testDirectory) {
+    //NB: This test fails when running with a ThreadRunner (i.e. in IDE) due to the
+    //System.exit() call in the Web3signerApp (which exits the test, rather than terminating
+    //the app (thus it work as expected with a ProcessRunner (i.e. when run from gradle)).
 
     final String dbUrl = EmbeddedDatabaseUtils.createEmbeddedDatabase();
     final Jdbi jdbi = Jdbi.create(dbUrl, DB_USERNAME, DB_PASSWORD);
