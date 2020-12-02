@@ -33,12 +33,10 @@ public class AttestationImporter {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  final OptionalMinValueTracker minSourceTracker = new OptionalMinValueTracker();
-  final OptionalMinValueTracker minTargetTracker = new OptionalMinValueTracker();
-
+  private final OptionalMinValueTracker minSourceTracker = new OptionalMinValueTracker();
+  private final OptionalMinValueTracker minTargetTracker = new OptionalMinValueTracker();
   private final LowWatermarkDao lowWatermarkDao;
   private final SignedAttestationsDao signedAttestationsDao;
-
   private final Validator validator;
   private final Handle handle;
   private final ObjectMapper mapper;
@@ -72,32 +70,35 @@ public class AttestationImporter {
               signedAttestationsDao,
               lowWatermarkDao);
 
-      // if the attestation is illegal formatted, it cannot be imported
-      final String attesationIdentiferString =
+      final String attestationIdentifierString =
           String.format("Attestation with index %d for validator %s", i, validator.getPublicKey());
+
+      // if the attestation is illegal formatted, it cannot be imported
       if (attestationValidator.sourceGreaterThanTargetEpoch()) {
-        LOG.warn("{} - source is greater than target epoch", attesationIdentiferString);
+        LOG.warn("{} - source is greater than target epoch", attestationIdentifierString);
       } else {
 
         if (attestationValidator.isSurroundedByExistingAttestation()) {
-          LOG.warn("{} - is surrounded by existing entries", attesationIdentiferString);
+          LOG.warn("{} - is surrounded by existing entries", attestationIdentifierString);
         }
 
         if (attestationValidator.surroundsExistingAttestation()) {
-          LOG.warn("{} - surrounds an existing entry", attesationIdentiferString);
+          LOG.warn("{} - surrounds an existing entry", attestationIdentifierString);
         }
 
         if (jsonAttestation.getSigningRoot() == null) {
-          if (!nullAttestationAlreadyExistsInTargetEpoch(jsonAttestation.getTargetEpoch())) {
+          if (nullAttestationAlreadyExistsInTargetEpoch(jsonAttestation.getTargetEpoch())) {
+            LOG.warn("{} - already exists in database, not imported", attestationIdentifierString);
+          } else {
             persist(jsonAttestation);
           }
         } else {
           if (attestationValidator.directlyConflictsWithExistingEntry()) {
-            LOG.warn("{} - conflicts with an existing entry", attesationIdentiferString);
+            LOG.warn("{} - conflicts with an existing entry", attestationIdentifierString);
           }
 
           if (attestationValidator.alreadyExists()) {
-            LOG.debug("{} - already exists in database, not imported", attesationIdentiferString);
+            LOG.debug("{} - already exists in database, not imported", attestationIdentifierString);
           } else {
             persist(jsonAttestation);
           }

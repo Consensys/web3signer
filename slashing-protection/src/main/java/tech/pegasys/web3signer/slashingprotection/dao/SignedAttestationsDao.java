@@ -29,7 +29,7 @@ public class SignedAttestationsDao {
       final int validatorId,
       final UInt64 targetEpoch,
       final Bytes signingRoot) {
-    checkNotNull(signingRoot, "This function only accepts queries where the signing root is known");
+    checkNotNull(signingRoot, "Signing root must not be null");
     return handle
         .createQuery(
             "SELECT validator_id, source_epoch, target_epoch, signing_root "
@@ -48,7 +48,7 @@ public class SignedAttestationsDao {
       final int validatorId,
       final UInt64 targetEpoch,
       final Bytes signingRoot) {
-    checkNotNull(signingRoot, "This function only accepts queries where the signing root is known");
+    checkNotNull(signingRoot, "Signing root must not be null");
     return handle
         .createQuery(
             "SELECT validator_id, source_epoch, target_epoch, signing_root "

@@ -33,11 +33,9 @@ public class BlockImporter {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  final OptionalMinValueTracker minSlotTracker = new OptionalMinValueTracker();
-
+  private final OptionalMinValueTracker minSlotTracker = new OptionalMinValueTracker();
   private final LowWatermarkDao lowWatermarkDao;
   private final SignedBlocksDao signedBlocksDao;
-
   private final Validator validator;
   private final Handle handle;
   private final ObjectMapper mapper;
@@ -68,25 +66,22 @@ public class BlockImporter {
               signedBlocksDao,
               lowWatermarkDao);
 
+      final String blockIdentifierString =
+          String.format("Block with index %d for validator %s", i, validator.getPublicKey());
+
       if (jsonBlock.getSigningRoot() == null) {
-        if (!nullBlockAlreadyExistsInSlot(jsonBlock.getSlot())) {
+        if (nullBlockAlreadyExistsInSlot(jsonBlock.getSlot())) {
+          LOG.warn("{} - already exists in database, not imported", blockIdentifierString);
+        } else {
           persist(jsonBlock);
         }
       } else {
-
         if (blockValidator.directlyConflictsWithExistingEntry()) {
-          LOG.debug(
-              "Block {} for validator {} conflicts with on slot {} in database",
-              i,
-              validator.getPublicKey(),
-              jsonBlock.getSlot());
+          LOG.warn("{} - conflicts with an existing entry", blockIdentifierString);
         }
 
         if (blockValidator.alreadyExists()) {
-          LOG.debug(
-              "Block {} for validator {} already exists in database, not imported",
-              i,
-              validator.getPublicKey());
+          LOG.debug("{} - already exists in database, not imported", blockIdentifierString);
         } else {
           persist(jsonBlock);
         }

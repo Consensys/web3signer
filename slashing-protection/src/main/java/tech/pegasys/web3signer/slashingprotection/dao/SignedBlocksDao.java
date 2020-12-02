@@ -26,7 +26,7 @@ public class SignedBlocksDao {
 
   public List<SignedBlock> findBlockForSlotWithDifferentSigningRoot(
       final Handle handle, final int validatorId, final UInt64 slot, final Bytes signingRoot) {
-    checkNotNull(signingRoot, "This function only accepts queries where the signing root is known");
+    checkNotNull(signingRoot, "Signing root must not be null");
 
     return handle
         .createQuery(
@@ -42,7 +42,7 @@ public class SignedBlocksDao {
 
   public Optional<SignedBlock> findMatchingBlock(
       final Handle handle, final int validatorId, final UInt64 slot, final Bytes signingRoot) {
-    checkNotNull(signingRoot, "This function only accepts queries where the signing root is known");
+    checkNotNull(signingRoot, "Signing root must not be null");
     return handle
         .createQuery(
             "SELECT validator_id, slot, signing_root FROM signed_blocks "

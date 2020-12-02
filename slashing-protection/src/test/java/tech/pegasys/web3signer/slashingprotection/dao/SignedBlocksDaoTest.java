@@ -137,7 +137,7 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void fidnMatchingBlockThrowsIfMatchingOnNull() {
+  public void findMatchingBlockThrowsIfMatchingOnNull() {
     insertValidator(Bytes.of(100), 1);
     insertBlock(1, 3, null);
     assertThatThrownBy(() -> signedBlocksDao.findMatchingBlock(handle, 1, UInt64.valueOf(3), null))

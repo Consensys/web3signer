@@ -126,9 +126,9 @@ public class InterchangeV5Importer {
       final Handle handle, final Validator validator, final ArrayNode signedBlocksNode)
       throws JsonProcessingException {
 
-    final BlockImporter importer =
+    final BlockImporter blockImporter =
         new BlockImporter(validator, handle, mapper, lowWatermarkDao, signedBlocksDao);
-    importer.importFrom(signedBlocksNode);
+    blockImporter.importFrom(signedBlocksNode);
   }
 
   private void importAttestations(
