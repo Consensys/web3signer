@@ -154,7 +154,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   }
 
   public List<String> listPublicKeys(final KeyType keyType) {
-    return given().baseUri(getUrl()).get(publicKeysPath(keyType)).as(new TypeRef<>() {});
+    return callApiPublicKeys(keyType).as(new TypeRef<>() {});
   }
 
   public static String publicKeysPath(final KeyType keyType) {
