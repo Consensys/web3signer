@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
 import tech.pegasys.web3signer.slashingprotection.dao.DatabaseVersionDao;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;

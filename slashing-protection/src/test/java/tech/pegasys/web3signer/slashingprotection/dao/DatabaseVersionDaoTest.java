@@ -15,8 +15,6 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
-import org.postgresql.util.PSQLException;
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
 import org.jdbi.v3.core.Handle;

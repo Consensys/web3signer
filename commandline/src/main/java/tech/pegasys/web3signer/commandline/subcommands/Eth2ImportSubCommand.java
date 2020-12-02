@@ -61,16 +61,18 @@ public class Eth2ImportSubCommand implements Runnable {
           "--slashing-protection-db-url has not been specified");
     }
 
-    final SlashingProtection slashingProtection =
-        createSlashingProtection(
-            eth2Config.slashingProtectionDbUrl,
-            eth2Config.slashingProtectionDbUsername,
-            eth2Config.slashingProtectionDbPassword);
-
     try (final InputStream inStream = new FileInputStream(from)) {
+      final SlashingProtection slashingProtection =
+          createSlashingProtection(
+              eth2Config.slashingProtectionDbUrl,
+              eth2Config.slashingProtectionDbUsername,
+              eth2Config.slashingProtectionDbPassword);
+
       slashingProtection.importData(inStream);
     } catch (final IOException e) {
       throw new UncheckedIOException("Unable to find input file", e);
+    } catch (final IllegalStateException e) {
+      throw new InitializationException(e.getMessage(), e);
     } catch (final RuntimeException e) {
       throw new InitializationException(
           "Failed to initialise Slashing Protection: " + e.getMessage(), e);

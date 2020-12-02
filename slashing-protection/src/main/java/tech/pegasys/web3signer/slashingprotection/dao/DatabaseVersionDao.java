@@ -18,9 +18,11 @@ public class DatabaseVersionDao {
 
   public Integer findDatabaseVersion(final Handle handle) {
     try {
-      return handle.createQuery("SELECT version from database_version").mapTo(Integer.class)
+      return handle
+          .createQuery("SELECT version from database_version")
+          .mapTo(Integer.class)
           .first();
-    } catch(final Exception e) {
+    } catch (final Exception e) {
       throw new IllegalStateException("Unable to determine database version", e);
     }
   }
