@@ -16,8 +16,12 @@ import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.StringUtils;
 
 public class AzureSecretSigningMetadata extends SigningMetadata {
 
@@ -76,5 +80,29 @@ public class AzureSecretSigningMetadata extends SigningMetadata {
   @Override
   public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
     return factory.create(this);
+  }
+
+  @Override
+  public void validate() throws SigningMetadataException {
+    final List<String> missingParameters = new ArrayList<>();
+    if (authenticationMode == AzureAuthenticationMode.CLIENT_SECRET) {
+      if (StringUtils.isBlank(clientId)) {
+        missingParameters.add("clientId");
+      }
+
+      if (StringUtils.isBlank(clientSecret)) {
+        missingParameters.add("clientSecret");
+      }
+
+      if (StringUtils.isBlank(tenantId)) {
+        missingParameters.add("tenantId");
+      }
+
+      if (!missingParameters.isEmpty()) {
+        throw new SigningMetadataException(
+            "Missing required parameters for type: \"azure-secret\", authenticationMode: \"CLIENT_SECRET\" - "
+                + String.join(", ", missingParameters));
+      }
+    }
   }
 }

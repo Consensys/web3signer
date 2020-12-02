@@ -41,4 +41,8 @@ public abstract class SigningMetadata {
   public KeyType getKeyType() {
     return keyType;
   }
+
+  public void validate() throws SigningMetadataException {
+    // do nothing by default
+  }
 }

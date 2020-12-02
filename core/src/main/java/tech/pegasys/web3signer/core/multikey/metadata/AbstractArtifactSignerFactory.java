@@ -56,7 +56,6 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
     final AzureKeyVault azureVault;
     if (metadata.getAuthenticationMode() == AzureAuthenticationMode.CLIENT_SECRET) {
-      // TODO: validate clientid, clientsecret and tenantid exist for client-secret mode
       azureVault =
           AzureKeyVault.createUsingClientSecretCredentials(
               metadata.getClientId(),

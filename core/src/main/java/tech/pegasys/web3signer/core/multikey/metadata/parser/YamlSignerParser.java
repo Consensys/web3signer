@@ -50,6 +50,9 @@ public class YamlSignerParser implements SignerParser {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
 
+      // Custom validation of metadata parameters which is not enforced by Jackson
+      metaDataInfo.validate();
+
       return signerFactories.stream()
           .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
           .map(metaDataInfo::createSigner)
