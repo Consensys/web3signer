@@ -53,8 +53,9 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   }
 
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
+    // TODO: Support for managed identity
     final AzureKeyVault azureVault =
-        new AzureKeyVault(
+        AzureKeyVault.createUsingClientSecretCredentials(
             metadata.getClientId(),
             metadata.getClientSecret(),
             metadata.getTenantId(),

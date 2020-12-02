@@ -197,21 +197,18 @@ public class Eth2Runner extends Runner {
   }
 
   final Collection<ArtifactSigner> loadAzureSigners() {
-    // TODO: Use new factory method from updated signers library
     final AzureKeyVault keyVault;
     if (azureKeyVaultParameters.getAuthenticationMode() == AzureAuthenticationMode.CLIENT_SECRET) {
       keyVault =
-          new AzureKeyVault(
+          AzureKeyVault.createUsingClientSecretCredentials(
               azureKeyVaultParameters.getClientlId(),
               azureKeyVaultParameters.getClientSecret(),
               azureKeyVaultParameters.getTenantId(),
               azureKeyVaultParameters.getKeyVaultName());
     } else {
       keyVault =
-          new AzureKeyVault(
-              azureKeyVaultParameters.getClientlId(),
-              azureKeyVaultParameters.getClientSecret(),
-              azureKeyVaultParameters.getTenantId(),
+          AzureKeyVault.createUsingManagedIdentity(
+              Optional.ofNullable(azureKeyVaultParameters.getClientlId()),
               azureKeyVaultParameters.getKeyVaultName());
     }
 
