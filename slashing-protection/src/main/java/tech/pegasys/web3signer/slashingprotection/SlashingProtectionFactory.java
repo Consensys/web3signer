@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
+import tech.pegasys.web3signer.slashingprotection.dao.DatabaseVersionDao;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -22,6 +24,12 @@ import org.jdbi.v3.core.Jdbi;
 
 public class SlashingProtectionFactory {
 
+  public static final int EXPECTED_DATABASE_VERSION = 6;
+  private static final String errorMsg =
+      String.format(
+          "Database does not have expected version (%s), please run migrations and try again.",
+          EXPECTED_DATABASE_VERSION);
+
   public static SlashingProtection createSlashingProtection(
       final String slashingProtectionDbUrl,
       final String slashingProtectionDbUser,
@@ -29,7 +37,23 @@ public class SlashingProtectionFactory {
     final Jdbi jdbi =
         DbConnection.createConnection(
             slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
+
+    verifyVersion(jdbi);
+
     return createSlashingProtection(jdbi);
+  }
+
+  private static void verifyVersion(final Jdbi jdbi) {
+    final DatabaseVersionDao databaseVersionDao = new DatabaseVersionDao();
+
+    try {
+      final Integer version = jdbi.withHandle(databaseVersionDao::findDatabaseVersion);
+      if (version.compareTo(EXPECTED_DATABASE_VERSION) != 0) {
+        throw new IllegalStateException(errorMsg);
+      }
+    } catch (final IllegalStateException e) {
+      throw new IllegalStateException(errorMsg, e);
+    }
   }
 
   private static SlashingProtection createSlashingProtection(final Jdbi jdbi) {
