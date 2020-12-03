@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: 'Web3Signer ETH2 Api'
   description: 'Sign Eth2 Artifacts'
-  version: '20.11.0+3-g70b06fe'
+  version: '20.11.0+4-g3baaadf'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -421,4 +421,4 @@ components:
 
 externalDocs:
   description: 'Web3Signer User Documentation'
-  url: 'https://doc.web3signer.pegasys.tech/'
+  url: 'https://docs.web3signer.consensys.net/'
