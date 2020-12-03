@@ -58,6 +58,7 @@ dependencies {
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation 'org.flywaydb:flyway-core'
   integrationTestImplementation 'com.opentable.components:otj-pg-embedded'
+  integrationTestImplementation 'org.apache.logging.log4j:log4j-slf4j-impl'
   integrationTestImplementation sourceSets.testFixtures.output
 }
 

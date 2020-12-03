@@ -24,10 +24,6 @@ import org.jdbi.v3.core.Jdbi;
 public class SlashingProtectionFactory {
 
   public static final int EXPECTED_DATABASE_VERSION = 6;
-  private static final String errorMsg =
-      String.format(
-          "Database does not have expected version (%s), please run migrations and try again.",
-          EXPECTED_DATABASE_VERSION);
 
   public static SlashingProtection createSlashingProtection(
       final String slashingProtectionDbUrl,
@@ -45,13 +41,21 @@ public class SlashingProtectionFactory {
   private static void verifyVersion(final Jdbi jdbi) {
     final DatabaseVersionDao databaseVersionDao = new DatabaseVersionDao();
 
+    final int version;
     try {
-      final Integer version = jdbi.withHandle(databaseVersionDao::findDatabaseVersion);
-      if (version.compareTo(EXPECTED_DATABASE_VERSION) != 0) {
-        throw new IllegalStateException(errorMsg);
-      }
+      version = jdbi.withHandle(databaseVersionDao::findDatabaseVersion);
     } catch (final IllegalStateException e) {
+      final String errorMsg =
+          String.format("Failed to read database version, expected %s", EXPECTED_DATABASE_VERSION);
       throw new IllegalStateException(errorMsg, e);
+    }
+
+    if (version != EXPECTED_DATABASE_VERSION) {
+      final String errorMsg =
+          String.format(
+              "Database version (%s) does not match expected version (%s), please run migrations and try again.",
+              version, EXPECTED_DATABASE_VERSION);
+      throw new IllegalStateException(errorMsg);
     }
   }
 
