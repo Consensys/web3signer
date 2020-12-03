@@ -89,14 +89,10 @@ public class Eth2SubCommand extends ModeSubCommand {
 
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
 
-      List<String> missingAzureFields = Lists.newArrayList();
+      final List<String> missingAzureFields = Lists.newArrayList();
 
       if (azureKeyVaultParameters.getKeyVaultName() == null) {
         missingAzureFields.add("--azure-vault-name");
-      }
-
-      if (azureKeyVaultParameters.getAuthenticationMode() == null) {
-        missingAzureFields.add("--azure-vault-auth-mode");
       }
 
       if (azureKeyVaultParameters.getAuthenticationMode() == CLIENT_SECRET) {
@@ -114,7 +110,9 @@ public class Eth2SubCommand extends ModeSubCommand {
         }
       }
 
-      //  no extra validation required for "managed identity". It can optionally use client-id.
+      // no extra validation required for "managed identity".
+      // client-id can be used for user-assigned managed identity but it is not required for
+      // system-generated managed identity.
 
       if (!missingAzureFields.isEmpty()) {
         final String errorMsg =
