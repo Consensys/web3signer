@@ -19,7 +19,7 @@ public class DatabaseVersionDao {
   public Integer findDatabaseVersion(final Handle handle) {
     try {
       return handle
-          .createQuery("SELECT version from database_version")
+          .createQuery("SELECT version from database_version WHERE id = 1")
           .mapTo(Integer.class)
           .first();
     } catch (final Exception e) {
