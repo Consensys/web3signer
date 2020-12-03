@@ -148,7 +148,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @ParameterizedTest
   @EnumSource(ArtifactType.class)
-  public void failsIfSigningRootDoesNotMatchSigningData(final ArtifactType artifactType) throws JsonProcessingException {
+  public void failsIfSigningRootDoesNotMatchSigningData(final ArtifactType artifactType)
+      throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
