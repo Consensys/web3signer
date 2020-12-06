@@ -22,7 +22,7 @@ public interface AzureKeyVaultParameters {
 
   String getTenantId();
 
-  String getClientlId();
+  String getClientId();
 
   String getClientSecret();
 }

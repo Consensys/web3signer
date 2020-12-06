@@ -57,6 +57,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -201,15 +202,18 @@ public class Eth2Runner extends Runner {
     if (azureKeyVaultParameters.getAuthenticationMode() == AzureAuthenticationMode.CLIENT_SECRET) {
       keyVault =
           AzureKeyVault.createUsingClientSecretCredentials(
-              azureKeyVaultParameters.getClientlId(),
+              azureKeyVaultParameters.getClientId(),
               azureKeyVaultParameters.getClientSecret(),
               azureKeyVaultParameters.getTenantId(),
               azureKeyVaultParameters.getKeyVaultName());
     } else {
+      final Optional<String> clientId =
+          StringUtils.isBlank(azureKeyVaultParameters.getClientId())
+              ? Optional.empty()
+              : Optional.of(azureKeyVaultParameters.getClientId());
       keyVault =
           AzureKeyVault.createUsingManagedIdentity(
-              Optional.ofNullable(azureKeyVaultParameters.getClientlId()),
-              azureKeyVaultParameters.getKeyVaultName());
+              clientId, azureKeyVaultParameters.getKeyVaultName());
     }
 
     return keyVault.mapSecrets(

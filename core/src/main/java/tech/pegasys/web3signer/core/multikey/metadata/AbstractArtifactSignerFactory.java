@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import com.google.common.io.Files;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
@@ -63,9 +64,11 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
               metadata.getTenantId(),
               metadata.getVaultName());
     } else {
-      azureVault =
-          AzureKeyVault.createUsingManagedIdentity(
-              Optional.ofNullable(metadata.getClientId()), metadata.getVaultName());
+      final Optional<String> clientId =
+          StringUtils.isBlank(metadata.getClientId())
+              ? Optional.empty()
+              : Optional.of(metadata.getClientId());
+      azureVault = AzureKeyVault.createUsingManagedIdentity(clientId, metadata.getVaultName());
     }
 
     return azureVault

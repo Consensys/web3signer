@@ -149,7 +149,7 @@ public abstract class Web3SignerRunner {
         params.add("--azure-vault-name");
         params.add(azureParams.getKeyVaultName());
         params.add("--azure-client-id");
-        params.add(azureParams.getClientlId());
+        params.add(azureParams.getClientId());
         params.add("--azure-client-secret");
         params.add(azureParams.getClientSecret());
         params.add("--azure-tenant-id");

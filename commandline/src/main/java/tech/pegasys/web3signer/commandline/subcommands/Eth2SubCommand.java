@@ -101,7 +101,7 @@ public class Eth2SubCommand extends ModeSubCommand {
           missingAzureFields.add("--azure-client-secret");
         }
 
-        if (azureKeyVaultParameters.getClientlId() == null) {
+        if (azureKeyVaultParameters.getClientId() == null) {
           missingAzureFields.add("--azure-client-id");
         }
 

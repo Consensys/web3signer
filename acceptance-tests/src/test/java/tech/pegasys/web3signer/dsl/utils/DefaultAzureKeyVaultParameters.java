@@ -46,7 +46,7 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   }
 
   @Override
-  public String getClientlId() {
+  public String getClientId() {
     return clientId;
   }
 
