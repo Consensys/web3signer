@@ -119,7 +119,7 @@ components:
           type: object
           properties:
             fork:
-              $ref: '#/components/schemas/AttestationData'
+              $ref: '#/components/schemas/Fork'
             genesis_validators_root:
               type: "string"
         signingRoot:
