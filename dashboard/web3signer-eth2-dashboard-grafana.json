@@ -12,12 +12,12 @@
       }
     ]
   },
-  "description": "Provides a dashboard for monitoring multiple instances of web3signer eth2 https://github.com/ConsenSys/web3signer",
+  "description": "Web3signer Eth2 Dashboard https://github.com/ConsenSys/web3signer",
   "editable": true,
   "gnetId": 12729,
   "graphTooltip": 1,
-  "id": 1,
-  "iteration": 1607041249082,
+  "id": 20,
+  "iteration": 1607469506855,
   "links": [],
   "panels": [
     {
@@ -46,8 +46,7 @@
                 "value": null
               }
             ]
-          },
-          "unit": "s"
+          }
         },
         "overrides": []
       },
@@ -57,64 +56,28 @@
         "x": 0,
         "y": 1
       },
-      "id": 106,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "mean"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "7.3.3",
-      "targets": [
-        {
-          "expr": "time() - process_start_time_seconds{instance=~\"$system\"}",
-          "format": "time_series",
-          "instant": true,
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Uptime",
-      "type": "stat"
-    },
-    {
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {
-          "custom": {},
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 4,
-        "x": 4,
-        "y": 1
-      },
       "id": 102,
       "options": {
         "colorMode": "value",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            }
+          },
+          "overrides": [],
+          "values": false
+        },
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
@@ -127,7 +90,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.3",
+      "pluginVersion": "6.7.2",
       "targets": [
         {
           "expr": "signing_signers_loaded_count{instance=~\"$system\"}",
@@ -166,12 +129,33 @@
       "gridPos": {
         "h": 5,
         "w": 4,
-        "x": 8,
+        "x": 4,
         "y": 1
       },
       "id": 120,
+      "interval": "",
       "options": {
         "colorMode": "value",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                }
+              ]
+            },
+            "unit": "decbytes"
+          },
+          "overrides": [],
+          "values": false
+        },
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
@@ -184,10 +168,10 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "7.3.3",
+      "pluginVersion": "6.7.2",
       "targets": [
         {
-          "expr": "jvm_memory_bytes_max{area=\"heap\"}",
+          "expr": "jvm_memory_bytes_max{area=\"heap\", instance=~\"$system\"}",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -253,8 +237,31 @@
       "id": 84,
       "links": [],
       "options": {
-        "displayMode": "gradient",
-        "orientation": "auto",
+        "displayMode": "basic",
+        "fieldOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "defaults": {
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [],
+          "values": false
+        },
+        "orientation": "vertical",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -264,7 +271,7 @@
         },
         "showUnfilled": true
       },
-      "pluginVersion": "7.3.3",
+      "pluginVersion": "6.7.2",
       "targets": [
         {
           "expr": "signing_bls_signing_duration{instance=~\"$system\"}",
@@ -318,7 +325,8 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "alertThreshold": true,
+        "dataLinks": []
       },
       "percentage": false,
       "pluginVersion": "7.3.3",
@@ -331,7 +339,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(rate(signing_bls_signing_duration_count{instance=~\"$system\"}[$__rate_interval]))",
+          "expr": "sum(rate(signing_bls_signing_duration_count{instance=~\"$system\"}[1m]))",
+          "instant": false,
           "interval": "",
           "legendFormat": "sigs/s",
           "refId": "A"
@@ -428,7 +437,8 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "alertThreshold": true,
+        "dataLinks": []
       },
       "percentage": false,
       "pluginVersion": "7.3.3",
@@ -441,9 +451,9 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(eth2_slashingprotection_prevented_signings{instance=~\"$system\"}[$__rate_interval])",
+          "expr": "rate(eth2_slashingprotection_prevented_signings{instance=~\"$system\"}[1m])",
           "format": "time_series",
-          "instant": true,
+          "instant": false,
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -525,7 +535,8 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "alertThreshold": true,
+        "dataLinks": []
       },
       "percentage": false,
       "pluginVersion": "7.3.3",
@@ -538,7 +549,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(signing_bls_missing_identifier_count{instance=~\"$system\"}[$__rate_interval])",
+          "expr": "rate(signing_bls_missing_identifier_count{instance=~\"$system\"}[1m])",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -634,7 +645,8 @@
       "linewidth": 1,
       "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "alertThreshold": true,
+        "dataLinks": []
       },
       "percentage": false,
       "pluginVersion": "7.3.3",
@@ -647,7 +659,8 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(http_bls_malformed_request_count{instance=~\"$system\"}[$__rate_interval])",
+          "expr": "rate(http_bls_malformed_request_count{instance=~\"$system\"}[1m])",
+          "instant": false,
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -749,7 +762,8 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "alertThreshold": true,
+        "dataLinks": []
       },
       "percentage": false,
       "pluginVersion": "7.3.3",
@@ -851,7 +865,8 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "alertThreshold": true,
+        "dataLinks": []
       },
       "percentage": false,
       "pluginVersion": "7.3.3",
@@ -971,7 +986,8 @@
       "links": [],
       "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "alertThreshold": true,
+        "dataLinks": []
       },
       "percentage": false,
       "pluginVersion": "7.3.3",
@@ -1077,7 +1093,8 @@
       ],
       "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "alertThreshold": true,
+        "dataLinks": []
       },
       "percentage": false,
       "pluginVersion": "7.3.3",
@@ -1188,7 +1205,8 @@
       ],
       "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "alertThreshold": true,
+        "dataLinks": []
       },
       "percentage": false,
       "pluginVersion": "7.3.3",
@@ -1305,7 +1323,7 @@
     }
   ],
   "refresh": "5s",
-  "schemaVersion": 26,
+  "schemaVersion": 22,
   "style": "dark",
   "tags": [
     "ethereum",
@@ -1317,16 +1335,15 @@
       {
         "allValue": null,
         "current": {
-          "isNone": true,
-          "selected": false,
-          "text": "None",
-          "value": ""
+          "text": "dev-web3signer-ohio-pyrmont-1",
+          "value": "dev-web3signer-ohio-pyrmont-1"
         },
         "datasource": "Prometheus",
         "definition": "signing_signers_loaded_count",
         "error": null,
         "hide": 0,
         "includeAll": false,
+        "index": -1,
         "label": null,
         "multi": false,
         "name": "system",
@@ -1362,7 +1379,10 @@
     ]
   },
   "timezone": "",
-  "title": "Web3Signer Eth2",
+  "title": "Web3Signer Eth2 Monitor",
   "uid": "dkIJoOVMk",
-  "version": 24
+  "variables": {
+    "list": []
+  },
+  "version": 8
 }
