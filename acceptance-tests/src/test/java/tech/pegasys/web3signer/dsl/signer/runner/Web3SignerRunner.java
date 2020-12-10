@@ -73,8 +73,8 @@ public abstract class Web3SignerRunner {
   public void start() {
     final CmdLineParamsBuilder cmdLineParamsBuilder =
         signerConfig.useConfigFile()
-            ? new CmdLineParamsDefaultImpl(signerConfig, dataPath)
-            : new CmdLineParamsConfigFileImpl(signerConfig, dataPath);
+            ? new CmdLineParamsConfigFileImpl(signerConfig, dataPath)
+            : new CmdLineParamsDefaultImpl(signerConfig, dataPath);
     final List<String> params = cmdLineParamsBuilder.createCmdLineParams();
     slashingProtectionDbUrl = cmdLineParamsBuilder.slashingProtectionDbUrl();
 
