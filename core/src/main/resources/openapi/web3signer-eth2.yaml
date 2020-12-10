@@ -119,7 +119,7 @@ components:
           type: object
           properties:
             fork:
-              $ref: '#/components/schemas/AttestationData'
+              $ref: '#/components/schemas/Fork'
             genesis_validators_root:
               type: "string"
         signingRoot:
@@ -181,6 +181,9 @@ components:
       properties:
         type:
           type: "string"
+        signingRoot:
+          description: 'signing root for optional verification if field present'
+          type: "string"
         deposit:
           type: object
           properties:
@@ -189,9 +192,6 @@ components:
             withdrawal_credentials:
               type: "string"
             amount:
-              type: "string"
-            signingRoot:
-              description: 'signing root for optional verification if field present'
               type: "string"
             genesis_fork_version:
               type: "string"
@@ -421,4 +421,4 @@ components:
 
 externalDocs:
   description: 'Web3Signer User Documentation'
-  url: 'https://doc.web3signer.pegasys.tech/'
+  url: 'https://docs.web3signer.consensys.net/'

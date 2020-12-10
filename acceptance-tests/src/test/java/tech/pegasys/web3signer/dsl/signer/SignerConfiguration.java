@@ -44,6 +44,7 @@ public class SignerConfiguration {
   private final boolean enableSlashing;
   private final Optional<Path> slashingExportPath;
   private final Optional<Path> slashingImportPath;
+  private final boolean swaggerUIEnabled;
 
   public SignerConfiguration(
       final String hostname,
@@ -64,7 +65,8 @@ public class SignerConfiguration {
       final Optional<Map<String, String>> web3SignerEnvironment,
       final boolean enableSlashing,
       final Optional<Path> slashingExportPath,
-      final Optional<Path> slashingImportPath) {
+      final Optional<Path> slashingImportPath,
+      final boolean swaggerUIEnabled) {
     this.hostname = hostname;
     this.httpRpcPort = httpRpcPort;
     this.httpHostAllowList = httpHostAllowList;
@@ -84,6 +86,7 @@ public class SignerConfiguration {
     this.enableSlashing = enableSlashing;
     this.slashingExportPath = slashingExportPath;
     this.slashingImportPath = slashingImportPath;
+    this.swaggerUIEnabled = swaggerUIEnabled;
   }
 
   public String hostname() {
@@ -168,5 +171,9 @@ public class SignerConfiguration {
 
   public Optional<Path> getSlashingImportPath() {
     return slashingImportPath;
+  }
+
+  public boolean isSwaggerUIEnabled() {
+    return swaggerUIEnabled;
   }
 }

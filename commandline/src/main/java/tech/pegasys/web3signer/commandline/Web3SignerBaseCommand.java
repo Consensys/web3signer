@@ -163,7 +163,13 @@ public class Web3SignerBaseCommand implements Config, Runnable {
       arity = "1")
   private int idleConnectionTimeoutSeconds = 30;
 
-  @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
+  @Option(
+          names = {"--swagger-ui-enabled"},
+          description = "Enable swagger UI (default: ${DEFAULT-VALUE})")
+  private final Boolean swaggerUiEnabled = false;
+
+  @CommandLine.Mixin
+  private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
   @Override
   public Level getLogLevel() {
@@ -232,6 +238,11 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   @Override
   public int getIdleConnectionTimeoutSeconds() {
     return idleConnectionTimeoutSeconds;
+  }
+
+  @Override
+  public Boolean isSwaggerUIEnabled() {
+    return swaggerUiEnabled;
   }
 
   @Override

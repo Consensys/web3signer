@@ -107,7 +107,9 @@ public abstract class Runner implements Runnable {
 
       final Context context = new Context(routerFactory, metricsSystem, errorHandler, vertx);
       final Router router = populateRouter(context);
-      registerSwaggerUIRoute(router); // serve static openapi spec
+      if (config.isSwaggerUIEnabled()) {
+        registerSwaggerUIRoute(router); // serve static openapi spec
+      }
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
       final String tlsStatus = config.getTlsOptions().isPresent() ? "enabled" : "disabled";

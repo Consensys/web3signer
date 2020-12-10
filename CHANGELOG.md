@@ -1,11 +1,21 @@
 # Changelog
 
-## Next Release
+## 20.11.0
 
 ### Features Added
 
 - Interlock/Armory II HSM keystore support
-- Eth2 slashing protection data able to be imported from json file (Interchange format V5)
+- Eth2 slashing protection data able to be exported and imported from json file (Interchange format V5)
+- Eth2 signing API returned body matches incoming request content-type in either plain-text or json
+- Only able to sign for a single Genesis validators root (which is defined by the first received request after creation)
+- Do not sign below watermark (regardless of if matching existing entry)
+
+### Bugs Fixed
+- Eth2 slashing protection metrics category was not working on CLI
+- Update Filecoin RPC to be compatible with Lotus remote wallet API
+- Eth2 slashing protection returns a 412 http status code for a slashing violation
+- Signing with empty slashing database would sometimes fail due multiple genesis validator root values inserting concurrently 
+- Resolved help text anomalies on command line
 
 ## 0.2.0
 

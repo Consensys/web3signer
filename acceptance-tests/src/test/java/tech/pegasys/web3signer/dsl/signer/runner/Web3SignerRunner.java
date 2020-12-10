@@ -125,6 +125,11 @@ public abstract class Web3SignerRunner {
         params.add(createCommaSeparatedList(signerConfig.getMetricsCategories()));
       }
     }
+
+    if (signerConfig.isSwaggerUIEnabled()) {
+      params.add("--swagger-ui-enabled=true");
+    }
+
     if (signerConfig.isHttpDynamicPortAllocation()) {
       params.add("--data-path");
       params.add(dataPath.toAbsolutePath().toString());
