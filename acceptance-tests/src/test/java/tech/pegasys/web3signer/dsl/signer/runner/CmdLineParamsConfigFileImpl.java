@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.dsl.signer.runner;
 
 import static tech.pegasys.web3signer.dsl.utils.EmbeddedDatabaseUtils.createEmbeddedDatabase;
 
-import tech.pegasys.web3signer.commandline.DefaultCommandValues;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -137,7 +136,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       Files.writeString(configFile, yamlConfig.toString());
 
       params.add(0, configFile.toAbsolutePath().toString());
-      params.add(0, DefaultCommandValues.CONFIG_FILE_OPTION_NAME);
+      params.add(0, "--config-file");
     } catch (final IOException e) {
       throw new UncheckedIOException(e);
     }
