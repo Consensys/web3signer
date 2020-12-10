@@ -168,14 +168,14 @@ public class AttestationImporter {
 
   private boolean nullAttestationAlreadyExistsInTargetEpoch(final UInt64 targetEpoch) {
     return handle
-        .createQuery(
-            "SELECT validator_id, source_epoch, target_epoch, signing_root "
-                + "FROM signed_attestations "
-                + "WHERE validator_id = ? AND target_epoch = ? AND signing_root IS NULL")
-        .bind(0, validator.getId())
-        .bind(1, targetEpoch)
-        .mapToBean(tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation.class)
-        .findFirst()
-        .isPresent();
+            .createQuery(
+                "SELECT count(*) "
+                    + "FROM signed_attestations "
+                    + "WHERE validator_id = ? AND target_epoch = ? AND signing_root IS NULL")
+            .bind(0, validator.getId())
+            .bind(1, targetEpoch)
+            .mapTo(Integer.class)
+            .first()
+        == 1;
   }
 }

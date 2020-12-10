@@ -109,14 +109,14 @@ public class BlockImporter {
 
   private boolean nullBlockAlreadyExistsInSlot(final UInt64 slot) {
     return handle
-        .createQuery(
-            "SELECT validator_id, slot, signing_root "
-                + "FROM signed_blocks "
-                + "WHERE validator_id = ? AND slot = ? AND signing_root IS NULL")
-        .bind(0, validator.getId())
-        .bind(1, slot)
-        .mapToBean(tech.pegasys.web3signer.slashingprotection.dao.SignedBlock.class)
-        .findFirst()
-        .isPresent();
+            .createQuery(
+                "SELECT COUNT(*) "
+                    + "FROM signed_blocks "
+                    + "WHERE validator_id = ? AND slot = ? AND signing_root IS NULL")
+            .bind(0, validator.getId())
+            .bind(1, slot)
+            .mapTo(Integer.class)
+            .first()
+        == 1;
   }
 }
