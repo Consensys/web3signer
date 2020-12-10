@@ -47,6 +47,7 @@ public class SignerConfigurationBuilder {
   private Path slashingExportPath;
   private Path slashingImportPath;
   private boolean swaggerUIEnabled = false;
+  private boolean useConfigFile = false;
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -147,6 +148,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withUseConfigFile(final boolean useConfigFile) {
+    this.useConfigFile = useConfigFile;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -171,6 +177,7 @@ public class SignerConfigurationBuilder {
         enableSlashing,
         Optional.ofNullable(slashingExportPath),
         Optional.ofNullable(slashingImportPath),
-        swaggerUIEnabled);
+        swaggerUIEnabled,
+        useConfigFile);
   }
 }
