@@ -39,8 +39,9 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ServerSideTlsAcceptanceTest {
 
@@ -97,11 +98,15 @@ class ServerSideTlsAcceptanceTest {
       final TlsCertificateDefinition clientExpectedCert,
       final TlsCertificateDefinition clientCertInServerWhitelist,
       final TlsCertificateDefinition clientToPresent,
-      final int fixedListenPort) {
+      final int fixedListenPort,
+      final boolean useConfigFile) {
 
     try {
       final SignerConfigurationBuilder configBuilder =
-          new SignerConfigurationBuilder().withHttpPort(fixedListenPort).withMode("eth1");
+          new SignerConfigurationBuilder()
+              .withHttpPort(fixedListenPort)
+              .withUseConfigFile(useConfigFile)
+              .withMode("eth1");
 
       final ClientAuthConstraints clientAuthConstraints;
       if (clientCertInServerWhitelist != null) {
@@ -138,9 +143,10 @@ class ServerSideTlsAcceptanceTest {
     }
   }
 
-  @Test
-  void ableToConnectWhenClientExpectsSameCertificateAsThatPresented() {
-    signer = createTlsSigner(cert1, cert1, null, null, 0);
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void ableToConnectWhenClientExpectsSameCertificateAsThatPresented(final boolean useConfigFile) {
+    signer = createTlsSigner(cert1, cert1, null, null, 0, useConfigFile);
     signer.start();
     signer.awaitStartupCompletion();
 
@@ -154,11 +160,12 @@ class ServerSideTlsAcceptanceTest {
         .body(equalToIgnoringCase("OK"));
   }
 
-  @Test
-  void nonTlsClientsCannotConnectToTlsEnabledEthSigner() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void nonTlsClientsCannotConnectToTlsEnabledEthSigner(final boolean useConfigFile) {
     // The ethSigner object (and in-built requester are already TLS enabled, so need to make a new
     // http client which does not have TLS enabled
-    signer = createTlsSigner(cert1, cert1, null, null, 0);
+    signer = createTlsSigner(cert1, cert1, null, null, 0, useConfigFile);
     signer.start();
     signer.awaitStartupCompletion();
 
@@ -176,29 +183,33 @@ class ServerSideTlsAcceptanceTest {
     assertThatThrownBy(request::run).isInstanceOf(SSLHandshakeException.class);
   }
 
-  @Test
-  void missingPasswordFileResultsInEthSignerExiting() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void missingPasswordFileResultsInEthSignerExiting(final boolean useConfigFile) {
     // arbitrary listen-port to prevent waiting for portfile (during Start) to be created.
     final TlsCertificateDefinition missingPasswordCert =
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", null);
-    signer = createTlsSigner(missingPasswordCert, cert1, null, null, 9000);
+    signer = createTlsSigner(missingPasswordCert, cert1, null, null, 9000, useConfigFile);
     signer.start();
     waitFor(() -> assertThat(signer.isRunning()).isFalse());
   }
 
-  @Test
-  void ethSignerExitsIfPasswordDoesntMatchKeyStoreFile() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void ethSignerExitsIfPasswordDoesntMatchKeyStoreFile(final boolean useConfigFile) {
     // arbitrary listen-port to prevent waiting for portfile (during Start) to be created.
     final TlsCertificateDefinition wrongPasswordCert =
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", "wrongPassword");
-    signer = createTlsSigner(wrongPasswordCert, cert1, null, null, 9000);
+    signer = createTlsSigner(wrongPasswordCert, cert1, null, null, 9000, useConfigFile);
     signer.start();
     waitFor(() -> assertThat(signer.isRunning()).isFalse());
   }
 
-  @Test
-  void clientCannotConnectIfExpectedServerCertDoesntMatchServerSuppliedCert() {
-    signer = createTlsSigner(cert1, cert1, null, null, 0);
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void clientCannotConnectIfExpectedServerCertDoesntMatchServerSuppliedCert(
+      final boolean useConfigFile) {
+    signer = createTlsSigner(cert1, cert1, null, null, 0, useConfigFile);
     signer.start();
     signer.awaitStartupCompletion();
 
@@ -219,8 +230,10 @@ class ServerSideTlsAcceptanceTest {
     assertThatThrownBy(request::run).isInstanceOf(SSLHandshakeException.class);
   }
 
-  @Test
-  void missingKeyStoreFileResultsInEthSignerExiting() throws IOException {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void missingKeyStoreFileResultsInEthSignerExiting(final boolean useConfigFile)
+      throws IOException {
     final TlsOptions serverOptions =
         new BasicTlsOptions(
             dataPath.resolve("missing_keystore").toFile(),
@@ -229,16 +242,20 @@ class ServerSideTlsAcceptanceTest {
 
     // Requires arbitrary port to avoid waiting for Ports file
     final SignerConfigurationBuilder configBuilder =
-        new SignerConfigurationBuilder().withServerTlsOptions(serverOptions).withHttpPort(9000);
+        new SignerConfigurationBuilder()
+            .withUseConfigFile(useConfigFile)
+            .withServerTlsOptions(serverOptions)
+            .withHttpPort(9000);
 
     signer = new Signer(configBuilder.withMode("eth2").build(), null);
     signer.start();
     waitFor(() -> assertThat(signer.isRunning()).isFalse());
   }
 
-  @Test
-  void clientMissingFromWhiteListCannotConnectToEthSigner() {
-    signer = createTlsSigner(cert1, cert1, cert1, cert1, 0);
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void clientMissingFromWhiteListCannotConnectToEthSigner(final boolean useConfigFile) {
+    signer = createTlsSigner(cert1, cert1, cert1, cert1, 0, useConfigFile);
     signer.start();
     signer.awaitStartupCompletion();
 

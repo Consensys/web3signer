@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.io.FileUtils;
+
 public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
   private final SignerConfiguration signerConfig;
   private final Path dataPath;
@@ -61,9 +63,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
         String.format(
             YAML_STRING_FMT, "key-store-path", signerConfig.getKeyStorePath().toString()));
     if (signerConfig.isMetricsEnabled()) {
-      yamlConfig.append(
-          String.format(
-              YAML_BOOLEAN_FMT, "metrics-enabled", Boolean.TRUE)); // TODO: Fix in BaseCommand
+      yamlConfig.append(String.format(YAML_BOOLEAN_FMT, "metrics-enabled", Boolean.TRUE));
       yamlConfig.append(
           String.format(YAML_NUMERIC_FMT, "metrics-port", signerConfig.getMetricsPort()));
 
@@ -78,7 +78,8 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
         yamlConfig.append(
             String.format(
                 YAML_STRING_FMT,
-                "metrics-category",
+                "metrics-categories", // config-file can only use longest options if more than one
+                // option is specified.
                 createCommaSeparatedList(signerConfig.getMetricsCategories())));
       }
     }
@@ -133,7 +134,8 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
 
     // create temporary config file
     try {
-      final Path configFile = Files.createTempFile(dataPath, "web3signer_config", ".yaml");
+      final Path configFile = Files.createTempFile("web3signer_config", ".yaml");
+      FileUtils.forceDeleteOnExit(configFile.toFile());
       Files.writeString(configFile, yamlConfig.toString());
 
       params.add(0, configFile.toAbsolutePath().toString());
