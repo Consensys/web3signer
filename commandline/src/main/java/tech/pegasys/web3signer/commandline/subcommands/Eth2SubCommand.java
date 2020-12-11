@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.commandline.subcommands;
 
 import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.CLIENT_SECRET;
+import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
@@ -108,11 +109,14 @@ public class Eth2SubCommand extends ModeSubCommand {
         if (azureKeyVaultParameters.getTenantId() == null) {
           missingAzureFields.add("--azure-tenant-id");
         }
+      } else if (azureKeyVaultParameters.getAuthenticationMode()
+          == USER_ASSIGNED_MANAGED_IDENTITY) {
+        if (azureKeyVaultParameters.getClientId() == null) {
+          missingAzureFields.add("--azure-client-id");
+        }
       }
 
-      // no extra validation required for "managed identity".
-      // client-id can be used for user-assigned managed identity but it is not required for
-      // system-generated managed identity.
+      // no extra validation required for "system-assigned managed identity".
 
       if (!missingAzureFields.isEmpty()) {
         final String errorMsg =
