@@ -17,8 +17,6 @@ import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = AzureSecretSigningMetadataDeserializer.class)
@@ -31,15 +29,14 @@ public class AzureSecretSigningMetadata extends SigningMetadata implements Azure
   private final String secretName;
   private final AzureAuthenticationMode authenticationMode;
 
-  @JsonCreator
   public AzureSecretSigningMetadata(
-      @JsonProperty("clientId") final String clientId,
-      @JsonProperty("clientSecret") final String clientSecret,
-      @JsonProperty("tenantId") final String tenantId,
-      @JsonProperty("vaultName") final String vaultName,
-      @JsonProperty("secretName") final String secretName,
-      @JsonProperty("authenticationMode") final AzureAuthenticationMode azureAuthenticationMode,
-      @JsonProperty("keyType") final KeyType keyType) {
+      final String clientId,
+      final String clientSecret,
+      final String tenantId,
+      final String vaultName,
+      final String secretName,
+      final AzureAuthenticationMode azureAuthenticationMode,
+      final KeyType keyType) {
     super(keyType != null ? keyType : KeyType.BLS);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
