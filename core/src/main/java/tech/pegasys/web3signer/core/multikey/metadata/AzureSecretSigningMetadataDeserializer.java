@@ -58,7 +58,6 @@ public class AzureSecretSigningMetadataDeserializer
     AzureAuthenticationMode authenticationMode = null;
 
     final JsonNode node = parser.getCodec().readTree(parser);
-    System.out.println(node.toPrettyString());
 
     if (node.get(KEY_TYPE) != null) {
       try {
