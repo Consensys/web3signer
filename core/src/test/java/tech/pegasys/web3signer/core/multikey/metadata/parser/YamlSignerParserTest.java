@@ -310,7 +310,7 @@ class YamlSignerParserTest {
   }
 
   @Test
-  void azureSecretMetadataWithManagedIdentityModeMinimalReturnsMetadata() throws IOException {
+  void azureSecretMetadataWithSystemAssignedManagedIdentityReturnsMetadata() throws IOException {
     final BlsArtifactSigner artifactSigner =
         new BlsArtifactSigner(
             new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY))));
@@ -323,7 +323,8 @@ class YamlSignerParserTest {
     azureMetaDataMap.put("type", "azure-secret");
     azureMetaDataMap.put("vaultName", "sample-vault-name");
     azureMetaDataMap.put("secretName", "TEST-KEY");
-    azureMetaDataMap.put("authenticationMode", AzureAuthenticationMode.MANAGED_IDENTITY.name());
+    azureMetaDataMap.put(
+        "authenticationMode", AzureAuthenticationMode.SYSTEM_ASSIGNED_MANAGED_IDENTITY.name());
     YAML_OBJECT_MAPPER.writeValue(filename.toFile(), azureMetaDataMap);
 
     final List<ArtifactSigner> result = signerParser.parse(filename);
@@ -354,7 +355,7 @@ class YamlSignerParserTest {
 
   @Test
   void validationFailsForMissingRequiredOptionsForClientSecretMode() throws IOException {
-    final Path filename = configDir.resolve("azure_vf." + YAML_FILE_EXTENSION);
+    final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
 
     final Map<String, String> azureMetaDataMap = new HashMap<>();
     azureMetaDataMap.put("type", "azure-secret");
@@ -388,6 +389,7 @@ class YamlSignerParserTest {
                 && m.getTenantId() == null
                 && m.getKeyVaultName().equals("sample-vault-name")
                 && m.getSecretName().equals("TEST-KEY")
-                && m.getAuthenticationMode().equals(AzureAuthenticationMode.MANAGED_IDENTITY));
+                && m.getAuthenticationMode()
+                    .equals(AzureAuthenticationMode.SYSTEM_ASSIGNED_MANAGED_IDENTITY));
   }
 }

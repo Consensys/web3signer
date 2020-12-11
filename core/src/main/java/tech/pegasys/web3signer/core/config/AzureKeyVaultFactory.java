@@ -16,24 +16,23 @@ import tech.pegasys.signers.azure.AzureKeyVault;
 
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
-
 public class AzureKeyVaultFactory {
   public static AzureKeyVault createAzureKeyVault(
       final AzureKeyVaultParameters azureKeyVaultParameters) {
-    if (azureKeyVaultParameters.getAuthenticationMode() == AzureAuthenticationMode.CLIENT_SECRET) {
-      return AzureKeyVault.createUsingClientSecretCredentials(
-          azureKeyVaultParameters.getClientId(),
-          azureKeyVaultParameters.getClientSecret(),
-          azureKeyVaultParameters.getTenantId(),
-          azureKeyVaultParameters.getKeyVaultName());
-    } else {
-      final Optional<String> clientId =
-          StringUtils.isBlank(azureKeyVaultParameters.getClientId())
-              ? Optional.empty()
-              : Optional.of(azureKeyVaultParameters.getClientId());
-      return AzureKeyVault.createUsingManagedIdentity(
-          clientId, azureKeyVaultParameters.getKeyVaultName());
+    switch (azureKeyVaultParameters.getAuthenticationMode()) {
+      case USER_ASSIGNED_MANAGED_IDENTITY:
+        return AzureKeyVault.createUsingManagedIdentity(
+            Optional.of(azureKeyVaultParameters.getClientId()),
+            azureKeyVaultParameters.getKeyVaultName());
+      case SYSTEM_ASSIGNED_MANAGED_IDENTITY:
+        return AzureKeyVault.createUsingManagedIdentity(
+            Optional.empty(), azureKeyVaultParameters.getKeyVaultName());
+      default:
+        return AzureKeyVault.createUsingClientSecretCredentials(
+            azureKeyVaultParameters.getClientId(),
+            azureKeyVaultParameters.getClientSecret(),
+            azureKeyVaultParameters.getTenantId(),
+            azureKeyVaultParameters.getKeyVaultName());
     }
   }
 }

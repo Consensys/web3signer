@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
-import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.CLIENT_SECRET;
+import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
 import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -37,14 +37,6 @@ public class AzureSecretSigningMetadataDeserializer
   private static final String AUTH_MODE = "authenticationMode";
   private static final String KEY_TYPE = "keyType";
 
-  private KeyType keyType;
-  private String clientId;
-  private String clientSecret;
-  private String tenantId;
-  private String vaultName;
-  private String secretName;
-  private AzureAuthenticationMode authenticationMode;
-
   @SuppressWarnings("Unused")
   public AzureSecretSigningMetadataDeserializer() {
     this(null);
@@ -57,7 +49,16 @@ public class AzureSecretSigningMetadataDeserializer
   @Override
   public AzureSecretSigningMetadata deserialize(
       final JsonParser parser, final DeserializationContext ctxt) throws IOException {
+    KeyType keyType = null;
+    String clientId = null;
+    String clientSecret = null;
+    String tenantId = null;
+    String vaultName = null;
+    String secretName = null;
+    AzureAuthenticationMode authenticationMode = null;
+
     final JsonNode node = parser.getCodec().readTree(parser);
+    System.out.println(node.toPrettyString());
 
     if (node.get(KEY_TYPE) != null) {
       try {
@@ -95,34 +96,47 @@ public class AzureSecretSigningMetadataDeserializer
       clientSecret = node.get(CLIENT_SECRET).asText();
     }
 
-    validate(parser);
+    final AzureSecretSigningMetadata azureSecretSigningMetadata =
+        new AzureSecretSigningMetadata(
+            clientId, clientSecret, tenantId, vaultName, secretName, authenticationMode, keyType);
 
-    return new AzureSecretSigningMetadata(
-        clientId, clientSecret, tenantId, vaultName, secretName, authenticationMode, keyType);
+    validate(parser, azureSecretSigningMetadata);
+
+    return azureSecretSigningMetadata;
   }
 
-  // keyType and authMode can be null (for backward compatibility)
-  // vaultName and secretName are REQUIRED.
-  // clientId, clientSecret, tenantId are REQUIRED only if authMode is null OR CLIENT_SECRET
-  private void validate(final JsonParser parser) throws JsonMappingException {
+  private void validate(
+      final JsonParser parser, AzureSecretSigningMetadata azureSecretSigningMetadata)
+      throws JsonMappingException {
     final List<String> missingParameters = new ArrayList<>();
-    if (vaultName == null) {
+    // vaultName and secretName are REQUIRED.
+    if (azureSecretSigningMetadata.getKeyVaultName() == null) {
       missingParameters.add(VAULT_NAME);
     }
-    if (secretName == null) {
+    if (azureSecretSigningMetadata.getSecretName() == null) {
       missingParameters.add(SECRET_NAME);
     }
-    if (authenticationMode == null || authenticationMode == AzureAuthenticationMode.CLIENT_SECRET) {
-      if (clientId == null) {
+
+    // auth mode specific requirements
+    if (azureSecretSigningMetadata.getAuthenticationMode()
+        == AzureAuthenticationMode.CLIENT_SECRET) {
+      if (azureSecretSigningMetadata.getClientId() == null) {
         missingParameters.add(CLIENT_ID);
       }
-      if (clientSecret == null) {
+      if (azureSecretSigningMetadata.getClientSecret() == null) {
         missingParameters.add(CLIENT_SECRET);
       }
-      if (tenantId == null) {
+      if (azureSecretSigningMetadata.getTenantId() == null) {
         missingParameters.add(TENANT_ID);
       }
+    } else if (azureSecretSigningMetadata.getAuthenticationMode()
+        == USER_ASSIGNED_MANAGED_IDENTITY) {
+      if (azureSecretSigningMetadata.getClientId() == null) {
+        missingParameters.add(CLIENT_ID);
+      }
     }
+
+    // system-assigned-managed-identity doesn't require any of clientId, clientSecret and tenantId
 
     if (!missingParameters.isEmpty()) {
       throw new JsonMappingException(

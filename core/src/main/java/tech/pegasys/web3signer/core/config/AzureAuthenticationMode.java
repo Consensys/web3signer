@@ -14,5 +14,6 @@ package tech.pegasys.web3signer.core.config;
 
 public enum AzureAuthenticationMode {
   CLIENT_SECRET,
-  MANAGED_IDENTITY
+  SYSTEM_ASSIGNED_MANAGED_IDENTITY,
+  USER_ASSIGNED_MANAGED_IDENTITY
 }
