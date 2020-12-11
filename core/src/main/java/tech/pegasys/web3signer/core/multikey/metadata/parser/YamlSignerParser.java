@@ -49,10 +49,6 @@ public class YamlSignerParser implements SignerParser {
     try {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
-      System.out.println(metaDataInfo.getClass().getName());
-
-      // Custom validation of metadata parameters which is not enforced by Jackson
-      // SigningMetadataValidator.validate(metaDataInfo);
 
       return signerFactories.stream()
           .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
@@ -68,7 +64,7 @@ public class YamlSignerParser implements SignerParser {
     } catch (final SigningMetadataException e) {
       throw e;
     } catch (final Exception e) {
-      throw new SigningMetadataException("Unknonwn failure", e);
+      throw new SigningMetadataException("Unknown failure", e);
     }
   }
 }
