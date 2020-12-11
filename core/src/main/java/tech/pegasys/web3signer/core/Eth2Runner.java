@@ -21,7 +21,7 @@ import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
+import tech.pegasys.web3signer.core.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
@@ -57,7 +57,6 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -198,23 +197,8 @@ public class Eth2Runner extends Runner {
   }
 
   final Collection<ArtifactSigner> loadAzureSigners() {
-    final AzureKeyVault keyVault;
-    if (azureKeyVaultParameters.getAuthenticationMode() == AzureAuthenticationMode.CLIENT_SECRET) {
-      keyVault =
-          AzureKeyVault.createUsingClientSecretCredentials(
-              azureKeyVaultParameters.getClientId(),
-              azureKeyVaultParameters.getClientSecret(),
-              azureKeyVaultParameters.getTenantId(),
-              azureKeyVaultParameters.getKeyVaultName());
-    } else {
-      final Optional<String> clientId =
-          StringUtils.isBlank(azureKeyVaultParameters.getClientId())
-              ? Optional.empty()
-              : Optional.of(azureKeyVaultParameters.getClientId());
-      keyVault =
-          AzureKeyVault.createUsingManagedIdentity(
-              clientId, azureKeyVaultParameters.getKeyVaultName());
-    }
+    final AzureKeyVault keyVault =
+        AzureKeyVaultFactory.createAzureKeyVault(azureKeyVaultParameters);
 
     return keyVault.mapSecrets(
         (name, value) -> {

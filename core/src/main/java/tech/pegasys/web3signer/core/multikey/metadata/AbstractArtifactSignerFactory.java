@@ -22,7 +22,7 @@ import tech.pegasys.signers.hashicorp.TrustStoreType;
 import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
-import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
+import tech.pegasys.web3signer.core.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -33,7 +33,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import com.google.common.io.Files;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFactory {
@@ -55,21 +54,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   }
 
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
-    final AzureKeyVault azureVault;
-    if (metadata.getAuthenticationMode() == AzureAuthenticationMode.CLIENT_SECRET) {
-      azureVault =
-          AzureKeyVault.createUsingClientSecretCredentials(
-              metadata.getClientId(),
-              metadata.getClientSecret(),
-              metadata.getTenantId(),
-              metadata.getVaultName());
-    } else {
-      final Optional<String> clientId =
-          StringUtils.isBlank(metadata.getClientId())
-              ? Optional.empty()
-              : Optional.of(metadata.getClientId());
-      azureVault = AzureKeyVault.createUsingManagedIdentity(clientId, metadata.getVaultName());
-    }
+    final AzureKeyVault azureVault = AzureKeyVaultFactory.createAzureKeyVault(metadata);
 
     return azureVault
         .fetchSecret(metadata.getSecretName())

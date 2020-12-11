@@ -21,6 +21,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.mockito.Mockito;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
@@ -67,6 +68,7 @@ class YamlSignerParserTest {
 
   @BeforeEach
   public void setup() {
+    Mockito.reset();
     signerParser =
         new YamlSignerParser(List.of(blsArtifactSignerFactory, otherBlsArtifactSignerFactory));
     lenient().when(blsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
@@ -352,7 +354,7 @@ class YamlSignerParserTest {
 
   @Test
   void validationFailsForMissingRequiredOptionsForClientSecretMode() throws IOException {
-    final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
+    final Path filename = configDir.resolve("azure_vf." + YAML_FILE_EXTENSION);
 
     final Map<String, String> azureMetaDataMap = new HashMap<>();
     azureMetaDataMap.put("type", "azure-secret");
@@ -363,8 +365,7 @@ class YamlSignerParserTest {
 
     assertThatExceptionOfType(SigningMetadataException.class)
         .isThrownBy(() -> signerParser.parse(filename))
-        .withMessage(
-            "Missing required parameters for type: \"azure-secret\", authenticationMode: \"CLIENT_SECRET\" - clientId, clientSecret, tenantId");
+        .withMessage("Invalid signing metadata file format");
   }
 
   private AzureSecretSigningMetadata hasCorrectAzureMetadataArguments(
@@ -374,7 +375,7 @@ class YamlSignerParserTest {
             m.getClientId().equals("sample-client-id")
                 && m.getClientSecret().equals("sample-client-secret")
                 && m.getTenantId().equals("sample-tenant-id")
-                && m.getVaultName().equals("sample-vault-name")
+                && m.getKeyVaultName().equals("sample-vault-name")
                 && m.getSecretName().equals("TEST-KEY")
                 && m.getAuthenticationMode().equals(authenticationMode));
   }
@@ -385,7 +386,7 @@ class YamlSignerParserTest {
             m.getClientId() == null
                 && m.getClientSecret() == null
                 && m.getTenantId() == null
-                && m.getVaultName().equals("sample-vault-name")
+                && m.getKeyVaultName().equals("sample-vault-name")
                 && m.getSecretName().equals("TEST-KEY")
                 && m.getAuthenticationMode().equals(AzureAuthenticationMode.MANAGED_IDENTITY));
   }

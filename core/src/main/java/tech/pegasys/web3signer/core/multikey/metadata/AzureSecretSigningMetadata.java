@@ -13,13 +13,16 @@
 package tech.pegasys.web3signer.core.multikey.metadata;
 
 import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
+import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-public class AzureSecretSigningMetadata extends SigningMetadata {
+@JsonDeserialize(using = AzureSecretSigningMetadataDeserializer.class)
+public class AzureSecretSigningMetadata extends SigningMetadata implements AzureKeyVaultParameters {
 
   private final String clientId;
   private final String clientSecret;
@@ -33,8 +36,8 @@ public class AzureSecretSigningMetadata extends SigningMetadata {
       @JsonProperty("clientId") final String clientId,
       @JsonProperty("clientSecret") final String clientSecret,
       @JsonProperty("tenantId") final String tenantId,
-      @JsonProperty(value = "vaultName", required = true) final String vaultName,
-      @JsonProperty(value = "secretName", required = true) final String secretName,
+      @JsonProperty("vaultName") final String vaultName,
+      @JsonProperty("secretName") final String secretName,
       @JsonProperty("authenticationMode") final AzureAuthenticationMode azureAuthenticationMode,
       @JsonProperty("keyType") final KeyType keyType) {
     super(keyType != null ? keyType : KeyType.BLS);
@@ -49,28 +52,38 @@ public class AzureSecretSigningMetadata extends SigningMetadata {
             : azureAuthenticationMode;
   }
 
-  public String getClientId() {
-    return clientId;
+  @Override
+  public boolean isAzureKeyVaultEnabled() {
+    return true;
   }
 
-  public String getClientSecret() {
-    return clientSecret;
+  @Override
+  public AzureAuthenticationMode getAuthenticationMode() {
+    return authenticationMode;
   }
 
+  @Override
+  public String getKeyVaultName() {
+    return vaultName;
+  }
+
+  @Override
   public String getTenantId() {
     return tenantId;
   }
 
-  public String getVaultName() {
-    return vaultName;
+  @Override
+  public String getClientId() {
+    return clientId;
+  }
+
+  @Override
+  public String getClientSecret() {
+    return clientSecret;
   }
 
   public String getSecretName() {
     return secretName;
-  }
-
-  public AzureAuthenticationMode getAuthenticationMode() {
-    return authenticationMode;
   }
 
   @Override

@@ -17,7 +17,6 @@ import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITI
 import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
-import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataValidator;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 
 import java.io.FileNotFoundException;
@@ -50,9 +49,10 @@ public class YamlSignerParser implements SignerParser {
     try {
       final SigningMetadata metaDataInfo =
           OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
+      System.out.println(metaDataInfo.getClass().getName());
 
       // Custom validation of metadata parameters which is not enforced by Jackson
-      SigningMetadataValidator.validate(metaDataInfo);
+      // SigningMetadataValidator.validate(metaDataInfo);
 
       return signerFactories.stream()
           .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
