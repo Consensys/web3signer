@@ -87,10 +87,12 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
         final AzureKeyVaultParameters azureParams = signerConfig.getAzureKeyVaultParameters().get();
         params.add("--azure-vault-enabled=true");
+        params.add("--azure-vault-auth-mode");
+        params.add(azureParams.getAuthenticationMode().name());
         params.add("--azure-vault-name");
         params.add(azureParams.getKeyVaultName());
         params.add("--azure-client-id");
-        params.add(azureParams.getClientlId());
+        params.add(azureParams.getClientId());
         params.add("--azure-client-secret");
         params.add(azureParams.getClientSecret());
         params.add("--azure-tenant-id");

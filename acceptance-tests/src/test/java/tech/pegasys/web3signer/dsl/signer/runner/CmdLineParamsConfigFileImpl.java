@@ -105,9 +105,14 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
         yamlConfig.append(
             String.format(YAML_BOOLEAN_FMT, "eth2.azure-vault-enabled", Boolean.TRUE));
         yamlConfig.append(
+            String.format(
+                YAML_STRING_FMT,
+                "eth2.azure-vault-auth-mode",
+                azureParams.getAuthenticationMode().name()));
+        yamlConfig.append(
             String.format(YAML_STRING_FMT, "eth2.azure-vault-name", azureParams.getKeyVaultName()));
         yamlConfig.append(
-            String.format(YAML_STRING_FMT, "eth2.azure-client-id", azureParams.getClientlId()));
+            String.format(YAML_STRING_FMT, "eth2.azure-client-id", azureParams.getClientId()));
         yamlConfig.append(
             String.format(
                 YAML_STRING_FMT, "eth2.azure-client-secret", azureParams.getClientSecret()));
