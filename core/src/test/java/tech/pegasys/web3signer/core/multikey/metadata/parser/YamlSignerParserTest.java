@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.multikey.metadata.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.when;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.core.multikey.metadata.AzureSecretSigningMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.FileKeyStoreMetadata;
@@ -44,7 +46,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,6 +68,7 @@ class YamlSignerParserTest {
 
   @BeforeEach
   public void setup() {
+    Mockito.reset();
     signerParser =
         new YamlSignerParser(List.of(blsArtifactSignerFactory, otherBlsArtifactSignerFactory));
     lenient().when(blsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
@@ -271,16 +277,119 @@ class YamlSignerParserTest {
 
     final List<ArtifactSigner> result = signerParser.parse(filename);
     assertThat(result).containsOnly(artifactSigner);
-    verify(blsArtifactSignerFactory).create(hasCorrectAzureMetadataArguments());
+    verify(blsArtifactSignerFactory)
+        .create(hasCorrectAzureMetadataArguments(AzureAuthenticationMode.CLIENT_SECRET));
   }
 
-  private AzureSecretSigningMetadata hasCorrectAzureMetadataArguments() {
+  @ParameterizedTest
+  @EnumSource(AzureAuthenticationMode.class)
+  void azureSecretMetadataWithAuthenticationModeReturnsMetadata(
+      final AzureAuthenticationMode authenticationMode) throws IOException {
+    final BlsArtifactSigner artifactSigner =
+        new BlsArtifactSigner(
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY))));
+    when(blsArtifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
+        .thenReturn(artifactSigner);
+
+    final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
+
+    final Map<String, String> azureMetaDataMap = new HashMap<>();
+    azureMetaDataMap.put("type", "azure-secret");
+    azureMetaDataMap.put("clientId", "sample-client-id");
+    azureMetaDataMap.put("clientSecret", "sample-client-secret");
+    azureMetaDataMap.put("tenantId", "sample-tenant-id");
+    azureMetaDataMap.put("vaultName", "sample-vault-name");
+    azureMetaDataMap.put("secretName", "TEST-KEY");
+    azureMetaDataMap.put("authenticationMode", authenticationMode.name());
+    azureMetaDataMap.put("keyType", "BLS");
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), azureMetaDataMap);
+
+    final List<ArtifactSigner> result = signerParser.parse(filename);
+    assertThat(result).containsOnly(artifactSigner);
+    verify(blsArtifactSignerFactory).create(hasCorrectAzureMetadataArguments(authenticationMode));
+  }
+
+  @Test
+  void azureSecretMetadataWithSystemAssignedManagedIdentityReturnsMetadata() throws IOException {
+    final BlsArtifactSigner artifactSigner =
+        new BlsArtifactSigner(
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY))));
+    when(blsArtifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
+        .thenReturn(artifactSigner);
+
+    final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
+
+    final Map<String, String> azureMetaDataMap = new HashMap<>();
+    azureMetaDataMap.put("type", "azure-secret");
+    azureMetaDataMap.put("vaultName", "sample-vault-name");
+    azureMetaDataMap.put("secretName", "TEST-KEY");
+    azureMetaDataMap.put(
+        "authenticationMode", AzureAuthenticationMode.SYSTEM_ASSIGNED_MANAGED_IDENTITY.name());
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), azureMetaDataMap);
+
+    final List<ArtifactSigner> result = signerParser.parse(filename);
+    assertThat(result).containsOnly(artifactSigner);
+    verify(blsArtifactSignerFactory)
+        .create(hasCorrectAzureManagedIdentityMinimalMetadataArguments());
+  }
+
+  @Test
+  void validationFailsForInvalidAzureAuthenticationMode() throws IOException {
+    final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
+
+    final Map<String, String> azureMetaDataMap = new HashMap<>();
+    azureMetaDataMap.put("type", "azure-secret");
+    azureMetaDataMap.put("clientId", "sample-client-id");
+    azureMetaDataMap.put("clientSecret", "sample-client-secret");
+    azureMetaDataMap.put("tenantId", "sample-tenant-id");
+    azureMetaDataMap.put("vaultName", "sample-vault-name");
+    azureMetaDataMap.put("secretName", "TEST-KEY");
+    azureMetaDataMap.put("authenticationMode", "invalid_auth_mode");
+    azureMetaDataMap.put("keyType", "BLS");
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), azureMetaDataMap);
+
+    assertThatExceptionOfType(SigningMetadataException.class)
+        .isThrownBy(() -> signerParser.parse(filename))
+        .withMessage("Invalid signing metadata file format");
+  }
+
+  @Test
+  void validationFailsForMissingRequiredOptionsForClientSecretMode() throws IOException {
+    final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
+
+    final Map<String, String> azureMetaDataMap = new HashMap<>();
+    azureMetaDataMap.put("type", "azure-secret");
+    azureMetaDataMap.put("vaultName", "sample-vault-name");
+    azureMetaDataMap.put("secretName", "TEST-KEY");
+    azureMetaDataMap.put("authenticationMode", AzureAuthenticationMode.CLIENT_SECRET.name());
+    YAML_OBJECT_MAPPER.writeValue(filename.toFile(), azureMetaDataMap);
+
+    assertThatExceptionOfType(SigningMetadataException.class)
+        .isThrownBy(() -> signerParser.parse(filename))
+        .withMessage("Invalid signing metadata file format");
+  }
+
+  private AzureSecretSigningMetadata hasCorrectAzureMetadataArguments(
+      final AzureAuthenticationMode authenticationMode) {
     return argThat(
         (AzureSecretSigningMetadata m) ->
             m.getClientId().equals("sample-client-id")
                 && m.getClientSecret().equals("sample-client-secret")
                 && m.getTenantId().equals("sample-tenant-id")
-                && m.getVaultName().equals("sample-vault-name")
-                && m.getSecretName().equals("TEST-KEY"));
+                && m.getKeyVaultName().equals("sample-vault-name")
+                && m.getSecretName().equals("TEST-KEY")
+                && m.getAuthenticationMode().equals(authenticationMode));
+  }
+
+  private AzureSecretSigningMetadata hasCorrectAzureManagedIdentityMinimalMetadataArguments() {
+    return argThat(
+        (AzureSecretSigningMetadata m) ->
+            m.getClientId() == null
+                && m.getClientSecret() == null
+                && m.getTenantId() == null
+                && m.getKeyVaultName().equals("sample-vault-name")
+                && m.getSecretName().equals("TEST-KEY")
+                && m.getAuthenticationMode()
+                    .equals(AzureAuthenticationMode.SYSTEM_ASSIGNED_MANAGED_IDENTITY));
   }
 }

@@ -12,50 +12,71 @@
  */
 package tech.pegasys.web3signer.core.multikey.metadata;
 
+import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
+import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-public class AzureSecretSigningMetadata extends SigningMetadata {
+@JsonDeserialize(using = AzureSecretSigningMetadataDeserializer.class)
+public class AzureSecretSigningMetadata extends SigningMetadata implements AzureKeyVaultParameters {
 
   private final String clientId;
   private final String clientSecret;
   private final String tenantId;
   private final String vaultName;
   private final String secretName;
+  private final AzureAuthenticationMode authenticationMode;
 
-  @JsonCreator
   public AzureSecretSigningMetadata(
-      @JsonProperty("clientId") final String clientId,
-      @JsonProperty("clientSecret") final String clientSecret,
-      @JsonProperty("tenantId") final String tenantId,
-      @JsonProperty("vaultName") final String vaultName,
-      @JsonProperty("secretName") final String secretName,
-      @JsonProperty("keyType") final KeyType keyType) {
+      final String clientId,
+      final String clientSecret,
+      final String tenantId,
+      final String vaultName,
+      final String secretName,
+      final AzureAuthenticationMode azureAuthenticationMode,
+      final KeyType keyType) {
     super(keyType != null ? keyType : KeyType.BLS);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.tenantId = tenantId;
     this.vaultName = vaultName;
     this.secretName = secretName;
+    this.authenticationMode =
+        azureAuthenticationMode == null
+            ? AzureAuthenticationMode.CLIENT_SECRET
+            : azureAuthenticationMode;
   }
 
-  public String getClientId() {
-    return clientId;
+  @Override
+  public boolean isAzureKeyVaultEnabled() {
+    return true;
   }
 
-  public String getClientSecret() {
-    return clientSecret;
+  @Override
+  public AzureAuthenticationMode getAuthenticationMode() {
+    return authenticationMode;
   }
 
+  @Override
+  public String getKeyVaultName() {
+    return vaultName;
+  }
+
+  @Override
   public String getTenantId() {
     return tenantId;
   }
 
-  public String getVaultName() {
-    return vaultName;
+  @Override
+  public String getClientId() {
+    return clientId;
+  }
+
+  @Override
+  public String getClientSecret() {
+    return clientSecret;
   }
 
   public String getSecretName() {

@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
@@ -122,24 +123,25 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void allNonNullEntriesAtTargetEpochAreReturnedIfCheckingAgainstNull() {
+  public void throwsIfMatchingAgainstNull() {
     insertValidator(Bytes.of(100), 1);
     insertBlock(1, 3, Bytes.of(10));
     insertBlock(1, 3, Bytes.of(11));
     insertBlock(1, 3, null);
 
-    final List<SignedBlock> nonMatchingAttestations =
-        signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
-            handle, 1, UInt64.valueOf(3), null);
-
-    assertThat(nonMatchingAttestations).hasSize(2);
+    assertThatThrownBy(
+            () ->
+                signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
+                    handle, 1, UInt64.valueOf(3), null))
+        .isInstanceOf(NullPointerException.class);
   }
 
   @Test
-  public void existingCheckMatchesOnNullSigningRoot() {
+  public void findMatchingBlockThrowsIfMatchingOnNull() {
     insertValidator(Bytes.of(100), 1);
     insertBlock(1, 3, null);
-    assertThat(signedBlocksDao.findMatchingBlock(handle, 1, UInt64.valueOf(3), null)).isNotEmpty();
+    assertThatThrownBy(() -> signedBlocksDao.findMatchingBlock(handle, 1, UInt64.valueOf(3), null))
+        .isInstanceOf(NullPointerException.class);
   }
 
   private void insertBlock(final int validatorId, final int slot, final Bytes signingRoot) {

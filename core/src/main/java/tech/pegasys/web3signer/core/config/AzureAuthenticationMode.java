@@ -12,17 +12,8 @@
  */
 package tech.pegasys.web3signer.core.config;
 
-public interface AzureKeyVaultParameters {
-
-  boolean isAzureKeyVaultEnabled();
-
-  AzureAuthenticationMode getAuthenticationMode();
-
-  String getKeyVaultName();
-
-  String getTenantId();
-
-  String getClientId();
-
-  String getClientSecret();
+public enum AzureAuthenticationMode {
+  CLIENT_SECRET,
+  SYSTEM_ASSIGNED_MANAGED_IDENTITY,
+  USER_ASSIGNED_MANAGED_IDENTITY
 }

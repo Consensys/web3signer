@@ -21,6 +21,7 @@ import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.core.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
@@ -197,11 +198,7 @@ public class Eth2Runner extends Runner {
 
   final Collection<ArtifactSigner> loadAzureSigners() {
     final AzureKeyVault keyVault =
-        new AzureKeyVault(
-            azureKeyVaultParameters.getClientlId(),
-            azureKeyVaultParameters.getClientSecret(),
-            azureKeyVaultParameters.getTenantId(),
-            azureKeyVaultParameters.getKeyVaultName());
+        AzureKeyVaultFactory.createAzureKeyVault(azureKeyVaultParameters);
 
     return keyVault.mapSecrets(
         (name, value) -> {

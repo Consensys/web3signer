@@ -163,8 +163,6 @@ components:
           properties:
             attestation:
               $ref: "#/components/schemas/AttestationData"
-            fork:
-              $ref: '#/components/schemas/AttestationData'
           required:
             - attestation
     BlockSigning:
@@ -314,9 +312,9 @@ components:
     ProposerSlashing:
       type: "object"
       properties:
-        header_1:
+        signed_header_1:
           "$ref": "#/components/schemas/SignedBeaconBlockHeader"
-        header_2":
+        signed_header_2:
           "$ref": "#/components/schemas/SignedBeaconBlockHeader"
     AttesterSlashing:
       type: "object"
