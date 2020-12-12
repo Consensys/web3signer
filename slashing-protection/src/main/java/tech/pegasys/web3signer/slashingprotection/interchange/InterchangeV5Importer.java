@@ -16,19 +16,13 @@ import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
-import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
-import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation;
-import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
-import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
-import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRootValidator;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -40,7 +34,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
@@ -133,154 +126,18 @@ public class InterchangeV5Importer {
       final Handle handle, final Validator validator, final ArrayNode signedBlocksNode)
       throws JsonProcessingException {
 
-    final OptionalMinValueTracker minSlotTracker = new OptionalMinValueTracker();
-
-    for (int i = 0; i < signedBlocksNode.size(); i++) {
-      final SignedBlock jsonBlock = mapper.treeToValue(signedBlocksNode.get(i), SignedBlock.class);
-      final BlockValidator blockValidator =
-          new BlockValidator(
-              handle,
-              jsonBlock.getSigningRoot(),
-              jsonBlock.getSlot(),
-              validator.getId(),
-              signedBlocksDao,
-              lowWatermarkDao);
-
-      if (blockValidator.directlyConflictsWithExistingEntry()) {
-        LOG.debug(
-            "Block {} for validator {} conflicts with on slot {} in database",
-            i,
-            validator.getPublicKey(),
-            jsonBlock.getSlot());
-      }
-
-      if (blockValidator.alreadyExists()) {
-        LOG.debug(
-            "Block {} for validator {} already exists in database, not imported",
-            i,
-            validator.getPublicKey());
-      } else {
-        signedBlocksDao.insertBlockProposal(
-            handle,
-            new tech.pegasys.web3signer.slashingprotection.dao.SignedBlock(
-                validator.getId(), jsonBlock.getSlot(), jsonBlock.getSigningRoot()));
-
-        minSlotTracker.trackValue(jsonBlock.getSlot());
-      }
-    }
-
-    final Optional<SigningWatermark> watermark =
-        lowWatermarkDao.findLowWatermarkForValidator(handle, validator.getId());
-
-    if (minSlotTracker.compareTrackedValueTo(watermark.map(SigningWatermark::getSlot)) > 0) {
-      LOG.warn(
-          "Updating Block slot low watermark to {}", minSlotTracker.getTrackedMinValue().get());
-      lowWatermarkDao.updateSlotWatermarkFor(
-          handle, validator.getId(), minSlotTracker.getTrackedMinValue().get());
-    }
+    final BlockImporter blockImporter =
+        new BlockImporter(validator, handle, mapper, lowWatermarkDao, signedBlocksDao);
+    blockImporter.importFrom(signedBlocksNode);
   }
 
   private void importAttestations(
       final Handle handle, final Validator validator, final ArrayNode signedAttestationNode)
       throws JsonProcessingException {
 
-    final OptionalMinValueTracker minSourceTracker = new OptionalMinValueTracker();
-    final OptionalMinValueTracker minTargetTracker = new OptionalMinValueTracker();
+    final AttestationImporter attestationImporter =
+        new AttestationImporter(validator, handle, mapper, lowWatermarkDao, signedAttestationsDao);
 
-    for (int i = 0; i < signedAttestationNode.size(); i++) {
-      final SignedAttestation jsonAttestation =
-          mapper.treeToValue(signedAttestationNode.get(i), SignedAttestation.class);
-      final AttestationValidator attestationValidator =
-          new AttestationValidator(
-              handle,
-              validator.getPublicKey(),
-              jsonAttestation.getSigningRoot(),
-              jsonAttestation.getSourceEpoch(),
-              jsonAttestation.getTargetEpoch(),
-              validator.getId(),
-              signedAttestationsDao,
-              lowWatermarkDao);
-
-      // if the attestation is illegal formatted, it cannot be imported
-      final String attesationIdentiferString =
-          String.format("Attestation with index %d for validator %s", i, validator.getPublicKey());
-      if (attestationValidator.sourceGreaterThanTargetEpoch()) {
-        LOG.warn("{} - source is greater than target epoch", attesationIdentiferString);
-      } else {
-
-        if (attestationValidator.directlyConflictsWithExistingEntry()) {
-          LOG.warn("{} - conflicts with an existing entry", attesationIdentiferString);
-        }
-
-        if (attestationValidator.isSurroundedByExistingAttestation()) {
-          LOG.warn("{} - is surrounded by existing entries", attesationIdentiferString);
-        }
-
-        if (attestationValidator.surroundsExistingAttestation()) {
-          LOG.warn("{} - surrounds an existing entry", attesationIdentiferString);
-        }
-
-        if (attestationValidator.alreadyExists()) {
-          LOG.debug("{} - already exists in database, not imported", attesationIdentiferString);
-        } else {
-          signedAttestationsDao.insertAttestation(
-              handle,
-              new tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation(
-                  validator.getId(),
-                  jsonAttestation.getSourceEpoch(),
-                  jsonAttestation.getTargetEpoch(),
-                  jsonAttestation.getSigningRoot()));
-          minSourceTracker.trackValue(jsonAttestation.getSourceEpoch());
-          minTargetTracker.trackValue(jsonAttestation.getTargetEpoch());
-        }
-      }
-    }
-    persistAttestationWatermark(handle, validator, minSourceTracker, minTargetTracker);
-  }
-
-  public void persistAttestationWatermark(
-      final Handle handle,
-      final Validator validator,
-      final OptionalMinValueTracker minSourceTracker,
-      final OptionalMinValueTracker minTargetTracker) {
-    final Optional<SigningWatermark> existingWatermark =
-        lowWatermarkDao.findLowWatermarkForValidator(handle, validator.getId());
-
-    final Optional<UInt64> newSourceWatermark =
-        findBestEpochWatermark(
-            minSourceTracker,
-            existingWatermark.flatMap(
-                watermark -> Optional.ofNullable(watermark.getSourceEpoch())));
-    final Optional<UInt64> newTargetWatermark =
-        findBestEpochWatermark(
-            minTargetTracker,
-            existingWatermark.flatMap(
-                watermark -> Optional.ofNullable(watermark.getTargetEpoch())));
-
-    if (newSourceWatermark.isPresent() && newTargetWatermark.isPresent()) {
-      LOG.info(
-          "Updating validator {} source epoch to {}",
-          validator.getPublicKey(),
-          newSourceWatermark.get());
-      LOG.info(
-          "Updating validator {} target epoch to {}",
-          validator.getPublicKey(),
-          newTargetWatermark.get());
-      lowWatermarkDao.updateEpochWatermarksFor(
-          handle, validator.getId(), newSourceWatermark.get(), newTargetWatermark.get());
-    } else if (newSourceWatermark.isPresent() != newTargetWatermark.isPresent()) {
-      throw new RuntimeException(
-          "Inconsistent data - no existing attestation watermark, "
-              + "and import only sets one epoch");
-    }
-  }
-
-  private Optional<UInt64> findBestEpochWatermark(
-      final OptionalMinValueTracker importedMin, final Optional<UInt64> currentWatermark) {
-    if (importedMin.compareTrackedValueTo(currentWatermark) > 0) {
-      return importedMin.getTrackedMinValue();
-    } else {
-      return currentWatermark;
-    }
+    attestationImporter.importFrom(signedAttestationNode);
   }
 }
