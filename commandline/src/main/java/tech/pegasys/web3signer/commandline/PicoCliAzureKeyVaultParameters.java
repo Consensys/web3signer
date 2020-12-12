@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline;
 
+import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 
 import picocli.CommandLine.Option;
@@ -27,6 +28,14 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
   private boolean azureKeyVaultEnabled = false;
 
   @Option(
+      names = {"--azure-vault-auth-mode"},
+      description =
+          "Authentication mode for Azure Vault. Valid Values: [${COMPLETION-CANDIDATES}]"
+              + " (Default: ${DEFAULT-VALUE})",
+      paramLabel = "<AUTHENTICATION_MODE>")
+  private AzureAuthenticationMode authenticationMode = AzureAuthenticationMode.CLIENT_SECRET;
+
+  @Option(
       names = {"--azure-vault-name"},
       description = "Name of the vault to access - used as the sub-domain to vault.azure.net",
       paramLabel = "<KEY_VAULT_NAME>")
@@ -34,7 +43,9 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
   @Option(
       names = {"--azure-client-id"},
-      description = "The ID used to authenticate with Azure key vault",
+      description =
+          "The ID used by client secret or user-assigned managed identity authentication mode to access Azure key vault. "
+              + "Optional for system-assigned managed identity.",
       paramLabel = "<CLIENT_ID>")
   private String clientId;
 
@@ -56,6 +67,11 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
   }
 
   @Override
+  public AzureAuthenticationMode getAuthenticationMode() {
+    return authenticationMode;
+  }
+
+  @Override
   public String getKeyVaultName() {
     return keyVaultName;
   }
@@ -66,7 +82,7 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
   }
 
   @Override
-  public String getClientlId() {
+  public String getClientId() {
     return clientId;
   }
 
