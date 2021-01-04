@@ -73,7 +73,6 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Override
   public Eth2Runner createRunner() {
-    validateArgs();
     return new Eth2Runner(
         config,
         slashingProtectionEnabled,
@@ -83,7 +82,10 @@ public class Eth2SubCommand extends ModeSubCommand {
         azureKeyVaultParameters);
   }
 
-  private void validateArgs() {
+  @Override
+  protected void validateArgs() {
+    super.validateArgs();
+
     if (slashingProtectionEnabled && slashingProtectionDbUrl == null) {
       throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
     }

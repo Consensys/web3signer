@@ -197,7 +197,7 @@ class CommandlineParserTest {
 
     @Override
     public void run() {
-      config.validateArgs();
+      validateArgs();
       createRunner();
     }
   }
