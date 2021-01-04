@@ -270,7 +270,9 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   }
 
   @Override
-  public void validateConfig() {
+  public void validateArgs() {
+    // custom validation for TLS options as we removed ArgGroups since they don't work with config
+    // files
     final PicoCliTlsServerOptionsValidator picoCliTlsServerOptionsValidator =
         new PicoCliTlsServerOptionsValidator(spec, picoCliTlsServerOptions);
     picoCliTlsServerOptionsValidator.validate();
