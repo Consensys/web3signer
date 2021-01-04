@@ -17,6 +17,7 @@ import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_A
 
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
+import tech.pegasys.web3signer.core.Runner;
 
 import java.util.List;
 
@@ -72,7 +73,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
-  public Eth2Runner createRunner() {
+  public Runner createRunner() {
     return new Eth2Runner(
         config,
         slashingProtectionEnabled,

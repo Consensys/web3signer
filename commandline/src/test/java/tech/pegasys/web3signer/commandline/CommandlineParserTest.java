@@ -17,8 +17,8 @@ import static tech.pegasys.web3signer.CmdlineHelpers.removeFieldFrom;
 import static tech.pegasys.web3signer.CmdlineHelpers.validBaseCommandOptions;
 
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
-import tech.pegasys.web3signer.core.Eth2Runner;
-import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.core.Context;
+import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.Config;
 
 import java.io.PrintWriter;
@@ -27,6 +27,7 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.function.Supplier;
 
+import io.vertx.ext.web.Router;
 import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -333,38 +334,28 @@ class CommandlineParserTest {
 
   public static class MockEth2SubCommand extends Eth2SubCommand {
     @Override
-    public Eth2Runner createRunner() {
-      return new DoNothingEth2Runner(
-          config,
-          isSlashingProtectionEnabled(),
-          getSlashingProtectionDbUrl(),
-          getSlashingProtectionDbUsername(),
-          getSlashingProtectionDbPassword(),
-          azureKeyVaultParameters);
+    public Runner createRunner() {
+      return new NoOpRunner(config);
     }
   }
 
-  public static class DoNothingEth2Runner extends Eth2Runner {
+  public static class NoOpRunner extends Runner {
 
-    public DoNothingEth2Runner(
-        final Config config,
-        final boolean slashingProtectionEnabled,
-        final String slashingProtectionDbUrl,
-        final String slashingProtectionDbUser,
-        final String slashingProtectionDbPassword,
-        final AzureKeyVaultParameters azureKeyVaultParameters) {
-      super(
-          config,
-          slashingProtectionEnabled,
-          slashingProtectionDbUrl,
-          slashingProtectionDbUser,
-          slashingProtectionDbPassword,
-          azureKeyVaultParameters);
+    protected NoOpRunner(final Config config) {
+      super(config);
     }
 
     @Override
-    public void run() {
-      // do nothing as we don't want to perform actual execution of command
+    public void run() {}
+
+    @Override
+    protected Router populateRouter(final Context context) {
+      return null;
+    }
+
+    @Override
+    protected String getOpenApiSpecResource() {
+      return null;
     }
   }
 }
