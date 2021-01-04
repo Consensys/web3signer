@@ -21,11 +21,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.logging.log4j.Level;
+
 public class SignerConfiguration {
 
   public static final int UNASSIGNED_PORT = 0;
 
   private final String hostname;
+  private final Level logLevel;
   private final int httpRpcPort;
   private final List<String> httpHostAllowList;
   private final Path keyStorePath;
@@ -50,6 +53,7 @@ public class SignerConfiguration {
   public SignerConfiguration(
       final String hostname,
       final int httpRpcPort,
+      final Level logLevel,
       final List<String> httpHostAllowList,
       final Path keyStorePath,
       final int metricsPort,
@@ -70,6 +74,7 @@ public class SignerConfiguration {
       final boolean swaggerUIEnabled,
       final boolean useConfigFile) {
     this.hostname = hostname;
+    this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
     this.httpHostAllowList = httpHostAllowList;
     this.keyStorePath = keyStorePath;
@@ -98,6 +103,10 @@ public class SignerConfiguration {
 
   public int httpPort() {
     return httpRpcPort;
+  }
+
+  public String logLevel() {
+    return logLevel.toString();
   }
 
   public List<String> getHttpHostAllowList() {

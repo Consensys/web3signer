@@ -39,11 +39,9 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
 
   @Override
   public List<String> createCmdLineParams() {
-    final String loggingLevel = "TRACE";
-
     final List<String> params = new ArrayList<>();
     params.add("--logging");
-    params.add(loggingLevel);
+    params.add(signerConfig.logLevel());
     params.add("--http-listen-host");
     params.add(signerConfig.hostname());
     params.add("--http-listen-port");

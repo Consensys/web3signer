@@ -24,10 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.logging.log4j.Level;
+
 public class SignerConfigurationBuilder {
 
   private static final String LOCALHOST = "127.0.0.1";
 
+  private Level logLevel = Level.TRACE;
   private int httpRpcPort = 0;
   private int metricsPort = 0;
   private Path keyStoreDirectory = Path.of("./");
@@ -48,6 +51,11 @@ public class SignerConfigurationBuilder {
   private Path slashingImportPath;
   private boolean swaggerUIEnabled = false;
   private boolean useConfigFile = false;
+
+  public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
+    this.logLevel = logLevel;
+    return this;
+  }
 
   public SignerConfigurationBuilder withHttpPort(final int port) {
     httpRpcPort = port;
@@ -160,6 +168,7 @@ public class SignerConfigurationBuilder {
     return new SignerConfiguration(
         LOCALHOST,
         httpRpcPort,
+        logLevel,
         httpHostAllowList,
         keyStoreDirectory,
         metricsPort,

@@ -48,7 +48,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     final ArrayList<String> params = new ArrayList<>();
 
     final StringBuilder yamlConfig = new StringBuilder();
-    yamlConfig.append(String.format(YAML_STRING_FMT, "logging", "TRACE"));
+    yamlConfig.append(String.format(YAML_STRING_FMT, "logging", signerConfig.logLevel()));
     yamlConfig.append(String.format(YAML_STRING_FMT, "http-listen-host", signerConfig.hostname()));
     yamlConfig.append(String.format(YAML_NUMERIC_FMT, "http-listen-port", signerConfig.httpPort()));
 
