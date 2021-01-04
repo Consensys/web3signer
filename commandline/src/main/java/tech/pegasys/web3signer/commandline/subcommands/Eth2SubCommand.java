@@ -133,20 +133,4 @@ public class Eth2SubCommand extends ModeSubCommand {
   public String getCommandName() {
     return COMMAND_NAME;
   }
-
-  protected boolean isSlashingProtectionEnabled() {
-    return slashingProtectionEnabled;
-  }
-
-  protected String getSlashingProtectionDbUrl() {
-    return slashingProtectionDbUrl;
-  }
-
-  protected String getSlashingProtectionDbUsername() {
-    return slashingProtectionDbUsername;
-  }
-
-  protected String getSlashingProtectionDbPassword() {
-    return slashingProtectionDbPassword;
-  }
 }
