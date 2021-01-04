@@ -36,4 +36,9 @@ public class Eth1SubCommand extends ModeSubCommand {
   public String getCommandName() {
     return COMMAND_NAME;
   }
+
+  @Override
+  protected void validateArgs() {
+    // no special validation required
+  }
 }

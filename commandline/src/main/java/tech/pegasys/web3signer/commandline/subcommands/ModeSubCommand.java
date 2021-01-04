@@ -23,6 +23,7 @@ public abstract class ModeSubCommand implements Runnable {
 
   @Override
   public void run() {
+    config.validateArgs();
     validateArgs();
     createRunner().run();
   }
@@ -31,7 +32,5 @@ public abstract class ModeSubCommand implements Runnable {
 
   public abstract String getCommandName();
 
-  protected void validateArgs() {
-    config.validateArgs();
-  }
+  protected abstract void validateArgs();
 }

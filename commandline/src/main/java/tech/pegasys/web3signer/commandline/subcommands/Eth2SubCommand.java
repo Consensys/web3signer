@@ -84,8 +84,6 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Override
   protected void validateArgs() {
-    super.validateArgs();
-
     if (slashingProtectionEnabled && slashingProtectionDbUrl == null) {
       throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
     }
