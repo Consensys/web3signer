@@ -48,5 +48,7 @@ public interface Config {
 
   int getIdleConnectionTimeoutSeconds();
 
+  void validateArgs();
+
   Boolean isSwaggerUIEnabled();
 }

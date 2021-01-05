@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline.config;
 
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_BOOL_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
@@ -32,8 +33,10 @@ public class PicoCliClientAuthConstraints implements ClientAuthConstraints {
 
   @Option(
       names = "--tls-allow-ca-clients",
-      description = "If defined, allows clients authorized by the CA to connect to EthSigner.",
-      arity = "0")
+      description =
+          "If set to true, allows clients authorized by the CA to connect to Web3Signer. (Default: false)",
+      paramLabel = MANDATORY_BOOL_FORMAT_HELP,
+      arity = "1")
   private Boolean tlsAllowCaClients = false;
 
   @Override

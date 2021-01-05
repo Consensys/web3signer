@@ -45,4 +45,9 @@ public class FilecoinSubCommand extends ModeSubCommand {
   public String getCommandName() {
     return COMMAND_NAME;
   }
+
+  @Override
+  protected void validateArgs() {
+    // no special validation required
+  }
 }

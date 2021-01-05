@@ -17,6 +17,9 @@ import static tech.pegasys.web3signer.CmdlineHelpers.removeFieldFrom;
 import static tech.pegasys.web3signer.CmdlineHelpers.validBaseCommandOptions;
 
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
+import tech.pegasys.web3signer.core.Context;
+import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.core.config.Config;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -24,6 +27,7 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.function.Supplier;
 
+import io.vertx.ext.web.Router;
 import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -182,6 +186,141 @@ class CommandlineParserTest {
         .contains("--slashing-protection-db-url has not been specified");
   }
 
+  @Test
+  void tlsKeystoreWithoutPasswordFileFailsToParse() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--tls-keystore-file=./keystorefile.p12 ";
+    cmdline += "eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: --tls-keystore-file must be specified together with --tls-keystore-password-file");
+  }
+
+  @Test
+  void tlsKeystorePasswordWithoutKeystoreFileFailsToParse() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--tls-keystore-password-file=./keystorefile.pass ";
+    cmdline += "eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: --tls-keystore-file must be specified together with --tls-keystore-password-file");
+  }
+
+  @Test
+  void tlsOptionsWithoutRequiredClientAuthOptionsFailsToParse() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--tls-keystore-file=./keystorefile.p12 ";
+    cmdline += "--tls-keystore-password-file=./passwordfile.txt ";
+    cmdline += "eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: --tls-known-clients-file must be specified if both --tls-allow-any-client and --tls-allow-ca-clients are set to false");
+  }
+
+  @Test
+  void tlsOptionsWithAllowAnyClientParsesSuccessfully() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--tls-keystore-file=./keystorefile.p12 ";
+    cmdline += "--tls-keystore-password-file=./passwordfile.txt ";
+    cmdline += "--tls-allow-any-client=true ";
+    cmdline += "eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isZero();
+  }
+
+  @Test
+  void tlsOptionsWithAllowCAClientsParsesSuccessfully() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--tls-keystore-file=./keystorefile.p12 ";
+    cmdline += "--tls-keystore-password-file=./passwordfile.txt ";
+    cmdline += "--tls-allow-ca-clients=true ";
+    cmdline += "eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isZero();
+  }
+
+  @Test
+  void tlsOptionsWithKnownClientsFileParsesSuccessfully() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--tls-keystore-file=./keystorefile.p12 ";
+    cmdline += "--tls-keystore-password-file=./passwordfile.txt ";
+    cmdline += "--tls-known-clients-file=./knownClients.txt ";
+    cmdline += "eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isZero();
+  }
+
+  @Test
+  void tlsOptionsWithCAAndKnownClientsFileParsesSuccessfully() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--tls-keystore-file=./keystorefile.p12 ";
+    cmdline += "--tls-keystore-password-file=./passwordfile.txt ";
+    cmdline += "--tls-allow-ca-clients=true ";
+    cmdline += "--tls-known-clients-file=./knownClients.txt ";
+    cmdline = cmdline + "eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isZero();
+  }
+
+  @Test
+  void tlsOptionsWithAllowAnyClientAndKnownClientsFileFailsToParses() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--tls-keystore-file=./keystorefile.p12 ";
+    cmdline += "--tls-keystore-password-file=./passwordfile.txt ";
+    cmdline += "--tls-allow-any-client=true ";
+    cmdline += "--tls-known-clients-file=./knownClients.txt ";
+    cmdline = cmdline + "eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: --tls-allow-any-client cannot be set to true when --tls-known-clients-file is specified or --tls-allow-ca-clients is set to true");
+  }
+
+  @Test
+  void tlsOptionsWithAllowAnyClientAndAllowCAFailsToParses() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--tls-keystore-file=./keystorefile.p12 ";
+    cmdline += "--tls-keystore-password-file=./passwordfile.txt ";
+    cmdline += "--tls-allow-any-client=true ";
+    cmdline += "--tls-allow-ca-clients=true ";
+    cmdline = cmdline + "eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: --tls-allow-any-client cannot be set to true when --tls-known-clients-file is specified or --tls-allow-ca-clients is set to true");
+  }
+
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(
       final String paramToRemove, final Supplier<T> actualValueGetter, final T expectedValue) {
 
@@ -194,10 +333,29 @@ class CommandlineParserTest {
   }
 
   public static class MockEth2SubCommand extends Eth2SubCommand {
+    @Override
+    public Runner createRunner() {
+      return new NoOpRunner(config);
+    }
+  }
+
+  public static class NoOpRunner extends Runner {
+
+    protected NoOpRunner(final Config config) {
+      super(config);
+    }
 
     @Override
-    public void run() {
-      createRunner();
+    public void run() {}
+
+    @Override
+    protected Router populateRouter(final Context context) {
+      return null;
+    }
+
+    @Override
+    protected String getOpenApiSpecResource() {
+      return null;
     }
   }
 }

@@ -21,6 +21,8 @@ import java.util.Collections;
 
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class MetricsHostAllowListAcceptanceTest extends AcceptanceTestBase {
 
@@ -42,13 +44,15 @@ public class MetricsHostAllowListAcceptanceTest extends AcceptanceTestBase {
         .statusCode(200);
   }
 
-  @Test
-  void metricsForAllowedHostRespondsWithOkResponse() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void metricsForAllowedHostRespondsWithOkResponse(final boolean useConfigFile) {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
             .withMetricsHostAllowList(Collections.singletonList("foo"))
             .withMetricsEnabled(true)
             .withMode("eth1")
+            .withUseConfigFile(useConfigFile)
             .build();
     startSigner(signerConfiguration);
 

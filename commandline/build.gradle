@@ -31,6 +31,7 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testImplementation 'io.vertx:vertx-web'
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }

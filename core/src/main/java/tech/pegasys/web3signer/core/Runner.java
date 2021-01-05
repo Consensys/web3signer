@@ -109,8 +109,10 @@ public abstract class Runner implements Runnable {
       }
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
+      final String tlsStatus = config.getTlsOptions().isPresent() ? "enabled" : "disabled";
       LOG.info(
-          "Web3Signer has started, and ready to handle signing requests on {}:{}",
+          "Web3Signer has started with TLS {}, and ready to handle signing requests on {}:{}",
+          tlsStatus,
           config.getHttpListenHost(),
           httpServer.actualPort());
 
