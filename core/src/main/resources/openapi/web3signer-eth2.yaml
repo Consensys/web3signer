@@ -122,6 +122,9 @@ components:
               $ref: '#/components/schemas/Fork'
             genesis_validators_root:
               type: "string"
+          required:
+            - fork
+            - genesis_validators_root
         signingRoot:
           type: "string"
       required:
