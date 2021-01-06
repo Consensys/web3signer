@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: 'Web3Signer ETH2 Api'
   description: 'Sign Eth2 Artifacts'
-  version: '20.11.0+11-gc7c5f0f'
+  version: '20.11.0+12-g9fb46c2'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -122,6 +122,9 @@ components:
               $ref: '#/components/schemas/Fork'
             genesis_validators_root:
               type: "string"
+          required:
+            - fork
+            - genesis_validators_root
         signingRoot:
           type: "string"
       required:
