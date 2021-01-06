@@ -49,7 +49,7 @@ public class DatabaseVersionDaoTest {
   @Test
   public void migratedDatabaseReturnsValue() {
     final int version = databaseVersionDao.findDatabaseVersion(handle);
-    assertThat(version).isEqualTo(6);
+    assertThat(version).isEqualTo(7);
   }
 
   @Test
