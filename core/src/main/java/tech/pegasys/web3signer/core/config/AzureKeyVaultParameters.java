@@ -16,11 +16,13 @@ public interface AzureKeyVaultParameters {
 
   boolean isAzureKeyVaultEnabled();
 
+  AzureAuthenticationMode getAuthenticationMode();
+
   String getKeyVaultName();
 
   String getTenantId();
 
-  String getClientlId();
+  String getClientId();
 
   String getClientSecret();
 }

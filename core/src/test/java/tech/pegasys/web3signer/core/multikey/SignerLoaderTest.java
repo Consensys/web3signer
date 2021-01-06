@@ -34,10 +34,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.Logger;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
@@ -250,8 +252,14 @@ class SignerLoaderTest {
       createFileInConfigsDirectory(PUBLIC_KEY1);
       SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
-      assertThat(logAppender.getLogMessagesReceived().get(1).getMessage().getFormattedMessage())
-          .contains(rootCause.getMessage());
+      final Optional<LogEvent> event =
+          logAppender.getLogMessagesReceived().stream()
+              .filter(
+                  logEvent ->
+                      logEvent.getMessage().getFormattedMessage().contains(rootCause.getMessage()))
+              .findFirst();
+      assertThat(event).isPresent().as("Log should contain message {}", rootCause.getMessage());
+
     } finally {
       logger.removeAppender(logAppender);
       logAppender.stop();

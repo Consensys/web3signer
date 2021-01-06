@@ -119,7 +119,7 @@ components:
           type: object
           properties:
             fork:
-              $ref: '#/components/schemas/AttestationData'
+              $ref: '#/components/schemas/Fork'
             genesis_validators_root:
               type: "string"
         signingRoot:
@@ -163,8 +163,6 @@ components:
           properties:
             attestation:
               $ref: "#/components/schemas/AttestationData"
-            fork:
-              $ref: '#/components/schemas/AttestationData'
           required:
             - attestation
     BlockSigning:
@@ -181,6 +179,9 @@ components:
       properties:
         type:
           type: "string"
+        signingRoot:
+          description: 'signing root for optional verification if field present'
+          type: "string"
         deposit:
           type: object
           properties:
@@ -189,9 +190,6 @@ components:
             withdrawal_credentials:
               type: "string"
             amount:
-              type: "string"
-            signingRoot:
-              description: 'signing root for optional verification if field present'
               type: "string"
             genesis_fork_version:
               type: "string"
@@ -314,9 +312,9 @@ components:
     ProposerSlashing:
       type: "object"
       properties:
-        header_1:
+        signed_header_1:
           "$ref": "#/components/schemas/SignedBeaconBlockHeader"
-        header_2":
+        signed_header_2:
           "$ref": "#/components/schemas/SignedBeaconBlockHeader"
     AttesterSlashing:
       type: "object"
@@ -421,4 +419,4 @@ components:
 
 externalDocs:
   description: 'Web3Signer User Documentation'
-  url: 'https://doc.web3signer.pegasys.tech/'
+  url: 'https://docs.web3signer.consensys.net/'

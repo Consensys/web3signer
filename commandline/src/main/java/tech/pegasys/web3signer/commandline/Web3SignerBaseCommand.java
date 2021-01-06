@@ -20,6 +20,7 @@ import static tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory.DEFA
 
 import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
+import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptionsValidator;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -38,7 +39,6 @@ import org.apache.logging.log4j.Level;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import picocli.CommandLine;
-import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
@@ -168,8 +168,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
       description = "Enable swagger UI (default: ${DEFAULT-VALUE})")
   private final Boolean swaggerUiEnabled = false;
 
-  @ArgGroup(exclusive = false)
-  private PicoCliTlsServerOptions picoCliTlsServerOptions;
+  @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
   @Override
   public Level getLogLevel() {
@@ -228,7 +227,11 @@ public class Web3SignerBaseCommand implements Config, Runnable {
 
   @Override
   public Optional<TlsOptions> getTlsOptions() {
-    return Optional.ofNullable(picoCliTlsServerOptions);
+    if (picoCliTlsServerOptions.getKeyStoreFile() != null
+        && picoCliTlsServerOptions.getKeyStorePasswordFile() != null) {
+      return Optional.of(picoCliTlsServerOptions);
+    }
+    return Optional.empty();
   }
 
   @Override
@@ -264,6 +267,15 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   @Override
   public void run() {
     throw new ParameterException(spec.commandLine(), "Missing required subcommand");
+  }
+
+  @Override
+  public void validateArgs() {
+    // custom validation for TLS options as we removed ArgGroups since they don't work with config
+    // files
+    final PicoCliTlsServerOptionsValidator picoCliTlsServerOptionsValidator =
+        new PicoCliTlsServerOptionsValidator(spec, picoCliTlsServerOptions);
+    picoCliTlsServerOptionsValidator.validate();
   }
 
   public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {

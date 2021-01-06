@@ -12,8 +12,12 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.CLIENT_SECRET;
+import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
+
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
+import tech.pegasys.web3signer.core.Runner;
 
 import java.util.List;
 
@@ -69,8 +73,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
-  public Eth2Runner createRunner() {
-    validateArgs();
+  public Runner createRunner() {
     return new Eth2Runner(
         config,
         slashingProtectionEnabled,
@@ -80,31 +83,43 @@ public class Eth2SubCommand extends ModeSubCommand {
         azureKeyVaultParameters);
   }
 
-  private void validateArgs() {
+  @Override
+  protected void validateArgs() {
     if (slashingProtectionEnabled && slashingProtectionDbUrl == null) {
       throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
     }
 
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
 
-      List<String> missingAzureFields = Lists.newArrayList();
-
-      if (azureKeyVaultParameters.getClientSecret() == null) {
-        missingAzureFields.add("--azure-client-secret");
-      }
-
-      if (azureKeyVaultParameters.getClientlId() == null) {
-        missingAzureFields.add("--azure-client-id");
-      }
-
-      if (azureKeyVaultParameters.getTenantId() == null) {
-        missingAzureFields.add("--azure-tenant-id");
-      }
+      final List<String> missingAzureFields = Lists.newArrayList();
 
       if (azureKeyVaultParameters.getKeyVaultName() == null) {
         missingAzureFields.add("--azure-vault-name");
       }
-      if (missingAzureFields.size() != 0) {
+
+      if (azureKeyVaultParameters.getAuthenticationMode() == CLIENT_SECRET) {
+        // client secret authentication mode requires all of following options
+        if (azureKeyVaultParameters.getClientSecret() == null) {
+          missingAzureFields.add("--azure-client-secret");
+        }
+
+        if (azureKeyVaultParameters.getClientId() == null) {
+          missingAzureFields.add("--azure-client-id");
+        }
+
+        if (azureKeyVaultParameters.getTenantId() == null) {
+          missingAzureFields.add("--azure-tenant-id");
+        }
+      } else if (azureKeyVaultParameters.getAuthenticationMode()
+          == USER_ASSIGNED_MANAGED_IDENTITY) {
+        if (azureKeyVaultParameters.getClientId() == null) {
+          missingAzureFields.add("--azure-client-id");
+        }
+      }
+
+      // no extra validation required for "system-assigned managed identity".
+
+      if (!missingAzureFields.isEmpty()) {
         final String errorMsg =
             String.format(
                 "Azure Key Vault was enabled, but the following parameters were missing [%s].",

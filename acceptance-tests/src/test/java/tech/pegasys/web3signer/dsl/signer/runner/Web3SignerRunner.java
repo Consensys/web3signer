@@ -13,12 +13,8 @@
 package tech.pegasys.web3signer.dsl.signer.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.dsl.utils.EmbeddedDatabaseUtils.createEmbeddedDatabase;
 import static tech.pegasys.web3signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
 
-import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
-import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
-import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
@@ -27,14 +23,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,7 +42,7 @@ public abstract class Web3SignerRunner {
   private final Path dataPath;
   private final Properties portsProperties;
 
-  private String slashingProtectionDbUrl;
+  private Optional<String> slashingProtectionDbUrl;
 
   private static final String PORTS_FILENAME = "web3signer.ports";
   private static final String HTTP_PORT_KEY = "http-port";
@@ -77,7 +71,12 @@ public abstract class Web3SignerRunner {
   }
 
   public void start() {
-    final List<String> params = createCmdLineParams();
+    final CmdLineParamsBuilder cmdLineParamsBuilder =
+        signerConfig.useConfigFile()
+            ? new CmdLineParamsConfigFileImpl(signerConfig, dataPath)
+            : new CmdLineParamsDefaultImpl(signerConfig, dataPath);
+    final List<String> params = cmdLineParamsBuilder.createCmdLineParams();
+    slashingProtectionDbUrl = cmdLineParamsBuilder.slashingProtectionDbUrl();
 
     startExecutor(params);
 
@@ -95,131 +94,6 @@ public abstract class Web3SignerRunner {
   protected abstract void shutdownExecutor();
 
   public abstract boolean isRunning();
-
-  private List<String> createCmdLineParams() {
-    final String loggingLevel = "TRACE";
-
-    final List<String> params = new ArrayList<>();
-    params.add("--logging");
-    params.add(loggingLevel);
-    params.add("--http-listen-host");
-    params.add(signerConfig.hostname());
-    params.add("--http-listen-port");
-    params.add(String.valueOf(signerConfig.httpPort()));
-    if (!signerConfig.getHttpHostAllowList().isEmpty()) {
-      params.add("--http-host-allowlist");
-      params.add(createCommaSeparatedList(signerConfig.getHttpHostAllowList()));
-    }
-    params.add("--key-store-path");
-    params.add(signerConfig.getKeyStorePath().toString());
-    if (signerConfig.isMetricsEnabled()) {
-      params.add("--metrics-enabled");
-      params.add("--metrics-port");
-      params.add(Integer.toString(signerConfig.getMetricsPort()));
-      if (!signerConfig.getMetricsHostAllowList().isEmpty()) {
-        params.add("--metrics-host-allowlist");
-        params.add(createCommaSeparatedList(signerConfig.getMetricsHostAllowList()));
-      }
-      if (!signerConfig.getMetricsCategories().isEmpty()) {
-        params.add("--metrics-category");
-        params.add(createCommaSeparatedList(signerConfig.getMetricsCategories()));
-      }
-    }
-
-    if (signerConfig.isSwaggerUIEnabled()) {
-      params.add("--swagger-ui-enabled=true");
-    }
-
-    if (signerConfig.isHttpDynamicPortAllocation()) {
-      params.add("--data-path");
-      params.add(dataPath.toAbsolutePath().toString());
-    }
-
-    params.addAll(createServerTlsArgs());
-
-    params.add(signerConfig.getMode());
-
-    if (signerConfig.getMode().equals("eth2")) {
-      params.addAll(createEth2Args());
-
-      if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
-        final AzureKeyVaultParameters azureParams = signerConfig.getAzureKeyVaultParameters().get();
-        params.add("--azure-vault-enabled=true");
-        params.add("--azure-vault-name");
-        params.add(azureParams.getKeyVaultName());
-        params.add("--azure-client-id");
-        params.add(azureParams.getClientlId());
-        params.add("--azure-client-secret");
-        params.add(azureParams.getClientSecret());
-        params.add("--azure-tenant-id");
-        params.add(azureParams.getTenantId());
-      }
-    }
-
-    return params;
-  }
-
-  private Collection<? extends String> createServerTlsArgs() {
-    final List<String> params = Lists.newArrayList();
-
-    if (signerConfig.getServerTlsOptions().isPresent()) {
-      final TlsOptions serverTlsOptions = signerConfig.getServerTlsOptions().get();
-      params.add("--tls-keystore-file");
-      params.add(serverTlsOptions.getKeyStoreFile().toString());
-      params.add("--tls-keystore-password-file");
-      params.add(serverTlsOptions.getKeyStorePasswordFile().toString());
-      if (serverTlsOptions.getClientAuthConstraints().isEmpty()) {
-        params.add("--tls-allow-any-client");
-      } else {
-        final ClientAuthConstraints constraints = serverTlsOptions.getClientAuthConstraints().get();
-        if (constraints.getKnownClientsFile().isPresent()) {
-          params.add("--tls-known-clients-file");
-          params.add(constraints.getKnownClientsFile().get().toString());
-        }
-        if (constraints.isCaAuthorizedClientAllowed()) {
-          params.add("--tls-allow-ca-clients");
-        }
-      }
-    }
-    return params;
-  }
-
-  private Collection<String> createEth2Args() {
-    final List<String> params = Lists.newArrayList();
-    params.add("--slashing-protection-enabled");
-    params.add(Boolean.toString(signerConfig.isSlashingProtectionEnabled()));
-
-    if (signerConfig.isSlashingProtectionEnabled()) {
-      if (signerConfig.getSlashingProtectionDbUrl().isEmpty()) {
-        slashingProtectionDbUrl = createEmbeddedDatabase();
-      } else {
-        slashingProtectionDbUrl = signerConfig.getSlashingProtectionDbUrl().get();
-      }
-
-      params.add("--slashing-protection-db-url");
-      params.add(slashingProtectionDbUrl);
-      params.add("--slashing-protection-db-username");
-      params.add(signerConfig.getSlashingProtectionDbUsername());
-      params.add("--slashing-protection-db-password");
-      params.add(signerConfig.getSlashingProtectionDbPassword());
-    }
-
-    if (signerConfig.getSlashingExportPath().isPresent()) {
-      params.add("export");
-      params.add("--to");
-      params.add(signerConfig.getSlashingExportPath().get().toAbsolutePath().toString());
-    } else if (signerConfig.getSlashingImportPath().isPresent()) {
-      params.add("import");
-      params.add("--from");
-      params.add(signerConfig.getSlashingImportPath().get().toAbsolutePath().toString());
-    }
-
-    return params;
-  }
-
-  private String createCommaSeparatedList(final List<String> values) {
-    return String.join(",", values);
-  }
 
   private void loadPortsFile() {
     final File portsFile = new File(dataPath.toFile(), PORTS_FILENAME);
@@ -290,6 +164,6 @@ public abstract class Web3SignerRunner {
   }
 
   public String getSlashingDbUrl() {
-    return slashingProtectionDbUrl;
+    return slashingProtectionDbUrl.orElse(null);
   }
 }

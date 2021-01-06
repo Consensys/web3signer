@@ -31,8 +31,9 @@ import java.util.Optional;
 import javax.net.ssl.SSLException;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class ServerSideTlsCaClientAcceptanceTest {
 
@@ -51,7 +52,8 @@ public class ServerSideTlsCaClientAcceptanceTest {
     }
   }
 
-  private Signer createSigner(final TlsCertificateDefinition certInCa, final Path testDir)
+  private Signer createSigner(
+      final TlsCertificateDefinition certInCa, final Path testDir, final boolean useConfigFile)
       throws Exception {
 
     final Path passwordPath = testDir.resolve("keystore.passwd");
@@ -67,6 +69,7 @@ public class ServerSideTlsCaClientAcceptanceTest {
         new SignerConfigurationBuilder()
             .withServerTlsOptions(serverOptions)
             .withOverriddenCA(certInCa)
+            .withUseConfigFile(useConfigFile)
             .withMode("eth2");
 
     final ClientTlsConfig clientTlsConfig = new ClientTlsConfig(serverCert, clientCert);
@@ -74,10 +77,11 @@ public class ServerSideTlsCaClientAcceptanceTest {
     return new Signer(configBuilder.build(), clientTlsConfig);
   }
 
-  @Test
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
   void clientWithCertificateNotInCertificateAuthorityCanConnectAndQueryAccounts(
-      @TempDir final Path tempDir) throws Exception {
-    signer = createSigner(clientCert, tempDir);
+      final boolean useConfigFile, @TempDir final Path tempDir) throws Exception {
+    signer = createSigner(clientCert, tempDir, useConfigFile);
     signer.start();
     signer.awaitStartupCompletion();
 
@@ -91,9 +95,11 @@ public class ServerSideTlsCaClientAcceptanceTest {
         .body(equalToIgnoringCase("OK"));
   }
 
-  @Test
-  void clientNotInCaFailedToConnectToEthSigner(@TempDir final Path tempDir) throws Exception {
-    signer = createSigner(clientCert, tempDir);
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void clientNotInCaFailedToConnectToEthSigner(
+      final boolean useConfigFile, @TempDir final Path tempDir) throws Exception {
+    signer = createSigner(clientCert, tempDir, useConfigFile);
     signer.start();
     signer.awaitStartupCompletion();
 

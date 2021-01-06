@@ -12,11 +12,13 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
+import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 
 public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
   private String keyVaultName;
+  private AzureAuthenticationMode authenticationMode;
   private String clientId;
   private String tenantId;
   private String clientSecret;
@@ -30,6 +32,7 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
     this.clientId = clientId;
     this.tenantId = tenantId;
     this.clientSecret = clientSecret;
+    this.authenticationMode = AzureAuthenticationMode.CLIENT_SECRET;
   }
 
   @Override
@@ -43,7 +46,7 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   }
 
   @Override
-  public String getClientlId() {
+  public String getClientId() {
     return clientId;
   }
 
@@ -55,5 +58,10 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   @Override
   public boolean isAzureKeyVaultEnabled() {
     return true;
+  }
+
+  @Override
+  public AzureAuthenticationMode getAuthenticationMode() {
+    return authenticationMode;
   }
 }

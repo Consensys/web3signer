@@ -35,19 +35,23 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Keys;
 import org.web3j.utils.Numeric;
 
 public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
-  @Test
-  void filecoinApisAreCounted() {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void filecoinApisAreCounted(final boolean useConfigFile) {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
             .withMetricsCategories("FILECOIN")
             .withMetricsEnabled(true)
             .withMode("filecoin")
+            .withUseConfigFile(useConfigFile)
             .build();
     startSigner(signerConfiguration);
 
