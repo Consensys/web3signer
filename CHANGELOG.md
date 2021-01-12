@@ -1,5 +1,19 @@
 # Changelog
 
+## 21.1.0
+
+### Features Added
+- Azure secrets managed identity mode
+- Check that database matches expected version on startup
+- Added basic Eth2 grafana dashboard (https://grafana.com/grafana/dashboards/13687)
+- Updated openjdk docker base image
+
+### Bugs Fixed
+- Improve query performance of attestations and blocks by adding indexes
+- Azure configuration files could only be parallel-processed in a batch of 10 due to a bug in Azure libraries
+- Incorrect options in the openapi spec for Eth2 signing API
+- Fix the external link for documentation on OpenAPI documentation
+
 ## 20.11.0
 
 ### Features Added
