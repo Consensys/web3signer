@@ -61,15 +61,18 @@ public class Eth2ExportSubCommand implements Runnable {
           "--slashing-protection-db-url has not been specified");
     }
 
-    final SlashingProtection slashingProtection =
-        createSlashingProtection(
-            eth2Config.slashingProtectionDbUrl,
-            eth2Config.slashingProtectionDbUsername,
-            eth2Config.slashingProtectionDbPassword);
     try (final OutputStream outStream = new FileOutputStream(output)) {
+      final SlashingProtection slashingProtection =
+          createSlashingProtection(
+              eth2Config.slashingProtectionDbUrl,
+              eth2Config.slashingProtectionDbUsername,
+              eth2Config.slashingProtectionDbPassword);
+
       slashingProtection.export(outStream);
     } catch (final IOException e) {
       throw new UncheckedIOException("Unable to find output target file", e);
+    } catch (final IllegalStateException e) {
+      throw new InitializationException(e.getMessage(), e);
     } catch (final RuntimeException e) {
       throw new InitializationException(
           "Failed to initialise Slashing Protection: " + e.getMessage(), e);

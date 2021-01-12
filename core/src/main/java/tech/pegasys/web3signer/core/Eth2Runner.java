@@ -93,9 +93,13 @@ public class Eth2Runner extends Runner {
       final String slashingProtectionDbUser,
       final String slashingProtectionDbPassword) {
     if (slashingProtectionEnabled) {
-      return Optional.of(
-          SlashingProtectionFactory.createSlashingProtection(
-              slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword));
+      try {
+        return Optional.of(
+            SlashingProtectionFactory.createSlashingProtection(
+                slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword));
+      } catch (final IllegalStateException e) {
+        throw new InitializationException(e.getMessage(), e);
+      }
     } else {
       return Optional.empty();
     }
