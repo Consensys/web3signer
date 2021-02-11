@@ -138,8 +138,7 @@ public class Eth2Runner extends Runner {
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .registerModule(new SigningJsonModule());
 
-    addPublicKeysListHandler(
-        routerFactory, blsSignerProvider.availableIdentifiers(), ETH2_LIST.name(), errorHandler);
+    addPublicKeysListHandler(routerFactory, blsSignerProvider, ETH2_LIST.name(), errorHandler);
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
@@ -158,46 +157,57 @@ public class Eth2Runner extends Runner {
 
   private ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+    final ArtifactSignerProvider artifactSignerProvider =
+        new DefaultArtifactSignerProvider(
+            () -> {
+              final List<ArtifactSigner> signers = Lists.newArrayList();
+              final HashicorpConnectionFactory hashicorpConnectionFactory =
+                  new HashicorpConnectionFactory(vertx);
 
-    final List<ArtifactSigner> signers = Lists.newArrayList();
-    final HashicorpConnectionFactory hashicorpConnectionFactory =
-        new HashicorpConnectionFactory(vertx);
+              try (final InterlockKeyProvider interlockKeyProvider =
+                      new InterlockKeyProvider(vertx);
+                  final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+                      new YubiHsmOpaqueDataProvider()) {
+                final AbstractArtifactSignerFactory artifactSignerFactory =
+                    new BlsArtifactSignerFactory(
+                        config.getKeyConfigPath(),
+                        metricsSystem,
+                        hashicorpConnectionFactory,
+                        interlockKeyProvider,
+                        yubiHsmOpaqueDataProvider,
+                        BlsArtifactSigner::new);
 
-    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
-        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-            new YubiHsmOpaqueDataProvider()) {
-      final AbstractArtifactSignerFactory artifactSignerFactory =
-          new BlsArtifactSignerFactory(
-              config.getKeyConfigPath(),
-              metricsSystem,
-              hashicorpConnectionFactory,
-              interlockKeyProvider,
-              yubiHsmOpaqueDataProvider,
-              BlsArtifactSigner::new);
+                signers.addAll(
+                    SignerLoader.load(
+                        config.getKeyConfigPath(),
+                        "yaml",
+                        new YamlSignerParser(List.of(artifactSignerFactory))));
+              }
 
-      signers.addAll(
-          SignerLoader.load(
-              config.getKeyConfigPath(),
-              "yaml",
-              new YamlSignerParser(List.of(artifactSignerFactory))));
-    }
+              if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
+                signers.addAll(loadAzureSigners());
+              }
 
-    if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-      signers.addAll(loadAzureSigners());
-    }
+              final List<Bytes> validators =
+                  signers.stream()
+                      .map(ArtifactSigner::getIdentifier)
+                      .map(Bytes::fromHexString)
+                      .collect(Collectors.toList());
+              if (validators.isEmpty()) {
+                LOG.warn(
+                    "No BLS keys configured. Check that the key store has BLS key config files");
+              }
 
-    final List<Bytes> validators =
-        signers.stream()
-            .map(ArtifactSigner::getIdentifier)
-            .map(Bytes::fromHexString)
-            .collect(Collectors.toList());
-    if (validators.isEmpty()) {
-      LOG.warn("No BLS keys configured. Check that the key store has BLS key config files");
-    }
-    slashingProtection.ifPresent(
-        slashingProtection -> slashingProtection.registerValidators(validators));
+              // TODO: Do we want to register validators again?
+              slashingProtection.ifPresent(
+                  slashingProtection -> slashingProtection.registerValidators(validators));
 
-    return DefaultArtifactSignerProvider.create(signers);
+              return signers;
+            });
+
+    artifactSignerProvider.reload();
+
+    return artifactSignerProvider;
   }
 
   final Collection<ArtifactSigner> loadAzureSigners() {

@@ -22,6 +22,7 @@ import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
+import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.util.FileUtil;
 
 import java.io.File;
@@ -32,7 +33,6 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -154,11 +154,12 @@ public abstract class Runner implements Runnable {
 
   protected void addPublicKeysListHandler(
       final OpenAPI3RouterFactory openAPI3RouterFactory,
-      final Set<String> identifiers,
+      final ArtifactSignerProvider artifactSignerProvider,
       final String operationId,
       final LogErrorHandler errorHandler) {
     openAPI3RouterFactory.addHandlerByOperationId(
-        operationId, new BlockingHandlerDecorator(new PublicKeysListHandler(identifiers), false));
+        operationId,
+        new BlockingHandlerDecorator(new PublicKeysListHandler(artifactSignerProvider), false));
     openAPI3RouterFactory.addFailureHandlerByOperationId(operationId, errorHandler);
   }
 
