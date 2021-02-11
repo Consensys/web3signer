@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_RELOAD;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
@@ -153,6 +154,8 @@ public class Eth2Runner extends Runner {
                 objectMapper),
             false));
     routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
+
+    addReloadHandler(routerFactory, blsSignerProvider, ETH2_RELOAD.name(), errorHandler);
   }
 
   private ArtifactSignerProvider loadSigners(

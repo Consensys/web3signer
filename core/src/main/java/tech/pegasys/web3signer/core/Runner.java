@@ -163,6 +163,22 @@ public abstract class Runner implements Runnable {
     openAPI3RouterFactory.addFailureHandlerByOperationId(operationId, errorHandler);
   }
 
+  protected void addReloadHandler(
+      final OpenAPI3RouterFactory openAPI3RouterFactory,
+      final ArtifactSignerProvider artifactSignerProvider,
+      final String operationId,
+      final LogErrorHandler errorHandler) {
+    openAPI3RouterFactory.addHandlerByOperationId(
+        operationId,
+        new BlockingHandlerDecorator(
+            routingContext -> {
+              artifactSignerProvider.reload();
+              routingContext.response().setStatusCode(200).end();
+            },
+            false));
+    openAPI3RouterFactory.addFailureHandlerByOperationId(operationId, errorHandler);
+  }
+
   private void registerUpcheckRoute(
       final OpenAPI3RouterFactory openAPI3RouterFactory, final LogErrorHandler errorHandler) {
     openAPI3RouterFactory.addHandlerByOperationId(
