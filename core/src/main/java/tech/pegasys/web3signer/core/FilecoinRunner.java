@@ -16,6 +16,7 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
 import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
 import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
@@ -68,6 +69,9 @@ public class FilecoinRunner extends Runner {
     final ArtifactSignerProvider signerProvider =
         loadSigners(config, context.getVertx(), context.getMetricsSystem());
     incSignerLoadCount(context.getMetricsSystem(), signerProvider.availableIdentifiers().size());
+
+    addReloadHandler(
+        context.getRouterFactory(), signerProvider, RELOAD.name(), context.getErrorHandler());
 
     return registerFilecoinJsonRpcRoute(
         context.getRouterFactory(), context.getMetricsSystem(), signerProvider);

@@ -16,7 +16,6 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -33,7 +32,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Map<String, ArtifactSigner> signers = new ConcurrentHashMap<>();
-  private final Set<String> signerIdentifiers = new HashSet<>();
+  private final Set<String> signerIdentifiers = ConcurrentHashMap.newKeySet();
 
   public DefaultArtifactSignerProvider(
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {

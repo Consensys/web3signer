@@ -13,8 +13,8 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_RELOAD;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
@@ -155,7 +155,7 @@ public class Eth2Runner extends Runner {
             false));
     routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
 
-    addReloadHandler(routerFactory, blsSignerProvider, ETH2_RELOAD.name(), errorHandler);
+    addReloadHandler(routerFactory, blsSignerProvider, RELOAD.name(), errorHandler);
   }
 
   private ArtifactSignerProvider loadSigners(
@@ -201,7 +201,6 @@ public class Eth2Runner extends Runner {
                     "No BLS keys configured. Check that the key store has BLS key config files");
               }
 
-              // TODO: Do we want to register validators again?
               slashingProtection.ifPresent(
                   slashingProtection -> slashingProtection.registerValidators(validators));
 

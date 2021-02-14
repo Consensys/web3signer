@@ -78,13 +78,13 @@ paths:
         '500':
           description: 'Internal Web3Signer server error'
 
-  /api/v1/eth1/reload:
+  /reload:
     post:
       tags:
         - 'Reload Signer Keys'
       summary: 'Reload signer keys'
       description: 'Reload signer keys'
-      operationId: 'ETH1_RELOAD'
+      operationId: 'RELOAD'
       responses:
         '200':
           description: 'Reload successful'

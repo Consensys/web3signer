@@ -13,8 +13,8 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_LIST;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_RELOAD;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
@@ -74,7 +74,7 @@ public class Eth1Runner extends Runner {
             false));
     routerFactory.addFailureHandlerByOperationId(ETH1_SIGN.name(), errorHandler);
 
-    addReloadHandler(routerFactory, signerProvider, ETH1_RELOAD.name(), context.getErrorHandler());
+    addReloadHandler(routerFactory, signerProvider, RELOAD.name(), context.getErrorHandler());
 
     return context.getRouterFactory().getRouter();
   }
