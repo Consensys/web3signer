@@ -43,6 +43,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   @Override
   public void reload() {
+    LOG.trace("Reloading Artifact Signers");
+    
     final Map<String, ArtifactSigner> signerMap =
         artifactSignerCollectionSupplier
             .get()
