@@ -207,8 +207,6 @@ public class Eth2Runner extends Runner {
               return signers;
             });
 
-    artifactSignerProvider.reload();
-
     return artifactSignerProvider;
   }
 

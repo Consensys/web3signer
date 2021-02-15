@@ -107,7 +107,6 @@ public class Eth1Runner extends Runner {
               }
             });
 
-    artifactSignerProvider.reload();
     return artifactSignerProvider;
   }
 

@@ -150,8 +150,6 @@ public class FilecoinRunner extends Runner {
               }
             });
 
-    artifactSignerProvider.reload();
-
     return artifactSignerProvider;
   }
 }

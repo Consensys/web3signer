@@ -37,6 +37,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   public DefaultArtifactSignerProvider(
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
+
+    reload();
   }
 
   @Override
@@ -54,9 +56,11 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                       return signer1;
                     }));
 
-    // TODO: Do we want to replace existing collections completely?
+    signers.clear();
+    signerIdentifiers.clear();
+
     signers.putAll(signerMap);
-    signerIdentifiers.addAll(signers.keySet().parallelStream().collect(Collectors.toSet()));
+    signerIdentifiers.addAll(signers.keySet());
   }
 
   @Override
