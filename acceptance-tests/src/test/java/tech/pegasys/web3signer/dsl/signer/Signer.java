@@ -184,6 +184,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   }
 
   public Response callReload() {
-    return given().baseUri(getUrl()).get(RELOAD_ENDPOINT);
+    return given().baseUri(getUrl()).post(RELOAD_ENDPOINT);
   }
 }
