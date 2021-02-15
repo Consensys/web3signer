@@ -56,6 +56,8 @@ public class Signer extends FilecoinJsonRpcEndpoint {
       "/api/v1/eth2/sign/{identifier}"; // using bls keys
   public static final String ETH1_PUBLIC_KEYS = "/api/v1/eth1/publicKeys"; // secp keys
   public static final String ETH2_PUBLIC_KEYS = "/api/v1/eth2/publicKeys"; // bls keys
+  public static final String RELOAD_ENDPOINT = "/reload";
+
   public static final ObjectMapper ETH_2_INTERFACE_OBJECT_MAPPER =
       new ObjectMapper()
           .registerModule(new SigningJsonModule())
@@ -179,5 +181,9 @@ public class Signer extends FilecoinJsonRpcEndpoint {
 
   public String getSlashingDbUrl() {
     return runner.getSlashingDbUrl();
+  }
+
+  public Response callReload() {
+    return given().baseUri(getUrl()).get(RELOAD_ENDPOINT);
   }
 }

@@ -29,6 +29,7 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import java.nio.file.Path;
 
 import io.restassured.response.Response;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -66,6 +67,25 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final Response response = signer.callApiPublicKeys(keyType);
     validateApiResponse(response, contains(keys));
     validateApiResponse(response, everyItem(not(in(invalidKeys))));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = KeyType.class)
+  public void additionalPublicKeyAreReportedAfterReload(final KeyType keyType) {
+    final String[] prvKeys = privateKeys(keyType);
+    final String[] keys = createKeys(keyType, true, prvKeys[0]);
+
+    initAndStartSigner(calculateMode(keyType));
+
+    final Response response = signer.callApiPublicKeys(keyType);
+    validateApiResponse(response, contains(keys));
+
+    final String[] additionalKeys = createKeys(keyType, true, prvKeys[1]);
+    signer.callReload().then().statusCode(200);
+
+    final Response publicKeysResponseAfterReload = signer.callApiPublicKeys(keyType);
+    validateApiResponse(
+        publicKeysResponseAfterReload, containsInAnyOrder(ArrayUtils.addAll(keys, additionalKeys)));
   }
 
   @ParameterizedTest
