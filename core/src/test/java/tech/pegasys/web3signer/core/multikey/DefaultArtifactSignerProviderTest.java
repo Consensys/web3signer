@@ -37,7 +37,7 @@ class DefaultArtifactSignerProviderTest {
     when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1);
 
     final ArtifactSignerProvider signerProvider =
-        DefaultArtifactSignerProvider.create(List.of(mockSigner));
+        new DefaultArtifactSignerProvider(() -> List.of(mockSigner));
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
@@ -52,7 +52,7 @@ class DefaultArtifactSignerProviderTest {
     when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY1);
 
     final ArtifactSignerProvider signerProvider =
-        DefaultArtifactSignerProvider.create(List.of(mockSigner1, mockSigner2));
+        new DefaultArtifactSignerProvider(() -> List.of(mockSigner1, mockSigner2));
 
     assertThat(signerProvider.availableIdentifiers()).hasSize(1);
     assertThat(signerProvider.availableIdentifiers()).containsOnly(PUBLIC_KEY1);
@@ -66,7 +66,7 @@ class DefaultArtifactSignerProviderTest {
     when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY2);
 
     final ArtifactSignerProvider signerProvider =
-        DefaultArtifactSignerProvider.create(List.of(mockSigner1, mockSigner2));
+        new DefaultArtifactSignerProvider(() -> List.of(mockSigner1, mockSigner2));
 
     assertThat(signerProvider.availableIdentifiers()).hasSize(2);
     assertThat(signerProvider.availableIdentifiers()).containsOnly(PUBLIC_KEY1, PUBLIC_KEY2);

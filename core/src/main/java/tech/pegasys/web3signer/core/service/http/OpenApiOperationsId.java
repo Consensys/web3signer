@@ -18,5 +18,6 @@ public enum OpenApiOperationsId {
   ETH1_SIGN,
   ETH2_LIST,
   ETH1_LIST,
+  RELOAD,
   UPCHECK,
 }

@@ -19,7 +19,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -28,15 +30,24 @@ import org.apache.logging.log4j.Logger;
 public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
-  private final Map<String, ArtifactSigner> signers;
+  private Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
+  private final Map<String, ArtifactSigner> signers = new ConcurrentHashMap<>();
+  private final Set<String> signerIdentifiers = ConcurrentHashMap.newKeySet();
 
-  private DefaultArtifactSignerProvider(final Map<String, ArtifactSigner> signers) {
-    this.signers = signers;
+  public DefaultArtifactSignerProvider(
+      final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {
+    this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
+
+    reload();
   }
 
-  public static DefaultArtifactSignerProvider create(final Collection<ArtifactSigner> signers) {
+  @Override
+  public void reload() {
+    LOG.trace("Reloading Artifact Signers");
+
     final Map<String, ArtifactSigner> signerMap =
-        signers
+        artifactSignerCollectionSupplier
+            .get()
             .parallelStream()
             .collect(
                 Collectors.toMap(
@@ -46,7 +57,12 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                       LOG.warn("Duplicate keys were found.");
                       return signer1;
                     }));
-    return new DefaultArtifactSignerProvider(signerMap);
+
+    signers.clear();
+    signerIdentifiers.clear();
+
+    signers.putAll(signerMap);
+    signerIdentifiers.addAll(signers.keySet());
   }
 
   @Override
@@ -61,6 +77,6 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   @Override
   public Set<String> availableIdentifiers() {
-    return signers.keySet().parallelStream().collect(Collectors.toSet());
+    return signerIdentifiers;
   }
 }

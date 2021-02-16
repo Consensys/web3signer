@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
@@ -30,12 +31,10 @@ import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
-import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 
-import java.util.Collection;
 import java.util.List;
 
 import io.vertx.core.Vertx;
@@ -63,10 +62,7 @@ public class Eth1Runner extends Runner {
     final LogErrorHandler errorHandler = context.getErrorHandler();
 
     addPublicKeysListHandler(
-        routerFactory,
-        signerProvider.availableIdentifiers(),
-        ETH1_LIST.name(),
-        context.getErrorHandler());
+        routerFactory, signerProvider, ETH1_LIST.name(), context.getErrorHandler());
 
     final SignerForIdentifier<SecpArtifactSignature> secpSigner =
         new SignerForIdentifier<>(signerProvider, this::formatSecpSignature, SECP256K1);
@@ -78,33 +74,40 @@ public class Eth1Runner extends Runner {
             false));
     routerFactory.addFailureHandlerByOperationId(ETH1_SIGN.name(), errorHandler);
 
+    addReloadHandler(routerFactory, signerProvider, RELOAD.name(), context.getErrorHandler());
+
     return context.getRouterFactory().getRouter();
   }
 
   private ArtifactSignerProvider loadSigners(final Config config, final Vertx vertx) {
-    final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
-    final HashicorpConnectionFactory hashicorpConnectionFactory =
-        new HashicorpConnectionFactory(vertx);
-    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
-        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-            new YubiHsmOpaqueDataProvider()) {
-      final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
-          new Secp256k1ArtifactSignerFactory(
-              hashicorpConnectionFactory,
-              config.getKeyConfigPath(),
-              azureFactory,
-              interlockKeyProvider,
-              yubiHsmOpaqueDataProvider,
-              EthSecpArtifactSigner::new,
-              true);
+    final ArtifactSignerProvider artifactSignerProvider =
+        new DefaultArtifactSignerProvider(
+            () -> {
+              final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+              final HashicorpConnectionFactory hashicorpConnectionFactory =
+                  new HashicorpConnectionFactory(vertx);
+              try (final InterlockKeyProvider interlockKeyProvider =
+                      new InterlockKeyProvider(vertx);
+                  final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+                      new YubiHsmOpaqueDataProvider()) {
+                final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
+                    new Secp256k1ArtifactSignerFactory(
+                        hashicorpConnectionFactory,
+                        config.getKeyConfigPath(),
+                        azureFactory,
+                        interlockKeyProvider,
+                        yubiHsmOpaqueDataProvider,
+                        EthSecpArtifactSigner::new,
+                        true);
 
-      final Collection<ArtifactSigner> signers =
-          SignerLoader.load(
-              config.getKeyConfigPath(),
-              "yaml",
-              new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
-      return DefaultArtifactSignerProvider.create(signers);
-    }
+                return SignerLoader.load(
+                    config.getKeyConfigPath(),
+                    "yaml",
+                    new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
+              }
+            });
+
+    return artifactSignerProvider;
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {
