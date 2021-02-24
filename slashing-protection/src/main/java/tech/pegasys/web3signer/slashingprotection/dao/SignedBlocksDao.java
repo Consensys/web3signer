@@ -70,4 +70,9 @@ public class SignedBlocksDao {
             "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ?")
         .bind(0, validatorId).mapToBean(SignedBlock.class).stream();
   }
+
+  public void deleteBlocksBelowSlot(final Handle handle, final int validatorId, final UInt64 slot) {
+    handle.execute(
+        "DELETE FROM signed_blocks WHERE validator_id = ? AND slot < ?", validatorId, slot);
+  }
 }
