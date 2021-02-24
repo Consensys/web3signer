@@ -18,6 +18,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -196,7 +198,7 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void findAttesationsNotMatchingSigningRootThrowsIfNullRequested() {
+  public void findAttestationsNotMatchingSigningRootThrowsIfNullRequested() {
     insertValidator(Bytes.of(100), 1);
     insertAttestation(1, Bytes.of(10), UInt64.valueOf(2), UInt64.valueOf(3));
     insertAttestation(1, Bytes.of(11), UInt64.valueOf(2), UInt64.valueOf(3));
@@ -206,6 +208,37 @@ public class SignedAttestationsDaoTest {
                 signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
                     handle, 1, UInt64.valueOf(3), null))
         .isInstanceOf(NullPointerException.class);
+  }
+
+  @Test
+  public void deletesAttestationsBelowEpoch() {
+    insertValidator(Bytes.of(100), 1);
+    insertValidator(Bytes.of(200), 2);
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
+    insertAttestation(2, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+
+    signedAttestationsDao.deleteAttestationsBelowEpoch(handle, 1, UInt64.valueOf(4));
+    final Map<Integer, List<SignedAttestation>> attestations =
+        handle.createQuery("SELECT * FROM signed_attestations ORDER BY validator_id")
+            .mapToBean(SignedAttestation.class).stream()
+            .collect(Collectors.groupingBy(SignedAttestation::getValidatorId));
+
+    // no longer contains the first entry with sourceEpoch=2, targetEpoch=3 others should remain
+    assertThat(attestations.get(1)).hasSize(2);
+    assertThat(attestations.get(1).get(0))
+        .isEqualToComparingFieldByField(
+            new SignedAttestation(1, UInt64.valueOf(3), UInt64.valueOf(4), Bytes.of(1)));
+    assertThat(attestations.get(1).get(1))
+        .isEqualToComparingFieldByField(
+            new SignedAttestation(1, UInt64.valueOf(4), UInt64.valueOf(5), Bytes.of(1)));
+
+    // all existing entries should remain
+    assertThat(attestations.get(2)).hasSize(1);
+    assertThat(attestations.get(2).get(0))
+        .isEqualToComparingFieldByField(
+            new SignedAttestation(2, UInt64.valueOf(2), UInt64.valueOf(3), Bytes.of(1)));
   }
 
   private void insertValidator(final Bytes publicKey, final int validatorId) {

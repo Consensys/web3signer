@@ -118,4 +118,15 @@ public class SignedAttestationsDao {
                 + "FROM signed_attestations WHERE validator_id = ?")
         .bind(0, validatorId).mapToBean(SignedAttestation.class).stream();
   }
+
+  public void deleteAttestationsBelowEpoch(
+      final Handle handle, final int validatorId, final UInt64 epoch) {
+    handle
+        .createUpdate(
+            "DELETE FROM signed_attestations "
+                + "WHERE validator_id = :validator_id AND source_epoch < :epoch AND target_epoch < :epoch")
+        .bind("validator_id", validatorId)
+        .bind("epoch", epoch)
+        .execute();
+  }
 }
