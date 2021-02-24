@@ -37,4 +37,6 @@ public interface SlashingProtection {
   void export(OutputStream output);
 
   void importData(InputStream output);
+
+  void prune();
 }

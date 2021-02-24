@@ -75,4 +75,12 @@ public class SignedBlocksDao {
     handle.execute(
         "DELETE FROM signed_blocks WHERE validator_id = ? AND slot < ?", validatorId, slot);
   }
+
+  public UInt64 findMaxSlot(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery("SELECT max(slot) FROM signed_blocks WHERE validator_id = ?")
+        .bind(0, validatorId)
+        .mapTo(UInt64.class)
+        .one();
+  }
 }

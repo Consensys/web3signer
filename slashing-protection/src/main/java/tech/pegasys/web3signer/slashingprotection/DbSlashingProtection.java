@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
+import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_UNCOMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
@@ -236,6 +237,53 @@ public class DbSlashingProtection implements SlashingProtection {
           Streams.concat(existingRegisteredValidators.stream(), newlyRegisteredValidators.stream())
               .forEach(v -> registeredValidators.put(v.getPublicKey(), v.getId()));
         });
+  }
+
+  @Override
+  public void prune() {
+    final int slotsPerEpoch = 32;
+    final UInt64 epochsToPrune = UInt64.valueOf(10_000);
+    final UInt64 slotsToPrune = epochsToPrune.divide(slotsPerEpoch);
+
+    LOG.info("Pruning slashing protection database");
+
+    registeredValidators.forEach(
+        (key, validatorId) -> {
+          pruneValidator(validatorId, epochsToPrune, slotsToPrune);
+        });
+
+    LOG.info("Pruning slashing protection database complete");
+  }
+
+  private void pruneValidator(
+      final int validatorId, final UInt64 epochsToPrune, final UInt64 slotsToPrune) {
+    final UInt64 pruningSlot =
+        jdbi.inTransaction(
+            READ_UNCOMMITTED,
+            h -> {
+              lockForValidator(h, LockType.BLOCK, validatorId);
+              final UInt64 slot =
+                  signedBlocksDao.findMaxSlot(h, validatorId).subtract(slotsToPrune);
+              lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, slot);
+              return slot;
+            });
+
+    jdbi.useTransaction(
+        READ_UNCOMMITTED, h -> signedBlocksDao.deleteBlocksBelowSlot(h, validatorId, pruningSlot));
+
+    final UInt64 pruningEpoch =
+        jdbi.inTransaction(
+            READ_UNCOMMITTED,
+            h -> {
+              final UInt64 epoch =
+                  signedAttestationsDao.findMaxTargetEpoch(h, validatorId).subtract(epochsToPrune);
+              lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, epoch, epoch);
+              return epoch;
+            });
+
+    jdbi.useTransaction(
+        READ_UNCOMMITTED,
+        h -> signedAttestationsDao.deleteAttestationsBelowEpoch(h, validatorId, pruningEpoch));
   }
 
   private int validatorId(final Bytes publicKey) {

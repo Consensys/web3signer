@@ -121,12 +121,17 @@ public class SignedAttestationsDao {
 
   public void deleteAttestationsBelowEpoch(
       final Handle handle, final int validatorId, final UInt64 epoch) {
-    handle
-        .createUpdate(
-            "DELETE FROM signed_attestations "
-                + "WHERE validator_id = :validator_id AND source_epoch < :epoch AND target_epoch < :epoch")
-        .bind("validator_id", validatorId)
-        .bind("epoch", epoch)
-        .execute();
+    handle.execute(
+        "DELETE FROM signed_attestations " + "WHERE validator_id = ? AND target_epoch < ?",
+        validatorId,
+        epoch);
+  }
+
+  public UInt64 findMaxTargetEpoch(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery("SELECT max(target_epoch) FROM signed_attestations WHERE validator_id = ?")
+        .bind(0, validatorId)
+        .mapTo(UInt64.class)
+        .one();
   }
 }
