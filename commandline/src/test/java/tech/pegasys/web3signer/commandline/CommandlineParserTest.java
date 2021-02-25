@@ -131,6 +131,49 @@ class CommandlineParserTest {
   }
 
   @Test
+  void eth2SubcommandSlashingDatabasePruningEpochsMustBePositive() {
+    String cmdline = validBaseCommandOptions();
+    cmdline =
+        cmdline
+            + "eth2 --slashing-protection-db-url=jdbc:mock --slashing-protection-pruning-epochs=0";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains("Error parsing parameters: Pruning epochs must be 1 or more. Value was 0.");
+  }
+
+  @Test
+  void eth2SubcommandSlashingDatabasePruningPeriodMustBePositive() {
+    String cmdline = validBaseCommandOptions();
+    cmdline =
+        cmdline
+            + "eth2 --slashing-protection-db-url=jdbc:mock --slashing-protection-pruning-period=0";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains("Error parsing parameters: Pruning period must be 1 or more. Value was 0.");
+  }
+
+  @Test
+  void eth2SubcommandSlashingDatabasePruningSlotsPerEpochMustBePositive() {
+    String cmdline = validBaseCommandOptions();
+    cmdline =
+        cmdline
+            + "eth2 --slashing-protection-db-url=jdbc:mock --slashing-protection-pruning-slots-per-epoch=0";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: Pruning slots per epoch must be 1 or more. Value was 0.");
+  }
+
+  @Test
   void eth2SubcommandSlashingDatabaseUrlNotRequiredWhenSlashingDisabled() {
     String cmdline = validBaseCommandOptions();
     cmdline = cmdline + "eth2 --slashing-protection-enabled=false";

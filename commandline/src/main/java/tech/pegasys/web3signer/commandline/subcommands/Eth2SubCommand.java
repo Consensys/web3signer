@@ -66,6 +66,11 @@ public class Eth2SubCommand extends ModeSubCommand {
       throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
     }
 
+    validatePositiveValue(slashingProtectionParameters.getPruningEpochs(), "Pruning epochs");
+    validatePositiveValue(slashingProtectionParameters.getPruningPeriod(), "Pruning period");
+    validatePositiveValue(
+        slashingProtectionParameters.getPruningEpochsPerSlot(), "Pruning slots per epoch");
+
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
 
       final List<String> missingAzureFields = Lists.newArrayList();
@@ -103,6 +108,14 @@ public class Eth2SubCommand extends ModeSubCommand {
                 String.join(",", missingAzureFields));
         throw new ParameterException(spec.commandLine(), errorMsg);
       }
+    }
+  }
+
+  private void validatePositiveValue(final long value, final String fieldName) {
+    if (value < 1) {
+      throw new ParameterException(
+          spec.commandLine(),
+          String.format("%s must be 1 or more. Value was %d.", fieldName, value));
     }
   }
 
