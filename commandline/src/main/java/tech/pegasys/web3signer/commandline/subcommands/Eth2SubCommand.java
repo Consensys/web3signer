@@ -52,10 +52,10 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionParameters.getDbUrl(),
         slashingProtectionParameters.getDbUsername(),
         slashingProtectionParameters.getDbPassword(),
-        slashingProtectionParameters.isSlashingProtectionPruningEnabled(),
-        slashingProtectionParameters.getSlashingProtectionPruningEpochs(),
-        slashingProtectionParameters.getSlashingProtectionPruningEpochsPerSlot(),
-        slashingProtectionParameters.getSlashingProtectionPruningPeriod(),
+        slashingProtectionParameters.isPruningEnabled(),
+        slashingProtectionParameters.getPruningEpochs(),
+        slashingProtectionParameters.getPruningEpochsPerSlot(),
+        slashingProtectionParameters.getPruningPeriod(),
         azureKeyVaultParameters);
   }
 

@@ -23,26 +23,26 @@ public class SlashingProtectionParameters {
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  boolean slashingProtectionEnabled = true;
+  boolean enabled = true;
 
   @Option(
       names = {"--slashing-protection-db-url"},
       description = "The jdbc url to use to connect to the slashing protection database",
       paramLabel = "<jdbc url>",
       arity = "1")
-  String slashingProtectionDbUrl;
+  String dbUrl;
 
   @Option(
       names = {"--slashing-protection-db-username"},
       description = "The username to use when connecting to the slashing protection database",
       paramLabel = "<jdbc user>")
-  String slashingProtectionDbUsername;
+  String dbUsername;
 
   @Option(
       names = {"--slashing-protection-db-password"},
       description = "The password to use when connecting to the slashing protection database",
       paramLabel = "<jdbc password>")
-  String slashingProtectionDbPassword;
+  String dbPassword;
 
   @Option(
       names = {"--slashing-protection-pruning-enabled"},
@@ -51,7 +51,7 @@ public class SlashingProtectionParameters {
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  boolean slashingProtectionPruningEnabled = true;
+  boolean pruningEnabled = true;
 
   @Option(
       names = {"--slashing-protection-pruning-epochs"},
@@ -59,7 +59,7 @@ public class SlashingProtectionParameters {
           "Number of epochs back from latest epoch where data should be pruned to "
               + "(default: ${DEFAULT-VALUE})",
       arity = "1")
-  long slashingProtectionPruningEpochs = 10_000;
+  long pruningEpochs = 10_000;
 
   @Option(
       names = {"--slashing-protection-pruning-slots-per-epoch"},
@@ -67,43 +67,43 @@ public class SlashingProtectionParameters {
           "Slots per epoch to use when calculating the number of slots to prune for signed"
               + " blocks. This typically will not need changing and defaults to value used on mainnet "
               + "(default: ${DEFAULT-VALUE})")
-  long slashingProtectionPruningEpochsPerSlot = 32;
+  long pruningEpochsPerSlot = 32;
 
   @Option(
       names = {"--slashing-protection-pruning-period"},
       description =
           "How often the pruning process should be run in hours (default: ${DEFAULT-VALUE})")
-  long slashingProtectionPruningPeriod = 12;
+  long pruningPeriod = 12;
 
   public boolean isEnabled() {
-    return slashingProtectionEnabled;
+    return enabled;
   }
 
   public String getDbUrl() {
-    return slashingProtectionDbUrl;
+    return dbUrl;
   }
 
   public String getDbUsername() {
-    return slashingProtectionDbUsername;
+    return dbUsername;
   }
 
   public String getDbPassword() {
-    return slashingProtectionDbPassword;
+    return dbPassword;
   }
 
-  public boolean isSlashingProtectionPruningEnabled() {
-    return slashingProtectionPruningEnabled;
+  public boolean isPruningEnabled() {
+    return pruningEnabled;
   }
 
-  public long getSlashingProtectionPruningEpochs() {
-    return slashingProtectionPruningEpochs;
+  public long getPruningEpochs() {
+    return pruningEpochs;
   }
 
-  public long getSlashingProtectionPruningEpochsPerSlot() {
-    return slashingProtectionPruningEpochsPerSlot;
+  public long getPruningEpochsPerSlot() {
+    return pruningEpochsPerSlot;
   }
 
-  public long getSlashingProtectionPruningPeriod() {
-    return slashingProtectionPruningPeriod;
+  public long getPruningPeriod() {
+    return pruningPeriod;
   }
 }
