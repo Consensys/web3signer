@@ -167,6 +167,20 @@ public class SignedBlocksDaoTest {
     assertThat(blocks.get(2)).hasSize(2);
   }
 
+  @Test
+  public void findsMaxSlotForValidator() {
+    insertValidator(Bytes.of(1), 1);
+    insertValidator(Bytes.of(2), 2);
+    insertValidator(Bytes.of(3), 3);
+    insertBlock(1, 3, Bytes.of(1));
+    insertBlock(1, 4, Bytes.of(1));
+    insertBlock(2, 3, Bytes.of(1));
+
+    assertThat(signedBlocksDao.findMaxSlot(handle, 1)).contains(UInt64.valueOf(4));
+    assertThat(signedBlocksDao.findMaxSlot(handle, 2)).contains(UInt64.valueOf(3));
+    assertThat(signedBlocksDao.findMaxSlot(handle, 3)).isEmpty();
+  }
+
   private void insertBlock(final int validatorId, final int slot, final Bytes signingRoot) {
     handle.execute(
         "INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)",

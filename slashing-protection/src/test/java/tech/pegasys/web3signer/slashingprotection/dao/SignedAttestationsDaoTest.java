@@ -241,6 +241,21 @@ public class SignedAttestationsDaoTest {
             new SignedAttestation(2, UInt64.valueOf(2), UInt64.valueOf(3), Bytes.of(1)));
   }
 
+  @Test
+  public void findsMaxTargetEpochForValidator() {
+    insertValidator(Bytes.of(1), 1);
+    insertValidator(Bytes.of(2), 2);
+    insertValidator(Bytes.of(3), 3);
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
+    insertAttestation(2, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+
+    assertThat(signedAttestationsDao.findMaxTargetEpoch(handle, 1)).contains(UInt64.valueOf(5));
+    assertThat(signedAttestationsDao.findMaxTargetEpoch(handle, 2)).contains(UInt64.valueOf(3));
+    assertThat(signedAttestationsDao.findMaxTargetEpoch(handle, 3)).isEmpty();
+  }
+
   private void insertValidator(final Bytes publicKey, final int validatorId) {
     handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
   }
