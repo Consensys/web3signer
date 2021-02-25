@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -240,50 +241,49 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void prune() {
-    final int slotsPerEpoch = 32;
-    final UInt64 epochsToPrune = UInt64.valueOf(10_000);
-    final UInt64 slotsToPrune = epochsToPrune.divide(slotsPerEpoch);
-
+  public void prune(final long epochsToPrune, final long slotsPerEpoch) {
+    final UInt64 slotsToPrune = UInt64.valueOf(epochsToPrune).divide(slotsPerEpoch);
     LOG.info("Pruning slashing protection database");
-
-    registeredValidators.forEach(
-        (key, validatorId) -> {
-          pruneValidator(validatorId, epochsToPrune, slotsToPrune);
-        });
-
+    registeredValidators.values().forEach(v -> pruneValidator(v, epochsToPrune, slotsToPrune));
     LOG.info("Pruning slashing protection database complete");
   }
 
   private void pruneValidator(
-      final int validatorId, final UInt64 epochsToPrune, final UInt64 slotsToPrune) {
-    final UInt64 pruningSlot =
+      final int validatorId, final long epochsToPrune, final UInt64 slotsToPrune) {
+    final Optional<UInt64> pruningSlot =
         jdbi.inTransaction(
             READ_UNCOMMITTED,
             h -> {
               lockForValidator(h, LockType.BLOCK, validatorId);
-              final UInt64 slot =
-                  signedBlocksDao.findMaxSlot(h, validatorId).subtract(slotsToPrune);
-              lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, slot);
+              final Optional<UInt64> slot =
+                  signedBlocksDao.findMaxSlot(h, validatorId).map(s -> s.subtract(slotsToPrune));
+              slot.ifPresent(s -> lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, s));
               return slot;
             });
 
-    jdbi.useTransaction(
-        READ_UNCOMMITTED, h -> signedBlocksDao.deleteBlocksBelowSlot(h, validatorId, pruningSlot));
+    pruningSlot.ifPresent(
+        s ->
+            jdbi.useTransaction(
+                READ_UNCOMMITTED, h -> signedBlocksDao.deleteBlocksBelowSlot(h, validatorId, s)));
 
-    final UInt64 pruningEpoch =
+    final Optional<UInt64> pruningEpoch =
         jdbi.inTransaction(
             READ_UNCOMMITTED,
             h -> {
-              final UInt64 epoch =
-                  signedAttestationsDao.findMaxTargetEpoch(h, validatorId).subtract(epochsToPrune);
-              lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, epoch, epoch);
+              lockForValidator(h, LockType.ATTESTATION, validatorId);
+              final Optional<UInt64> epoch =
+                  signedAttestationsDao
+                      .findMaxTargetEpoch(h, validatorId)
+                      .map(s -> s.subtract(epochsToPrune));
+              epoch.ifPresent(e -> lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, e, e));
               return epoch;
             });
 
-    jdbi.useTransaction(
-        READ_UNCOMMITTED,
-        h -> signedAttestationsDao.deleteAttestationsBelowEpoch(h, validatorId, pruningEpoch));
+    pruningEpoch.ifPresent(
+        e ->
+            jdbi.useTransaction(
+                READ_UNCOMMITTED,
+                h -> signedAttestationsDao.deleteAttestationsBelowEpoch(h, validatorId, e)));
   }
 
   private int validatorId(final Bytes publicKey) {

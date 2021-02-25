@@ -44,6 +44,37 @@ public class SlashingProtectionParameters {
       paramLabel = "<jdbc password>")
   String slashingProtectionDbPassword;
 
+  @Option(
+      names = {"--slashing-protection-pruning-enabled"},
+      description =
+          "Set to true if all Eth2 slashing protection database should be pruned "
+              + "(default: ${DEFAULT-VALUE})",
+      paramLabel = "<BOOL>",
+      arity = "1")
+  boolean slashingProtectionPruningEnabled = true;
+
+  @Option(
+      names = {"--slashing-protection-pruning-epochs"},
+      description =
+          "Number of epochs back from latest epoch where data should be pruned to "
+              + "(default: ${DEFAULT-VALUE})",
+      arity = "1")
+  long slashingProtectionPruningEpochs = 10_000;
+
+  @Option(
+      names = {"--slashing-protection-pruning-slots-per-epoch"},
+      description =
+          "Slots per epoch to use when calculating the number of slots to prune for signed"
+              + " blocks. This typically will not need changing and defaults to value used on mainnet "
+              + "(default: ${DEFAULT-VALUE})")
+  long slashingProtectionPruningEpochsPerSlot = 32;
+
+  @Option(
+      names = {"--slashing-protection-pruning-period"},
+      description =
+          "How often the pruning process should be run in hours (default: ${DEFAULT-VALUE})")
+  long slashingProtectionPruningPeriod = 12;
+
   public boolean isEnabled() {
     return slashingProtectionEnabled;
   }
@@ -58,5 +89,21 @@ public class SlashingProtectionParameters {
 
   public String getDbPassword() {
     return slashingProtectionDbPassword;
+  }
+
+  public boolean isSlashingProtectionPruningEnabled() {
+    return slashingProtectionPruningEnabled;
+  }
+
+  public long getSlashingProtectionPruningEpochs() {
+    return slashingProtectionPruningEpochs;
+  }
+
+  public long getSlashingProtectionPruningEpochsPerSlot() {
+    return slashingProtectionPruningEpochsPerSlot;
+  }
+
+  public long getSlashingProtectionPruningPeriod() {
+    return slashingProtectionPruningPeriod;
   }
 }

@@ -48,6 +48,9 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -77,6 +80,10 @@ public class Eth2Runner extends Runner {
       final String slashingProtectionDbUrl,
       final String slashingProtectionDbUser,
       final String slashingProtectionDbPassword,
+      final boolean slashingProtectionPruningEnabled,
+      final long slashingProtectionPruningEpochs,
+      final long slashingProtectionPruningEpochsPerSlot,
+      final long slashingProtectionPruningPeriod,
       final AzureKeyVaultParameters azureKeyVaultParameters) {
     super(config);
     this.slashingProtection =
@@ -86,6 +93,17 @@ public class Eth2Runner extends Runner {
             slashingProtectionDbUser,
             slashingProtectionDbPassword);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
+    if (slashingProtection.isPresent() && slashingProtectionPruningEnabled) {
+      final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+      executorService.scheduleAtFixedRate(
+          () ->
+              slashingProtection
+                  .get()
+                  .prune(slashingProtectionPruningEpochs, slashingProtectionPruningEpochsPerSlot),
+          slashingProtectionPruningPeriod,
+          slashingProtectionPruningPeriod,
+          TimeUnit.SECONDS);
+    }
   }
 
   private Optional<SlashingProtection> createSlashingProtection(

@@ -127,11 +127,11 @@ public class SignedAttestationsDao {
         epoch);
   }
 
-  public UInt64 findMaxTargetEpoch(final Handle handle, final int validatorId) {
+  public Optional<UInt64> findMaxTargetEpoch(final Handle handle, final int validatorId) {
     return handle
         .createQuery("SELECT max(target_epoch) FROM signed_attestations WHERE validator_id = ?")
         .bind(0, validatorId)
         .mapTo(UInt64.class)
-        .one();
+        .findFirst();
   }
 }
