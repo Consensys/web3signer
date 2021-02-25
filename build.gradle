@@ -500,32 +500,32 @@ task testDocker(type: Exec) {
 
 task dockerUpload(type: Exec) {
   dependsOn distDocker
-  def dockerBuildVersion = rootProject.version
-  def imageName = "consensys/web3signer"
-  def image = "${imageName}:${dockerBuildVersion}"
-  def cmd = "docker push '${image}'"
+  doLast {
+    def dockerBuildVersion = rootProject.version
+    def imageName = "consensys/web3signer"
+    def image = "${imageName}:${dockerBuildVersion}"
+    def cmd = "docker push '${image}'"
 
-  def psImageName = "pegasyseng/web3signer"
-  def psImage = "${psImageName}:${dockerBuildVersion}"
-  cmd += " && docker tag '${image}' '${psImage}' && docker push '${psImage}'"
+    def psImageName = "pegasyseng/web3signer"
+    def psImage = "${psImageName}:${dockerBuildVersion}"
+    cmd += " && docker tag '${image}' '${psImage}' && docker push '${psImage}'"
 
-  def additionalTags = []
+    def additionalTags = []
 
-  if (project.hasProperty('branch') && project.property('branch') == 'master') {
-    additionalTags.add('develop')
-  }
+    if (project.hasProperty('branch') && project.property('branch') == 'master') {
+      additionalTags.add('develop')
+    }
 
-  if (!isDevelopBuild) {
-    additionalTags.add('latest')
-    if ("UNKNOWN" != version) {
+    if (!isDevelopBuild) {
+      additionalTags.add('latest')
       additionalTags.add(version.split(/\./)[0..1].join('.'))
     }
-  }
 
-  additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
-  additionalTags.each { tag -> cmd += " && docker tag '${image}' '${psImageName}:${tag.trim()}' && docker push '${psImageName}:${tag.trim()}'" }
-  executable "sh"
-  args "-c", cmd
+    additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
+    additionalTags.each { tag -> cmd += " && docker tag '${image}' '${psImageName}:${tag.trim()}' && docker push '${psImageName}:${tag.trim()}'" }
+    executable "sh"
+    args "-c", cmd
+  }
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
