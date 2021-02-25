@@ -500,7 +500,7 @@ task testDocker(type: Exec) {
 
 task dockerUpload(type: Exec) {
   dependsOn distDocker
-  doLast {
+  doFirst {
     def dockerBuildVersion = rootProject.version
     def imageName = "consensys/web3signer"
     def image = "${imageName}:${dockerBuildVersion}"
@@ -523,9 +523,9 @@ task dockerUpload(type: Exec) {
 
     additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
     additionalTags.each { tag -> cmd += " && docker tag '${image}' '${psImageName}:${tag.trim()}' && docker push '${psImageName}:${tag.trim()}'" }
-    executable "sh"
-    args "-c", cmd
+    args "-c", "${cmd}"
   }
+  executable "sh"
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
