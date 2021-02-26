@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.slashingprotection.DbLocker.LockType;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.util.Optional;
 
@@ -42,7 +43,7 @@ public class Pruner {
     this.lowWatermarkDao = lowWatermarkDao;
   }
 
-  public void pruneValidator(
+  public void pruneForValidator(
       final int validatorId, final long epochsToPrune, final long slotsPerEpoch) {
     final long slotsToPrune = Math.max(epochsToPrune / slotsPerEpoch, 1);
     pruneBlocks(validatorId, slotsToPrune);
@@ -55,10 +56,16 @@ public class Pruner {
             READ_UNCOMMITTED,
             h -> {
               lockForValidator(h, LockType.BLOCK, validatorId);
-              final Optional<UInt64> slot =
-                  signedBlocksDao.findMaxSlot(h, validatorId).map(s -> s.subtract(slotsToPrune));
-              slot.ifPresent(s -> lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, s));
-              return slot;
+              final Optional<UInt64> watermarkSlot =
+                  lowWatermarkDao
+                      .findLowWatermarkForValidator(h, validatorId)
+                      .map(SigningWatermark::getSlot);
+              final Optional<UInt64> slot = signedBlocksDao.findMaxSlot(h, validatorId);
+              final Optional<UInt64> slotToPruneTo =
+                  calculatePruningMark(slotsToPrune, slot, watermarkSlot);
+              slotToPruneTo.ifPresent(
+                  s -> lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, s));
+              return slotToPruneTo;
             });
 
     pruningSlot.ifPresent(
@@ -73,12 +80,17 @@ public class Pruner {
             READ_UNCOMMITTED,
             h -> {
               lockForValidator(h, LockType.ATTESTATION, validatorId);
+              final Optional<UInt64> watermarkEpoch =
+                  lowWatermarkDao
+                      .findLowWatermarkForValidator(h, validatorId)
+                      .map(SigningWatermark::getTargetEpoch);
               final Optional<UInt64> epoch =
-                  signedAttestationsDao
-                      .findMaxTargetEpoch(h, validatorId)
-                      .map(s -> s.subtract(epochsToPrune));
-              epoch.ifPresent(e -> lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, e, e));
-              return epoch;
+                  signedAttestationsDao.findMaxTargetEpoch(h, validatorId);
+              final Optional<UInt64> epochToPruneTo =
+                  calculatePruningMark(epochsToPrune, epoch, watermarkEpoch);
+              epochToPruneTo.ifPresent(
+                  e -> lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, e, e));
+              return epochToPruneTo;
             });
 
     pruningEpoch.ifPresent(
@@ -86,5 +98,24 @@ public class Pruner {
             jdbi.useTransaction(
                 READ_UNCOMMITTED,
                 h -> signedAttestationsDao.deleteAttestationsBelowEpoch(h, validatorId, e)));
+  }
+
+  private Optional<UInt64> calculatePruningMark(
+      final long amountToPrune,
+      final Optional<UInt64> highpoint,
+      final Optional<UInt64> watermark) {
+    return highpoint.flatMap(
+        h ->
+            watermark.map(
+                w -> {
+                  // new watermark should never go negative
+                  final UInt64 newWatermark = max(UInt64.ZERO, h.subtract(amountToPrune));
+                  // we don't the watermark to ever move lower
+                  return max(newWatermark, w);
+                }));
+  }
+
+  private UInt64 max(final UInt64 a, final UInt64 b) {
+    return a.compareTo(b) >= 1 ? a : b;
   }
 }
