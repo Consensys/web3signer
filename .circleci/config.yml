@@ -205,12 +205,17 @@ jobs:
     executor: executor_med
     steps:
       - prepare
+      - run:
+          name: Install Python3
+          command: |
+            sudo apt update
+            sudo apt install python3 python3-pip python3-venv
       - attach_workspace:
           at: ~/project
       - run:
           name: Publish
           command: |
-            ./gradlew --no-daemon --parallel bintrayUpload
+            ./gradlew --no-daemon --parallel cloudSmithUpload
       - notify
       
   publishDocker:

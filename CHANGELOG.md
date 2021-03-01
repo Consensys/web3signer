@@ -1,5 +1,11 @@
 # Changelog
 
+## Next Release
+
+### Features Added
+- Publish binaries to Cloudsmith
+- Resolve Signers from Cloudsmith
+
 ## 21.1.0
 
 ### Features Added
