@@ -26,6 +26,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
@@ -147,6 +148,19 @@ public class IntegrationTestBase {
 
   protected SigningWatermark getWatermark(final int validatorId) {
     return jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, validatorId)).get();
+  }
+
+  protected List<SignedBlock> getBlocks(final int validatorId) {
+    return jdbi.withHandle(
+        h -> signedBlocksDao.findAllBlockSignedBy(h, validatorId).collect(Collectors.toList()));
+  }
+
+  protected List<SignedAttestation> getAttestations(final int validatorId) {
+    return jdbi.withHandle(
+        h ->
+            signedAttestationsDao
+                .findAllAttestationsSignedBy(h, validatorId)
+                .collect(Collectors.toList()));
   }
 
   protected void insertGvr(final Bytes genesisValidatorsRoot) {

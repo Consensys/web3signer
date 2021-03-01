@@ -54,6 +54,7 @@ dependencies {
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
+  integrationTestImplementation 'org.junit.jupiter:junit-jupiter-params'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation 'org.flywaydb:flyway-core'

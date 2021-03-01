@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt64;
+import org.apache.tuweni.units.bigints.UInt64s;
 import org.jdbi.v3.core.Jdbi;
 
 public class Pruner {
@@ -47,7 +48,9 @@ public class Pruner {
   public void pruneForValidator(
       final int validatorId, final long epochsToKeep, final long slotsPerEpoch) {
     checkArgument(
-        epochsToKeep > 0, "epochsToKeep to keep must be a positive value, but was %", epochsToKeep);
+        epochsToKeep > 0,
+        "epochsToKeep to keep must be a positive value, but was %s",
+        epochsToKeep);
     checkArgument(
         slotsPerEpoch > 0,
         "slotsPerEpoch to keep must be a positive value, but was %",
@@ -115,17 +118,12 @@ public class Pruner {
         h ->
             watermark.map(
                 w -> {
-                  // add one so that this matches the amount of data to remove as we remove below
-                  // the pruning point
-                  final UInt64 pruningPoint = h.subtract(amountToPrune).add(1);
-                  // new watermark should never go negative
-                  final UInt64 newWatermark = max(UInt64.ZERO, pruningPoint);
-                  // we don't the watermark to ever move lower
-                  return max(newWatermark, w);
+                  final UInt64 pruningPoint =
+                      h.compareTo(UInt64.valueOf(amountToPrune)) <= -1
+                          ? UInt64.ZERO
+                          : h.subtract(amountToPrune).add(1);
+                  final UInt64 newWatermark = UInt64s.max(UInt64.ZERO, pruningPoint);
+                  return UInt64s.max(newWatermark, w);
                 }));
-  }
-
-  private UInt64 max(final UInt64 a, final UInt64 b) {
-    return a.compareTo(b) >= 1 ? a : b;
   }
 }
