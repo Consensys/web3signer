@@ -38,5 +38,5 @@ public interface SlashingProtection {
 
   void importData(InputStream output);
 
-  void prune(final long epochsToPrune, final long slotsPerEpoch);
+  void prune(final long epochsToKeep, final long slotsPerEpoch);
 }

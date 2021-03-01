@@ -31,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
-public class InterchangeExportIntegrationTest extends InterchangeBaseIntegrationTest {
+public class InterchangeExportIntegrationTest extends IntegrationTestBase {
 
   @Test
   void exportedEntitiesRepresentTheEntriesStoredInTheDatabase() throws IOException {

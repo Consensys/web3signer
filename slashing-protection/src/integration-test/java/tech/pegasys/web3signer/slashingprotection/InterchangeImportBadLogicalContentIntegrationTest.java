@@ -30,8 +30,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
-public class InterchangeImportBadLogicalContentIntegrationTest
-    extends InterchangeBaseIntegrationTest {
+public class InterchangeImportBadLogicalContentIntegrationTest extends IntegrationTestBase {
 
   @Test
   void attestationHasSourceGreaterThanTargetEpoch() throws IOException {

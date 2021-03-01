@@ -237,11 +237,11 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void prune(final long epochsToPrune, final long slotsPerEpoch) {
+  public void prune(final long epochsToKeep, final long slotsPerEpoch) {
     LOG.info("Pruning slashing protection database");
     registeredValidators
         .values()
-        .forEach(v -> pruner.pruneForValidator(v, epochsToPrune, slotsPerEpoch));
+        .forEach(v -> pruner.pruneForValidator(v, epochsToKeep, slotsPerEpoch));
     LOG.info("Pruning slashing protection database complete");
   }
 
