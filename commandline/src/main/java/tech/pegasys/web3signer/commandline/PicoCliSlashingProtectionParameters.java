@@ -12,9 +12,11 @@
  */
 package tech.pegasys.web3signer.commandline;
 
+import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
+
 import picocli.CommandLine.Option;
 
-public class SlashingProtectionParameters {
+public class PicoCliSlashingProtectionParameters implements SlashingProtectionParameters {
   @Option(
       names = {"--slashing-protection-enabled"},
       description =
@@ -57,7 +59,7 @@ public class SlashingProtectionParameters {
       names = {"--slashing-protection-pruning-epochs-to-keep"},
       description = "Number of epochs to keep. (default: ${DEFAULT-VALUE})",
       arity = "1")
-  long pruningEpochs = 10_000;
+  long pruningEpochsToKeep = 10_000;
 
   @Option(
       names = {"--slashing-protection-pruning-slots-per-epoch"},
@@ -72,34 +74,42 @@ public class SlashingProtectionParameters {
       description = "Hours between pruning operations (default: ${DEFAULT-VALUE})")
   long pruningSchedule = 24;
 
+  @Override
   public boolean isEnabled() {
     return enabled;
   }
 
+  @Override
   public String getDbUrl() {
     return dbUrl;
   }
 
+  @Override
   public String getDbUsername() {
     return dbUsername;
   }
 
+  @Override
   public String getDbPassword() {
     return dbPassword;
   }
 
+  @Override
   public boolean isPruningEnabled() {
     return pruningEnabled;
   }
 
-  public long getPruningEpochs() {
-    return pruningEpochs;
+  @Override
+  public long getPruningEpochsToKeep() {
+    return pruningEpochsToKeep;
   }
 
+  @Override
   public long getPruningEpochsPerSlot() {
     return pruningEpochsPerSlot;
   }
 
+  @Override
   public long getPruningSchedule() {
     return pruningSchedule;
   }

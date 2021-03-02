@@ -25,6 +25,7 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
@@ -71,48 +72,28 @@ public class Eth2Runner extends Runner {
 
   private final Optional<SlashingProtection> slashingProtection;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
-  private final boolean slashingProtectionPruningEnabled;
-  private final long slashingProtectionPruningEpochs;
-  private final long slashingProtectionPruningEpochsPerSlot;
-  private final long slashingProtectionPruningSchedule;
+  private final SlashingProtectionParameters slashingProtectionParameters;
 
   private static final Logger LOG = LogManager.getLogger();
 
   public Eth2Runner(
       final Config config,
-      final boolean slashingProtectionEnabled,
-      final String slashingProtectionDbUrl,
-      final String slashingProtectionDbUser,
-      final String slashingProtectionDbPassword,
-      final boolean slashingProtectionPruningEnabled,
-      final long slashingProtectionPruningEpochs,
-      final long slashingProtectionPruningEpochsPerSlot,
-      final long slashingProtectionPruningSchedule,
+      final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters) {
     super(config);
-    this.slashingProtectionPruningEnabled = slashingProtectionPruningEnabled;
-    this.slashingProtectionPruningEpochs = slashingProtectionPruningEpochs;
-    this.slashingProtectionPruningEpochsPerSlot = slashingProtectionPruningEpochsPerSlot;
-    this.slashingProtectionPruningSchedule = slashingProtectionPruningSchedule;
-    this.slashingProtection =
-        createSlashingProtection(
-            slashingProtectionEnabled,
-            slashingProtectionDbUrl,
-            slashingProtectionDbUser,
-            slashingProtectionDbPassword);
+    this.slashingProtectionParameters = slashingProtectionParameters;
+    this.slashingProtection = createSlashingProtection();
     this.azureKeyVaultParameters = azureKeyVaultParameters;
   }
 
-  private Optional<SlashingProtection> createSlashingProtection(
-      final boolean slashingProtectionEnabled,
-      final String slashingProtectionDbUrl,
-      final String slashingProtectionDbUser,
-      final String slashingProtectionDbPassword) {
-    if (slashingProtectionEnabled) {
+  private Optional<SlashingProtection> createSlashingProtection() {
+    if (slashingProtectionParameters.isEnabled()) {
       try {
         return Optional.of(
             SlashingProtectionFactory.createSlashingProtection(
-                slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword));
+                slashingProtectionParameters.getDbUrl(),
+                slashingProtectionParameters.getDbUsername(),
+                slashingProtectionParameters.getDbPassword()));
       } catch (final IllegalStateException e) {
         throw new InitializationException(e.getMessage(), e);
       }
@@ -130,12 +111,12 @@ public class Eth2Runner extends Runner {
   public void run() {
     super.run();
 
-    if (slashingProtection.isPresent() && slashingProtectionPruningEnabled) {
+    if (slashingProtection.isPresent() && slashingProtectionParameters.isPruningEnabled()) {
       final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
       executorService.scheduleAtFixedRate(
           this::pruneSlashingProtectionDatabase,
           0,
-          slashingProtectionPruningSchedule,
+          slashingProtectionParameters.getPruningSchedule(),
           TimeUnit.HOURS);
     }
   }
@@ -143,7 +124,10 @@ public class Eth2Runner extends Runner {
   private void pruneSlashingProtectionDatabase() {
     try {
       slashingProtection.ifPresent(
-          sp -> sp.prune(slashingProtectionPruningEpochs, slashingProtectionPruningEpochsPerSlot));
+          sp ->
+              sp.prune(
+                  slashingProtectionParameters.getPruningEpochsToKeep(),
+                  slashingProtectionParameters.getPruningEpochsPerSlot()));
     } catch (Exception e) {
       // We only log the error as retrying on the scheduled prune might fix the error
       LOG.info("Pruning slashing protection database failed with error", e);
