@@ -52,9 +52,7 @@ public class Pruner {
         "epochsToKeep to keep must be a positive value, but was %s",
         epochsToKeep);
     checkArgument(
-        slotsPerEpoch > 0,
-        "slotsPerEpoch to keep must be a positive value, but was %",
-        slotsPerEpoch);
+        slotsPerEpoch > 0, "slotsPerEpoch must be a positive value, but was %", slotsPerEpoch);
     final long slotsToKeep = Math.max(epochsToKeep / slotsPerEpoch, 1);
     pruneBlocks(validatorId, slotsToKeep);
     pruneAttestations(validatorId, epochsToKeep);

@@ -100,10 +100,6 @@ public class PruningIntegrationTest extends IntegrationTestBase {
     assertThat(getBlocks(1)).hasSize(5);
   }
 
-  // error occurring during pruning doesn't affect data
-
-  // slots per epoch correctly calculated
-
   private void insertAndRegisterData(
       final int noOfBlocks, final int noOfAttestations, final int validatorId) {
     final Bytes validatorPublicKey = Bytes.of(validatorId);
