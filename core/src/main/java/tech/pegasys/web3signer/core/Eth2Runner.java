@@ -74,7 +74,7 @@ public class Eth2Runner extends Runner {
   private final boolean slashingProtectionPruningEnabled;
   private final long slashingProtectionPruningEpochs;
   private final long slashingProtectionPruningEpochsPerSlot;
-  private final long slashingProtectionPruningPeriod;
+  private final long slashingProtectionPruningSchedule;
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -87,13 +87,13 @@ public class Eth2Runner extends Runner {
       final boolean slashingProtectionPruningEnabled,
       final long slashingProtectionPruningEpochs,
       final long slashingProtectionPruningEpochsPerSlot,
-      final long slashingProtectionPruningPeriod,
+      final long slashingProtectionPruningSchedule,
       final AzureKeyVaultParameters azureKeyVaultParameters) {
     super(config);
     this.slashingProtectionPruningEnabled = slashingProtectionPruningEnabled;
     this.slashingProtectionPruningEpochs = slashingProtectionPruningEpochs;
     this.slashingProtectionPruningEpochsPerSlot = slashingProtectionPruningEpochsPerSlot;
-    this.slashingProtectionPruningPeriod = slashingProtectionPruningPeriod;
+    this.slashingProtectionPruningSchedule = slashingProtectionPruningSchedule;
     this.slashingProtection =
         createSlashingProtection(
             slashingProtectionEnabled,
@@ -133,13 +133,20 @@ public class Eth2Runner extends Runner {
     if (slashingProtection.isPresent() && slashingProtectionPruningEnabled) {
       final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
       executorService.scheduleAtFixedRate(
-          () ->
-              slashingProtection
-                  .get()
-                  .prune(slashingProtectionPruningEpochs, slashingProtectionPruningEpochsPerSlot),
+          this::pruneSlashingProtectionDatabase,
           0,
-          slashingProtectionPruningPeriod,
+          slashingProtectionPruningSchedule,
           TimeUnit.HOURS);
+    }
+  }
+
+  private void pruneSlashingProtectionDatabase() {
+    try {
+      slashingProtection.ifPresent(
+          sp -> sp.prune(slashingProtectionPruningEpochs, slashingProtectionPruningEpochsPerSlot));
+    } catch (Exception e) {
+      // We only log the error as retrying on the scheduled prune might fix the error
+      LOG.info("Pruning slashing protection database failed with error", e);
     }
   }
 
