@@ -55,7 +55,7 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionParameters.isPruningEnabled(),
         slashingProtectionParameters.getPruningEpochs(),
         slashingProtectionParameters.getPruningEpochsPerSlot(),
-        slashingProtectionParameters.getPruningPeriod(),
+        slashingProtectionParameters.getPruningSchedule(),
         azureKeyVaultParameters);
   }
 
@@ -67,7 +67,7 @@ public class Eth2SubCommand extends ModeSubCommand {
     }
 
     validatePositiveValue(slashingProtectionParameters.getPruningEpochs(), "Pruning epochs");
-    validatePositiveValue(slashingProtectionParameters.getPruningPeriod(), "Pruning period");
+    validatePositiveValue(slashingProtectionParameters.getPruningSchedule(), "Pruning period");
     validatePositiveValue(
         slashingProtectionParameters.getPruningEpochsPerSlot(), "Pruning slots per epoch");
 

@@ -49,8 +49,12 @@ public class SignerConfigurationBuilder {
   private String slashingProtectionDbUrl;
   private Path slashingExportPath;
   private Path slashingImportPath;
+  private boolean enableSlashingPruning = false;
   private boolean swaggerUIEnabled = false;
   private boolean useConfigFile = false;
+  private long pruningEpochsToKeep = 1;
+  private long slashingPruningSlotsPerEpoch = 1;
+  private long slashingPruningSchedule = 1;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -146,6 +150,29 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withSlashingPruningEnabled(final boolean enablePruning) {
+    this.enableSlashingPruning = enablePruning;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withSlashingPruningEpochsToKeep(
+      final long pruningEpochsToKeep) {
+    this.pruningEpochsToKeep = pruningEpochsToKeep;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withSlashingPruningSlotsPerEpoch(
+      final long slashingPruningSlotsPerEpoch) {
+    this.slashingPruningSlotsPerEpoch = slashingPruningSlotsPerEpoch;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withSlashingPruningSchedule(
+      final long slashingPruningSchedule) {
+    this.slashingPruningSchedule = slashingPruningSchedule;
+    return this;
+  }
+
   public SignerConfigurationBuilder withEnvironment(final Map<String, String> environment) {
     this.web3SignerEnvironment = environment;
     return this;
@@ -186,6 +213,10 @@ public class SignerConfigurationBuilder {
         enableSlashing,
         Optional.ofNullable(slashingExportPath),
         Optional.ofNullable(slashingImportPath),
+        enableSlashingPruning,
+        pruningEpochsToKeep,
+        slashingPruningSlotsPerEpoch,
+        slashingPruningSchedule,
         swaggerUIEnabled,
         useConfigFile);
   }

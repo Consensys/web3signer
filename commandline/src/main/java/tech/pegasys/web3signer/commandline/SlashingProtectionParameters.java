@@ -51,7 +51,7 @@ public class SlashingProtectionParameters {
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  boolean pruningEnabled = true;
+  boolean pruningEnabled = false;
 
   @Option(
       names = {"--slashing-protection-pruning-epochs-to-keep"},
@@ -68,10 +68,9 @@ public class SlashingProtectionParameters {
   long pruningEpochsPerSlot = 32;
 
   @Option(
-      names = {"--slashing-protection-pruning-period"},
-      description =
-          "How often the pruning process should be run in hours (default: ${DEFAULT-VALUE})")
-  long pruningPeriod = 12;
+      names = {"--slashing-protection-pruning-schedule"},
+      description = "Hours between pruning operations (default: ${DEFAULT-VALUE})")
+  long pruningSchedule = 24;
 
   public boolean isEnabled() {
     return enabled;
@@ -101,7 +100,7 @@ public class SlashingProtectionParameters {
     return pruningEpochsPerSlot;
   }
 
-  public long getPruningPeriod() {
-    return pruningPeriod;
+  public long getPruningSchedule() {
+    return pruningSchedule;
   }
 }

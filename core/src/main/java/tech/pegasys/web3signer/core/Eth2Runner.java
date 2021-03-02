@@ -71,6 +71,10 @@ public class Eth2Runner extends Runner {
 
   private final Optional<SlashingProtection> slashingProtection;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
+  private final boolean slashingProtectionPruningEnabled;
+  private final long slashingProtectionPruningEpochs;
+  private final long slashingProtectionPruningEpochsPerSlot;
+  private final long slashingProtectionPruningPeriod;
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -86,6 +90,10 @@ public class Eth2Runner extends Runner {
       final long slashingProtectionPruningPeriod,
       final AzureKeyVaultParameters azureKeyVaultParameters) {
     super(config);
+    this.slashingProtectionPruningEnabled = slashingProtectionPruningEnabled;
+    this.slashingProtectionPruningEpochs = slashingProtectionPruningEpochs;
+    this.slashingProtectionPruningEpochsPerSlot = slashingProtectionPruningEpochsPerSlot;
+    this.slashingProtectionPruningPeriod = slashingProtectionPruningPeriod;
     this.slashingProtection =
         createSlashingProtection(
             slashingProtectionEnabled,
@@ -93,17 +101,6 @@ public class Eth2Runner extends Runner {
             slashingProtectionDbUser,
             slashingProtectionDbPassword);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
-    if (slashingProtection.isPresent() && slashingProtectionPruningEnabled) {
-      final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
-      executorService.scheduleAtFixedRate(
-          () ->
-              slashingProtection
-                  .get()
-                  .prune(slashingProtectionPruningEpochs, slashingProtectionPruningEpochsPerSlot),
-          slashingProtectionPruningPeriod,
-          slashingProtectionPruningPeriod,
-          TimeUnit.HOURS);
-    }
   }
 
   private Optional<SlashingProtection> createSlashingProtection(
@@ -127,6 +124,23 @@ public class Eth2Runner extends Runner {
   @Override
   protected String getOpenApiSpecResource() {
     return "openapi/web3signer-eth2.yaml";
+  }
+
+  @Override
+  public void run() {
+    super.run();
+
+    if (slashingProtection.isPresent() && slashingProtectionPruningEnabled) {
+      final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+      executorService.scheduleAtFixedRate(
+          () ->
+              slashingProtection
+                  .get()
+                  .prune(slashingProtectionPruningEpochs, slashingProtectionPruningEpochsPerSlot),
+          0,
+          slashingProtectionPruningPeriod,
+          TimeUnit.HOURS);
+    }
   }
 
   @Override
