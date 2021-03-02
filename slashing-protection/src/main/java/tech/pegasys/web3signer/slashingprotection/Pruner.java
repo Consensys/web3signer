@@ -117,7 +117,7 @@ public class Pruner {
             watermark.map(
                 w -> {
                   final UInt64 pruningPoint =
-                      h.compareTo(UInt64.valueOf(amountToPrune)) <= -1
+                      h.compareTo(UInt64.valueOf(amountToPrune)) < 0
                           ? UInt64.ZERO
                           : h.subtract(amountToPrune).add(1);
                   final UInt64 newWatermark = UInt64s.max(UInt64.ZERO, pruningPoint);
