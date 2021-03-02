@@ -120,8 +120,4 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
   private List<Map<String, Object>> getAttestations(final Jdbi jdbi) {
     return jdbi.withHandle(h -> h.select("SELECT * from signed_attestations").mapToMap().list());
   }
-
-  private List<Map<String, Object>> getValidators(final Jdbi jdbi) {
-    return jdbi.withHandle(h -> h.select("SELECT * from validators").mapToMap().list());
-  }
 }
