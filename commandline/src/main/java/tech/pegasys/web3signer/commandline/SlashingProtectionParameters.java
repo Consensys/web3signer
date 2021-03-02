@@ -54,10 +54,8 @@ public class SlashingProtectionParameters {
   boolean pruningEnabled = true;
 
   @Option(
-      names = {"--slashing-protection-pruning-epochs"},
-      description =
-          "Number of epochs back from latest epoch where data should be pruned to "
-              + "(default: ${DEFAULT-VALUE})",
+      names = {"--slashing-protection-pruning-epochs-to-keep"},
+      description = "Number of epochs to keep. (default: ${DEFAULT-VALUE})",
       arity = "1")
   long pruningEpochs = 10_000;
 

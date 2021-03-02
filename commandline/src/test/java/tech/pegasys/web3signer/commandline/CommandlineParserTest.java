@@ -135,7 +135,7 @@ class CommandlineParserTest {
     String cmdline = validBaseCommandOptions();
     cmdline =
         cmdline
-            + "eth2 --slashing-protection-db-url=jdbc:mock --slashing-protection-pruning-epochs=0";
+            + "eth2 --slashing-protection-db-url=jdbc:mock --slashing-protection-pruning-epochs-to-keep=0";
 
     parser.registerSubCommands(new MockEth2SubCommand());
     final int result = parser.parseCommandLine(cmdline.split(" "));
