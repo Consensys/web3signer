@@ -157,9 +157,9 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(signerConfig.getSlashingImportPath().get().toAbsolutePath().toString());
     }
 
-    params.add("--slashing-protection-pruning-enabled");
-    params.add(Boolean.toString(signerConfig.isSlashingProtectionPruningEnabled()));
     if (signerConfig.isSlashingProtectionPruningEnabled()) {
+      params.add("--slashing-protection-pruning-enabled");
+      params.add(Boolean.toString(signerConfig.isSlashingProtectionPruningEnabled()));
       params.add("--slashing-protection-pruning-epochs-to-keep");
       params.add(Long.toString(signerConfig.getSlashingProtectionPruningEpochsToKeep()));
       params.add("--slashing-protection-pruning-slots-per-epoch");
