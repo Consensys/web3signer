@@ -102,7 +102,7 @@ public class Eth2Runner extends Runner {
                   .prune(slashingProtectionPruningEpochs, slashingProtectionPruningEpochsPerSlot),
           slashingProtectionPruningPeriod,
           slashingProtectionPruningPeriod,
-          TimeUnit.SECONDS);
+          TimeUnit.HOURS);
     }
   }
 
