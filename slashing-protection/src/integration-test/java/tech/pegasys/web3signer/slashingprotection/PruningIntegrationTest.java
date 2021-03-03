@@ -24,13 +24,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 public class PruningIntegrationTest extends IntegrationTestBase {
 
   @ParameterizedTest
-  @ValueSource(ints = {1, 2, 5, 9, 10, 20})
-  void prunesDataForRegisteredValidator(final int amountToKeep) {
+  @CsvSource({"1, 9", "2, 8", "5, 5", "9, 1", "10, 0", "20, 0"})
+  void prunesDataForRegisteredValidator(final int amountToKeep, final int pruningMark) {
     final int size = 10;
     insertAndRegisterData(size, size, 1);
     final List<SignedAttestation> allAttestations = getAttestations(1);
@@ -38,7 +38,6 @@ public class PruningIntegrationTest extends IntegrationTestBase {
 
     slashingProtection.prune(amountToKeep, 1);
 
-    final int pruningMark = Math.max(size - amountToKeep, 0);
     final List<SignedAttestation> expectedAttestations = allAttestations.subList(pruningMark, size);
     final List<SignedAttestation> attestations = getAttestations(1);
     assertThat(attestations).usingFieldByFieldElementComparator().isEqualTo(expectedAttestations);
