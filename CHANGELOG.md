@@ -6,6 +6,9 @@
 - Publish binaries to Cloudsmith
 - Resolve Signers from Cloudsmith
 
+### Bugs Fixed
+- Fixed build failure when checked out as a shallow clone. Shallow clones are still not recommended as the version number cannot be determined correctly.
+
 ## 21.1.0
 
 ### Features Added
