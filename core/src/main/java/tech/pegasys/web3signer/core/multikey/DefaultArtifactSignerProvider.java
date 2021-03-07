@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
 public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
-  private Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
+  private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Map<String, ArtifactSigner> signers = new ConcurrentHashMap<>();
   private final Set<String> signerIdentifiers = ConcurrentHashMap.newKeySet();
 
@@ -58,11 +58,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                       return signer1;
                     }));
 
-    signers.clear();
-    signerIdentifiers.clear();
-
     signers.putAll(signerMap);
     signerIdentifiers.addAll(signers.keySet());
+    LOG.info("Total signers (keys) loaded in memory {}", signerIdentifiers.size());
   }
 
   @Override
