@@ -35,7 +35,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
-public class WatermarkImportingIntegrationTest extends InterchangeBaseIntegrationTest {
+public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
 
   final Bytes PUBLIC_KEY =
       Bytes.fromHexString(

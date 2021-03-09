@@ -27,7 +27,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
-public class InterchangeImportConflictsIntegrationTest extends InterchangeBaseIntegrationTest {
+public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTestBase {
 
   @Test
   void duplicateEntriesAreNotInsertedToDatabase() throws IOException {
