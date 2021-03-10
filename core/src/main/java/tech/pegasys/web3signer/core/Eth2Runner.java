@@ -82,11 +82,12 @@ public class Eth2Runner extends Runner {
       final AzureKeyVaultParameters azureKeyVaultParameters) {
     super(config);
     this.slashingProtectionParameters = slashingProtectionParameters;
-    this.slashingProtection = createSlashingProtection();
+    this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
   }
 
-  private Optional<SlashingProtection> createSlashingProtection() {
+  private Optional<SlashingProtection> createSlashingProtection(
+      final SlashingProtectionParameters slashingProtectionParameters) {
     if (slashingProtectionParameters.isEnabled()) {
       try {
         return Optional.of(
