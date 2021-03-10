@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.tests.publickeys;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;
@@ -86,6 +87,25 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final Response publicKeysResponseAfterReload = signer.callApiPublicKeys(keyType);
     validateApiResponse(
         publicKeysResponseAfterReload, containsInAnyOrder(ArrayUtils.addAll(keys, additionalKeys)));
+  }
+
+  @ParameterizedTest
+  @EnumSource(value = KeyType.class)
+  public void alreadyLoadedPublicKeysAreNotRemovedAfterReload(final KeyType keyType) {
+    final String[] prvKeys = privateKeys(keyType);
+    final String[] keys = createKeys(keyType, true, prvKeys);
+
+    initAndStartSigner(calculateMode(keyType));
+
+    validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
+
+    // remove one of the key config file
+    assertThat(testDirectory.resolve(keys[1] + ".yaml").toFile().delete()).isTrue();
+
+    // reload API call
+    signer.callReload().then().statusCode(200);
+
+    validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
   }
 
   @ParameterizedTest

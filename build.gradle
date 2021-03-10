@@ -20,13 +20,11 @@ import java.text.SimpleDateFormat
 plugins {
   id 'java-test-fixtures'
   id 'com.diffplug.gradle.spotless' version '3.27.1'
-  id 'com.jfrog.bintray' version '1.8.4'
   id 'com.github.ben-manes.versions' version '0.27.0'
   id 'com.github.hierynomus.license' version '0.15.0'
   id 'io.spring.dependency-management' version '1.0.9.RELEASE'
   id 'me.champeau.gradle.jmh' version '0.5.0' apply false
   id 'net.ltgt.errorprone' version '1.1.1'
-  id 'net.researchgate.release' version '2.8.1'
   id 'org.ajoberstar.grgit' version '4.0.2'
 }
 
@@ -38,24 +36,6 @@ if (!JavaVersion.current().java11Compatible) {
 rootProject.version = calculatePublishVersion()
 def specificVersion = calculateVersion()
 def isDevelopBuild = rootProject.version.contains('develop')
-
-def bintrayUser = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-def bintrayKey = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_KEY')
-def bintrayPackage = bintray.pkg {
-  repo = 'pegasys-repo'
-  name = 'web3signer'
-  userOrg = 'consensys'
-  licenses = ['Apache-2.0']
-  websiteUrl = 'https://github.com/ConsenSys/web3signer'
-  issueTrackerUrl = 'https://github.com/ConsenSys/web3signer/issues'
-  vcsUrl = 'https://github.com/ConsenSys/web3signer.git'
-
-  version {
-    name = project.version
-    released  = new Date()
-  }
-}
-
 
 group = 'tech.pegasys.web3signer'
 
@@ -124,7 +104,8 @@ allprojects {
     jcenter()
     mavenCentral()
     maven { url "https://hyperledger-org.bintray.com/besu-repo/" }
-    maven { url  "https://consensys.bintray.com/pegasys-repo" }
+    maven { url "https://artifacts.consensys.net/public/maven/maven/" }
+    maven { url "https://consensys.bintray.com/pegasys-repo" }
     maven { url "https://jitpack.io" }
   }
 
@@ -244,55 +225,6 @@ task deploy() {}
 
 
 subprojects {
-
-  if (file('src/main/java').directory) {
-    apply plugin: 'com.jfrog.bintray'
-    apply plugin: 'maven-publish'
-
-    publishing {
-      publications {
-        mavenJava(MavenPublication) {
-          groupId "tech.pegasys.web3signer.internal"
-          version "${project.version}"
-          from components.java
-          artifact sourcesJar
-          artifact javadocJar
-          versionMapping {
-            usage('java-api') { fromResolutionOf('runtimeClasspath') }
-            usage('java-runtime') { fromResolutionResult() }
-          }
-          pom {
-            name = "web3signer - ${project.name}"
-            url = 'http://github.com/ConsenSys/web3signer'
-            licenses {
-              license {
-                name = 'The Apache License, Version 2.0'
-                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-              }
-            }
-            scm {
-              connection = 'scm:git:git://github.com/ConsenSys/web3signer.git'
-              developerConnection = 'scm:git:ssh://github.com/ConsenSys/web3signer.git'
-              url = 'https://github.com/ConsenSys/web3signer'
-            }
-          }
-        }
-      }
-    }
-
-    bintray {
-      user = bintrayUser
-      key = bintrayKey
-
-      publications = ['mavenJava']
-      override = isDevelopBuild
-
-      publish = true
-
-      pkg = bintrayPackage
-    }
-  }
-
   tasks.withType(Test) {
     // If GRADLE_MAX_TEST_FORKS is not set, use half the available processors
     maxParallelForks = (System.getenv('GRADLE_MAX_TEST_FORKS') ?: (Runtime.runtime.availableProcessors().intdiv(2) ?: 1)).toInteger()
@@ -500,30 +432,32 @@ task testDocker(type: Exec) {
 
 task dockerUpload(type: Exec) {
   dependsOn distDocker
-  def dockerBuildVersion = rootProject.version
-  def imageName = "consensys/web3signer"
-  def image = "${imageName}:${dockerBuildVersion}"
-  def cmd = "docker push '${image}'"
+  doFirst {
+    def dockerBuildVersion = rootProject.version
+    def imageName = "consensys/web3signer"
+    def image = "${imageName}:${dockerBuildVersion}"
+    def cmd = "docker push '${image}'"
 
-  def psImageName = "pegasyseng/web3signer"
-  def psImage = "${psImageName}:${dockerBuildVersion}"
-  cmd += " && docker tag '${image}' '${psImage}' && docker push '${psImage}'"
+    def psImageName = "pegasyseng/web3signer"
+    def psImage = "${psImageName}:${dockerBuildVersion}"
+    cmd += " && docker tag '${image}' '${psImage}' && docker push '${psImage}'"
 
-  def additionalTags = []
+    def additionalTags = []
 
-  if (project.hasProperty('branch') && project.property('branch') == 'master') {
-    additionalTags.add('develop')
+    if (project.hasProperty('branch') && project.property('branch') == 'master') {
+      additionalTags.add('develop')
+    }
+
+    if (!isDevelopBuild) {
+      additionalTags.add('latest')
+      additionalTags.add(version.split(/\./)[0..1].join('.'))
+    }
+
+    additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
+    additionalTags.each { tag -> cmd += " && docker tag '${image}' '${psImageName}:${tag.trim()}' && docker push '${psImageName}:${tag.trim()}'" }
+    args "-c", "${cmd}"
   }
-
-  if (!isDevelopBuild) {
-    additionalTags.add('latest')
-    additionalTags.add(version.split(/\./)[0..1].join('.'))
-  }
-
-  additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
-  additionalTags.each { tag -> cmd += " && docker tag '${image}' '${psImageName}:${tag.trim()}' && docker push '${psImageName}:${tag.trim()}'" }
   executable "sh"
-  args "-c", cmd
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
@@ -543,17 +477,6 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
 }
 
 configurations { annotationProcessor }
-
-// Prevent errorprone-checks being dependent upon errorprone-checks!
-// However, ensure all subprojects comply with the custom rules.
-/*
- configure(subprojects.findAll {it.name != 'errorprone-checks'}) {
- dependencies { annotationProcessor project(":errorprone-checks") }
- tasks.withType(JavaCompile) {
- options.annotationProcessorPath = configurations.annotationProcessor
- }
- }
- */
 
 // http://label-schema.org/rc1/
 // using the RFC3339 format "2016-04-12T23:20:50.52Z"
@@ -588,6 +511,9 @@ def calculateVersion() {
     return 'UNKNOWN'
   }
   String version = grgit.describe(tags: true)
+  if (version == null) {
+    return "UNKNOWN+g${grgit.head().abbreviatedId}"
+  }
   def versionPattern = ~/^(?<lastVersion>.*)-(?<devVersion>[0-9]+-g[a-z0-9]+)$/
   def matcher = version =~ versionPattern
   if (matcher.find()) {
@@ -607,8 +533,6 @@ def getCheckedOutGitCommitHash() {
   grgit ? grgit.head().id.take(takeFromHash) : 'UNKNOWN'
 }
 
-apply plugin: 'net.researchgate.release'
-
 task releaseIntegrationTest(type: Test){
   for(TaskContainer taskList : subprojects.tasks){
     def subProjectIntegrationTask = taskList.findByName('integrationTest')
@@ -621,41 +545,15 @@ task releaseIntegrationTest(type: Test){
 
 task releaseAcceptanceTest(type: Test, dependsOn : ':acceptance-tests:acceptanceTest') {}
 
-release {
-  preTagCommitMessage = '[Gradle Release Plugin] - pre tag commit: '
-  tagCommitMessage = '[Gradle Release Plugin] - creating tag: '
-  newVersionCommitMessage = '[Gradle Release Plugin] - new version commit: '
-  buildTasks = [
-    'build',
-    'releaseIntegrationTest',
-    'releaseAcceptanceTest',
-    'checkLicenses',
-    'javadoc'
-  ]
-
-  git {
-    requireBranch = project.hasProperty('release.branch') ? project.property('release.branch') : 'master'
+task cloudsmithUpload {
+  dependsOn([
+    distTar,
+    distZip,
+  ])
+  doLast {
+    exec {
+      executable project.file("scripts/cloudsmith-upload.sh")
+      args rootProject.version, "${buildDir}/distributions"
+    }
   }
 }
-
-apply plugin: 'com.jfrog.bintray'
-
-bintray {
-  user = bintrayUser
-  key = bintrayKey
-
-  filesSpec {
-    from distTar.destinationDirectory
-    from distZip.destinationDirectory
-    into '.'
-  }
-
-  publish = true
-  override = isDevelopBuild
-
-  pkg = bintrayPackage
-}
-
-afterReleaseBuild.dependsOn bintrayUpload
-bintrayUpload.mustRunAfter(distTar)
-bintrayUpload.mustRunAfter(distZip)

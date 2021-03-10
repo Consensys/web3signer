@@ -20,7 +20,7 @@ import java.net.URL;
 import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 
-public class InterchangeImportBadJsonFormattingIntegrationTest extends IntegrationTestBase {
+public class InterchangeImportBadJsonFormattingIntegrationTestBase extends IntegrationTestBase {
 
   @Test
   void incorrectlyTypedDataFieldThrowsException() {

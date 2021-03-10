@@ -16,7 +16,6 @@ import static io.restassured.RestAssured.given;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
@@ -92,13 +91,14 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
             privateKey -> {
               final BLSKeyPair keyPair =
                   new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(privateKey)));
-              final Path keyConfigFile = blsConfigFileName(keyPair.getPublicKey());
+              final String publicKey = keyPair.getPublicKey().toString();
+              final Path keyConfigFile = testDirectory.resolve(publicKey + ".yaml");
               if (isValid) {
                 metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, privateKey, BLS);
               } else {
                 createInvalidFile(keyConfigFile);
               }
-              return keyPair.getPublicKey().toString();
+              return publicKey;
             })
         .toArray(String[]::new);
   }
@@ -133,7 +133,7 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
     final String password = "pass";
     final Bytes privateKey = Bytes.fromHexString(privateKeyHexString);
     final ECKeyPair ecKeyPair = ECKeyPair.create(Numeric.toBigInt(privateKey.toArray()));
-    final String publicKey = Numeric.toHexStringNoPrefix(ecKeyPair.getPublicKey());
+    final String publicKey = Numeric.toHexStringWithPrefix(ecKeyPair.getPublicKey());
 
     final String walletFile;
     try {
@@ -148,11 +148,6 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
         Path.of(walletFile),
         password,
         KeyType.SECP256K1);
-  }
-
-  private Path blsConfigFileName(final BLSPublicKey publicKey) {
-    final String configFilename = publicKey.toString().substring(2);
-    return testDirectory.resolve(configFilename + ".yaml");
   }
 
   protected void initAndStartSigner(final String mode) {
