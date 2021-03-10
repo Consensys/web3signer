@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
-import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
@@ -38,7 +37,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-public class InterchangeBaseIntegrationTest {
+public class IntegrationTestBase {
 
   protected final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
 
@@ -46,7 +45,6 @@ public class InterchangeBaseIntegrationTest {
   protected final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
   protected final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
   protected final SignedAttestationsDao signedAttestationsDao = new SignedAttestationsDao();
-  protected final MetadataDao metadataDao = new MetadataDao();
 
   protected EmbeddedPostgres db;
   protected String databaseUrl;
