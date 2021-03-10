@@ -82,13 +82,13 @@ public class Eth2Runner extends Runner {
   }
 
   private Optional<SlashingProtection> createSlashingProtection(
-      SlashingProtectionParameters slashingProtectionParameters) {
+      final SlashingProtectionParameters slashingProtectionParameters) {
     if (slashingProtectionParameters.isEnabled()) {
       try {
         return Optional.of(
             SlashingProtectionFactory.createSlashingProtection(
                 slashingProtectionParameters.getDbUrl(),
-                slashingProtectionParameters.getDbUrl(),
+                slashingProtectionParameters.getDbUsername(),
                 slashingProtectionParameters.getDbPassword()));
       } catch (final IllegalStateException e) {
         throw new InitializationException(e.getMessage(), e);
