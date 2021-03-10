@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
 
 import java.util.List;
 
@@ -41,8 +42,8 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Spec CommandSpec spec;
 
-  @Mixin public PicoCliSlashingProtectionParameters slashingProtectionParameters;
-  @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
+  @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
   public Runner createRunner() {
@@ -99,5 +100,9 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Override
   public String getCommandName() {
     return COMMAND_NAME;
+  }
+
+  public SlashingProtectionParameters getSlashingProtectionParameters() {
+    return slashingProtectionParameters;
   }
 }
