@@ -25,6 +25,7 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
@@ -73,31 +74,22 @@ public class Eth2Runner extends Runner {
 
   public Eth2Runner(
       final Config config,
-      final boolean slashingProtectionEnabled,
-      final String slashingProtectionDbUrl,
-      final String slashingProtectionDbUser,
-      final String slashingProtectionDbPassword,
+      final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters) {
     super(config);
-    this.slashingProtection =
-        createSlashingProtection(
-            slashingProtectionEnabled,
-            slashingProtectionDbUrl,
-            slashingProtectionDbUser,
-            slashingProtectionDbPassword);
+    this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
   }
 
   private Optional<SlashingProtection> createSlashingProtection(
-      final boolean slashingProtectionEnabled,
-      final String slashingProtectionDbUrl,
-      final String slashingProtectionDbUser,
-      final String slashingProtectionDbPassword) {
-    if (slashingProtectionEnabled) {
+      SlashingProtectionParameters slashingProtectionParameters) {
+    if (slashingProtectionParameters.isEnabled()) {
       try {
         return Optional.of(
             SlashingProtectionFactory.createSlashingProtection(
-                slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword));
+                slashingProtectionParameters.getDbUrl(),
+                slashingProtectionParameters.getDbUrl(),
+                slashingProtectionParameters.getDbPassword()));
       } catch (final IllegalStateException e) {
         throw new InitializationException(e.getMessage(), e);
       }

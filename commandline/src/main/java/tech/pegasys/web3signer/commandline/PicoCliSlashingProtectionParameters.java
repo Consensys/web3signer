@@ -12,9 +12,11 @@
  */
 package tech.pegasys.web3signer.commandline;
 
+import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
+
 import picocli.CommandLine.Option;
 
-public class SlashingProtectionParameters {
+public class PicoCliSlashingProtectionParameters implements SlashingProtectionParameters {
   @Option(
       names = {"--slashing-protection-enabled"},
       description =
@@ -44,18 +46,22 @@ public class SlashingProtectionParameters {
       paramLabel = "<jdbc password>")
   String slashingProtectionDbPassword;
 
+  @Override
   public boolean isEnabled() {
     return slashingProtectionEnabled;
   }
 
+  @Override
   public String getDbUrl() {
     return slashingProtectionDbUrl;
   }
 
+  @Override
   public String getDbUsername() {
     return slashingProtectionDbUsername;
   }
 
+  @Override
   public String getDbPassword() {
     return slashingProtectionDbPassword;
   }

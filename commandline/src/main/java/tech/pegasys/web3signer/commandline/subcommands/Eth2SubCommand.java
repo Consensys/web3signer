@@ -16,7 +16,7 @@ import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.CLIENT
 import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
-import tech.pegasys.web3signer.commandline.SlashingProtectionParameters;
+import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
 
@@ -41,18 +41,12 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Spec CommandSpec spec;
 
-  @Mixin public SlashingProtectionParameters slashingProtectionParameters;
+  @Mixin public PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
   public Runner createRunner() {
-    return new Eth2Runner(
-        config,
-        slashingProtectionParameters.isEnabled(),
-        slashingProtectionParameters.getDbUrl(),
-        slashingProtectionParameters.getDbUsername(),
-        slashingProtectionParameters.getDbPassword(),
-        azureKeyVaultParameters);
+    return new Eth2Runner(config, slashingProtectionParameters, azureKeyVaultParameters);
   }
 
   @Override
