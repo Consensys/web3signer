@@ -16,8 +16,10 @@ import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.CLIENT
 import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
+import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
 
 import java.util.List;
 
@@ -26,7 +28,6 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
 
@@ -41,51 +42,18 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Spec CommandSpec spec;
 
-  @Option(
-      names = {"--slashing-protection-enabled"},
-      description =
-          "Set to true if all Eth2 signing operations should be validated against historic data, "
-              + "prior to responding with signatures"
-              + "(default: ${DEFAULT-VALUE})",
-      paramLabel = "<BOOL>",
-      arity = "1")
-  boolean slashingProtectionEnabled = true;
-
-  @Option(
-      names = {"--slashing-protection-db-url"},
-      description = "The jdbc url to use to connect to the slashing protection database",
-      paramLabel = "<jdbc url>",
-      arity = "1")
-  String slashingProtectionDbUrl;
-
-  @Option(
-      names = {"--slashing-protection-db-username"},
-      description = "The username to use when connecting to the slashing protection database",
-      paramLabel = "<jdbc user>")
-  String slashingProtectionDbUsername;
-
-  @Option(
-      names = {"--slashing-protection-db-password"},
-      description = "The password to use when connecting to the slashing protection database",
-      paramLabel = "<jdbc password>")
-  String slashingProtectionDbPassword;
-
-  @Mixin public PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
+  @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
   public Runner createRunner() {
-    return new Eth2Runner(
-        config,
-        slashingProtectionEnabled,
-        slashingProtectionDbUrl,
-        slashingProtectionDbUsername,
-        slashingProtectionDbPassword,
-        azureKeyVaultParameters);
+    return new Eth2Runner(config, slashingProtectionParameters, azureKeyVaultParameters);
   }
 
   @Override
   protected void validateArgs() {
-    if (slashingProtectionEnabled && slashingProtectionDbUrl == null) {
+    if (slashingProtectionParameters.isEnabled()
+        && slashingProtectionParameters.getDbUrl() == null) {
       throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
     }
 
@@ -132,5 +100,9 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Override
   public String getCommandName() {
     return COMMAND_NAME;
+  }
+
+  public SlashingProtectionParameters getSlashingProtectionParameters() {
+    return slashingProtectionParameters;
   }
 }

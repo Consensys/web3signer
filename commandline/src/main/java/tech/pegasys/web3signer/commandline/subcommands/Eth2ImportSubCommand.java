@@ -54,7 +54,7 @@ public class Eth2ImportSubCommand implements Runnable {
     if (from == null) {
       throw new MissingParameterException(
           spec.commandLine(), spec.findOption("--from"), "--from has not been specified");
-    } else if (StringUtils.isEmpty(eth2Config.slashingProtectionDbUrl)) {
+    } else if (StringUtils.isEmpty(eth2Config.getSlashingProtectionParameters().getDbUrl())) {
       throw new MissingParameterException(
           spec.parent().commandLine(),
           spec.findOption("--slashing-protection-db-url"),
@@ -64,9 +64,9 @@ public class Eth2ImportSubCommand implements Runnable {
     try (final InputStream inStream = new FileInputStream(from)) {
       final SlashingProtection slashingProtection =
           createSlashingProtection(
-              eth2Config.slashingProtectionDbUrl,
-              eth2Config.slashingProtectionDbUsername,
-              eth2Config.slashingProtectionDbPassword);
+              eth2Config.getSlashingProtectionParameters().getDbUrl(),
+              eth2Config.getSlashingProtectionParameters().getDbUsername(),
+              eth2Config.getSlashingProtectionParameters().getDbPassword());
 
       slashingProtection.importData(inStream);
     } catch (final IOException e) {

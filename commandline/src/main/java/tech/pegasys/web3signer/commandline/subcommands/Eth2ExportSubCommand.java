@@ -54,7 +54,7 @@ public class Eth2ExportSubCommand implements Runnable {
     if (output == null) {
       throw new MissingParameterException(
           spec.commandLine(), spec.findOption("--to"), "--to has not been specified");
-    } else if (StringUtils.isEmpty(eth2Config.slashingProtectionDbUrl)) {
+    } else if (StringUtils.isEmpty(eth2Config.getSlashingProtectionParameters().getDbUrl())) {
       throw new MissingParameterException(
           spec.parent().commandLine(),
           spec.findOption("--slashing-protection-db-url"),
@@ -64,9 +64,9 @@ public class Eth2ExportSubCommand implements Runnable {
     try (final OutputStream outStream = new FileOutputStream(output)) {
       final SlashingProtection slashingProtection =
           createSlashingProtection(
-              eth2Config.slashingProtectionDbUrl,
-              eth2Config.slashingProtectionDbUsername,
-              eth2Config.slashingProtectionDbPassword);
+              eth2Config.getSlashingProtectionParameters().getDbUrl(),
+              eth2Config.getSlashingProtectionParameters().getDbUsername(),
+              eth2Config.getSlashingProtectionParameters().getDbPassword());
 
       slashingProtection.export(outStream);
     } catch (final IOException e) {
