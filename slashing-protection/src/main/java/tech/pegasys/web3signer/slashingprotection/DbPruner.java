@@ -116,18 +116,16 @@ public class DbPruner {
   }
 
   private Optional<UInt64> calculateWatermark(
-      final long amountToPrune,
-      final Optional<UInt64> highpoint,
-      final Optional<UInt64> watermark) {
+      final long amountToKeep, final Optional<UInt64> highpoint, final Optional<UInt64> watermark) {
     return highpoint.flatMap(
         h ->
             watermark.map(
                 w -> {
                   final UInt64 pruningPoint =
-                      h.compareTo(UInt64.valueOf(amountToPrune)) < 0
+                      h.compareTo(UInt64.valueOf(amountToKeep)) < 0
                           ? UInt64.ZERO
                           // add one as we remove below the watermark
-                          : h.subtract(amountToPrune).add(1);
+                          : h.subtract(amountToKeep).add(1);
                   final UInt64 newWatermark = UInt64s.max(UInt64.ZERO, pruningPoint);
                   return UInt64s.max(newWatermark, w);
                 }));
