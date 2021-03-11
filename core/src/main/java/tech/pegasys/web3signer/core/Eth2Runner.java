@@ -66,11 +66,11 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<SlashingProtection> slashingProtection;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
-
-  private static final Logger LOG = LogManager.getLogger();
+  private final boolean pruningEnabled;
 
   public Eth2Runner(
       final Config config,
@@ -79,6 +79,7 @@ public class Eth2Runner extends Runner {
     super(config);
     this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
+    this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
   }
 
   private Optional<SlashingProtection> createSlashingProtection(
@@ -191,8 +192,12 @@ public class Eth2Runner extends Runner {
               }
 
               slashingProtection.ifPresent(
-                  slashingProtection -> slashingProtection.registerValidators(validators));
-
+                  slashingProtection -> {
+                    slashingProtection.registerValidators(validators);
+                    if (pruningEnabled) {
+                      slashingProtection.prune();
+                    }
+                  });
               return signers;
             });
 

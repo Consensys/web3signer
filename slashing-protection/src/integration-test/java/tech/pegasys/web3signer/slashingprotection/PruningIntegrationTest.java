@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
 import java.util.List;
 
+import dsl.TestSlashingProtectionParameters;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
@@ -29,18 +30,33 @@ import org.junit.jupiter.params.provider.CsvSource;
 public class PruningIntegrationTest extends IntegrationTestBase {
 
   @ParameterizedTest
-  @CsvSource({"1, 9", "5, 5", "9, 1", "10, 0", "20, 0"})
+  @CsvSource({
+    "1, 1, 9, 9",
+    "5, 1, 5, 5",
+    "9, 1, 1, 1, 1",
+    "10, 1, 0, 0",
+    "20, 1, 0, 0",
+    "1, 2, 9, 8",
+    "3, 2, 7, 4"
+  })
   void prunesDataForRegisteredValidator(
-      final int amountToKeep, final int expectedLowestPopulatedSlot) {
+      final int amountToKeep,
+      final int slotsPerEpoch,
+      final int expectedLowestPopulatedEpoch,
+      final int expectedLowestPopulatedSlot) {
+    final SlashingProtection slashingProtection =
+        SlashingProtectionFactory.createSlashingProtection(
+            new TestSlashingProtectionParameters(
+                databaseUrl, USERNAME, PASSWORD, amountToKeep, slotsPerEpoch));
     final int size = 10;
-    insertAndRegisterData(size, size, 1);
+    insertAndRegisterData(slashingProtection, size, size, 1);
     final List<SignedAttestation> allAttestations = fetchAttestations(1);
     final List<SignedBlock> allBlocks = fetchBlocks(1);
 
-    slashingProtection.prune(amountToKeep, 1);
+    slashingProtection.prune();
 
     final List<SignedAttestation> expectedAttestations =
-        allAttestations.subList(expectedLowestPopulatedSlot, size);
+        allAttestations.subList(expectedLowestPopulatedEpoch, size);
     final List<SignedAttestation> attestationsInDatabase = fetchAttestations(1);
     assertThat(attestationsInDatabase)
         .usingFieldByFieldElementComparator()
@@ -50,20 +66,25 @@ public class PruningIntegrationTest extends IntegrationTestBase {
     final List<SignedBlock> blocks = fetchBlocks(1);
     assertThat(blocks).usingFieldByFieldElementComparator().isEqualTo(expectedBlocks);
 
-    final UInt64 expectedWatermarkValue = UInt64.valueOf(expectedLowestPopulatedSlot);
     assertThat(getWatermark(1))
         .isEqualToComparingFieldByField(
             new SigningWatermark(
-                1, expectedWatermarkValue, expectedWatermarkValue, expectedWatermarkValue));
+                1,
+                UInt64.valueOf(expectedLowestPopulatedSlot),
+                UInt64.valueOf(expectedLowestPopulatedEpoch),
+                UInt64.valueOf(expectedLowestPopulatedEpoch)));
   }
 
   @Test
   void dataUnchangedForNonRegisteredValidators() {
+    final SlashingProtection slashingProtection =
+        SlashingProtectionFactory.createSlashingProtection(
+            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 1, 1));
     jdbi.withHandle(h -> validators.registerValidators(h, List.of(Bytes.of(1))));
     insertData(2, 2, 1);
-    insertAndRegisterData(2, 2, 2);
+    insertAndRegisterData(slashingProtection, 2, 2, 2);
 
-    slashingProtection.prune(1, 1);
+    slashingProtection.prune();
 
     final List<SignedAttestation> attestationsForValidator1 = fetchAttestations(1);
     assertThat(attestationsForValidator1).hasSize(2);
@@ -74,13 +95,16 @@ public class PruningIntegrationTest extends IntegrationTestBase {
 
   @Test
   void watermarkIsNotMovedLower() {
-    insertAndRegisterData(10, 10, 1);
+    final SlashingProtection slashingProtection =
+        SlashingProtectionFactory.createSlashingProtection(
+            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1));
+    insertAndRegisterData(slashingProtection, 10, 10, 1);
     jdbi.useTransaction(
         h -> {
           lowWatermarkDao.updateSlotWatermarkFor(h, 1, UInt64.valueOf(8));
           lowWatermarkDao.updateEpochWatermarksFor(h, 1, UInt64.valueOf(8), UInt64.valueOf(8));
         });
-    slashingProtection.prune(5, 1);
+    slashingProtection.prune();
 
     // we are only able to prune 2 entries because the watermark is at 8
     assertThat(fetchAttestations(1)).hasSize(2);
@@ -90,6 +114,9 @@ public class PruningIntegrationTest extends IntegrationTestBase {
 
   @Test
   void noPruningOccursWhenThereIsNoWatermark() {
+    final SlashingProtection slashingProtection =
+        SlashingProtectionFactory.createSlashingProtection(
+            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 1, 1));
     slashingProtection.registerValidators(List.of(Bytes.of(1)));
     for (int i = 0; i < 5; i++) {
       insertBlockAt(UInt64.valueOf(i), 1);
@@ -98,20 +125,16 @@ public class PruningIntegrationTest extends IntegrationTestBase {
       insertAttestationAt(UInt64.valueOf(1), UInt64.valueOf(1), 1);
     }
 
-    slashingProtection.prune(1, 1);
+    slashingProtection.prune();
     assertThat(fetchAttestations(1)).hasSize(5);
     assertThat(fetchBlocks(1)).hasSize(5);
   }
 
-  @Test
-  void prunesForAttestationsForSlotsPerEpochFactor() {
-    insertAndRegisterData(0, 100, 1);
-
-    slashingProtection.prune(2, 10);
-  }
-
   private void insertAndRegisterData(
-      final int noOfBlocks, final int noOfAttestations, final int validatorId) {
+      final SlashingProtection slashingProtection,
+      final int noOfBlocks,
+      final int noOfAttestations,
+      final int validatorId) {
     final Bytes validatorPublicKey = Bytes.of(validatorId);
     slashingProtection.registerValidators(List.of(validatorPublicKey));
     insertData(noOfBlocks, noOfAttestations, validatorId);

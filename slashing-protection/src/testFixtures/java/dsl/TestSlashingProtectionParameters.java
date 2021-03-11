@@ -19,12 +19,29 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   private final String dbUrl;
   private final String dbUser;
   private final String dbPassword;
+  private boolean pruningEnabled = false;
+  private int pruningEpochsToKeep = 0;
+  private int pruningSlotsPerEpoch = 0;
 
   public TestSlashingProtectionParameters(
       final String dbUrl, final String dbUser, final String dbPassword) {
     this.dbUrl = dbUrl;
     this.dbUser = dbUser;
     this.dbPassword = dbPassword;
+  }
+
+  public TestSlashingProtectionParameters(
+      final String dbUrl,
+      final String dbUser,
+      final String dbPassword,
+      final int pruningEpochsToKeep,
+      final int pruningSlotsPerEpoch) {
+    this.dbUrl = dbUrl;
+    this.dbUser = dbUser;
+    this.dbPassword = dbPassword;
+    this.pruningEnabled = true;
+    this.pruningEpochsToKeep = pruningEpochsToKeep;
+    this.pruningSlotsPerEpoch = pruningSlotsPerEpoch;
   }
 
   @Override
@@ -49,21 +66,21 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
 
   @Override
   public boolean isPruningEnabled() {
-    return false;
+    return pruningEnabled;
   }
 
   @Override
   public long getPruningEpochsToKeep() {
-    return 0;
+    return pruningEpochsToKeep;
   }
 
   @Override
   public long getPruningSlotsPerEpoch() {
-    return 0;
+    return pruningSlotsPerEpoch;
   }
 
   @Override
   public long getPruningInterval() {
-    return 0;
+    return Long.MAX_VALUE;
   }
 }

@@ -62,6 +62,8 @@ public class DbSlashingProtection implements SlashingProtection {
   private final LowWatermarkDao lowWatermarkDao;
   private final GenesisValidatorRootValidator gvrValidator;
   private final DbPruner dbPruner;
+  private final long pruningEpochsToKeep;
+  private final long pruningSlotsPerEpoch;
 
   public DbSlashingProtection(
       final Jdbi jdbi,
@@ -69,7 +71,9 @@ public class DbSlashingProtection implements SlashingProtection {
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
       final MetadataDao metadataDao,
-      final LowWatermarkDao lowWatermarkDao) {
+      final LowWatermarkDao lowWatermarkDao,
+      final long pruningEpochsToKeep,
+      final long pruningSlotsPerEpoch) {
     this(
         jdbi,
         validatorsDao,
@@ -77,6 +81,8 @@ public class DbSlashingProtection implements SlashingProtection {
         signedAttestationsDao,
         metadataDao,
         lowWatermarkDao,
+        pruningEpochsToKeep,
+        pruningSlotsPerEpoch,
         new HashMap<>());
   }
 
@@ -87,6 +93,8 @@ public class DbSlashingProtection implements SlashingProtection {
       final SignedAttestationsDao signedAttestationsDao,
       final MetadataDao metadataDao,
       final LowWatermarkDao lowWatermarkDao,
+      final long pruningEpochsToKeep,
+      final long pruningSlotsPerEpoch,
       final Map<Bytes, Integer> registeredValidators) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
@@ -108,6 +116,8 @@ public class DbSlashingProtection implements SlashingProtection {
                 .configure(FLUSH_AFTER_WRITE_VALUE, true)
                 .enable(SerializationFeature.INDENT_OUTPUT));
     this.dbPruner = new DbPruner(jdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
+    this.pruningEpochsToKeep = pruningEpochsToKeep;
+    this.pruningSlotsPerEpoch = pruningSlotsPerEpoch;
   }
 
   @Override
@@ -237,11 +247,11 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void prune(final long epochsToKeep, final long slotsPerEpoch) {
+  public void prune() {
     LOG.info("Pruning slashing protection database");
     registeredValidators
         .values()
-        .forEach(v -> dbPruner.pruneForValidator(v, epochsToKeep, slotsPerEpoch));
+        .forEach(v -> dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch));
     LOG.info("Pruning slashing protection database complete");
   }
 

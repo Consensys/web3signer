@@ -42,7 +42,11 @@ public class SlashingProtectionFactory {
 
     verifyVersion(jdbi);
 
-    final SlashingProtection slashingProtection = createSlashingProtection(jdbi);
+    final SlashingProtection slashingProtection =
+        createSlashingProtection(
+            jdbi,
+            slashingProtectionParameters.getPruningEpochsToKeep(),
+            slashingProtectionParameters.getPruningSlotsPerEpoch());
 
     if (slashingProtectionParameters.isPruningEnabled()) {
       schedulePruning(slashingProtectionParameters, slashingProtection);
@@ -58,15 +62,13 @@ public class SlashingProtectionFactory {
     executorService.scheduleAtFixedRate(
         () -> {
           try {
-            slashingProtection.prune(
-                slashingProtectionParameters.getPruningEpochsToKeep(),
-                slashingProtectionParameters.getPruningSlotsPerEpoch());
+            slashingProtection.prune();
           } catch (Exception e) {
             // We only log the error as retrying on the scheduled prune might fix the error
             LOG.info("Pruning slashing protection database failed with error", e);
           }
         },
-        0,
+        slashingProtectionParameters.getPruningInterval(),
         slashingProtectionParameters.getPruningInterval(),
         TimeUnit.HOURS);
   }
@@ -92,13 +94,16 @@ public class SlashingProtectionFactory {
     }
   }
 
-  private static SlashingProtection createSlashingProtection(final Jdbi jdbi) {
+  private static SlashingProtection createSlashingProtection(
+      final Jdbi jdbi, final long pruningEpochsToKeep, final long pruningSlotsPerEpoch) {
     return new DbSlashingProtection(
         jdbi,
         new ValidatorsDao(),
         new SignedBlocksDao(),
         new SignedAttestationsDao(),
         new MetadataDao(),
-        new LowWatermarkDao());
+        new LowWatermarkDao(),
+        pruningEpochsToKeep,
+        pruningSlotsPerEpoch);
   }
 }
