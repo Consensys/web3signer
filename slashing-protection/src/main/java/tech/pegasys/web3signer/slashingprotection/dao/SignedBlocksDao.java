@@ -71,9 +71,12 @@ public class SignedBlocksDao {
         .bind(0, validatorId).mapToBean(SignedBlock.class).stream();
   }
 
-  public void deleteBlocksBelowSlot(final Handle handle, final int validatorId, final UInt64 slot) {
+  public void deleteBlocksBelowWatermark(final Handle handle, final int validatorId) {
     handle.execute(
-        "DELETE FROM signed_blocks WHERE validator_id = ? AND slot < ?", validatorId, slot);
+        "DELETE FROM signed_blocks b "
+            + "USING low_watermarks w "
+            + "WHERE b.validator_id = ? AND b.slot < w.slot",
+        validatorId);
   }
 
   public Optional<UInt64> findMaxSlot(final Handle handle, final int validatorId) {

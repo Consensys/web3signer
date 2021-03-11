@@ -88,7 +88,7 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
         .withSlashingPruningEnabled(true)
         .withSlashingPruningEpochsToKeep(1)
         .withSlashingPruningSlotsPerEpoch(1)
-        .withSlashingPruningSchedule(1);
+        .withSlashingPruningInterval(1);
     final Signer pruningSigner = new Signer(signerBuilder.build(), null);
     pruningSigner.start();
     pruningSigner.awaitStartupCompletion();

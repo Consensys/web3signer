@@ -235,7 +235,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
           String.format(
               YAML_NUMERIC_FMT,
               "eth2.slashing-protection-pruning-schedule",
-              signerConfig.getSlashingProtectionPruningSchedule()));
+              signerConfig.getSlashingProtectionPruningInterval()));
     }
 
     return yamlConfig.toString();

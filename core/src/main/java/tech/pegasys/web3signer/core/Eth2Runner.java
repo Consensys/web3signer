@@ -25,7 +25,6 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
-import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
@@ -45,13 +44,11 @@ import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -72,7 +69,6 @@ public class Eth2Runner extends Runner {
 
   private final Optional<SlashingProtection> slashingProtection;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
-  private final SlashingProtectionParameters slashingProtectionParameters;
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -81,7 +77,6 @@ public class Eth2Runner extends Runner {
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters) {
     super(config);
-    this.slashingProtectionParameters = slashingProtectionParameters;
     this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
   }
@@ -91,10 +86,7 @@ public class Eth2Runner extends Runner {
     if (slashingProtectionParameters.isEnabled()) {
       try {
         return Optional.of(
-            SlashingProtectionFactory.createSlashingProtection(
-                slashingProtectionParameters.getDbUrl(),
-                slashingProtectionParameters.getDbUsername(),
-                slashingProtectionParameters.getDbPassword()));
+            SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters));
       } catch (final IllegalStateException e) {
         throw new InitializationException(e.getMessage(), e);
       }
@@ -106,33 +98,6 @@ public class Eth2Runner extends Runner {
   @Override
   protected String getOpenApiSpecResource() {
     return "openapi/web3signer-eth2.yaml";
-  }
-
-  @Override
-  public void run() {
-    super.run();
-
-    if (slashingProtection.isPresent() && slashingProtectionParameters.isPruningEnabled()) {
-      final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
-      executorService.scheduleAtFixedRate(
-          this::pruneSlashingProtectionDatabase,
-          0,
-          slashingProtectionParameters.getPruningSchedule(),
-          TimeUnit.HOURS);
-    }
-  }
-
-  private void pruneSlashingProtectionDatabase() {
-    try {
-      slashingProtection.ifPresent(
-          sp ->
-              sp.prune(
-                  slashingProtectionParameters.getPruningEpochsToKeep(),
-                  slashingProtectionParameters.getPruningEpochsPerSlot()));
-    } catch (Exception e) {
-      // We only log the error as retrying on the scheduled prune might fix the error
-      LOG.info("Pruning slashing protection database failed with error", e);
-    }
   }
 
   @Override

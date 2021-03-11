@@ -52,7 +52,7 @@ public class SignerConfiguration {
   private final boolean useConfigFile;
   private final long slashingPruningEpochsToKeep;
   private final long slashingPruningSlotsPerEpoch;
-  private final long slashingPruningSchedule;
+  private final long slashingPruningInterval;
 
   public SignerConfiguration(
       final String hostname,
@@ -104,7 +104,7 @@ public class SignerConfiguration {
     this.enableSlashingPruning = enableSlashingPruning;
     this.slashingPruningEpochsToKeep = slashingPruningEpochsToKeep;
     this.slashingPruningSlotsPerEpoch = slashingPruningSlotsPerEpoch;
-    this.slashingPruningSchedule = slashingPruningSchedule;
+    this.slashingPruningInterval = slashingPruningSchedule;
     this.swaggerUIEnabled = swaggerUIEnabled;
     this.useConfigFile = useConfigFile;
   }
@@ -209,8 +209,8 @@ public class SignerConfiguration {
     return slashingPruningSlotsPerEpoch;
   }
 
-  public long getSlashingProtectionPruningSchedule() {
-    return slashingPruningSchedule;
+  public long getSlashingProtectionPruningInterval() {
+    return slashingPruningInterval;
   }
 
   public boolean isSwaggerUIEnabled() {

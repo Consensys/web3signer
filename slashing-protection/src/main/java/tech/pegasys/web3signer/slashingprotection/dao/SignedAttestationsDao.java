@@ -119,12 +119,12 @@ public class SignedAttestationsDao {
         .bind(0, validatorId).mapToBean(SignedAttestation.class).stream();
   }
 
-  public void deleteAttestationsBelowEpoch(
-      final Handle handle, final int validatorId, final UInt64 epoch) {
+  public void deleteAttestationsBelowWatermark(final Handle handle, final int validatorId) {
     handle.execute(
-        "DELETE FROM signed_attestations " + "WHERE validator_id = ? AND target_epoch < ?",
-        validatorId,
-        epoch);
+        "DELETE FROM signed_attestations a "
+            + "USING low_watermarks w "
+            + "WHERE a.validator_id = ? AND a.target_epoch < w.target_epoch",
+        validatorId);
   }
 
   public Optional<UInt64> findMaxTargetEpoch(final Handle handle, final int validatorId) {

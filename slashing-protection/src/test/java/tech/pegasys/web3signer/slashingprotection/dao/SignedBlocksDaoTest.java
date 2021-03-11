@@ -40,7 +40,8 @@ public class SignedBlocksDaoTest {
           .withMigration(Migration.before().withPath("migrations/postgresql"));
 
   private Handle handle;
-  final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+  private final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+  private final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
 
   @Before
   public void setup() {
@@ -147,15 +148,17 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void deletesBlocksBelowSlot() {
+  public void deletesBlocksBelowWatermark() {
     insertValidator(Bytes.of(100), 1);
     insertValidator(Bytes.of(200), 2);
     insertBlock(1, 3, Bytes.of(1));
     insertBlock(1, 4, Bytes.of(1));
     insertBlock(2, 3, Bytes.of(1));
     insertBlock(2, 4, Bytes.of(1));
+    lowWatermarkDao.updateSlotWatermarkFor(handle, 1, UInt64.valueOf(4));
+    lowWatermarkDao.updateSlotWatermarkFor(handle, 2, UInt64.valueOf(4));
 
-    signedBlocksDao.deleteBlocksBelowSlot(handle, 1, UInt64.valueOf(4));
+    signedBlocksDao.deleteBlocksBelowWatermark(handle, 1);
     final Map<Integer, List<SignedBlock>> blocks =
         handle.createQuery("SELECT * FROM signed_blocks ORDER BY validator_id")
             .mapToBean(SignedBlock.class).stream()
@@ -165,6 +168,22 @@ public class SignedBlocksDaoTest {
     assertThat(blocks.get(1).get(0))
         .isEqualToComparingFieldByField(new SignedBlock(1, UInt64.valueOf(4), Bytes.of(1)));
     assertThat(blocks.get(2)).hasSize(2);
+  }
+
+  @Test
+  public void doesNotDeleteBlocksIfNoWatermark() {
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 3, Bytes.of(1));
+    insertBlock(1, 4, Bytes.of(1));
+
+    signedBlocksDao.deleteBlocksBelowWatermark(handle, 1);
+    final List<SignedBlock> blocks =
+        signedBlocksDao.findAllBlockSignedBy(handle, 1).collect(Collectors.toList());
+    assertThat(blocks).hasSize(2);
+    assertThat(blocks.get(0))
+        .isEqualToComparingFieldByField(new SignedBlock(1, UInt64.valueOf(3), Bytes.of(1)));
+    assertThat(blocks.get(1))
+        .isEqualToComparingFieldByField(new SignedBlock(1, UInt64.valueOf(4), Bytes.of(1)));
   }
 
   @Test

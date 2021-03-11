@@ -141,21 +141,21 @@ class CommandlineParserTest {
     final int result = parser.parseCommandLine(cmdline.split(" "));
     assertThat(result).isNotZero();
     assertThat(commandError.toString())
-        .contains("Error parsing parameters: Pruning epochs must be 1 or more. Value was 0.");
+        .contains("Error parsing parameters: Pruning epochsToKeep must be 1 or more. Value was 0.");
   }
 
   @Test
-  void eth2SubcommandSlashingDatabasePruningPeriodMustBePositive() {
+  void eth2SubcommandSlashingDatabasePruningIntervalMustBePositive() {
     String cmdline = validBaseCommandOptions();
     cmdline =
         cmdline
-            + "eth2 --slashing-protection-db-url=jdbc:mock --slashing-protection-pruning-schedule=0";
+            + "eth2 --slashing-protection-db-url=jdbc:mock --slashing-protection-pruning-interval=0";
 
     parser.registerSubCommands(new MockEth2SubCommand());
     final int result = parser.parseCommandLine(cmdline.split(" "));
     assertThat(result).isNotZero();
     assertThat(commandError.toString())
-        .contains("Error parsing parameters: Pruning period must be 1 or more. Value was 0.");
+        .contains("Error parsing parameters: Pruning interval must be 1 or more. Value was 0.");
   }
 
   @Test

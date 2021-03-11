@@ -38,9 +38,10 @@ public class SignedAttestationsDaoTest {
       JdbiRule.embeddedPostgres()
           .withMigration(Migration.before().withPath("migrations/postgresql"));
 
+  private Handle handle;
   private final SignedAttestationsDao signedAttestationsDao = new SignedAttestationsDao();
   private final ValidatorsDao validatorsDao = new ValidatorsDao();
-  private Handle handle;
+  private final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
 
   @Before
   public void setup() {
@@ -218,8 +219,10 @@ public class SignedAttestationsDaoTest {
     insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
     insertAttestation(1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
     insertAttestation(2, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+    lowWatermarkDao.updateEpochWatermarksFor(handle, 1, UInt64.valueOf(4), UInt64.valueOf(4));
+    lowWatermarkDao.updateEpochWatermarksFor(handle, 2, UInt64.valueOf(4), UInt64.valueOf(4));
 
-    signedAttestationsDao.deleteAttestationsBelowEpoch(handle, 1, UInt64.valueOf(4));
+    signedAttestationsDao.deleteAttestationsBelowWatermark(handle, 1);
     final Map<Integer, List<SignedAttestation>> attestations =
         handle.createQuery("SELECT * FROM signed_attestations ORDER BY validator_id")
             .mapToBean(SignedAttestation.class).stream()
@@ -239,6 +242,24 @@ public class SignedAttestationsDaoTest {
     assertThat(attestations.get(2).get(0))
         .isEqualToComparingFieldByField(
             new SignedAttestation(2, UInt64.valueOf(2), UInt64.valueOf(3), Bytes.of(1)));
+  }
+
+  @Test
+  public void doesNotDeleteAttestationsIfNoWatermark() {
+    insertValidator(Bytes.of(100), 1);
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
+
+    signedAttestationsDao.deleteAttestationsBelowWatermark(handle, 1);
+    final List<SignedAttestation> attestations =
+        signedAttestationsDao.findAllAttestationsSignedBy(handle, 1).collect(Collectors.toList());
+    assertThat(attestations).hasSize(2);
+    assertThat(attestations.get(0))
+        .isEqualToComparingFieldByField(
+            new SignedAttestation(1, UInt64.valueOf(2), UInt64.valueOf(3), Bytes.of(1)));
+    assertThat(attestations.get(1))
+        .isEqualToComparingFieldByField(
+            new SignedAttestation(1, UInt64.valueOf(3), UInt64.valueOf(4), Bytes.of(1)));
   }
 
   @Test

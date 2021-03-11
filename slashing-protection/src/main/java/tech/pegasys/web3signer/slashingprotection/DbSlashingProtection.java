@@ -61,7 +61,7 @@ public class DbSlashingProtection implements SlashingProtection {
   private final InterchangeManager interchangeManager;
   private final LowWatermarkDao lowWatermarkDao;
   private final GenesisValidatorRootValidator gvrValidator;
-  private final Pruner pruner;
+  private final DbPruner dbPruner;
 
   public DbSlashingProtection(
       final Jdbi jdbi,
@@ -107,7 +107,7 @@ public class DbSlashingProtection implements SlashingProtection {
                 .registerModule(new InterchangeModule())
                 .configure(FLUSH_AFTER_WRITE_VALUE, true)
                 .enable(SerializationFeature.INDENT_OUTPUT));
-    this.pruner = new Pruner(jdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
+    this.dbPruner = new DbPruner(jdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
   }
 
   @Override
@@ -241,7 +241,7 @@ public class DbSlashingProtection implements SlashingProtection {
     LOG.info("Pruning slashing protection database");
     registeredValidators
         .values()
-        .forEach(v -> pruner.pruneForValidator(v, epochsToKeep, slotsPerEpoch));
+        .forEach(v -> dbPruner.pruneForValidator(v, epochsToKeep, slotsPerEpoch));
     LOG.info("Pruning slashing protection database complete");
   }
 

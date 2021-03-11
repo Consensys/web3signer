@@ -164,8 +164,8 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Long.toString(signerConfig.getSlashingProtectionPruningEpochsToKeep()));
       params.add("--slashing-protection-pruning-slots-per-epoch");
       params.add(Long.toString(signerConfig.getSlashingProtectionPruningSlotsPerEpoch()));
-      params.add("--slashing-protection-pruning-schedule");
-      params.add(Long.toString(signerConfig.getSlashingProtectionPruningSchedule()));
+      params.add("--slashing-protection-pruning-interval");
+      params.add(Long.toString(signerConfig.getSlashingProtectionPruningInterval()));
     }
 
     return params;

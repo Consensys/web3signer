@@ -19,7 +19,7 @@ import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
-import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.List;
 
@@ -57,10 +57,11 @@ public class Eth2SubCommand extends ModeSubCommand {
       throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
     }
 
-    validatePositiveValue(slashingProtectionParameters.getPruningEpochsToKeep(), "Pruning epochs");
-    validatePositiveValue(slashingProtectionParameters.getPruningSchedule(), "Pruning period");
     validatePositiveValue(
-        slashingProtectionParameters.getPruningEpochsPerSlot(), "Pruning slots per epoch");
+        slashingProtectionParameters.getPruningEpochsToKeep(), "Pruning epochsToKeep");
+    validatePositiveValue(slashingProtectionParameters.getPruningInterval(), "Pruning interval");
+    validatePositiveValue(
+        slashingProtectionParameters.getPruningSlotsPerEpoch(), "Pruning slots per epoch");
 
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
 

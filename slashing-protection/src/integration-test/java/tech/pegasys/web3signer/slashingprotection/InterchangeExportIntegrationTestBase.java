@@ -26,6 +26,7 @@ import java.util.Optional;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
+import dsl.TestSlashingProtectionParameters;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -97,7 +98,8 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
 
     final OutputStream exportOutput = new ByteArrayOutputStream();
     final SlashingProtection slashingProtection =
-        SlashingProtectionFactory.createSlashingProtection(databaseUrl, "postgres", "postgres");
+        SlashingProtectionFactory.createSlashingProtection(
+            new TestSlashingProtectionParameters(databaseUrl, "postgres", "postgres"));
     assertThatThrownBy(() -> slashingProtection.export(exportOutput))
         .hasMessage("No genesis validators root for slashing protection data")
         .isInstanceOf(RuntimeException.class);

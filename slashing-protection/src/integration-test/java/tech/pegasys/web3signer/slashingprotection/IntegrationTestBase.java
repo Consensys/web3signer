@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import dsl.TestSlashingProtectionParameters;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -65,7 +66,8 @@ public class IntegrationTestBase {
       databaseUrl = String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
       jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
       slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
+          SlashingProtectionFactory.createSlashingProtection(
+              new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD));
       insertGvr(GVR);
     } catch (final IOException e) {
       throw new UncheckedIOException(e);
@@ -150,12 +152,12 @@ public class IntegrationTestBase {
     return jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, validatorId)).get();
   }
 
-  protected List<SignedBlock> getBlocks(final int validatorId) {
+  protected List<SignedBlock> fetchBlocks(final int validatorId) {
     return jdbi.withHandle(
         h -> signedBlocksDao.findAllBlockSignedBy(h, validatorId).collect(Collectors.toList()));
   }
 
-  protected List<SignedAttestation> getAttestations(final int validatorId) {
+  protected List<SignedAttestation> fetchAttestations(final int validatorId) {
     return jdbi.withHandle(
         h ->
             signedAttestationsDao

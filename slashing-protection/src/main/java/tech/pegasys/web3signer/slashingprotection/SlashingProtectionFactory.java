@@ -19,23 +19,56 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jdbi.v3.core.Jdbi;
 
 public class SlashingProtectionFactory {
 
   public static final int EXPECTED_DATABASE_VERSION = 7;
+  private static final Logger LOG = LogManager.getLogger();
 
   public static SlashingProtection createSlashingProtection(
-      final String slashingProtectionDbUrl,
-      final String slashingProtectionDbUser,
-      final String slashingProtectionDbPassword) {
+      final SlashingProtectionParameters slashingProtectionParameters) {
     final Jdbi jdbi =
         DbConnection.createConnection(
-            slashingProtectionDbUrl, slashingProtectionDbUser, slashingProtectionDbPassword);
+            slashingProtectionParameters.getDbUrl(),
+            slashingProtectionParameters.getDbUsername(),
+            slashingProtectionParameters.getDbPassword());
 
     verifyVersion(jdbi);
 
-    return createSlashingProtection(jdbi);
+    final SlashingProtection slashingProtection = createSlashingProtection(jdbi);
+
+    if (slashingProtectionParameters.isPruningEnabled()) {
+      schedulePruning(slashingProtectionParameters, slashingProtection);
+    }
+
+    return slashingProtection;
+  }
+
+  private static void schedulePruning(
+      final SlashingProtectionParameters slashingProtectionParameters,
+      final SlashingProtection slashingProtection) {
+    final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+    executorService.scheduleAtFixedRate(
+        () -> {
+          try {
+            slashingProtection.prune(
+                slashingProtectionParameters.getPruningEpochsToKeep(),
+                slashingProtectionParameters.getPruningSlotsPerEpoch());
+          } catch (Exception e) {
+            // We only log the error as retrying on the scheduled prune might fix the error
+            LOG.info("Pruning slashing protection database failed with error", e);
+          }
+        },
+        0,
+        slashingProtectionParameters.getPruningInterval(),
+        TimeUnit.HOURS);
   }
 
   private static void verifyVersion(final Jdbi jdbi) {

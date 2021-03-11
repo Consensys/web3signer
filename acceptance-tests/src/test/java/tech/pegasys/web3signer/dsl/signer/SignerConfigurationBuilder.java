@@ -54,7 +54,7 @@ public class SignerConfigurationBuilder {
   private boolean useConfigFile = false;
   private long pruningEpochsToKeep = 1;
   private long slashingPruningSlotsPerEpoch = 1;
-  private long slashingPruningSchedule = 1;
+  private long slashingPruningInterval = 1;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -167,9 +167,9 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withSlashingPruningSchedule(
-      final long slashingPruningSchedule) {
-    this.slashingPruningSchedule = slashingPruningSchedule;
+  public SignerConfigurationBuilder withSlashingPruningInterval(
+      final long slashingPruningInterval) {
+    this.slashingPruningInterval = slashingPruningInterval;
     return this;
   }
 
@@ -216,7 +216,7 @@ public class SignerConfigurationBuilder {
         enableSlashingPruning,
         pruningEpochsToKeep,
         slashingPruningSlotsPerEpoch,
-        slashingPruningSchedule,
+        slashingPruningInterval,
         swaggerUIEnabled,
         useConfigFile);
   }

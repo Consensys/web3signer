@@ -29,24 +29,28 @@ import org.junit.jupiter.params.provider.CsvSource;
 public class PruningIntegrationTest extends IntegrationTestBase {
 
   @ParameterizedTest
-  @CsvSource({"1, 9", "2, 8", "5, 5", "9, 1", "10, 0", "20, 0"})
-  void prunesDataForRegisteredValidator(final int amountToKeep, final int pruningMark) {
+  @CsvSource({"1, 9", "5, 5", "9, 1", "10, 0", "20, 0"})
+  void prunesDataForRegisteredValidator(
+      final int amountToKeep, final int expectedLowestPopulatedSlot) {
     final int size = 10;
     insertAndRegisterData(size, size, 1);
-    final List<SignedAttestation> allAttestations = getAttestations(1);
-    final List<SignedBlock> allBlocks = getBlocks(1);
+    final List<SignedAttestation> allAttestations = fetchAttestations(1);
+    final List<SignedBlock> allBlocks = fetchBlocks(1);
 
     slashingProtection.prune(amountToKeep, 1);
 
-    final List<SignedAttestation> expectedAttestations = allAttestations.subList(pruningMark, size);
-    final List<SignedAttestation> attestations = getAttestations(1);
-    assertThat(attestations).usingFieldByFieldElementComparator().isEqualTo(expectedAttestations);
+    final List<SignedAttestation> expectedAttestations =
+        allAttestations.subList(expectedLowestPopulatedSlot, size);
+    final List<SignedAttestation> attestationsInDatabase = fetchAttestations(1);
+    assertThat(attestationsInDatabase)
+        .usingFieldByFieldElementComparator()
+        .isEqualTo(expectedAttestations);
 
-    final List<SignedBlock> expectedBlocks = allBlocks.subList(pruningMark, size);
-    final List<SignedBlock> blocks = getBlocks(1);
+    final List<SignedBlock> expectedBlocks = allBlocks.subList(expectedLowestPopulatedSlot, size);
+    final List<SignedBlock> blocks = fetchBlocks(1);
     assertThat(blocks).usingFieldByFieldElementComparator().isEqualTo(expectedBlocks);
 
-    final UInt64 expectedWatermarkValue = UInt64.valueOf(pruningMark);
+    final UInt64 expectedWatermarkValue = UInt64.valueOf(expectedLowestPopulatedSlot);
     assertThat(getWatermark(1))
         .isEqualToComparingFieldByField(
             new SigningWatermark(
@@ -61,10 +65,10 @@ public class PruningIntegrationTest extends IntegrationTestBase {
 
     slashingProtection.prune(1, 1);
 
-    final List<SignedAttestation> attestationsForValidator1 = getAttestations(1);
+    final List<SignedAttestation> attestationsForValidator1 = fetchAttestations(1);
     assertThat(attestationsForValidator1).hasSize(2);
 
-    final List<SignedAttestation> attestationsForValidator2 = getAttestations(2);
+    final List<SignedAttestation> attestationsForValidator2 = fetchAttestations(2);
     assertThat(attestationsForValidator2).hasSize(1);
   }
 
@@ -79,8 +83,8 @@ public class PruningIntegrationTest extends IntegrationTestBase {
     slashingProtection.prune(5, 1);
 
     // we are only able to prune 2 entries because the watermark is at 8
-    assertThat(getAttestations(1)).hasSize(2);
-    assertThat(getBlocks(1)).hasSize(2);
+    assertThat(fetchAttestations(1)).hasSize(2);
+    assertThat(fetchBlocks(1)).hasSize(2);
     assertThat(getWatermark(1).getSlot()).isEqualTo(UInt64.valueOf(8));
   }
 
@@ -95,8 +99,15 @@ public class PruningIntegrationTest extends IntegrationTestBase {
     }
 
     slashingProtection.prune(1, 1);
-    assertThat(getAttestations(1)).hasSize(5);
-    assertThat(getBlocks(1)).hasSize(5);
+    assertThat(fetchAttestations(1)).hasSize(5);
+    assertThat(fetchBlocks(1)).hasSize(5);
+  }
+
+  @Test
+  void prunesForAttestationsForSlotsPerEpochFactor() {
+    insertAndRegisterData(0, 100, 1);
+
+    slashingProtection.prune(2, 10);
   }
 
   private void insertAndRegisterData(

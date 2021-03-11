@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline;
 
-import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import picocli.CommandLine.Option;
 
@@ -67,12 +67,12 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
           "Slots per epoch to use when calculating the number of slots to prune for signed"
               + " blocks. This typically will not need changing and defaults to value used on mainnet "
               + "(default: ${DEFAULT-VALUE})")
-  long pruningEpochsPerSlot = 32;
+  long pruningSlotsPerEpoch = 32;
 
   @Option(
-      names = {"--slashing-protection-pruning-schedule"},
+      names = {"--slashing-protection-pruning-interval"},
       description = "Hours between pruning operations (default: ${DEFAULT-VALUE})")
-  long pruningSchedule = 24;
+  long pruningInterval = 24;
 
   @Override
   public boolean isEnabled() {
@@ -105,12 +105,12 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   }
 
   @Override
-  public long getPruningEpochsPerSlot() {
-    return pruningEpochsPerSlot;
+  public long getPruningSlotsPerEpoch() {
+    return pruningSlotsPerEpoch;
   }
 
   @Override
-  public long getPruningSchedule() {
-    return pruningSchedule;
+  public long getPruningInterval() {
+    return pruningInterval;
   }
 }
