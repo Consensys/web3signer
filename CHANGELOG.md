@@ -5,6 +5,7 @@
 ### Features Added
 - Publish binaries to Cloudsmith
 - Resolve Signers from Cloudsmith
+- Slashing protection database pruning for Eth2
 
 ### Bugs Fixed
 - Fixed build failure when checked out as a shallow clone. Shallow clones are still not recommended as the version number cannot be determined correctly.
