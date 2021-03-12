@@ -155,9 +155,37 @@ public class PruningIntegrationTest extends IntegrationTestBase {
 
     assertThat(fetchAttestations(1)).hasSize(2);
     assertThat(fetchBlocks(1)).hasSize(2);
-    //    assertThat(getWatermark(1).getSlot()).isEqualTo(UInt64.valueOf(9));
+    assertThat(getWatermark(1).getSlot()).isEqualTo(UInt64.valueOf(8));
     assertThat(getWatermark(1).getSourceEpoch()).isEqualTo(UInt64.valueOf(8));
     assertThat(getWatermark(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(9));
+  }
+
+  @Test
+  void prunesForDataWithGapsAndDoesNotDeleteAllData() {
+    final SlashingProtection slashingProtection =
+        SlashingProtectionFactory.createSlashingProtection(
+            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1));
+    slashingProtection.registerValidators(List.of(Bytes.of(1)));
+
+    for (int i = 0; i < 2; i++) {
+      insertAttestationAt(UInt64.valueOf(i), UInt64.valueOf(i + 1), 1);
+      insertBlockAt(UInt64.valueOf(i), 1);
+    }
+    insertAttestationAt(UInt64.valueOf(9), UInt64.valueOf(9 + 1), 1);
+    insertBlockAt(UInt64.valueOf(9), 1);
+    jdbi.useTransaction(
+        h -> {
+          lowWatermarkDao.updateSlotWatermarkFor(h, 1, UInt64.ZERO);
+          lowWatermarkDao.updateEpochWatermarksFor(h, 1, UInt64.ZERO, UInt64.ZERO);
+        });
+
+    slashingProtection.prune();
+
+    assertThat(fetchAttestations(1)).hasSize(1);
+    assertThat(fetchBlocks(1)).hasSize(1);
+    assertThat(getWatermark(1).getSlot()).isEqualTo(UInt64.valueOf(9));
+    assertThat(getWatermark(1).getSourceEpoch()).isEqualTo(UInt64.valueOf(9));
+    assertThat(getWatermark(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(10));
   }
 
   private void insertAndRegisterData(
