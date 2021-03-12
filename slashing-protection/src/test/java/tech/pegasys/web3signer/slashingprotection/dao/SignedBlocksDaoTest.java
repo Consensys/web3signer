@@ -18,7 +18,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -38,7 +40,8 @@ public class SignedBlocksDaoTest {
           .withMigration(Migration.before().withPath("migrations/postgresql"));
 
   private Handle handle;
-  final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+  private final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+  private final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
 
   @Before
   public void setup() {
@@ -89,8 +92,7 @@ public class SignedBlocksDaoTest {
     validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
     validatorsDao.registerValidators(handle, List.of(Bytes.of(101)));
     validatorsDao.registerValidators(handle, List.of(Bytes.of(102)));
-    signedBlocksDao.insertBlockProposal(
-        handle, new SignedBlock(1, UInt64.valueOf(2), Bytes.of(100)));
+    signedBlocksDao.insertBlockProposal(handle, block(2, 100));
     signedBlocksDao.insertBlockProposal(
         handle, new SignedBlock(2, UInt64.MAX_VALUE, Bytes.of(101)));
     signedBlocksDao.insertBlockProposal(
@@ -102,8 +104,7 @@ public class SignedBlocksDaoTest {
             .mapToBean(SignedBlock.class)
             .list();
     assertThat(validators.size()).isEqualTo(3);
-    assertThat(validators.get(0))
-        .isEqualToComparingFieldByField(new SignedBlock(1, UInt64.valueOf(2), Bytes.of(100)));
+    assertThat(validators.get(0)).isEqualToComparingFieldByField(block(2, 100));
     assertThat(validators.get(1))
         .isEqualToComparingFieldByField(new SignedBlock(2, UInt64.MAX_VALUE, Bytes.of(101)));
     assertThat(validators.get(2))
@@ -144,6 +145,69 @@ public class SignedBlocksDaoTest {
         .isInstanceOf(NullPointerException.class);
   }
 
+  @Test
+  public void deletesBlocksBelowWatermark() {
+    insertValidator(Bytes.of(100), 1);
+    insertValidator(Bytes.of(200), 2);
+    insertBlock(1, 3, Bytes.of(1));
+    insertBlock(1, 4, Bytes.of(1));
+    insertBlock(2, 3, Bytes.of(1));
+    insertBlock(2, 4, Bytes.of(1));
+    lowWatermarkDao.updateSlotWatermarkFor(handle, 1, UInt64.valueOf(4));
+    lowWatermarkDao.updateSlotWatermarkFor(handle, 2, UInt64.valueOf(4));
+
+    signedBlocksDao.deleteBlocksBelowWatermark(handle, 1);
+    final Map<Integer, List<SignedBlock>> blocks =
+        handle.createQuery("SELECT * FROM signed_blocks ORDER BY validator_id")
+            .mapToBean(SignedBlock.class).stream()
+            .collect(Collectors.groupingBy(SignedBlock::getValidatorId));
+
+    assertThat(blocks.get(1)).hasSize(1);
+    assertThat(blocks.get(1).get(0)).isEqualToComparingFieldByField(block(4, 1));
+    assertThat(blocks.get(2)).hasSize(2);
+  }
+
+  @Test
+  public void doesNotDeleteBlocksIfNoWatermark() {
+    insertValidator(Bytes.of(100), 1);
+    insertBlock(1, 3, Bytes.of(1));
+    insertBlock(1, 4, Bytes.of(1));
+
+    signedBlocksDao.deleteBlocksBelowWatermark(handle, 1);
+    final List<SignedBlock> blocks =
+        signedBlocksDao.findAllBlockSignedBy(handle, 1).collect(Collectors.toList());
+    assertThat(blocks).hasSize(2);
+    assertThat(blocks.get(0)).isEqualToComparingFieldByField(block(3, 1));
+    assertThat(blocks.get(1)).isEqualToComparingFieldByField(block(4, 1));
+  }
+
+  @Test
+  public void findsMaxSlotForValidator() {
+    insertValidator(Bytes.of(1), 1);
+    insertValidator(Bytes.of(2), 2);
+    insertValidator(Bytes.of(3), 3);
+    insertBlock(1, 3, Bytes.of(1));
+    insertBlock(1, 4, Bytes.of(1));
+    insertBlock(2, 3, Bytes.of(1));
+
+    assertThat(signedBlocksDao.findMaxSlot(handle, 1)).contains(UInt64.valueOf(4));
+    assertThat(signedBlocksDao.findMaxSlot(handle, 2)).contains(UInt64.valueOf(3));
+    assertThat(signedBlocksDao.findMaxSlot(handle, 3)).isEmpty();
+  }
+
+  @Test
+  public void findsNearestBlockForSlot() {
+    insertValidator(Bytes.of(1), 1);
+    insertBlock(1, 2, Bytes.of(1));
+    insertBlock(1, 3, Bytes.of(1));
+    insertBlock(1, 7, Bytes.of(1));
+
+    assertThat(signedBlocksDao.findNearestBlockWithSlot(handle, 1, UInt64.valueOf(3)).get())
+        .isEqualToComparingFieldByField(block(3, 1));
+    assertThat(signedBlocksDao.findNearestBlockWithSlot(handle, 1, UInt64.valueOf(5)).get())
+        .isEqualToComparingFieldByField(block(7, 1));
+  }
+
   private void insertBlock(final int validatorId, final int slot, final Bytes signingRoot) {
     handle.execute(
         "INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)",
@@ -154,5 +218,9 @@ public class SignedBlocksDaoTest {
 
   private void insertValidator(final Bytes publicKey, final int validatorId) {
     handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
+  }
+
+  private SignedBlock block(final int slot, final int signingRoot) {
+    return new SignedBlock(1, UInt64.valueOf(slot), Bytes.of(signingRoot));
   }
 }

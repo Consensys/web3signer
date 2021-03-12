@@ -63,10 +63,7 @@ public class Eth2ImportSubCommand implements Runnable {
 
     try (final InputStream inStream = new FileInputStream(from)) {
       final SlashingProtection slashingProtection =
-          createSlashingProtection(
-              eth2Config.getSlashingProtectionParameters().getDbUrl(),
-              eth2Config.getSlashingProtectionParameters().getDbUsername(),
-              eth2Config.getSlashingProtectionParameters().getDbPassword());
+          createSlashingProtection(eth2Config.getSlashingProtectionParameters());
 
       slashingProtection.importData(inStream);
     } catch (final IOException e) {

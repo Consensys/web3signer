@@ -83,6 +83,8 @@ public class DbSlashingProtectionTest {
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao,
+            0,
+            0,
             Map.of(PUBLIC_KEY1, VALIDATOR_ID));
     when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(GVR));
   }
@@ -154,7 +156,9 @@ public class DbSlashingProtectionTest {
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
-            lowWatermarkDao);
+            lowWatermarkDao,
+            0,
+            0);
 
     assertThatThrownBy(
             () -> dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR))
@@ -314,7 +318,9 @@ public class DbSlashingProtectionTest {
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
-            lowWatermarkDao);
+            lowWatermarkDao,
+            0,
+            0);
 
     assertThatThrownBy(
             () ->
@@ -353,6 +359,8 @@ public class DbSlashingProtectionTest {
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao,
+            0,
+            0,
             registeredValidators);
 
     when(validatorsDao.retrieveValidators(any(), any()))

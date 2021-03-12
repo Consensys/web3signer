@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.SignedArtifacts;
+import dsl.TestSlashingProtectionParameters;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -76,8 +77,10 @@ public class ReferenceTestRunner {
     flyway.migrate();
     databaseUrl =
         String.format("jdbc:postgresql://localhost:%d/postgres", slashingDatabase.getPort());
+    final SlashingProtectionParameters slashingProtectionParameters =
+        new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD);
     slashingProtection =
-        SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
+        SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
     jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
   }
 

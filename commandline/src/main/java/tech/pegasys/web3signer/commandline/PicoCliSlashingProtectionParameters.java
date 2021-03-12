@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline;
 
-import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import picocli.CommandLine.Option;
 
@@ -25,44 +25,92 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  boolean slashingProtectionEnabled = true;
+  boolean enabled = true;
 
   @Option(
       names = {"--slashing-protection-db-url"},
       description = "The jdbc url to use to connect to the slashing protection database",
       paramLabel = "<jdbc url>",
       arity = "1")
-  String slashingProtectionDbUrl;
+  String dbUrl;
 
   @Option(
       names = {"--slashing-protection-db-username"},
       description = "The username to use when connecting to the slashing protection database",
       paramLabel = "<jdbc user>")
-  String slashingProtectionDbUsername;
+  String dbUsername;
 
   @Option(
       names = {"--slashing-protection-db-password"},
       description = "The password to use when connecting to the slashing protection database",
       paramLabel = "<jdbc password>")
-  String slashingProtectionDbPassword;
+  String dbPassword;
+
+  @Option(
+      names = {"--slashing-protection-pruning-enabled"},
+      description =
+          "Set to true if all Eth2 slashing protection database should be pruned "
+              + "(default: ${DEFAULT-VALUE})",
+      paramLabel = "<BOOL>",
+      arity = "1")
+  boolean pruningEnabled = false;
+
+  @Option(
+      names = {"--slashing-protection-pruning-epochs-to-keep"},
+      description = "Number of epochs to keep. (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  long pruningEpochsToKeep = 10_000;
+
+  @Option(
+      names = {"--slashing-protection-pruning-slots-per-epoch"},
+      description =
+          "Slots per epoch to use when calculating the number of slots to prune for signed"
+              + " blocks. This typically will not need changing and defaults to value used on mainnet "
+              + "(default: ${DEFAULT-VALUE})")
+  long pruningSlotsPerEpoch = 32;
+
+  @Option(
+      names = {"--slashing-protection-pruning-interval"},
+      description = "Hours between pruning operations (default: ${DEFAULT-VALUE})")
+  long pruningInterval = 24;
 
   @Override
   public boolean isEnabled() {
-    return slashingProtectionEnabled;
+    return enabled;
   }
 
   @Override
   public String getDbUrl() {
-    return slashingProtectionDbUrl;
+    return dbUrl;
   }
 
   @Override
   public String getDbUsername() {
-    return slashingProtectionDbUsername;
+    return dbUsername;
   }
 
   @Override
   public String getDbPassword() {
-    return slashingProtectionDbPassword;
+    return dbPassword;
+  }
+
+  @Override
+  public boolean isPruningEnabled() {
+    return pruningEnabled;
+  }
+
+  @Override
+  public long getPruningEpochsToKeep() {
+    return pruningEpochsToKeep;
+  }
+
+  @Override
+  public long getPruningSlotsPerEpoch() {
+    return pruningSlotsPerEpoch;
+  }
+
+  @Override
+  public long getPruningInterval() {
+    return pruningInterval;
   }
 }

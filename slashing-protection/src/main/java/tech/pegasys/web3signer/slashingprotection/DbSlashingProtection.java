@@ -15,7 +15,9 @@ package tech.pegasys.web3signer.slashingprotection;
 import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
+import static tech.pegasys.web3signer.slashingprotection.DbLocker.lockForValidator;
 
+import tech.pegasys.web3signer.slashingprotection.DbLocker.LockType;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -46,7 +48,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 public class DbSlashingProtection implements SlashingProtection {
@@ -60,11 +61,9 @@ public class DbSlashingProtection implements SlashingProtection {
   private final InterchangeManager interchangeManager;
   private final LowWatermarkDao lowWatermarkDao;
   private final GenesisValidatorRootValidator gvrValidator;
-
-  private enum LockType {
-    BLOCK,
-    ATTESTATION
-  }
+  private final DbPruner dbPruner;
+  private final long pruningEpochsToKeep;
+  private final long pruningSlotsPerEpoch;
 
   public DbSlashingProtection(
       final Jdbi jdbi,
@@ -72,7 +71,9 @@ public class DbSlashingProtection implements SlashingProtection {
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
       final MetadataDao metadataDao,
-      final LowWatermarkDao lowWatermarkDao) {
+      final LowWatermarkDao lowWatermarkDao,
+      final long pruningEpochsToKeep,
+      final long pruningSlotsPerEpoch) {
     this(
         jdbi,
         validatorsDao,
@@ -80,6 +81,8 @@ public class DbSlashingProtection implements SlashingProtection {
         signedAttestationsDao,
         metadataDao,
         lowWatermarkDao,
+        pruningEpochsToKeep,
+        pruningSlotsPerEpoch,
         new HashMap<>());
   }
 
@@ -90,6 +93,8 @@ public class DbSlashingProtection implements SlashingProtection {
       final SignedAttestationsDao signedAttestationsDao,
       final MetadataDao metadataDao,
       final LowWatermarkDao lowWatermarkDao,
+      final long pruningEpochsToKeep,
+      final long pruningSlotsPerEpoch,
       final Map<Bytes, Integer> registeredValidators) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
@@ -110,6 +115,9 @@ public class DbSlashingProtection implements SlashingProtection {
                 .registerModule(new InterchangeModule())
                 .configure(FLUSH_AFTER_WRITE_VALUE, true)
                 .enable(SerializationFeature.INDENT_OUTPUT));
+    this.dbPruner = new DbPruner(jdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
+    this.pruningEpochsToKeep = pruningEpochsToKeep;
+    this.pruningSlotsPerEpoch = pruningSlotsPerEpoch;
   }
 
   @Override
@@ -238,16 +246,20 @@ public class DbSlashingProtection implements SlashingProtection {
         });
   }
 
+  @Override
+  public void prune() {
+    LOG.info("Pruning slashing protection database");
+    registeredValidators
+        .values()
+        .forEach(v -> dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch));
+    LOG.info("Pruning slashing protection database complete");
+  }
+
   private int validatorId(final Bytes publicKey) {
     final Integer validatorId = registeredValidators.get(publicKey);
     if (validatorId == null) {
       throw new IllegalStateException("Unregistered validator for " + publicKey);
     }
     return validatorId;
-  }
-
-  private void lockForValidator(
-      final Handle handle, final LockType lockType, final int validatorId) {
-    handle.execute("SELECT pg_advisory_xact_lock(?, ?)", lockType.ordinal(), validatorId);
   }
 }

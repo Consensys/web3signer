@@ -10,15 +10,19 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.config;
+package tech.pegasys.web3signer.slashingprotection;
 
-public interface SlashingProtectionParameters {
+import org.jdbi.v3.core.Handle;
 
-  boolean isEnabled();
+public class DbLocker {
 
-  String getDbUrl();
+  public enum LockType {
+    BLOCK,
+    ATTESTATION
+  }
 
-  String getDbUsername();
-
-  String getDbPassword();
+  public static void lockForValidator(
+      final Handle handle, final LockType lockType, final int validatorId) {
+    handle.execute("SELECT pg_advisory_xact_lock(?, ?)", lockType.ordinal(), validatorId);
+  }
 }

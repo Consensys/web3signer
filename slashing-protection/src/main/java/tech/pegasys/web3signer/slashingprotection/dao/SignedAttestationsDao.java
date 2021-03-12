@@ -118,4 +118,35 @@ public class SignedAttestationsDao {
                 + "FROM signed_attestations WHERE validator_id = ?")
         .bind(0, validatorId).mapToBean(SignedAttestation.class).stream();
   }
+
+  public void deleteAttestationsBelowWatermark(final Handle handle, final int validatorId) {
+    handle.execute(
+        "DELETE FROM signed_attestations a "
+            + "USING low_watermarks w "
+            + "WHERE a.validator_id = ? AND a.target_epoch < w.target_epoch",
+        validatorId);
+  }
+
+  public Optional<UInt64> findMaxTargetEpoch(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery("SELECT max(target_epoch) FROM signed_attestations WHERE validator_id = ?")
+        .bind(0, validatorId)
+        .mapTo(UInt64.class)
+        .findFirst();
+  }
+
+  public Optional<SignedAttestation> findNearestAttestationWithTargetEpoch(
+      final Handle handle, final int validatorId, final UInt64 targetEpoch) {
+    return handle
+        .createQuery(
+            "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                + "FROM signed_attestations "
+                + "WHERE validator_id = ? AND target_epoch >= ? "
+                + "ORDER BY target_epoch ASC "
+                + "LIMIT 1")
+        .bind(0, validatorId)
+        .bind(1, targetEpoch)
+        .mapToBean(SignedAttestation.class)
+        .findFirst();
+  }
 }

@@ -63,10 +63,7 @@ public class Eth2ExportSubCommand implements Runnable {
 
     try (final OutputStream outStream = new FileOutputStream(output)) {
       final SlashingProtection slashingProtection =
-          createSlashingProtection(
-              eth2Config.getSlashingProtectionParameters().getDbUrl(),
-              eth2Config.getSlashingProtectionParameters().getDbUsername(),
-              eth2Config.getSlashingProtectionParameters().getDbPassword());
+          createSlashingProtection(eth2Config.getSlashingProtectionParameters());
 
       slashingProtection.export(outStream);
     } catch (final IOException e) {

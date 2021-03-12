@@ -215,6 +215,29 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               signerConfig.getSlashingProtectionDbPassword()));
     }
 
+    if (signerConfig.isSlashingProtectionPruningEnabled()) {
+      yamlConfig.append(
+          String.format(
+              YAML_BOOLEAN_FMT,
+              "eth2.slashing-protection-pruning-enabled",
+              signerConfig.isSlashingProtectionPruningEnabled()));
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT,
+              "eth2.slashing-protection-pruning-epochs-to-keep",
+              signerConfig.getSlashingProtectionPruningEpochsToKeep()));
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT,
+              "eth2.sslashing-protection-pruning-slots-per-epoch",
+              signerConfig.getSlashingProtectionPruningSlotsPerEpoch()));
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT,
+              "eth2.slashing-protection-pruning-schedule",
+              signerConfig.getSlashingProtectionPruningInterval()));
+    }
+
     return yamlConfig.toString();
   }
 

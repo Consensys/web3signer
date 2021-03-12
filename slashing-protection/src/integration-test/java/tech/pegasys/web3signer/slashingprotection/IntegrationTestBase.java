@@ -26,9 +26,11 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import dsl.TestSlashingProtectionParameters;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -64,7 +66,8 @@ public class IntegrationTestBase {
       databaseUrl = String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
       jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
       slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(databaseUrl, USERNAME, PASSWORD);
+          SlashingProtectionFactory.createSlashingProtection(
+              new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD));
       insertGvr(GVR);
     } catch (final IOException e) {
       throw new UncheckedIOException(e);
@@ -147,6 +150,19 @@ public class IntegrationTestBase {
 
   protected SigningWatermark getWatermark(final int validatorId) {
     return jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, validatorId)).get();
+  }
+
+  protected List<SignedBlock> fetchBlocks(final int validatorId) {
+    return jdbi.withHandle(
+        h -> signedBlocksDao.findAllBlockSignedBy(h, validatorId).collect(Collectors.toList()));
+  }
+
+  protected List<SignedAttestation> fetchAttestations(final int validatorId) {
+    return jdbi.withHandle(
+        h ->
+            signedAttestationsDao
+                .findAllAttestationsSignedBy(h, validatorId)
+                .collect(Collectors.toList()));
   }
 
   protected void insertGvr(final Bytes genesisValidatorsRoot) {

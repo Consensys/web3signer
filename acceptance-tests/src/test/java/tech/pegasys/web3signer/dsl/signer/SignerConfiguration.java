@@ -47,8 +47,12 @@ public class SignerConfiguration {
   private final boolean enableSlashing;
   private final Optional<Path> slashingExportPath;
   private final Optional<Path> slashingImportPath;
+  private final boolean enableSlashingPruning;
   private final boolean swaggerUIEnabled;
   private final boolean useConfigFile;
+  private final long slashingPruningEpochsToKeep;
+  private final long slashingPruningSlotsPerEpoch;
+  private final long slashingPruningInterval;
 
   public SignerConfiguration(
       final String hostname,
@@ -71,6 +75,10 @@ public class SignerConfiguration {
       final boolean enableSlashing,
       final Optional<Path> slashingExportPath,
       final Optional<Path> slashingImportPath,
+      final boolean enableSlashingPruning,
+      final long slashingPruningEpochsToKeep,
+      final long slashingPruningSlotsPerEpoch,
+      final long slashingPruningSchedule,
       final boolean swaggerUIEnabled,
       final boolean useConfigFile) {
     this.hostname = hostname;
@@ -93,6 +101,10 @@ public class SignerConfiguration {
     this.enableSlashing = enableSlashing;
     this.slashingExportPath = slashingExportPath;
     this.slashingImportPath = slashingImportPath;
+    this.enableSlashingPruning = enableSlashingPruning;
+    this.slashingPruningEpochsToKeep = slashingPruningEpochsToKeep;
+    this.slashingPruningSlotsPerEpoch = slashingPruningSlotsPerEpoch;
+    this.slashingPruningInterval = slashingPruningSchedule;
     this.swaggerUIEnabled = swaggerUIEnabled;
     this.useConfigFile = useConfigFile;
   }
@@ -183,6 +195,22 @@ public class SignerConfiguration {
 
   public Optional<Path> getSlashingImportPath() {
     return slashingImportPath;
+  }
+
+  public boolean isSlashingProtectionPruningEnabled() {
+    return enableSlashingPruning;
+  }
+
+  public long getSlashingProtectionPruningEpochsToKeep() {
+    return slashingPruningEpochsToKeep;
+  }
+
+  public long getSlashingProtectionPruningSlotsPerEpoch() {
+    return slashingPruningSlotsPerEpoch;
+  }
+
+  public long getSlashingProtectionPruningInterval() {
+    return slashingPruningInterval;
   }
 
   public boolean isSwaggerUIEnabled() {

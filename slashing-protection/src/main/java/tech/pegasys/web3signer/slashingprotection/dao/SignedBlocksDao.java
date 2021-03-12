@@ -70,4 +70,35 @@ public class SignedBlocksDao {
             "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ?")
         .bind(0, validatorId).mapToBean(SignedBlock.class).stream();
   }
+
+  public void deleteBlocksBelowWatermark(final Handle handle, final int validatorId) {
+    handle.execute(
+        "DELETE FROM signed_blocks b "
+            + "USING low_watermarks w "
+            + "WHERE b.validator_id = ? AND b.slot < w.slot",
+        validatorId);
+  }
+
+  public Optional<UInt64> findMaxSlot(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery("SELECT max(slot) FROM signed_blocks WHERE validator_id = ?")
+        .bind(0, validatorId)
+        .mapTo(UInt64.class)
+        .findFirst();
+  }
+
+  public Optional<SignedBlock> findNearestBlockWithSlot(
+      final Handle handle, final int validatorId, final UInt64 slot) {
+    return handle
+        .createQuery(
+            "SELECT validator_id, slot, signing_root "
+                + "FROM signed_blocks "
+                + "WHERE validator_id = ? AND slot >= ? "
+                + "ORDER BY slot ASC "
+                + "LIMIT 1")
+        .bind(0, validatorId)
+        .bind(1, slot)
+        .mapToBean(SignedBlock.class)
+        .findFirst();
+  }
 }

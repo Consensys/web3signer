@@ -19,7 +19,7 @@ import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
-import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.List;
 
@@ -56,6 +56,12 @@ public class Eth2SubCommand extends ModeSubCommand {
         && slashingProtectionParameters.getDbUrl() == null) {
       throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
     }
+
+    validatePositiveValue(
+        slashingProtectionParameters.getPruningEpochsToKeep(), "Pruning epochsToKeep");
+    validatePositiveValue(slashingProtectionParameters.getPruningInterval(), "Pruning interval");
+    validatePositiveValue(
+        slashingProtectionParameters.getPruningSlotsPerEpoch(), "Pruning slots per epoch");
 
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
 
@@ -94,6 +100,14 @@ public class Eth2SubCommand extends ModeSubCommand {
                 String.join(",", missingAzureFields));
         throw new ParameterException(spec.commandLine(), errorMsg);
       }
+    }
+  }
+
+  private void validatePositiveValue(final long value, final String fieldName) {
+    if (value < 1) {
+      throw new ParameterException(
+          spec.commandLine(),
+          String.format("%s must be 1 or more. Value was %d.", fieldName, value));
     }
   }
 

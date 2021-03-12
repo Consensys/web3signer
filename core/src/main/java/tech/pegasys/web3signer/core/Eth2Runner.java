@@ -25,7 +25,6 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
-import tech.pegasys.web3signer.core.config.SlashingProtectionParameters;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.core.multikey.SignerLoader;
@@ -45,6 +44,7 @@ import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.Collection;
 import java.util.List;
@@ -66,11 +66,11 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
+  private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<SlashingProtection> slashingProtection;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
-
-  private static final Logger LOG = LogManager.getLogger();
+  private final boolean pruningEnabled;
 
   public Eth2Runner(
       final Config config,
@@ -79,6 +79,7 @@ public class Eth2Runner extends Runner {
     super(config);
     this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
+    this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
   }
 
   private Optional<SlashingProtection> createSlashingProtection(
@@ -86,10 +87,7 @@ public class Eth2Runner extends Runner {
     if (slashingProtectionParameters.isEnabled()) {
       try {
         return Optional.of(
-            SlashingProtectionFactory.createSlashingProtection(
-                slashingProtectionParameters.getDbUrl(),
-                slashingProtectionParameters.getDbUsername(),
-                slashingProtectionParameters.getDbPassword()));
+            SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters));
       } catch (final IllegalStateException e) {
         throw new InitializationException(e.getMessage(), e);
       }
@@ -194,8 +192,12 @@ public class Eth2Runner extends Runner {
               }
 
               slashingProtection.ifPresent(
-                  slashingProtection -> slashingProtection.registerValidators(validators));
-
+                  slashingProtection -> {
+                    slashingProtection.registerValidators(validators);
+                    if (pruningEnabled) {
+                      slashingProtection.prune();
+                    }
+                  });
               return signers;
             });
 
