@@ -18,7 +18,9 @@ import static tech.pegasys.web3signer.slashingprotection.DbLocker.lockForValidat
 
 import tech.pegasys.web3signer.slashingprotection.DbLocker.LockType;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
+import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 
@@ -58,7 +60,7 @@ public class DbPruner {
   }
 
   private void pruneBlocks(final int validatorId, final long slotsToKeep) {
-    final Optional<UInt64> pruningSlot =
+    final boolean hasWatermark =
         jdbi.inTransaction(
             READ_UNCOMMITTED,
             h -> {
@@ -66,27 +68,30 @@ public class DbPruner {
               return moveWatermarkForBlock(validatorId, slotsToKeep, h);
             });
 
-    pruningSlot.ifPresent(
-        s ->
-            jdbi.useTransaction(
-                READ_UNCOMMITTED, h -> signedBlocksDao.deleteBlocksBelowWatermark(h, validatorId)));
+    if (hasWatermark) {
+      jdbi.useTransaction(
+          READ_UNCOMMITTED, h -> signedBlocksDao.deleteBlocksBelowWatermark(h, validatorId));
+    }
   }
 
-  private Optional<UInt64> moveWatermarkForBlock(
+  private boolean moveWatermarkForBlock(
       final int validatorId, final long slotsToKeep, final Handle handle) {
     final Optional<UInt64> watermarkSlot =
         lowWatermarkDao
             .findLowWatermarkForValidator(handle, validatorId)
             .map(SigningWatermark::getSlot);
     final Optional<UInt64> mostRecentSlot = signedBlocksDao.findMaxSlot(handle, validatorId);
-    final Optional<UInt64> newWatermark =
+    final Optional<UInt64> slotWatermark =
         calculateWatermark(slotsToKeep, mostRecentSlot, watermarkSlot);
-    newWatermark.ifPresent(s -> lowWatermarkDao.updateSlotWatermarkFor(handle, validatorId, s));
-    return newWatermark;
+    final Optional<SignedBlock> watermark =
+        slotWatermark.flatMap(w -> signedBlocksDao.findNearestBlockWithSlot(handle, validatorId, w));
+    watermark.ifPresent(
+        s -> lowWatermarkDao.updateSlotWatermarkFor(handle, validatorId, s.getSlot()));
+    return slotWatermark.isPresent();
   }
 
   private void pruneAttestations(final int validatorId, final long epochsToKeep) {
-    final Optional<UInt64> pruningEpoch =
+    final boolean hasWatermark =
         jdbi.inTransaction(
             READ_UNCOMMITTED,
             h -> {
@@ -94,14 +99,14 @@ public class DbPruner {
               return moveWatermarkForAttestation(validatorId, epochsToKeep, h);
             });
 
-    pruningEpoch.ifPresent(
-        e ->
-            jdbi.useTransaction(
-                READ_UNCOMMITTED,
-                h -> signedAttestationsDao.deleteAttestationsBelowWatermark(h, validatorId)));
+    if (hasWatermark) {
+      jdbi.useTransaction(
+          READ_UNCOMMITTED,
+          h -> signedAttestationsDao.deleteAttestationsBelowWatermark(h, validatorId));
+    }
   }
 
-  private Optional<UInt64> moveWatermarkForAttestation(
+  private boolean moveWatermarkForAttestation(
       final int validatorId, final long epochsToKeep, final Handle h) {
     final Optional<UInt64> watermarkEpoch =
         lowWatermarkDao
@@ -109,10 +114,19 @@ public class DbPruner {
             .map(SigningWatermark::getTargetEpoch);
     final Optional<UInt64> mostRecentEpoch =
         signedAttestationsDao.findMaxTargetEpoch(h, validatorId);
-    final Optional<UInt64> epochToPruneTo =
+    final Optional<UInt64> targetEpochWatermark =
         calculateWatermark(epochsToKeep, mostRecentEpoch, watermarkEpoch);
-    epochToPruneTo.ifPresent(e -> lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, e, e));
-    return epochToPruneTo;
+    final Optional<SignedAttestation> watermark =
+        targetEpochWatermark.flatMap(
+            w -> signedAttestationsDao.findNearestAttestationWithTargetEpoch(h, validatorId, w));
+    targetEpochWatermark.ifPresent(
+        e ->
+            lowWatermarkDao.updateEpochWatermarksFor(
+                h,
+                validatorId,
+                watermark.get().getSourceEpoch(),
+                watermark.get().getTargetEpoch()));
+    return targetEpochWatermark.isPresent();
   }
 
   private Optional<UInt64> calculateWatermark(

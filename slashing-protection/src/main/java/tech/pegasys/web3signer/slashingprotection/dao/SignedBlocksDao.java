@@ -86,4 +86,19 @@ public class SignedBlocksDao {
         .mapTo(UInt64.class)
         .findFirst();
   }
+
+  public Optional<SignedBlock> findNearestBlockWithSlot(
+      final Handle handle, final int validatorId, final UInt64 slot) {
+    return handle
+        .createQuery(
+            "SELECT validator_id, slot, signing_root "
+                + "FROM signed_blocks "
+                + "WHERE validator_id = ? AND slot >= ? "
+                + "ORDER BY slot ASC "
+                + "LIMIT 1")
+        .bind(0, validatorId)
+        .bind(1, slot)
+        .mapToBean(SignedBlock.class)
+        .findFirst();
+  }
 }

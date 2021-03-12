@@ -134,4 +134,19 @@ public class SignedAttestationsDao {
         .mapTo(UInt64.class)
         .findFirst();
   }
+
+  public Optional<SignedAttestation> findNearestAttestationWithTargetEpoch(
+      final Handle handle, final int validatorId, final UInt64 targetEpoch) {
+    return handle
+        .createQuery(
+            "SELECT validator_id, source_epoch, target_epoch, signing_root "
+                + "FROM signed_attestations "
+                + "WHERE validator_id = ? AND target_epoch >= ? "
+                + "ORDER BY target_epoch ASC "
+                + "LIMIT 1")
+        .bind(0, validatorId)
+        .bind(1, targetEpoch)
+        .mapToBean(SignedAttestation.class)
+        .findFirst();
+  }
 }
