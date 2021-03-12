@@ -84,7 +84,8 @@ public class DbPruner {
     final Optional<UInt64> slotWatermark =
         calculateWatermark(slotsToKeep, mostRecentSlot, watermarkSlot);
     final Optional<SignedBlock> watermark =
-        slotWatermark.flatMap(w -> signedBlocksDao.findNearestBlockWithSlot(handle, validatorId, w));
+        slotWatermark.flatMap(
+            w -> signedBlocksDao.findNearestBlockWithSlot(handle, validatorId, w));
     watermark.ifPresent(
         s -> lowWatermarkDao.updateSlotWatermarkFor(handle, validatorId, s.getSlot()));
     return slotWatermark.isPresent();
