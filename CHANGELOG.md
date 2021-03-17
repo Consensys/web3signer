@@ -2,13 +2,17 @@
 
 ## Next Release
 
+## 21.3.0
+
 ### Features Added
+- Reload API endpoint to load new keys
+- Slashing protection database pruning for Eth2
 - Publish binaries to Cloudsmith
 - Resolve Signers from Cloudsmith
-- Slashing protection database pruning for Eth2
 
 ### Bugs Fixed
 - Fixed build failure when checked out as a shallow clone. Shallow clones are still not recommended as the version number cannot be determined correctly.
+- Change reference tests git submodule to https so a github account isn't required to build web3signer
 
 ## 21.1.0
 
