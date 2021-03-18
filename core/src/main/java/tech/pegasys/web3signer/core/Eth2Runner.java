@@ -42,6 +42,7 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.slashingprotection.DbPrunerRunner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
@@ -70,6 +71,7 @@ public class Eth2Runner extends Runner {
 
   private final Optional<SlashingProtection> slashingProtection;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
+  private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
 
   public Eth2Runner(
@@ -79,6 +81,7 @@ public class Eth2Runner extends Runner {
     super(config);
     this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
+    this.slashingProtectionParameters = slashingProtectionParameters;
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
   }
 
@@ -192,16 +195,22 @@ public class Eth2Runner extends Runner {
               }
 
               slashingProtection.ifPresent(
-                  slashingProtection -> {
-                    slashingProtection.registerValidators(validators);
-                    if (pruningEnabled) {
-                      slashingProtection.prune();
-                    }
-                  });
+                  slashingProtection -> slashingProtection.registerValidators(validators));
               return signers;
             });
 
     return artifactSignerProvider;
+  }
+
+  @Override
+  public void run() {
+    super.run();
+    if (pruningEnabled && slashingProtection.isPresent()) {
+      final DbPrunerRunner dbPrunerRunner =
+          new DbPrunerRunner(slashingProtectionParameters, slashingProtection.get());
+      dbPrunerRunner.runOnce();
+      dbPrunerRunner.start();
+    }
   }
 
   final Collection<ArtifactSigner> loadAzureSigners() {
