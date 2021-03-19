@@ -40,7 +40,7 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
   public static final String PRUNING_THREAD_NAME = "slashing-db-pruner-0";
   private ScheduledExecutorService scheduledExecutorService;
   private TestSlashingProtectionParameters slashingProtectionParameters;
-  private SlashingProtection slashingProtection;
+  private SlashingProtection pruningSlashingProtection;
 
   @BeforeEach
   void setupSlashingProtection() {
@@ -49,15 +49,15 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     scheduledExecutorService =
         new ScheduledThreadPoolExecutor(
             1, new ThreadFactoryBuilder().setNameFormat("slashing-db-pruner" + "-%d").build());
-    slashingProtection =
+    pruningSlashingProtection =
         SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
-    insertValidatorAndCreateSlashingData(slashingProtection, 10, 10, 1);
+    insertValidatorAndCreateSlashingData(pruningSlashingProtection, 10, 10, 1);
   }
 
   @Test
   void prunesValidatorsForExecuteOnOwnThread() {
     final TestSlashingProtection testSlashingProtection =
-        new TestSlashingProtection(slashingProtection);
+        new TestSlashingProtection(pruningSlashingProtection);
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
             slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
@@ -74,7 +74,8 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
   @Test
   void prunesValidatorsForExecuteHandlesErrors() {
     final TestSlashingProtection testSlashingProtection =
-        new TestSlashingProtection(slashingProtection, createPrunerRunnerThatFailsOnFirstRun());
+        new TestSlashingProtection(
+            pruningSlashingProtection, createPrunerRunnerThatFailsOnFirstRun());
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
             slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
@@ -105,7 +106,7 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
       if (pruningCount.addAndGet(1) == 1) {
         throw new IllegalStateException("Pruning failed");
       } else {
-        slashingProtection.prune();
+        pruningSlashingProtection.prune();
       }
     };
   }
@@ -115,7 +116,8 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     final SlashingProtectionParameters slashingProtectionParameters =
         new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, 1);
     final TestSlashingProtection testSlashingProtection =
-        new TestSlashingProtection(slashingProtection, createPrunerRunnerThatFailsOnFirstRun());
+        new TestSlashingProtection(
+            pruningSlashingProtection, createPrunerRunnerThatFailsOnFirstRun());
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
             slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
@@ -142,7 +144,7 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     final SlashingProtectionParameters slashingProtectionParameters =
         new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, 1);
     final TestSlashingProtection testSlashingProtection =
-        new TestSlashingProtection(slashingProtection);
+        new TestSlashingProtection(pruningSlashingProtection);
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
             slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
