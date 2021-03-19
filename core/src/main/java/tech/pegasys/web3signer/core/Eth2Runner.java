@@ -50,6 +50,7 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -207,9 +208,12 @@ public class Eth2Runner extends Runner {
     super.run();
     if (pruningEnabled && slashingProtection.isPresent()) {
       final DbPrunerRunner dbPrunerRunner =
-          new DbPrunerRunner(slashingProtectionParameters, slashingProtection.get());
-      dbPrunerRunner.runOnce();
-      dbPrunerRunner.start();
+          new DbPrunerRunner(
+              slashingProtectionParameters,
+              slashingProtection.get(),
+              Executors.newScheduledThreadPool(1));
+      dbPrunerRunner.execute();
+      dbPrunerRunner.schedule();
     }
   }
 

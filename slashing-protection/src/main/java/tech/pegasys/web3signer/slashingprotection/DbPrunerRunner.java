@@ -12,16 +12,12 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DbPrunerRunner implements Closeable {
+public class DbPrunerRunner {
   private static final Logger LOG = LogManager.getLogger();
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final SlashingProtection slashingProtection;
@@ -29,31 +25,23 @@ public class DbPrunerRunner implements Closeable {
 
   public DbPrunerRunner(
       final SlashingProtectionParameters slashingProtectionParameters,
-      final SlashingProtection slashingProtection) {
+      final SlashingProtection slashingProtection,
+      final ScheduledExecutorService executorService) {
     this.slashingProtectionParameters = slashingProtectionParameters;
     this.slashingProtection = slashingProtection;
-    this.executorService = Executors.newScheduledThreadPool(1);
+    this.executorService = executorService;
   }
 
-  public void start() {
+  public void schedule() {
     executorService.scheduleAtFixedRate(
         this::runPruning,
         slashingProtectionParameters.getPruningInterval(),
         slashingProtectionParameters.getPruningInterval(),
-        TimeUnit.HOURS);
+        slashingProtectionParameters.getPruningIntervalTimeUnit());
   }
 
-  public void stop() {
-    executorService.shutdown();
-  }
-
-  public void runOnce() {
-    executorService.schedule(this::runPruning, 0, TimeUnit.SECONDS);
-  }
-
-  @Override
-  public void close() throws IOException {
-    stop();
+  public void execute() {
+    executorService.execute(this::runPruning);
   }
 
   private void runPruning() {

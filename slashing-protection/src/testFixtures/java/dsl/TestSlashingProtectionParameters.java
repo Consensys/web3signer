@@ -14,20 +14,21 @@ package dsl;
 
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
+import java.util.concurrent.TimeUnit;
+
 public class TestSlashingProtectionParameters implements SlashingProtectionParameters {
 
   private final String dbUrl;
   private final String dbUser;
   private final String dbPassword;
-  private boolean pruningEnabled = false;
-  private int pruningEpochsToKeep = 0;
-  private int pruningSlotsPerEpoch = 0;
+  private final boolean pruningEnabled;
+  private final int pruningEpochsToKeep;
+  private final int pruningSlotsPerEpoch;
+  private final long pruningInterval;
 
   public TestSlashingProtectionParameters(
       final String dbUrl, final String dbUser, final String dbPassword) {
-    this.dbUrl = dbUrl;
-    this.dbUser = dbUser;
-    this.dbPassword = dbPassword;
+    this(dbUrl, dbUser, dbPassword, 0, 0);
   }
 
   public TestSlashingProtectionParameters(
@@ -36,12 +37,23 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
       final String dbPassword,
       final int pruningEpochsToKeep,
       final int pruningSlotsPerEpoch) {
+    this(dbUrl, dbUser, dbPassword, pruningEpochsToKeep, pruningSlotsPerEpoch, Long.MAX_VALUE);
+  }
+
+  public TestSlashingProtectionParameters(
+      final String dbUrl,
+      final String dbUser,
+      final String dbPassword,
+      final int pruningEpochsToKeep,
+      final int pruningSlotsPerEpoch,
+      final long pruningInterval) {
     this.dbUrl = dbUrl;
     this.dbUser = dbUser;
     this.dbPassword = dbPassword;
     this.pruningEnabled = true;
     this.pruningEpochsToKeep = pruningEpochsToKeep;
     this.pruningSlotsPerEpoch = pruningSlotsPerEpoch;
+    this.pruningInterval = pruningInterval;
   }
 
   @Override
@@ -81,6 +93,11 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
 
   @Override
   public long getPruningInterval() {
-    return Long.MAX_VALUE;
+    return pruningInterval;
+  }
+
+  @Override
+  public TimeUnit getPruningIntervalTimeUnit() {
+    return TimeUnit.SECONDS;
   }
 }

@@ -34,11 +34,12 @@ import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -85,7 +86,7 @@ public class DbSlashingProtectionTest {
             lowWatermarkDao,
             0,
             0,
-            Map.of(PUBLIC_KEY1, VALIDATOR_ID));
+            HashBiMap.create(Map.of(PUBLIC_KEY1, VALIDATOR_ID)));
     when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(GVR));
   }
 
@@ -349,7 +350,7 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void registersValidatorsThatAreNotAlreadyInDb() {
-    final Map<Bytes, Integer> registeredValidators = new HashMap<>();
+    final BiMap<Bytes, Integer> registeredValidators = HashBiMap.create();
     registeredValidators.put(PUBLIC_KEY1, 1);
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(

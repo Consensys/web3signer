@@ -59,6 +59,7 @@ dependencies {
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation 'org.flywaydb:flyway-core'
   integrationTestImplementation 'com.opentable.components:otj-pg-embedded'
+  integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestImplementation sourceSets.testFixtures.output
 }
 
