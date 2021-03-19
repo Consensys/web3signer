@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -223,7 +224,9 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
 
     @Override
     public void prune() {
-      pruningStats.add(new PruningStat(Thread.currentThread(), LocalDateTime.now()));
+      final Thread currentThread = Thread.currentThread();
+      final LocalDateTime currentTime = LocalDateTime.now(ZoneId.systemDefault());
+      pruningStats.add(new PruningStat(currentThread, currentTime));
       pruningRunner.run();
     }
 
