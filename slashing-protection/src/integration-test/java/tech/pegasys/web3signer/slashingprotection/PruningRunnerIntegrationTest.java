@@ -72,17 +72,8 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
 
   @Test
   void prunesValidatorsForExecuteHandlesErrors() {
-    final AtomicInteger pruningCount = new AtomicInteger(0);
     final TestSlashingProtection testSlashingProtection =
-        new TestSlashingProtection(
-            slashingProtection,
-            () -> {
-              if (pruningCount.addAndGet(1) == 1) {
-                throw new IllegalStateException("Pruning failed");
-              } else {
-                slashingProtection.prune();
-              }
-            });
+        new TestSlashingProtection(slashingProtection, createPrunerRunnerThatFailsOnFirstRun());
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
             slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
@@ -107,12 +98,23 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     assertThat(fetchBlocks(1)).hasSize(5);
   }
 
+  private Runnable createPrunerRunnerThatFailsOnFirstRun() {
+    final AtomicInteger pruningCount = new AtomicInteger(0);
+    return () -> {
+      if (pruningCount.addAndGet(1) == 1) {
+        throw new IllegalStateException("Pruning failed");
+      } else {
+        slashingProtection.prune();
+      }
+    };
+  }
+
   @Test
   void prunesValidatorsForScheduledRunAreRunPeriodically() {
     final SlashingProtectionParameters slashingProtectionParameters =
         new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, 1);
     final TestSlashingProtection testSlashingProtection =
-        new TestSlashingProtection(slashingProtection);
+        new TestSlashingProtection(slashingProtection, createPrunerRunnerThatFailsOnFirstRun());
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
             slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
@@ -130,6 +132,31 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
         .isEqualToIgnoringNanos(firstPruningStartTime.plusSeconds(1));
     assertThat(pruningStats.get(2).getStartTime())
         .isEqualToIgnoringNanos(firstPruningStartTime.plusSeconds(2));
+    assertThat(fetchAttestations(1)).hasSize(5);
+    assertThat(fetchBlocks(1)).hasSize(5);
+  }
+
+  @Test
+  void prunesValidatorsForScheduledRunHandlesErrors() {
+    final SlashingProtectionParameters slashingProtectionParameters =
+        new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, 1);
+    final TestSlashingProtection testSlashingProtection =
+        new TestSlashingProtection(slashingProtection);
+    final DbPrunerRunner dbPrunerRunner =
+        new DbPrunerRunner(
+            slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
+
+    dbPrunerRunner.schedule();
+
+    final List<PruningStat> pruningStats = testSlashingProtection.getPruningStats();
+    waitForPruningToFinish(pruningStats, 2);
+    assertThat(
+            pruningStats.stream()
+                .allMatch(ps -> ps.getThread().getName().equals(PRUNING_THREAD_NAME)))
+        .isTrue();
+    final LocalDateTime firstPruningStartTime = pruningStats.get(0).getStartTime();
+    assertThat(pruningStats.get(1).getStartTime())
+        .isEqualToIgnoringNanos(firstPruningStartTime.plusSeconds(1));
     assertThat(fetchAttestations(1)).hasSize(5);
     assertThat(fetchBlocks(1)).hasSize(5);
   }
