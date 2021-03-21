@@ -207,14 +207,18 @@ public class Eth2Runner extends Runner {
   public void run() {
     super.run();
     if (pruningEnabled && slashingProtection.isPresent()) {
-      final DbPrunerRunner dbPrunerRunner =
-          new DbPrunerRunner(
-              slashingProtectionParameters,
-              slashingProtection.get(),
-              Executors.newScheduledThreadPool(1));
-      dbPrunerRunner.execute();
-      dbPrunerRunner.schedule();
+      scheduleAndExecuteInitialDbPruning();
     }
+  }
+
+  private void scheduleAndExecuteInitialDbPruning() {
+    final DbPrunerRunner dbPrunerRunner =
+        new DbPrunerRunner(
+            slashingProtectionParameters,
+            slashingProtection.get(),
+            Executors.newScheduledThreadPool(1));
+    dbPrunerRunner.execute();
+    dbPrunerRunner.schedule();
   }
 
   final Collection<ArtifactSigner> loadAzureSigners() {

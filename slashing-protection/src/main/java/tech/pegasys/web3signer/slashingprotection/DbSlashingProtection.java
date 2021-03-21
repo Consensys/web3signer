@@ -253,7 +253,7 @@ public class DbSlashingProtection implements SlashingProtection {
         .values()
         .forEach(
             v -> {
-              LOG.debug("Pruning for validator {}", registeredValidators.inverse().get(v));
+              LOG.debug("Pruning for validator {}", () -> registeredValidators.inverse().get(v));
               dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch);
             });
     LOG.info("Pruning slashing protection database complete");

@@ -47,7 +47,7 @@ public class DbPrunerRunner {
   private void runPruning() {
     try {
       slashingProtection.prune();
-    } catch (Exception e) {
+    } catch (final Exception e) {
       // We only log the error as retrying on the scheduled prune might fix the error
       LOG.info("Pruning slashing protection database failed with error", e);
     }

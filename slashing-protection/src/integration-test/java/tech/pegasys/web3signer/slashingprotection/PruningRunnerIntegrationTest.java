@@ -32,6 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -52,6 +53,11 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     pruningSlashingProtection =
         SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
     insertValidatorAndCreateSlashingData(pruningSlashingProtection, 10, 10, 1);
+  }
+
+  @AfterEach
+  void tearDownSlashingProtection() {
+    scheduledExecutorService.shutdownNow();
   }
 
   @Test
