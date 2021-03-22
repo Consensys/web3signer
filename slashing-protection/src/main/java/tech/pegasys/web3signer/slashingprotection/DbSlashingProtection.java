@@ -35,13 +35,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Streams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,7 +57,7 @@ public class DbSlashingProtection implements SlashingProtection {
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
-  private final Map<Bytes, Integer> registeredValidators;
+  private final BiMap<Bytes, Integer> registeredValidators;
   private final InterchangeManager interchangeManager;
   private final LowWatermarkDao lowWatermarkDao;
   private final GenesisValidatorRootValidator gvrValidator;
@@ -83,7 +83,7 @@ public class DbSlashingProtection implements SlashingProtection {
         lowWatermarkDao,
         pruningEpochsToKeep,
         pruningSlotsPerEpoch,
-        new HashMap<>());
+        HashBiMap.create());
   }
 
   public DbSlashingProtection(
@@ -95,7 +95,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final LowWatermarkDao lowWatermarkDao,
       final long pruningEpochsToKeep,
       final long pruningSlotsPerEpoch,
-      final Map<Bytes, Integer> registeredValidators) {
+      final BiMap<Bytes, Integer> registeredValidators) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
     this.signedBlocksDao = signedBlocksDao;
@@ -251,7 +251,11 @@ public class DbSlashingProtection implements SlashingProtection {
     LOG.info("Pruning slashing protection database");
     registeredValidators
         .values()
-        .forEach(v -> dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch));
+        .forEach(
+            v -> {
+              LOG.debug("Pruning for validator {}", () -> registeredValidators.inverse().get(v));
+              dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch);
+            });
     LOG.info("Pruning slashing protection database complete");
   }
 

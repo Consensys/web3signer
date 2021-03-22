@@ -14,6 +14,8 @@ package tech.pegasys.web3signer.commandline;
 
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
+import java.util.concurrent.TimeUnit;
+
 import picocli.CommandLine.Option;
 
 public class PicoCliSlashingProtectionParameters implements SlashingProtectionParameters {
@@ -112,5 +114,10 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   @Override
   public long getPruningInterval() {
     return pruningInterval;
+  }
+
+  @Override
+  public TimeUnit getPruningIntervalTimeUnit() {
+    return TimeUnit.HOURS;
   }
 }

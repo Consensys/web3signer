@@ -49,7 +49,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
             new TestSlashingProtectionParameters(
                 databaseUrl, USERNAME, PASSWORD, amountToKeep, slotsPerEpoch));
     final int size = 10;
-    insertAndRegisterData(slashingProtection, size, size, 1);
+    insertValidatorAndCreateSlashingData(slashingProtection, size, size, 1);
     final List<SignedAttestation> allAttestations = fetchAttestations(1);
     final List<SignedBlock> allBlocks = fetchBlocks(1);
 
@@ -81,8 +81,8 @@ public class PruningIntegrationTest extends IntegrationTestBase {
         SlashingProtectionFactory.createSlashingProtection(
             new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 1, 1));
     jdbi.withHandle(h -> validators.registerValidators(h, List.of(Bytes.of(1))));
-    insertData(2, 2, 1);
-    insertAndRegisterData(slashingProtection, 2, 2, 2);
+    createSlashingData(2, 2, 1);
+    insertValidatorAndCreateSlashingData(slashingProtection, 2, 2, 2);
 
     slashingProtection.prune();
 
@@ -98,7 +98,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
     final SlashingProtection slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(
             new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1));
-    insertAndRegisterData(slashingProtection, 10, 10, 1);
+    insertValidatorAndCreateSlashingData(slashingProtection, 10, 10, 1);
     jdbi.useTransaction(
         h -> {
           lowWatermarkDao.updateSlotWatermarkFor(h, 1, UInt64.valueOf(8));
@@ -186,30 +186,5 @@ public class PruningIntegrationTest extends IntegrationTestBase {
     assertThat(getWatermark(1).getSlot()).isEqualTo(UInt64.valueOf(9));
     assertThat(getWatermark(1).getSourceEpoch()).isEqualTo(UInt64.valueOf(9));
     assertThat(getWatermark(1).getTargetEpoch()).isEqualTo(UInt64.valueOf(10));
-  }
-
-  private void insertAndRegisterData(
-      final SlashingProtection slashingProtection,
-      final int noOfBlocks,
-      final int noOfAttestations,
-      final int validatorId) {
-    final Bytes validatorPublicKey = Bytes.of(validatorId);
-    slashingProtection.registerValidators(List.of(validatorPublicKey));
-    insertData(noOfBlocks, noOfAttestations, validatorId);
-  }
-
-  private void insertData(final int noOfBlocks, final int noOfAttestations, final int validatorId) {
-    for (int b = 0; b < noOfBlocks; b++) {
-      insertBlockAt(UInt64.valueOf(b), validatorId);
-    }
-    for (int a = 0; a < noOfAttestations; a++) {
-      insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a), validatorId);
-    }
-
-    jdbi.useTransaction(
-        h -> {
-          lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, UInt64.ZERO);
-          lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, UInt64.ZERO, UInt64.ZERO);
-        });
   }
 }

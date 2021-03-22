@@ -175,4 +175,30 @@ public class IntegrationTestBase {
                 genesisValidatorsRoot,
                 genesisValidatorsRoot));
   }
+
+  protected void insertValidatorAndCreateSlashingData(
+      final SlashingProtection slashingProtection,
+      final int noOfBlocks,
+      final int noOfAttestations,
+      final int validatorId) {
+    final Bytes validatorPublicKey = Bytes.of(validatorId);
+    slashingProtection.registerValidators(List.of(validatorPublicKey));
+    createSlashingData(noOfBlocks, noOfAttestations, validatorId);
+  }
+
+  protected void createSlashingData(
+      final int noOfBlocks, final int noOfAttestations, final int validatorId) {
+    for (int b = 0; b < noOfBlocks; b++) {
+      insertBlockAt(UInt64.valueOf(b), validatorId);
+    }
+    for (int a = 0; a < noOfAttestations; a++) {
+      insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a), validatorId);
+    }
+
+    jdbi.useTransaction(
+        h -> {
+          lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, UInt64.ZERO);
+          lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, UInt64.ZERO, UInt64.ZERO);
+        });
+  }
 }

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import java.util.concurrent.TimeUnit;
+
 public interface SlashingProtectionParameters {
 
   boolean isEnabled();
@@ -29,4 +31,6 @@ public interface SlashingProtectionParameters {
   long getPruningSlotsPerEpoch();
 
   long getPruningInterval();
+
+  TimeUnit getPruningIntervalTimeUnit();
 }
