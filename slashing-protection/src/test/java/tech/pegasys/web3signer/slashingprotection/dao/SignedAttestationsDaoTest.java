@@ -206,8 +206,28 @@ public class SignedAttestationsDaoTest {
 
   @Test
   public void deletesAttestationsBelowEpoch() {
-    insertValidator(Bytes.of(100), 1);
-    insertValidator(Bytes.of(200), 2);
+    insertValidator(Bytes.of(1), 1);
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
+    insertAttestation(1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
+    lowWatermarkDao.updateEpochWatermarksFor(handle, 1, UInt64.valueOf(4), UInt64.valueOf(4));
+
+    signedAttestationsDao.deleteAttestationsBelowWatermark(handle, 1);
+    final Map<Integer, List<SignedAttestation>> attestations =
+        handle.createQuery("SELECT * FROM signed_attestations ORDER BY validator_id")
+            .mapToBean(SignedAttestation.class).stream()
+            .collect(Collectors.groupingBy(SignedAttestation::getValidatorId));
+
+    // no longer contains the first entry with sourceEpoch=2, targetEpoch=3 others should remain
+    assertThat(attestations.get(1)).hasSize(2);
+    assertThat(attestations.get(1).get(0)).isEqualToComparingFieldByField(attestation(1, 3, 4, 1));
+    assertThat(attestations.get(1).get(1)).isEqualToComparingFieldByField(attestation(1, 4, 5, 1));
+  }
+
+  @Test
+  public void deletingAttestationsDoesNotAffectAfterValidatorAttestations() {
+    insertValidator(Bytes.of(1), 1);
+    insertValidator(Bytes.of(2), 2);
     insertAttestation(1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
     insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
     insertAttestation(1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));

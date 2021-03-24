@@ -36,6 +36,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -248,14 +250,18 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public void prune() {
-    LOG.info("Pruning slashing protection database");
-    registeredValidators
-        .values()
-        .forEach(
-            v -> {
-              LOG.debug("Pruning for validator {}", () -> registeredValidators.inverse().get(v));
-              dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch);
-            });
+    final Set<Integer> validatorKeys = registeredValidators.values();
+    LOG.info("Pruning slashing protection database for {} validators", validatorKeys.size());
+    final AtomicInteger pruningCount = new AtomicInteger();
+    validatorKeys.forEach(
+        v -> {
+          LOG.debug(
+              "Pruning {} of {} validator {}",
+              pruningCount::incrementAndGet,
+              validatorKeys::size,
+              () -> registeredValidators.inverse().get(v));
+          dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch);
+        });
     LOG.info("Pruning slashing protection database complete");
   }
 

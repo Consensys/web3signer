@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import org.jdbi.v3.core.result.ResultIterable;
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
 import java.util.List;
@@ -167,14 +166,12 @@ public class SignedBlocksDaoTest {
   public void deletingBlocksDoesNotAffectAfterValidatorBlocks() {
     insertValidator(Bytes.of(1), 1);
     insertValidator(Bytes.of(2), 2);
-    insertValidator(Bytes.of(3), 3);
     insertBlock(1, 3, Bytes.of(1));
     insertBlock(1, 4, Bytes.of(1));
     insertBlock(2, 3, Bytes.of(1));
     insertBlock(2, 4, Bytes.of(1));
     lowWatermarkDao.updateSlotWatermarkFor(handle, 1, UInt64.valueOf(4));
     lowWatermarkDao.updateSlotWatermarkFor(handle, 2, UInt64.valueOf(5));
-    lowWatermarkDao.updateSlotWatermarkFor(handle, 3, UInt64.valueOf(6));
 
     signedBlocksDao.deleteBlocksBelowWatermark(handle, 1);
     final Map<Integer, List<SignedBlock>> blocks =
@@ -185,7 +182,6 @@ public class SignedBlocksDaoTest {
     assertThat(blocks.get(1)).hasSize(1);
     assertThat(blocks.get(1).get(0)).isEqualToComparingFieldByField(block(4, 1));
     assertThat(blocks.get(2)).hasSize(2);
-    assertThat(blocks.get(3)).isNull();
   }
 
   @Test
