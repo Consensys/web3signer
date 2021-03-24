@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: 'Web3Signer ETH2 Api'
   description: 'Sign Eth2 Artifacts'
-  version: '21.2.0+2-gbf0af53'
+  version: '21.1.0'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -87,19 +87,6 @@ paths:
                   type: string
         '400':
           description: 'Bad request format'
-        '500':
-          description: 'Internal Web3Signer server error'
-
-  /reload:
-    post:
-      tags:
-        - 'Reload Signer Keys'
-      summary: 'Reload signer keys'
-      description: 'Reload signer keys'
-      operationId: 'RELOAD'
-      responses:
-        '200':
-          description: 'Reload successful'
         '500':
           description: 'Internal Web3Signer server error'
 

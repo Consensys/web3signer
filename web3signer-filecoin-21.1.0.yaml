@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Web3Signer Filecoin'
   description: 'Upcheck'
-  version: '21.2.0+2-gbf0af53'
+  version: '21.1.0'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -12,18 +12,6 @@ servers:
   - url: http://localhost:9000/
 
 paths:
-  /reload:
-    post:
-      tags:
-        - 'Reload Signer Keys'
-      summary: 'Reload signer keys'
-      description: 'Reload signer keys'
-      operationId: 'RELOAD'
-      responses:
-        '200':
-          description: 'Reload successful'
-        '500':
-          description: 'Internal Web3Signer server error'
   /upcheck:
     get:
       tags:

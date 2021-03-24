@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Web3Signer ETH1 API'
   description: 'Sign ETH1 Artifacts'
-  version: '21.2.0+2-gbf0af53'
+  version: '20.11.0'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -78,19 +78,6 @@ paths:
         '500':
           description: 'Internal Web3Signer server error'
 
-  /reload:
-    post:
-      tags:
-        - 'Reload Signer Keys'
-      summary: 'Reload signer keys'
-      description: 'Reload signer keys'
-      operationId: 'RELOAD'
-      responses:
-        '200':
-          description: 'Reload successful'
-        '500':
-          description: 'Internal Web3Signer server error'
-
   /upcheck:
     get:
       tags:
@@ -111,4 +98,4 @@ paths:
 
 externalDocs:
   description: 'Web3Signer User Documentation'
-  url: 'https://docs.web3signer.consensys.net/'
+  url: 'https://doc.web3signer.pegasys.tech/'

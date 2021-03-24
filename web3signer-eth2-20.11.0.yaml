@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: 'Web3Signer ETH2 Api'
   description: 'Sign Eth2 Artifacts'
-  version: '21.2.0+2-gbf0af53'
+  version: '20.11.0'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -90,19 +90,6 @@ paths:
         '500':
           description: 'Internal Web3Signer server error'
 
-  /reload:
-    post:
-      tags:
-        - 'Reload Signer Keys'
-      summary: 'Reload signer keys'
-      description: 'Reload signer keys'
-      operationId: 'RELOAD'
-      responses:
-        '200':
-          description: 'Reload successful'
-        '500':
-          description: 'Internal Web3Signer server error'
-
   /upcheck:
     get:
       tags:
@@ -132,12 +119,9 @@ components:
           type: object
           properties:
             fork:
-              $ref: '#/components/schemas/Fork'
+              $ref: '#/components/schemas/AttestationData'
             genesis_validators_root:
               type: "string"
-          required:
-            - fork
-            - genesis_validators_root
         signingRoot:
           type: "string"
       required:
@@ -179,6 +163,8 @@ components:
           properties:
             attestation:
               $ref: "#/components/schemas/AttestationData"
+            fork:
+              $ref: '#/components/schemas/AttestationData'
           required:
             - attestation
     BlockSigning:
@@ -195,9 +181,6 @@ components:
       properties:
         type:
           type: "string"
-        signingRoot:
-          description: 'signing root for optional verification if field present'
-          type: "string"
         deposit:
           type: object
           properties:
@@ -206,6 +189,9 @@ components:
             withdrawal_credentials:
               type: "string"
             amount:
+              type: "string"
+            signingRoot:
+              description: 'signing root for optional verification if field present'
               type: "string"
             genesis_fork_version:
               type: "string"
@@ -328,9 +314,9 @@ components:
     ProposerSlashing:
       type: "object"
       properties:
-        signed_header_1:
+        header_1:
           "$ref": "#/components/schemas/SignedBeaconBlockHeader"
-        signed_header_2:
+        header_2":
           "$ref": "#/components/schemas/SignedBeaconBlockHeader"
     AttesterSlashing:
       type: "object"
@@ -435,4 +421,4 @@ components:
 
 externalDocs:
   description: 'Web3Signer User Documentation'
-  url: 'https://docs.web3signer.consensys.net/'
+  url: 'https://doc.web3signer.pegasys.tech/'
