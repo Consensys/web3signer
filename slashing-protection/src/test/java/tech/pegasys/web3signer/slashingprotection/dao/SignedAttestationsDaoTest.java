@@ -213,7 +213,7 @@ public class SignedAttestationsDaoTest {
     insertAttestation(1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
     insertAttestation(2, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
     lowWatermarkDao.updateEpochWatermarksFor(handle, 1, UInt64.valueOf(4), UInt64.valueOf(4));
-    lowWatermarkDao.updateEpochWatermarksFor(handle, 2, UInt64.valueOf(4), UInt64.valueOf(4));
+    lowWatermarkDao.updateEpochWatermarksFor(handle, 2, UInt64.valueOf(5), UInt64.valueOf(6));
 
     signedAttestationsDao.deleteAttestationsBelowWatermark(handle, 1);
     final Map<Integer, List<SignedAttestation>> attestations =

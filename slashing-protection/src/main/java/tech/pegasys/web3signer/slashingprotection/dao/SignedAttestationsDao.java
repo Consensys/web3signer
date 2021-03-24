@@ -120,11 +120,13 @@ public class SignedAttestationsDao {
   }
 
   public void deleteAttestationsBelowWatermark(final Handle handle, final int validatorId) {
-    handle.execute(
-        "DELETE FROM signed_attestations a "
-            + "USING low_watermarks w "
-            + "WHERE a.validator_id = ? AND a.target_epoch < w.target_epoch",
-        validatorId);
+    handle
+        .createUpdate(
+            "DELETE FROM signed_attestations "
+                + "WHERE validator_id = :validator_id "
+                + "AND target_epoch < (SELECT target_epoch FROM low_watermarks where validator_id = :validator_id)")
+        .bind("validator_id", validatorId)
+        .execute();
   }
 
   public Optional<UInt64> findMaxTargetEpoch(final Handle handle, final int validatorId) {

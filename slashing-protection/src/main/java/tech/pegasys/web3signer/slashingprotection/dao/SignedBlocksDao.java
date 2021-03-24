@@ -72,11 +72,13 @@ public class SignedBlocksDao {
   }
 
   public void deleteBlocksBelowWatermark(final Handle handle, final int validatorId) {
-    handle.execute(
-        "DELETE FROM signed_blocks b "
-            + "USING low_watermarks w "
-            + "WHERE b.validator_id = ? AND b.slot < w.slot",
-        validatorId);
+    handle
+        .createUpdate(
+            "DELETE FROM signed_blocks "
+                + "WHERE validator_id = :validator_id "
+                + "AND slot < (SELECT slot FROM low_watermarks WHERE validator_id = :validator_id)")
+        .bind("validator_id", validatorId)
+        .execute();
   }
 
   public Optional<UInt64> findMaxSlot(final Handle handle, final int validatorId) {
