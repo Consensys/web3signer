@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -41,7 +41,14 @@
         }
       }
     </style>
-
+    <script type="application/javascript">
+      const SPEC_PREFIX = 'web3signer-eth2-';
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js" type="application/javascript"></script>
+    <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha384-LVoNJ6yst/aLxKvxwp6s2GAabqPczfWh6xzm38S/YtjUyZ+3aTKOnD/OJVGYLZDl" crossorigin="anonymous" type="application/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous" type="application/javascript"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous" type="application/javascript"></script>
+    <script src="scripts/spec-version.js" type="application/javascript"></script>
   </head>
   <body>
     <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
@@ -61,83 +68,7 @@
       </div>
     </nav>
 
-    <main role="main" class="container">
-      <!-- <redoc spec-url='../0.10.0/api.json'></redoc> -->
-      <script src="https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"> </script>
-    </main><!-- /.container -->
+    <main role="main" class="container"></main>
 
-    <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha384-LVoNJ6yst/aLxKvxwp6s2GAabqPczfWh6xzm38S/YtjUyZ+3aTKOnD/OJVGYLZDl" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-    <script>
-
-      // default version list in case of JSON loading issue
-      var versions = {'latest':{'spec':'latest','source':'master'}};
-      const DEFAULT_VERSION = Object.keys(versions)[0];
-
-      // return the yaml OPENAPI spec path to load for a version
-      // or a default version (first one in list) if no matching version.
-      function getSpecPath(version){
-        var spec = (version in versions) ? versions[version].spec : versions[Object.keys(versions)[0]].spec;
-        return `web3signer-eth2-${spec}.yaml`;
-      }
-
-      // is the version passed as param the one displayed accoring to the url
-      function isDisplayedVersion(version){
-         return getVersionFromURL() == version || (getVersionFromURL() == '' && version == DEFAULT_VERSION);
-      }
-
-      // Update the redoc element and run the redoc display
-      function updateSpec(){
-        const element = $( `<redoc spec-url="${getSpecPath(getVersionFromURL())}"></redoc>` );
-        element.appendTo( "main.container" );
-        Redoc.init(element.attr('spec-url'), {hideHostname: true});
-        updateVersionsDropDown();
-      }
-
-      // Update the drop down list and set active version
-      function updateVersionsDropDown(){
-        $("#versionsList").empty();
-        $.each( versions, function( version, infos ) {
-          var sourceText = (version == infos.source) ? '' : ` (${infos.source})`;
-
-          var item = $( `<a class="version-number-item dropdown-item" href="#${version}">${version}${sourceText}</a>" `);
-
-          if(isDisplayedVersion(version)){
-            item.addClass("active");
-            $('#dropdownMenuButton').text(`${version}${sourceText}`);
-            document.title = `PegaSys Web3Signer ETH2 API Documentation - ${version}`;
-          }
-
-          item.appendTo("#versionsList");
-        });
-      }
-
-      // get the version in the URL from the hash part
-      // removes the and # at the begining of the hask part
-      // returns empty string if no hash present
-      function getVersionFromURL(){
-        return $(location).attr('hash').replace(/^[#]/,'');
-      }
-
-      // set the global versions value from the Json file,
-      // update spec page on completions
-      function getVersionsFromJsonFile(){
-        $.getJSON( "versions.json", function( data ) {
-          if(!jQuery.isEmptyObject(data)){ versions = data; }
-        })
-        .always(function() { updateSpec(); });
-      }
-
-      // event trigger functions
-      $(window).on( 'hashchange', function( e ) {
-        updateSpec();
-      });
-
-      $(function() {
-        getVersionsFromJsonFile();
-      });
-
-    </script>
   </body>
 </html>
