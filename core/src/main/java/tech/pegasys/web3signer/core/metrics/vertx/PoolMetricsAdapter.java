@@ -65,7 +65,7 @@ final class PoolMetricsAdapter implements PoolMetrics<TimingContext> {
             .createLabelledTimer(
                 Web3SignerMetricCategory.HTTP,
                 "vertx_worker_queue_delay",
-                "Time spent in pool before being processed",
+                "Time spent in queue before being processed",
                 "poolType",
                 "poolName")
             .labels(poolType, poolName);

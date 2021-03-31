@@ -66,23 +66,16 @@ public abstract class Runner implements Runnable {
 
   private static final String CONTENT_TYPE_TEXT_HTML = "text/html; charset=utf-8";
   private static final String CONTENT_TYPE_YAML = "text/x-yaml";
-  private static final String SWAGGER_ENDPOINT = "/swagger-ui";
+
   public static final String OPENAPI_INDEX_RESOURCE = "openapi/index.html";
 
+  private static final String SWAGGER_ENDPOINT = "/swagger-ui";
+  protected static final String JSON_RPC_PATH = "/rpc/v1";
+
   protected final Config config;
-  protected final MetricsSystem metricsSystem;
-  private final MetricsEndpoint metricsEndpoint;
 
   protected Runner(final Config config) {
     this.config = config;
-    this.metricsEndpoint =
-        new MetricsEndpoint(
-            config.isMetricsEnabled(),
-            config.getMetricsPort(),
-            config.getMetricsNetworkInterface(),
-            config.getMetricCategories(),
-            config.getMetricsHostAllowList());
-    this.metricsSystem = metricsEndpoint.getMetricsSystem();
   }
 
   @Override
@@ -91,6 +84,16 @@ public abstract class Runner implements Runnable {
       System.out.println("Setting logging level to " + config.getLogLevel().name());
       Configurator.setRootLevel(config.getLogLevel());
     }
+
+    final MetricsEndpoint metricsEndpoint =
+        new MetricsEndpoint(
+            config.isMetricsEnabled(),
+            config.getMetricsPort(),
+            config.getMetricsNetworkInterface(),
+            config.getMetricCategories(),
+            config.getMetricsHostAllowList());
+
+    final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
 
     final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
     final LogErrorHandler errorHandler = new LogErrorHandler();
