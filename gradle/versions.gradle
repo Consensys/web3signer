@@ -72,8 +72,8 @@ dependencyManagement {
 
     dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
 
-    dependency 'org.hyperledger.besu.internal:metrics-core:1.4.0'
-    dependency 'org.hyperledger.besu:plugin-api:1.4.0'
+    dependency 'org.hyperledger.besu:plugin-api:21.1.3'
+    dependency 'org.hyperledger.besu.internal:metrics-core:21.1.3'
 
     dependencySet(group: 'tech.pegasys.teku.internal', version: '20.11.0') {
       entry 'bls'
