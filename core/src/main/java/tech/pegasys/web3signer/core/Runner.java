@@ -18,6 +18,7 @@ import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
+import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
@@ -41,11 +42,13 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
@@ -63,16 +66,23 @@ public abstract class Runner implements Runnable {
 
   private static final String CONTENT_TYPE_TEXT_HTML = "text/html; charset=utf-8";
   private static final String CONTENT_TYPE_YAML = "text/x-yaml";
-
+  private static final String SWAGGER_ENDPOINT = "/swagger-ui";
   public static final String OPENAPI_INDEX_RESOURCE = "openapi/index.html";
 
-  private static final String SWAGGER_ENDPOINT = "/swagger-ui";
-  protected static final String JSON_RPC_PATH = "/rpc/v1";
-
   protected final Config config;
+  protected final MetricsSystem metricsSystem;
+  private final MetricsEndpoint metricsEndpoint;
 
   protected Runner(final Config config) {
     this.config = config;
+    this.metricsEndpoint =
+        new MetricsEndpoint(
+            config.isMetricsEnabled(),
+            config.getMetricsPort(),
+            config.getMetricsNetworkInterface(),
+            config.getMetricCategories(),
+            config.getMetricsHostAllowList());
+    this.metricsSystem = metricsEndpoint.getMetricsSystem();
   }
 
   @Override
@@ -82,17 +92,7 @@ public abstract class Runner implements Runnable {
       Configurator.setRootLevel(config.getLogLevel());
     }
 
-    final MetricsEndpoint metricsEndpoint =
-        new MetricsEndpoint(
-            config.isMetricsEnabled(),
-            config.getMetricsPort(),
-            config.getMetricsNetworkInterface(),
-            config.getMetricCategories(),
-            config.getMetricsHostAllowList());
-
-    final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
-
-    final Vertx vertx = Vertx.vertx();
+    final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
     final LogErrorHandler errorHandler = new LogErrorHandler();
 
     try {
@@ -124,6 +124,14 @@ public abstract class Runner implements Runnable {
       metricsEndpoint.stop();
       LOG.error("Failed to initialise application", e);
     }
+  }
+
+  private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
+    return new VertxOptions()
+        .setMetricsOptions(
+            new MetricsOptions()
+                .setEnabled(true)
+                .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
   }
 
   protected abstract Router populateRouter(final Context context);
