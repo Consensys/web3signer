@@ -20,7 +20,7 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
-final class PoolMetricsAdapter implements PoolMetrics<TimingContext> {
+public final class PoolMetricsAdapter implements PoolMetrics<TimingContext> {
 
   private final Counter submittedCounter;
   private final Counter completedCounter;
