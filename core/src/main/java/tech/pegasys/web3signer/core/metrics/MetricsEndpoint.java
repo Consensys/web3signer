@@ -17,9 +17,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.metrics.MetricsService;
+import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.metrics.prometheus.MetricsService;
-import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
@@ -41,13 +41,13 @@ public class MetricsEndpoint {
             metricsNetworkInterface,
             metricCategories,
             metricsHostAllowList);
-    this.metricsSystem = PrometheusMetricsSystem.init(metricsConfig);
+    this.metricsSystem = MetricsSystemFactory.create(metricsConfig);
     this.metricsConfig = metricsConfig;
   }
 
   public void start(final Vertx vertx) {
     if (metricsConfig.isEnabled()) {
-      metricsService = Optional.of(MetricsService.create(vertx, metricsConfig, metricsSystem));
+      metricsService = MetricsService.create(vertx, metricsConfig, metricsSystem);
     } else {
       metricsService = Optional.empty();
     }
@@ -77,7 +77,7 @@ public class MetricsEndpoint {
         .port(metricsPort)
         .host(metricsNetworkInterface)
         .metricCategories(metricCategories)
-        .hostsWhitelist(metricsHostAllowList)
+        .hostsAllowlist(metricsHostAllowList)
         .build();
   }
 }

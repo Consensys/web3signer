@@ -18,6 +18,7 @@ import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
+import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
@@ -41,11 +42,13 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
@@ -92,7 +95,7 @@ public abstract class Runner implements Runnable {
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
 
-    final Vertx vertx = Vertx.vertx();
+    final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
     final LogErrorHandler errorHandler = new LogErrorHandler();
 
     try {
@@ -124,6 +127,14 @@ public abstract class Runner implements Runnable {
       metricsEndpoint.stop();
       LOG.error("Failed to initialise application", e);
     }
+  }
+
+  private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
+    return new VertxOptions()
+        .setMetricsOptions(
+            new MetricsOptions()
+                .setEnabled(true)
+                .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
   }
 
   protected abstract Router populateRouter(final Context context);
