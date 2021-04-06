@@ -2,6 +2,15 @@
 
 ## Next Release
 
+## 21.3.0
+
+### Features Added
+- Metrics on Vertx event loop and worker thread pools
+
+### Bugs Fixed
+- Eth2 slashing protection pruning on startup now runs on a separate thread, so it doesn't block application startup and http requests
+- Eth2 slashing protection pruning was deleting the incorrect amount of data in some cases
+
 ## 21.2.0
 
 ### Features Added
