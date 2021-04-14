@@ -27,6 +27,7 @@ import org.jdbi.v3.core.mapper.ColumnMappers;
 import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
 
 public class DbConnection {
+  private static final String DEFAULT_PG_SOCKET_TIMEOUT_SECONDS = "20";
 
   public static Jdbi createConnection(
       final String jdbcUrl, final String username, final String password) {
@@ -53,6 +54,7 @@ public class DbConnection {
     dataSource.setJdbcUrl(jdbcUrl);
     dataSource.setUsername(username);
     dataSource.setPassword(password);
+    dataSource.addDataSourceProperty("socketTimeout", DEFAULT_PG_SOCKET_TIMEOUT_SECONDS);
     return dataSource;
   }
 }
