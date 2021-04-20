@@ -16,10 +16,10 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -31,8 +31,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
-  private final Map<String, ArtifactSigner> signers = new ConcurrentHashMap<>();
-  private final Set<String> signerIdentifiers = ConcurrentHashMap.newKeySet();
+  private Map<String, ArtifactSigner> signers = new HashMap<>();
 
   public DefaultArtifactSignerProvider(
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {
@@ -45,7 +44,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   public void reload() {
     LOG.trace("Reloading Artifact Signers");
 
-    final Map<String, ArtifactSigner> signerMap =
+    signers =
         artifactSignerCollectionSupplier
             .get()
             .parallelStream()
@@ -54,13 +53,12 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                     ArtifactSigner::getIdentifier,
                     Function.identity(),
                     (signer1, signer2) -> {
-                      LOG.warn("Duplicate keys were found.");
+                      LOG.warn(
+                          "Duplicate keys were found while loading. {}", signer1.getIdentifier());
                       return signer1;
                     }));
 
-    signers.putAll(signerMap);
-    signerIdentifiers.addAll(signers.keySet());
-    LOG.info("Total signers (keys) loaded in memory {}", signerIdentifiers.size());
+    LOG.info("Total signers (keys) loaded in memory {}", signers.size());
   }
 
   @Override
@@ -75,6 +73,6 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   @Override
   public Set<String> availableIdentifiers() {
-    return signerIdentifiers;
+    return signers.keySet();
   }
 }
