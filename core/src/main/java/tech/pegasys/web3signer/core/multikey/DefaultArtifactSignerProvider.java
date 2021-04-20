@@ -16,6 +16,7 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +32,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
-  private Map<String, ArtifactSigner> signers = new HashMap<>();
+  private final Map<String, ArtifactSigner> signers = new HashMap<>();
+  private Set<String> identifiers = Collections.emptySet();
 
   public DefaultArtifactSignerProvider(
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {
@@ -44,7 +46,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   public void reload() {
     LOG.trace("Reloading Artifact Signers");
 
-    signers =
+    final Map<String, ArtifactSigner> signerMap =
         artifactSignerCollectionSupplier
             .get()
             .parallelStream()
@@ -57,6 +59,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                           "Duplicate keys were found while loading. {}", signer1.getIdentifier());
                       return signer1;
                     }));
+
+    signers.putAll(signerMap);
+    identifiers = Set.copyOf(signers.keySet());
 
     LOG.info("Total signers (keys) loaded in memory {}", signers.size());
   }
@@ -73,6 +78,6 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   @Override
   public Set<String> availableIdentifiers() {
-    return signers.keySet();
+    return identifiers;
   }
 }
