@@ -60,7 +60,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                       return signer1;
                     }));
 
-    signers.putAll(signerMap);
+    signerMap.forEach(signers::putIfAbsent);
     identifiers = Set.copyOf(signers.keySet());
 
     LOG.info("Total signers (keys) loaded in memory {}", signers.size());
