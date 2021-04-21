@@ -15,10 +15,9 @@ package tech.pegasys.web3signer.core.multikey.metadata.parser;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 
-import java.nio.file.Path;
 import java.util.List;
 
 public interface SignerParser {
 
-  List<ArtifactSigner> parse(Path file) throws SigningMetadataException;
+  List<ArtifactSigner> parse(String yamlMetadata) throws SigningMetadataException;
 }

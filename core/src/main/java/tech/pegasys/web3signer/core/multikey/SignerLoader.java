@@ -12,17 +12,22 @@
  */
 package tech.pegasys.web3signer.core.multikey;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 
 import tech.pegasys.web3signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
@@ -32,6 +37,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,22 +45,61 @@ public class SignerLoader {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final long FILES_PROCESSED_TO_REPORT = 10;
-  private static final int MAX_FORK_JOIN_THREADS = 10;
+  private static final int MAX_FORK_JOIN_THREADS = 5;
+  private static final Set<Path> loadedConfigurationFiles = new HashSet<>();
 
   public static Collection<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
-    LOG.info("Loading signer configuration files from {}", configsDirectory);
-    final List<Path> configFilesList = getConfigFilesList(configsDirectory, fileExtension);
-    return processMetadataFilesInParallel(configFilesList, signerParser);
+    final Instant start = Instant.now();
+    LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
+
+    final Map<Path, String> configFilesContent =
+        getConfigFilesContents(configsDirectory, fileExtension);
+    loadedConfigurationFiles.addAll(configFilesContent.keySet());
+
+    final String timeTaken =
+        DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
+    LOG.info(
+        "Signer configuration metadata files read in memory {} in {}",
+        configFilesContent.size(),
+        timeTaken);
+
+    return processMetadataFilesInParallel(configFilesContent, signerParser);
+  }
+
+  private static Map<Path, String> getConfigFilesContents(
+      final Path configsDirectory, final String fileExtension) {
+    // read configuration files without converting them to signers first.
+    // Avoid reading files which are already loaded/processed
+    try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
+      return fileStream
+          .filter(path -> !loadedConfigurationFiles.contains(path))
+          .filter(path -> matchesFileExtension(fileExtension, path))
+          .map(
+              path -> {
+                try {
+                  return new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8));
+                } catch (final IOException e) {
+                  LOG.error("Error reading config file: {}", path, e);
+                  return null;
+                }
+              })
+          .filter(Objects::nonNull)
+          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    } catch (final IOException e) {
+      LOG.error("Unable to access the supplied key directory", e);
+    }
+
+    return emptyMap();
   }
 
   private static Collection<ArtifactSigner> processMetadataFilesInParallel(
-      final List<Path> configFilesList, final SignerParser signerParser) {
+      final Map<Path, String> configFilesContent, final SignerParser signerParser) {
     // use custom fork-join pool instead of common. Limit number of threads to avoid Azure bug
     ForkJoinPool forkJoinPool = null;
     try {
       forkJoinPool = new ForkJoinPool(numberOfThreads());
-      return forkJoinPool.submit(() -> parseMetadataFiles(configFilesList, signerParser)).get();
+      return forkJoinPool.submit(() -> parseMetadataFiles(configFilesContent, signerParser)).get();
     } catch (final Exception e) {
       LOG.error(
           "Unexpected error in processing configuration files in parallel: {}", e.getMessage(), e);
@@ -67,42 +112,39 @@ public class SignerLoader {
     return emptySet();
   }
 
-  private static List<Path> getConfigFilesList(
-      final Path configsDirectory, final String fileExtension) {
-    try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
-      return fileStream
-          .filter(path -> matchesFileExtension(fileExtension, path))
-          .collect(Collectors.toList());
-    } catch (final IOException e) {
-      LOG.error("Unable to access the supplied key directory", e);
-    }
-
-    return emptyList();
-  }
-
   private static Set<ArtifactSigner> parseMetadataFiles(
-      final List<Path> configFilesList, final SignerParser signerParser) {
+      final Map<Path, String> configFilesContents, final SignerParser signerParser) {
+    LOG.info("Parsing configuration metadata files");
+
+    final Instant start = Instant.now();
     final AtomicLong configFilesHandled = new AtomicLong();
+
     final Set<ArtifactSigner> artifactSigners =
-        configFilesList.stream()
-            .parallel()
+        configFilesContents
+            .entrySet()
+            .parallelStream()
             .flatMap(
-                signerConfigFile -> {
+                metadataContent -> {
                   final long filesProcessed = configFilesHandled.incrementAndGet();
                   if (filesProcessed % FILES_PROCESSED_TO_REPORT == 0) {
-                    LOG.info("{} files processed from configuration directory", filesProcessed);
+                    LOG.info("{} metadata configuration files processed", filesProcessed);
                   }
                   try {
-                    return signerParser.parse(signerConfigFile).stream();
+                    return signerParser.parse(metadataContent.getValue()).stream();
                   } catch (final Exception e) {
-                    renderException(e, signerConfigFile.getFileName().toString());
+                    renderException(e, metadataContent.getKey().toString());
                     return null;
                   }
                 })
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
-    LOG.info("Total files processed from configuration directory: {}", configFilesHandled.get());
-    LOG.info("Total signers loaded from configuration files: {}", artifactSigners.size());
+    final String timeTaken =
+        DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
+    LOG.info("Total configuration metadata files processed: {}", configFilesHandled.get());
+    LOG.info(
+        "Total signers loaded from configuration files: {} in {}",
+        artifactSigners.size(),
+        timeTaken);
     return artifactSigners;
   }
 
@@ -122,7 +164,9 @@ public class SignerLoader {
   }
 
   private static int numberOfThreads() {
-    int defaultNumberOfThreads = Runtime.getRuntime().availableProcessors() - 1;
+    // try to allocate between 1-5 threads (based on processor cores) to process files in parallel
+    int defaultNumberOfThreads = Runtime.getRuntime().availableProcessors() / 2;
+
     if (defaultNumberOfThreads >= MAX_FORK_JOIN_THREADS) {
       return MAX_FORK_JOIN_THREADS;
     } else if (defaultNumberOfThreads < 1) {

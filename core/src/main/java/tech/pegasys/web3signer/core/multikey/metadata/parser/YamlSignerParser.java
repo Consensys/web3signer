@@ -19,9 +19,7 @@ import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,10 +43,10 @@ public class YamlSignerParser implements SignerParser {
   }
 
   @Override
-  public List<ArtifactSigner> parse(final Path metadataPath) {
+  public List<ArtifactSigner> parse(final String yamlMetadata) {
     try {
       final SigningMetadata metaDataInfo =
-          OBJECT_MAPPER.readValue(metadataPath.toFile(), SigningMetadata.class);
+          OBJECT_MAPPER.readValue(yamlMetadata, SigningMetadata.class);
 
       return signerFactories.stream()
           .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
@@ -56,8 +54,6 @@ public class YamlSignerParser implements SignerParser {
           .collect(Collectors.toList());
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file format", e);
-    } catch (final FileNotFoundException e) {
-      throw new SigningMetadataException("File not found", e);
     } catch (final IOException e) {
       throw new SigningMetadataException(
           "Unexpected IO error while reading signing metadata file", e);

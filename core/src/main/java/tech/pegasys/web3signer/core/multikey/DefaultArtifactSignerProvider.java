@@ -44,26 +44,22 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   @Override
   public void reload() {
-    LOG.trace("Reloading Artifact Signers");
+    LOG.debug("Signer keys pre-loaded in memory {}", signers.size());
 
-    final Map<String, ArtifactSigner> signerMap =
-        artifactSignerCollectionSupplier
-            .get()
-            .parallelStream()
-            .collect(
-                Collectors.toMap(
-                    ArtifactSigner::getIdentifier,
-                    Function.identity(),
-                    (signer1, signer2) -> {
-                      LOG.warn(
-                          "Duplicate keys were found while loading. {}", signer1.getIdentifier());
-                      return signer1;
-                    }));
+    artifactSignerCollectionSupplier.get().stream()
+        .collect(
+            Collectors.toMap(
+                ArtifactSigner::getIdentifier,
+                Function.identity(),
+                (signer1, signer2) -> {
+                  LOG.warn("Duplicate keys were found while loading. {}", Function.identity());
+                  return signer1;
+                }))
+        .forEach(signers::putIfAbsent);
 
-    signerMap.forEach(signers::putIfAbsent);
     identifiers = Set.copyOf(signers.keySet());
 
-    LOG.info("Total signers (keys) loaded in memory {}", signers.size());
+    LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
   }
 
   @Override
