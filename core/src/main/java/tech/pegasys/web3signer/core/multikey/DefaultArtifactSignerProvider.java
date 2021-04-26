@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -34,16 +36,17 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
   private Set<String> identifiers = Collections.emptySet();
+  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   public DefaultArtifactSignerProvider(
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
 
-    reload();
+    load();
   }
 
   @Override
-  public void reload() {
+  public void load() {
     LOG.debug("Signer keys pre-loaded in memory {}", signers.size());
 
     artifactSignerCollectionSupplier.get().stream()
@@ -60,6 +63,11 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
     identifiers = Set.copyOf(signers.keySet());
 
     LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
+  }
+
+  @Override
+  public void asyncLoad() {
+    executorService.execute(this::load);
   }
 
   @Override

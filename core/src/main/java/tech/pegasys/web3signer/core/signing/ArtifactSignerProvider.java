@@ -17,7 +17,9 @@ import java.util.Set;
 
 public interface ArtifactSignerProvider {
 
-  void reload();
+  void load();
+
+  void asyncLoad();
 
   Optional<ArtifactSigner> getSigner(final String identifier);
 

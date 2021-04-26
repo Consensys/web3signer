@@ -154,52 +154,49 @@ public class Eth2Runner extends Runner {
 
   private ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
-    final ArtifactSignerProvider artifactSignerProvider =
-        new DefaultArtifactSignerProvider(
-            () -> {
-              final List<ArtifactSigner> signers = Lists.newArrayList();
-              final HashicorpConnectionFactory hashicorpConnectionFactory =
-                  new HashicorpConnectionFactory(vertx);
 
-              try (final InterlockKeyProvider interlockKeyProvider =
-                      new InterlockKeyProvider(vertx);
-                  final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                      new YubiHsmOpaqueDataProvider()) {
-                final AbstractArtifactSignerFactory artifactSignerFactory =
-                    new BlsArtifactSignerFactory(
-                        config.getKeyConfigPath(),
-                        metricsSystem,
-                        hashicorpConnectionFactory,
-                        interlockKeyProvider,
-                        yubiHsmOpaqueDataProvider,
-                        BlsArtifactSigner::new);
+    return new DefaultArtifactSignerProvider(
+        () -> {
+          final List<ArtifactSigner> signers = Lists.newArrayList();
+          final HashicorpConnectionFactory hashicorpConnectionFactory =
+              new HashicorpConnectionFactory(vertx);
 
-                signers.addAll(
-                    SignerLoader.load(
-                        config.getKeyConfigPath(),
-                        "yaml",
-                        new YamlSignerParser(List.of(artifactSignerFactory))));
-              }
+          try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+              final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+                  new YubiHsmOpaqueDataProvider()) {
+            final AbstractArtifactSignerFactory artifactSignerFactory =
+                new BlsArtifactSignerFactory(
+                    config.getKeyConfigPath(),
+                    metricsSystem,
+                    hashicorpConnectionFactory,
+                    interlockKeyProvider,
+                    yubiHsmOpaqueDataProvider,
+                    BlsArtifactSigner::new);
 
-              if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-                signers.addAll(loadAzureSigners());
-              }
+            signers.addAll(
+                SignerLoader.load(
+                    config.getKeyConfigPath(),
+                    "yaml",
+                    new YamlSignerParser(List.of(artifactSignerFactory))));
+          }
 
-              final List<Bytes> validators =
-                  signers.stream()
-                      .map(ArtifactSigner::getIdentifier)
-                      .map(Bytes::fromHexString)
-                      .collect(Collectors.toList());
-              if (validators.isEmpty()) {
-                LOG.warn("No BLS keys loaded. Check that the key store has BLS key config files");
-              } else {
-                slashingProtection.ifPresent(
-                    slashingProtection -> slashingProtection.registerValidators(validators));
-              }
-              return signers;
-            });
+          if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
+            signers.addAll(loadAzureSigners());
+          }
 
-    return artifactSignerProvider;
+          final List<Bytes> validators =
+              signers.stream()
+                  .map(ArtifactSigner::getIdentifier)
+                  .map(Bytes::fromHexString)
+                  .collect(Collectors.toList());
+          if (validators.isEmpty()) {
+            LOG.warn("No BLS keys loaded. Check that the key store has BLS key config files");
+          } else {
+            slashingProtection.ifPresent(
+                slashingProtection1 -> slashingProtection1.registerValidators(validators));
+          }
+          return signers;
+        });
   }
 
   @Override
