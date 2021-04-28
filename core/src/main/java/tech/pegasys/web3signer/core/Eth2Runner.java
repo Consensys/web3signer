@@ -50,6 +50,7 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
@@ -155,48 +156,56 @@ public class Eth2Runner extends Runner {
   private ArtifactSignerProvider loadSigners(
       final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
 
-    return new DefaultArtifactSignerProvider(
-        () -> {
-          final List<ArtifactSigner> signers = Lists.newArrayList();
-          final HashicorpConnectionFactory hashicorpConnectionFactory =
-              new HashicorpConnectionFactory(vertx);
+    final DefaultArtifactSignerProvider artifactSignerProvider =
+        new DefaultArtifactSignerProvider(
+            () -> {
+              final List<ArtifactSigner> signers = Lists.newArrayList();
+              final HashicorpConnectionFactory hashicorpConnectionFactory =
+                  new HashicorpConnectionFactory(vertx);
 
-          try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
-              final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                  new YubiHsmOpaqueDataProvider()) {
-            final AbstractArtifactSignerFactory artifactSignerFactory =
-                new BlsArtifactSignerFactory(
-                    config.getKeyConfigPath(),
-                    metricsSystem,
-                    hashicorpConnectionFactory,
-                    interlockKeyProvider,
-                    yubiHsmOpaqueDataProvider,
-                    BlsArtifactSigner::new);
+              try (final InterlockKeyProvider interlockKeyProvider =
+                      new InterlockKeyProvider(vertx);
+                  final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+                      new YubiHsmOpaqueDataProvider()) {
+                final AbstractArtifactSignerFactory artifactSignerFactory =
+                    new BlsArtifactSignerFactory(
+                        config.getKeyConfigPath(),
+                        metricsSystem,
+                        hashicorpConnectionFactory,
+                        interlockKeyProvider,
+                        yubiHsmOpaqueDataProvider,
+                        BlsArtifactSigner::new);
 
-            signers.addAll(
-                SignerLoader.load(
-                    config.getKeyConfigPath(),
-                    "yaml",
-                    new YamlSignerParser(List.of(artifactSignerFactory))));
-          }
+                signers.addAll(
+                    SignerLoader.load(
+                        config.getKeyConfigPath(),
+                        "yaml",
+                        new YamlSignerParser(List.of(artifactSignerFactory))));
+              }
 
-          if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-            signers.addAll(loadAzureSigners());
-          }
+              if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
+                signers.addAll(loadAzureSigners());
+              }
 
-          final List<Bytes> validators =
-              signers.stream()
-                  .map(ArtifactSigner::getIdentifier)
-                  .map(Bytes::fromHexString)
-                  .collect(Collectors.toList());
-          if (validators.isEmpty()) {
-            LOG.warn("No BLS keys loaded. Check that the key store has BLS key config files");
-          } else {
-            slashingProtection.ifPresent(
-                slashingProtection1 -> slashingProtection1.registerValidators(validators));
-          }
-          return signers;
-        });
+              final List<Bytes> validators =
+                  signers.stream()
+                      .map(ArtifactSigner::getIdentifier)
+                      .map(Bytes::fromHexString)
+                      .collect(Collectors.toList());
+              if (validators.isEmpty()) {
+                LOG.warn("No BLS keys loaded. Check that the key store has BLS key config files");
+              } else {
+                slashingProtection.ifPresent(
+                    slashingProtection1 -> slashingProtection1.registerValidators(validators));
+              }
+              return signers;
+            });
+    try {
+      artifactSignerProvider.load().get();
+    } catch (InterruptedException | ExecutionException e) {
+      LOG.error("Error invoking load", e);
+    }
+    return artifactSignerProvider;
   }
 
   @Override

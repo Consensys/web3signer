@@ -40,6 +40,7 @@ import tech.pegasys.web3signer.core.signing.FcSecpArtifactSigner;
 import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
@@ -47,9 +48,12 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.BodyHandler;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
+  private static final Logger LOG = LogManager.getLogger();
 
   private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
@@ -149,7 +153,11 @@ public class FilecoinRunner extends Runner {
                         List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
               }
             });
-
+    try {
+      artifactSignerProvider.load().get();
+    } catch (InterruptedException | ExecutionException e) {
+      LOG.error("Error invoking load", e);
+    }
     return artifactSignerProvider;
   }
 }

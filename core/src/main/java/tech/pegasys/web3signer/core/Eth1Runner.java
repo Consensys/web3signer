@@ -36,13 +36,17 @@ import tech.pegasys.web3signer.core.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Eth1Runner extends Runner {
+  private static final Logger LOG = LogManager.getLogger();
 
   public Eth1Runner(final Config config) {
     super(config);
@@ -106,6 +110,12 @@ public class Eth1Runner extends Runner {
                     new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
               }
             });
+
+    try {
+      artifactSignerProvider.load().get();
+    } catch (InterruptedException | ExecutionException e) {
+      LOG.error("Error invoking load", e);
+    }
 
     return artifactSignerProvider;
   }
