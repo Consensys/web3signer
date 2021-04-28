@@ -19,5 +19,5 @@ import java.util.List;
 
 public interface SignerParser {
 
-  List<ArtifactSigner> parse(String yamlMetadata) throws SigningMetadataException;
+  List<ArtifactSigner> parse(String fileContent) throws SigningMetadataException;
 }

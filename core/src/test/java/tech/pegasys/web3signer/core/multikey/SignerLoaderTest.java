@@ -103,7 +103,6 @@ class SignerLoaderTest {
   }
 
   @Test
-  // @SuppressWarnings("ResultOfMethodCallIgnored")
   void signerReturnedWhenFileExtensionIsUpperCase() throws IOException {
     final String filename = PUBLIC_KEY1 + ".YAML";
     final Path metadataFile = createFileInConfigsDirectory(filename, PRIVATE_KEY1);

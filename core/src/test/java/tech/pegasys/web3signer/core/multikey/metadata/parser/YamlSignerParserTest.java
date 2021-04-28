@@ -162,7 +162,6 @@ class YamlSignerParserTest {
 
   @Test
   void keyStoreMetaDataInfoWithMissingKeystoreFilesFails() throws IOException {
-    // final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
     final Path passwordFile = configDir.resolve("keystore.password");
 
     final Map<String, String> keystoreMetadataFile = new HashMap<>();
@@ -177,7 +176,6 @@ class YamlSignerParserTest {
 
   @Test
   void keyStoreMetaDataInfoWithMissingPasswordFilesFails() throws IOException {
-    // final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
     final Path keystoreFile = configDir.resolve("keystore.json");
 
     final Map<String, String> keystoreMetadataFile = new HashMap<>();
@@ -198,7 +196,6 @@ class YamlSignerParserTest {
     when(blsArtifactSignerFactory.create(any(FileKeyStoreMetadata.class)))
         .thenReturn(artifactSigner);
 
-    // final Path filename = configDir.resolve("keystore." + YAML_FILE_EXTENSION);
     final Path keystoreFile = configDir.resolve("keystore.json");
     final Path passwordFile = configDir.resolve("keystore.password");
 
@@ -216,7 +213,6 @@ class YamlSignerParserTest {
   @Test
   void aSignerIsCreatedForEachMatchingFactory() throws IOException {
     lenient().when(otherBlsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
-    // final Path filename = configDir.resolve("bls_unencrypted." + YAML_FILE_EXTENSION);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
     unencryptedKeyMetadataFile.put("type", "file-raw");
     unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);
@@ -274,8 +270,6 @@ class YamlSignerParserTest {
     when(blsArtifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
-    // final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
-
     final Map<String, String> azureMetaDataMap = new HashMap<>();
     azureMetaDataMap.put("type", "azure-secret");
     azureMetaDataMap.put("clientId", "sample-client-id");
@@ -300,8 +294,6 @@ class YamlSignerParserTest {
     when(blsArtifactSignerFactory.create(any(AzureSecretSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
-    // final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
-
     final Map<String, String> azureMetaDataMap = new HashMap<>();
     azureMetaDataMap.put("type", "azure-secret");
     azureMetaDataMap.put("vaultName", "sample-vault-name");
@@ -318,8 +310,6 @@ class YamlSignerParserTest {
 
   @Test
   void validationFailsForInvalidAzureAuthenticationMode() throws IOException {
-    // final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
-
     final Map<String, String> azureMetaDataMap = new HashMap<>();
     azureMetaDataMap.put("type", "azure-secret");
     azureMetaDataMap.put("clientId", "sample-client-id");
@@ -338,8 +328,6 @@ class YamlSignerParserTest {
 
   @Test
   void validationFailsForMissingRequiredOptionsForClientSecretMode() throws IOException {
-    // final Path filename = configDir.resolve("azure." + YAML_FILE_EXTENSION);
-
     final Map<String, String> azureMetaDataMap = new HashMap<>();
     azureMetaDataMap.put("type", "azure-secret");
     azureMetaDataMap.put("vaultName", "sample-vault-name");

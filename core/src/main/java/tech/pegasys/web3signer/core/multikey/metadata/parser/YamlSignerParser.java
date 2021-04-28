@@ -43,10 +43,10 @@ public class YamlSignerParser implements SignerParser {
   }
 
   @Override
-  public List<ArtifactSigner> parse(final String yamlMetadata) {
+  public List<ArtifactSigner> parse(final String fileContent) {
     try {
       final SigningMetadata metaDataInfo =
-          OBJECT_MAPPER.readValue(yamlMetadata, SigningMetadata.class);
+          OBJECT_MAPPER.readValue(fileContent, SigningMetadata.class);
 
       return signerFactories.stream()
           .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
