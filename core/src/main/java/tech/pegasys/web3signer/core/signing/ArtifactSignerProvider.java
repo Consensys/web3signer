@@ -14,12 +14,11 @@ package tech.pegasys.web3signer.core.signing;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 public interface ArtifactSignerProvider {
 
-  void load();
-
-  void asyncLoad();
+  Future<Void> load();
 
   Optional<ArtifactSigner> getSigner(final String identifier);
 

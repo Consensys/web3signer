@@ -21,8 +21,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -42,32 +44,36 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
 
-    load();
+    try {
+      load().get();
+    } catch (InterruptedException | ExecutionException e) {
+      LOG.error("Error invoking load", e);
+    }
   }
 
   @Override
-  public void load() {
-    LOG.debug("Signer keys pre-loaded in memory {}", signers.size());
+  public Future<Void> load() {
+    return executorService.submit(
+        () -> {
+          LOG.debug("Signer keys pre-loaded in memory {}", signers.size());
 
-    artifactSignerCollectionSupplier.get().stream()
-        .collect(
-            Collectors.toMap(
-                ArtifactSigner::getIdentifier,
-                Function.identity(),
-                (signer1, signer2) -> {
-                  LOG.warn("Duplicate keys were found while loading. {}", Function.identity());
-                  return signer1;
-                }))
-        .forEach(signers::putIfAbsent);
+          artifactSignerCollectionSupplier.get().stream()
+              .collect(
+                  Collectors.toMap(
+                      ArtifactSigner::getIdentifier,
+                      Function.identity(),
+                      (signer1, signer2) -> {
+                        LOG.warn(
+                            "Duplicate keys were found while loading. {}", Function.identity());
+                        return signer1;
+                      }))
+              .forEach(signers::putIfAbsent);
 
-    identifiers = Set.copyOf(signers.keySet());
+          identifiers = Set.copyOf(signers.keySet());
 
-    LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
-  }
-
-  @Override
-  public void asyncLoad() {
-    executorService.execute(this::load);
+          LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
+          return null;
+        });
   }
 
   @Override

@@ -182,7 +182,7 @@ public abstract class Runner implements Runnable {
     openAPI3RouterFactory.addHandlerByOperationId(
         operationId,
         routingContext -> {
-          artifactSignerProvider.asyncLoad();
+          artifactSignerProvider.load();
           routingContext.response().setStatusCode(200).end();
         });
     openAPI3RouterFactory.addFailureHandlerByOperationId(operationId, errorHandler);
