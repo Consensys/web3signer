@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -37,11 +36,13 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
   private Set<String> identifiers = Collections.emptySet();
-  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+  private final ExecutorService executorService;
 
   public DefaultArtifactSignerProvider(
-      final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {
+      final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier,
+      final ExecutorService executorService) {
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
+    this.executorService = executorService;
   }
 
   @Override

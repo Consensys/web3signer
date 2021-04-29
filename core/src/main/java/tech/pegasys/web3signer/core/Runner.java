@@ -36,6 +36,8 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Charsets;
@@ -97,6 +99,7 @@ public abstract class Runner implements Runnable {
 
     final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
     final LogErrorHandler errorHandler = new LogErrorHandler();
+    final ExecutorService reloadExecutorService = Executors.newSingleThreadExecutor();
 
     try {
       metricsEndpoint.start(vertx);
@@ -105,7 +108,8 @@ public abstract class Runner implements Runnable {
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
-      final Context context = new Context(routerFactory, metricsSystem, errorHandler, vertx);
+      final Context context =
+          new Context(routerFactory, metricsSystem, errorHandler, vertx, reloadExecutorService);
       final Router router = populateRouter(context);
       if (config.isSwaggerUIEnabled()) {
         registerSwaggerUIRoute(router); // serve static openapi spec
@@ -125,6 +129,7 @@ public abstract class Runner implements Runnable {
     } catch (final Throwable e) {
       vertx.close();
       metricsEndpoint.stop();
+      reloadExecutorService.shutdownNow();
       LOG.error("Failed to initialise application", e);
     }
   }

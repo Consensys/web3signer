@@ -51,6 +51,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
@@ -109,7 +110,11 @@ public class Eth2Runner extends Runner {
   @Override
   public Router populateRouter(final Context context) {
     final ArtifactSignerProvider signerProvider =
-        loadSigners(config, context.getVertx(), context.getMetricsSystem());
+        loadSigners(
+            config,
+            context.getVertx(),
+            context.getMetricsSystem(),
+            context.getReloadExecutorService());
     incSignerLoadCount(context.getMetricsSystem(), signerProvider.availableIdentifiers().size());
 
     registerEth2Routes(
@@ -154,7 +159,10 @@ public class Eth2Runner extends Runner {
   }
 
   private ArtifactSignerProvider loadSigners(
-      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+      final Config config,
+      final Vertx vertx,
+      final MetricsSystem metricsSystem,
+      final ExecutorService reloadExecutorService) {
 
     final DefaultArtifactSignerProvider artifactSignerProvider =
         new DefaultArtifactSignerProvider(
@@ -199,7 +207,8 @@ public class Eth2Runner extends Runner {
                     slashingProtection1 -> slashingProtection1.registerValidators(validators));
               }
               return signers;
-            });
+            },
+            reloadExecutorService);
     try {
       artifactSignerProvider.load().get();
     } catch (InterruptedException | ExecutionException e) {

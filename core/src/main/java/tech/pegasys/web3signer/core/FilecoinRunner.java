@@ -41,6 +41,7 @@ import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
@@ -71,7 +72,11 @@ public class FilecoinRunner extends Runner {
   @Override
   protected Router populateRouter(final Context context) {
     final ArtifactSignerProvider signerProvider =
-        loadSigners(config, context.getVertx(), context.getMetricsSystem());
+        loadSigners(
+            config,
+            context.getVertx(),
+            context.getMetricsSystem(),
+            context.getReloadExecutorService());
     incSignerLoadCount(context.getMetricsSystem(), signerProvider.availableIdentifiers().size());
 
     addReloadHandler(
@@ -114,7 +119,10 @@ public class FilecoinRunner extends Runner {
   }
 
   private ArtifactSignerProvider loadSigners(
-      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
+      final Config config,
+      final Vertx vertx,
+      final MetricsSystem metricsSystem,
+      final ExecutorService reloadExecutorService) {
     final ArtifactSignerProvider artifactSignerProvider =
         new DefaultArtifactSignerProvider(
             () -> {
@@ -152,7 +160,8 @@ public class FilecoinRunner extends Runner {
                     new YamlSignerParser(
                         List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
               }
-            });
+            },
+            reloadExecutorService);
     try {
       artifactSignerProvider.load().get();
     } catch (InterruptedException | ExecutionException e) {

@@ -37,6 +37,7 @@ import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
@@ -59,7 +60,8 @@ public class Eth1Runner extends Runner {
 
   @Override
   protected Router populateRouter(final Context context) {
-    final ArtifactSignerProvider signerProvider = loadSigners(config, context.getVertx());
+    final ArtifactSignerProvider signerProvider =
+        loadSigners(config, context.getVertx(), context.getReloadExecutorService());
     incSignerLoadCount(context.getMetricsSystem(), signerProvider.availableIdentifiers().size());
 
     final OpenAPI3RouterFactory routerFactory = context.getRouterFactory();
@@ -83,7 +85,8 @@ public class Eth1Runner extends Runner {
     return context.getRouterFactory().getRouter();
   }
 
-  private ArtifactSignerProvider loadSigners(final Config config, final Vertx vertx) {
+  private ArtifactSignerProvider loadSigners(
+      final Config config, final Vertx vertx, final ExecutorService reloadExecutorService) {
     final ArtifactSignerProvider artifactSignerProvider =
         new DefaultArtifactSignerProvider(
             () -> {
@@ -109,7 +112,8 @@ public class Eth1Runner extends Runner {
                     "yaml",
                     new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
               }
-            });
+            },
+            reloadExecutorService);
 
     try {
       artifactSignerProvider.load().get();
