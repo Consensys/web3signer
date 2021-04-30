@@ -131,7 +131,6 @@ class SignerLoaderTest {
   @Test
   void failedParserReturnsEmptySigner() throws IOException {
     createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, "NOT_A_VALID_KEY");
-    // when(signerParser.parse(any())).thenThrow(SigningMetadataException.class);
 
     final List<ArtifactSigner> signerList =
         Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
