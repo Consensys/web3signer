@@ -12,14 +12,19 @@
  */
 package tech.pegasys.web3signer.core.signing;
 
+import java.io.Closeable;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Future;
 
-public interface ArtifactSignerProvider {
+public interface ArtifactSignerProvider extends Closeable {
 
-  void reload();
+  Future<Void> load();
 
   Optional<ArtifactSigner> getSigner(final String identifier);
 
   Set<String> availableIdentifiers();
+
+  @Override
+  void close();
 }

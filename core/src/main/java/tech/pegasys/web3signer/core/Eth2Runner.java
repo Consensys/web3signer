@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.core;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
-import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.signers.azure.AzureKeyVault;
@@ -107,13 +106,9 @@ public class Eth2Runner extends Runner {
 
   @Override
   public Router populateRouter(final Context context) {
-    final ArtifactSignerProvider signerProvider =
-        loadSigners(config, context.getVertx(), context.getMetricsSystem());
-    incSignerLoadCount(context.getMetricsSystem(), signerProvider.availableIdentifiers().size());
-
     registerEth2Routes(
         context.getRouterFactory(),
-        signerProvider,
+        context.getArtifactSignerProvider(),
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtection);
@@ -152,55 +147,51 @@ public class Eth2Runner extends Runner {
     addReloadHandler(routerFactory, blsSignerProvider, RELOAD.name(), errorHandler);
   }
 
-  private ArtifactSignerProvider loadSigners(
-      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
-    final ArtifactSignerProvider artifactSignerProvider =
-        new DefaultArtifactSignerProvider(
-            () -> {
-              final List<ArtifactSigner> signers = Lists.newArrayList();
-              final HashicorpConnectionFactory hashicorpConnectionFactory =
-                  new HashicorpConnectionFactory(vertx);
+  @Override
+  protected ArtifactSignerProvider createArtifactSignerProvider(
+      final Vertx vertx, final MetricsSystem metricsSystem) {
+    return new DefaultArtifactSignerProvider(
+        () -> {
+          final List<ArtifactSigner> signers = Lists.newArrayList();
+          final HashicorpConnectionFactory hashicorpConnectionFactory =
+              new HashicorpConnectionFactory(vertx);
 
-              try (final InterlockKeyProvider interlockKeyProvider =
-                      new InterlockKeyProvider(vertx);
-                  final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                      new YubiHsmOpaqueDataProvider()) {
-                final AbstractArtifactSignerFactory artifactSignerFactory =
-                    new BlsArtifactSignerFactory(
-                        config.getKeyConfigPath(),
-                        metricsSystem,
-                        hashicorpConnectionFactory,
-                        interlockKeyProvider,
-                        yubiHsmOpaqueDataProvider,
-                        BlsArtifactSigner::new);
+          try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+              final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+                  new YubiHsmOpaqueDataProvider()) {
+            final AbstractArtifactSignerFactory artifactSignerFactory =
+                new BlsArtifactSignerFactory(
+                    config.getKeyConfigPath(),
+                    metricsSystem,
+                    hashicorpConnectionFactory,
+                    interlockKeyProvider,
+                    yubiHsmOpaqueDataProvider,
+                    BlsArtifactSigner::new);
 
-                signers.addAll(
-                    SignerLoader.load(
-                        config.getKeyConfigPath(),
-                        "yaml",
-                        new YamlSignerParser(List.of(artifactSignerFactory))));
-              }
+            signers.addAll(
+                SignerLoader.load(
+                    config.getKeyConfigPath(),
+                    "yaml",
+                    new YamlSignerParser(List.of(artifactSignerFactory))));
+          }
 
-              if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-                signers.addAll(loadAzureSigners());
-              }
+          if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
+            signers.addAll(loadAzureSigners());
+          }
 
-              final List<Bytes> validators =
-                  signers.stream()
-                      .map(ArtifactSigner::getIdentifier)
-                      .map(Bytes::fromHexString)
-                      .collect(Collectors.toList());
-              if (validators.isEmpty()) {
-                LOG.warn(
-                    "No BLS keys configured. Check that the key store has BLS key config files");
-              }
-
-              slashingProtection.ifPresent(
-                  slashingProtection -> slashingProtection.registerValidators(validators));
-              return signers;
-            });
-
-    return artifactSignerProvider;
+          final List<Bytes> validators =
+              signers.stream()
+                  .map(ArtifactSigner::getIdentifier)
+                  .map(Bytes::fromHexString)
+                  .collect(Collectors.toList());
+          if (validators.isEmpty()) {
+            LOG.warn("No BLS keys loaded. Check that the key store has BLS key config files");
+          } else {
+            slashingProtection.ifPresent(
+                slashingProtection1 -> slashingProtection1.registerValidators(validators));
+          }
+          return signers;
+        });
   }
 
   @Override

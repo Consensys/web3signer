@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
+import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
@@ -23,16 +24,19 @@ public class Context {
   private final MetricsSystem metricsSystem;
   private final LogErrorHandler errorHandler;
   private final Vertx vertx;
+  private final ArtifactSignerProvider artifactSignerProvider;
 
   public Context(
       final OpenAPI3RouterFactory routerFactory,
       final MetricsSystem metricsSystem,
       final LogErrorHandler errorHandler,
-      final Vertx vertx) {
+      final Vertx vertx,
+      final ArtifactSignerProvider artifactSignerProvider) {
     this.routerFactory = routerFactory;
     this.metricsSystem = metricsSystem;
     this.errorHandler = errorHandler;
     this.vertx = vertx;
+    this.artifactSignerProvider = artifactSignerProvider;
   }
 
   public OpenAPI3RouterFactory getRouterFactory() {
@@ -49,5 +53,9 @@ public class Context {
 
   public Vertx getVertx() {
     return vertx;
+  }
+
+  public ArtifactSignerProvider getArtifactSignerProvider() {
+    return artifactSignerProvider;
   }
 }

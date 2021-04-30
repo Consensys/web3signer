@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.multikey;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -22,6 +23,7 @@ import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 class DefaultArtifactSignerProviderTest {
@@ -31,13 +33,22 @@ class DefaultArtifactSignerProviderTest {
   private static final String PUBLIC_KEY2 =
       "a99a76ed7796f7be22d5b7e85deeb7c5677e88e511e0b337618f8c4eb61349b4bf2d153f649f7b53359fe8b94a38e44c";
 
+  private ArtifactSignerProvider signerProvider;
+
+  @AfterEach
+  void cleanup() {
+    if (signerProvider != null) {
+      signerProvider.close();
+    }
+  }
+
   @Test
   void signerReturnedForMatchingIdentifer() {
     final ArtifactSigner mockSigner = mock(ArtifactSigner.class);
     when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1);
 
-    final ArtifactSignerProvider signerProvider =
-        new DefaultArtifactSignerProvider(() -> List.of(mockSigner));
+    signerProvider = new DefaultArtifactSignerProvider(() -> List.of(mockSigner));
+    assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
 
     final Optional<ArtifactSigner> signer = signerProvider.getSigner(PUBLIC_KEY1);
     assertThat(signer).isNotEmpty();
@@ -51,8 +62,8 @@ class DefaultArtifactSignerProviderTest {
     final ArtifactSigner mockSigner2 = mock(ArtifactSigner.class);
     when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY1);
 
-    final ArtifactSignerProvider signerProvider =
-        new DefaultArtifactSignerProvider(() -> List.of(mockSigner1, mockSigner2));
+    signerProvider = new DefaultArtifactSignerProvider(() -> List.of(mockSigner1, mockSigner2));
+    assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
 
     assertThat(signerProvider.availableIdentifiers()).hasSize(1);
     assertThat(signerProvider.availableIdentifiers()).containsOnly(PUBLIC_KEY1);
@@ -65,9 +76,8 @@ class DefaultArtifactSignerProviderTest {
     final ArtifactSigner mockSigner2 = mock(ArtifactSigner.class);
     when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY2);
 
-    final ArtifactSignerProvider signerProvider =
-        new DefaultArtifactSignerProvider(() -> List.of(mockSigner1, mockSigner2));
-
+    signerProvider = new DefaultArtifactSignerProvider(() -> List.of(mockSigner1, mockSigner2));
+    assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
     assertThat(signerProvider.availableIdentifiers()).hasSize(2);
     assertThat(signerProvider.availableIdentifiers()).containsOnly(PUBLIC_KEY1, PUBLIC_KEY2);
   }
