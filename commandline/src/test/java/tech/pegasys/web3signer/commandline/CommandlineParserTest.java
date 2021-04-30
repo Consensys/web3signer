@@ -395,7 +395,7 @@ class CommandlineParserTest {
     public void run() {}
 
     @Override
-    protected ArtifactSignerProvider getArtifactSignerProvider(
+    protected ArtifactSignerProvider createArtifactSignerProvider(
         final Vertx vertx, final MetricsSystem metricsSystem) {
       return null;
     }

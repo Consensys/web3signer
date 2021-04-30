@@ -99,7 +99,7 @@ public abstract class Runner implements Runnable {
     final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
     final LogErrorHandler errorHandler = new LogErrorHandler();
     final ArtifactSignerProvider artifactSignerProvider =
-        getArtifactSignerProvider(vertx, metricsSystem);
+        createArtifactSignerProvider(vertx, metricsSystem);
 
     try {
       metricsEndpoint.start(vertx);
@@ -152,7 +152,7 @@ public abstract class Runner implements Runnable {
                 .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
   }
 
-  protected abstract ArtifactSignerProvider getArtifactSignerProvider(
+  protected abstract ArtifactSignerProvider createArtifactSignerProvider(
       final Vertx vertx, final MetricsSystem metricsSystem);
 
   protected abstract Router populateRouter(final Context context);

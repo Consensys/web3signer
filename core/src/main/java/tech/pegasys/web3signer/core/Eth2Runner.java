@@ -148,7 +148,7 @@ public class Eth2Runner extends Runner {
   }
 
   @Override
-  protected ArtifactSignerProvider getArtifactSignerProvider(
+  protected ArtifactSignerProvider createArtifactSignerProvider(
       final Vertx vertx, final MetricsSystem metricsSystem) {
     return new DefaultArtifactSignerProvider(
         () -> {
