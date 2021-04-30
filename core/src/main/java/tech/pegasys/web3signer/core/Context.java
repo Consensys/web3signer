@@ -14,8 +14,6 @@ package tech.pegasys.web3signer.core;
 
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 
-import java.util.concurrent.ExecutorService;
-
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -25,19 +23,16 @@ public class Context {
   private final MetricsSystem metricsSystem;
   private final LogErrorHandler errorHandler;
   private final Vertx vertx;
-  private final ExecutorService reloadExecutorService;
 
   public Context(
       final OpenAPI3RouterFactory routerFactory,
       final MetricsSystem metricsSystem,
       final LogErrorHandler errorHandler,
-      final Vertx vertx,
-      final ExecutorService reloadExecutorService) {
+      final Vertx vertx) {
     this.routerFactory = routerFactory;
     this.metricsSystem = metricsSystem;
     this.errorHandler = errorHandler;
     this.vertx = vertx;
-    this.reloadExecutorService = reloadExecutorService;
   }
 
   public OpenAPI3RouterFactory getRouterFactory() {
@@ -54,9 +49,5 @@ public class Context {
 
   public Vertx getVertx() {
     return vertx;
-  }
-
-  public ExecutorService getReloadExecutorService() {
-    return reloadExecutorService;
   }
 }

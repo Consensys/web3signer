@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -392,7 +393,13 @@ class CommandlineParserTest {
     public void run() {}
 
     @Override
-    protected Router populateRouter(final Context context) {
+    protected ArtifactSignerProvider getArtifactSignerProvider(final Context context) {
+      return null;
+    }
+
+    @Override
+    protected Router populateRouter(
+        final Context context, final ArtifactSignerProvider signerProvider) {
       return null;
     }
 

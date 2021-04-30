@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
+import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
@@ -36,8 +37,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Charsets;
@@ -99,8 +98,7 @@ public abstract class Runner implements Runnable {
 
     final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
     final LogErrorHandler errorHandler = new LogErrorHandler();
-    final ExecutorService reloadExecutorService = Executors.newSingleThreadExecutor();
-
+    ArtifactSignerProvider artifactSignerProvider = null;
     try {
       metricsEndpoint.start(vertx);
 
@@ -108,9 +106,19 @@ public abstract class Runner implements Runnable {
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
-      final Context context =
-          new Context(routerFactory, metricsSystem, errorHandler, vertx, reloadExecutorService);
-      final Router router = populateRouter(context);
+      final Context context = new Context(routerFactory, metricsSystem, errorHandler, vertx);
+
+      // load artifact signers
+      artifactSignerProvider = getArtifactSignerProvider(context);
+      try {
+        artifactSignerProvider.load().get();
+      } catch (InterruptedException | ExecutionException e) {
+        LOG.error("Error invoking load", e);
+      }
+      incSignerLoadCount(
+          context.getMetricsSystem(), artifactSignerProvider.availableIdentifiers().size());
+
+      final Router router = populateRouter(context, artifactSignerProvider);
       if (config.isSwaggerUIEnabled()) {
         registerSwaggerUIRoute(router); // serve static openapi spec
       }
@@ -127,9 +135,11 @@ public abstract class Runner implements Runnable {
     } catch (final InitializationException e) {
       throw e;
     } catch (final Throwable e) {
+      if (artifactSignerProvider != null) {
+        artifactSignerProvider.close();
+      }
       vertx.close();
       metricsEndpoint.stop();
-      reloadExecutorService.shutdownNow();
       LOG.error("Failed to initialise application", e);
     }
   }
@@ -142,7 +152,10 @@ public abstract class Runner implements Runnable {
                 .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
   }
 
-  protected abstract Router populateRouter(final Context context);
+  protected abstract ArtifactSignerProvider getArtifactSignerProvider(final Context context);
+
+  protected abstract Router populateRouter(
+      final Context context, final ArtifactSignerProvider artifactSignerProvider);
 
   protected abstract String getOpenApiSpecResource();
 

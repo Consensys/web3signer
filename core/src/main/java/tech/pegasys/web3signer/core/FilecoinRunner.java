@@ -18,7 +18,6 @@ import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITI
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
-import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
@@ -40,8 +39,6 @@ import tech.pegasys.web3signer.core.signing.FcSecpArtifactSigner;
 import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
@@ -49,13 +46,9 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
-  private static final Logger LOG = LogManager.getLogger();
-
   private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
 
@@ -70,15 +63,8 @@ public class FilecoinRunner extends Runner {
   }
 
   @Override
-  protected Router populateRouter(final Context context) {
-    final ArtifactSignerProvider signerProvider =
-        loadSigners(
-            config,
-            context.getVertx(),
-            context.getMetricsSystem(),
-            context.getReloadExecutorService());
-    incSignerLoadCount(context.getMetricsSystem(), signerProvider.availableIdentifiers().size());
-
+  protected Router populateRouter(
+      final Context context, final ArtifactSignerProvider signerProvider) {
     addReloadHandler(
         context.getRouterFactory(), signerProvider, RELOAD.name(), context.getErrorHandler());
 
@@ -118,55 +104,45 @@ public class FilecoinRunner extends Runner {
     return router;
   }
 
-  private ArtifactSignerProvider loadSigners(
-      final Config config,
-      final Vertx vertx,
-      final MetricsSystem metricsSystem,
-      final ExecutorService reloadExecutorService) {
-    final ArtifactSignerProvider artifactSignerProvider =
-        new DefaultArtifactSignerProvider(
-            () -> {
-              final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
-              final HashicorpConnectionFactory hashicorpConnectionFactory =
-                  new HashicorpConnectionFactory(vertx);
+  @Override
+  protected ArtifactSignerProvider getArtifactSignerProvider(final Context context) {
+    final Vertx vertx = context.getVertx();
+    final MetricsSystem metricsSystem = context.getMetricsSystem();
 
-              try (final InterlockKeyProvider interlockKeyProvider =
-                      new InterlockKeyProvider(vertx);
-                  final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                      new YubiHsmOpaqueDataProvider()) {
+    return new DefaultArtifactSignerProvider(
+        () -> {
+          final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+          final HashicorpConnectionFactory hashicorpConnectionFactory =
+              new HashicorpConnectionFactory(vertx);
 
-                final AbstractArtifactSignerFactory blsArtifactSignerFactory =
-                    new BlsArtifactSignerFactory(
-                        config.getKeyConfigPath(),
-                        metricsSystem,
-                        hashicorpConnectionFactory,
-                        interlockKeyProvider,
-                        yubiHsmOpaqueDataProvider,
-                        keyPair -> new FcBlsArtifactSigner(keyPair, network));
+          try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+              final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+                  new YubiHsmOpaqueDataProvider()) {
 
-                final AbstractArtifactSignerFactory secpArtifactSignerFactory =
-                    new Secp256k1ArtifactSignerFactory(
-                        hashicorpConnectionFactory,
-                        config.getKeyConfigPath(),
-                        azureFactory,
-                        interlockKeyProvider,
-                        yubiHsmOpaqueDataProvider,
-                        signer -> new FcSecpArtifactSigner(signer, network),
-                        false);
-
-                return SignerLoader.load(
+            final AbstractArtifactSignerFactory blsArtifactSignerFactory =
+                new BlsArtifactSignerFactory(
                     config.getKeyConfigPath(),
-                    "yaml",
-                    new YamlSignerParser(
-                        List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
-              }
-            },
-            reloadExecutorService);
-    try {
-      artifactSignerProvider.load().get();
-    } catch (InterruptedException | ExecutionException e) {
-      LOG.error("Error invoking load", e);
-    }
-    return artifactSignerProvider;
+                    metricsSystem,
+                    hashicorpConnectionFactory,
+                    interlockKeyProvider,
+                    yubiHsmOpaqueDataProvider,
+                    keyPair -> new FcBlsArtifactSigner(keyPair, network));
+
+            final AbstractArtifactSignerFactory secpArtifactSignerFactory =
+                new Secp256k1ArtifactSignerFactory(
+                    hashicorpConnectionFactory,
+                    config.getKeyConfigPath(),
+                    azureFactory,
+                    interlockKeyProvider,
+                    yubiHsmOpaqueDataProvider,
+                    signer -> new FcSecpArtifactSigner(signer, network),
+                    false);
+
+            return SignerLoader.load(
+                config.getKeyConfigPath(),
+                "yaml",
+                new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+          }
+        });
   }
 }
