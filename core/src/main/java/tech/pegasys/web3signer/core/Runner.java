@@ -98,27 +98,27 @@ public abstract class Runner implements Runnable {
 
     final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
     final LogErrorHandler errorHandler = new LogErrorHandler();
-    ArtifactSignerProvider artifactSignerProvider = null;
+    final ArtifactSignerProvider artifactSignerProvider =
+        getArtifactSignerProvider(vertx, metricsSystem);
+
     try {
       metricsEndpoint.start(vertx);
+
+      try {
+        artifactSignerProvider.load().get(); // wait for signers to get loaded ...
+      } catch (final InterruptedException | ExecutionException e) {
+        LOG.error("Error loading signers", e);
+      }
+      incSignerLoadCount(metricsSystem, artifactSignerProvider.availableIdentifiers().size());
 
       final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
-      final Context context = new Context(routerFactory, metricsSystem, errorHandler, vertx);
+      final Context context =
+          new Context(routerFactory, metricsSystem, errorHandler, vertx, artifactSignerProvider);
 
-      // load artifact signers
-      artifactSignerProvider = getArtifactSignerProvider(context);
-      try {
-        artifactSignerProvider.load().get();
-      } catch (InterruptedException | ExecutionException e) {
-        LOG.error("Error loading signers", e);
-      }
-      incSignerLoadCount(
-          context.getMetricsSystem(), artifactSignerProvider.availableIdentifiers().size());
-
-      final Router router = populateRouter(context, artifactSignerProvider);
+      final Router router = populateRouter(context);
       if (config.isSwaggerUIEnabled()) {
         registerSwaggerUIRoute(router); // serve static openapi spec
       }
@@ -152,10 +152,10 @@ public abstract class Runner implements Runnable {
                 .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
   }
 
-  protected abstract ArtifactSignerProvider getArtifactSignerProvider(final Context context);
+  protected abstract ArtifactSignerProvider getArtifactSignerProvider(
+      final Vertx vertx, final MetricsSystem metricsSystem);
 
-  protected abstract Router populateRouter(
-      final Context context, final ArtifactSignerProvider artifactSignerProvider);
+  protected abstract Router populateRouter(final Context context);
 
   protected abstract String getOpenApiSpecResource();
 

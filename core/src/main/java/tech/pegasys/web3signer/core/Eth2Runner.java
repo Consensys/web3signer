@@ -105,10 +105,10 @@ public class Eth2Runner extends Runner {
   }
 
   @Override
-  public Router populateRouter(final Context context, final ArtifactSignerProvider signerProvider) {
+  public Router populateRouter(final Context context) {
     registerEth2Routes(
         context.getRouterFactory(),
-        signerProvider,
+        context.getArtifactSignerProvider(),
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtection);
@@ -148,10 +148,8 @@ public class Eth2Runner extends Runner {
   }
 
   @Override
-  protected ArtifactSignerProvider getArtifactSignerProvider(final Context context) {
-    final Vertx vertx = context.getVertx();
-    final MetricsSystem metricsSystem = context.getMetricsSystem();
-
+  protected ArtifactSignerProvider getArtifactSignerProvider(
+      final Vertx vertx, final MetricsSystem metricsSystem) {
     return new DefaultArtifactSignerProvider(
         () -> {
           final List<ArtifactSigner> signers = Lists.newArrayList();

@@ -63,13 +63,17 @@ public class FilecoinRunner extends Runner {
   }
 
   @Override
-  protected Router populateRouter(
-      final Context context, final ArtifactSignerProvider signerProvider) {
+  protected Router populateRouter(final Context context) {
     addReloadHandler(
-        context.getRouterFactory(), signerProvider, RELOAD.name(), context.getErrorHandler());
+        context.getRouterFactory(),
+        context.getArtifactSignerProvider(),
+        RELOAD.name(),
+        context.getErrorHandler());
 
     return registerFilecoinJsonRpcRoute(
-        context.getRouterFactory(), context.getMetricsSystem(), signerProvider);
+        context.getRouterFactory(),
+        context.getMetricsSystem(),
+        context.getArtifactSignerProvider());
   }
 
   private Router registerFilecoinJsonRpcRoute(
@@ -105,10 +109,8 @@ public class FilecoinRunner extends Runner {
   }
 
   @Override
-  protected ArtifactSignerProvider getArtifactSignerProvider(final Context context) {
-    final Vertx vertx = context.getVertx();
-    final MetricsSystem metricsSystem = context.getMetricsSystem();
-
+  protected ArtifactSignerProvider getArtifactSignerProvider(
+      final Vertx vertx, final MetricsSystem metricsSystem) {
     return new DefaultArtifactSignerProvider(
         () -> {
           final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();

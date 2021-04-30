@@ -40,6 +40,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
   public Eth1Runner(final Config config) {
@@ -52,10 +53,10 @@ public class Eth1Runner extends Runner {
   }
 
   @Override
-  protected Router populateRouter(
-      final Context context, final ArtifactSignerProvider signerProvider) {
+  protected Router populateRouter(final Context context) {
     final OpenAPI3RouterFactory routerFactory = context.getRouterFactory();
     final LogErrorHandler errorHandler = context.getErrorHandler();
+    final ArtifactSignerProvider signerProvider = context.getArtifactSignerProvider();
 
     addPublicKeysListHandler(
         routerFactory, signerProvider, ETH1_LIST.name(), context.getErrorHandler());
@@ -76,9 +77,8 @@ public class Eth1Runner extends Runner {
   }
 
   @Override
-  protected ArtifactSignerProvider getArtifactSignerProvider(final Context context) {
-    final Vertx vertx = context.getVertx();
-
+  protected ArtifactSignerProvider getArtifactSignerProvider(
+      final Vertx vertx, final MetricsSystem metricsSystem) {
     return new DefaultArtifactSignerProvider(
         () -> {
           final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();

@@ -28,8 +28,10 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.function.Supplier;
 
+import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import org.apache.logging.log4j.Level;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -393,13 +395,13 @@ class CommandlineParserTest {
     public void run() {}
 
     @Override
-    protected ArtifactSignerProvider getArtifactSignerProvider(final Context context) {
+    protected ArtifactSignerProvider getArtifactSignerProvider(
+        final Vertx vertx, final MetricsSystem metricsSystem) {
       return null;
     }
 
     @Override
-    protected Router populateRouter(
-        final Context context, final ArtifactSignerProvider signerProvider) {
+    protected Router populateRouter(final Context context) {
       return null;
     }
 
