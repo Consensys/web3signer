@@ -113,7 +113,7 @@ public abstract class Runner implements Runnable {
       try {
         artifactSignerProvider.load().get();
       } catch (InterruptedException | ExecutionException e) {
-        LOG.error("Error invoking load", e);
+        LOG.error("Error loading signers", e);
       }
       incSignerLoadCount(
           context.getMetricsSystem(), artifactSignerProvider.availableIdentifiers().size());
