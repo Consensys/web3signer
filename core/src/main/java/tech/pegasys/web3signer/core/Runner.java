@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
+import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
@@ -97,15 +98,26 @@ public abstract class Runner implements Runnable {
 
     final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
     final LogErrorHandler errorHandler = new LogErrorHandler();
+    final ArtifactSignerProvider artifactSignerProvider =
+        createArtifactSignerProvider(vertx, metricsSystem);
 
     try {
       metricsEndpoint.start(vertx);
+
+      try {
+        artifactSignerProvider.load().get(); // wait for signers to get loaded ...
+      } catch (final InterruptedException | ExecutionException e) {
+        LOG.error("Error loading signers", e);
+      }
+      incSignerLoadCount(metricsSystem, artifactSignerProvider.availableIdentifiers().size());
 
       final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
-      final Context context = new Context(routerFactory, metricsSystem, errorHandler, vertx);
+      final Context context =
+          new Context(routerFactory, metricsSystem, errorHandler, vertx, artifactSignerProvider);
+
       final Router router = populateRouter(context);
       if (config.isSwaggerUIEnabled()) {
         registerSwaggerUIRoute(router); // serve static openapi spec
@@ -123,6 +135,9 @@ public abstract class Runner implements Runnable {
     } catch (final InitializationException e) {
       throw e;
     } catch (final Throwable e) {
+      if (artifactSignerProvider != null) {
+        artifactSignerProvider.close();
+      }
       vertx.close();
       metricsEndpoint.stop();
       LOG.error("Failed to initialise application", e);
@@ -136,6 +151,9 @@ public abstract class Runner implements Runnable {
                 .setEnabled(true)
                 .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
   }
+
+  protected abstract ArtifactSignerProvider createArtifactSignerProvider(
+      final Vertx vertx, final MetricsSystem metricsSystem);
 
   protected abstract Router populateRouter(final Context context);
 
@@ -181,12 +199,10 @@ public abstract class Runner implements Runnable {
       final LogErrorHandler errorHandler) {
     openAPI3RouterFactory.addHandlerByOperationId(
         operationId,
-        new BlockingHandlerDecorator(
-            routingContext -> {
-              artifactSignerProvider.reload();
-              routingContext.response().setStatusCode(200).end();
-            },
-            false));
+        routingContext -> {
+          artifactSignerProvider.load();
+          routingContext.response().setStatusCode(200).end();
+        });
     openAPI3RouterFactory.addFailureHandlerByOperationId(operationId, errorHandler);
   }
 

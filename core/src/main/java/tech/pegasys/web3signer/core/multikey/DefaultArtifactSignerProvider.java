@@ -16,10 +16,14 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -31,36 +35,38 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   private static final Logger LOG = LogManager.getLogger();
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
-  private final Map<String, ArtifactSigner> signers = new ConcurrentHashMap<>();
-  private final Set<String> signerIdentifiers = ConcurrentHashMap.newKeySet();
+  private final Map<String, ArtifactSigner> signers = new HashMap<>();
+  private Set<String> identifiers = Collections.emptySet();
+  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   public DefaultArtifactSignerProvider(
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
-
-    reload();
   }
 
   @Override
-  public void reload() {
-    LOG.trace("Reloading Artifact Signers");
+  public Future<Void> load() {
+    return executorService.submit(
+        () -> {
+          LOG.debug("Signer keys pre-loaded in memory {}", signers.size());
 
-    final Map<String, ArtifactSigner> signerMap =
-        artifactSignerCollectionSupplier
-            .get()
-            .parallelStream()
-            .collect(
-                Collectors.toMap(
-                    ArtifactSigner::getIdentifier,
-                    Function.identity(),
-                    (signer1, signer2) -> {
-                      LOG.warn("Duplicate keys were found.");
-                      return signer1;
-                    }));
+          artifactSignerCollectionSupplier.get().stream()
+              .collect(
+                  Collectors.toMap(
+                      ArtifactSigner::getIdentifier,
+                      Function.identity(),
+                      (signer1, signer2) -> {
+                        LOG.warn(
+                            "Duplicate keys were found while loading. {}", Function.identity());
+                        return signer1;
+                      }))
+              .forEach(signers::putIfAbsent);
 
-    signers.putAll(signerMap);
-    signerIdentifiers.addAll(signers.keySet());
-    LOG.info("Total signers (keys) loaded in memory {}", signerIdentifiers.size());
+          identifiers = Set.copyOf(signers.keySet());
+
+          LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
+          return null;
+        });
   }
 
   @Override
@@ -75,6 +81,11 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   @Override
   public Set<String> availableIdentifiers() {
-    return signerIdentifiers;
+    return identifiers;
+  }
+
+  @Override
+  public void close() {
+    executorService.shutdownNow();
   }
 }

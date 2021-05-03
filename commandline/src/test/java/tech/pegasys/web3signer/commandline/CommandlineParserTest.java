@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -27,8 +28,10 @@ import java.net.InetAddress;
 import java.util.Collections;
 import java.util.function.Supplier;
 
+import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import org.apache.logging.log4j.Level;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -390,6 +393,12 @@ class CommandlineParserTest {
 
     @Override
     public void run() {}
+
+    @Override
+    protected ArtifactSignerProvider createArtifactSignerProvider(
+        final Vertx vertx, final MetricsSystem metricsSystem) {
+      return null;
+    }
 
     @Override
     protected Router populateRouter(final Context context) {

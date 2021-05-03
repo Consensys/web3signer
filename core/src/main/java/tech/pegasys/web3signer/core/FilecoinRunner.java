@@ -18,7 +18,6 @@ import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITI
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
-import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
@@ -50,7 +49,6 @@ import io.vertx.ext.web.handler.BodyHandler;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
-
   private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
 
@@ -66,15 +64,16 @@ public class FilecoinRunner extends Runner {
 
   @Override
   protected Router populateRouter(final Context context) {
-    final ArtifactSignerProvider signerProvider =
-        loadSigners(config, context.getVertx(), context.getMetricsSystem());
-    incSignerLoadCount(context.getMetricsSystem(), signerProvider.availableIdentifiers().size());
-
     addReloadHandler(
-        context.getRouterFactory(), signerProvider, RELOAD.name(), context.getErrorHandler());
+        context.getRouterFactory(),
+        context.getArtifactSignerProvider(),
+        RELOAD.name(),
+        context.getErrorHandler());
 
     return registerFilecoinJsonRpcRoute(
-        context.getRouterFactory(), context.getMetricsSystem(), signerProvider);
+        context.getRouterFactory(),
+        context.getMetricsSystem(),
+        context.getArtifactSignerProvider());
   }
 
   private Router registerFilecoinJsonRpcRoute(
@@ -109,47 +108,43 @@ public class FilecoinRunner extends Runner {
     return router;
   }
 
-  private ArtifactSignerProvider loadSigners(
-      final Config config, final Vertx vertx, final MetricsSystem metricsSystem) {
-    final ArtifactSignerProvider artifactSignerProvider =
-        new DefaultArtifactSignerProvider(
-            () -> {
-              final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
-              final HashicorpConnectionFactory hashicorpConnectionFactory =
-                  new HashicorpConnectionFactory(vertx);
+  @Override
+  protected ArtifactSignerProvider createArtifactSignerProvider(
+      final Vertx vertx, final MetricsSystem metricsSystem) {
+    return new DefaultArtifactSignerProvider(
+        () -> {
+          final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+          final HashicorpConnectionFactory hashicorpConnectionFactory =
+              new HashicorpConnectionFactory(vertx);
 
-              try (final InterlockKeyProvider interlockKeyProvider =
-                      new InterlockKeyProvider(vertx);
-                  final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                      new YubiHsmOpaqueDataProvider()) {
+          try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+              final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+                  new YubiHsmOpaqueDataProvider()) {
 
-                final AbstractArtifactSignerFactory blsArtifactSignerFactory =
-                    new BlsArtifactSignerFactory(
-                        config.getKeyConfigPath(),
-                        metricsSystem,
-                        hashicorpConnectionFactory,
-                        interlockKeyProvider,
-                        yubiHsmOpaqueDataProvider,
-                        keyPair -> new FcBlsArtifactSigner(keyPair, network));
-
-                final AbstractArtifactSignerFactory secpArtifactSignerFactory =
-                    new Secp256k1ArtifactSignerFactory(
-                        hashicorpConnectionFactory,
-                        config.getKeyConfigPath(),
-                        azureFactory,
-                        interlockKeyProvider,
-                        yubiHsmOpaqueDataProvider,
-                        signer -> new FcSecpArtifactSigner(signer, network),
-                        false);
-
-                return SignerLoader.load(
+            final AbstractArtifactSignerFactory blsArtifactSignerFactory =
+                new BlsArtifactSignerFactory(
                     config.getKeyConfigPath(),
-                    "yaml",
-                    new YamlSignerParser(
-                        List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
-              }
-            });
+                    metricsSystem,
+                    hashicorpConnectionFactory,
+                    interlockKeyProvider,
+                    yubiHsmOpaqueDataProvider,
+                    keyPair -> new FcBlsArtifactSigner(keyPair, network));
 
-    return artifactSignerProvider;
+            final AbstractArtifactSignerFactory secpArtifactSignerFactory =
+                new Secp256k1ArtifactSignerFactory(
+                    hashicorpConnectionFactory,
+                    config.getKeyConfigPath(),
+                    azureFactory,
+                    interlockKeyProvider,
+                    yubiHsmOpaqueDataProvider,
+                    signer -> new FcSecpArtifactSigner(signer, network),
+                    false);
+
+            return SignerLoader.load(
+                config.getKeyConfigPath(),
+                "yaml",
+                new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+          }
+        });
   }
 }

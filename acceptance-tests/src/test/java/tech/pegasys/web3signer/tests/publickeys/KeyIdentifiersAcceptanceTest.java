@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.tests.publickeys;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.not;
@@ -28,10 +29,12 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import io.restassured.response.Response;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tuweni.bytes.Bytes32;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -84,9 +87,12 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String[] additionalKeys = createKeys(keyType, true, prvKeys[1]);
     signer.callReload().then().statusCode(200);
 
-    final Response publicKeysResponseAfterReload = signer.callApiPublicKeys(keyType);
-    validateApiResponse(
-        publicKeysResponseAfterReload, containsInAnyOrder(ArrayUtils.addAll(keys, additionalKeys)));
+    // reload is async ...
+    Awaitility.await()
+        .atMost(5, SECONDS)
+        .until(
+            () -> signer.callApiPublicKeys(keyType).jsonPath().<List<String>>get("."),
+            containsInAnyOrder(ArrayUtils.addAll(keys, additionalKeys)));
   }
 
   @ParameterizedTest
