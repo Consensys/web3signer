@@ -40,6 +40,15 @@ public class DbConnection {
     return jdbi;
   }
 
+  public static Jdbi createPruningConnection(
+      final String jdbcUrl, final String username, final String password) {
+    final HikariDataSource datasource = createDataSource(jdbcUrl, username, password);
+    datasource.setMaximumPoolSize(2); // should set to 1 ??
+    final Jdbi jdbi = Jdbi.create(datasource);
+    configureJdbi(jdbi);
+    return jdbi;
+  }
+
   public static void configureJdbi(final Jdbi jdbi) {
     jdbi.getConfig(Arguments.class)
         .register(new BytesArgumentFactory())
@@ -51,7 +60,7 @@ public class DbConnection {
     jdbi.setTransactionHandler(new SerializableTransactionRunner());
   }
 
-  private static DataSource createDataSource(
+  private static HikariDataSource createDataSource(
       final String jdbcUrl, final String username, final String password) {
     final HikariDataSource dataSource = new HikariDataSource();
     dataSource.setJdbcUrl(jdbcUrl);

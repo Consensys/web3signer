@@ -69,6 +69,7 @@ public class DbSlashingProtection implements SlashingProtection {
 
   public DbSlashingProtection(
       final Jdbi jdbi,
+      final Jdbi pruningJdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
@@ -78,6 +79,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final long pruningSlotsPerEpoch) {
     this(
         jdbi,
+        pruningJdbi,
         validatorsDao,
         signedBlocksDao,
         signedAttestationsDao,
@@ -90,6 +92,7 @@ public class DbSlashingProtection implements SlashingProtection {
 
   public DbSlashingProtection(
       final Jdbi jdbi,
+      final Jdbi pruningJdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
@@ -117,7 +120,8 @@ public class DbSlashingProtection implements SlashingProtection {
                 .registerModule(new InterchangeModule())
                 .configure(FLUSH_AFTER_WRITE_VALUE, true)
                 .enable(SerializationFeature.INDENT_OUTPUT));
-    this.dbPruner = new DbPruner(jdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
+    this.dbPruner =
+        new DbPruner(pruningJdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
     this.pruningEpochsToKeep = pruningEpochsToKeep;
     this.pruningSlotsPerEpoch = pruningSlotsPerEpoch;
   }

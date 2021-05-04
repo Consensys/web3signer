@@ -43,6 +43,7 @@ import com.google.common.collect.HashBiMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.testing.JdbiRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -76,9 +77,11 @@ public class DbSlashingProtectionTest {
 
   @Before
   public void setup() {
+    final Jdbi jdbi = db.getJdbi();
     dbSlashingProtection =
         new DbSlashingProtection(
-            db.getJdbi(),
+            jdbi,
+            jdbi,
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
@@ -150,9 +153,11 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void blockCannotSignWhenNoRegisteredValidator() {
+    final Jdbi jdbi = db.getJdbi();
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
-            db.getJdbi(),
+            jdbi,
+            jdbi,
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
@@ -312,9 +317,11 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void attestationCannotSignWhenNoRegisteredValidator() {
+    final Jdbi jdbi = db.getJdbi();
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
-            db.getJdbi(),
+            jdbi,
+            jdbi,
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
@@ -352,9 +359,11 @@ public class DbSlashingProtectionTest {
   public void registersValidatorsThatAreNotAlreadyInDb() {
     final BiMap<Bytes, Integer> registeredValidators = HashBiMap.create();
     registeredValidators.put(PUBLIC_KEY1, 1);
+    final Jdbi jdbi = db.getJdbi();
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
-            db.getJdbi(),
+            jdbi,
+            jdbi,
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
