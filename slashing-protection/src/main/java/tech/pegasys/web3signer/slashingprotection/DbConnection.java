@@ -43,7 +43,7 @@ public class DbConnection {
   public static Jdbi createPruningConnection(
       final String jdbcUrl, final String username, final String password) {
     final HikariDataSource datasource = createDataSource(jdbcUrl, username, password);
-    datasource.setMaximumPoolSize(2); // should set to 1 ??
+    datasource.setMaximumPoolSize(1); // we only need 1 connection in pool for pruning
     final Jdbi jdbi = Jdbi.create(datasource);
     configureJdbi(jdbi);
     return jdbi;
