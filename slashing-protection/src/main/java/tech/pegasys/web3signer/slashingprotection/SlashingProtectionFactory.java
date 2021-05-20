@@ -35,8 +35,16 @@ public class SlashingProtectionFactory {
 
     verifyVersion(jdbi);
 
+    // create separate Jdbi instance for pruning operations
+    final Jdbi pruningJdbi =
+        DbConnection.createPruningConnection(
+            slashingProtectionParameters.getDbUrl(),
+            slashingProtectionParameters.getDbUsername(),
+            slashingProtectionParameters.getDbPassword());
+
     return createSlashingProtection(
         jdbi,
+        pruningJdbi,
         slashingProtectionParameters.getPruningEpochsToKeep(),
         slashingProtectionParameters.getPruningSlotsPerEpoch());
   }
@@ -63,9 +71,13 @@ public class SlashingProtectionFactory {
   }
 
   private static SlashingProtection createSlashingProtection(
-      final Jdbi jdbi, final long pruningEpochsToKeep, final long pruningSlotsPerEpoch) {
+      final Jdbi jdbi,
+      final Jdbi pruningJdbi,
+      final long pruningEpochsToKeep,
+      final long pruningSlotsPerEpoch) {
     return new DbSlashingProtection(
         jdbi,
+        pruningJdbi,
         new ValidatorsDao(),
         new SignedBlocksDao(),
         new SignedAttestationsDao(),

@@ -18,6 +18,7 @@ import tech.pegasys.web3signer.slashingprotection.ColumnMappers.Bytes32ColumnMap
 import tech.pegasys.web3signer.slashingprotection.ColumnMappers.BytesColumnMapper;
 import tech.pegasys.web3signer.slashingprotection.ColumnMappers.UInt64ColumnMapper;
 
+import java.time.Duration;
 import javax.sql.DataSource;
 
 import com.zaxxer.hikari.HikariDataSource;
@@ -27,10 +28,22 @@ import org.jdbi.v3.core.mapper.ColumnMappers;
 import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
 
 public class DbConnection {
+  // https://jdbc.postgresql.org/documentation/head/connect.html#connection-parameters
+  private static final String PG_SOCKET_TIMEOUT_PARAM = "socketTimeout";
+  private static final long DEFAULT_PG_SOCKET_TIMEOUT_SECONDS = Duration.ofMinutes(5).getSeconds();
 
   public static Jdbi createConnection(
       final String jdbcUrl, final String username, final String password) {
     final DataSource datasource = createDataSource(jdbcUrl, username, password);
+    final Jdbi jdbi = Jdbi.create(datasource);
+    configureJdbi(jdbi);
+    return jdbi;
+  }
+
+  public static Jdbi createPruningConnection(
+      final String jdbcUrl, final String username, final String password) {
+    final HikariDataSource datasource = createDataSource(jdbcUrl, username, password);
+    datasource.setMaximumPoolSize(1); // we only need 1 connection in pool for pruning
     final Jdbi jdbi = Jdbi.create(datasource);
     configureJdbi(jdbi);
     return jdbi;
@@ -47,12 +60,13 @@ public class DbConnection {
     jdbi.setTransactionHandler(new SerializableTransactionRunner());
   }
 
-  private static DataSource createDataSource(
+  private static HikariDataSource createDataSource(
       final String jdbcUrl, final String username, final String password) {
     final HikariDataSource dataSource = new HikariDataSource();
     dataSource.setJdbcUrl(jdbcUrl);
     dataSource.setUsername(username);
     dataSource.setPassword(password);
+    dataSource.addDataSourceProperty(PG_SOCKET_TIMEOUT_PARAM, DEFAULT_PG_SOCKET_TIMEOUT_SECONDS);
     return dataSource;
   }
 }
