@@ -83,7 +83,6 @@ allprojects {
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
   apply from: "${rootDir}/gradle/versions.gradle"
-  //apply from: "${rootDir}/gradle/check-licenses.gradle"
 
   version = rootProject.version
 
