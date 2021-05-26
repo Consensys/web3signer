@@ -394,7 +394,7 @@ distZip {
   }
 }
 
-check.dependsOn checkLicenses
+check.dependsOn checkLicense
 
 // rename the top level dir from web3signer-<version> to web3signer and this makes it really
 // simple for use in docker
