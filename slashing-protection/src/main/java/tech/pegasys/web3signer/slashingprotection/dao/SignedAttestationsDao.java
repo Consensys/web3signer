@@ -116,7 +116,9 @@ public class SignedAttestationsDao {
         .createQuery(
             "SELECT validator_id, source_epoch, target_epoch, signing_root "
                 + "FROM signed_attestations WHERE validator_id = ?")
-        .bind(0, validatorId).mapToBean(SignedAttestation.class).stream();
+        .bind(0, validatorId)
+        .mapToBean(SignedAttestation.class)
+        .stream();
   }
 
   public void deleteAttestationsBelowWatermark(final Handle handle, final int validatorId) {

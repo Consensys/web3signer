@@ -1,0 +1,10 @@
+com.github.jnr|Eclipse Public License - v 2.0
+io.vertx|Apache License, Version 2.0
+jakarta.activation|Eclipse Public License - v 2.0
+jakarta.xml.bind|Eclipse Public License - v 2.0
+javax.xml.bind|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1
+net.java.dev.jna|Apache License, Version 2.0
+org.codehaus.mojo|Apache License, Version 2.0
+org.codehaus.woodstox|Apache License, Version 2.0
+org.hdrhistogram|The 2-Clause BSD License
+org.ow2.asm|Apache License, Version 2.0

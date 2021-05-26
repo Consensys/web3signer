@@ -55,7 +55,9 @@ public class ValidatorsDao {
   }
 
   public Stream<Validator> findAllValidators(final Handle handle) {
-    return handle.createQuery("SELECT id, public_key FROM validators").mapToBean(Validator.class)
+    return handle
+        .createQuery("SELECT id, public_key FROM validators")
+        .mapToBean(Validator.class)
         .stream();
   }
 }

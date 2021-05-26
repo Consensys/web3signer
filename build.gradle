@@ -12,20 +12,22 @@
  */
 
 
+import com.github.jk1.license.filter.LicenseBundleNormalizer
 import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
+import tech.pegasys.internal.license.GroupedLicensesHtmlRenderer
 
 import java.text.SimpleDateFormat
 
 plugins {
   id 'java-test-fixtures'
-  id 'com.diffplug.gradle.spotless' version '3.27.1'
+  id 'com.diffplug.spotless' version '5.12.5'
   id 'com.github.ben-manes.versions' version '0.27.0'
-  id 'com.github.hierynomus.license' version '0.15.0'
+  id 'com.github.jk1.dependency-license-report'
   id 'io.spring.dependency-management' version '1.0.9.RELEASE'
   id 'me.champeau.gradle.jmh' version '0.5.0' apply false
-  id 'net.ltgt.errorprone' version '1.1.1'
-  id 'org.ajoberstar.grgit' version '4.0.2'
+  id 'net.ltgt.errorprone' version '2.0.1'
+  id 'org.ajoberstar.grgit' version '4.1.0'
 }
 
 if (!JavaVersion.current().java11Compatible) {
@@ -39,12 +41,12 @@ def isDevelopBuild = rootProject.version.contains('develop')
 
 group = 'tech.pegasys.web3signer'
 
-defaultTasks 'build', 'checkLicenses', 'javadoc'
+defaultTasks 'build', 'checkLicense', 'javadoc'
 
 def buildAliases = ['dev': [
     'spotlessApply',
     'build',
-    'checkLicenses',
+    'checkLicense',
     'javadoc'
   ]]
 
@@ -81,7 +83,7 @@ allprojects {
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
   apply from: "${rootDir}/gradle/versions.gradle"
-  apply from: "${rootDir}/gradle/check-licenses.gradle"
+  //apply from: "${rootDir}/gradle/check-licenses.gradle"
 
   version = rootProject.version
 
@@ -112,7 +114,7 @@ allprojects {
 
   dependencies { errorprone("com.google.errorprone:error_prone_core") }
 
-  apply plugin: 'com.diffplug.gradle.spotless'
+  apply plugin: 'com.diffplug.spotless'
   spotless {
     java {
       // This path needs to be relative to each project
@@ -121,7 +123,7 @@ allprojects {
         exclude '**/.gradle/**'
       }
       removeUnusedImports()
-      googleJavaFormat('1.7')
+      googleJavaFormat('1.10.0')
       importOrder 'tech.pegasys', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
@@ -224,6 +226,17 @@ allprojects {
 
 task deploy() {}
 
+licenseReport {
+  // configurations = ALL
+  outputDir = "${buildDir}/reports/licenses"
+  allowedLicensesFile = new File("${rootDir}/gradle/license-report-config/allowed-licenses.json")
+  filters = [
+    new LicenseBundleNormalizer(["bundlePath": new File("${rootDir}/gradle/license-report-config/license-normalizer.json"), "createDefaultTransformationRules": true])
+  ]
+  renderers = [
+    new GroupedLicensesHtmlRenderer(["projectName":"Web3Signer", "multiLicensesFile": new File("${rootDir}/gradle/license-report-config/multi-licenses.txt")])
+  ]
+}
 
 subprojects {
   tasks.withType(Test) {
@@ -360,10 +373,10 @@ distributions {
   }
 }
 
-installDist { dependsOn checkLicenses }
+installDist { dependsOn checkLicense }
 
 distTar {
-  dependsOn checkLicenses
+  dependsOn checkLicense
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -372,7 +385,7 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses
+  dependsOn checkLicense
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
