@@ -15,15 +15,24 @@
 import com.github.jk1.license.filter.LicenseBundleNormalizer
 import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
-import tech.pegasys.internal.license.GroupedLicensesHtmlRenderer
+import tech.pegasys.internal.license.reporter.GroupedLicenseHtmlRenderer
 
 import java.text.SimpleDateFormat
+
+buildscript {
+  repositories {
+    maven { url "https://artifacts.consensys.net/public/maven/maven/" }
+  }
+  dependencies {
+    classpath 'tech.pegasys.internal.license.reporter:license-reporter:develop'
+  }
+}
 
 plugins {
   id 'java-test-fixtures'
   id 'com.diffplug.spotless' version '5.12.5'
   id 'com.github.ben-manes.versions' version '0.27.0'
-  id 'com.github.jk1.dependency-license-report'
+  id 'com.github.jk1.dependency-license-report' version '1.16'
   id 'io.spring.dependency-management' version '1.0.9.RELEASE'
   id 'me.champeau.gradle.jmh' version '0.5.0' apply false
   id 'net.ltgt.errorprone' version '2.0.1'
@@ -226,14 +235,13 @@ allprojects {
 task deploy() {}
 
 licenseReport {
-  // configurations = ALL
   outputDir = "${buildDir}/reports/licenses"
   allowedLicensesFile = new File("${rootDir}/gradle/license-report-config/allowed-licenses.json")
   filters = [
     new LicenseBundleNormalizer(["bundlePath": new File("${rootDir}/gradle/license-report-config/license-normalizer.json"), "createDefaultTransformationRules": true])
   ]
   renderers = [
-    new GroupedLicensesHtmlRenderer(["projectName":"Web3Signer", "multiLicensesFile": new File("${rootDir}/gradle/license-report-config/multi-licenses.txt")])
+    new GroupedLicenseHtmlRenderer()
   ]
 }
 

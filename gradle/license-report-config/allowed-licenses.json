@@ -65,5 +65,47 @@
       "moduleVersion": "1.4.7",
       "moduleName": "org.xipki.iaik:sunpkcs11-wrapper"
     }
+  ],
+  "overrideLicenses": [
+    {
+      "moduleName": "com.github.jnr:jnr-posix",
+      "moduleLicense": "Eclipse Public License - v 2.0"
+    },
+    {
+      "moduleName": "io.vertx",
+      "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
+      "moduleName": "jakarta.activation:jakarta.activation-api",
+      "moduleLicense": "Eclipse Distribution License - v 1.0"
+    },
+    {
+      "moduleName": "jakarta.xml.bind:jakarta.xml.bind-api",
+      "moduleLicense": "Eclipse Distribution License - v 1.0"
+    },
+    {
+      "moduleName": "javax.xml.bind:jaxb-api",
+      "moduleLicense": "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1"
+    },
+    {
+      "moduleName": "net.java.dev.jna",
+      "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
+      "moduleName": "org.codehaus.mojo:animal-sniffer-annotations",
+      "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
+      "moduleName": "org.codehaus.woodstox:stax2-api",
+      "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
+      "moduleName": "org.hdrhistogram:HdrHistogram",
+      "moduleLicense": "The 2-Clause BSD License"
+    },
+    {
+      "moduleName": "org.ow2.asm",
+      "moduleLicense": "Apache License, Version 2.0"
+    }
   ]
 }
