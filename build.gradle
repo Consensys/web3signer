@@ -131,6 +131,7 @@ allprojects {
         exclude '**/.gradle/**'
       }
       removeUnusedImports()
+      // See gradle.properties for exports/opens flags required by JDK 16 and Google Java Format plugin
       googleJavaFormat('1.10.0')
       importOrder 'tech.pegasys', 'java', ''
       trimTrailingWhitespace()
