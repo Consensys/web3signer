@@ -8,7 +8,7 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder
 import tech.pegasys.web3signer.dsl.signer.Signer
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers
 
-import scala.collection.JavaConverters.iterableAsScalaIterableConverter
+import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
@@ -16,6 +16,7 @@ class FcBlsSignSimulation extends Simulation {
   private val keyStoreDirectory: Path = Files.createTempDirectory("bls")
   new MetadataFileHelpers().createRandomUnencryptedBlsKeys(keyStoreDirectory, 1000)
 
+  System.setProperty("acctests.runWeb3SignerAsProcess", "true")
   private val runner = new Signer(new SignerConfigurationBuilder()
     .withKeyStoreDirectory(keyStoreDirectory).withMode("filecoin").build(), null)
   runner.start()

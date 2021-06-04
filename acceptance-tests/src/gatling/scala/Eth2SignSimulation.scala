@@ -12,14 +12,13 @@
  */
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
-
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import tech.pegasys.web3signer.core.signing.KeyType
 import tech.pegasys.web3signer.dsl.signer.{Signer, SignerConfigurationBuilder}
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers
 
-import scala.collection.JavaConverters.iterableAsScalaIterableConverter
+import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
 
@@ -27,6 +26,7 @@ class Eth2SignSimulation extends Simulation {
   private val keyStoreDirectory: Path = Files.createTempDirectory("bls")
   new MetadataFileHelpers().createRandomUnencryptedBlsKeys(keyStoreDirectory, 1000)
 
+  System.setProperty("acctests.runWeb3SignerAsProcess", "true")
   private val signer = new Signer(new SignerConfigurationBuilder()
     .withKeyStoreDirectory(keyStoreDirectory)
     .withMode("eth2")
@@ -40,7 +40,7 @@ class Eth2SignSimulation extends Simulation {
     signer.shutdown()
   }
 
-  private val httpProtocol = http.baseUrl(signer.getUrl())
+  private val httpProtocol = http.baseUrl(signer.getUrl)
   private val slot = new AtomicInteger(0)
   private val slots: Iterator[Map[String, Int]] = Iterator.continually(Map("slot" -> slot.getAndIncrement()))
   private val addresses = signer.listPublicKeys(KeyType.BLS).asScala.map(a => Map("address" -> a)).toArray.circular
