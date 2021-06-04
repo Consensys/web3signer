@@ -57,11 +57,13 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
     final List<String> paramsWithCmd = Lists.asList(executableLocation(), paramsAsArray);
 
     final String userDir = System.getProperty("user.dir");
+    LOG.info("User Dir: {}", userDir);
     // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
     final File web3SignerDirectory =
         userDir.toLowerCase().endsWith("web3signer")
             ? new File(userDir)
             : new File(userDir).getParentFile();
+    LOG.info("Web3Signer Dir: {}", web3SignerDirectory);
 
     final ProcessBuilder processBuilder =
         new ProcessBuilder(paramsWithCmd)
