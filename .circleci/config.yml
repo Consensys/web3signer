@@ -176,6 +176,7 @@ jobs:
           command: |
             ./gradlew --no-daemon clean
             ./gradlew --no-daemon installDist
+            ls -alh ./build/install/web3signer/bin
             ./gradlew --no-daemon gatlingRun
       - notify
       - capture_test_reports
