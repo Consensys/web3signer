@@ -94,8 +94,8 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
     // user.dir can either return projectRoot or projectRoot/acceptance-tests
     if (userDir.resolve(executableLocation()).toFile().exists()) {
       return userDir;
-    } else if (userDir.resolve("../" + executableLocation()).toFile().exists()) {
-      return userDir.resolve("..").toAbsolutePath();
+    } else if (userDir.getParent().resolve(executableLocation()).toFile().exists()) {
+      return userDir.getParent();
     } else {
       throw new RuntimeException(
           executableLocation() + " does not exist. Make sure installDist task has been executed");
