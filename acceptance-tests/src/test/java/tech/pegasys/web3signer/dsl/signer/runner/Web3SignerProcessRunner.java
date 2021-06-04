@@ -55,17 +55,7 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
     final String[] paramsAsArray = params.toArray(new String[0]);
     final List<String> paramsWithCmd = Lists.asList(executableLocation(), paramsAsArray);
 
-    final Path userDir = Path.of(System.getProperty("user.dir"));
-    final Path web3signerDir;
-    // set userDir from where build/install resolves. in some cases, we need to go to parent dir
-    if (userDir.resolve("build/install").toFile().exists()) {
-      web3signerDir = userDir;
-    } else if (userDir.resolve("../build/install").toFile().exists()) {
-      web3signerDir = userDir.resolve("..").toAbsolutePath();
-    } else {
-      throw new RuntimeException("build/install does not exist");
-    }
-
+    final Path web3signerDir = getProjectRootPath();
     LOG.info("Web3Signer process dir: {}", web3signerDir);
 
     final ProcessBuilder processBuilder =
@@ -95,6 +85,20 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
 
       LOG.error("Error starting Web3Signer process", e);
       throw new UncheckedIOException("Failed to start the Web3Signer process", e);
+    }
+  }
+
+  private Path getProjectRootPath() {
+    final Path userDir = Path.of(System.getProperty("user.dir"));
+    // project path from where build directory resolves.
+    // user.dir can either return projectRoot or projectRoot/acceptance-tests
+    if (userDir.resolve(executableLocation()).toFile().exists()) {
+      return userDir;
+    } else if (userDir.resolve("../" + executableLocation()).toFile().exists()) {
+      return userDir.resolve("..").toAbsolutePath();
+    } else {
+      throw new RuntimeException(
+          executableLocation() + " does not exist. Make sure installDist task has been executed");
     }
   }
 

@@ -158,8 +158,7 @@ jobs:
           name: Acceptance Tests
           no_output_timeout: 20m
           command: |
-            ./gradlew --no-daemon clean
-            ./gradlew --no-daemon installDist
+            ./gradlew --no-daemon clean installDist
             ./gradlew --no-daemon --parallel acceptanceTest
       - notify
       - capture_test_results
@@ -175,10 +174,7 @@ jobs:
           name: Performance Tests
           no_output_timeout: 20m
           command: |
-            ./gradlew --no-daemon clean
-            ./gradlew --no-daemon installDist
-            pwd
-            ls -alh ./build/install/web3signer/bin
+            ./gradlew --no-daemon clean installDist
             ./gradlew --no-daemon gatlingRun
       - notify
       - capture_test_reports
