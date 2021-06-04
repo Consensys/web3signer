@@ -129,6 +129,7 @@ allprojects {
       target fileTree('.') {
         include '**/*.java'
         exclude '**/.gradle/**'
+        exclude '**/build/**'
       }
       removeUnusedImports()
       // See gradle.properties for exports/opens flags required by JDK 16 and Google Java Format plugin
