@@ -18,7 +18,6 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
@@ -56,18 +55,22 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
     final String[] paramsAsArray = params.toArray(new String[0]);
     final List<String> paramsWithCmd = Lists.asList(executableLocation(), paramsAsArray);
 
-    final String userDir = System.getProperty("user.dir");
-    LOG.info("User Dir: {}", userDir);
-    // For gatling the pwd is actually the web3signer directory for other tasks this a lower dir
-    final File web3SignerDirectory =
-        userDir.toLowerCase().endsWith("web3signer")
-            ? new File(userDir)
-            : new File(userDir).getParentFile();
-    LOG.info("Web3Signer Dir: {}", web3SignerDirectory);
+    final Path userDir = Path.of(System.getProperty("user.dir"));
+    final Path web3signerDir;
+    // set userDir from where build/install resolves. in some cases, we need to go to parent dir
+    if (userDir.resolve("build/install").toFile().exists()) {
+      web3signerDir = userDir;
+    } else if (userDir.resolve("../build/install").toFile().exists()) {
+      web3signerDir = userDir.resolve("..").toAbsolutePath();
+    } else {
+      throw new RuntimeException("build/install does not exist");
+    }
+
+    LOG.info("Web3Signer process dir: {}", web3signerDir);
 
     final ProcessBuilder processBuilder =
         new ProcessBuilder(paramsWithCmd)
-            .directory(web3SignerDirectory)
+            .directory(web3signerDir.toFile())
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
 
