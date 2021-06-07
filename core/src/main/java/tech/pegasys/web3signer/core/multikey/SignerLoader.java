@@ -120,9 +120,7 @@ public class SignerLoader {
     final AtomicLong configFilesHandled = new AtomicLong();
 
     final Set<ArtifactSigner> artifactSigners =
-        configFilesContents
-            .entrySet()
-            .parallelStream()
+        configFilesContents.entrySet().parallelStream()
             .flatMap(
                 metadataContent -> {
                   final long filesProcessed = configFilesHandled.incrementAndGet();

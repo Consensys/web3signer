@@ -12,20 +12,31 @@
  */
 
 
+import com.github.jk1.license.filter.LicenseBundleNormalizer
 import groovy.transform.Memoized
 import net.ltgt.gradle.errorprone.CheckSeverity
+import tech.pegasys.internal.license.reporter.GroupedLicenseHtmlRenderer
 
 import java.text.SimpleDateFormat
 
+buildscript {
+  repositories {
+    maven { url "https://artifacts.consensys.net/public/maven/maven/" }
+  }
+  dependencies {
+    classpath 'tech.pegasys.internal.license.reporter:license-reporter:1.0.0'
+  }
+}
+
 plugins {
   id 'java-test-fixtures'
-  id 'com.diffplug.gradle.spotless' version '3.27.1'
+  id 'com.diffplug.spotless' version '5.12.5'
   id 'com.github.ben-manes.versions' version '0.27.0'
-  id 'com.github.hierynomus.license' version '0.15.0'
+  id 'com.github.jk1.dependency-license-report' version '1.16'
   id 'io.spring.dependency-management' version '1.0.9.RELEASE'
   id 'me.champeau.gradle.jmh' version '0.5.0' apply false
-  id 'net.ltgt.errorprone' version '1.1.1'
-  id 'org.ajoberstar.grgit' version '4.0.2'
+  id 'net.ltgt.errorprone' version '2.0.1'
+  id 'org.ajoberstar.grgit' version '4.1.0'
 }
 
 if (!JavaVersion.current().java11Compatible) {
@@ -39,12 +50,12 @@ def isDevelopBuild = rootProject.version.contains('develop')
 
 group = 'tech.pegasys.web3signer'
 
-defaultTasks 'build', 'checkLicenses', 'javadoc'
+defaultTasks 'build', 'checkLicense', 'javadoc'
 
 def buildAliases = ['dev': [
     'spotlessApply',
     'build',
-    'checkLicenses',
+    'checkLicense',
     'javadoc'
   ]]
 
@@ -81,7 +92,6 @@ allprojects {
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
   apply from: "${rootDir}/gradle/versions.gradle"
-  apply from: "${rootDir}/gradle/check-licenses.gradle"
 
   version = rootProject.version
 
@@ -112,16 +122,18 @@ allprojects {
 
   dependencies { errorprone("com.google.errorprone:error_prone_core") }
 
-  apply plugin: 'com.diffplug.gradle.spotless'
+  apply plugin: 'com.diffplug.spotless'
   spotless {
     java {
       // This path needs to be relative to each project
       target fileTree('.') {
         include '**/*.java'
         exclude '**/.gradle/**'
+        exclude '**/build/**'
       }
       removeUnusedImports()
-      googleJavaFormat('1.7')
+      // See gradle.properties for exports/opens flags required by JDK 16 and Google Java Format plugin
+      googleJavaFormat('1.10.0')
       importOrder 'tech.pegasys', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
@@ -224,6 +236,16 @@ allprojects {
 
 task deploy() {}
 
+licenseReport {
+  outputDir = "${buildDir}/reports/licenses"
+  allowedLicensesFile = new File("${rootDir}/gradle/license-report-config/allowed-licenses.json")
+  filters = [
+    new LicenseBundleNormalizer(["bundlePath": new File("${rootDir}/gradle/license-report-config/license-normalizer.json"), "createDefaultTransformationRules": true])
+  ]
+  renderers = [
+    new GroupedLicenseHtmlRenderer()
+  ]
+}
 
 subprojects {
   tasks.withType(Test) {
@@ -354,16 +376,20 @@ distributions {
   main {
     contents {
       from("./LICENSE") { into "." }
-      from("build/reports/license/license-dependency.html") { into "." }
+      from("build/reports/licenses") {
+        into "./licenses"
+        exclude "**/dependencies-without-allowed-license.json"
+        exclude "**/project-licenses-for-check-license-task.json"
+      }
       from("./slashing-protection/src/main/resources/migrations") { into "./migrations" }
     }
   }
 }
 
-installDist { dependsOn checkLicenses }
+installDist { dependsOn checkLicense }
 
 distTar {
-  dependsOn checkLicenses
+  dependsOn checkLicense
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.tar.gz')
   }
@@ -372,11 +398,13 @@ distTar {
 }
 
 distZip {
-  dependsOn checkLicenses
+  dependsOn checkLicense
   doFirst {
     delete fileTree(dir: 'build/distributions', include: '*.zip')
   }
 }
+
+check.dependsOn checkLicense
 
 // rename the top level dir from web3signer-<version> to web3signer and this makes it really
 // simple for use in docker

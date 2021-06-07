@@ -154,8 +154,10 @@ public class SignedBlocksDaoTest {
 
     signedBlocksDao.deleteBlocksBelowWatermark(handle, 1);
     final Map<Integer, List<SignedBlock>> blocks =
-        handle.createQuery("SELECT * FROM signed_blocks ORDER BY validator_id")
-            .mapToBean(SignedBlock.class).stream()
+        handle
+            .createQuery("SELECT * FROM signed_blocks ORDER BY validator_id")
+            .mapToBean(SignedBlock.class)
+            .stream()
             .collect(Collectors.groupingBy(SignedBlock::getValidatorId));
 
     assertThat(blocks.get(1)).hasSize(1);
@@ -175,8 +177,10 @@ public class SignedBlocksDaoTest {
 
     signedBlocksDao.deleteBlocksBelowWatermark(handle, 1);
     final Map<Integer, List<SignedBlock>> blocks =
-        handle.createQuery("SELECT * FROM signed_blocks ORDER BY validator_id")
-            .mapToBean(SignedBlock.class).stream()
+        handle
+            .createQuery("SELECT * FROM signed_blocks ORDER BY validator_id")
+            .mapToBean(SignedBlock.class)
+            .stream()
             .collect(Collectors.groupingBy(SignedBlock::getValidatorId));
 
     assertThat(blocks.get(1)).hasSize(1);

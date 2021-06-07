@@ -68,7 +68,9 @@ public class SignedBlocksDao {
     return handle
         .createQuery(
             "SELECT validator_id, slot, signing_root FROM signed_blocks WHERE validator_id = ?")
-        .bind(0, validatorId).mapToBean(SignedBlock.class).stream();
+        .bind(0, validatorId)
+        .mapToBean(SignedBlock.class)
+        .stream();
   }
 
   public void deleteBlocksBelowWatermark(final Handle handle, final int validatorId) {

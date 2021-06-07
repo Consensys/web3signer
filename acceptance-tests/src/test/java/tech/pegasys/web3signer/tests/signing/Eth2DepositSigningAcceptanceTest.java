@@ -73,7 +73,8 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
   private Stream<DynamicTest> createTest(final ObjectMapper objectMapper, final Path tf) {
     try {
       return objectMapper
-          .<List<Map<String, String>>>readValue(tf.toFile(), new TypeReference<>() {}).stream()
+          .<List<Map<String, String>>>readValue(tf.toFile(), new TypeReference<>() {})
+          .stream()
           .map(
               depositData -> {
                 final String displayName = testDisplayName(tf) + "-" + depositData.get("pubkey");

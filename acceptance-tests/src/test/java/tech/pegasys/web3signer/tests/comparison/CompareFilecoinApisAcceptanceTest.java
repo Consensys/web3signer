@@ -65,9 +65,7 @@ public class CompareFilecoinApisAcceptanceTest extends CompareApisAcceptanceTest
   @Test
   void compareWalletSignAndVerifyResponsesWithRandomDataToSign() {
 
-    addressMap
-        .keySet()
-        .parallelStream()
+    addressMap.keySet().parallelStream()
         .forEach(
             address -> {
               final Bytes dataToSign = Bytes.random(32);

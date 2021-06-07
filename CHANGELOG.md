@@ -2,6 +2,9 @@
 
 ## Next Release
 
+### Features Added
+- Upgraded gradle and various plugin versions. Switched to new dependency license reporting plugin. Project can now be compiled against JDK 16.
+
 ## 21.3.0
 
 ### Features Added
