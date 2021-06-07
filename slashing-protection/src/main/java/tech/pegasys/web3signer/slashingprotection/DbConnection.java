@@ -79,10 +79,10 @@ public class DbConnection {
       final String username,
       final String password,
       final Path hikariConfigurationFile) {
-    Properties hikariConfigurationProperties =
+    final Properties hikariConfigurationProperties =
         loadHikariConfigurationProperties(hikariConfigurationFile);
 
-    HikariConfig hikariConfig = new HikariConfig(hikariConfigurationProperties);
+    final HikariConfig hikariConfig = new HikariConfig(hikariConfigurationProperties);
     hikariConfig.setJdbcUrl(jdbcUrl);
     hikariConfig.setUsername(username);
     hikariConfig.setPassword(password);
