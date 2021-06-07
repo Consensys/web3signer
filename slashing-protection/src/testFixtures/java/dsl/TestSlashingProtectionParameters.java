@@ -38,7 +38,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
       final String dbUser,
       final String dbPassword,
       Path dbPoolConfigurationFile) {
-    this(dbUrl, dbUser, dbPassword, null, 0, 0, Long.MAX_VALUE);
+    this(dbUrl, dbUser, dbPassword, dbPoolConfigurationFile, 0, 0, Long.MAX_VALUE);
   }
 
   public TestSlashingProtectionParameters(
