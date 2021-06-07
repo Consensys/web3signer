@@ -14,6 +14,7 @@ package dsl;
 
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 public class TestSlashingProtectionParameters implements SlashingProtectionParameters {
@@ -25,10 +26,19 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   private final int pruningEpochsToKeep;
   private final int pruningSlotsPerEpoch;
   private final long pruningInterval;
+  private final Path dbPoolConfigurationFile;
 
   public TestSlashingProtectionParameters(
       final String dbUrl, final String dbUser, final String dbPassword) {
     this(dbUrl, dbUser, dbPassword, 0, 0);
+  }
+
+  public TestSlashingProtectionParameters(
+      final String dbUrl,
+      final String dbUser,
+      final String dbPassword,
+      Path dbPoolConfigurationFile) {
+    this(dbUrl, dbUser, dbPassword, null, 0, 0, Long.MAX_VALUE);
   }
 
   public TestSlashingProtectionParameters(
@@ -47,9 +57,28 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
       final int pruningEpochsToKeep,
       final int pruningSlotsPerEpoch,
       final long pruningInterval) {
+    this(
+        dbUrl,
+        dbUser,
+        dbPassword,
+        null,
+        pruningEpochsToKeep,
+        pruningSlotsPerEpoch,
+        pruningInterval);
+  }
+
+  public TestSlashingProtectionParameters(
+      final String dbUrl,
+      final String dbUser,
+      final String dbPassword,
+      final Path dbPoolConfigurationFile,
+      final int pruningEpochsToKeep,
+      final int pruningSlotsPerEpoch,
+      final long pruningInterval) {
     this.dbUrl = dbUrl;
     this.dbUser = dbUser;
     this.dbPassword = dbPassword;
+    this.dbPoolConfigurationFile = dbPoolConfigurationFile;
     this.pruningEnabled = true;
     this.pruningEpochsToKeep = pruningEpochsToKeep;
     this.pruningSlotsPerEpoch = pruningSlotsPerEpoch;
@@ -99,5 +128,10 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   @Override
   public TimeUnit getPruningIntervalTimeUnit() {
     return TimeUnit.SECONDS;
+  }
+
+  @Override
+  public Path getDbPoolConfigurationFile() {
+    return dbPoolConfigurationFile;
   }
 }

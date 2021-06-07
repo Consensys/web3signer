@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 public interface SlashingProtectionParameters {
@@ -23,6 +24,8 @@ public interface SlashingProtectionParameters {
   String getDbUsername();
 
   String getDbPassword();
+
+  Path getDbPoolConfigurationFile();
 
   boolean isPruningEnabled();
 

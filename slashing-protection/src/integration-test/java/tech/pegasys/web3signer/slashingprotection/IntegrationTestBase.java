@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,10 +65,13 @@ public class IntegrationTestBase {
     try {
       db = setup();
       databaseUrl = String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-      jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
+      final Path dbCPConfigurationFile =
+          Path.of(getClass().getResource("/hikari.properties").getPath());
+      jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD, dbCPConfigurationFile);
       slashingProtection =
           SlashingProtectionFactory.createSlashingProtection(
-              new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD));
+              new TestSlashingProtectionParameters(
+                  databaseUrl, USERNAME, PASSWORD, dbCPConfigurationFile));
       insertGvr(GVR);
     } catch (final IOException e) {
       throw new UncheckedIOException(e);

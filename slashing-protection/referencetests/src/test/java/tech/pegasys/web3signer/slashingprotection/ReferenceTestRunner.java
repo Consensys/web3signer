@@ -81,7 +81,12 @@ public class ReferenceTestRunner {
         new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD);
     slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
-    jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD);
+    jdbi =
+        DbConnection.createConnection(
+            slashingProtectionParameters.getDbUrl(),
+            slashingProtectionParameters.getDbUsername(),
+            slashingProtectionParameters.getDbPassword(),
+            slashingProtectionParameters.getDbPoolConfigurationFile());
   }
 
   public void cleanup() {

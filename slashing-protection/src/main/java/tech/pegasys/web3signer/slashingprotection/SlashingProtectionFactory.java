@@ -31,7 +31,8 @@ public class SlashingProtectionFactory {
         DbConnection.createConnection(
             slashingProtectionParameters.getDbUrl(),
             slashingProtectionParameters.getDbUsername(),
-            slashingProtectionParameters.getDbPassword());
+            slashingProtectionParameters.getDbPassword(),
+            slashingProtectionParameters.getDbPoolConfigurationFile());
 
     verifyVersion(jdbi);
 
@@ -40,7 +41,8 @@ public class SlashingProtectionFactory {
         DbConnection.createPruningConnection(
             slashingProtectionParameters.getDbUrl(),
             slashingProtectionParameters.getDbUsername(),
-            slashingProtectionParameters.getDbPassword());
+            slashingProtectionParameters.getDbPassword(),
+            slashingProtectionParameters.getDbPoolConfigurationFile());
 
     return createSlashingProtection(
         jdbi,

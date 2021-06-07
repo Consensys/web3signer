@@ -145,6 +145,10 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(signerConfig.getSlashingProtectionDbUsername());
       params.add("--slashing-protection-db-password");
       params.add(signerConfig.getSlashingProtectionDbPassword());
+      if (signerConfig.getSlashingProtectionDbPoolConfigurationFile().isPresent()) {
+        params.add("--slashing-protection-db-pool-configuration-file");
+        params.add(signerConfig.getSlashingProtectionDbPoolConfigurationFile().toString());
+      }
     }
 
     if (signerConfig.getSlashingExportPath().isPresent()) {

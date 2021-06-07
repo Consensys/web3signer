@@ -42,6 +42,7 @@ public class SignerConfigurationBuilder {
   private TlsCertificateDefinition overriddenCaTrustStore;
   private String slashingProtectionDbUsername = "";
   private String slashingProtectionDbPassword = "";
+  private Path slashingProtectionDbPoolConfigurationFile = null;
   private String mode;
   private AzureKeyVaultParameters azureKeyVaultParameters;
   private Map<String, String> web3SignerEnvironment;
@@ -135,6 +136,12 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withSlashingProtectionDbPoolConfigurationFile(
+      final Path slashingProtectionDbPoolConfigurationFile) {
+    this.slashingProtectionDbPoolConfigurationFile = slashingProtectionDbPoolConfigurationFile;
+    return this;
+  }
+
   public SignerConfigurationBuilder withSlashingEnabled(final boolean enableSlashing) {
     this.enableSlashing = enableSlashing;
     return this;
@@ -218,6 +225,7 @@ public class SignerConfigurationBuilder {
         slashingPruningSlotsPerEpoch,
         slashingPruningInterval,
         swaggerUIEnabled,
-        useConfigFile);
+        useConfigFile,
+        Optional.ofNullable(slashingProtectionDbPoolConfigurationFile));
   }
 }

@@ -213,6 +213,13 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               YAML_STRING_FMT,
               "eth2.slashing-protection-db-password",
               signerConfig.getSlashingProtectionDbPassword()));
+      if (signerConfig.getSlashingProtectionDbPoolConfigurationFile().isPresent()) {
+        yamlConfig.append(
+            String.format(
+                YAML_STRING_FMT,
+                "eth2.slashing-protection-db-pool-configuration-file",
+                signerConfig.getSlashingProtectionDbPoolConfigurationFile()));
+      }
     }
 
     if (signerConfig.isSlashingProtectionPruningEnabled()) {

@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.commandline;
 
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 import picocli.CommandLine.Option;
@@ -47,6 +48,11 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
       description = "The password to use when connecting to the slashing protection database",
       paramLabel = "<jdbc password>")
   String dbPassword;
+
+  @Option(
+      names = "--slashing-protection-db-pool-configuration-file",
+      description = "Optional configuration file for Hikari database connection pool.")
+  private Path dbPoolConfigurationFile = null;
 
   @Option(
       names = {"--slashing-protection-pruning-enabled"},
@@ -94,6 +100,11 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   @Override
   public String getDbPassword() {
     return dbPassword;
+  }
+
+  @Override
+  public Path getDbPoolConfigurationFile() {
+    return dbPoolConfigurationFile;
   }
 
   @Override

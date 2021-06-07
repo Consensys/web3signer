@@ -18,9 +18,16 @@ import tech.pegasys.web3signer.slashingprotection.ColumnMappers.Bytes32ColumnMap
 import tech.pegasys.web3signer.slashingprotection.ColumnMappers.BytesColumnMapper;
 import tech.pegasys.web3signer.slashingprotection.ColumnMappers.UInt64ColumnMapper;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Properties;
 import javax.sql.DataSource;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.argument.Arguments;
@@ -33,16 +40,23 @@ public class DbConnection {
   private static final long DEFAULT_PG_SOCKET_TIMEOUT_SECONDS = Duration.ofMinutes(5).getSeconds();
 
   public static Jdbi createConnection(
-      final String jdbcUrl, final String username, final String password) {
-    final DataSource datasource = createDataSource(jdbcUrl, username, password);
+      final String jdbcUrl,
+      final String username,
+      final String password,
+      final Path configurationFile) {
+    final DataSource datasource = createDataSource(jdbcUrl, username, password, configurationFile);
     final Jdbi jdbi = Jdbi.create(datasource);
     configureJdbi(jdbi);
     return jdbi;
   }
 
   public static Jdbi createPruningConnection(
-      final String jdbcUrl, final String username, final String password) {
-    final HikariDataSource datasource = createDataSource(jdbcUrl, username, password);
+      final String jdbcUrl,
+      final String username,
+      final String password,
+      final Path configurationFile) {
+    final HikariDataSource datasource =
+        createDataSource(jdbcUrl, username, password, configurationFile);
     datasource.setMaximumPoolSize(1); // we only need 1 connection in pool for pruning
     final Jdbi jdbi = Jdbi.create(datasource);
     configureJdbi(jdbi);
@@ -61,12 +75,36 @@ public class DbConnection {
   }
 
   private static HikariDataSource createDataSource(
-      final String jdbcUrl, final String username, final String password) {
-    final HikariDataSource dataSource = new HikariDataSource();
-    dataSource.setJdbcUrl(jdbcUrl);
-    dataSource.setUsername(username);
-    dataSource.setPassword(password);
-    dataSource.addDataSourceProperty(PG_SOCKET_TIMEOUT_PARAM, DEFAULT_PG_SOCKET_TIMEOUT_SECONDS);
-    return dataSource;
+      final String jdbcUrl,
+      final String username,
+      final String password,
+      final Path hikariConfigurationFile) {
+    Properties hikariConfigurationProperties =
+        loadHikariConfigurationProperties(hikariConfigurationFile);
+
+    HikariConfig hikariConfig = new HikariConfig(hikariConfigurationProperties);
+    hikariConfig.setJdbcUrl(jdbcUrl);
+    hikariConfig.setUsername(username);
+    hikariConfig.setPassword(password);
+
+    return new HikariDataSource(hikariConfig);
+  }
+
+  @VisibleForTesting
+  static Properties loadHikariConfigurationProperties(final Path hikariConfigurationFile) {
+    final Properties hikariConfigurationProperties = new Properties();
+    if (hikariConfigurationFile != null) {
+      try (FileInputStream inputStream = new FileInputStream(hikariConfigurationFile.toFile())) {
+        hikariConfigurationProperties.load(inputStream);
+      } catch (final IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    }
+
+    if (!hikariConfigurationProperties.containsKey("dataSource." + PG_SOCKET_TIMEOUT_PARAM)) {
+      hikariConfigurationProperties.put(
+          "dataSource." + PG_SOCKET_TIMEOUT_PARAM, DEFAULT_PG_SOCKET_TIMEOUT_SECONDS);
+    }
+    return hikariConfigurationProperties;
   }
 }

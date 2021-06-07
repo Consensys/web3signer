@@ -3,6 +3,7 @@
 ## Next Release
 
 ### Features Added
+- Introduced `--slashing-protection-db-pool-configuration-file` to specify Hikari connection pool configuration file.
 - Upgraded gradle and various plugin versions. Switched to new dependency license reporting plugin. Project can now be compiled against JDK 16.
 
 ## 21.3.0
