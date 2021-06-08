@@ -21,6 +21,7 @@ import tech.pegasys.web3signer.slashingprotection.ColumnMappers.BytesColumnMappe
 import tech.pegasys.web3signer.slashingprotection.ColumnMappers.UInt64ColumnMapper;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -102,8 +103,15 @@ public class DbConnection {
     if (hikariConfigurationFile != null) {
       try (FileInputStream inputStream = new FileInputStream(hikariConfigurationFile.toFile())) {
         hikariConfigurationProperties.load(inputStream);
+      } catch (final FileNotFoundException e) {
+        throw new UncheckedIOException(
+            "Hikari configuration file not found: " + hikariConfigurationFile, e);
       } catch (final IOException e) {
-        throw new UncheckedIOException(e);
+        final String errorMessage =
+            String.format(
+                "Unexpected IO error while reading Hikari configuration file [%s]",
+                hikariConfigurationFile);
+        throw new UncheckedIOException(errorMessage, e);
       }
     }
 
