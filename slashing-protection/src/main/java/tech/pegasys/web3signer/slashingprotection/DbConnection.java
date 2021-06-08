@@ -39,7 +39,7 @@ import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
 public class DbConnection {
   // https://jdbc.postgresql.org/documentation/head/connect.html#connection-parameters
   private static final String PG_SOCKET_TIMEOUT_PARAM = "socketTimeout";
-  private static final long DEFAULT_PG_SOCKET_TIMEOUT_SECONDS = Duration.ofMinutes(5).getSeconds();
+  static final long DEFAULT_PG_SOCKET_TIMEOUT_SECONDS = Duration.ofMinutes(5).getSeconds();
 
   public static Jdbi createConnection(
       final String jdbcUrl,

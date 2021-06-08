@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.slashingprotection.DbConnection.DEFAULT_PG_SOCKET_TIMEOUT_SECONDS;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -29,7 +30,22 @@ class DbConnectionTest {
             Objects.requireNonNull(getClass().getResource("/hikariConfigurationFile.properties"))
                 .toURI());
     final Properties properties = DbConnection.loadHikariConfigurationProperties(propertiesFile);
-    assertThat(properties).containsKey("autoCommit");
-    assertThat(properties).containsKey("dataSource.socketTimeout");
+    assertThat(properties.get("autoCommit")).isEqualTo("false");
+    assertThat(properties.get("dataSource.socketTimeout")).isEqualTo(DEFAULT_PG_SOCKET_TIMEOUT_SECONDS);
+    assertThat(properties.get("minimumIdle")).isEqualTo("5");
+    assertThat(properties.get("connectionTestQuery")).isEqualTo("SELECT 1");
+  }
+
+  @Test
+  void dataSourceSocketTimeoutLoadsFromPropertiesFile() throws URISyntaxException {
+    final Path propertiesFile =
+            Path.of(
+                    Objects.requireNonNull(getClass().getResource("/hikari_socket_to.properties"))
+                            .toURI());
+    final Properties properties = DbConnection.loadHikariConfigurationProperties(propertiesFile);
+    assertThat(properties.get("autoCommit")).isEqualTo("false");
+    assertThat(properties.get("dataSource.socketTimeout")).isEqualTo("600");
+    assertThat(properties.get("minimumIdle")).isEqualTo("5");
+    assertThat(properties.get("connectionTestQuery")).isEqualTo("SELECT 1");
   }
 }
