@@ -51,7 +51,8 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
 
   @Option(
       names = "--slashing-protection-db-pool-configuration-file",
-      description = "Optional configuration file for Hikari database connection pool.")
+      description = "Optional configuration file for Hikari database connection pool.",
+      paramLabel = "<hikari configuration properties file>")
   private Path dbPoolConfigurationFile = null;
 
   @Option(

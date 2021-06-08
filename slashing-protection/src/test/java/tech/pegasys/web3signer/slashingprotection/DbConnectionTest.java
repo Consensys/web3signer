@@ -31,7 +31,8 @@ class DbConnectionTest {
                 .toURI());
     final Properties properties = DbConnection.loadHikariConfigurationProperties(propertiesFile);
     assertThat(properties.get("autoCommit")).isEqualTo("false");
-    assertThat(properties.get("dataSource.socketTimeout")).isEqualTo(DEFAULT_PG_SOCKET_TIMEOUT_SECONDS);
+    assertThat(properties.get("dataSource.socketTimeout"))
+        .isEqualTo(DEFAULT_PG_SOCKET_TIMEOUT_SECONDS);
     assertThat(properties.get("minimumIdle")).isEqualTo("5");
     assertThat(properties.get("connectionTestQuery")).isEqualTo("SELECT 1");
   }
@@ -39,9 +40,8 @@ class DbConnectionTest {
   @Test
   void dataSourceSocketTimeoutLoadsFromPropertiesFile() throws URISyntaxException {
     final Path propertiesFile =
-            Path.of(
-                    Objects.requireNonNull(getClass().getResource("/hikari_socket_to.properties"))
-                            .toURI());
+        Path.of(
+            Objects.requireNonNull(getClass().getResource("/hikari_socket_to.properties")).toURI());
     final Properties properties = DbConnection.loadHikariConfigurationProperties(propertiesFile);
     assertThat(properties.get("autoCommit")).isEqualTo("false");
     assertThat(properties.get("dataSource.socketTimeout")).isEqualTo("600");
