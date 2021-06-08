@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import static org.apache.commons.lang.StringUtils.isEmpty;
+
 import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.BytesArgumentFactory;
 import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.UInt64ArgumentFactory;
 import tech.pegasys.web3signer.slashingprotection.ColumnMappers.Bytes32ColumnMapper;
@@ -84,8 +86,12 @@ public class DbConnection {
 
     final HikariConfig hikariConfig = new HikariConfig(hikariConfigurationProperties);
     hikariConfig.setJdbcUrl(jdbcUrl);
-    hikariConfig.setUsername(username);
-    hikariConfig.setPassword(password);
+    if (!isEmpty(username)) {
+      hikariConfig.setUsername(username);
+    }
+    if (!isEmpty(password)) {
+      hikariConfig.setPassword(password);
+    }
 
     return new HikariDataSource(hikariConfig);
   }
