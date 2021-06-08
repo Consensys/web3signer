@@ -20,15 +20,14 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Properties;
 
+import com.zaxxer.hikari.HikariConfig;
 import org.junit.jupiter.api.Test;
 
 class DbConnectionTest {
   @Test
   void dbPoolConfigurationFileIsLoaded() throws URISyntaxException {
     final Path propertiesFile =
-        Path.of(
-            Objects.requireNonNull(getClass().getResource("/hikariConfigurationFile.properties"))
-                .toURI());
+        Path.of(getClass().getResource("/hikariConfigurationFile.properties").toURI());
     final Properties properties = DbConnection.loadHikariConfigurationProperties(propertiesFile);
     assertThat(properties.get("autoCommit")).isEqualTo("false");
     assertThat(properties.get("dataSource.socketTimeout"))
@@ -47,5 +46,21 @@ class DbConnectionTest {
     assertThat(properties.get("dataSource.socketTimeout")).isEqualTo("600");
     assertThat(properties.get("minimumIdle")).isEqualTo("5");
     assertThat(properties.get("connectionTestQuery")).isEqualTo("SELECT 1");
+  }
+
+  @Test
+  void cliJdbcUrlResetsJdbcUrlLoadedFromFile() {
+    final String cliJdbcUrl = "jdbc:postgresql://127.0.0.2/web3signer";
+    final String propertiesFileJdbcUrl = "jdbc:postgresql://127.0.0.1/web3signer";
+    final Path propertiesFile =
+        Path.of(getClass().getResource("/hikariConfigurationFile.properties").getPath());
+    final Properties properties = DbConnection.loadHikariConfigurationProperties(propertiesFile);
+    final HikariConfig hikariConfig = new HikariConfig(properties);
+
+    assertThat(hikariConfig.getJdbcUrl()).isEqualTo(propertiesFileJdbcUrl);
+
+    // set the jdbc url that we would receive from cli
+    hikariConfig.setJdbcUrl(cliJdbcUrl);
+    assertThat(hikariConfig.getJdbcUrl()).isEqualTo(cliJdbcUrl);
   }
 }
