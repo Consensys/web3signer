@@ -13,8 +13,8 @@
 package tech.pegasys.web3signer.dsl.utils;
 
 import static java.util.Collections.emptyList;
-import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_domain;
-import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_signing_root;
+import static tech.pegasys.teku.spec.datastructures.util.BeaconStateUtil.compute_domain;
+import static tech.pegasys.teku.spec.datastructures.util.BeaconStateUtil.compute_signing_root;
 import static tech.pegasys.teku.util.config.Constants.DOMAIN_DEPOSIT;
 
 import tech.pegasys.teku.api.schema.AggregateAndProof;
@@ -30,8 +30,9 @@ import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
-import tech.pegasys.teku.ssz.SSZTypes.Bitlist;
-import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
+import tech.pegasys.teku.ssz.collections.SszBitlist;
+import tech.pegasys.teku.ssz.collections.impl.SszBitlistImpl;
+import tech.pegasys.teku.ssz.type.Bytes4;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregationSlot;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;
@@ -74,7 +75,7 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final Attestation attestation =
         new Attestation(
-            Bitlist.fromBytes(Bytes.fromHexString("0x03"), 2048L),
+            SszBitlistImpl.fromBytes(Bytes.fromHexString("0x03"), 2048L),
             new AttestationData(
                 UInt64.ZERO,
                 UInt64.ZERO,

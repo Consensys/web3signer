@@ -23,8 +23,7 @@ import java.nio.charset.StandardCharsets;
 import org.apache.tuweni.bytes.Bytes;
 
 public class FcBlsArtifactSigner implements ArtifactSigner {
-  public static final Bytes FC_DST =
-      Bytes.wrap("BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_".getBytes(StandardCharsets.US_ASCII));
+  public static final String FC_DST = "BLS_SIG_BLS12381G2_XMD:SHA-256_SSWU_RO_NUL_";
 
   private final BLSKeyPair keyPair;
   private final FilecoinNetwork filecoinNetwork;

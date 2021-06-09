@@ -45,7 +45,7 @@ dependencies {
 
   implementation 'tech.pegasys.teku.internal:bls'
   implementation 'tech.pegasys.teku.internal:core'
-  implementation 'tech.pegasys.teku.internal:datastructures'
+  implementation 'tech.pegasys.teku.internal:spec'
   implementation 'tech.pegasys.teku.internal:serializer'
   implementation 'tech.pegasys.teku.internal:unsigned'
 

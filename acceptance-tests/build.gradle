@@ -44,7 +44,7 @@ dependencies {
   testImplementation 'tech.pegasys.signers.internal:signing-secp256k1-impl'
   testImplementation 'tech.pegasys.teku.internal:bls'
   testImplementation 'tech.pegasys.teku.internal:core'
-  testImplementation 'tech.pegasys.teku.internal:datastructures'
+  testImplementation 'tech.pegasys.teku.internal:spec'
   testImplementation 'tech.pegasys.teku.internal:serializer'
   testImplementation 'tech.pegasys.teku.internal:unsigned'
   testImplementation 'io.rest-assured:rest-assured'
