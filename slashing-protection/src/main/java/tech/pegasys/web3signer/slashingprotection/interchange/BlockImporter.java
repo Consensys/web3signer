@@ -77,10 +77,8 @@ public class BlockImporter {
         }
       } else {
         if (blockValidator.directlyConflictsWithExistingEntry()) {
-          LOG.warn("{} - conflicts with an existing entry", blockIdentifierString);
-        }
-
-        if (blockValidator.alreadyExists()) {
+          LOG.warn("{} - conflicts with an existing entry, not imported", blockIdentifierString);
+        } else if (blockValidator.alreadyExists()) {
           LOG.debug("{} - already exists in database, not imported", blockIdentifierString);
         } else {
           persist(jsonBlock);

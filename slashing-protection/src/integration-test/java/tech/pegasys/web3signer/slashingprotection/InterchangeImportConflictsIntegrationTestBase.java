@@ -46,12 +46,12 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
   }
 
   @Test
-  void canLoadConflictingBlocksInSameSlot() throws IOException {
+  void conflictingBlocksInSameSlotAreNotInsertedToDatabase() throws IOException {
     final URL importFile = Resources.getResource("interchange/conflictingBlocks.json");
     slashingProtection.importData(importFile.openStream());
 
     final List<SignedBlock> blocksInDb = findAllBlocks();
-    assertThat(blocksInDb).hasSize(2);
+    assertThat(blocksInDb).hasSize(1);
     assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
     assertThat(blocksInDb.get(0).getValidatorId()).isEqualTo(1);
     assertThat(blocksInDb.get(0).getSigningRoot())
@@ -59,14 +59,6 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
             Optional.of(
                 Bytes.fromHexString(
                     "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b")));
-
-    assertThat(blocksInDb.get(1).getSlot()).isEqualTo(UInt64.valueOf(12345));
-    assertThat(blocksInDb.get(1).getValidatorId()).isEqualTo(1);
-    assertThat(blocksInDb.get(1).getSigningRoot())
-        .isEqualTo(
-            Optional.of(
-                Bytes.fromHexString(
-                    "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850c")));
   }
 
   @Test

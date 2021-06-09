@@ -194,8 +194,6 @@ public class SignedAttestationsDaoTest {
   @Test
   public void findAttestationsNotMatchingSigningRootThrowsIfNullRequested() {
     insertValidator(Bytes.of(100), 1);
-    insertAttestation(1, Bytes.of(10), UInt64.valueOf(2), UInt64.valueOf(3));
-    insertAttestation(1, Bytes.of(11), UInt64.valueOf(2), UInt64.valueOf(3));
     insertAttestation(1, null, UInt64.valueOf(2), UInt64.valueOf(3));
     assertThatThrownBy(
             () ->

@@ -94,10 +94,9 @@ public class AttestationImporter {
           }
         } else {
           if (attestationValidator.directlyConflictsWithExistingEntry()) {
-            LOG.warn("{} - conflicts with an existing entry", attestationIdentifierString);
-          }
-
-          if (attestationValidator.alreadyExists()) {
+            LOG.warn(
+                "{} - conflicts with an existing entry, not imported", attestationIdentifierString);
+          } else if (attestationValidator.alreadyExists()) {
             LOG.debug("{} - already exists in database, not imported", attestationIdentifierString);
           } else {
             persist(jsonAttestation);

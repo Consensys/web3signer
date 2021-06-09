@@ -126,8 +126,6 @@ public class SignedBlocksDaoTest {
   @Test
   public void throwsIfMatchingAgainstNull() {
     insertValidator(Bytes.of(100), 1);
-    insertBlock(1, 3, Bytes.of(10));
-    insertBlock(1, 3, Bytes.of(11));
     insertBlock(1, 3, null);
 
     assertThatThrownBy(
