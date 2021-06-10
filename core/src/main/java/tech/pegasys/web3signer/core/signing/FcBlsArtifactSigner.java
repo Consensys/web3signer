@@ -18,8 +18,6 @@ import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.web3signer.core.signing.filecoin.FilecoinAddress;
 import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 
-import java.nio.charset.StandardCharsets;
-
 import org.apache.tuweni.bytes.Bytes;
 
 public class FcBlsArtifactSigner implements ArtifactSigner {

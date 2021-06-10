@@ -19,6 +19,7 @@ import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.web3signer.BLSKeyUtil;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
@@ -45,7 +46,7 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
-  protected final BLSKeyPair keyPair = BLSKeyPair.random(0);
+  protected final BLSKeyPair keyPair = BLSKeyUtil.randomBLSKeyPair();
 
   final List<String> blockSlashingMetrics =
       List.of(

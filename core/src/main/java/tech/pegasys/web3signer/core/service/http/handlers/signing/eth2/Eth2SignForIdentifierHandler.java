@@ -24,6 +24,9 @@ import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentif
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
+import tech.pegasys.teku.spec.Spec;
+import tech.pegasys.teku.spec.datastructures.state.ForkData;
+import tech.pegasys.teku.ssz.type.Bytes4;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
@@ -56,6 +59,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   private final SlashingProtectionMetrics slashingMetrics;
   private final Optional<SlashingProtection> slashingProtection;
   private final ObjectMapper objectMapper;
+  private final Spec eth2Spec;
 
   public static final int NOT_FOUND = 404;
   public static final int BAD_REQUEST = 400;
@@ -66,12 +70,14 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       final HttpApiMetrics httpMetrics,
       final SlashingProtectionMetrics slashingMetrics,
       final Optional<SlashingProtection> slashingProtection,
-      final ObjectMapper objectMapper) {
+      final ObjectMapper objectMapper,
+      final Spec eth2Spec) {
     this.signerForIdentifier = signerForIdentifier;
     this.httpMetrics = httpMetrics;
     this.slashingMetrics = slashingMetrics;
     this.slashingProtection = slashingProtection;
     this.objectMapper = objectMapper;
+    this.eth2Spec = eth2Spec;
   }
 
   @Override
@@ -189,7 +195,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       case BLOCK:
         checkArgument(body.getBlock() != null, "block must be specified");
         return SigningRootUtil.signingRootForSignBlock(
-            body.getBlock().asInternalBeaconBlock(), body.getForkInfo().asInternalForkInfo());
+            body.getBlock().asInternalBeaconBlock(eth2Spec),
+            body.getForkInfo().asInternalForkInfo());
       case ATTESTATION:
         checkArgument(body.getAttestation() != null, "attestation must be specified");
         return SigningRootUtil.signingRootForSignAttestationData(
@@ -257,5 +264,21 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     final String mimeComponent = mimeHeader.component() + "/" + mimeHeader.subComponent();
     return Objects.equals("application/json", mimeComponent)
         || Objects.equals("*/*", mimeComponent);
+  }
+
+  private static Bytes32 compute_fork_data_root(
+      Bytes4 current_version, Bytes32 genesis_validators_root) {
+    return new ForkData(current_version, genesis_validators_root).hashTreeRoot();
+  }
+
+  private static Bytes32 compute_domain(
+      Bytes4 domain_type, Bytes4 fork_version, Bytes32 genesis_validators_root) {
+    final Bytes32 fork_data_root = compute_fork_data_root(fork_version, genesis_validators_root);
+    return compute_domain(domain_type, fork_data_root);
+  }
+
+  private static Bytes32 compute_domain(final Bytes4 domain_type, final Bytes32 fork_data_root) {
+    return Bytes32.wrap(
+        Bytes.concatenate(domain_type.getWrappedBytes(), fork_data_root.slice(0, 28)));
   }
 }

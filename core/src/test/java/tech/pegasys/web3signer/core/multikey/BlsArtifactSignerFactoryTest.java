@@ -40,6 +40,7 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureRandom;
 
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
@@ -57,7 +58,7 @@ class BlsArtifactSignerFactoryTest {
       Bytes.fromHexString("1f2b6d2bac495b05ec65f49e8d9def356b29b65a0b80260a884d6d393073ff7b");
   private static final String KEYSTORE_FILE_NAME = "keystore.json";
   private static final String PASSWORD_FILE_NAME = "keystore.password";
-  private static final BLSKeyPair blsKeyPair = BLSKeyPair.random(48);
+  private static final BLSKeyPair blsKeyPair = BLSKeyPair.random(new SecureRandom());
 
   @TempDir static Path configDir;
   private static Path keystoreFile;

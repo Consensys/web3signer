@@ -30,8 +30,10 @@ import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.teku.spec.Spec;
+import tech.pegasys.teku.spec.SpecFactory;
 import tech.pegasys.teku.ssz.collections.SszBitlist;
-import tech.pegasys.teku.ssz.collections.impl.SszBitlistImpl;
+import tech.pegasys.teku.ssz.schema.collections.SszBitlistSchema;
 import tech.pegasys.teku.ssz.type.Bytes4;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregationSlot;
@@ -40,6 +42,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2Signi
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
 
+import java.util.Optional;
 import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -49,6 +52,8 @@ public class Eth2RequestUtils {
 
   public static final String GENESIS_VALIDATORS_ROOT =
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
+
+  static final Spec spec = SpecFactory.create("mainnet", Optional.empty());
 
   public static Eth2SigningRequestBody createCannedRequest(final ArtifactType artifactType) {
     switch (artifactType) {
@@ -73,9 +78,10 @@ public class Eth2RequestUtils {
 
   private static Eth2SigningRequestBody createAggregateAndProof() {
     final ForkInfo forkInfo = forkInfo();
+    final SszBitlist sszBitlist = SszBitlistSchema.create(2048L).ofBits(4, 0, 0, 1, 1);
     final Attestation attestation =
         new Attestation(
-            SszBitlistImpl.fromBytes(Bytes.fromHexString("0x03"), 2048L),
+            sszBitlist,
             new AttestationData(
                 UInt64.ZERO,
                 UInt64.ZERO,
@@ -231,6 +237,7 @@ public class Eth2RequestUtils {
 
   public static Eth2SigningRequestBody createBlockRequest(
       final UInt64 slot, final Bytes32 stateRoot) {
+
     final ForkInfo forkInfo = forkInfo();
     final BeaconBlock block =
         new BeaconBlock(
@@ -257,7 +264,7 @@ public class Eth2RequestUtils {
                 emptyList()));
     final Bytes signingRoot =
         SigningRootUtil.signingRootForSignBlock(
-            block.asInternalBeaconBlock(), forkInfo.asInternalForkInfo());
+            block.asInternalBeaconBlock(spec), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.BLOCK, signingRoot, forkInfo, block, null, null, null, null, null, null);
   }

@@ -14,11 +14,10 @@ package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
 import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
-
+import tech.pegasys.teku.ssz.type.Bytes4;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
-import tech.pegasys.teku.ssz.type.Bytes4;
 
 public class DepositMessage {
   private final BLSPubKey pubkey;
@@ -58,7 +57,8 @@ public class DepositMessage {
     return genesisForkVersion;
   }
 
-  public tech.pegasys.teku.spec.datastructures.operations.DepositMessage asInternalDepositMessage() {
+  public tech.pegasys.teku.spec.datastructures.operations.DepositMessage
+      asInternalDepositMessage() {
     return new tech.pegasys.teku.spec.datastructures.operations.DepositMessage(
         pubkey.asBLSPublicKey(), withdrawalCredentials, amount);
   }
