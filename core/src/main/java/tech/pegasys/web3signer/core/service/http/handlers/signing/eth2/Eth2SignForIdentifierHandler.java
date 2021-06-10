@@ -60,6 +60,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   private final Optional<SlashingProtection> slashingProtection;
   private final ObjectMapper objectMapper;
   private final Spec eth2Spec;
+  private final SigningRootUtil signingRootUtil;
 
   public static final int NOT_FOUND = 404;
   public static final int BAD_REQUEST = 400;
@@ -78,6 +79,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     this.slashingProtection = slashingProtection;
     this.objectMapper = objectMapper;
     this.eth2Spec = eth2Spec;
+    this.signingRootUtil = new SigningRootUtil(eth2Spec);
   }
 
   @Override
@@ -194,30 +196,30 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     switch (body.getType()) {
       case BLOCK:
         checkArgument(body.getBlock() != null, "block must be specified");
-        return SigningRootUtil.signingRootForSignBlock(
+        return signingRootUtil.signingRootForSignBlock(
             body.getBlock().asInternalBeaconBlock(eth2Spec),
             body.getForkInfo().asInternalForkInfo());
       case ATTESTATION:
         checkArgument(body.getAttestation() != null, "attestation must be specified");
-        return SigningRootUtil.signingRootForSignAttestationData(
+        return signingRootUtil.signingRootForSignAttestationData(
             body.getAttestation().asInternalAttestationData(),
             body.getForkInfo().asInternalForkInfo());
       case AGGREGATE_AND_PROOF:
         checkArgument(body.getAggregateAndProof() != null, "aggregateAndProof must be specified");
-        return SigningRootUtil.signingRootForSignAggregateAndProof(
+        return signingRootUtil.signingRootForSignAggregateAndProof(
             body.getAggregateAndProof().asInternalAggregateAndProof(),
             body.getForkInfo().asInternalForkInfo());
       case AGGREGATION_SLOT:
         checkArgument(body.getAggregationSlot() != null, "aggregationSlot must be specified");
-        return SigningRootUtil.signingRootForSignAggregationSlot(
+        return signingRootUtil.signingRootForSignAggregationSlot(
             body.getAggregationSlot().getSlot(), body.getForkInfo().asInternalForkInfo());
       case RANDAO_REVEAL:
         checkArgument(body.getRandaoReveal() != null, "randaoReveal must be specified");
-        return SigningRootUtil.signingRootForRandaoReveal(
+        return signingRootUtil.signingRootForRandaoReveal(
             body.getRandaoReveal().getEpoch(), body.getForkInfo().asInternalForkInfo());
       case VOLUNTARY_EXIT:
         checkArgument(body.getVoluntaryExit() != null, "voluntaryExit must be specified");
-        return SigningRootUtil.signingRootForSignVoluntaryExit(
+        return signingRootUtil.signingRootForSignVoluntaryExit(
             body.getVoluntaryExit().asInternalVoluntaryExit(),
             body.getForkInfo().asInternalForkInfo());
       case DEPOSIT:

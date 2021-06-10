@@ -54,6 +54,7 @@ public class Eth2RequestUtils {
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
 
   static final Spec spec = SpecFactory.create("mainnet", Optional.empty());
+  static final SigningRootUtil signingRootUtil = new SigningRootUtil(spec);
 
   public static Eth2SigningRequestBody createCannedRequest(final ArtifactType artifactType) {
     switch (artifactType) {
@@ -100,7 +101,7 @@ public class Eth2RequestUtils {
     final AggregateAndProof aggregateAndProof =
         new AggregateAndProof(UInt64.ONE, attestation, selectionProof);
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignAggregateAndProof(
+        signingRootUtil.signingRootForSignAggregateAndProof(
             aggregateAndProof.asInternalAggregateAndProof(), forkInfo.asInternalForkInfo());
 
     return new Eth2SigningRequestBody(
@@ -120,7 +121,7 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final AggregationSlot aggregationSlot = new AggregationSlot(UInt64.valueOf(119));
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignAggregationSlot(
+        signingRootUtil.signingRootForSignAggregationSlot(
             aggregationSlot.getSlot(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.AGGREGATION_SLOT,
@@ -143,7 +144,7 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final RandaoReveal randaoReveal = new RandaoReveal(UInt64.valueOf(3));
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForRandaoReveal(
+        signingRootUtil.signingRootForRandaoReveal(
             randaoReveal.getEpoch(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.RANDAO_REVEAL,
@@ -162,7 +163,7 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final VoluntaryExit voluntaryExit = new VoluntaryExit(UInt64.valueOf(119), UInt64.ZERO);
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignVoluntaryExit(
+        signingRootUtil.signingRootForSignVoluntaryExit(
             voluntaryExit.asInternalVoluntaryExit(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.VOLUNTARY_EXIT,
@@ -216,7 +217,7 @@ public class Eth2RequestUtils {
                 Bytes32.fromHexString(
                     "0xb2eedb01adbd02c828d5eec09b4c70cbba12ffffba525ebf48aca33028e8ad89")));
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignAttestationData(
+        signingRootUtil.signingRootForSignAttestationData(
             attestationData.asInternalAttestationData(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.ATTESTATION,
@@ -263,7 +264,7 @@ public class Eth2RequestUtils {
                 emptyList(),
                 emptyList()));
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignBlock(
+        signingRootUtil.signingRootForSignBlock(
             block.asInternalBeaconBlock(spec), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.BLOCK, signingRoot, forkInfo, block, null, null, null, null, null, null);
