@@ -14,9 +14,9 @@ package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static tech.pegasys.teku.spec.datastructures.util.BeaconStateUtil.compute_domain;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
+import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.compute_domain;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.api.schema.AttestationData;
@@ -24,12 +24,10 @@ import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.constants.Domain;
-import tech.pegasys.teku.spec.datastructures.state.ForkData;
-import tech.pegasys.teku.spec.datastructures.state.SigningData;
-import tech.pegasys.teku.ssz.type.Bytes4;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.List;
@@ -224,18 +222,13 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             body.getForkInfo().asInternalForkInfo());
       case DEPOSIT:
         checkArgument(body.getDeposit() != null, "deposit must be specified");
-        return signingRootForDeposit(body);
+        final Bytes32 depositDomain =
+            compute_domain(Domain.DEPOSIT, body.getDeposit().getGenesisForkVersion(), Bytes32.ZERO);
+        return DepositSigningRootUtil.compute_signing_root(
+            body.getDeposit().asInternalDepositMessage(), depositDomain);
       default:
         throw new IllegalStateException("Signing root unimplemented for type " + body.getType());
     }
-  }
-
-  private Bytes32 signingRootForDeposit(final Eth2SigningRequestBody body) {
-    final Bytes32 depositDomain =
-        compute_domain(Domain.DEPOSIT, body.getDeposit().getGenesisForkVersion(), Bytes32.ZERO);
-    return new SigningData(
-            body.getDeposit().asInternalDepositMessage().hashTreeRoot(), depositDomain)
-        .hashTreeRoot();
   }
 
   private UInt64 toUInt64(final tech.pegasys.teku.infrastructure.unsigned.UInt64 uInt64) {
@@ -271,21 +264,5 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     final String mimeComponent = mimeHeader.component() + "/" + mimeHeader.subComponent();
     return Objects.equals("application/json", mimeComponent)
         || Objects.equals("*/*", mimeComponent);
-  }
-
-  private Bytes32 compute_domain(
-      final Bytes4 domain_type, final Bytes4 fork_version, final Bytes32 genesis_validators_root) {
-    final Bytes32 fork_data_root = compute_fork_data_root(fork_version, genesis_validators_root);
-    return compute_domain(domain_type, fork_data_root);
-  }
-
-  private Bytes32 compute_domain(final Bytes4 domain_type, final Bytes32 fork_data_root) {
-    return Bytes32.wrap(
-        Bytes.concatenate(domain_type.getWrappedBytes(), fork_data_root.slice(0, 28)));
-  }
-
-  private Bytes32 compute_fork_data_root(
-      final Bytes4 current_version, final Bytes32 genesis_validators_root) {
-    return new ForkData(current_version, genesis_validators_root).hashTreeRoot();
   }
 }

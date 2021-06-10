@@ -13,9 +13,7 @@
 package tech.pegasys.web3signer.dsl.utils;
 
 import static java.util.Collections.emptyList;
-import static tech.pegasys.teku.spec.datastructures.util.BeaconStateUtil.compute_domain;
-import static tech.pegasys.teku.spec.datastructures.util.BeaconStateUtil.compute_signing_root;
-import static tech.pegasys.teku.util.config.Constants.DOMAIN_DEPOSIT;
+import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.compute_domain;
 
 import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.Attestation;
@@ -32,6 +30,7 @@ import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecFactory;
+import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.teku.ssz.collections.SszBitlist;
 import tech.pegasys.teku.ssz.schema.collections.SszBitlistSchema;
 import tech.pegasys.teku.ssz.type.Bytes4;
@@ -41,6 +40,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMe
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
+import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 
 import java.util.Optional;
 import java.util.Random;
@@ -179,16 +179,18 @@ public class Eth2RequestUtils {
   }
 
   private static Eth2SigningRequestBody createDepositRequest() {
+    final Bytes4 genesisForkVersion = Bytes4.fromHexString("0x00000001");
     final DepositMessage depositMessage =
         new DepositMessage(
             BLSPubKey.fromHexString(
                 "0x8f82597c919c056571a05dfe83e6a7d32acf9ad8931be04d11384e95468cd68b40129864ae12745f774654bbac09b057"),
             Bytes32.random(new Random(2)),
             UInt64.valueOf(32),
-            Bytes4.fromHexString("0x00000001"));
+            genesisForkVersion);
+    final Bytes32 depositDomain = compute_domain(Domain.DEPOSIT, genesisForkVersion, Bytes32.ZERO);
     final Bytes signingRoot =
-        compute_signing_root(
-            depositMessage.asInternalDepositMessage(), compute_domain(DOMAIN_DEPOSIT));
+        DepositSigningRootUtil.compute_signing_root(
+            depositMessage.asInternalDepositMessage(), depositDomain);
     return new Eth2SigningRequestBody(
         ArtifactType.DEPOSIT,
         signingRoot,
