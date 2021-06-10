@@ -77,9 +77,7 @@ dependencyManagement {
 
     dependencySet(group: 'tech.pegasys.teku.internal', version: '21.6.0') {
       entry 'bls'
-      entry('core') {
-        exclude 'teku:data'
-      }
+      entry 'core'
       entry 'spec'
       entry 'serializer'
       entry 'unsigned'
