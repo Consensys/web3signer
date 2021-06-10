@@ -17,7 +17,7 @@ import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestati
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
-import tech.pegasys.web3signer.BLSKeyUtil;
+import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
@@ -42,7 +42,7 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
 
-  protected final BLSKeyPair keyPair = BLSKeyUtil.randomBLSKeyPair();
+  protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
 
   @Test
   void slashingDataIsPruned(@TempDir Path testDirectory) throws IOException {

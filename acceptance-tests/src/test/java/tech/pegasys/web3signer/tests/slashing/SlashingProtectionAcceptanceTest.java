@@ -18,7 +18,7 @@ import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createBlockRequ
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
-import tech.pegasys.web3signer.BLSKeyUtil;
+import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
@@ -39,7 +39,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
-  protected final BLSKeyPair keyPair = BLSKeyUtil.randomBLSKeyPair();
+  protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
   static final int SLASHING_PROTECTION_ENFORCED = 412;
 
   final List<String> attestationSlashingMetrics =
