@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.commandline.subcommands;
 import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.CLIENT_SECRET;
 import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.SpecFactory;
 import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
@@ -47,9 +48,10 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Spec CommandSpec commandSpec;
 
   @CommandLine.Option(
-      names = {"-n", "--network"},
+      names = {"--network"},
       paramLabel = "<NETWORK>",
-      description = "Represents which network to use.",
+      description =
+          "Predefined network configuration to use. Possible values: [mainnet, pyrmont, prater, minimal]. Defaults to mainnet.",
       arity = "1")
   private String network = "mainnet";
 
@@ -66,8 +68,13 @@ public class Eth2SubCommand extends ModeSubCommand {
   protected void validateArgs() {
     final String networkConfigName =
         Eth2Network.fromStringLenient(network).map(Eth2Network::configName).orElse(network);
-    // TODO: What kind of exception will be raised for invalid/empty network name
-    eth2Spec = SpecFactory.create(networkConfigName, Optional.empty()); // TODO: altairForkSlot
+    final Optional<UInt64> altairForkEpoch = Optional.empty();
+    try {
+      eth2Spec = SpecFactory.create(networkConfigName, altairForkEpoch);
+    } catch (final IllegalArgumentException e) {
+      throw new ParameterException(
+          commandSpec.commandLine(), "Failed to load network spec: " + networkConfigName, e);
+    }
 
     if (slashingProtectionParameters.isEnabled()
         && slashingProtectionParameters.getDbUrl() == null) {
