@@ -4,6 +4,8 @@
 
 ### Features Added
 - Upgraded gradle and various plugin versions. Switched to new dependency license reporting plugin. Project can now be compiled against JDK 16.
+- Introduced --network cli option for Eth2 mode. Defaults to mainnet. Should match the option used by Teku at runtime.
+- Upgraded Teku libraries.
 
 ## 21.3.0
 
