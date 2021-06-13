@@ -51,7 +51,8 @@ public class Eth2SubCommand extends ModeSubCommand {
       names = {"--network"},
       paramLabel = "<NETWORK>",
       description =
-          "Predefined network configuration to use. Possible values: [mainnet, pyrmont, prater, minimal]. Defaults to mainnet.",
+          "Predefined network configuration to use. Possible values: [mainnet, pyrmont, prater, minimal], file path"
+              + " or URL to a YAML configuration file or directory. Defaults to mainnet.",
       arity = "1")
   private String network = "mainnet";
 
