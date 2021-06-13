@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
@@ -53,7 +54,7 @@ public class SlashingImportAcceptanceTest extends AcceptanceTestBase {
           .registerModule(new InterchangeModule())
           .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
 
-  protected final BLSKeyPair keyPair = BLSKeyPair.random(0);
+  protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
 
   void setupSigner(final Path testDirectory, final boolean enableSlashing) {
     final SignerConfigurationBuilder builder =

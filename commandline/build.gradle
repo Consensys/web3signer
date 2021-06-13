@@ -25,6 +25,9 @@ dependencies {
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   implementation 'commons-lang:commons-lang'
 
+  implementation 'tech.pegasys.teku.internal:spec'
+  implementation 'tech.pegasys.teku.internal:unsigned'
+
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api'

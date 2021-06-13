@@ -15,6 +15,9 @@ package tech.pegasys.web3signer.commandline.subcommands;
 import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.CLIENT_SECRET;
 import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.teku.spec.SpecFactory;
+import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
@@ -22,8 +25,10 @@ import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Mixin;
@@ -40,21 +45,42 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
 
-  @Spec CommandSpec spec;
+  @Spec CommandSpec commandSpec;
+
+  @CommandLine.Option(
+      names = {"--network"},
+      paramLabel = "<NETWORK>",
+      description =
+          "Predefined network configuration to use. Possible values: [mainnet, pyrmont, prater, minimal], file path"
+              + " or URL to a YAML configuration file or directory. Defaults to mainnet.",
+      arity = "1")
+  private String network = "mainnet";
 
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  private tech.pegasys.teku.spec.Spec eth2Spec;
 
   @Override
   public Runner createRunner() {
-    return new Eth2Runner(config, slashingProtectionParameters, azureKeyVaultParameters);
+    return new Eth2Runner(config, slashingProtectionParameters, azureKeyVaultParameters, eth2Spec);
   }
 
   @Override
   protected void validateArgs() {
+    final String networkConfigName =
+        Eth2Network.fromStringLenient(network).map(Eth2Network::configName).orElse(network);
+    final Optional<UInt64> altairForkEpoch = Optional.empty();
+    try {
+      eth2Spec = SpecFactory.create(networkConfigName, altairForkEpoch);
+    } catch (final IllegalArgumentException e) {
+      throw new ParameterException(
+          commandSpec.commandLine(), "Failed to load network spec: " + networkConfigName, e);
+    }
+
     if (slashingProtectionParameters.isEnabled()
         && slashingProtectionParameters.getDbUrl() == null) {
-      throw new ParameterException(spec.commandLine(), "Missing slashing protection database url");
+      throw new ParameterException(
+          commandSpec.commandLine(), "Missing slashing protection database url");
     }
 
     validatePositiveValue(
@@ -98,7 +124,7 @@ public class Eth2SubCommand extends ModeSubCommand {
             String.format(
                 "Azure Key Vault was enabled, but the following parameters were missing [%s].",
                 String.join(",", missingAzureFields));
-        throw new ParameterException(spec.commandLine(), errorMsg);
+        throw new ParameterException(commandSpec.commandLine(), errorMsg);
       }
     }
   }
@@ -106,7 +132,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   private void validatePositiveValue(final long value, final String fieldName) {
     if (value < 1) {
       throw new ParameterException(
-          spec.commandLine(),
+          commandSpec.commandLine(),
           String.format("%s must be 1 or more. Value was %d.", fieldName, value));
     }
   }

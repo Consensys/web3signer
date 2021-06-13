@@ -18,15 +18,22 @@ import tech.pegasys.teku.provider.BLSPubKeyDeserializer;
 import tech.pegasys.teku.provider.BLSPubKeySerializer;
 import tech.pegasys.teku.provider.BLSSignatureDeserializer;
 import tech.pegasys.teku.provider.BLSSignatureSerializer;
-import tech.pegasys.teku.provider.BitlistDeserializer;
-import tech.pegasys.teku.provider.BitlistSerializer;
 import tech.pegasys.teku.provider.Bytes32Deserializer;
 import tech.pegasys.teku.provider.Bytes4Deserializer;
 import tech.pegasys.teku.provider.Bytes4Serializer;
+import tech.pegasys.teku.provider.BytesDeserializer;
+import tech.pegasys.teku.provider.BytesSerializer;
+import tech.pegasys.teku.provider.DoubleDeserializer;
+import tech.pegasys.teku.provider.DoubleSerializer;
+import tech.pegasys.teku.provider.SszBitlistDeserializer;
+import tech.pegasys.teku.provider.SszBitlistSerializer;
+import tech.pegasys.teku.provider.SszBitvectorDeserializer;
+import tech.pegasys.teku.provider.SszBitvectorSerializer;
 import tech.pegasys.teku.provider.UInt64Deserializer;
 import tech.pegasys.teku.provider.UInt64Serializer;
-import tech.pegasys.teku.ssz.SSZTypes.Bitlist;
-import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
+import tech.pegasys.teku.ssz.collections.SszBitlist;
+import tech.pegasys.teku.ssz.collections.SszBitvector;
+import tech.pegasys.teku.ssz.type.Bytes4;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Deserializer;
@@ -49,17 +56,24 @@ public class SigningJsonModule extends SimpleModule {
     addDeserializer(
         tech.pegasys.teku.infrastructure.unsigned.UInt64.class, new UInt64Deserializer());
     addSerializer(tech.pegasys.teku.infrastructure.unsigned.UInt64.class, new UInt64Serializer());
+
+    addSerializer(Bytes32.class, new Bytes32Serializer());
+    addDeserializer(Bytes32.class, new Bytes32Deserializer());
     addDeserializer(Bytes4.class, new Bytes4Deserializer());
     addSerializer(Bytes4.class, new Bytes4Serializer());
-    addDeserializer(Bytes32.class, new Bytes32Deserializer());
-    addSerializer(Bytes32.class, new Bytes32Serializer());
+    addDeserializer(Bytes.class, new BytesDeserializer());
+    addSerializer(Bytes.class, new BytesSerializer());
+    addDeserializer(Double.class, new DoubleDeserializer());
+    addSerializer(Double.class, new DoubleSerializer());
 
     addSerializer(BLSPubKey.class, new BLSPubKeySerializer());
     addDeserializer(BLSPubKey.class, new BLSPubKeyDeserializer());
     addDeserializer(BLSSignature.class, new BLSSignatureDeserializer());
     addSerializer(BLSSignature.class, new BLSSignatureSerializer());
 
-    addSerializer(Bitlist.class, new BitlistSerializer());
-    addDeserializer(Bitlist.class, new BitlistDeserializer());
+    addSerializer(SszBitlist.class, new SszBitlistSerializer());
+    addDeserializer(SszBitlist.class, new SszBitlistDeserializer());
+    addDeserializer(SszBitvector.class, new SszBitvectorDeserializer());
+    addSerializer(SszBitvector.class, new SszBitvectorSerializer());
   }
 }

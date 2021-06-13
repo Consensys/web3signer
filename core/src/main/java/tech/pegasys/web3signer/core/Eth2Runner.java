@@ -21,6 +21,7 @@ import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
@@ -73,16 +74,19 @@ public class Eth2Runner extends Runner {
   private final AzureKeyVaultParameters azureKeyVaultParameters;
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
+  private final Spec eth2Spec;
 
   public Eth2Runner(
       final Config config,
       final SlashingProtectionParameters slashingProtectionParameters,
-      final AzureKeyVaultParameters azureKeyVaultParameters) {
+      final AzureKeyVaultParameters azureKeyVaultParameters,
+      final Spec eth2Spec) {
     super(config);
     this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.slashingProtectionParameters = slashingProtectionParameters;
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
+    this.eth2Spec = eth2Spec;
   }
 
   private Optional<SlashingProtection> createSlashingProtection(
@@ -140,7 +144,8 @@ public class Eth2Runner extends Runner {
                 new HttpApiMetrics(metricsSystem, BLS),
                 new SlashingProtectionMetrics(metricsSystem),
                 slashingProtection,
-                objectMapper),
+                objectMapper,
+                eth2Spec),
             false));
     routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
 
