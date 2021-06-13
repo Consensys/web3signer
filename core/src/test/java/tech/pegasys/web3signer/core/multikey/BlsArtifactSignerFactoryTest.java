@@ -26,6 +26,7 @@ import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
+import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.core.multikey.metadata.ArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.FileKeyStoreMetadata;
@@ -57,7 +58,7 @@ class BlsArtifactSignerFactoryTest {
       Bytes.fromHexString("1f2b6d2bac495b05ec65f49e8d9def356b29b65a0b80260a884d6d393073ff7b");
   private static final String KEYSTORE_FILE_NAME = "keystore.json";
   private static final String PASSWORD_FILE_NAME = "keystore.password";
-  private static final BLSKeyPair blsKeyPair = BLSKeyPair.random(48);
+  private static final BLSKeyPair blsKeyPair = BLSTestUtil.randomKeyPair(48);
 
   @TempDir static Path configDir;
   private static Path keystoreFile;
