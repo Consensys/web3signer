@@ -43,6 +43,7 @@ public class SignerConfiguration {
   private final Optional<String> slashingProtectionDbUrl;
   private final String slashingProtectionDbUsername;
   private final String slashingProtectionDbPassword;
+  private final Optional<Path> slashingProtectionDbPoolConfigurationFile;
   private final Optional<Map<String, String>> web3SignerEnvironment;
   private final boolean enableSlashing;
   private final Optional<Path> slashingExportPath;
@@ -80,7 +81,8 @@ public class SignerConfiguration {
       final long slashingPruningSlotsPerEpoch,
       final long slashingPruningSchedule,
       final boolean swaggerUIEnabled,
-      final boolean useConfigFile) {
+      final boolean useConfigFile,
+      final Optional<Path> slashingDbPoolConfigurationFile) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -107,6 +109,7 @@ public class SignerConfiguration {
     this.slashingPruningInterval = slashingPruningSchedule;
     this.swaggerUIEnabled = swaggerUIEnabled;
     this.useConfigFile = useConfigFile;
+    this.slashingProtectionDbPoolConfigurationFile = slashingDbPoolConfigurationFile;
   }
 
   public String hostname() {
@@ -219,5 +222,9 @@ public class SignerConfiguration {
 
   public boolean useConfigFile() {
     return useConfigFile;
+  }
+
+  public Optional<Path> getSlashingProtectionDbPoolConfigurationFile() {
+    return slashingProtectionDbPoolConfigurationFile;
   }
 }
