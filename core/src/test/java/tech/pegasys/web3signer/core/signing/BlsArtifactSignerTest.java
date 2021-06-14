@@ -19,15 +19,15 @@ import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentif
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSignature;
+import tech.pegasys.web3signer.BLSTestUtil;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 class BlsArtifactSignerTest {
-
   @Test
   void publicKeyIsReturnedAsIdentifier() {
-    final BLSKeyPair keyPair = BLSKeyPair.random(4);
+    final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(4);
     final BlsArtifactSigner blsArtifactSigner = new BlsArtifactSigner(keyPair);
     final String expectedIdentifier = normaliseIdentifier(keyPair.getPublicKey().toString());
     assertThat(blsArtifactSigner.getIdentifier()).isEqualTo(expectedIdentifier);
@@ -36,7 +36,7 @@ class BlsArtifactSignerTest {
   @Test
   void signsData() {
     final Bytes message = Bytes.wrap("Hello, world!".getBytes(UTF_8));
-    final BLSKeyPair keyPair = BLSKeyPair.random(4);
+    final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(4);
     final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), message);
 
     final BlsArtifactSigner blsArtifactSigner = new BlsArtifactSigner(keyPair);

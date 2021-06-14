@@ -18,6 +18,7 @@ import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
@@ -160,7 +161,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   void signMetricIncrementsWhenBlsSignRequestReceived(@TempDir Path testDirectory)
       throws JsonProcessingException {
     final MetadataFileHelpers fileHelpers = new MetadataFileHelpers();
-    final BLSKeyPair keyPair = BLSKeyPair.random(1);
+    final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(1);
 
     fileHelpers.createUnencryptedYamlFileAt(
         testDirectory.resolve(keyPair.getPublicKey().toBytesCompressed().toHexString() + ".yaml"),

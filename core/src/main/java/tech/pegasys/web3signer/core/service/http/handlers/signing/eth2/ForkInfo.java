@@ -41,8 +41,8 @@ public class ForkInfo {
     return genesisValidatorsRoot;
   }
 
-  public tech.pegasys.teku.datastructures.state.ForkInfo asInternalForkInfo() {
-    return new tech.pegasys.teku.datastructures.state.ForkInfo(
+  public tech.pegasys.teku.spec.datastructures.state.ForkInfo asInternalForkInfo() {
+    return new tech.pegasys.teku.spec.datastructures.state.ForkInfo(
         fork.asInternalFork(), genesisValidatorsRoot);
   }
 }

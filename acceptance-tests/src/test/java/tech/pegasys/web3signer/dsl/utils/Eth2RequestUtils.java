@@ -13,9 +13,7 @@
 package tech.pegasys.web3signer.dsl.utils;
 
 import static java.util.Collections.emptyList;
-import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_domain;
-import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_signing_root;
-import static tech.pegasys.teku.util.config.Constants.DOMAIN_DEPOSIT;
+import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.compute_domain;
 
 import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.Attestation;
@@ -30,15 +28,21 @@ import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
-import tech.pegasys.teku.ssz.SSZTypes.Bitlist;
-import tech.pegasys.teku.ssz.SSZTypes.Bytes4;
+import tech.pegasys.teku.spec.Spec;
+import tech.pegasys.teku.spec.SpecFactory;
+import tech.pegasys.teku.spec.constants.Domain;
+import tech.pegasys.teku.ssz.collections.SszBitlist;
+import tech.pegasys.teku.ssz.schema.collections.SszBitlistSchema;
+import tech.pegasys.teku.ssz.type.Bytes4;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregationSlot;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
+import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 
+import java.util.Optional;
 import java.util.Random;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -48,6 +52,9 @@ public class Eth2RequestUtils {
 
   public static final String GENESIS_VALIDATORS_ROOT =
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
+
+  static final Spec spec = SpecFactory.create("mainnet", Optional.empty());
+  static final SigningRootUtil signingRootUtil = new SigningRootUtil(spec);
 
   public static Eth2SigningRequestBody createCannedRequest(final ArtifactType artifactType) {
     switch (artifactType) {
@@ -72,9 +79,10 @@ public class Eth2RequestUtils {
 
   private static Eth2SigningRequestBody createAggregateAndProof() {
     final ForkInfo forkInfo = forkInfo();
+    final SszBitlist sszBitlist = SszBitlistSchema.create(2048L).ofBits(4, 0, 0, 1, 1);
     final Attestation attestation =
         new Attestation(
-            Bitlist.fromBytes(Bytes.fromHexString("0x03"), 2048L),
+            sszBitlist,
             new AttestationData(
                 UInt64.ZERO,
                 UInt64.ZERO,
@@ -93,7 +101,7 @@ public class Eth2RequestUtils {
     final AggregateAndProof aggregateAndProof =
         new AggregateAndProof(UInt64.ONE, attestation, selectionProof);
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignAggregateAndProof(
+        signingRootUtil.signingRootForSignAggregateAndProof(
             aggregateAndProof.asInternalAggregateAndProof(), forkInfo.asInternalForkInfo());
 
     return new Eth2SigningRequestBody(
@@ -113,7 +121,7 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final AggregationSlot aggregationSlot = new AggregationSlot(UInt64.valueOf(119));
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignAggregationSlot(
+        signingRootUtil.signingRootForSignAggregationSlot(
             aggregationSlot.getSlot(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.AGGREGATION_SLOT,
@@ -136,7 +144,7 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final RandaoReveal randaoReveal = new RandaoReveal(UInt64.valueOf(3));
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForRandaoReveal(
+        signingRootUtil.signingRootForRandaoReveal(
             randaoReveal.getEpoch(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.RANDAO_REVEAL,
@@ -155,7 +163,7 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final VoluntaryExit voluntaryExit = new VoluntaryExit(UInt64.valueOf(119), UInt64.ZERO);
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignVoluntaryExit(
+        signingRootUtil.signingRootForSignVoluntaryExit(
             voluntaryExit.asInternalVoluntaryExit(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.VOLUNTARY_EXIT,
@@ -171,16 +179,18 @@ public class Eth2RequestUtils {
   }
 
   private static Eth2SigningRequestBody createDepositRequest() {
+    final Bytes4 genesisForkVersion = Bytes4.fromHexString("0x00000001");
     final DepositMessage depositMessage =
         new DepositMessage(
             BLSPubKey.fromHexString(
                 "0x8f82597c919c056571a05dfe83e6a7d32acf9ad8931be04d11384e95468cd68b40129864ae12745f774654bbac09b057"),
             Bytes32.random(new Random(2)),
             UInt64.valueOf(32),
-            Bytes4.fromHexString("0x00000001"));
+            genesisForkVersion);
+    final Bytes32 depositDomain = compute_domain(Domain.DEPOSIT, genesisForkVersion, Bytes32.ZERO);
     final Bytes signingRoot =
-        compute_signing_root(
-            depositMessage.asInternalDepositMessage(), compute_domain(DOMAIN_DEPOSIT));
+        DepositSigningRootUtil.compute_signing_root(
+            depositMessage.asInternalDepositMessage(), depositDomain);
     return new Eth2SigningRequestBody(
         ArtifactType.DEPOSIT,
         signingRoot,
@@ -209,7 +219,7 @@ public class Eth2RequestUtils {
                 Bytes32.fromHexString(
                     "0xb2eedb01adbd02c828d5eec09b4c70cbba12ffffba525ebf48aca33028e8ad89")));
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignAttestationData(
+        signingRootUtil.signingRootForSignAttestationData(
             attestationData.asInternalAttestationData(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.ATTESTATION,
@@ -230,6 +240,7 @@ public class Eth2RequestUtils {
 
   public static Eth2SigningRequestBody createBlockRequest(
       final UInt64 slot, final Bytes32 stateRoot) {
+
     final ForkInfo forkInfo = forkInfo();
     final BeaconBlock block =
         new BeaconBlock(
@@ -255,8 +266,8 @@ public class Eth2RequestUtils {
                 emptyList(),
                 emptyList()));
     final Bytes signingRoot =
-        SigningRootUtil.signingRootForSignBlock(
-            block.asInternalBeaconBlock(), forkInfo.asInternalForkInfo());
+        signingRootUtil.signingRootForSignBlock(
+            block.asInternalBeaconBlock(spec), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.BLOCK, signingRoot, forkInfo, block, null, null, null, null, null, null);
   }

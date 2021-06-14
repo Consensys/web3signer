@@ -14,19 +14,20 @@ package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_domain;
-import static tech.pegasys.teku.datastructures.util.BeaconStateUtil.compute_signing_root;
-import static tech.pegasys.teku.util.config.Constants.DOMAIN_DEPOSIT;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
+import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.compute_domain;
 import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
+import tech.pegasys.teku.spec.Spec;
+import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.List;
@@ -56,6 +57,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   private final SlashingProtectionMetrics slashingMetrics;
   private final Optional<SlashingProtection> slashingProtection;
   private final ObjectMapper objectMapper;
+  private final Spec eth2Spec;
+  private final SigningRootUtil signingRootUtil;
 
   public static final int NOT_FOUND = 404;
   public static final int BAD_REQUEST = 400;
@@ -66,12 +69,15 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       final HttpApiMetrics httpMetrics,
       final SlashingProtectionMetrics slashingMetrics,
       final Optional<SlashingProtection> slashingProtection,
-      final ObjectMapper objectMapper) {
+      final ObjectMapper objectMapper,
+      final Spec eth2Spec) {
     this.signerForIdentifier = signerForIdentifier;
     this.httpMetrics = httpMetrics;
     this.slashingMetrics = slashingMetrics;
     this.slashingProtection = slashingProtection;
     this.objectMapper = objectMapper;
+    this.eth2Spec = eth2Spec;
+    this.signingRootUtil = new SigningRootUtil(eth2Spec);
   }
 
   @Override
@@ -188,37 +194,38 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     switch (body.getType()) {
       case BLOCK:
         checkArgument(body.getBlock() != null, "block must be specified");
-        return SigningRootUtil.signingRootForSignBlock(
-            body.getBlock().asInternalBeaconBlock(), body.getForkInfo().asInternalForkInfo());
+        return signingRootUtil.signingRootForSignBlock(
+            body.getBlock().asInternalBeaconBlock(eth2Spec),
+            body.getForkInfo().asInternalForkInfo());
       case ATTESTATION:
         checkArgument(body.getAttestation() != null, "attestation must be specified");
-        return SigningRootUtil.signingRootForSignAttestationData(
+        return signingRootUtil.signingRootForSignAttestationData(
             body.getAttestation().asInternalAttestationData(),
             body.getForkInfo().asInternalForkInfo());
       case AGGREGATE_AND_PROOF:
         checkArgument(body.getAggregateAndProof() != null, "aggregateAndProof must be specified");
-        return SigningRootUtil.signingRootForSignAggregateAndProof(
+        return signingRootUtil.signingRootForSignAggregateAndProof(
             body.getAggregateAndProof().asInternalAggregateAndProof(),
             body.getForkInfo().asInternalForkInfo());
       case AGGREGATION_SLOT:
         checkArgument(body.getAggregationSlot() != null, "aggregationSlot must be specified");
-        return SigningRootUtil.signingRootForSignAggregationSlot(
+        return signingRootUtil.signingRootForSignAggregationSlot(
             body.getAggregationSlot().getSlot(), body.getForkInfo().asInternalForkInfo());
       case RANDAO_REVEAL:
         checkArgument(body.getRandaoReveal() != null, "randaoReveal must be specified");
-        return SigningRootUtil.signingRootForRandaoReveal(
+        return signingRootUtil.signingRootForRandaoReveal(
             body.getRandaoReveal().getEpoch(), body.getForkInfo().asInternalForkInfo());
       case VOLUNTARY_EXIT:
         checkArgument(body.getVoluntaryExit() != null, "voluntaryExit must be specified");
-        return SigningRootUtil.signingRootForSignVoluntaryExit(
+        return signingRootUtil.signingRootForSignVoluntaryExit(
             body.getVoluntaryExit().asInternalVoluntaryExit(),
             body.getForkInfo().asInternalForkInfo());
       case DEPOSIT:
         checkArgument(body.getDeposit() != null, "deposit must be specified");
-        return compute_signing_root(
-            body.getDeposit().asInternalDepositMessage(),
-            compute_domain(
-                DOMAIN_DEPOSIT, body.getDeposit().getGenesisForkVersion(), Bytes32.ZERO));
+        final Bytes32 depositDomain =
+            compute_domain(Domain.DEPOSIT, body.getDeposit().getGenesisForkVersion(), Bytes32.ZERO);
+        return DepositSigningRootUtil.compute_signing_root(
+            body.getDeposit().asInternalDepositMessage(), depositDomain);
       default:
         throw new IllegalStateException("Signing root unimplemented for type " + body.getType());
     }
