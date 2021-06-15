@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
 
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.testing.JdbiRule;
@@ -49,7 +50,7 @@ public class DatabaseVersionDaoTest {
   @Test
   public void migratedDatabaseReturnsValue() {
     final int version = databaseVersionDao.findDatabaseVersion(handle);
-    assertThat(version).isEqualTo(7);
+    assertThat(version).isEqualTo(SlashingProtectionFactory.EXPECTED_DATABASE_VERSION);
   }
 
   @Test
