@@ -1,5 +1,5 @@
 
-FROM openjdk:11-jre-slim-buster
+FROM openjdk:11.0.11-jdk-oraclelinux8
 
 COPY web3signer /opt/web3signer/
 WORKDIR /opt/web3signer

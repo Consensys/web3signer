@@ -8,6 +8,7 @@
 - Introduced --network cli option for Eth2 mode. Defaults to mainnet. Should match the option used by Teku at runtime.
 - Upgraded Teku libraries.
 - Eth2 slashing protection now has an additional safeguard that prevents multiple signed blocks or attestations being inserted using database constraints.
+- Use openjdk:11.0.11-jdk-oraclelinux8 as docker base image (recommended by docker image scanning tool Synk). 
 
 ## 21.3.0
 
