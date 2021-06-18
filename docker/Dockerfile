@@ -1,7 +1,6 @@
 
 FROM adoptopenjdk/openjdk11:x86_64-ubuntu-jre-11.0.11_9
 
-# RUN apt-get update && apt-get upgrade -y
 COPY web3signer /opt/web3signer/
 WORKDIR /opt/web3signer
 
