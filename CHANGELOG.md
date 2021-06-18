@@ -8,6 +8,7 @@
 - Introduced --network cli option for Eth2 mode. Defaults to mainnet. Should match the option used by Teku at runtime.
 - Upgraded Teku libraries.
 - Eth2 slashing protection now has an additional safeguard that prevents multiple signed blocks or attestations being inserted using database constraints.
+- Use adoptopenjdk/openjdk11:x86_64-ubuntu-jre-11.0.11_9 as docker base image. 
 
 ## 21.3.0
 
