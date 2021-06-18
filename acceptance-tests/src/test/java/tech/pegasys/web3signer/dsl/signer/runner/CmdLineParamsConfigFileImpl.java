@@ -88,6 +88,8 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       yamlConfig.append(String.format(YAML_BOOLEAN_FMT, "swagger-ui-enabled", Boolean.TRUE));
     }
 
+    yamlConfig.append(String.format(YAML_BOOLEAN_FMT, "access-logs-enabled", Boolean.TRUE));
+
     if (signerConfig.isHttpDynamicPortAllocation()) {
       yamlConfig.append(
           String.format(YAML_STRING_FMT, "data-path", dataPath.toAbsolutePath().toString()));

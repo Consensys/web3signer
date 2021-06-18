@@ -168,6 +168,11 @@ public class Web3SignerBaseCommand implements Config, Runnable {
       description = "Enable swagger UI (default: ${DEFAULT-VALUE})")
   private final Boolean swaggerUiEnabled = false;
 
+  @Option(
+      names = {"--access-logs-enabled"},
+      description = "Enable access logs (default: ${DEFAULT-VALUE})")
+  private final Boolean accessLogsEnabled = false;
+
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
   @Override
@@ -242,6 +247,11 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   @Override
   public Boolean isSwaggerUIEnabled() {
     return swaggerUiEnabled;
+  }
+
+  @Override
+  public Boolean isAccessLogsEnabled() {
+    return accessLogsEnabled;
   }
 
   @Override

@@ -53,6 +53,8 @@ import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
+import io.vertx.ext.web.handler.LoggerFormat;
+import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.apache.logging.log4j.LogManager;
@@ -112,6 +114,10 @@ public abstract class Runner implements Runnable {
       incSignerLoadCount(metricsSystem, artifactSignerProvider.availableIdentifiers().size());
 
       final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
+      // register access log handler first
+      if (config.isAccessLogsEnabled()) {
+        routerFactory.addGlobalHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
+      }
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 
