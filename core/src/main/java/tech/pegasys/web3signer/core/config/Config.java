@@ -51,4 +51,6 @@ public interface Config {
   void validateArgs();
 
   Boolean isSwaggerUIEnabled();
+
+  Boolean isAccessLogsEnabled();
 }
