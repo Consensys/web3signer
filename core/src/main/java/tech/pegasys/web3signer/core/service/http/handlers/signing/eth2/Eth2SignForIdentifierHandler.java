@@ -24,6 +24,7 @@ import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.constants.Domain;
+import tech.pegasys.teku.spec.logic.common.util.SyncCommitteeUtil;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -226,9 +228,27 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             compute_domain(Domain.DEPOSIT, body.getDeposit().getGenesisForkVersion(), Bytes32.ZERO);
         return DepositSigningRootUtil.compute_signing_root(
             body.getDeposit().asInternalDepositMessage(), depositDomain);
+      case SYNC_COMMITTEE_SIGNATURE:
+        final tech.pegasys.teku.infrastructure.unsigned.UInt64 slot = body.getSlot();
+        final Bytes32 beaconBlockRoot = body.getBeaconBlockRoot();
+        checkArgument(slot != null, "slot must be specified");
+        checkArgument(beaconBlockRoot != null, "beacon_block_root must be specified");
+        return signingRootFromSyncCommitteeUtils(
+            slot,
+            utils ->
+                utils.getSyncCommitteeSignatureSigningRoot(
+                    beaconBlockRoot,
+                    eth2Spec.computeEpochAtSlot(slot),
+                    body.getForkInfo().asInternalForkInfo()));
       default:
         throw new IllegalStateException("Signing root unimplemented for type " + body.getType());
     }
+  }
+
+  private Bytes signingRootFromSyncCommitteeUtils(
+      final tech.pegasys.teku.infrastructure.unsigned.UInt64 slot,
+      final Function<SyncCommitteeUtil, Bytes> createSigningRoot) {
+    return createSigningRoot.apply(eth2Spec.getSyncCommitteeUtilRequired(slot));
   }
 
   private UInt64 toUInt64(final tech.pegasys.teku.infrastructure.unsigned.UInt64 uInt64) {
