@@ -169,7 +169,10 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.getAggregateAndProof(),
             request.getVoluntaryExit(),
             request.getRandaoReveal(),
-            request.getDeposit());
+            request.getDeposit(),
+            request.getBeaconBlockRoot(),
+            request.getSlot(),
+            request.getSubcommitteeIndex());
 
     final Response response =
         signer.eth2Sign(keyPair.getPublicKey().toString(), requestWithMismatchedSigningRoot);
@@ -202,7 +205,10 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.getAggregateAndProof(),
             request.getVoluntaryExit(),
             request.getRandaoReveal(),
-            request.getDeposit());
+            request.getDeposit(),
+            request.getBeaconBlockRoot(),
+            request.getSlot(),
+            request.getSubcommitteeIndex());
 
     final Response response =
         signer.eth2Sign(

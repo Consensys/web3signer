@@ -114,6 +114,9 @@ public class Eth2RequestUtils {
         aggregateAndProof,
         null,
         null,
+        null,
+        null,
+        null,
         null);
   }
 
@@ -130,6 +133,9 @@ public class Eth2RequestUtils {
         null,
         null,
         aggregationSlot,
+        null,
+        null,
+        null,
         null,
         null,
         null,
@@ -156,6 +162,9 @@ public class Eth2RequestUtils {
         null,
         null,
         randaoReveal,
+        null,
+        null,
+        null,
         null);
   }
 
@@ -174,6 +183,9 @@ public class Eth2RequestUtils {
         null,
         null,
         voluntaryExit,
+        null,
+        null,
+        null,
         null,
         null);
   }
@@ -201,7 +213,10 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        depositMessage);
+        depositMessage,
+        null,
+        null,
+        null);
   }
 
   public static Eth2SigningRequestBody createAttestationRequest(
@@ -227,6 +242,9 @@ public class Eth2RequestUtils {
         forkInfo,
         null,
         attestationData,
+        null,
+        null,
+        null,
         null,
         null,
         null,
@@ -269,7 +287,19 @@ public class Eth2RequestUtils {
         signingRootUtil.signingRootForSignBlock(
             block.asInternalBeaconBlock(spec), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
-        ArtifactType.BLOCK, signingRoot, forkInfo, block, null, null, null, null, null, null);
+        ArtifactType.BLOCK,
+        signingRoot,
+        forkInfo,
+        block,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
   }
 
   private static ForkInfo forkInfo() {

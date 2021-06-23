@@ -12,12 +12,27 @@
  */
 package tech.pegasys.web3signer.core.service.http;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum ArtifactType {
+  @JsonProperty("block")
   BLOCK,
+  @JsonProperty("attestation")
   ATTESTATION,
+  @JsonProperty("aggregation_slot")
   AGGREGATION_SLOT,
+  @JsonProperty("aggregate_and_proof")
   AGGREGATE_AND_PROOF,
+  @JsonProperty("deposit")
   DEPOSIT,
+  @JsonProperty("randao_reveal")
   RANDAO_REVEAL,
-  VOLUNTARY_EXIT
+  @JsonProperty("voluntary_exit")
+  VOLUNTARY_EXIT,
+  @JsonProperty("sync_committee_signature")
+  SYNC_COMMITTEE_SIGNATURE,
+  @JsonProperty("sync_committee_selection_proof")
+  SYNC_COMMITTEE_SELECTION_PROOF,
+  @JsonProperty("sync_committee_contribution_and_proof")
+  SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF
 }

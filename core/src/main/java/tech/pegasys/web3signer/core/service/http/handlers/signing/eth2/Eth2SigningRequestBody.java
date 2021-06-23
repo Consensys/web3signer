@@ -16,11 +16,13 @@ import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class Eth2SigningRequestBody {
   private final ArtifactType type;
@@ -33,6 +35,9 @@ public class Eth2SigningRequestBody {
   private final VoluntaryExit voluntary_exit;
   private final RandaoReveal randao_reveal;
   private final DepositMessage deposit;
+  private final Bytes32 beaconBlockRoot;
+  private final UInt64 slot;
+  private final UInt64 subcommitteeIndex;
 
   @JsonCreator
   public Eth2SigningRequestBody(
@@ -45,7 +50,10 @@ public class Eth2SigningRequestBody {
       @JsonProperty("aggregate_and_proof") final AggregateAndProof aggregate_and_proof,
       @JsonProperty("voluntary_exit") final VoluntaryExit voluntary_exit,
       @JsonProperty("randao_reveal") final RandaoReveal randao_reveal,
-      @JsonProperty("deposit") final DepositMessage deposit) {
+      @JsonProperty("deposit") final DepositMessage deposit,
+      @JsonProperty("beacon_block_root") final Bytes32 beaconBlockRoot,
+      @JsonProperty("slot") final UInt64 slot,
+      @JsonProperty("subcommittee_index") final UInt64 subcommitteeIndex) {
     this.type = type;
     this.signingRoot = signingRoot;
     this.fork_info = fork_info;
@@ -56,6 +64,9 @@ public class Eth2SigningRequestBody {
     this.voluntary_exit = voluntary_exit;
     this.randao_reveal = randao_reveal;
     this.deposit = deposit;
+    this.beaconBlockRoot = beaconBlockRoot;
+    this.slot = slot;
+    this.subcommitteeIndex = subcommitteeIndex;
   }
 
   @JsonProperty("type")
@@ -106,5 +117,20 @@ public class Eth2SigningRequestBody {
   @JsonProperty("deposit")
   public DepositMessage getDeposit() {
     return deposit;
+  }
+
+  @JsonProperty("beacon_block_root")
+  public Bytes32 getBeaconBlockRoot() {
+    return beaconBlockRoot;
+  }
+
+  @JsonProperty("slot")
+  public UInt64 getSlot() {
+    return slot;
+  }
+
+  @JsonProperty("subcommittee_index")
+  public UInt64 getSubcommitteeIndex() {
+    return subcommitteeIndex;
   }
 }
