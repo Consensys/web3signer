@@ -57,11 +57,11 @@ public class Eth2SubCommand extends ModeSubCommand {
   private String network = "mainnet";
 
   @CommandLine.Option(
-          names = {"--Xnetwork-altair-fork-epoch"},
-          hidden = true,
-          paramLabel = "<epoch>",
-          description = "Override the Altair fork activation epoch.",
-          arity = "1")
+      names = {"--Xnetwork-altair-fork-epoch"},
+      hidden = true,
+      paramLabel = "<epoch>",
+      description = "Override the Altair fork activation epoch.",
+      arity = "1")
   private UInt64 altairForkEpoch;
 
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
