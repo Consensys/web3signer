@@ -56,6 +56,14 @@ public class Eth2SubCommand extends ModeSubCommand {
       arity = "1")
   private String network = "mainnet";
 
+  @CommandLine.Option(
+      names = {"--Xnetwork-altair-fork-epoch"},
+      hidden = true,
+      paramLabel = "<epoch>",
+      description = "Override the Altair fork activation epoch.",
+      arity = "1")
+  private UInt64 altairForkEpoch;
+
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
@@ -69,9 +77,8 @@ public class Eth2SubCommand extends ModeSubCommand {
   protected void validateArgs() {
     final String networkConfigName =
         Eth2Network.fromStringLenient(network).map(Eth2Network::configName).orElse(network);
-    final Optional<UInt64> altairForkEpoch = Optional.empty();
     try {
-      eth2Spec = SpecFactory.create(networkConfigName, altairForkEpoch);
+      eth2Spec = SpecFactory.create(networkConfigName, Optional.ofNullable(altairForkEpoch));
     } catch (final IllegalArgumentException e) {
       throw new ParameterException(
           commandSpec.commandLine(), "Failed to load network spec: " + networkConfigName, e);
