@@ -39,6 +39,7 @@ paths:
                 - $ref: '#/components/schemas/DepositSigning'
                 - $ref: '#/components/schemas/RandaoRevealSigning'
                 - $ref: '#/components/schemas/VoluntaryExitSigning'
+                - $ref: '#/components/schemas/SyncCommitteeSignatureSigning'
               discriminator:
                 propertyName: type
                 mapping:
@@ -49,6 +50,7 @@ paths:
                   DEPOSIT: '#/components/schemas/DepositSigning'
                   RANDAO_REVEAL: '#/components/schemas/RandaoRevealSigning'
                   VOLUNTARY_EXIT: '#/components/schemas/VoluntaryExitSigning'
+                  SYNC_COMMITTEE_SIGNATURE: '#/components/schemas/SyncCommitteeSignatureSigning'
       responses:
         '200':
           description: 'hex encoded string of signature'
@@ -231,6 +233,10 @@ components:
               $ref: "#/components/schemas/VoluntaryExit"
           required:
             - voluntary_exit
+    SyncCommitteeSignatureSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+
     RandaoReveal:
       type: "object"
       properties:
