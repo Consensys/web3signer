@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.core.service.http;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public enum ArtifactType {
   BLOCK,
   ATTESTATION,
