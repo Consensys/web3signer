@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class SyncAggregatorSelectionData {
-  private Bytes32 beaconBlockRoot;
   private final UInt64 slot;
   private final UInt64 subcommitteeIndex;
 
