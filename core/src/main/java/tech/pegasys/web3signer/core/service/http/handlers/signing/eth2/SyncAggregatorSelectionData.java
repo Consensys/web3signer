@@ -16,7 +16,6 @@ import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class SyncAggregatorSelectionData {
   private final UInt64 slot;
