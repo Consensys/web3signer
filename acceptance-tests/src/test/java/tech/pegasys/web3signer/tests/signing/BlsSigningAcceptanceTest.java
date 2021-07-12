@@ -62,11 +62,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @ParameterizedTest
   @EnumSource(
       mode = EXCLUDE,
-      names = {
-        "SYNC_COMMITTEE_SIGNATURE",
-        "SYNC_COMMITTEE_SELECTION_PROOF",
-        "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"
-      })
+      names = {"SYNC_COMMITTEE_SELECTION_PROOF", "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"})
   public void signDataWithKeyLoadedFromUnencryptedFile(final ArtifactType artifactType)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -79,11 +75,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @ParameterizedTest
   @EnumSource(
       mode = EXCLUDE,
-      names = {
-        "SYNC_COMMITTEE_SIGNATURE",
-        "SYNC_COMMITTEE_SELECTION_PROOF",
-        "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"
-      })
+      names = {"SYNC_COMMITTEE_SELECTION_PROOF", "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"})
   public void signDataWithJsonAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -96,11 +88,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @ParameterizedTest
   @EnumSource(
       mode = EXCLUDE,
-      names = {
-        "SYNC_COMMITTEE_SIGNATURE",
-        "SYNC_COMMITTEE_SELECTION_PROOF",
-        "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"
-      })
+      names = {"SYNC_COMMITTEE_SELECTION_PROOF", "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"})
   public void signDataWithDefaultAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -168,11 +156,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @ParameterizedTest
   @EnumSource(
       mode = EXCLUDE,
-      names = {
-        "SYNC_COMMITTEE_SIGNATURE",
-        "SYNC_COMMITTEE_SELECTION_PROOF",
-        "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"
-      })
+      names = {"SYNC_COMMITTEE_SELECTION_PROOF", "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"})
   public void failsIfSigningRootDoesNotMatchSigningData(final ArtifactType artifactType)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);

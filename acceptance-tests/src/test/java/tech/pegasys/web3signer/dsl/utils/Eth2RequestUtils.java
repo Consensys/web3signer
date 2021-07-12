@@ -27,10 +27,12 @@ import tech.pegasys.teku.api.schema.Eth1Data;
 import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
+import tech.pegasys.teku.infrastructure.async.SafeFuture;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecFactory;
 import tech.pegasys.teku.spec.constants.Domain;
+import tech.pegasys.teku.spec.logic.common.util.SyncCommitteeUtil;
 import tech.pegasys.teku.ssz.collections.SszBitlist;
 import tech.pegasys.teku.ssz.schema.collections.SszBitlistSchema;
 import tech.pegasys.teku.ssz.type.Bytes4;
@@ -40,16 +42,19 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMe
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeSignature;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class Eth2RequestUtils {
-
+  private static int seed = 0;
   public static final String GENESIS_VALIDATORS_ROOT =
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
 
@@ -72,6 +77,8 @@ public class Eth2RequestUtils {
         return createAggregationSlot();
       case AGGREGATE_AND_PROOF:
         return createAggregateAndProof();
+      case SYNC_COMMITTEE_SIGNATURE:
+        return createSyncCommitteeSignatureRequest();
       default:
         throw new IllegalStateException("Unknown eth2 signing type");
     }
@@ -310,5 +317,53 @@ public class Eth2RequestUtils {
             UInt64.valueOf(1));
     final Bytes32 genesisValidatorsRoot = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
     return new ForkInfo(fork, genesisValidatorsRoot);
+  }
+
+  private static Eth2SigningRequestBody createSyncCommitteeSignatureRequest() {
+    final ForkInfo forkInfo = forkInfo();
+    final UInt64 slot = UInt64.ZERO;
+    final Bytes32 beaconBlockRoot = randomBytes32();
+    final Bytes signingRoot;
+    try {
+      signingRoot =
+          signingRootFromSyncCommitteeUtils(
+                  slot,
+                  utils ->
+                      utils.getSyncCommitteeSignatureSigningRoot(
+                          beaconBlockRoot,
+                          spec.computeEpochAtSlot(slot),
+                          forkInfo.asInternalForkInfo()))
+              .get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
+
+    final SyncCommitteeSignature syncCommitteeSignature =
+        new SyncCommitteeSignature(beaconBlockRoot, slot);
+
+    return new Eth2SigningRequestBody(
+        ArtifactType.SYNC_COMMITTEE_SIGNATURE,
+        signingRoot,
+        forkInfo,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        syncCommitteeSignature,
+        null,
+        null);
+  }
+
+  private static SafeFuture<Bytes> signingRootFromSyncCommitteeUtils(
+      final UInt64 slot, final Function<SyncCommitteeUtil, Bytes> createSigningRoot) {
+    return SafeFuture.of(() -> createSigningRoot.apply(spec.getSyncCommitteeUtilRequired(slot)));
+  }
+
+  private static Bytes32 randomBytes32() {
+    final Random random = new Random(seed++);
+    return Bytes32.random(random);
   }
 }

@@ -83,6 +83,7 @@ dependencyManagement {
       entry 'spec'
       entry 'serializer'
       entry 'unsigned'
+      entry 'async'
     }
 
     dependency 'tech.pegasys:jblst:0.3.3-1'
