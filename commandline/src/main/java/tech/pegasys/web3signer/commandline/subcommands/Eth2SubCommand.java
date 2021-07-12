@@ -61,7 +61,8 @@ public class Eth2SubCommand extends ModeSubCommand {
       hidden = true,
       paramLabel = "<epoch>",
       description = "Override the Altair fork activation epoch.",
-      arity = "1")
+      arity = "1",
+      converter = UInt64Converter.class)
   private UInt64 altairForkEpoch;
 
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
@@ -151,5 +152,12 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public SlashingProtectionParameters getSlashingProtectionParameters() {
     return slashingProtectionParameters;
+  }
+
+  static class UInt64Converter implements CommandLine.ITypeConverter<UInt64> {
+    @Override
+    public UInt64 convert(final String value) throws Exception {
+      return UInt64.valueOf(value);
+    }
   }
 }
