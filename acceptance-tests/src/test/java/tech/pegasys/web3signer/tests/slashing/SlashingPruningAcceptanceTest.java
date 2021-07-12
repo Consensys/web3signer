@@ -60,6 +60,7 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
             .withSlashingProtectionDbUsername(DB_USERNAME)
             .withSlashingProtectionDbPassword(DB_PASSWORD)
             .withSlashingProtectionDbUrl(dbUrl)
+            .withAltairForkEpoch(0)
             .withKeyStoreDirectory(testDirectory);
 
     final Signer dataCreatingSigner = new Signer(signerBuilder.build(), null);
