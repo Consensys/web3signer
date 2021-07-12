@@ -247,6 +247,14 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               signerConfig.getSlashingProtectionPruningInterval()));
     }
 
+    if (signerConfig.getAltairForkEpoch().isPresent()) {
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT,
+              "eth2.Xnetwork-altair-fork-epoch",
+              signerConfig.getAltairForkEpoch().get()));
+    }
+
     return yamlConfig.toString();
   }
 

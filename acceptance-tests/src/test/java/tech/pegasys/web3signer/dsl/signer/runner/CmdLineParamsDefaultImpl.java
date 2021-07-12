@@ -174,6 +174,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Long.toString(signerConfig.getSlashingProtectionPruningInterval()));
     }
 
+    if (signerConfig.getAltairForkEpoch().isPresent()) {
+      params.add("--Xnetwork-altair-fork-epoch");
+      params.add(Long.toString(signerConfig.getAltairForkEpoch().get()));
+    }
+
     return params;
   }
 
