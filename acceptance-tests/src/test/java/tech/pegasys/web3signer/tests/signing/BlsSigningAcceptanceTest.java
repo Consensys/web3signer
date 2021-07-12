@@ -17,7 +17,6 @@ import static io.restassured.http.ContentType.JSON;
 import static io.restassured.http.ContentType.TEXT;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.params.provider.EnumSource.Mode.EXCLUDE;
 
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
@@ -60,9 +59,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
 
   @ParameterizedTest
-  @EnumSource(
-      mode = EXCLUDE,
-      names = {"SYNC_COMMITTEE_SELECTION_PROOF", "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"})
+  @EnumSource
   public void signDataWithKeyLoadedFromUnencryptedFile(final ArtifactType artifactType)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -73,9 +70,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource(
-      mode = EXCLUDE,
-      names = {"SYNC_COMMITTEE_SELECTION_PROOF", "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"})
+  @EnumSource
   public void signDataWithJsonAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -86,9 +81,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource(
-      mode = EXCLUDE,
-      names = {"SYNC_COMMITTEE_SELECTION_PROOF", "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"})
+  @EnumSource
   public void signDataWithDefaultAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -154,9 +147,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource(
-      mode = EXCLUDE,
-      names = {"SYNC_COMMITTEE_SELECTION_PROOF", "SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF"})
+  @EnumSource
   public void failsIfSigningRootDoesNotMatchSigningData(final ArtifactType artifactType)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
