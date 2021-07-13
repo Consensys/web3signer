@@ -59,7 +59,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
 
   @ParameterizedTest
-  @EnumSource(ArtifactType.class)
+  @EnumSource
   public void signDataWithKeyLoadedFromUnencryptedFile(final ArtifactType artifactType)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -70,7 +70,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource(ArtifactType.class)
+  @EnumSource
   public void signDataWithJsonAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -81,7 +81,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource(ArtifactType.class)
+  @EnumSource
   public void signDataWithDefaultAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -147,7 +147,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource(ArtifactType.class)
+  @EnumSource
   public void failsIfSigningRootDoesNotMatchSigningData(final ArtifactType artifactType)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -169,7 +169,10 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.getAggregateAndProof(),
             request.getVoluntaryExit(),
             request.getRandaoReveal(),
-            request.getDeposit());
+            request.getDeposit(),
+            request.getSyncCommitteeSignature(),
+            request.getSyncAggregatorSelectionData(),
+            request.getContributionAndProof());
 
     final Response response =
         signer.eth2Sign(keyPair.getPublicKey().toString(), requestWithMismatchedSigningRoot);
@@ -202,7 +205,10 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.getAggregateAndProof(),
             request.getVoluntaryExit(),
             request.getRandaoReveal(),
-            request.getDeposit());
+            request.getDeposit(),
+            request.getSyncCommitteeSignature(),
+            request.getSyncAggregatorSelectionData(),
+            request.getContributionAndProof());
 
     final Response response =
         signer.eth2Sign(

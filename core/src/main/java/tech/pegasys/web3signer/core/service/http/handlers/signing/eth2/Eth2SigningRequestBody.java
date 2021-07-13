@@ -16,6 +16,7 @@ import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
+import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,6 +34,9 @@ public class Eth2SigningRequestBody {
   private final VoluntaryExit voluntary_exit;
   private final RandaoReveal randao_reveal;
   private final DepositMessage deposit;
+  private final SyncCommitteeSignature syncCommitteeSignature;
+  private final SyncAggregatorSelectionData syncAggregatorSelectionData;
+  private final ContributionAndProof contributionAndProof;
 
   @JsonCreator
   public Eth2SigningRequestBody(
@@ -45,7 +49,11 @@ public class Eth2SigningRequestBody {
       @JsonProperty("aggregate_and_proof") final AggregateAndProof aggregate_and_proof,
       @JsonProperty("voluntary_exit") final VoluntaryExit voluntary_exit,
       @JsonProperty("randao_reveal") final RandaoReveal randao_reveal,
-      @JsonProperty("deposit") final DepositMessage deposit) {
+      @JsonProperty("deposit") final DepositMessage deposit,
+      @JsonProperty("sync_committee_signature") final SyncCommitteeSignature syncCommitteeSignature,
+      @JsonProperty("sync_aggregator_selection_data")
+          final SyncAggregatorSelectionData syncAggregatorSelectionData,
+      @JsonProperty("contribution_and_proof") final ContributionAndProof contributionAndProof) {
     this.type = type;
     this.signingRoot = signingRoot;
     this.fork_info = fork_info;
@@ -56,6 +64,9 @@ public class Eth2SigningRequestBody {
     this.voluntary_exit = voluntary_exit;
     this.randao_reveal = randao_reveal;
     this.deposit = deposit;
+    this.syncCommitteeSignature = syncCommitteeSignature;
+    this.syncAggregatorSelectionData = syncAggregatorSelectionData;
+    this.contributionAndProof = contributionAndProof;
   }
 
   @JsonProperty("type")
@@ -106,5 +117,20 @@ public class Eth2SigningRequestBody {
   @JsonProperty("deposit")
   public DepositMessage getDeposit() {
     return deposit;
+  }
+
+  @JsonProperty("sync_committee_signature")
+  public SyncCommitteeSignature getSyncCommitteeSignature() {
+    return syncCommitteeSignature;
+  }
+
+  @JsonProperty("sync_aggregator_selection_data")
+  public SyncAggregatorSelectionData getSyncAggregatorSelectionData() {
+    return syncAggregatorSelectionData;
+  }
+
+  @JsonProperty("contribution_and_proof")
+  public ContributionAndProof getContributionAndProof() {
+    return contributionAndProof;
   }
 }

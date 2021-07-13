@@ -32,7 +32,11 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
 
   protected void setupSigner(final String mode, final Map<String, String> env) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory).withMode(mode).withEnvironment(env);
+    builder
+        .withKeyStoreDirectory(testDirectory)
+        .withMode(mode)
+        .withAltairForkEpoch(0)
+        .withEnvironment(env);
     startSigner(builder.build());
   }
 

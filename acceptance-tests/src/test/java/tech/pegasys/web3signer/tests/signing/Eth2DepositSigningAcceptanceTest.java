@@ -100,7 +100,19 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
             Bytes4.fromHexString(depositData.get("fork_version")));
     final Eth2SigningRequestBody requestBody =
         new Eth2SigningRequestBody(
-            ArtifactType.DEPOSIT, null, null, null, null, null, null, null, null, depositMessage);
+            ArtifactType.DEPOSIT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            depositMessage,
+            null,
+            null,
+            null);
 
     final Response response = signer.eth2Sign(publicKey, requestBody, TEXT);
 

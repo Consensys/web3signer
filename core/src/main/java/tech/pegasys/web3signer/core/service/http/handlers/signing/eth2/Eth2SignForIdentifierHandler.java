@@ -21,9 +21,13 @@ import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentif
 
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
+import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
+import tech.pegasys.teku.api.schema.altair.SyncCommitteeContribution;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.constants.Domain;
+import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggregatorSelectionDataSchema;
+import tech.pegasys.teku.spec.logic.common.util.SyncCommitteeUtil;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
@@ -34,6 +38,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -226,9 +231,67 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             compute_domain(Domain.DEPOSIT, body.getDeposit().getGenesisForkVersion(), Bytes32.ZERO);
         return DepositSigningRootUtil.compute_signing_root(
             body.getDeposit().asInternalDepositMessage(), depositDomain);
+      case SYNC_COMMITTEE_SIGNATURE:
+        final SyncCommitteeSignature syncCommitteSignature = body.getSyncCommitteeSignature();
+        checkArgument(syncCommitteSignature != null, "SyncCommitteeSignature must be specified");
+        return signingRootFromSyncCommitteeUtils(
+            syncCommitteSignature.getSlot(),
+            utils ->
+                utils.getSyncCommitteeSignatureSigningRoot(
+                    syncCommitteSignature.getBeaconBlockRoot(),
+                    eth2Spec.computeEpochAtSlot(syncCommitteSignature.getSlot()),
+                    body.getForkInfo().asInternalForkInfo()));
+      case SYNC_COMMITTEE_SELECTION_PROOF:
+        final SyncAggregatorSelectionData syncAggregatorSelectionData =
+            body.getSyncAggregatorSelectionData();
+        checkArgument(
+            syncAggregatorSelectionData != null, "SyncAggregatorSelectionData is required");
+        return signingRootFromSyncCommitteeUtils(
+            syncAggregatorSelectionData.getSlot(),
+            utils ->
+                utils.getSyncAggregatorSelectionDataSigningRoot(
+                    asInternalSyncAggregatorSelectionData(syncAggregatorSelectionData),
+                    body.getForkInfo().asInternalForkInfo()));
+      case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF:
+        final ContributionAndProof contributionAndProof = body.getContributionAndProof();
+        checkArgument(contributionAndProof != null, "ContributionAndProof is required");
+        return signingRootFromSyncCommitteeUtils(
+            contributionAndProof.contribution.slot,
+            utils ->
+                utils.getContributionAndProofSigningRoot(
+                    asInternalContributionAndProof(contributionAndProof),
+                    body.getForkInfo().asInternalForkInfo()));
       default:
         throw new IllegalStateException("Signing root unimplemented for type " + body.getType());
     }
+  }
+
+  private tech.pegasys.teku.spec.datastructures.operations.versions.altair
+          .SyncAggregatorSelectionData
+      asInternalSyncAggregatorSelectionData(
+          final SyncAggregatorSelectionData syncAggregatorSelectionData) {
+    return SyncAggregatorSelectionDataSchema.INSTANCE.create(
+        syncAggregatorSelectionData.getSlot(), syncAggregatorSelectionData.getSubcommitteeIndex());
+  }
+
+  private tech.pegasys.teku.spec.datastructures.operations.versions.altair.ContributionAndProof
+      asInternalContributionAndProof(final ContributionAndProof contributionAndProof) {
+    final tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncCommitteeContribution
+        syncCommitteeContribution =
+            SyncCommitteeContribution.asInternalSyncCommitteeContribution(
+                eth2Spec, contributionAndProof.contribution);
+    return eth2Spec
+        .getSyncCommitteeUtilRequired(contributionAndProof.contribution.slot)
+        .createContributionAndProof(
+            contributionAndProof.aggregatorIndex,
+            syncCommitteeContribution,
+            contributionAndProof.selectionProof.asInternalBLSSignature());
+  }
+
+  private Bytes signingRootFromSyncCommitteeUtils(
+      final tech.pegasys.teku.infrastructure.unsigned.UInt64 slot,
+      final Function<SyncCommitteeUtil, Bytes> createSigningRoot) {
+    return createSigningRoot.apply(eth2Spec.getSyncCommitteeUtilRequired(slot));
   }
 
   private UInt64 toUInt64(final tech.pegasys.teku.infrastructure.unsigned.UInt64 uInt64) {

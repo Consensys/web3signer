@@ -45,8 +45,11 @@ dependencies {
   testImplementation 'tech.pegasys.teku.internal:bls'
   testImplementation 'tech.pegasys.teku.internal:core'
   testImplementation 'tech.pegasys.teku.internal:spec'
+  testImplementation (group: 'tech.pegasys.teku.internal', name: 'spec', classifier: 'test-fixtures')
+  testImplementation (group: 'tech.pegasys.teku.internal', name: 'bls', classifier: 'test-fixtures')
   testImplementation 'tech.pegasys.teku.internal:serializer'
   testImplementation 'tech.pegasys.teku.internal:unsigned'
+  testImplementation 'tech.pegasys.teku.internal:async'
   testImplementation 'io.rest-assured:rest-assured'
   testImplementation 'org.web3j:core'
   testImplementation 'org.apache.tuweni:tuweni-bytes'
