@@ -231,8 +231,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             compute_domain(Domain.DEPOSIT, body.getDeposit().getGenesisForkVersion(), Bytes32.ZERO);
         return DepositSigningRootUtil.compute_signing_root(
             body.getDeposit().asInternalDepositMessage(), depositDomain);
-      case SYNC_COMMITTEE_SIGNATURE:
-        final SyncCommitteeSignature syncCommitteSignature = body.getSyncCommitteeSignature();
+      case SYNC_COMMITTEE_MESSAGE:
+        final SyncCommitteeMessage syncCommitteSignature = body.getSyncCommitteeMessage();
         checkArgument(syncCommitteSignature != null, "SyncCommitteeSignature must be specified");
         return signingRootFromSyncCommitteeUtils(
             syncCommitteSignature.getSlot(),

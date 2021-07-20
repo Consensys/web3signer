@@ -18,12 +18,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class SyncCommitteeSignature {
+public class SyncCommitteeMessage {
   private Bytes32 beaconBlockRoot;
   private final UInt64 slot;
 
   @JsonCreator
-  public SyncCommitteeSignature(
+  public SyncCommitteeMessage(
       @JsonProperty(value = "beacon_block_root", required = true) final Bytes32 beaconBlockRoot,
       @JsonProperty(value = "slot", required = true) final UInt64 slot) {
     this.beaconBlockRoot = beaconBlockRoot;
