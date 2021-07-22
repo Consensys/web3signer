@@ -18,10 +18,11 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.statement.PreparedBatch;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 
 public class ValidatorsDao {
+  private static final String UPSERT_VALIDATORS_QUERY_FMT =
+      "SELECT val_id as id, val_publickey as public_key FROM upsert_validators(%s)";
 
   public Validator insertIfNotExist(final Handle handle, final Bytes validator) {
     final List<Validator> result =
@@ -39,23 +40,22 @@ public class ValidatorsDao {
   }
 
   public List<Validator> registerValidators(final Handle handle, final List<Bytes> validators) {
-    final PreparedBatch batch =
-        handle.prepareBatch("INSERT INTO validators (public_key) VALUES (?)");
-    validators.forEach(b -> batch.bind(0, b).add());
-    return batch.executeAndReturnGeneratedKeys().mapToBean(Validator.class).list();
-  }
-
-  public List<Validator> registerValidatorsVer2(final Handle handle, final List<Bytes> validators) {
-    final String rows = validators.stream()
-            .map(Bytes::toUnprefixedHexString)
-            .map(hex -> "row(decode('" + hex + "','hex'))::public_keys_type")
-            .collect(Collectors.joining(","));
-    final String arrays = "array[" + rows + "]::public_keys_type[]";
     return handle
         .createQuery(
-            "SELECT val_id as id, val_publickey as public_key FROM upsert_validators(" + arrays + ")")
+            String.format(UPSERT_VALIDATORS_QUERY_FMT, buildUpsertArrayArgument(validators)))
         .mapToBean(Validator.class)
         .list();
+  }
+
+  private String buildUpsertArrayArgument(final List<Bytes> validators) {
+    final String rowFormat = "row(decode('%s','hex'))::public_keys_type";
+    final String arrayFormat = "array[%s]::public_keys_type[]";
+    final String rows =
+        validators.stream()
+            .map(Bytes::toUnprefixedHexString)
+            .map(hex -> String.format(rowFormat, hex))
+            .collect(Collectors.joining(","));
+    return String.format(arrayFormat, rows);
   }
 
   public List<Validator> retrieveValidators(
