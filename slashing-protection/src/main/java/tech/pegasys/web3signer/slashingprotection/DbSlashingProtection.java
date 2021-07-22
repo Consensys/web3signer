@@ -231,6 +231,8 @@ public class DbSlashingProtection implements SlashingProtection {
       return;
     }
 
+    //TODO: insert (or ignore) validators ...
+
     jdbi.useTransaction(
         SERIALIZABLE,
         h -> {
