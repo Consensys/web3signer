@@ -46,7 +46,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMe
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeSignature;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 
 import java.util.Optional;
@@ -94,8 +94,8 @@ public class Eth2RequestUtils {
         return createAggregationSlot();
       case AGGREGATE_AND_PROOF:
         return createAggregateAndProof();
-      case SYNC_COMMITTEE_SIGNATURE:
-        return createSyncCommitteeSignatureRequest();
+      case SYNC_COMMITTEE_MESSAGE:
+        return createSyncCommitteeMessageRequest();
       case SYNC_COMMITTEE_SELECTION_PROOF:
         return createSyncCommitteeSelectionProofRequest();
       case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF:
@@ -340,7 +340,7 @@ public class Eth2RequestUtils {
     return new ForkInfo(fork, genesisValidatorsRoot);
   }
 
-  private static Eth2SigningRequestBody createSyncCommitteeSignatureRequest() {
+  private static Eth2SigningRequestBody createSyncCommitteeMessageRequest() {
     final ForkInfo forkInfo = forkInfo();
     final Bytes signingRoot;
     try {
@@ -357,11 +357,11 @@ public class Eth2RequestUtils {
       throw new RuntimeException(e);
     }
 
-    final SyncCommitteeSignature syncCommitteeSignature =
-        new SyncCommitteeSignature(beaconBlockRoot, slot);
+    final SyncCommitteeMessage syncCommitteeMessage =
+        new SyncCommitteeMessage(beaconBlockRoot, slot);
 
     return new Eth2SigningRequestBody(
-        ArtifactType.SYNC_COMMITTEE_SIGNATURE,
+        ArtifactType.SYNC_COMMITTEE_MESSAGE,
         signingRoot,
         forkInfo,
         null,
@@ -371,7 +371,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        syncCommitteeSignature,
+        syncCommitteeMessage,
         null,
         null);
   }

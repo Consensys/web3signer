@@ -44,6 +44,13 @@ public class ValidatorsDao {
     return batch.executeAndReturnGeneratedKeys().mapToBean(Validator.class).list();
   }
 
+  public List<Validator> registerValidatorsVer2(final Handle handle, final List<Bytes> validators) {
+    return handle.createQuery("SELECT val_id, val_publickey FROM upsert_validators(:publicKeys)")
+            .bindArray("publicKeys", Bytes.class, validators)
+            .mapToBean(Validator.class)
+            .list();
+  }
+
   public List<Validator> retrieveValidators(
       final Handle handle, @BindList("publicKeys") final List<Bytes> publicKeys) {
     return handle

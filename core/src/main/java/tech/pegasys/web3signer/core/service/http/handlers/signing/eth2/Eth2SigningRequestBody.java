@@ -34,7 +34,7 @@ public class Eth2SigningRequestBody {
   private final VoluntaryExit voluntary_exit;
   private final RandaoReveal randao_reveal;
   private final DepositMessage deposit;
-  private final SyncCommitteeSignature syncCommitteeSignature;
+  private final SyncCommitteeMessage syncCommitteeMessage;
   private final SyncAggregatorSelectionData syncAggregatorSelectionData;
   private final ContributionAndProof contributionAndProof;
 
@@ -50,7 +50,7 @@ public class Eth2SigningRequestBody {
       @JsonProperty("voluntary_exit") final VoluntaryExit voluntary_exit,
       @JsonProperty("randao_reveal") final RandaoReveal randao_reveal,
       @JsonProperty("deposit") final DepositMessage deposit,
-      @JsonProperty("sync_committee_signature") final SyncCommitteeSignature syncCommitteeSignature,
+      @JsonProperty("sync_committee_message") final SyncCommitteeMessage syncCommitteeMessage,
       @JsonProperty("sync_aggregator_selection_data")
           final SyncAggregatorSelectionData syncAggregatorSelectionData,
       @JsonProperty("contribution_and_proof") final ContributionAndProof contributionAndProof) {
@@ -64,7 +64,7 @@ public class Eth2SigningRequestBody {
     this.voluntary_exit = voluntary_exit;
     this.randao_reveal = randao_reveal;
     this.deposit = deposit;
-    this.syncCommitteeSignature = syncCommitteeSignature;
+    this.syncCommitteeMessage = syncCommitteeMessage;
     this.syncAggregatorSelectionData = syncAggregatorSelectionData;
     this.contributionAndProof = contributionAndProof;
   }
@@ -119,9 +119,9 @@ public class Eth2SigningRequestBody {
     return deposit;
   }
 
-  @JsonProperty("sync_committee_signature")
-  public SyncCommitteeSignature getSyncCommitteeSignature() {
-    return syncCommitteeSignature;
+  @JsonProperty("sync_committee_message")
+  public SyncCommitteeMessage getSyncCommitteeMessage() {
+    return syncCommitteeMessage;
   }
 
   @JsonProperty("sync_aggregator_selection_data")

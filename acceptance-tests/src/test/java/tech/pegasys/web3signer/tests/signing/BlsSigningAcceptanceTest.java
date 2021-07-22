@@ -170,7 +170,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.getVoluntaryExit(),
             request.getRandaoReveal(),
             request.getDeposit(),
-            request.getSyncCommitteeSignature(),
+            request.getSyncCommitteeMessage(),
             request.getSyncAggregatorSelectionData(),
             request.getContributionAndProof());
 
@@ -206,7 +206,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.getVoluntaryExit(),
             request.getRandaoReveal(),
             request.getDeposit(),
-            request.getSyncCommitteeSignature(),
+            request.getSyncCommitteeMessage(),
             request.getSyncAggregatorSelectionData(),
             request.getContributionAndProof());
 
