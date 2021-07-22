@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection.dao;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -45,10 +46,16 @@ public class ValidatorsDao {
   }
 
   public List<Validator> registerValidatorsVer2(final Handle handle, final List<Bytes> validators) {
-    return handle.createQuery("SELECT val_id, val_publickey FROM upsert_validators(:publicKeys)")
-            .bindArray("publicKeys", Bytes.class, validators)
-            .mapToBean(Validator.class)
-            .list();
+    final String rows = validators.stream()
+            .map(Bytes::toUnprefixedHexString)
+            .map(hex -> "row(decode('" + hex + "','hex'))::public_keys_type")
+            .collect(Collectors.joining(","));
+    final String arrays = "array[" + rows + "]::public_keys_type[]";
+    return handle
+        .createQuery(
+            "SELECT val_id as id, val_publickey as public_key FROM upsert_validators(" + arrays + ")")
+        .mapToBean(Validator.class)
+        .list();
   }
 
   public List<Validator> retrieveValidators(

@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
-import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.SERIALIZABLE;
 import static tech.pegasys.web3signer.slashingprotection.DbLocker.lockForValidator;
 
 import tech.pegasys.web3signer.slashingprotection.DbLocker.LockType;
@@ -34,17 +33,14 @@ import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRoot
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Streams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -231,27 +227,14 @@ public class DbSlashingProtection implements SlashingProtection {
       return;
     }
 
-    //TODO: insert (or ignore) validators ...
+   final List<Validator> insertedValidators =
+        jdbi.withHandle(h -> validatorsDao.registerValidatorsVer2(h, validators));
 
-    jdbi.useTransaction(
-        SERIALIZABLE,
-        h -> {
-          final List<Validator> existingRegisteredValidators =
-              validatorsDao.retrieveValidators(h, validators);
-          final List<Bytes> existingValidatorsPublicKeys =
-              existingRegisteredValidators.stream()
-                  .map(Validator::getPublicKey)
-                  .collect(Collectors.toList());
+    LOG.info("Validators inserted/updated in database:{}", insertedValidators.size());
 
-          final List<Bytes> validatorsMissingFromDb = new ArrayList<>(validators);
-          validatorsMissingFromDb.removeAll(existingValidatorsPublicKeys);
+    insertedValidators.forEach(
+        validator -> registeredValidators.put(validator.getPublicKey(), validator.getId()));
 
-          final List<Validator> newlyRegisteredValidators =
-              validatorsDao.registerValidators(h, validatorsMissingFromDb);
-
-          Streams.concat(existingRegisteredValidators.stream(), newlyRegisteredValidators.stream())
-              .forEach(v -> registeredValidators.put(v.getPublicKey(), v.getId()));
-        });
   }
 
   @Override

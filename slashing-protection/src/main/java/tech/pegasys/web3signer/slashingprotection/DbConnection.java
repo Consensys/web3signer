@@ -36,6 +36,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.argument.Arguments;
 import org.jdbi.v3.core.mapper.ColumnMappers;
 import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
+import org.jdbi.v3.postgres.PostgresPlugin;
 
 public class DbConnection {
   // https://jdbc.postgresql.org/documentation/head/connect.html#connection-parameters
@@ -67,6 +68,7 @@ public class DbConnection {
   }
 
   public static void configureJdbi(final Jdbi jdbi) {
+    jdbi.installPlugin(new PostgresPlugin());
     jdbi.getConfig(Arguments.class)
         .register(new BytesArgumentFactory())
         .register(new UInt64ArgumentFactory());

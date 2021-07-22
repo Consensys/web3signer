@@ -118,6 +118,7 @@ dependencyManagement {
       entry 'jdbi3-core'
       entry 'jdbi3-sqlobject'
       entry 'jdbi3-testing'
+      entry 'jdbi3-postgres'
     }
 
     dependency 'com.opentable.components:otj-pg-embedded:0.13.3'
