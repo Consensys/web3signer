@@ -41,21 +41,19 @@ public class ValidatorsDao {
     return handle
         .createQuery(
             String.format(
-                "SELECT val_id as id, val_publickey as public_key FROM upsert_validators(%s)",
-                buildUpsertArrayArgument(validators)))
+                "SELECT v_id as id, v_public_key as public_key FROM upsert_validators(%s)",
+                buildArrayArgument(validators)))
         .mapToBean(Validator.class)
         .list();
   }
 
-  private String buildUpsertArrayArgument(final List<Bytes> validators) {
-    final String rowFormat = "row(decode('%s','hex'))::public_keys_type";
-    final String arrayFormat = "array[%s]::public_keys_type[]";
+  private String buildArrayArgument(final List<Bytes> validators) {
     final String rows =
         validators.stream()
             .map(Bytes::toUnprefixedHexString)
-            .map(hex -> String.format(rowFormat, hex))
+            .map(hex -> String.format("decode('%s','hex')", hex))
             .collect(Collectors.joining(","));
-    return String.format(arrayFormat, rows);
+    return String.format("array[%s]", rows);
   }
 
   public List<Validator> retrieveValidators(

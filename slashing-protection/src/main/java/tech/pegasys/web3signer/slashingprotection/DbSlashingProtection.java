@@ -227,13 +227,13 @@ public class DbSlashingProtection implements SlashingProtection {
       return;
     }
 
-    final List<Validator> insertedValidators =
+    final List<Validator> registeredValidatorsList =
         jdbi.withHandle(h -> validatorsDao.registerValidators(h, validators));
 
-    LOG.info("No of validators upserted in database:{}", insertedValidators.size());
+    LOG.info("Validators registered successfully in database:{}", registeredValidatorsList.size());
 
-    insertedValidators.forEach(
-        validator -> registeredValidators.put(validator.getPublicKey(), validator.getId()));
+    registeredValidatorsList.forEach(
+        validator -> this.registeredValidators.put(validator.getPublicKey(), validator.getId()));
   }
 
   @Override

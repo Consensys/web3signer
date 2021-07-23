@@ -1,14 +1,12 @@
-CREATE TYPE public_keys_type AS (public_key BYTEA);
-
-CREATE OR REPLACE FUNCTION upsert_validators(_vals public_keys_type[])
-  RETURNS TABLE (val_id integer, val_publickey BYTEA) AS
+CREATE OR REPLACE FUNCTION upsert_validators(_vals BYTEA[])
+  RETURNS TABLE (v_id integer, v_public_key BYTEA) AS
 $$
 BEGIN
   RETURN QUERY
     WITH
       all_rows AS (
-        SELECT public_key, ordinality
-        FROM UNNEST(_vals) WITH ORDINALITY
+        SELECT *
+        FROM UNNEST(_vals) WITH ORDINALITY AS t(public_key, ordinality)
       ),
       dist_rows AS (
         SELECT DISTINCT public_key
