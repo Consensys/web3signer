@@ -370,7 +370,6 @@ public class DbSlashingProtectionTest {
   @Test
   public void registersValidatorsThatAreNotAlreadyInDb() {
     final BiMap<Bytes, Integer> registeredValidators = HashBiMap.create();
-    registeredValidators.put(PUBLIC_KEY1, 1);
     final Jdbi jdbi = db.getJdbi();
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
@@ -386,15 +385,15 @@ public class DbSlashingProtectionTest {
             registeredValidators);
 
     when(validatorsDao.registerValidators(any(), any())).thenCallRealMethod();
-    // .thenReturn(List.of(new Validator(1, PUBLIC_KEY1), new Validator(2, PUBLIC_KEY2), new
-    // Validator(3, PUBLIC_KEY3)));
-    dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3));
 
+    dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1));
+    assertThat(registeredValidators).hasSize(1);
+
+    dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3));
     assertThat(registeredValidators).hasSize(3);
+    // because 'id' is a sequence, the values will be 1, 2, 3
     assertThat(registeredValidators)
         .isEqualTo(Map.of(PUBLIC_KEY1, 1, PUBLIC_KEY2, 2, PUBLIC_KEY3, 3));
-    verify(validatorsDao)
-        .registerValidators(any(), eq(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3)));
   }
 
   @Test
