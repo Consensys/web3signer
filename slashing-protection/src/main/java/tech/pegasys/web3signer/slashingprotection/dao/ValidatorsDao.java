@@ -42,19 +42,17 @@ public class ValidatorsDao {
     return handle
         .createQuery(
             String.format(
-                "SELECT v_id as id, v_public_key as public_key FROM upsert_validators(%s)",
+                "SELECT v_id as id, v_public_key as public_key FROM upsert_validators(array[%s])",
                 buildArrayArgument(validators)))
         .mapToBean(Validator.class)
         .list();
   }
 
   private String buildArrayArgument(final List<Bytes> validators) {
-    final String rows =
-        validators.stream()
-            .map(Bytes::toUnprefixedHexString)
-            .map(hex -> String.format("decode('%s','hex')", hex))
-            .collect(Collectors.joining(","));
-    return String.format("array[%s]", rows);
+    return validators.stream()
+        .map(Bytes::toUnprefixedHexString)
+        .map(hex -> String.format("decode('%s','hex')", hex))
+        .collect(Collectors.joining(","));
   }
 
   public List<Validator> retrieveValidators(
