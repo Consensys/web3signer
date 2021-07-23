@@ -1,4 +1,3 @@
-CREATE TYPE ids_type AS (id integer);
 CREATE TYPE public_keys_type AS (public_key BYTEA);
 
 CREATE OR REPLACE FUNCTION upsert_validators(_vals public_keys_type[])

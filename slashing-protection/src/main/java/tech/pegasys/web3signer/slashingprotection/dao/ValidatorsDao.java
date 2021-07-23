@@ -21,8 +21,6 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 
 public class ValidatorsDao {
-  private static final String UPSERT_VALIDATORS_QUERY_FMT =
-      "SELECT val_id as id, val_publickey as public_key FROM upsert_validators(%s)";
 
   public Validator insertIfNotExist(final Handle handle, final Bytes validator) {
     final List<Validator> result =
@@ -42,7 +40,9 @@ public class ValidatorsDao {
   public List<Validator> registerValidators(final Handle handle, final List<Bytes> validators) {
     return handle
         .createQuery(
-            String.format(UPSERT_VALIDATORS_QUERY_FMT, buildUpsertArrayArgument(validators)))
+            String.format(
+                "SELECT val_id as id, val_publickey as public_key FROM upsert_validators(%s)",
+                buildUpsertArrayArgument(validators)))
         .mapToBean(Validator.class)
         .list();
   }
