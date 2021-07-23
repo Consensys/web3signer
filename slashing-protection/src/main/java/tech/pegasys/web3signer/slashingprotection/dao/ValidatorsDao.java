@@ -38,6 +38,7 @@ public class ValidatorsDao {
   }
 
   public List<Validator> registerValidators(final Handle handle, final List<Bytes> validators) {
+    // adapted from https://stackoverflow.com/a/66704110/535610
     return handle
         .createQuery(
             String.format(
