@@ -28,7 +28,6 @@ dependencies {
   implementation 'org.postgresql:postgresql'
   implementation 'org.jdbi:jdbi3-core'
   implementation 'org.jdbi:jdbi3-sqlobject'
-  implementation 'org.jdbi:jdbi3-postgres'
   implementation 'org.hyperledger.besu:plugin-api'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
