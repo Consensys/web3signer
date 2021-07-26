@@ -228,7 +228,7 @@ public class DbSlashingProtection implements SlashingProtection {
     }
 
     final List<Validator> registeredValidatorsList =
-        jdbi.withHandle(h -> validatorsDao.registerValidators(h, validators));
+        jdbi.inTransaction(READ_COMMITTED, h -> validatorsDao.registerValidators(h, validators));
 
     LOG.info("Validators registered successfully in database:{}", registeredValidatorsList.size());
 
