@@ -22,21 +22,6 @@ import org.jdbi.v3.sqlobject.customizer.BindList;
 
 public class ValidatorsDao {
 
-  public Validator insertIfNotExist(final Handle handle, final Bytes validator) {
-    final List<Validator> result =
-        handle
-            .createUpdate("INSERT INTO validators (public_key) VALUES (?) ON CONFLICT DO NOTHING")
-            .bind(0, validator)
-            .executeAndReturnGeneratedKeys()
-            .mapToBean(Validator.class)
-            .list();
-
-    if (result.isEmpty()) {
-      return retrieveValidators(handle, List.of(validator)).get(0);
-    }
-    return result.get(0);
-  }
-
   public List<Validator> registerValidators(final Handle handle, final List<Bytes> validators) {
     // adapted from https://stackoverflow.com/a/66704110/535610
     return handle

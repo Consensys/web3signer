@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRoot
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -113,7 +114,12 @@ public class InterchangeV5Importer {
     }
     final ObjectNode parentNode = (ObjectNode) node;
     final String pubKey = parentNode.required("pubkey").textValue();
-    final Validator validator = validatorsDao.insertIfNotExist(handle, Bytes.fromHexString(pubKey));
+    final List<Validator> validators =
+        validatorsDao.registerValidators(handle, List.of(Bytes.fromHexString(pubKey)));
+    if (validators.isEmpty()) {
+      throw new IllegalStateException("Unable to register validator " + pubKey);
+    }
+    final Validator validator = validators.get(0);
 
     final ArrayNode signedBlocksNode = parentNode.withArray("signed_blocks");
     importBlocks(handle, validator, signedBlocksNode);
