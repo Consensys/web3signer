@@ -237,7 +237,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         return signingRootFromSyncCommitteeUtils(
             syncCommitteMessage.getSlot(),
             utils ->
-                utils.getSyncCommitteeSignatureSigningRoot(
+                utils.getSyncCommitteeMessageSigningRoot(
                     syncCommitteMessage.getBeaconBlockRoot(),
                     eth2Spec.computeEpochAtSlot(syncCommitteMessage.getSlot()),
                     body.getForkInfo().asInternalForkInfo()));
