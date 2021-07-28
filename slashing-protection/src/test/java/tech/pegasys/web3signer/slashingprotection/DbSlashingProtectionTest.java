@@ -33,7 +33,6 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
-import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.util.List;
@@ -48,6 +47,7 @@ import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.transaction.TransactionIsolationLevel;
 import org.jdbi.v3.testing.JdbiRule;
+import org.jdbi.v3.testing.Migration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -74,7 +74,11 @@ public class DbSlashingProtectionTest {
   @Mock private SignedAttestationsDao signedAttestationsDao;
   @Mock private MetadataDao metadataDao;
   @Mock private LowWatermarkDao lowWatermarkDao;
-  @Rule public JdbiRule db = JdbiRule.embeddedPostgres();
+
+  @Rule
+  public JdbiRule db =
+      JdbiRule.embeddedPostgres()
+          .withMigration(Migration.before().withPath("migrations/postgresql"));
 
   private DbSlashingProtection dbSlashingProtection;
   private Jdbi jdbi;
@@ -82,8 +86,10 @@ public class DbSlashingProtectionTest {
 
   @Before
   public void setup() {
-    jdbi = spy(db.getJdbi());
-    pruningJdbi = spy(db.getJdbi());
+    final Jdbi tempJdbi = db.getJdbi();
+    DbConnection.configureJdbi(tempJdbi);
+    jdbi = spy(tempJdbi);
+    pruningJdbi = spy(tempJdbi);
     dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
@@ -364,7 +370,6 @@ public class DbSlashingProtectionTest {
   @Test
   public void registersValidatorsThatAreNotAlreadyInDb() {
     final BiMap<Bytes, Integer> registeredValidators = HashBiMap.create();
-    registeredValidators.put(PUBLIC_KEY1, 1);
     final Jdbi jdbi = db.getJdbi();
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
@@ -379,18 +384,16 @@ public class DbSlashingProtectionTest {
             0,
             registeredValidators);
 
-    when(validatorsDao.retrieveValidators(any(), any()))
-        .thenReturn(List.of(new Validator(1, PUBLIC_KEY1)));
-    when(validatorsDao.registerValidators(any(), any()))
-        .thenReturn(List.of(new Validator(2, PUBLIC_KEY2), new Validator(3, PUBLIC_KEY3)));
-    dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3));
+    when(validatorsDao.registerValidators(any(), any())).thenCallRealMethod();
 
+    dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1));
+    assertThat(registeredValidators).hasSize(1);
+
+    dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3));
     assertThat(registeredValidators).hasSize(3);
+    // because 'id' is a sequence, the values will be 1, 2, 3
     assertThat(registeredValidators)
         .isEqualTo(Map.of(PUBLIC_KEY1, 1, PUBLIC_KEY2, 2, PUBLIC_KEY3, 3));
-    verify(validatorsDao)
-        .retrieveValidators(any(), eq(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3)));
-    verify(validatorsDao).registerValidators(any(), eq(List.of(PUBLIC_KEY2, PUBLIC_KEY3)));
   }
 
   @Test

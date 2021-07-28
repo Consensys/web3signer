@@ -13,35 +13,31 @@
 package tech.pegasys.web3signer.slashingprotection.dao;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.statement.PreparedBatch;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 
 public class ValidatorsDao {
 
-  public Validator insertIfNotExist(final Handle handle, final Bytes validator) {
-    final List<Validator> result =
-        handle
-            .createUpdate("INSERT INTO validators (public_key) VALUES (?) ON CONFLICT DO NOTHING")
-            .bind(0, validator)
-            .executeAndReturnGeneratedKeys()
-            .mapToBean(Validator.class)
-            .list();
-
-    if (result.isEmpty()) {
-      return retrieveValidators(handle, List.of(validator)).get(0);
-    }
-    return result.get(0);
+  public List<Validator> registerValidators(final Handle handle, final List<Bytes> validators) {
+    // adapted from https://stackoverflow.com/a/66704110/535610
+    return handle
+        .createQuery(
+            String.format(
+                "SELECT v_id as id, v_public_key as public_key FROM upsert_validators(array[%s])",
+                buildArrayArgument(validators)))
+        .mapToBean(Validator.class)
+        .list();
   }
 
-  public List<Validator> registerValidators(final Handle handle, final List<Bytes> validators) {
-    final PreparedBatch batch =
-        handle.prepareBatch("INSERT INTO validators (public_key) VALUES (?)");
-    validators.forEach(b -> batch.bind(0, b).add());
-    return batch.executeAndReturnGeneratedKeys().mapToBean(Validator.class).list();
+  private String buildArrayArgument(final List<Bytes> validators) {
+    return validators.stream()
+        .map(Bytes::toUnprefixedHexString)
+        .map(hex -> String.format("decode('%s','hex')", hex))
+        .collect(Collectors.joining(","));
   }
 
   public List<Validator> retrieveValidators(

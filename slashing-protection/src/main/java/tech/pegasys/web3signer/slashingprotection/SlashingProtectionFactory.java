@@ -23,7 +23,7 @@ import org.jdbi.v3.core.Jdbi;
 
 public class SlashingProtectionFactory {
 
-  public static final int EXPECTED_DATABASE_VERSION = 8;
+  public static final int EXPECTED_DATABASE_VERSION = 9;
 
   public static SlashingProtection createSlashingProtection(
       final SlashingProtectionParameters slashingProtectionParameters) {
