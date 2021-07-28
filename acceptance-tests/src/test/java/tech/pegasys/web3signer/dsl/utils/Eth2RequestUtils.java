@@ -348,7 +348,7 @@ public class Eth2RequestUtils {
           signingRootFromSyncCommitteeUtils(
                   slot,
                   utils ->
-                      utils.getSyncCommitteeSignatureSigningRoot(
+                      utils.getSyncCommitteeMessageSigningRoot(
                           beaconBlockRoot,
                           spec.computeEpochAtSlot(slot),
                           forkInfo.asInternalForkInfo()))
