@@ -4,7 +4,7 @@
 
 ### Breaking changes
 - `--network` flag for `eth2` subcommand is now mandatory and defaults to `mainnet`. Use appropriate network when running web3signer for a testnet.
-- Database migration scripts are required to be executed for this release if slashing protection is used.
+- Database migration scripts (V8__*.sql and V9__*.sql) are required to be executed for this release if slashing protection is used.
 
 ### Features Added
 - Introduced `--slashing-protection-db-pool-configuration-file` to specify Hikari connection pool configuration file.
