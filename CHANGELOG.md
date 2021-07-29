@@ -1,6 +1,10 @@
 # Changelog
 
-## Next Release
+## 21.7.0
+
+### Breaking changes
+- `--network` flag for `eth2` subcommand is now mandatory and defaults to `mainnet`. Use appropriate network when running web3signer for a testnet.
+- New database migration script (migrations/postgresql/V9__upsert_validators.sql) is required to be executed for this release if slashing protection is used.
 
 ### Features Added
 - Introduced `--slashing-protection-db-pool-configuration-file` to specify Hikari connection pool configuration file.
@@ -12,7 +16,6 @@
 
 ### Bugs fixed
 - Fixed transaction deadlock at start up during same validators registration (>10000) from multiple web3signer instances.
-Database migration script must be executed. 
 
 ## 21.3.0
 
