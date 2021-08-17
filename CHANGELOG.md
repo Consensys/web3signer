@@ -1,5 +1,10 @@
 # Changelog
 
+## Next Release
+
+### Features Added
+- Upgraded Teku libraries to 21.8.1. Added support for Altair upgrade on the Pyrmont testnet at epoch 61650.
+
 ## 21.7.0
 
 ### Breaking changes
