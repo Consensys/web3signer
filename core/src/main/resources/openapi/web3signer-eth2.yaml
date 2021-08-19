@@ -46,7 +46,7 @@ paths:
                 propertyName: type
                 mapping:
                   AGGREGATION_SLOT: '#/components/schemas/AggregationSlotSigning'
-                  AGGREGATE_AND_PROOF: '#/components/schemas/AggregationAndProofSigning'
+                  AGGREGATE_AND_PROOF: '#/components/schemas/AggregateAndProofSigning'
                   ATTESTATION: '#/components/schemas/AttestationSigning'
                   BLOCK: '#/components/schemas/BlockSigning'
                   DEPOSIT: '#/components/schemas/DepositSigning'
