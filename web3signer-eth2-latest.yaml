@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: 'Web3Signer ETH2 Api'
   description: 'Sign Eth2 Artifacts'
-  version: '21.7.0+1-g8be63d5'
+  version: '21.7.0+2-ge9379e0'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -46,7 +46,7 @@ paths:
                 propertyName: type
                 mapping:
                   AGGREGATION_SLOT: '#/components/schemas/AggregationSlotSigning'
-                  AGGREGATE_AND_PROOF: '#/components/schemas/AggregationAndProofSigning'
+                  AGGREGATE_AND_PROOF: '#/components/schemas/AggregateAndProofSigning'
                   ATTESTATION: '#/components/schemas/AttestationSigning'
                   BLOCK: '#/components/schemas/BlockSigning'
                   DEPOSIT: '#/components/schemas/DepositSigning'
