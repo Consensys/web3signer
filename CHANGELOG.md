@@ -1,9 +1,12 @@
 # Changelog
 
-## Next Release
+## 21.8.0
 
 ### Features Added
 - Upgraded Teku libraries to 21.8.1. Added support for Altair upgrade on the Pyrmont testnet at epoch 61650.
+
+### Bug fixed
+- Spelling mistake fixed in Eth2 OpenApi spec
 
 ## 21.7.0
 
