@@ -109,6 +109,7 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
             null,
             null,
             null,
+            null,
             depositMessage,
             null,
             null,

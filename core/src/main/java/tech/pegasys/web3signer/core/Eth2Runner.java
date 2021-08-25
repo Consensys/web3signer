@@ -33,7 +33,7 @@ import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
-import tech.pegasys.web3signer.core.service.http.SigningJsonModule;
+import tech.pegasys.web3signer.core.service.http.SigningJsonProvider;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SignForIdentifierHandler;
@@ -53,8 +53,6 @@ import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
@@ -126,11 +124,7 @@ public class Eth2Runner extends Runner {
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
       final Optional<SlashingProtection> slashingProtection) {
-    final ObjectMapper objectMapper =
-        new ObjectMapper()
-            .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .registerModule(new SigningJsonModule());
+    final ObjectMapper objectMapper = new SigningJsonProvider().getObjectMapper();
 
     addPublicKeysListHandler(routerFactory, blsSignerProvider, ETH2_LIST.name(), errorHandler);
 

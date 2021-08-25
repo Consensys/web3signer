@@ -113,10 +113,10 @@ allprojects {
   repositories {
     jcenter()
     mavenCentral()
-    maven { url "https://hyperledger.jfrog.io/artifactory/besu-maven" }
-    maven { url "https://hyperledger-org.bintray.com/besu-repo/" }
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
     maven { url "https://artifacts.consensys.net/public/teku/maven/" }
+    maven { url "https://hyperledger.jfrog.io/artifactory/besu-maven" }
+    maven { url "https://hyperledger-org.bintray.com/besu-repo/" }
     maven { url "https://jitpack.io" }
   }
 

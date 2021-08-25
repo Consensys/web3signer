@@ -147,7 +147,10 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource
+  @EnumSource(
+      value = ArtifactType.class,
+      names = {"BLOCK_V2"},
+      mode = EnumSource.Mode.EXCLUDE)
   public void failsIfSigningRootDoesNotMatchSigningData(final ArtifactType artifactType)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -164,6 +167,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             Bytes32.ZERO,
             request.getForkInfo(),
             request.getBlock(),
+            request.getBlockRequest(),
             request.getAttestation(),
             request.getAggregationSlot(),
             request.getAggregateAndProof(),
@@ -200,6 +204,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             null,
             request.getForkInfo(),
             request.getBlock(),
+            request.getBlockRequest(),
             request.getAttestation(),
             request.getAggregationSlot(),
             request.getAggregateAndProof(),

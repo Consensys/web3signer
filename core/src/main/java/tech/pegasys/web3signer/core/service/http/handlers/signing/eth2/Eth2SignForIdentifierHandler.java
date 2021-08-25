@@ -175,11 +175,13 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     final ForkInfo forkInfo = eth2SigningRequestBody.getForkInfo();
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
-        final BeaconBlock beaconBlock = eth2SigningRequestBody.getBlock();
-        final UInt64 blockSlot = UInt64.valueOf(beaconBlock.slot.bigIntegerValue());
-        return slashingProtection
-            .get()
-            .maySignBlock(publicKey, signingRoot, blockSlot, forkInfo.getGenesisValidatorsRoot());
+        return maySignBlock(publicKey, signingRoot, eth2SigningRequestBody.getBlock(), forkInfo);
+      case BLOCK_V2:
+        return maySignBlock(
+            publicKey,
+            signingRoot,
+            eth2SigningRequestBody.getBlockRequest().getBeaconBlock(),
+            forkInfo);
       case ATTESTATION:
         final AttestationData attestation = eth2SigningRequestBody.getAttestation();
         return slashingProtection
@@ -195,12 +197,28 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     }
   }
 
+  private boolean maySignBlock(
+      final Bytes publicKey,
+      final Bytes signingRoot,
+      final BeaconBlock beaconBlock,
+      final ForkInfo forkInfo) {
+    final UInt64 blockSlot = UInt64.valueOf(beaconBlock.slot.bigIntegerValue());
+    return slashingProtection
+        .get()
+        .maySignBlock(publicKey, signingRoot, blockSlot, forkInfo.getGenesisValidatorsRoot());
+  }
+
   private Bytes computeSigningRoot(final Eth2SigningRequestBody body) {
     switch (body.getType()) {
       case BLOCK:
         checkArgument(body.getBlock() != null, "block must be specified");
         return signingRootUtil.signingRootForSignBlock(
             body.getBlock().asInternalBeaconBlock(eth2Spec),
+            body.getForkInfo().asInternalForkInfo());
+      case BLOCK_V2:
+        checkArgument(body.getBlockRequest() != null, "beacon_block must be specified");
+        return signingRootUtil.signingRootForSignBlock(
+            body.getBlockRequest().getBeaconBlock().asInternalBeaconBlock(eth2Spec),
             body.getForkInfo().asInternalForkInfo());
       case ATTESTATION:
         checkArgument(body.getAttestation() != null, "attestation must be specified");
