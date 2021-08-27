@@ -59,7 +59,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
 
   @ParameterizedTest
-  @EnumSource
+  @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "BLOCK_V2")
   public void signDataWithKeyLoadedFromUnencryptedFile(final ArtifactType artifactType)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -70,7 +70,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource
+  @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "BLOCK_V2")
   public void signDataWithJsonAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -81,7 +81,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource
+  @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "BLOCK_V2")
   public void signDataWithDefaultAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
