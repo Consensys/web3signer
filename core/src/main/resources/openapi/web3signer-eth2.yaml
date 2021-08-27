@@ -516,15 +516,6 @@ components:
           type: string
           description: Bytes96 hexadecimal
     BeaconBlockSigning:
-      allOf:
-        - $ref: '#/components/schemas/Signing'
-        - type: object
-          properties:
-            beacon_block:
-              $ref: '#/components/schemas/BeaconBlockRequest'
-          required:
-            - beacon_block
-    BeaconBlockRequest:
       oneOf:
         - $ref: '#/components/schemas/BlockRequestPhase0'
         - $ref: '#/components/schemas/BlockRequestAltair'
@@ -534,22 +525,26 @@ components:
           PHASE0: '#/components/schemas/BlockRequestPhase0'
           ALTAIR: '#/components/schemas/BlockRequestAltair'
     BlockRequestPhase0:
-      type: object
-      properties:
-        version:
-          type: string
-        block:
-          $ref: "#/components/schemas/BeaconBlock"
-      required:
-        - version
-        - block
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            version:
+              type: string
+            block:
+              $ref: "#/components/schemas/BeaconBlock"
+          required:
+            - version
+            - block
     BlockRequestAltair:
-      type: object
-      properties:
-        version:
-          type: string
-        block:
-          $ref: "#/components/schemas/BeaconBlockAltair"
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            version:
+              type: string
+            block:
+              $ref: "#/components/schemas/BeaconBlockAltair"
       required:
         - version
         - block

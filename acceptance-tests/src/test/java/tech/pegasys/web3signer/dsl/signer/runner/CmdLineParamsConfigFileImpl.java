@@ -253,6 +253,12 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               YAML_NUMERIC_FMT,
               "eth2.Xnetwork-altair-fork-epoch",
               signerConfig.getAltairForkEpoch().get()));
+
+      // TODO: refactor
+      yamlConfig.append(
+              String.format(
+                      YAML_STRING_FMT,
+                      "eth2.network","minimal"));
     }
 
     return yamlConfig.toString();
