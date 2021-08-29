@@ -49,7 +49,7 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupSigner("eth2");
+    setupSigner("eth2", null, "minimal");
   }
 
   @Test

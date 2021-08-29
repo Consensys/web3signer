@@ -177,11 +177,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     if (signerConfig.getAltairForkEpoch().isPresent()) {
       params.add("--Xnetwork-altair-fork-epoch");
       params.add(Long.toString(signerConfig.getAltairForkEpoch().get()));
+    }
 
-      // TODO: Move
+    if (signerConfig.getNetwork().isPresent()) {
       params.add("--network");
-      params.add("minimal");
-
+      params.add(signerConfig.getNetwork().get());
     }
 
     return params;

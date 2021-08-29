@@ -27,16 +27,22 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   protected @TempDir Path testDirectory;
 
   protected void setupSigner(final String mode) {
-    setupSigner(mode, null);
+    setupSigner(mode, null, null);
   }
 
   protected void setupSigner(final String mode, final Map<String, String> env) {
+    setupSigner(mode, env, null);
+  }
+
+  protected void setupSigner(
+      final String mode, final Map<String, String> env, final String network) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder
         .withKeyStoreDirectory(testDirectory)
         .withMode(mode)
         .withAltairForkEpoch(0)
-        .withEnvironment(env);
+        .withEnvironment(env)
+        .withNetwork(network);
     startSigner(builder.build());
   }
 

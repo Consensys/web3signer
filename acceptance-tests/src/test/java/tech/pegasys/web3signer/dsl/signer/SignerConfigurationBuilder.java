@@ -57,6 +57,7 @@ public class SignerConfigurationBuilder {
   private long slashingPruningSlotsPerEpoch = 1;
   private long slashingPruningInterval = 1;
   private Long altairForkEpoch = null;
+  private String network = null;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -201,6 +202,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withNetwork(final String network) {
+    this.network = network;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -233,6 +239,7 @@ public class SignerConfigurationBuilder {
         swaggerUIEnabled,
         useConfigFile,
         Optional.ofNullable(slashingProtectionDbPoolConfigurationFile),
-        Optional.ofNullable(altairForkEpoch));
+        Optional.ofNullable(altairForkEpoch),
+        Optional.ofNullable(network));
   }
 }

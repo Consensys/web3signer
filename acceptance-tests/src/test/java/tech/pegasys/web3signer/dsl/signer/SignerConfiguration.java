@@ -55,6 +55,7 @@ public class SignerConfiguration {
   private final long slashingPruningSlotsPerEpoch;
   private final long slashingPruningInterval;
   private final Optional<Long> altairForkEpoch;
+  private final Optional<String> network;
 
   public SignerConfiguration(
       final String hostname,
@@ -84,7 +85,8 @@ public class SignerConfiguration {
       final boolean swaggerUIEnabled,
       final boolean useConfigFile,
       final Optional<Path> slashingDbPoolConfigurationFile,
-      final Optional<Long> altairForkEpoch) {
+      final Optional<Long> altairForkEpoch,
+      final Optional<String> network) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -113,6 +115,7 @@ public class SignerConfiguration {
     this.useConfigFile = useConfigFile;
     this.slashingProtectionDbPoolConfigurationFile = slashingDbPoolConfigurationFile;
     this.altairForkEpoch = altairForkEpoch;
+    this.network = network;
   }
 
   public String hostname() {
@@ -233,5 +236,9 @@ public class SignerConfiguration {
 
   public Optional<Long> getAltairForkEpoch() {
     return altairForkEpoch;
+  }
+
+  public Optional<String> getNetwork() {
+    return network;
   }
 }
