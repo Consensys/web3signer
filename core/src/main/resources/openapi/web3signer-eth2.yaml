@@ -518,12 +518,16 @@ components:
     BeaconBlockSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
-        - type: object
-          properties:
-            beacon_block:
-              anyOf:
-                - $ref: '#/components/schemas/BlockRequestPhase0'
-                - $ref: '#/components/schemas/BlockRequestAltair'
+        - $ref: '#/components/schemas/BeaconBlockRequest'
+    BeaconBlockRequest:
+      type: object
+      properties:
+        beacon_block:
+          anyOf:
+            - $ref: '#/components/schemas/BlockRequestAltair'
+            - $ref: '#/components/schemas/BlockRequestPhase0'
+      required:
+        - beacon_block
     BlockRequestPhase0:
       type: object
       properties:
