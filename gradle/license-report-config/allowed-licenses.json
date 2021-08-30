@@ -84,6 +84,10 @@
       "moduleLicense": "Eclipse Distribution License - v 1.0"
     },
     {
+      "moduleName": "jakarta.validation:jakarta.validation-api",
+      "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
       "moduleName": "javax.xml.bind:jaxb-api",
       "moduleLicense": "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.1"
     },
