@@ -17,6 +17,7 @@ import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockBodyAltair;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.spec.Spec;
+import tech.pegasys.teku.spec.SpecFactory;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.TestSpecFactory;
 import tech.pegasys.teku.spec.datastructures.blocks.BeaconBlock;
@@ -26,24 +27,48 @@ import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class Eth2AltairBlockRequestUtil {
-  private final Spec spec = TestSpecFactory.createMinimalAltair();
-  private final DataStructureUtil dataStructureUtil = new DataStructureUtil(spec);
-  private final SigningRootUtil signingRootUtil = new SigningRootUtil(spec);
-  private final ForkInfo tekuForkInfo = dataStructureUtil.randomForkInfo();
-  private final Fork tekuFork = new Fork(tekuForkInfo.getFork());
-  private final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo forkInfo =
-      new tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo(
-          tekuFork, tekuForkInfo.getGenesisValidatorsRoot());
-  private final BeaconBlock beaconBlock = dataStructureUtil.randomBeaconBlock(10);
-  private final Bytes signingRoot =
-      signingRootUtil.signingRootForSignBlock(beaconBlock, tekuForkInfo);
+  private final SpecMilestone specMilestone;
+  private final Spec spec;
+  private final DataStructureUtil dataStructureUtil;
+  private final SigningRootUtil signingRootUtil;
+  private final ForkInfo tekuForkInfo;
+  private final Fork tekuFork;
+  private final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo forkInfo;
+  private final BeaconBlock beaconBlock;
+  private final Bytes signingRoot;
+  private final String network;
 
-  public Eth2SigningRequestBody createRandomAltairBlockRequest() {
-    final BlockRequest blockRequest =
-        new BlockRequest(SpecMilestone.ALTAIR, getBeaconBlockAltair());
+  public Eth2AltairBlockRequestUtil(final SpecMilestone specMilestone, final String network) {
+    switch (specMilestone) {
+      case ALTAIR:
+        spec = TestSpecFactory.createMinimalAltair();
+        break;
+      case PHASE0:
+        spec = SpecFactory.create(network, Optional.empty());
+        break;
+      default:
+        throw new IllegalStateException("Spec Milestone not yet supported: " + specMilestone);
+    }
+    this.network = network;
+    this.specMilestone = specMilestone;
+    dataStructureUtil = new DataStructureUtil(spec);
+    signingRootUtil = new SigningRootUtil(spec);
+    tekuForkInfo = dataStructureUtil.randomForkInfo();
+    tekuFork = new Fork(tekuForkInfo.getFork());
+    forkInfo =
+        new tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo(
+            tekuFork, tekuForkInfo.getGenesisValidatorsRoot());
+    beaconBlock = dataStructureUtil.randomBeaconBlock(10);
+    signingRoot = signingRootUtil.signingRootForSignBlock(beaconBlock, tekuForkInfo);
+  }
+
+  public Eth2SigningRequestBody createRandomBlockV2Request() {
+    final BlockRequest blockRequest = new BlockRequest(specMilestone, getBeaconBlock());
 
     return new Eth2SigningRequestBody(
         ArtifactType.BLOCK_V2,
@@ -62,13 +87,41 @@ public class Eth2AltairBlockRequestUtil {
         null);
   }
 
-  private tech.pegasys.teku.api.schema.BeaconBlock getBeaconBlockAltair() {
-    return new BeaconBlockAltair(
-        beaconBlock.getSlot(),
-        beaconBlock.getProposerIndex(),
-        beaconBlock.getParentRoot(),
-        beaconBlock.getStateRoot(),
-        getBeaconBlockBodyAltair(beaconBlock.getBody()));
+  public Eth2SigningRequestBody createRandomPhase0BlockRequest() {
+    return new Eth2SigningRequestBody(
+        ArtifactType.BLOCK,
+        signingRoot,
+        forkInfo,
+        getBeaconBlock(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
+  }
+
+  public String getNetwork() {
+    return network;
+  }
+
+  private tech.pegasys.teku.api.schema.BeaconBlock getBeaconBlock() {
+    if (specMilestone == SpecMilestone.ALTAIR) {
+      return new BeaconBlockAltair(
+          beaconBlock.getSlot(),
+          beaconBlock.getProposerIndex(),
+          beaconBlock.getParentRoot(),
+          beaconBlock.getStateRoot(),
+          getBeaconBlockBodyAltair(beaconBlock.getBody()));
+    } else if (specMilestone == SpecMilestone.PHASE0) {
+      return new tech.pegasys.teku.api.schema.BeaconBlock(beaconBlock);
+    }
+
+    throw new IllegalStateException("Spec milestone not yet supported: " + specMilestone);
   }
 
   private BeaconBlockBodyAltair getBeaconBlockBodyAltair(

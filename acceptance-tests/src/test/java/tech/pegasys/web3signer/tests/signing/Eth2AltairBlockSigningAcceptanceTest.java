@@ -19,6 +19,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
+import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.utils.Eth2AltairBlockRequestUtil;
@@ -32,6 +33,8 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final String PRIVATE_KEY =
@@ -48,16 +51,30 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+  }
 
-    setupSigner("eth2", null, "minimal");
+  @ParameterizedTest
+  @EnumSource
+  void signAndVerifyAltairBlockSignature(final SpecMilestone specMilestone) throws Exception {
+    final Eth2AltairBlockRequestUtil util = new Eth2AltairBlockRequestUtil(specMilestone, "minimal");
+
+    setupSigner("eth2", null, util.getNetwork());
+
+    final Eth2SigningRequestBody request = util.createRandomBlockV2Request();
+    final Response response =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
+    final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
+    final BLSSignature expectedSignature =
+        BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
+    assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
   @Test
-  void signAndVerifyAltairBlockSignature() throws Exception {
+  void signAndVerifyPhase0BlockSignature() throws Exception {
+    final Eth2AltairBlockRequestUtil util = new Eth2AltairBlockRequestUtil(SpecMilestone.PHASE0, "mainnet");
+    setupSigner("eth2", null, util.getNetwork());
 
-    // openapi
-    final Eth2SigningRequestBody request =
-        new Eth2AltairBlockRequestUtil().createRandomAltairBlockRequest();
+    final Eth2SigningRequestBody request = util.createRandomPhase0BlockRequest();
     final Response response =
         signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
