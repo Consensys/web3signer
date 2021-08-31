@@ -42,6 +42,7 @@ import picocli.CommandLine.Spec;
     subcommands = {HelpCommand.class, Eth2ExportSubCommand.class, Eth2ImportSubCommand.class},
     mixinStandardHelpOptions = true)
 public class Eth2SubCommand extends ModeSubCommand {
+  
   public static final String COMMAND_NAME = "eth2";
 
   @Spec CommandSpec commandSpec;
@@ -77,7 +78,6 @@ public class Eth2SubCommand extends ModeSubCommand {
   protected void validateArgs() {
     final String networkConfigName =
         Eth2Network.fromStringLenient(network).map(Eth2Network::configName).orElse(network);
-    System.out.println("Network Config: " + networkConfigName);
 
     try {
       eth2Spec = SpecFactory.create(networkConfigName, Optional.ofNullable(altairForkEpoch));
