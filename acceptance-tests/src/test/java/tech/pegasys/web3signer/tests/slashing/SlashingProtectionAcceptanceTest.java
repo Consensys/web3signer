@@ -27,6 +27,7 @@ import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.response.Response;
@@ -61,7 +62,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
             .withSlashingProtectionDbUsername(DB_USERNAME)
             .withSlashingProtectionDbPassword(DB_PASSWORD)
             .withMetricsEnabled(true)
-            .withAltairForkEpoch(0)
+            .withAltairForkEpoch(Optional.of(0L))
             .withKeyStoreDirectory(testDirectory);
 
     final Path keyConfigFile = testDirectory.resolve("keyfile.yaml");

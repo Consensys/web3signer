@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Jdbi;
@@ -60,7 +61,7 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
             .withSlashingProtectionDbUsername(DB_USERNAME)
             .withSlashingProtectionDbPassword(DB_PASSWORD)
             .withSlashingProtectionDbUrl(dbUrl)
-            .withAltairForkEpoch(0)
+            .withAltairForkEpoch(Optional.of(0L))
             .withKeyStoreDirectory(testDirectory);
 
     final Signer dataCreatingSigner = new Signer(signerBuilder.build(), null);

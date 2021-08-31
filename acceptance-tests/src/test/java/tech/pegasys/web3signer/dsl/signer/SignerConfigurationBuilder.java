@@ -56,7 +56,7 @@ public class SignerConfigurationBuilder {
   private long pruningEpochsToKeep = 1;
   private long slashingPruningSlotsPerEpoch = 1;
   private long slashingPruningInterval = 1;
-  private Long altairForkEpoch = null;
+  private Optional<Long> altairForkEpoch = Optional.empty();
   private String network = null;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
@@ -197,7 +197,7 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withAltairForkEpoch(final long altairForkEpoch) {
+  public SignerConfigurationBuilder withAltairForkEpoch(final Optional<Long> altairForkEpoch) {
     this.altairForkEpoch = altairForkEpoch;
     return this;
   }
@@ -239,7 +239,7 @@ public class SignerConfigurationBuilder {
         swaggerUIEnabled,
         useConfigFile,
         Optional.ofNullable(slashingProtectionDbPoolConfigurationFile),
-        Optional.ofNullable(altairForkEpoch),
+        altairForkEpoch,
         Optional.ofNullable(network));
   }
 }

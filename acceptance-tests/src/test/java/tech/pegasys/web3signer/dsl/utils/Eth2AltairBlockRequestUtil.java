@@ -17,7 +17,6 @@ import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockBodyAltair;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.spec.Spec;
-import tech.pegasys.teku.spec.SpecFactory;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.TestSpecFactory;
 import tech.pegasys.teku.spec.datastructures.blocks.BeaconBlock;
@@ -26,8 +25,6 @@ import tech.pegasys.teku.spec.util.DataStructureUtil;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
-
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -41,20 +38,18 @@ public class Eth2AltairBlockRequestUtil {
   private final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo forkInfo;
   private final BeaconBlock beaconBlock;
   private final Bytes signingRoot;
-  private final String network;
 
-  public Eth2AltairBlockRequestUtil(final SpecMilestone specMilestone, final String network) {
+  public Eth2AltairBlockRequestUtil(final SpecMilestone specMilestone) {
     switch (specMilestone) {
       case ALTAIR:
         spec = TestSpecFactory.createMinimalAltair();
         break;
       case PHASE0:
-        spec = SpecFactory.create(network, Optional.empty());
+        spec = TestSpecFactory.createMinimalPhase0();
         break;
       default:
         throw new IllegalStateException("Spec Milestone not yet supported: " + specMilestone);
     }
-    this.network = network;
     this.specMilestone = specMilestone;
     dataStructureUtil = new DataStructureUtil(spec);
     signingRootUtil = new SigningRootUtil(spec);
@@ -63,7 +58,7 @@ public class Eth2AltairBlockRequestUtil {
     forkInfo =
         new tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo(
             tekuFork, tekuForkInfo.getGenesisValidatorsRoot());
-    beaconBlock = dataStructureUtil.randomBeaconBlock(10);
+    beaconBlock = dataStructureUtil.randomBeaconBlock(0);
     signingRoot = signingRootUtil.signingRootForSignBlock(beaconBlock, tekuForkInfo);
   }
 
@@ -88,6 +83,10 @@ public class Eth2AltairBlockRequestUtil {
   }
 
   public Eth2SigningRequestBody createRandomPhase0BlockRequest() {
+    System.out.printf(
+        "Block Hashcode: %s, ForkInfo Hashcode: %s, Spec Hashcode: %s%n",
+        getBeaconBlock().hashCode(), forkInfo.asInternalForkInfo().hashCode(), spec.hashCode());
+
     return new Eth2SigningRequestBody(
         ArtifactType.BLOCK,
         signingRoot,
@@ -103,10 +102,6 @@ public class Eth2AltairBlockRequestUtil {
         null,
         null,
         null);
-  }
-
-  public String getNetwork() {
-    return network;
   }
 
   private tech.pegasys.teku.api.schema.BeaconBlock getBeaconBlock() {

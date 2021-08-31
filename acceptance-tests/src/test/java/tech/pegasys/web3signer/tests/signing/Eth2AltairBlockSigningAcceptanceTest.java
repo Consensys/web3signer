@@ -26,6 +26,7 @@ import tech.pegasys.web3signer.dsl.utils.Eth2AltairBlockRequestUtil;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -55,10 +56,14 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
 
   @ParameterizedTest
   @EnumSource
-  void signAndVerifyAltairBlockSignature(final SpecMilestone specMilestone) throws Exception {
-    final Eth2AltairBlockRequestUtil util = new Eth2AltairBlockRequestUtil(specMilestone, "minimal");
+  void signAndVerifyBlockV2Signature(final SpecMilestone specMilestone) throws Exception {
+    final Eth2AltairBlockRequestUtil util = new Eth2AltairBlockRequestUtil(specMilestone);
 
-    setupSigner("eth2", null, util.getNetwork());
+    setupSigner(
+        "eth2",
+        null,
+        "minimal",
+        specMilestone == SpecMilestone.ALTAIR ? Optional.of(0L) : Optional.empty());
 
     final Eth2SigningRequestBody request = util.createRandomBlockV2Request();
     final Response response =
@@ -71,8 +76,8 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
 
   @Test
   void signAndVerifyPhase0BlockSignature() throws Exception {
-    final Eth2AltairBlockRequestUtil util = new Eth2AltairBlockRequestUtil(SpecMilestone.PHASE0, "mainnet");
-    setupSigner("eth2", null, util.getNetwork());
+    final Eth2AltairBlockRequestUtil util = new Eth2AltairBlockRequestUtil(SpecMilestone.PHASE0);
+    setupSigner("eth2", null, "minimal", Optional.empty());
 
     final Eth2SigningRequestBody request = util.createRandomPhase0BlockRequest();
     final Response response =
