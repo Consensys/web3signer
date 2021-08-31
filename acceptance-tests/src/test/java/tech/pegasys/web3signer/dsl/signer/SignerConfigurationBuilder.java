@@ -197,8 +197,8 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withAltairForkEpoch(final Optional<Long> altairForkEpoch) {
-    this.altairForkEpoch = altairForkEpoch;
+  public SignerConfigurationBuilder withAltairForkEpoch(final Long altairForkEpoch) {
+    this.altairForkEpoch = Optional.ofNullable(altairForkEpoch);
     return this;
   }
 

@@ -29,7 +29,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -102,7 +101,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
             .withMetricsCategories("SIGNING")
             .withMetricsEnabled(true)
             .withMode("eth2")
-            .withAltairForkEpoch(Optional.of(0L))
+            .withAltairForkEpoch(0L)
             .build();
     startSigner(signerConfiguration);
 

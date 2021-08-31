@@ -17,7 +17,6 @@ import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -26,20 +25,21 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   protected @TempDir Path testDirectory;
+  private static final Long MINIMAL_ALTAIR_FORK = 0L;
 
   protected void setupSigner(final String mode) {
-    setupSigner(mode, null, null, Optional.of(0L));
+    setupSigner(mode, null, null, MINIMAL_ALTAIR_FORK);
   }
 
   protected void setupSigner(final String mode, final Map<String, String> env) {
-    setupSigner(mode, env, null, Optional.of(0L));
+    setupSigner(mode, env, null, MINIMAL_ALTAIR_FORK);
   }
 
   protected void setupSigner(
       final String mode,
       final Map<String, String> env,
       final String network,
-      final Optional<Long> altairFork) {
+      final Long altairFork) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder
         .withKeyStoreDirectory(testDirectory)
