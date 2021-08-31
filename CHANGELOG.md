@@ -1,5 +1,15 @@
 # Changelog
 
+## 21.8.1
+
+### Features Added
+- Added sign type BLOCK_V2 to support block signing for Phase0, Altair and future forks (Eth2 mode). BLOCK is not removed for 
+backward compatibility with PHASE0 blocks.
+- Upgraded Teku libraries to 21.8.2 which added support for Altair upgrade on Prater testnet at epoch 36660.
+
+### Bugs fixed
+- Unable to sign blocks on testnet Pyrmont after Altair fork. (Thanks to [Sephiroth](https://github.com/3eph1r0th) for reporting it.)
+
 ## 21.8.0
 
 ### Features Added
