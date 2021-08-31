@@ -78,7 +78,6 @@ public class Eth2SubCommand extends ModeSubCommand {
   protected void validateArgs() {
     final String networkConfigName =
         Eth2Network.fromStringLenient(network).map(Eth2Network::configName).orElse(network);
-
     try {
       eth2Spec = SpecFactory.create(networkConfigName, Optional.ofNullable(altairForkEpoch));
     } catch (final IllegalArgumentException e) {
