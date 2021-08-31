@@ -42,7 +42,7 @@ import picocli.CommandLine.Spec;
     subcommands = {HelpCommand.class, Eth2ExportSubCommand.class, Eth2ImportSubCommand.class},
     mixinStandardHelpOptions = true)
 public class Eth2SubCommand extends ModeSubCommand {
-  
+
   public static final String COMMAND_NAME = "eth2";
 
   @Spec CommandSpec commandSpec;

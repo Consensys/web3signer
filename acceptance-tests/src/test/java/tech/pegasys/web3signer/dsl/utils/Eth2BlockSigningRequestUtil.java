@@ -28,9 +28,8 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2Signi
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class Eth2AltairBlockRequestUtil {
+public class Eth2BlockSigningRequestUtil {
   private final SpecMilestone specMilestone;
-  private final Spec spec;
   private final DataStructureUtil dataStructureUtil;
   private final SigningRootUtil signingRootUtil;
   private final ForkInfo tekuForkInfo;
@@ -39,7 +38,8 @@ public class Eth2AltairBlockRequestUtil {
   private final BeaconBlock beaconBlock;
   private final Bytes signingRoot;
 
-  public Eth2AltairBlockRequestUtil(final SpecMilestone specMilestone) {
+  public Eth2BlockSigningRequestUtil(final SpecMilestone specMilestone) {
+    final Spec spec;
     switch (specMilestone) {
       case ALTAIR:
         spec = TestSpecFactory.createMinimalAltair();
@@ -82,10 +82,11 @@ public class Eth2AltairBlockRequestUtil {
         null);
   }
 
-  public Eth2SigningRequestBody createRandomPhase0BlockRequest() {
-    System.out.printf(
-        "Block Hashcode: %s, ForkInfo Hashcode: %s, Spec Hashcode: %s%n",
-        getBeaconBlock().hashCode(), forkInfo.asInternalForkInfo().hashCode(), spec.hashCode());
+  public Eth2SigningRequestBody createRandomLegacyBlockRequest() {
+    if (specMilestone != SpecMilestone.PHASE0) {
+      throw new IllegalStateException(
+          "Only PHASE0 spec is supported to create legacy BLOCK type signing request");
+    }
 
     return new Eth2SigningRequestBody(
         ArtifactType.BLOCK,

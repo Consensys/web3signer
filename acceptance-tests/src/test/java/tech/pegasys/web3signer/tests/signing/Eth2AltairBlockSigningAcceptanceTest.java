@@ -22,7 +22,7 @@ import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
-import tech.pegasys.web3signer.dsl.utils.Eth2AltairBlockRequestUtil;
+import tech.pegasys.web3signer.dsl.utils.Eth2BlockSigningRequestUtil;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.nio.file.Path;
@@ -57,7 +57,7 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
   @ParameterizedTest
   @EnumSource
   void signAndVerifyBlockV2Signature(final SpecMilestone specMilestone) throws Exception {
-    final Eth2AltairBlockRequestUtil util = new Eth2AltairBlockRequestUtil(specMilestone);
+    final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
 
     setupSigner(
         "eth2",
@@ -75,11 +75,11 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
   }
 
   @Test
-  void signAndVerifyPhase0BlockSignature() throws Exception {
-    final Eth2AltairBlockRequestUtil util = new Eth2AltairBlockRequestUtil(SpecMilestone.PHASE0);
+  void signAndVerifyLegacyBlockSignature() throws Exception {
+    final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(SpecMilestone.PHASE0);
     setupSigner("eth2", null, "minimal", Optional.empty());
 
-    final Eth2SigningRequestBody request = util.createRandomPhase0BlockRequest();
+    final Eth2SigningRequestBody request = util.createRandomLegacyBlockRequest();
     final Response response =
         signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
