@@ -68,7 +68,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
-    setupSigner("filecoin");
+    setupFilecoinSigner();
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final ObjectMapper mapper = new ObjectMapper();

@@ -33,7 +33,6 @@ import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.nio.file.Path;
-import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
@@ -66,7 +65,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    signAndVerifySignature(artifactType, TEXT, null);
+    signAndVerifySignature(artifactType, TEXT);
   }
 
   @ParameterizedTest
@@ -77,7 +76,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    signAndVerifySignature(artifactType, JSON, null);
+    signAndVerifySignature(artifactType, JSON);
   }
 
   @ParameterizedTest
@@ -88,7 +87,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
     // this is same as not setting accept type at all - the client defaults to */* aka ANY
-    signAndVerifySignature(artifactType, ANY, null);
+    signAndVerifySignature(artifactType, ANY);
   }
 
   @ParameterizedTest
@@ -158,7 +157,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.SCRYPT);
 
-    setupSigner("eth2", null);
+    setupEth2Signer();
 
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
     final Eth2SigningRequestBody requestWithMismatchedSigningRoot =
@@ -194,7 +193,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.SCRYPT);
 
-    setupSigner("eth2", null);
+    setupEth2Signer();
 
     final Eth2SigningRequestBody request = Eth2RequestUtils.createBlockRequest();
 
@@ -236,15 +235,13 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   private void signAndVerifySignature(final ArtifactType artifactType)
       throws JsonProcessingException {
-    signAndVerifySignature(artifactType, TEXT, null);
+    signAndVerifySignature(artifactType, TEXT);
   }
 
   private void signAndVerifySignature(
-      final ArtifactType artifactType,
-      final ContentType acceptMediaType,
-      final Map<String, String> env)
+      final ArtifactType artifactType, final ContentType acceptMediaType)
       throws JsonProcessingException {
-    setupSigner("eth2", env);
+    setupEth2Signer();
 
     // openapi
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);

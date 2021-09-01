@@ -16,7 +16,6 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.nio.file.Path;
-import java.util.Map;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -27,26 +26,31 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   protected @TempDir Path testDirectory;
   private static final Long MINIMAL_ALTAIR_FORK = 0L;
 
-  protected void setupSigner(final String mode) {
-    setupSigner(mode, null, null, MINIMAL_ALTAIR_FORK);
+  protected void setupEth1Signer() {
+    setupSigner("eth1");
   }
 
-  protected void setupSigner(final String mode, final Map<String, String> env) {
-    setupSigner(mode, env, null, MINIMAL_ALTAIR_FORK);
+  protected void setupFilecoinSigner() {
+    setupSigner("filecoin");
   }
 
-  protected void setupSigner(
-      final String mode,
-      final Map<String, String> env,
-      final String network,
-      final Long altairFork) {
+  protected void setupEth2Signer() {
+    setupSigner("eth2");
+  }
+
+  protected void setupEth2SignerWithoutAltairFork() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder
-        .withKeyStoreDirectory(testDirectory)
-        .withMode(mode)
-        .withAltairForkEpoch(altairFork)
-        .withEnvironment(env)
-        .withNetwork(network);
+    builder.withKeyStoreDirectory(testDirectory).withMode("eth2").withNetwork("minimal");
+    startSigner(builder.build());
+  }
+
+  protected void setupSigner(final String mode) {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory).withMode(mode);
+
+    if ("eth2".equals(mode)) {
+      builder.withNetwork("minimal").withAltairForkEpoch(MINIMAL_ALTAIR_FORK);
+    }
     startSigner(builder.build());
   }
 

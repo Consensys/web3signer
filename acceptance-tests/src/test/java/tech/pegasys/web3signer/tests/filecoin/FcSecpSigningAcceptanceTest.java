@@ -64,7 +64,7 @@ public class FcSecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     metadataFileHelpers.createKeyStoreYamlFileAt(
         keyConfigFile, Path.of(keyPath), "pass", KeyType.SECP256K1);
 
-    setupSigner("filecoin");
+    setupFilecoinSigner();
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
     final ObjectMapper mapper = new ObjectMapper();

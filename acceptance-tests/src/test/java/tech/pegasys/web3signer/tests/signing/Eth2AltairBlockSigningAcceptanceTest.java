@@ -58,7 +58,11 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
   void signAndVerifyBlockV2Signature(final SpecMilestone specMilestone) throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
 
-    setupSigner("eth2", null, "minimal", specMilestone == SpecMilestone.ALTAIR ? 0L : null);
+    if (specMilestone == SpecMilestone.ALTAIR) {
+      setupEth2Signer();
+    } else {
+      setupEth2SignerWithoutAltairFork();
+    }
 
     final Eth2SigningRequestBody request = util.createRandomBlockV2Request();
     final Response response =
@@ -72,7 +76,7 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
   @Test
   void signAndVerifyLegacyBlockSignature() throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(SpecMilestone.PHASE0);
-    setupSigner("eth2", null, "minimal", null);
+    setupEth2SignerWithoutAltairFork();
 
     final Eth2SigningRequestBody request = util.createRandomLegacyBlockRequest();
     final Response response =

@@ -55,7 +55,7 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
     metadataFileHelpers.createUnencryptedYamlFileAt(
         testDirectory.resolve("2.yaml"), PRIVATE_KEY2, BLS);
 
-    setupSigner("eth2");
+    setupEth2Signer();
 
     final ObjectMapper objectMapper = new ObjectMapper();
 
