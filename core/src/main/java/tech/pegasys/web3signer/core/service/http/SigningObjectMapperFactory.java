@@ -51,10 +51,12 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class SigningJsonProvider {
+public class SigningObjectMapperFactory {
   private final ObjectMapper objectMapper;
 
-  public SigningJsonProvider() {
+  private static final SigningObjectMapperFactory factory = new SigningObjectMapperFactory();
+
+  private SigningObjectMapperFactory() {
     this.objectMapper =
         new ObjectMapper()
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
@@ -98,7 +100,7 @@ public class SigningJsonProvider {
     objectMapper.registerModule(module);
   }
 
-  public ObjectMapper getObjectMapper() {
-    return objectMapper;
+  public static ObjectMapper createObjectMapper() {
+    return factory.objectMapper;
   }
 }

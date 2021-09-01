@@ -19,7 +19,7 @@ import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpeci
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
-import tech.pegasys.web3signer.core.service.http.SigningJsonProvider;
+import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
@@ -59,7 +59,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   public static final String RELOAD_ENDPOINT = "/reload";
 
   public static final ObjectMapper ETH_2_INTERFACE_OBJECT_MAPPER =
-      new SigningJsonProvider().getObjectMapper().setSerializationInclusion(Include.NON_NULL);
+      SigningObjectMapperFactory.createObjectMapper().setSerializationInclusion(Include.NON_NULL);
   private static final String METRICS_ENDPOINT = "/metrics";
 
   private final Web3SignerRunner runner;
