@@ -58,7 +58,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final BLSPublicKey publicKey = keyPair.getPublicKey();
 
   @ParameterizedTest
-  @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "BLOCK_V2")
+  @EnumSource
   public void signDataWithKeyLoadedFromUnencryptedFile(final ArtifactType artifactType)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -69,7 +69,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "BLOCK_V2")
+  @EnumSource
   public void signDataWithJsonAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -80,7 +80,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource(mode = EnumSource.Mode.EXCLUDE, names = "BLOCK_V2")
+  @EnumSource
   public void signDataWithDefaultAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -146,10 +146,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource(
-      value = ArtifactType.class,
-      names = {"BLOCK_V2"},
-      mode = EnumSource.Mode.EXCLUDE)
+  @EnumSource
   public void failsIfSigningRootDoesNotMatchSigningData(final ArtifactType artifactType)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
@@ -241,7 +238,11 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private void signAndVerifySignature(
       final ArtifactType artifactType, final ContentType acceptMediaType)
       throws JsonProcessingException {
-    setupEth2Signer();
+    if (artifactType == ArtifactType.BLOCK_V2) {
+      setupEth2SignerMinimal();
+    } else {
+      setupEth2Signer();
+    }
 
     // openapi
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);

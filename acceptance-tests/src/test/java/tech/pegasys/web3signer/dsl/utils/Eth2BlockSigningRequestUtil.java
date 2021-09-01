@@ -62,7 +62,7 @@ public class Eth2BlockSigningRequestUtil {
     signingRoot = signingRootUtil.signingRootForSignBlock(beaconBlock, tekuForkInfo);
   }
 
-  public Eth2SigningRequestBody createRandomBlockV2Request() {
+  public Eth2SigningRequestBody createBlockV2Request() {
     final BlockRequest blockRequest = new BlockRequest(specMilestone, getBeaconBlock());
 
     return new Eth2SigningRequestBody(
@@ -82,7 +82,7 @@ public class Eth2BlockSigningRequestUtil {
         null);
   }
 
-  public Eth2SigningRequestBody createRandomLegacyBlockRequest() {
+  public Eth2SigningRequestBody createLegacyBlockRequest() {
     if (specMilestone != SpecMilestone.PHASE0) {
       throw new IllegalStateException(
           "Only PHASE0 spec is supported to create legacy BLOCK type signing request");

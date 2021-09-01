@@ -31,6 +31,7 @@ import tech.pegasys.teku.infrastructure.async.SafeFuture;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecFactory;
+import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.ContributionAndProof;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggregatorSelectionData;
@@ -78,6 +79,9 @@ public class Eth2RequestUtils {
       syncCommitteeUtil.createContributionAndProof(
           UInt64.valueOf(11), contribution, aggregatorSignature);
 
+  private static final Eth2BlockSigningRequestUtil ALTAIR_BLOCK_UTIL =
+      new Eth2BlockSigningRequestUtil(SpecMilestone.ALTAIR);
+
   public static Eth2SigningRequestBody createCannedRequest(final ArtifactType artifactType) {
     switch (artifactType) {
       case DEPOSIT:
@@ -88,6 +92,8 @@ public class Eth2RequestUtils {
         return createRandaoReveal();
       case BLOCK:
         return createBlockRequest();
+      case BLOCK_V2:
+        return ALTAIR_BLOCK_UTIL.createBlockV2Request();
       case ATTESTATION:
         return createAttestationRequest();
       case AGGREGATION_SLOT:

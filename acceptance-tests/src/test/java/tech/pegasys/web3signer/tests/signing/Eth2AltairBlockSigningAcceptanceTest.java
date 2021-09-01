@@ -59,12 +59,12 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
 
     if (specMilestone == SpecMilestone.ALTAIR) {
-      setupEth2Signer();
+      setupEth2SignerMinimal();
     } else {
-      setupEth2SignerWithoutAltairFork();
+      setupEth2SignerMinimalWithoutAltairFork();
     }
 
-    final Eth2SigningRequestBody request = util.createRandomBlockV2Request();
+    final Eth2SigningRequestBody request = util.createBlockV2Request();
     final Response response =
         signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
@@ -76,9 +76,9 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
   @Test
   void signAndVerifyLegacyBlockSignature() throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(SpecMilestone.PHASE0);
-    setupEth2SignerWithoutAltairFork();
+    setupEth2SignerMinimalWithoutAltairFork();
 
-    final Eth2SigningRequestBody request = util.createRandomLegacyBlockRequest();
+    final Eth2SigningRequestBody request = util.createLegacyBlockRequest();
     final Response response =
         signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
