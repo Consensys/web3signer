@@ -56,7 +56,11 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   @EnumSource(value = KeyType.class)
   public void receiveA404IfRequestedKeyDoesNotExist(final KeyType keyType)
       throws JsonProcessingException {
-    setupSigner(keyType == KeyType.BLS ? "eth2" : "eth1");
+    if (keyType == KeyType.BLS) {
+      setupEth1Signer();
+    } else {
+      setupEth2Signer();
+    }
     final String body = createBody(keyType);
     given()
         .baseUri(signer.getUrl())
@@ -78,7 +82,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupSigner("eth2");
+    setupEth2Signer();
 
     // without client-side openapi validator
     given()
@@ -99,7 +103,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupSigner("eth2");
+    setupEth2Signer();
 
     // without OpenAPI validation filter
     given()
@@ -120,7 +124,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupSigner("eth2");
+    setupEth2Signer();
 
     // without OpenAPI validation filter
     given()
@@ -141,7 +145,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupSigner("eth2");
+    setupEth2Signer();
 
     final Eth2SigningRequestBody blockRequest = Eth2RequestUtils.createBlockRequest();
     final JsonObject jsonObject =

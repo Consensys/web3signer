@@ -36,6 +36,7 @@ paths:
                 - $ref: '#/components/schemas/AggregateAndProofSigning'
                 - $ref: '#/components/schemas/AttestationSigning'
                 - $ref: '#/components/schemas/BlockSigning'
+                - $ref: '#/components/schemas/BeaconBlockSigning'
                 - $ref: '#/components/schemas/DepositSigning'
                 - $ref: '#/components/schemas/RandaoRevealSigning'
                 - $ref: '#/components/schemas/VoluntaryExitSigning'
@@ -49,6 +50,7 @@ paths:
                   AGGREGATE_AND_PROOF: '#/components/schemas/AggregateAndProofSigning'
                   ATTESTATION: '#/components/schemas/AttestationSigning'
                   BLOCK: '#/components/schemas/BlockSigning'
+                  BLOCK_V2: '#/components/schemas/BeaconBlockSigning'
                   DEPOSIT: '#/components/schemas/DepositSigning'
                   RANDAO_REVEAL: '#/components/schemas/RandaoRevealSigning'
                   VOLUNTARY_EXIT: '#/components/schemas/VoluntaryExitSigning'
@@ -505,15 +507,78 @@ components:
           type: string
           description: Bytes32 hexadecimal
         subcommittee_index:
-            type: string
-            format: uint64
+          type: string
+          format: uint64
         aggregation_bits:
           type: string
           description: SSZ hexadecimal
         signature:
           type: string
           description: Bytes96 hexadecimal
-
+    BeaconBlockSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - $ref: '#/components/schemas/BeaconBlockRequest'
+    BeaconBlockRequest:
+      type: object
+      properties:
+        beacon_block:
+          anyOf:
+            - $ref: '#/components/schemas/BlockRequestAltair'
+            - $ref: '#/components/schemas/BlockRequestPhase0'
+      required:
+        - beacon_block
+    BlockRequestPhase0:
+      type: object
+      properties:
+        version:
+          type: string
+        block:
+          $ref: "#/components/schemas/BeaconBlock"
+      required:
+        - version
+        - block
+    BlockRequestAltair:
+      type: object
+      properties:
+        version:
+          type: string
+        block:
+          $ref: "#/components/schemas/BeaconBlockAltair"
+      required:
+        - version
+        - block
+    BeaconBlockAltair:
+      type: "object"
+      properties:
+        slot:
+          type: "string"
+          format: "uint64"
+        proposer_index:
+          type: "string"
+          format: "uint64"
+        parent_root:
+          type: "string"
+        state_root:
+          type: "string"
+        body:
+          $ref: "#/components/schemas/BeaconBlockBodyAltair"
+    BeaconBlockBodyAltair:
+      allOf:
+        - $ref: "#/components/schemas/BeaconBlockBody"
+        - type: object
+          properties:
+            sync_aggregate:
+              $ref: "#/components/schemas/SyncAggregate"
+    SyncAggregate:
+      type: object
+      properties:
+        sync_committee_bits:
+          type: string
+          description: SSZ hexadecimal
+        sync_committee_signature:
+          type: string
+          description: Bytes96 hexadecimal
 externalDocs:
   description: 'Web3Signer User Documentation'
   url: 'https://docs.web3signer.consensys.net/'

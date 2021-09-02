@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.service.http;
 
 public enum ArtifactType {
   BLOCK,
+  BLOCK_V2,
   ATTESTATION,
   AGGREGATION_SLOT,
   AGGREGATE_AND_PROOF,

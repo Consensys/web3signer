@@ -16,7 +16,6 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.nio.file.Path;
-import java.util.Map;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -25,18 +24,42 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   protected @TempDir Path testDirectory;
+  private static final Long MINIMAL_ALTAIR_FORK = 0L;
 
-  protected void setupSigner(final String mode) {
-    setupSigner(mode, null);
+  protected void setupEth1Signer() {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory).withMode("eth1");
+    startSigner(builder.build());
   }
 
-  protected void setupSigner(final String mode, final Map<String, String> env) {
+  protected void setupFilecoinSigner() {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory).withMode("filecoin");
+    startSigner(builder.build());
+  }
+
+  protected void setupEth2Signer() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder
         .withKeyStoreDirectory(testDirectory)
-        .withMode(mode)
-        .withAltairForkEpoch(0)
-        .withEnvironment(env);
+        .withMode("eth2")
+        .withAltairForkEpoch(MINIMAL_ALTAIR_FORK);
+    startSigner(builder.build());
+  }
+
+  protected void setupEth2SignerMinimal() {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder
+        .withKeyStoreDirectory(testDirectory)
+        .withMode("eth2")
+        .withNetwork("minimal")
+        .withAltairForkEpoch(MINIMAL_ALTAIR_FORK);
+    startSigner(builder.build());
+  }
+
+  protected void setupEth2SignerMinimalWithoutAltairFork() {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory).withMode("eth2").withNetwork("minimal");
     startSigner(builder.build());
   }
 

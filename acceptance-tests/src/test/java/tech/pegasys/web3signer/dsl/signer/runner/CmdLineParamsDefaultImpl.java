@@ -179,6 +179,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Long.toString(signerConfig.getAltairForkEpoch().get()));
     }
 
+    if (signerConfig.getNetwork().isPresent()) {
+      params.add("--network");
+      params.add(signerConfig.getNetwork().get());
+    }
+
     return params;
   }
 

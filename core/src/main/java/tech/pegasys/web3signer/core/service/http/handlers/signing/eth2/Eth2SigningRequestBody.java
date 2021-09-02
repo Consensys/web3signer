@@ -27,7 +27,8 @@ public class Eth2SigningRequestBody {
   private final ArtifactType type;
   private final Bytes signingRoot;
   private final ForkInfo fork_info;
-  private final BeaconBlock beaconBlock;
+  private final BeaconBlock beaconBlock; // phase 0
+  private final BlockRequest blockRequest; // altair and onward
   private final AttestationData attestation;
   private final AggregationSlot aggregation_slot;
   private final AggregateAndProof aggregate_and_proof;
@@ -44,6 +45,7 @@ public class Eth2SigningRequestBody {
       @JsonProperty("signingRoot") final Bytes signingRoot,
       @JsonProperty("fork_info") final ForkInfo fork_info,
       @JsonProperty("block") final BeaconBlock block,
+      @JsonProperty("beacon_block") final BlockRequest blockRequest,
       @JsonProperty("attestation") final AttestationData attestation,
       @JsonProperty("aggregation_slot") final AggregationSlot aggregation_slot,
       @JsonProperty("aggregate_and_proof") final AggregateAndProof aggregate_and_proof,
@@ -58,6 +60,7 @@ public class Eth2SigningRequestBody {
     this.signingRoot = signingRoot;
     this.fork_info = fork_info;
     this.beaconBlock = block;
+    this.blockRequest = blockRequest;
     this.attestation = attestation;
     this.aggregation_slot = aggregation_slot;
     this.aggregate_and_proof = aggregate_and_proof;
@@ -82,6 +85,11 @@ public class Eth2SigningRequestBody {
   @JsonProperty("block")
   public BeaconBlock getBlock() {
     return beaconBlock;
+  }
+
+  @JsonProperty("beacon_block")
+  public BlockRequest getBlockRequest() {
+    return blockRequest;
   }
 
   @JsonProperty("attestation")

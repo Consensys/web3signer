@@ -55,7 +55,7 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
     metadataFileHelpers.createUnencryptedYamlFileAt(
         testDirectory.resolve("2.yaml"), PRIVATE_KEY2, BLS);
 
-    setupSigner("eth2");
+    setupEth2Signer();
 
     final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -101,6 +101,7 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
     final Eth2SigningRequestBody requestBody =
         new Eth2SigningRequestBody(
             ArtifactType.DEPOSIT,
+            null,
             null,
             null,
             null,

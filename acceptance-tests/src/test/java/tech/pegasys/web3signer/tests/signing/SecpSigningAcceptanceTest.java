@@ -28,7 +28,6 @@ import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.SignatureException;
-import java.util.Map;
 
 import com.google.common.io.Resources;
 import io.restassured.response.Response;
@@ -126,11 +125,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   private void signAndVerifySignature() {
-    signAndVerifySignature(null);
-  }
-
-  private void signAndVerifySignature(final Map<String, String> env) {
-    setupSigner("eth1", env);
+    setupEth1Signer();
 
     // openapi
     final Response response = signer.eth1Sign(PUBLIC_KEY_HEX_STRING, DATA);

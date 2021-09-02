@@ -255,6 +255,11 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               signerConfig.getAltairForkEpoch().get()));
     }
 
+    if (signerConfig.getNetwork().isPresent()) {
+      yamlConfig.append(
+          String.format(YAML_STRING_FMT, "eth2.network", signerConfig.getNetwork().get()));
+    }
+
     return yamlConfig.toString();
   }
 
