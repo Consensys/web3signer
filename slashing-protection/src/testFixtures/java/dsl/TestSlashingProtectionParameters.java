@@ -23,6 +23,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   private final String dbUser;
   private final String dbPassword;
   private final boolean pruningEnabled;
+  private final boolean pruningAtBootEnabled;
   private final int pruningEpochsToKeep;
   private final int pruningSlotsPerEpoch;
   private final long pruningInterval;
@@ -80,6 +81,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
     this.dbPassword = dbPassword;
     this.dbPoolConfigurationFile = dbPoolConfigurationFile;
     this.pruningEnabled = true;
+    this.pruningAtBootEnabled = true;
     this.pruningEpochsToKeep = pruningEpochsToKeep;
     this.pruningSlotsPerEpoch = pruningSlotsPerEpoch;
     this.pruningInterval = pruningInterval;
@@ -133,5 +135,10 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   @Override
   public Path getDbPoolConfigurationFile() {
     return dbPoolConfigurationFile;
+  }
+
+  @Override
+  public boolean isPruningAtBootEnabled() {
+    return pruningAtBootEnabled;
   }
 }

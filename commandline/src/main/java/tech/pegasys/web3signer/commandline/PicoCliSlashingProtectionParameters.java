@@ -83,6 +83,15 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
       description = "Hours between pruning operations (default: ${DEFAULT-VALUE})")
   long pruningInterval = 24;
 
+  @Option(
+      names = {"--slashing-protection-pruning-at-boot-enabled"},
+      description =
+          "Set to false to disable slashing protection pruning logic at server boot"
+              + "(default: ${DEFAULT-VALUE})",
+      paramLabel = "<BOOL>",
+      arity = "1")
+  boolean pruningAtBootEnabled = true;
+
   @Override
   public boolean isEnabled() {
     return enabled;
@@ -131,5 +140,10 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   @Override
   public TimeUnit getPruningIntervalTimeUnit() {
     return TimeUnit.HOURS;
+  }
+
+  @Override
+  public boolean isPruningAtBootEnabled() {
+    return pruningAtBootEnabled;
   }
 }

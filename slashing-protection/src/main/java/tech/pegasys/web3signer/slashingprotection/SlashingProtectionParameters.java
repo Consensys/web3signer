@@ -36,4 +36,6 @@ public interface SlashingProtectionParameters {
   long getPruningInterval();
 
   TimeUnit getPruningIntervalTimeUnit();
+
+  boolean isPruningAtBootEnabled();
 }
