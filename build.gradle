@@ -465,11 +465,7 @@ task dockerUpload(type: Exec) {
     def dockerBuildVersion = rootProject.version
     def imageName = "consensys/web3signer"
     def image = "${imageName}:${dockerBuildVersion}"
-    def cmd = "docker push '${image}'"
-
-    def psImageName = "pegasyseng/web3signer"
-    def psImage = "${psImageName}:${dockerBuildVersion}"
-    cmd += " && docker tag '${image}' '${psImage}' && docker push '${psImage}'"
+    def cmd = "docker push '${image}' && docker tag '${image}'"
 
     def additionalTags = []
 
@@ -483,7 +479,6 @@ task dockerUpload(type: Exec) {
     }
 
     additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
-    additionalTags.each { tag -> cmd += " && docker tag '${image}' '${psImageName}:${tag.trim()}' && docker push '${psImageName}:${tag.trim()}'" }
     args "-c", "${cmd}"
   }
   executable "sh"
