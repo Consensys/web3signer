@@ -465,7 +465,7 @@ task dockerUpload(type: Exec) {
     def dockerBuildVersion = rootProject.version
     def imageName = "consensys/web3signer"
     def image = "${imageName}:${dockerBuildVersion}"
-    def cmd = "docker push '${image}' && docker tag '${image}'"
+    def cmd = "docker push '${image}'"
 
     def additionalTags = []
 
