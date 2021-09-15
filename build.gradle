@@ -467,10 +467,6 @@ task dockerUpload(type: Exec) {
     def image = "${imageName}:${dockerBuildVersion}"
     def cmd = "docker push '${image}'"
 
-    def psImageName = "pegasyseng/web3signer"
-    def psImage = "${psImageName}:${dockerBuildVersion}"
-    cmd += " && docker tag '${image}' '${psImage}' && docker push '${psImage}'"
-
     def additionalTags = []
 
     if (project.hasProperty('branch') && project.property('branch') == 'master') {
@@ -483,7 +479,6 @@ task dockerUpload(type: Exec) {
     }
 
     additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
-    additionalTags.each { tag -> cmd += " && docker tag '${image}' '${psImageName}:${tag.trim()}' && docker push '${psImageName}:${tag.trim()}'" }
     args "-c", "${cmd}"
   }
   executable "sh"
