@@ -1,5 +1,9 @@
 # Changelog
 
+## Next Version
+### Breaking Changes
+- Upgrade to signers 1.0.18 removes support for deprecated SECP256K1 curve.
+
 ## 21.8.1
 
 ### Features Added
