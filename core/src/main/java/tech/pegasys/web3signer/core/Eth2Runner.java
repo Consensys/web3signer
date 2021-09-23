@@ -207,7 +207,9 @@ public class Eth2Runner extends Runner {
             slashingProtectionParameters,
             slashingProtection.get(),
             Executors.newScheduledThreadPool(1));
-    dbPrunerRunner.execute();
+    if (slashingProtectionParameters.isPruningAtBootEnabled()) {
+      dbPrunerRunner.execute();
+    }
     dbPrunerRunner.schedule();
   }
 
