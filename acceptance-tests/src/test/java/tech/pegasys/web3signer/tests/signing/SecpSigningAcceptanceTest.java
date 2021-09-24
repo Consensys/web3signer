@@ -122,7 +122,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   void verifySignature(final Bytes signature, final String publicKeyHex) {
-    ECPublicKey expectedPublicKey =
+    final ECPublicKey expectedPublicKey =
         EthPublicKeyUtils.createPublicKey(Bytes.fromHexString(publicKeyHex));
 
     final byte[] r = signature.slice(0, 32).toArray();
