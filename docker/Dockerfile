@@ -1,5 +1,5 @@
 
-FROM adoptopenjdk/openjdk11:x86_64-ubuntu-jre-11.0.11_9
+FROM adoptopenjdk/openjdk16:x86_64-ubuntu-jre-16.0.1_9
 
 COPY web3signer /opt/web3signer/
 WORKDIR /opt/web3signer
