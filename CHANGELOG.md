@@ -1,6 +1,6 @@
 # Changelog
 
-## Next Version
+## 21.10.0
 
 ### Features Added
 - Upgrade to signers 1.0.19 allows empty password files to be read when creating a Signer.
