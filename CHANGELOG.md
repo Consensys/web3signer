@@ -1,12 +1,13 @@
 # Changelog
 
-## Next Version
+## 21.10.0
 
 ### Features Added
-- Upgrade to signers 1.0.19 allows empty password files to be read when creating a Signer.
+- Upgrade to signers 1.0.19 allows empty password files to be read when creating a Signer [#432](https://github.com/ConsenSys/web3signer/pull/432)
+- Upgrade Teku libraries version to 21.9.2 to provide support for Altair fork in mainnet [#435](https://github.com/ConsenSys/web3signer/pull/435)
 
 ### Breaking Changes
-- Upgrade to signers 1.0.19 removes support for deprecated SECP256K1 curve in Azure remote signing.
+- Upgrade to signers 1.0.19 removes support for deprecated SECP256K1 curve in Azure remote signing [#432](https://github.com/ConsenSys/web3signer/pull/432)
 
 ## 21.8.1
 
