@@ -1,0 +1,63 @@
+post:
+  tags:
+    - 'Signing'
+  summary: 'Signs data for ETH2 BLS public key'
+  description: 'Signs data for the ETH2 BLS public key specified as part of the URL and returns the signature'
+  operationId: 'ETH2_SIGN'
+  parameters:
+    - name: 'identifier'
+      in: 'path'
+      required: true
+      description: 'Key for which data to sign'
+      schema:
+        type: 'string'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          oneOf:
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/AggregationSlotSigning'
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/AggregateAndProofSigning'
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/AttestationSigning'
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/BlockSigning'
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/BeaconBlockSigning'
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/DepositSigning'
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/RandaoRevealSigning'
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/VoluntaryExitSigning'
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/SyncCommitteeMessageSigning'
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/SyncCommitteeSelectionProofSigning'
+            - $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/SyncCommitteeContributionAndProofSigning'
+          discriminator:
+            propertyName: type
+            mapping:
+              AGGREGATION_SLOT: '/openapi/eth2/signing/schemas.yaml#/components/schemas/AggregationSlotSigning'
+              AGGREGATE_AND_PROOF: '/openapi/eth2/signing/schemas.yaml#/components/schemas/AggregateAndProofSigning'
+              ATTESTATION: '/openapi/eth2/signing/schemas.yaml#/components/schemas/AttestationSigning'
+              BLOCK: '/openapi/eth2/signing/schemas.yaml#/components/schemas/BlockSigning'
+              BLOCK_V2: '/openapi/eth2/signing/schemas.yaml#/components/schemas/BeaconBlockSigning'
+              DEPOSIT: '/openapi/eth2/signing/schemas.yaml#/components/schemas/DepositSigning'
+              RANDAO_REVEAL: '/openapi/eth2/signing/schemas.yaml#/components/schemas/RandaoRevealSigning'
+              VOLUNTARY_EXIT: '/openapi/eth2/signing/schemas.yaml#/components/schemas/VoluntaryExitSigning'
+              SYNC_COMMITTEE_MESSAGE: '/openapi/eth2/signing/schemas.yaml#/components/schemas/SyncCommitteeMessageSigning'
+              SYNC_COMMITTEE_SELECTION_PROOF: '/openapi/eth2/signing/schemas.yaml#/components/schemas/SyncCommitteeSelectionProofSigning'
+              SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF: '/openapi/eth2/signing/schemas.yaml#/components/schemas/SyncCommitteeContributionAndProofSigning'
+  responses:
+    '200':
+      description: 'hex encoded string of signature'
+      content:
+        application/json:
+          schema:
+            $ref: '/openapi/eth2/signing/schemas.yaml#/components/schemas/SigningResponse'
+        text/plain:
+          schema:
+            type: string
+          example: '0xb3baa751d0a9132cfe93e4e3d5ff9075111100e3789dca219ade5a24d27e19d16b3353149da1833e9b691bb38634e8dc04469be7032132906c927d7e1a49b414730612877bc6b2810c8f202daf793d1ab0d6b5cb21d52f9e52e883859887a5d9'
+    '412':
+      description: 'Signing operation failed due to slashing protection rules'
+    '404':
+      description: 'Public Key not found'
+    '400':
+      description: 'Bad request format'
+    '500':
+      description: 'Internal Web3Signer server error'
