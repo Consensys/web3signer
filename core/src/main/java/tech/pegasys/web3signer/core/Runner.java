@@ -30,7 +30,10 @@ import tech.pegasys.web3signer.core.util.FileUtil;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.util.Optional;
@@ -38,9 +41,8 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -57,9 +59,11 @@ import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.tuweni.io.Resources;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -68,10 +72,7 @@ public abstract class Runner implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
   private static final String CONTENT_TYPE_TEXT_HTML = "text/html; charset=utf-8";
-  private static final String CONTENT_TYPE_YAML = "text/x-yaml";
-
-  public static final String OPENAPI_INDEX_RESOURCE = "openapi/index.html";
-
+  private static final String CONTENT_TYPE_YAML = "application/yaml";
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
   protected static final String JSON_RPC_PATH = "/rpc/v1";
 
@@ -151,11 +152,15 @@ public abstract class Runner implements Runnable {
   }
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
-    return new VertxOptions()
-        .setMetricsOptions(
-            new MetricsOptions()
-                .setEnabled(true)
-                .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
+    final VertxOptions vertxOptions =
+        new VertxOptions()
+            .setMetricsOptions(
+                new MetricsOptions()
+                    .setEnabled(true)
+                    .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
+
+    vertxOptions.getFileSystemOptions().setFileCachingEnabled(false);
+    return vertxOptions;
   }
 
   protected abstract ArtifactSignerProvider createArtifactSignerProvider(
@@ -224,22 +229,53 @@ public abstract class Runner implements Runnable {
   }
 
   private void registerSwaggerUIRoute(final Router router) throws IOException {
-    final URL indexResourceUrl = Resources.getResource(OPENAPI_INDEX_RESOURCE);
-    final URL openApiSpecUrl = Resources.getResource(getOpenApiSpecResource());
-    final String indexHtml = Resources.toString(indexResourceUrl, Charsets.UTF_8);
-    final String openApiSpecYaml = Resources.toString(openApiSpecUrl, Charsets.UTF_8);
+    LOG.info(" Registering /swagger-ui routes...");
+    // vertx static handler doesn't seem to work with OpenApi3Router. So we manually load all the resources
+    // under openapi, fix relative schema links and register them.
+    try (final Stream<URL> webrootYamlFiles = Resources.find("/openapi**.*")) {
+      webrootYamlFiles.forEach(
+              yaml -> {
+                final String path = yaml.getPath();
+                final String yamlRoute = StringUtils.substringAfter(path, "!/openapi");
+                LOG.info("Registering: {}/{}", SWAGGER_ENDPOINT, yamlRoute);
+                final String file;
+                try {
+                  file = com.google.common.io.Resources.toString(yaml, StandardCharsets.UTF_8);
+                } catch (IOException e) {
+                  throw new UncheckedIOException(e);
+                }
 
-    router
-        .route(HttpMethod.GET, SWAGGER_ENDPOINT + "/web3signer.yaml")
-        .produces(CONTENT_TYPE_YAML)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(routingContext -> routingContext.response().end(openApiSpecYaml));
+                // adjust the ref (which works with OpenApi3Router) to relative that works with swagger-ui
+                final String adjustedFile = StringUtils.replace(file, "/openapi/eth2/signing/schemas.yaml", "../schemas.yaml");
 
-    router
-        .routeWithRegex(HttpMethod.GET, SWAGGER_ENDPOINT + "|" + SWAGGER_ENDPOINT + "/*")
-        .produces(CONTENT_TYPE_TEXT_HTML)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(routingContext -> routingContext.response().end(indexHtml));
+                router
+                        .route(HttpMethod.GET, SWAGGER_ENDPOINT + yamlRoute)
+                        .produces(yamlRoute.endsWith("yaml") ? CONTENT_TYPE_YAML : CONTENT_TYPE_TEXT_HTML)
+                        .handler(ResponseContentTypeHandler.create())
+                        .handler(routingContext -> routingContext.response().end(adjustedFile));
+
+                // register /index.html under /swagger-ui
+                if (yamlRoute.equalsIgnoreCase("/index.html")) {
+                  router
+                          .route(HttpMethod.GET, SWAGGER_ENDPOINT)
+                          .produces(CONTENT_TYPE_TEXT_HTML)
+                          .handler(ResponseContentTypeHandler.create())
+                          .handler(routingContext -> routingContext.response().end(adjustedFile));
+                }
+
+
+//                try (InputStream is = yaml.openStream()) {
+//                  // replace relative ref so that it works with swagger-ui
+//                  final String yamlFile = StringUtils.replace(new String(is.readAllBytes(), StandardCharsets.UTF_8), "/openapi/eth2/signing/schemas.yaml", "../schemas.yaml");;
+//
+//
+//
+//                } catch (IOException e) {
+//                  throw new RuntimeException(e);
+//                }
+              });
+    }
+
   }
 
   private HttpServer createServerAndWait(
@@ -323,7 +359,7 @@ public abstract class Runner implements Runnable {
           .ifPresent(
               whitelistFile ->
                   result.setTrustOptions(
-                      VertxTrustOptions.whitelistClients(
+                      VertxTrustOptions.allowlistClients(
                           whitelistFile.toPath(), constraints.isCaAuthorizedClientAllowed())));
     } catch (final IllegalArgumentException e) {
       throw new InitializationException("Illegally formatted client fingerprint file.");

@@ -31,7 +31,7 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.5.1'
 
-    dependencySet(group: 'io.vertx', version: '3.9.9') {
+    dependencySet(group: 'io.vertx', version: '3.9.10') {
       entry 'vertx-codegen'
       entry 'vertx-core'
       entry 'vertx-unit'
@@ -47,12 +47,13 @@ dependencyManagement {
     dependency 'org.apache.logging.log4j:log4j-core:2.13.0'
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.0'
 
-    dependencySet(group: 'org.apache.tuweni', version: '0.10.0') {
+    dependencySet(group: 'org.apache.tuweni', version: '2.0.0') {
       entry 'tuweni-net'
       entry 'tuweni-toml'
       entry 'tuweni-bytes'
       entry 'tuweni-crypto'
       entry 'tuweni-units'
+      entry 'tuweni-io'
     }
 
     dependency 'org.assertj:assertj-core:3.15.0'

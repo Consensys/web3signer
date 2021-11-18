@@ -27,6 +27,7 @@ dependencies {
 
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'org.apache.tuweni:tuweni-io'
   implementation 'org.web3j:core'
 
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
@@ -99,4 +100,22 @@ processResources {
       it.replace('@VERSION@', calculateVersion())
     }
   }
+}
+
+// copy openapi spec for publish to gh-pages. Adjust schema ref to relative path for sign.yaml
+def copyOpenApiSpecsToPublish = tasks.register('copyOpenApiSpecsForPublish', Copy) {
+  mustRunAfter processResources
+  from layout.buildDirectory.dir("resources/main/openapi")
+  into layout.buildDirectory.dir("publish")
+  exclude "*.html"
+  // replace ref to relative
+  filesMatching("**/*.yaml") {
+    filter {
+      it.replace("/openapi/eth2/signing/schemas.yaml", "../schemas.yaml")
+    }
+  }
+}
+
+processResources.configure {
+  finalizedBy copyOpenApiSpecsToPublish
 }

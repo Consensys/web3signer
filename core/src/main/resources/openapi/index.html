@@ -20,7 +20,11 @@
     window.onload = function() {
       // Begin Swagger UI call region
       const ui = SwaggerUIBundle({
-        url: "/swagger-ui/web3signer.yaml",
+        urls: [
+        {url: "/swagger-ui/web3signer-eth2.yaml", name: "Eth2"},
+        {url: "/swagger-ui/web3signer-eth1.yaml", name: "Eth1"},
+        {url: "/swagger-ui/web3signer-filecoin.yaml", name: "Filecoin"},
+        ],
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
