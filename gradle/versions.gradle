@@ -47,7 +47,7 @@ dependencyManagement {
     dependency 'org.apache.logging.log4j:log4j-core:2.13.0'
     dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.0'
 
-    dependencySet(group: 'org.apache.tuweni', version: '2.0.0') {
+    dependencySet(group: 'org.apache.tuweni', version: '0.10.0') {
       entry 'tuweni-net'
       entry 'tuweni-toml'
       entry 'tuweni-bytes'
