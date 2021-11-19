@@ -30,7 +30,6 @@ import tech.pegasys.web3signer.core.util.FileUtil;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -152,15 +151,11 @@ public abstract class Runner implements Runnable {
   }
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
-    final VertxOptions vertxOptions =
-        new VertxOptions()
-            .setMetricsOptions(
-                new MetricsOptions()
-                    .setEnabled(true)
-                    .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
-
-    vertxOptions.getFileSystemOptions().setFileCachingEnabled(false);
-    return vertxOptions;
+    return new VertxOptions()
+        .setMetricsOptions(
+            new MetricsOptions()
+                .setEnabled(true)
+                .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
   }
 
   protected abstract ArtifactSignerProvider createArtifactSignerProvider(
@@ -230,52 +225,44 @@ public abstract class Runner implements Runnable {
 
   private void registerSwaggerUIRoute(final Router router) throws IOException {
     LOG.info(" Registering /swagger-ui routes...");
-    // vertx static handler doesn't seem to work with OpenApi3Router. So we manually load all the resources
-    // under openapi, fix relative schema links and register them.
+    /* vertx static handler doesn't seem to work with OpenApi3Router. So we manually load all the
+     resources under /openapi, fix relative schema links and register them.
+    */
     try (final Stream<URL> webrootYamlFiles = Resources.find("/openapi**.*")) {
       webrootYamlFiles.forEach(
-              yaml -> {
-                final String path = yaml.getPath();
-                final String yamlRoute = StringUtils.substringAfter(path, "!/openapi");
-                LOG.info("Registering: {}/{}", SWAGGER_ENDPOINT, yamlRoute);
-                final String file;
-                try {
-                  file = com.google.common.io.Resources.toString(yaml, StandardCharsets.UTF_8);
-                } catch (IOException e) {
-                  throw new UncheckedIOException(e);
-                }
+          yaml -> {
+            final String path = yaml.getPath();
+            // the path is in file://.jar!<path> format. We need the non-jar path.
+            final String yamlRoute = StringUtils.substringAfter(path, "!/openapi");
+            LOG.info("Registering: {}/{}", SWAGGER_ENDPOINT, yamlRoute);
+            final String file;
+            try {
+              file = com.google.common.io.Resources.toString(yaml, StandardCharsets.UTF_8);
+            } catch (final IOException e) {
+              throw new UncheckedIOException(e);
+            }
 
-                // adjust the ref (which works with OpenApi3Router) to relative that works with swagger-ui
-                final String adjustedFile = StringUtils.replace(file, "/openapi/eth2/signing/schemas.yaml", "../schemas.yaml");
+            // adjust the ref (which works with OpenApi3Router) to relative that works with
+            // swagger-ui
+            final String adjustedFile =
+                StringUtils.replace(file, "/openapi/eth2/signing/schemas.yaml", "../schemas.yaml");
 
-                router
-                        .route(HttpMethod.GET, SWAGGER_ENDPOINT + yamlRoute)
-                        .produces(yamlRoute.endsWith("yaml") ? CONTENT_TYPE_YAML : CONTENT_TYPE_TEXT_HTML)
-                        .handler(ResponseContentTypeHandler.create())
-                        .handler(routingContext -> routingContext.response().end(adjustedFile));
+            router
+                .route(HttpMethod.GET, SWAGGER_ENDPOINT + yamlRoute)
+                .produces(yamlRoute.endsWith("yaml") ? CONTENT_TYPE_YAML : CONTENT_TYPE_TEXT_HTML)
+                .handler(ResponseContentTypeHandler.create())
+                .handler(routingContext -> routingContext.response().end(adjustedFile));
 
-                // register /index.html under /swagger-ui
-                if (yamlRoute.equalsIgnoreCase("/index.html")) {
-                  router
-                          .route(HttpMethod.GET, SWAGGER_ENDPOINT)
-                          .produces(CONTENT_TYPE_TEXT_HTML)
-                          .handler(ResponseContentTypeHandler.create())
-                          .handler(routingContext -> routingContext.response().end(adjustedFile));
-                }
-
-
-//                try (InputStream is = yaml.openStream()) {
-//                  // replace relative ref so that it works with swagger-ui
-//                  final String yamlFile = StringUtils.replace(new String(is.readAllBytes(), StandardCharsets.UTF_8), "/openapi/eth2/signing/schemas.yaml", "../schemas.yaml");;
-//
-//
-//
-//                } catch (IOException e) {
-//                  throw new RuntimeException(e);
-//                }
-              });
+            // register /index.html under /swagger-ui
+            if (yamlRoute.equalsIgnoreCase("/index.html")) {
+              router
+                  .route(HttpMethod.GET, SWAGGER_ENDPOINT)
+                  .produces(CONTENT_TYPE_TEXT_HTML)
+                  .handler(ResponseContentTypeHandler.create())
+                  .handler(routingContext -> routingContext.response().end(adjustedFile));
+            }
+          });
     }
-
   }
 
   private HttpServer createServerAndWait(
