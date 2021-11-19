@@ -103,7 +103,7 @@ processResources {
 }
 
 // copy openapi spec for publish to gh-pages. Adjust schema ref to relative path for sign.yaml
-def copyOpenApiSpecsToPublish = tasks.register('copyOpenApiSpecsForPublish', Copy) {
+def copyOpenApiSpecsToPublish = tasks.register('copyOpenApiSpecsToPublish', Copy) {
   mustRunAfter processResources
   from layout.buildDirectory.dir("resources/main/openapi")
   into layout.buildDirectory.dir("publish")
