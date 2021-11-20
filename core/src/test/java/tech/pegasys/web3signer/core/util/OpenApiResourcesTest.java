@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -35,5 +36,12 @@ class OpenApiResourcesTest {
     // assert that OpenAPI3RouterFactory is able to load the extracted specs
     assertThatCode(() -> Runner.getOpenAPI3RouterFactory(Vertx.vertx(), specPath.get().toString()))
         .doesNotThrowAnyException();
+  }
+
+  @Test
+  void relativeRefAreFixedAndLoaded() throws Exception {
+    // final String spec = "eth2/web3signer.yaml";
+    final OpenApiResources openApiResources = new OpenApiResources();
+    openApiResources.fixRelativeRef();
   }
 }

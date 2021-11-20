@@ -20,10 +20,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tuweni.io.Resources;
 
@@ -34,6 +39,7 @@ import org.apache.tuweni.io.Resources;
 public class OpenApiResources {
   private final Path extractedRoot;
   private final List<Path> extractedPaths;
+  private final ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
 
   public OpenApiResources() throws IOException {
     extractedRoot = Files.createTempDirectory("web3signer_openapi");
@@ -50,6 +56,50 @@ public class OpenApiResources {
 
   public List<Path> getExtractedPaths() {
     return extractedPaths;
+  }
+
+  public void fixRelativeRef() throws IOException {
+    extractedPaths.stream()
+        .filter(path -> path.getFileName().toString().endsWith(".yaml"))
+        .forEach(
+            path -> {
+              System.out.println("Reading " + path);
+
+              try {
+                final Map<String, Object> yamlMap =
+                    objectMapper.readValue(
+                        path.toFile(), new TypeReference<HashMap<String, Object>>() {});
+
+                mapTraverser(yamlMap);
+              } catch (IOException e) {
+                throw new UncheckedIOException(e);
+              }
+            });
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private void mapTraverser(final Map<String, Object> yamlMap) {
+    for (Map.Entry<String, Object> entry : yamlMap.entrySet()) {
+      final String key = entry.getKey();
+      final Object value = entry.getValue();
+
+      if ("$ref".equals(key) && value instanceof String) {
+        // is this a relative ref? if it starts with . or .., we want to convert it to fully
+        // qualified path
+        if (value.toString().startsWith("./") || value.toString().startsWith("..")) {
+          System.out.println("We got a RELATIVE $ref: " + value);
+        }
+      } else if (value instanceof List) {
+        List listItems = (List) value;
+        for (Object listItem : listItems) {
+          if (listItem instanceof Map) {
+            mapTraverser((Map<String, Object>) listItem);
+          } // else we are not interested
+        }
+      } else if (value instanceof Map) {
+        mapTraverser((Map<String, Object>) value);
+      }
+    }
   }
 
   private List<Path> extract() throws IOException {
