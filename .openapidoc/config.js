@@ -13,7 +13,8 @@ const branch = process.env.OA_GH_PAGES_BRANCH || "gh-pages";
 // modify following with caution
 const distDir = process.env.OA_DIST_DIR || "./dist";
 const specDir =
-  process.env.OA_SPEC_DIR || "../core/build/publish";
+  process.env.OA_SPEC_DIR || "../core/build/resources/main/openapi";
+const specFile = specDir + "/eth2/web3signer.yaml";
 const versionsFileName = process.env.OA_VERSIONS_FILE_NAME || "versions.json";
 
 module.exports = {
@@ -43,7 +44,6 @@ function getConfig() {
 }
 
 function calculateVersionDetails() {
-  const specFile = specDir + "/web3signer-eth2.yaml"
   const specVersion = readVersionFromSpecFile(specFile);
   const release = isReleaseVersion(specVersion);
 

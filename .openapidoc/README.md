@@ -6,18 +6,18 @@ See `publishOpenApiSpec` job in `.circleci/config.yml`.
 
 ## Prerequisite 
 The script assumes that the `gradle build` (from the root directory) has already been executed which prepares the 
-Web3Signer specs under `core/build/publish`. 
+Web3Signer specs under `../core/build/resources/main/openapi`. 
 
 ## Procedure
 The script performs following tasks:
 
 * Prepare config object (see `config.js`) which contains version details and gh-pages branch's [versions.json](https://github.com/ConsenSys/web3signer/raw/gh-pages/versions.json) details
-  * spec version is read from `core/build/publish/web3signer-eth2.yaml`
+  * spec version is read from `../core/build/resources/main/openapi/eth2/web3signer.yaml`
   * Stable/Release version is considered when it doesn't contain a `+` sign. 
 * Re-Create `dist` directory (this folder will be pushed to `gh-pages` branch)
-* Copy directory `core/build/publish` to `dist/latest`
+* Copy directory `../core/build/resources/main/openapi` to `dist/latest`
 * If stable/release version, 
-  * copy `core/build/publish` to `dist/$version`.
+  * copy `dist/latest` to `dist/$version`.
   * Fetch `versions.json` from gh-pages branch and update it with stable version entries. This file is used in gh-pages to render dropdowns.
 * Push the `dist` folder to `gh-pages` branch. The script is using [gh-pages](https://www.npmjs.com/package/gh-pages) 
 npm module to automate this step.

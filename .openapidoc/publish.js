@@ -22,6 +22,8 @@ async function main() {
     // step2: Copy directory core/build/publish to distDir/latest
     log(`Copying ${specDir} to ${distDir}/latest`);
     fs.cpSync(specDir, distDir + "/latest", {recursive: true});
+    // remove index.html as we don't need it in gh-pages branch
+    fs.rmSync(distDir + "/latest/index.html");
 
     // step 3: if non-dev version,
     //  then copy 'latest' dir to '$version' dir
@@ -29,8 +31,8 @@ async function main() {
 
     if (versionDetails.isReleaseVersion) {
       log("Stable version detected.")
-      log(`Copying ${specDir} to ${distDir}/${versionDetails.version}`);
-      fs.cpSync(specDir, distDir + "/" + versionDetails.version, {recursive: true});
+      log(`Copying ${distDir}/latest to ${distDir}/${versionDetails.version}`);
+      fs.cpSync(distDir + "/latest", distDir + "/" + versionDetails.version, {recursive: true});
 
       log("Fetching " + versionJsonDetails.url);
       const versionsJson = await fetchVersions(versionJsonDetails.url);
