@@ -95,27 +95,9 @@ artifacts {
 }
 
 processResources {
-  filesMatching('openapi/web3signer-*.yaml') {
+  filesMatching('openapi/**/web3signer.yaml') {
     filter {
       it.replace('@VERSION@', calculateVersion())
     }
   }
-}
-
-// copy openapi spec for publish to gh-pages. Adjust schema ref to relative path for sign.yaml
-def copyOpenApiSpecsToPublish = tasks.register('copyOpenApiSpecsToPublish', Copy) {
-  mustRunAfter processResources
-  from layout.buildDirectory.dir("resources/main/openapi")
-  into layout.buildDirectory.dir("publish")
-  exclude "*.html"
-  // replace ref to relative
-  filesMatching("**/*.yaml") {
-    filter {
-      it.replace("/openapi/eth2/signing/schemas.yaml", "../schemas.yaml")
-    }
-  }
-}
-
-processResources.configure {
-  finalizedBy copyOpenApiSpecsToPublish
 }
