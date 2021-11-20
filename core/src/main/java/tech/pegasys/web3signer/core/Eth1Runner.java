@@ -49,7 +49,7 @@ public class Eth1Runner extends Runner {
 
   @Override
   protected String getOpenApiSpecResource() {
-    return "openapi/web3signer-eth1.yaml";
+    return "eth1/web3signer.yaml";
   }
 
   @Override

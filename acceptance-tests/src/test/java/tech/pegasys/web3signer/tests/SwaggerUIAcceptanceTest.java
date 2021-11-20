@@ -78,7 +78,7 @@ public class SwaggerUIAcceptanceTest extends AcceptanceTestBase {
     given()
         .baseUri(signer.getUrl())
         .when()
-        .get(SWAGGER_UI_ENDPOINT + "/web3signer-eth2.yaml")
+        .get(SWAGGER_UI_ENDPOINT + "/eth2/web3signer.yaml")
         .then()
         .assertThat()
         .statusCode(200)

@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
@@ -26,21 +27,23 @@ import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.util.FileUtil;
+import tech.pegasys.web3signer.core.util.OpenApiResources;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -58,11 +61,9 @@ import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.tuweni.io.Resources;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -71,7 +72,6 @@ public abstract class Runner implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
   private static final String CONTENT_TYPE_TEXT_HTML = "text/html; charset=utf-8";
-  private static final String CONTENT_TYPE_YAML = "application/yaml";
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
   protected static final String JSON_RPC_PATH = "/rpc/v1";
 
@@ -113,7 +113,10 @@ public abstract class Runner implements Runnable {
       }
       incSignerLoadCount(metricsSystem, artifactSignerProvider.availableIdentifiers().size());
 
-      final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
+      final OpenApiResources openApiResources = new OpenApiResources();
+      final Path openApiSpec = openApiResources.getSpecPath(getOpenApiSpecResource()).orElseThrow();
+      final OpenAPI3RouterFactory routerFactory =
+          getOpenAPI3RouterFactory(vertx, openApiSpec.toString());
       // register access log handler first
       if (config.isAccessLogsEnabled()) {
         routerFactory.addGlobalHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
@@ -126,7 +129,7 @@ public abstract class Runner implements Runnable {
 
       final Router router = populateRouter(context);
       if (config.isSwaggerUIEnabled()) {
-        registerSwaggerUIRoute(router); // serve static openapi spec
+        registerSwaggerUIRoute(router, openApiResources); // serve static openapi spec
       }
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
@@ -165,12 +168,13 @@ public abstract class Runner implements Runnable {
 
   protected abstract String getOpenApiSpecResource();
 
-  private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)
+  public static OpenAPI3RouterFactory getOpenAPI3RouterFactory(
+      final Vertx vertx, final String openapiSpecUrl)
       throws InterruptedException, ExecutionException {
     final CompletableFuture<OpenAPI3RouterFactory> completableFuture = new CompletableFuture<>();
     OpenAPI3RouterFactory.create(
         vertx,
-        getOpenApiSpecResource(),
+        openapiSpecUrl,
         ar -> {
           if (ar.succeeded()) {
             completableFuture.complete(ar.result());
@@ -223,46 +227,56 @@ public abstract class Runner implements Runnable {
     openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
   }
 
-  private void registerSwaggerUIRoute(final Router router) throws IOException {
-    LOG.info(" Registering /swagger-ui routes...");
-    /* vertx static handler doesn't seem to work with OpenApi3Router. So we manually load all the
-     resources under /openapi, fix relative schema links and register them.
-    */
-    try (final Stream<URL> webrootYamlFiles = Resources.find("/openapi**.*")) {
-      webrootYamlFiles.forEach(
-          yaml -> {
-            final String path = yaml.getPath();
-            // the path is in file://.jar!<path> format. We need the non-jar path.
-            final String yamlRoute = StringUtils.substringAfter(path, "!/openapi");
-            LOG.info("Registering: {}/{}", SWAGGER_ENDPOINT, yamlRoute);
-            final String file;
-            try {
-              file = com.google.common.io.Resources.toString(yaml, StandardCharsets.UTF_8);
-            } catch (final IOException e) {
-              throw new UncheckedIOException(e);
-            }
+  private void registerSwaggerUIRoute(
+      final Router router, final OpenApiResources openApiResources) {
+    LOG.info(" Registering /swagger-ui routes ...");
+    final Map<Path, String> swaggerUIContents = getSwaggerUIStaticContent(openApiResources);
+    final Path indexPath = Path.of(SWAGGER_ENDPOINT).resolve("index.html");
 
-            // adjust the ref (which works with OpenApi3Router) to relative that works with
-            // swagger-ui
-            final String adjustedFile =
-                StringUtils.replace(file, "/openapi/eth2/signing/schemas.yaml", "../schemas.yaml");
+    // serve /swagger-ui/* from static content map
+    router
+        .route(HttpMethod.GET, SWAGGER_ENDPOINT + "/*")
+        .handler(
+            ctx -> {
+              final Path incomingPath = Path.of(ctx.request().path());
+              if (swaggerUIContents.containsKey(incomingPath)) {
+                ctx.response()
+                    .putHeader("Content-Type", "text/html")
+                    .end(swaggerUIContents.get(incomingPath));
+              } else {
+                ctx.fail(404);
+              }
+            });
 
-            router
-                .route(HttpMethod.GET, SWAGGER_ENDPOINT + yamlRoute)
-                .produces(yamlRoute.endsWith("yaml") ? CONTENT_TYPE_YAML : CONTENT_TYPE_TEXT_HTML)
-                .handler(ResponseContentTypeHandler.create())
-                .handler(routingContext -> routingContext.response().end(adjustedFile));
+    // above route doesn't handle /swagger-ui. So handle it directly.
+    router
+        .route(HttpMethod.GET, SWAGGER_ENDPOINT)
+        .produces(CONTENT_TYPE_TEXT_HTML)
+        .handler(ResponseContentTypeHandler.create())
+        .handler(
+            routingContext ->
+                routingContext
+                    .response()
+                    .putHeader("Content-Type", "text/html")
+                    .end(swaggerUIContents.get(indexPath)));
+  }
 
-            // register /index.html under /swagger-ui
-            if (yamlRoute.equalsIgnoreCase("/index.html")) {
-              router
-                  .route(HttpMethod.GET, SWAGGER_ENDPOINT)
-                  .produces(CONTENT_TYPE_TEXT_HTML)
-                  .handler(ResponseContentTypeHandler.create())
-                  .handler(routingContext -> routingContext.response().end(adjustedFile));
-            }
-          });
-    }
+  private Map<Path, String> getSwaggerUIStaticContent(final OpenApiResources openApiResources) {
+    // load openapi contents in memory
+    return openApiResources.getExtractedPaths().stream()
+        .map(
+            path -> {
+              try {
+                final Path relativePath = openApiResources.getExtractedRoot().relativize(path);
+                final Path swaggerUIPath = Path.of(SWAGGER_ENDPOINT).resolve(relativePath);
+                LOG.debug("Loading static content for: {} ...", swaggerUIPath);
+                final String content = Files.readString(path, UTF_8);
+                return Map.entry(swaggerUIPath, content);
+              } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+              }
+            })
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   private HttpServer createServerAndWait(
