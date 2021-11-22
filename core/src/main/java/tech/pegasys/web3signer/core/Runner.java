@@ -114,9 +114,13 @@ public abstract class Runner implements Runnable {
       incSignerLoadCount(metricsSystem, artifactSignerProvider.availableIdentifiers().size());
 
       final OpenApiSpecsExtractor openApiSpecsExtractor =
-          new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder().withFixRelativeRefPaths(true).build();
+          new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
+              .withFixRelativeRefPaths(true)
+              .build();
       final Path openApiSpec =
-          openApiSpecsExtractor.getSpecFilePathAtDestination(getOpenApiSpecResource()).orElseThrow();
+          openApiSpecsExtractor
+              .getSpecFilePathAtDestination(getOpenApiSpecResource())
+              .orElseThrow();
       final OpenAPI3RouterFactory routerFactory =
           getOpenAPI3RouterFactory(vertx, openApiSpec.toString());
       // register access log handler first
@@ -232,7 +236,9 @@ public abstract class Runner implements Runnable {
   private void registerSwaggerUIRoute(final Router router) throws IOException {
     LOG.info(" Registering /swagger-ui routes ...");
     OpenApiSpecsExtractor openApiSpecsExtractor =
-        new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder().withFixRelativeRefPaths(false).build();
+        new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
+            .withFixRelativeRefPaths(false)
+            .build();
     final Map<Path, String> swaggerUIContents = getSwaggerUIStaticContent(openApiSpecsExtractor);
     final Path indexPath = Path.of(SWAGGER_ENDPOINT).resolve("index.html");
 
@@ -264,7 +270,8 @@ public abstract class Runner implements Runnable {
                     .end(swaggerUIContents.get(indexPath)));
   }
 
-  private Map<Path, String> getSwaggerUIStaticContent(final OpenApiSpecsExtractor openApiSpecsExtractor) {
+  private Map<Path, String> getSwaggerUIStaticContent(
+      final OpenApiSpecsExtractor openApiSpecsExtractor) {
     // load openapi contents in memory
     return openApiSpecsExtractor.getDestinationSpecPaths().stream()
         .map(

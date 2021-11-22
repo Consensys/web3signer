@@ -35,8 +35,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.tuweni.io.Resources;
 
 /**
- * Extract OpenAPI specs from resources /openapi to a temporary folder on disk with capability to fix relative
- * $ref paths so that they can be used by OpenApi3RouterFactory which doesn't deal with relative $ref paths.
+ * Extract OpenAPI specs from resources /openapi to a temporary folder on disk with capability to
+ * fix relative $ref paths so that they can be used by OpenApi3RouterFactory which doesn't deal with
+ * relative $ref paths.
  */
 public class OpenApiSpecsExtractor {
   private static final String OPENAPI_RESOURCES_ROOT = "openapi";
@@ -96,8 +97,7 @@ public class OpenApiSpecsExtractor {
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
-  private void fixRelativePathInOpenApiMap(
-      final Path yamlFile, final Map<String, Object> yamlMap) {
+  private void fixRelativePathInOpenApiMap(final Path yamlFile, final Map<String, Object> yamlMap) {
     for (Map.Entry<String, Object> entry : yamlMap.entrySet()) {
       final String key = entry.getKey();
       final Object value = entry.getValue();
@@ -146,7 +146,8 @@ public class OpenApiSpecsExtractor {
   private List<Path> extractToDestination() throws IOException {
     final List<Path> extractedResources = new ArrayList<>();
 
-    try (final Stream<URL> webrootYamlFiles = Resources.find("/" + OPENAPI_RESOURCES_ROOT + "**.*")) {
+    try (final Stream<URL> webrootYamlFiles =
+        Resources.find("/" + OPENAPI_RESOURCES_ROOT + "**.*")) {
       webrootYamlFiles.forEach(
           openapiResource -> {
             final String jarPath = openapiResource.getPath();
@@ -188,7 +189,8 @@ public class OpenApiSpecsExtractor {
       return this;
     }
 
-    public OpenApiSpecsExtractorBuilder withForceDeleteOnJvmExit(final boolean forceDeleteOnJvmExit) {
+    public OpenApiSpecsExtractorBuilder withForceDeleteOnJvmExit(
+        final boolean forceDeleteOnJvmExit) {
       this.forceDeleteOnJvmExit = forceDeleteOnJvmExit;
       return this;
     }
@@ -197,7 +199,8 @@ public class OpenApiSpecsExtractor {
       if (destinationDirectory == null) {
         this.destinationDirectory = Files.createTempDirectory("w3s_openapi_");
       }
-      return new OpenApiSpecsExtractor(destinationDirectory, fixRelativeRefPaths, forceDeleteOnJvmExit);
+      return new OpenApiSpecsExtractor(
+          destinationDirectory, fixRelativeRefPaths, forceDeleteOnJvmExit);
     }
   }
 }
