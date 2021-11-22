@@ -56,6 +56,7 @@ public class SignerConfiguration {
   private final long slashingPruningInterval;
   private final Optional<Long> altairForkEpoch;
   private final Optional<String> network;
+  private final boolean keyManagerApiEnabled;
 
   public SignerConfiguration(
       final String hostname,
@@ -86,7 +87,8 @@ public class SignerConfiguration {
       final boolean useConfigFile,
       final Optional<Path> slashingDbPoolConfigurationFile,
       final Optional<Long> altairForkEpoch,
-      final Optional<String> network) {
+      final Optional<String> network,
+      final boolean keyManagerApiEnabled) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -116,6 +118,7 @@ public class SignerConfiguration {
     this.slashingProtectionDbPoolConfigurationFile = slashingDbPoolConfigurationFile;
     this.altairForkEpoch = altairForkEpoch;
     this.network = network;
+    this.keyManagerApiEnabled = keyManagerApiEnabled;
   }
 
   public String hostname() {
@@ -240,5 +243,9 @@ public class SignerConfiguration {
 
   public Optional<String> getNetwork() {
     return network;
+  }
+
+  public boolean isKeyManagerApiEnabled() {
+    return keyManagerApiEnabled;
   }
 }

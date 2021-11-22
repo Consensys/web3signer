@@ -65,13 +65,25 @@ public class Eth2SubCommand extends ModeSubCommand {
       converter = UInt64Converter.class)
   private UInt64 altairForkEpoch;
 
+  @CommandLine.Option(
+      names = {"--enable-key-manager-api"},
+      paramLabel = "<BOOL>",
+      description = "Enable the key manager API to manage key stores (default: ${DEFAULT-VALUE}).",
+      arity = "1")
+  private boolean isKeyManagerApiEnabled = false;
+
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
 
   @Override
   public Runner createRunner() {
-    return new Eth2Runner(config, slashingProtectionParameters, azureKeyVaultParameters, eth2Spec);
+    return new Eth2Runner(
+        config,
+        slashingProtectionParameters,
+        azureKeyVaultParameters,
+        eth2Spec,
+        isKeyManagerApiEnabled);
   }
 
   @Override

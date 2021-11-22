@@ -73,18 +73,21 @@ public class Eth2Runner extends Runner {
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
   private final Spec eth2Spec;
+  private final boolean isKeyManagerApiEnabled;
 
   public Eth2Runner(
       final Config config,
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters,
-      final Spec eth2Spec) {
+      final Spec eth2Spec,
+      final boolean isKeyManagerApiEnabled) {
     super(config);
     this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.slashingProtectionParameters = slashingProtectionParameters;
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
     this.eth2Spec = eth2Spec;
+    this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
   }
 
   private Optional<SlashingProtection> createSlashingProtection(
@@ -144,6 +147,10 @@ public class Eth2Runner extends Runner {
     routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
 
     addReloadHandler(routerFactory, blsSignerProvider, RELOAD.name(), errorHandler);
+
+    if (isKeyManagerApiEnabled) {
+      // TODO Implement KeyManager API handlers
+    }
   }
 
   @Override

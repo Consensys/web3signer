@@ -58,6 +58,7 @@ public class SignerConfigurationBuilder {
   private long slashingPruningInterval = 1;
   private Long altairForkEpoch = null;
   private String network = null;
+  private boolean keyManagerApiEnabled = false;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -207,6 +208,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withKeyManagerApiEnabled(final boolean keyManagerApiEnabled) {
+    this.keyManagerApiEnabled = keyManagerApiEnabled;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -240,6 +246,7 @@ public class SignerConfigurationBuilder {
         useConfigFile,
         Optional.ofNullable(slashingProtectionDbPoolConfigurationFile),
         Optional.ofNullable(altairForkEpoch),
-        Optional.ofNullable(network));
+        Optional.ofNullable(network),
+        keyManagerApiEnabled);
   }
 }

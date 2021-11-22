@@ -184,6 +184,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(signerConfig.getNetwork().get());
     }
 
+    if (signerConfig.isKeyManagerApiEnabled()) {
+      params.add("--enable-key-manager-api");
+      params.add(Boolean.toString(signerConfig.isKeyManagerApiEnabled()));
+    }
+
     return params;
   }
 
