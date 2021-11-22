@@ -1,0 +1,11 @@
+post:
+  tags:
+    - 'Reload Signer Keys'
+  summary: 'Reload signer keys asynchronously'
+  description: 'Reload signer keys asynchronously'
+  operationId: 'RELOAD'
+  responses:
+    '200':
+      description: 'Call is successful'
+    '500':
+      description: 'Internal Web3Signer server error'

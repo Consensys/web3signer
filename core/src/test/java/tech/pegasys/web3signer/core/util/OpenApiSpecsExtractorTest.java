@@ -20,28 +20,21 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-class OpenApiResourcesTest {
+class OpenApiSpecsExtractorTest {
 
   @ParameterizedTest
   @ValueSource(
       strings = {"eth1/web3signer.yaml", "eth2/web3signer.yaml", "filecoin/web3signer.yaml"})
   void openapiSpecsAreExtractedAndLoaded(final String spec) throws Exception {
-    final OpenApiResources openApiResources = new OpenApiResources();
-    final Optional<Path> specPath = openApiResources.getSpecPath(spec);
+    final OpenApiSpecsExtractor openApiSpecsExtractor =
+        new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder().withFixRelativeRefPaths(true).build();
+    final Optional<Path> specPath = openApiSpecsExtractor.getSpecFilePathAtDestination(spec);
 
     // assert that OpenAPI3RouterFactory is able to load the extracted specs
     assertThatCode(() -> Runner.getOpenAPI3RouterFactory(Vertx.vertx(), specPath.get().toString()))
         .doesNotThrowAnyException();
-  }
-
-  @Test
-  void relativeRefAreFixedAndLoaded() throws Exception {
-    // final String spec = "eth2/web3signer.yaml";
-    final OpenApiResources openApiResources = new OpenApiResources();
-    openApiResources.fixRelativeRef();
   }
 }

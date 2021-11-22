@@ -1,0 +1,19 @@
+get:
+  tags:
+    - 'Public Key'
+  summary: 'List of available ETH2 BLS Public Keys'
+  description: 'Returns the ETH2 BLS public keys for the private keys that have been loaded into Web3Signer'
+  operationId: 'ETH2_LIST'
+  responses:
+    '200':
+      description: 'list of public keys'
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: string
+    '400':
+      description: 'Bad request format'
+    '500':
+      description: 'Internal Web3Signer server error'

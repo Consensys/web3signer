@@ -27,7 +27,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.util.FileUtil;
-import tech.pegasys.web3signer.core.util.OpenApiResources;
+import tech.pegasys.web3signer.core.util.OpenApiSpecsExtractor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -113,8 +113,10 @@ public abstract class Runner implements Runnable {
       }
       incSignerLoadCount(metricsSystem, artifactSignerProvider.availableIdentifiers().size());
 
-      final OpenApiResources openApiResources = new OpenApiResources();
-      final Path openApiSpec = openApiResources.getSpecPath(getOpenApiSpecResource()).orElseThrow();
+      final OpenApiSpecsExtractor openApiSpecsExtractor =
+          new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder().withFixRelativeRefPaths(true).build();
+      final Path openApiSpec =
+          openApiSpecsExtractor.getSpecFilePathAtDestination(getOpenApiSpecResource()).orElseThrow();
       final OpenAPI3RouterFactory routerFactory =
           getOpenAPI3RouterFactory(vertx, openApiSpec.toString());
       // register access log handler first
@@ -129,7 +131,7 @@ public abstract class Runner implements Runnable {
 
       final Router router = populateRouter(context);
       if (config.isSwaggerUIEnabled()) {
-        registerSwaggerUIRoute(router, openApiResources); // serve static openapi spec
+        registerSwaggerUIRoute(router); // serve static openapi spec
       }
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
@@ -227,10 +229,11 @@ public abstract class Runner implements Runnable {
     openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
   }
 
-  private void registerSwaggerUIRoute(
-      final Router router, final OpenApiResources openApiResources) {
+  private void registerSwaggerUIRoute(final Router router) throws IOException {
     LOG.info(" Registering /swagger-ui routes ...");
-    final Map<Path, String> swaggerUIContents = getSwaggerUIStaticContent(openApiResources);
+    OpenApiSpecsExtractor openApiSpecsExtractor =
+        new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder().withFixRelativeRefPaths(false).build();
+    final Map<Path, String> swaggerUIContents = getSwaggerUIStaticContent(openApiSpecsExtractor);
     final Path indexPath = Path.of(SWAGGER_ENDPOINT).resolve("index.html");
 
     // serve /swagger-ui/* from static content map
@@ -261,13 +264,14 @@ public abstract class Runner implements Runnable {
                     .end(swaggerUIContents.get(indexPath)));
   }
 
-  private Map<Path, String> getSwaggerUIStaticContent(final OpenApiResources openApiResources) {
+  private Map<Path, String> getSwaggerUIStaticContent(final OpenApiSpecsExtractor openApiSpecsExtractor) {
     // load openapi contents in memory
-    return openApiResources.getExtractedPaths().stream()
+    return openApiSpecsExtractor.getDestinationSpecPaths().stream()
         .map(
             path -> {
               try {
-                final Path relativePath = openApiResources.getExtractedRoot().relativize(path);
+                final Path relativePath =
+                    openApiSpecsExtractor.getDestinationDirectory().relativize(path);
                 final Path swaggerUIPath = Path.of(SWAGGER_ENDPOINT).resolve(relativePath);
                 LOG.debug("Loading static content for: {} ...", swaggerUIPath);
                 final String content = Files.readString(path, UTF_8);
