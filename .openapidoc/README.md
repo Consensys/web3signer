@@ -32,5 +32,5 @@ Following environment variables can be used to override defaults
 Following should only be overridden if changing the project
 * `OA_VERSIONS_FILE_NAME` (default: `versions.json`)
 * `OA_DIST_DIR`           (default: `./dist`)
-* `OA_SPEC_DIR`          (default: `../core/build/publish`)
+* `OA_SPEC_DIR`           (default: `../core/build/resources/main/openapi`)
  
