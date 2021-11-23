@@ -49,13 +49,13 @@ public class OpenApiSpecsExtractor {
 
   private OpenApiSpecsExtractor(
       final Path destinationDirectory,
-      final boolean fixRelativeRefPaths,
+      final boolean convertRelativeRefToAbsoluteRef,
       final boolean forceDeleteOnJvmExit)
       throws IOException {
     this.destinationDirectory = destinationDirectory;
     this.destinationSpecPaths = extractResourcesToDestinationDirectory();
 
-    if (fixRelativeRefPaths) {
+    if (convertRelativeRefToAbsoluteRef) {
       fixRelativeRefAtDestination();
     }
 
@@ -176,15 +176,16 @@ public class OpenApiSpecsExtractor {
   public static class OpenApiSpecsExtractorBuilder {
     private Path destinationDirectory;
     private boolean forceDeleteOnJvmExit = true;
-    private boolean fixRelativeRefPaths = true;
+    private boolean convertRelativeRefToAbsoluteRef = true;
 
     public OpenApiSpecsExtractorBuilder withDestinationDirectory(final Path destinationDirectory) {
       this.destinationDirectory = destinationDirectory;
       return this;
     }
 
-    public OpenApiSpecsExtractorBuilder withFixRelativeRefPaths(final boolean fixRelativeRefPaths) {
-      this.fixRelativeRefPaths = fixRelativeRefPaths;
+    public OpenApiSpecsExtractorBuilder withConvertRelativeRefToAbsoluteRef(
+        final boolean convertRelativeRefToAbsoluteRef) {
+      this.convertRelativeRefToAbsoluteRef = convertRelativeRefToAbsoluteRef;
       return this;
     }
 
@@ -199,7 +200,7 @@ public class OpenApiSpecsExtractor {
         this.destinationDirectory = Files.createTempDirectory("w3s_openapi_");
       }
       return new OpenApiSpecsExtractor(
-          destinationDirectory, fixRelativeRefPaths, forceDeleteOnJvmExit);
+          destinationDirectory, convertRelativeRefToAbsoluteRef, forceDeleteOnJvmExit);
     }
   }
 }

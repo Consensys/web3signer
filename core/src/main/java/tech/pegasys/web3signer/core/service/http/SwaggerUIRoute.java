@@ -44,7 +44,7 @@ public class SwaggerUIRoute {
     LOG.info("Registering /swagger-ui routes ...");
     final OpenApiSpecsExtractor openApiSpecsExtractor =
         new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
-            .withFixRelativeRefPaths(false)
+            .withConvertRelativeRefToAbsoluteRef(false)
             .withForceDeleteOnJvmExit(true)
             .build();
 

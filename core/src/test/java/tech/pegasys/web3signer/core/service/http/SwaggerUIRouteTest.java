@@ -43,7 +43,7 @@ class SwaggerUIRouteTest {
 
     final OpenApiSpecsExtractor openApiSpecsExtractor =
         new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
-            .withFixRelativeRefPaths(false)
+            .withConvertRelativeRefToAbsoluteRef(false)
             .withForceDeleteOnJvmExit(true)
             .build();
 

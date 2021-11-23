@@ -34,7 +34,7 @@ class OpenApiSpecsExtractorTest {
   void openapiSpecsAreExtractedAndLoaded(final String spec, final Vertx vertx) throws Exception {
     final OpenApiSpecsExtractor openApiSpecsExtractor =
         new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
-            .withFixRelativeRefPaths(true)
+            .withConvertRelativeRefToAbsoluteRef(true)
             .build();
     final Optional<Path> specPath = openApiSpecsExtractor.getSpecFilePathAtDestination(spec);
 
