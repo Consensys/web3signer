@@ -56,10 +56,10 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
-import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -235,59 +235,61 @@ public abstract class Runner implements Runnable {
 
   private void registerSwaggerUIRoute(final Router router) throws IOException {
     LOG.info(" Registering /swagger-ui routes ...");
-    OpenApiSpecsExtractor openApiSpecsExtractor =
+    final OpenApiSpecsExtractor openApiSpecsExtractor =
         new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
             .withFixRelativeRefPaths(false)
             .build();
-    final Map<Path, String> swaggerUIContents = getSwaggerUIStaticContent(openApiSpecsExtractor);
-    final Path indexPath = Path.of(SWAGGER_ENDPOINT).resolve("index.html");
+
+    final Map<Path, String> swaggerUIWebRoot = loadSwaggerUIStaticContent(openApiSpecsExtractor);
+    LOG.debug("/swagger-ui paths: {}", swaggerUIWebRoot.keySet());
 
     // serve /swagger-ui/* from static content map
     router
         .route(HttpMethod.GET, SWAGGER_ENDPOINT + "/*")
-        .handler(
-            ctx -> {
-              final Path incomingPath = Path.of(ctx.request().path());
-              if (swaggerUIContents.containsKey(incomingPath)) {
-                ctx.response()
-                    .putHeader("Content-Type", "text/html")
-                    .end(swaggerUIContents.get(incomingPath));
-              } else {
-                ctx.fail(404);
-              }
-            });
+        .handler(ctx -> swaggerUIHandler(swaggerUIWebRoot, ctx));
 
-    // above route doesn't handle /swagger-ui. So handle it directly.
+    // Vertx 3.x doesn't handle paths without trailing / (such as /swagger-ui) , so handle it
+    // directly. The following code may be removed once upgrade to Vertx 4.x
     router
         .route(HttpMethod.GET, SWAGGER_ENDPOINT)
-        .produces(CONTENT_TYPE_TEXT_HTML)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(
-            routingContext ->
-                routingContext
-                    .response()
-                    .putHeader("Content-Type", "text/html")
-                    .end(swaggerUIContents.get(indexPath)));
+        .handler(ctx -> swaggerUIHandler(swaggerUIWebRoot, ctx));
   }
 
-  private Map<Path, String> getSwaggerUIStaticContent(
+  private void swaggerUIHandler(
+      final Map<Path, String> swaggerUIContents, final RoutingContext ctx) {
+    final Path incomingPath = Path.of(ctx.request().path());
+    if (swaggerUIContents.containsKey(incomingPath)) {
+      ctx.response()
+          .putHeader("Content-Type", CONTENT_TYPE_TEXT_HTML)
+          .end(swaggerUIContents.get(incomingPath));
+    } else {
+      ctx.fail(404);
+    }
+  }
+
+  private Map<Path, String> loadSwaggerUIStaticContent(
       final OpenApiSpecsExtractor openApiSpecsExtractor) {
-    // load openapi contents in memory
-    return openApiSpecsExtractor.getDestinationSpecPaths().stream()
-        .map(
-            path -> {
-              try {
-                final Path relativePath =
-                    openApiSpecsExtractor.getDestinationDirectory().relativize(path);
-                final Path swaggerUIPath = Path.of(SWAGGER_ENDPOINT).resolve(relativePath);
-                LOG.debug("Loading static content for: {} ...", swaggerUIPath);
-                final String content = Files.readString(path, UTF_8);
-                return Map.entry(swaggerUIPath, content);
-              } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-              }
-            })
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    final Map<Path, String> swaggerUIContentMap =
+        openApiSpecsExtractor.getDestinationSpecPaths().stream()
+            .map(
+                path -> {
+                  try {
+                    final Path relativePath =
+                        openApiSpecsExtractor.getDestinationDirectory().relativize(path);
+                    final Path swaggerUIPath = Path.of(SWAGGER_ENDPOINT).resolve(relativePath);
+                    final String content = Files.readString(path, UTF_8);
+                    return Map.entry(swaggerUIPath, content);
+                  } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                  }
+                })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+    // map /swagger-ui to index.html content
+    final String index_html =
+        swaggerUIContentMap.get(Path.of(SWAGGER_ENDPOINT).resolve("index.html"));
+    swaggerUIContentMap.put(Path.of(SWAGGER_ENDPOINT), index_html);
+    return swaggerUIContentMap;
   }
 
   private HttpServer createServerAndWait(
