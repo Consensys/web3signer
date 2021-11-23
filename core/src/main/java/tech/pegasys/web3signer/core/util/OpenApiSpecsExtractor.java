@@ -151,9 +151,7 @@ public class OpenApiSpecsExtractor {
       webrootYamlFiles.forEach(
           openapiResource -> {
             final String jarPath = openapiResource.getPath();
-            // the path is in file://.jar!<path> format. We need the non-jar path.
-            final String filePath =
-                StringUtils.substringAfter(jarPath, "!/" + OPENAPI_RESOURCES_ROOT + "/");
+            final String filePath = StringUtils.substringAfter(jarPath, OPENAPI_RESOURCES_ROOT + "/");
             final Path extractedResource = destinationDirectory.resolve(filePath);
             copyContents(openapiResource, extractedResource);
             extractedResources.add(extractedResource);
