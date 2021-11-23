@@ -12,10 +12,15 @@
  */
 package tech.pegasys.web3signer.core.util;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 import tech.pegasys.web3signer.core.Runner;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -41,5 +46,30 @@ class OpenApiSpecsExtractorTest {
     // assert that OpenAPI3RouterFactory is able to load the extracted specs
     assertThatCode(() -> Runner.getOpenAPI3RouterFactory(vertx, specPath.get().toString()))
         .doesNotThrowAnyException();
+
+    // assert that relative ref has been converted to absolute ref
+    if (spec.equals("eth2/web3signer.yaml")) {
+      final String sign_yaml =
+          openApiSpecsExtractor.getDestinationSpecPaths().stream()
+              .filter(path -> path.endsWith("sign.yaml"))
+              .findFirst()
+              .map(this::readString)
+              .orElseThrow();
+
+      assertThat(sign_yaml)
+          .contains(
+              openApiSpecsExtractor
+                  .getDestinationDirectory()
+                  .resolve("eth2/signing/schemas.yaml")
+                  .toString());
+    }
+  }
+
+  private String readString(final Path path) {
+    try {
+      return Files.readString(path, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 }
