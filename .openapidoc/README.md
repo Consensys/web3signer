@@ -6,16 +6,16 @@ See `publishOpenApiSpec` job in `.circleci/config.yml`.
 
 ## Prerequisite 
 The script assumes that the `gradle build` (from the root directory) has already been executed which prepares the 
-Web3Signer specs under `../core/build/resources/main/openapi`. 
+Web3Signer specs under `../core/build/resources/main/openapi-specs`. 
 
 ## Procedure
 The script performs following tasks:
 
 * Prepare config object (see `config.js`) which contains version details and gh-pages branch's [versions.json](https://github.com/ConsenSys/web3signer/raw/gh-pages/versions.json) details
-  * spec version is read from `../core/build/resources/main/openapi/eth2/web3signer.yaml`
+  * spec version is read from `../core/build/resources/main/openapi-specs/eth2/web3signer.yaml`
   * Stable/Release version is considered when it doesn't contain a `+` sign. 
 * Re-Create `dist` directory (this folder will be pushed to `gh-pages` branch)
-* Copy directory `../core/build/resources/main/openapi` to `dist/latest`
+* Copy directory `../core/build/resources/main/openapi-spcs` to `dist/latest`
 * If stable/release version, 
   * copy `dist/latest` to `dist/$version`.
   * Fetch `versions.json` from gh-pages branch and update it with stable version entries. This file is used in gh-pages to render dropdowns.
@@ -32,5 +32,5 @@ Following environment variables can be used to override defaults
 Following should only be overridden if changing the project
 * `OA_VERSIONS_FILE_NAME` (default: `versions.json`)
 * `OA_DIST_DIR`           (default: `./dist`)
-* `OA_SPEC_DIR`           (default: `../core/build/resources/main/openapi`)
+* `OA_SPEC_DIR`           (default: `../core/build/resources/main/openapi-specs`)
  

@@ -40,7 +40,7 @@ import org.apache.tuweni.io.Resources;
  * relative $ref paths.
  */
 public class OpenApiSpecsExtractor {
-  private static final String OPENAPI_RESOURCES_ROOT = "openapi";
+  private static final String OPENAPI_RESOURCES_ROOT = "openapi-specs";
   private static final ObjectMapper objectMapper =
       new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
 
@@ -151,7 +151,8 @@ public class OpenApiSpecsExtractor {
       webrootYamlFiles.forEach(
           openapiResource -> {
             final String jarPath = openapiResource.getPath();
-            final String filePath = StringUtils.substringAfter(jarPath, OPENAPI_RESOURCES_ROOT + "/");
+            final String filePath =
+                StringUtils.substringAfter(jarPath, OPENAPI_RESOURCES_ROOT + "/");
             final Path extractedResource = destinationDirectory.resolve(filePath);
             copyContents(openapiResource, extractedResource);
             extractedResources.add(extractedResource);

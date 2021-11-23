@@ -95,7 +95,7 @@ artifacts {
 }
 
 processResources {
-  filesMatching('openapi/**/web3signer.yaml') {
+  filesMatching('openapi-specs/**/web3signer.yaml') {
     filter {
       it.replace('@VERSION@', calculateVersion())
     }

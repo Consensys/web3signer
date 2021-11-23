@@ -13,7 +13,7 @@ const branch = process.env.OA_GH_PAGES_BRANCH || "gh-pages";
 // modify following with caution
 const distDir = process.env.OA_DIST_DIR || "./dist";
 const specDir =
-  process.env.OA_SPEC_DIR || "../core/build/resources/main/openapi";
+  process.env.OA_SPEC_DIR || "../core/build/resources/main/openapi-specs";
 const specFile = specDir + "/eth2/web3signer.yaml";
 const versionsFileName = process.env.OA_VERSIONS_FILE_NAME || "versions.json";
 
