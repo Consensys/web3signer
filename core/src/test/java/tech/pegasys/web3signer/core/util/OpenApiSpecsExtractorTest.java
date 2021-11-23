@@ -20,15 +20,18 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+@ExtendWith(VertxExtension.class)
 class OpenApiSpecsExtractorTest {
 
   @ParameterizedTest
   @ValueSource(
       strings = {"eth1/web3signer.yaml", "eth2/web3signer.yaml", "filecoin/web3signer.yaml"})
-  void openapiSpecsAreExtractedAndLoaded(final String spec) throws Exception {
+  void openapiSpecsAreExtractedAndLoaded(final String spec, final Vertx vertx) throws Exception {
     final OpenApiSpecsExtractor openApiSpecsExtractor =
         new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
             .withFixRelativeRefPaths(true)
@@ -36,7 +39,7 @@ class OpenApiSpecsExtractorTest {
     final Optional<Path> specPath = openApiSpecsExtractor.getSpecFilePathAtDestination(spec);
 
     // assert that OpenAPI3RouterFactory is able to load the extracted specs
-    assertThatCode(() -> Runner.getOpenAPI3RouterFactory(Vertx.vertx(), specPath.get().toString()))
+    assertThatCode(() -> Runner.getOpenAPI3RouterFactory(vertx, specPath.get().toString()))
         .doesNotThrowAnyException();
   }
 }

@@ -38,6 +38,7 @@ dependencyManagement {
       entry 'vertx-web-client'
       entry 'vertx-web'
       entry 'vertx-web-api-contract'
+      entry 'vertx-junit5'
     }
 
     dependency 'javax.activation:activation:1.1.1'

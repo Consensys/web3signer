@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.core;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
@@ -22,6 +21,7 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
+import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
@@ -32,31 +32,25 @@ import tech.pegasys.web3signer.core.util.OpenApiSpecsExtractor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ClientAuth;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
@@ -71,8 +65,6 @@ public abstract class Runner implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String CONTENT_TYPE_TEXT_HTML = "text/html; charset=utf-8";
-  private static final String SWAGGER_ENDPOINT = "/swagger-ui";
   protected static final String JSON_RPC_PATH = "/rpc/v1";
 
   protected final Config config;
@@ -116,11 +108,15 @@ public abstract class Runner implements Runnable {
       final OpenApiSpecsExtractor openApiSpecsExtractor =
           new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
               .withFixRelativeRefPaths(true)
+              .withForceDeleteOnJvmExit(true)
               .build();
       final Path openApiSpec =
           openApiSpecsExtractor
               .getSpecFilePathAtDestination(getOpenApiSpecResource())
-              .orElseThrow();
+              .orElseThrow(
+                  () ->
+                      new RuntimeException(
+                          "Unable to load OpenApi spec " + getOpenApiSpecResource()));
       final OpenAPI3RouterFactory routerFactory =
           getOpenAPI3RouterFactory(vertx, openApiSpec.toString());
       // register access log handler first
@@ -135,7 +131,7 @@ public abstract class Runner implements Runnable {
 
       final Router router = populateRouter(context);
       if (config.isSwaggerUIEnabled()) {
-        registerSwaggerUIRoute(router); // serve static openapi spec
+        new SwaggerUIRoute(router).register();
       }
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
@@ -231,65 +227,6 @@ public abstract class Runner implements Runnable {
 
   private void registerHttpHostAllowListHandler(final OpenAPI3RouterFactory openApiRouterFactory) {
     openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
-  }
-
-  private void registerSwaggerUIRoute(final Router router) throws IOException {
-    LOG.info(" Registering /swagger-ui routes ...");
-    final OpenApiSpecsExtractor openApiSpecsExtractor =
-        new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
-            .withFixRelativeRefPaths(false)
-            .build();
-
-    final Map<Path, String> swaggerUIWebRoot = loadSwaggerUIStaticContent(openApiSpecsExtractor);
-    LOG.debug("/swagger-ui paths: {}", swaggerUIWebRoot.keySet());
-
-    // serve /swagger-ui/* from static content map
-    router
-        .route(HttpMethod.GET, SWAGGER_ENDPOINT + "/*")
-        .handler(ctx -> swaggerUIHandler(swaggerUIWebRoot, ctx));
-
-    // Vertx 3.x doesn't handle paths without trailing / (such as /swagger-ui) , so handle it
-    // directly. The following code may be removed once upgrade to Vertx 4.x
-    router
-        .route(HttpMethod.GET, SWAGGER_ENDPOINT)
-        .handler(ctx -> swaggerUIHandler(swaggerUIWebRoot, ctx));
-  }
-
-  private void swaggerUIHandler(
-      final Map<Path, String> swaggerUIContents, final RoutingContext ctx) {
-    final Path incomingPath = Path.of(ctx.request().path());
-    if (swaggerUIContents.containsKey(incomingPath)) {
-      ctx.response()
-          .putHeader("Content-Type", CONTENT_TYPE_TEXT_HTML)
-          .end(swaggerUIContents.get(incomingPath));
-    } else {
-      ctx.fail(404);
-    }
-  }
-
-  private Map<Path, String> loadSwaggerUIStaticContent(
-      final OpenApiSpecsExtractor openApiSpecsExtractor) {
-    final Map<Path, String> swaggerUIContentMap =
-        openApiSpecsExtractor.getDestinationSpecPaths().stream()
-            .map(
-                path -> {
-                  try {
-                    final Path relativePath =
-                        openApiSpecsExtractor.getDestinationDirectory().relativize(path);
-                    final Path swaggerUIPath = Path.of(SWAGGER_ENDPOINT).resolve(relativePath);
-                    final String content = Files.readString(path, UTF_8);
-                    return Map.entry(swaggerUIPath, content);
-                  } catch (final IOException e) {
-                    throw new UncheckedIOException(e);
-                  }
-                })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-    // map /swagger-ui to index.html content
-    final String index_html =
-        swaggerUIContentMap.get(Path.of(SWAGGER_ENDPOINT).resolve("index.html"));
-    swaggerUIContentMap.put(Path.of(SWAGGER_ENDPOINT), index_html);
-    return swaggerUIContentMap;
   }
 
   private HttpServer createServerAndWait(
