@@ -53,7 +53,7 @@ public class OpenApiSpecsExtractor {
       final boolean forceDeleteOnJvmExit)
       throws IOException {
     this.destinationDirectory = destinationDirectory;
-    this.destinationSpecPaths = extractToDestination();
+    this.destinationSpecPaths = extractResourcesToDestinationDirectory();
 
     if (fixRelativeRefPaths) {
       fixRelativeRefAtDestination();
@@ -143,7 +143,7 @@ public class OpenApiSpecsExtractor {
     }
   }
 
-  private List<Path> extractToDestination() throws IOException {
+  private List<Path> extractResourcesToDestinationDirectory() throws IOException {
     final List<Path> extractedResources = new ArrayList<>();
 
     try (final Stream<URL> webrootYamlFiles =
@@ -153,20 +153,20 @@ public class OpenApiSpecsExtractor {
             final String jarPath = openapiResource.getPath();
             final String filePath =
                 StringUtils.substringAfter(jarPath, OPENAPI_RESOURCES_ROOT + "/");
-            final Path extractedResource = destinationDirectory.resolve(filePath);
-            copyContents(openapiResource, extractedResource);
-            extractedResources.add(extractedResource);
+            final Path destination = destinationDirectory.resolve(filePath);
+            extractResource(openapiResource, destination);
+            extractedResources.add(destination);
           });
     }
     return Collections.unmodifiableList(extractedResources);
   }
 
-  private static void copyContents(final URL openapiResource, final Path extractedResource) {
+  private void extractResource(final URL openapiResource, final Path destination) {
     final String contents;
     try {
       contents = com.google.common.io.Resources.toString(openapiResource, StandardCharsets.UTF_8);
-      extractedResource.getParent().toFile().mkdirs();
-      Files.writeString(extractedResource, contents);
+      destination.getParent().toFile().mkdirs();
+      Files.writeString(destination, contents);
     } catch (final IOException e) {
       throw new UncheckedIOException(e);
     }
