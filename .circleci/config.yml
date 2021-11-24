@@ -232,6 +232,12 @@ jobs:
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
       - notify
       
+  checkNodeVersion:
+    executor: executor_node
+    steps:
+      - run:
+          name: Node version
+          comand: node --version
 
   publishOpenApiSpec:
     executor: executor_node
@@ -267,6 +273,12 @@ workflows:
           filters:
             tags: &filters-release-tags
               only: /^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?/
+      - checkNodeVersion:
+        context:
+          - dockerhub-quorumengineering-ro
+        filters:
+          tags:
+            <<: *filters-release-tags
       - acceptanceTests:
           requires:
             - build
