@@ -52,7 +52,7 @@ executors:
 
   executor_node:
     docker:
-      - image: circleci/node:14-buster
+      - image: cimg/node:17.1.0
 
 commands:
   prepare:
