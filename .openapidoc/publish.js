@@ -1,6 +1,7 @@
 const fs = require("fs");
 const fetch = require("node-fetch");
 const ghpages = require("gh-pages");
+const tree = require('tree-node-cli');
 
 const config = require("./config.js");
 
@@ -11,32 +12,46 @@ const log = (...args) => console.log(...args); // eslint-disable-line no-console
  */
 async function main() {
   const cfg = config.getConfig();
-  const { distDir, specs, versions, ghPagesConfig } = cfg;
+  const { distDir, specDir, versionDetails, versionJsonDetails, ghPagesConfig } = cfg;
   try {
+    log(`Starting publishing OpenApi spec release: ${versionDetails.version}`);
+
+    // step1: clean distDir
     prepareDistDir(distDir);
 
-    specs.forEach(function (spec) {
-      copySpecFileToDist(spec);
-    });
+    // step2: Copy directory core/build/publish to distDir/latest
+    log(`Copying ${specDir} to ${distDir}/latest`);
+    fs.cpSync(specDir, distDir + "/latest", {recursive: true});
+    // remove index.html as we don't need it in gh-pages branch
+    fs.rmSync(distDir + "/latest/index.html");
 
-    if (specs[0].isReleaseVersion) {
-      const versionsJson = await fetchVersions(versions.url);
-      const updatedVersionsJson = updateVersions(
-        versionsJson,
-        specs[0].version
-      );
-      saveVersionsJson(updatedVersionsJson, versions.dist);
+    // step 3: if non-dev version,
+    //  then copy 'latest' dir to '$version' dir
+    //  and fetch and update versions.json
+
+    if (versionDetails.isReleaseVersion) {
+      log("Stable version detected.")
+      log(`Copying ${distDir}/latest to ${distDir}/${versionDetails.version}`);
+      fs.cpSync(distDir + "/latest", distDir + "/" + versionDetails.version, {recursive: true});
+
+      log("Fetching " + versionJsonDetails.url);
+      const versionsJson = await fetchVersions(versionJsonDetails.url);
+
+      log("Adding stable and current version entry into versions.json");
+      const updatedVersionsJson = updateVersions(versionsJson, versionDetails.version);
+
+      log("Saving versions.json to " + versionJsonDetails.dist);
+      saveVersionsJson(updatedVersionsJson, versionJsonDetails.dist);
     }
 
     log("Publishing following files: ");
-    fs.readdirSync(distDir).forEach((file) => {
-      log(file);
-    });
+    log(tree(distDir));
 
+    // step 4: Publish/commit to gh-pages branch
     cleanGhPagesCache();
     await publishToGHPages(distDir, ghPagesConfig);
     log(
-      `OpenAPI specs [${specs[0].version}] published to [${ghPagesConfig.branch}] using user [${ghPagesConfig.user.name}]`
+      `OpenAPI specs [${versionDetails.version}] published to [${ghPagesConfig.branch}] using user [${ghPagesConfig.user.name}]`
     );
   } catch (err) {
     log(`ERROR: OpenAPI spec failed to publish: ${err.message}`);
@@ -50,15 +65,9 @@ async function main() {
  * @param {string} dirPath
  */
 function prepareDistDir(dirPath) {
-  fs.rmdirSync(dirPath, { recursive: true });
+  log("Cleaning up " + dirPath)
+  fs.rmSync(dirPath, { recursive: true });
   fs.mkdirSync(dirPath, { recursive: true });
-}
-
-function copySpecFileToDist(spec) {
-  fs.copyFileSync(spec.path, spec.latestDist);
-  if (spec.isReleaseVersion) {
-    fs.copyFileSync(spec.path, spec.releaseDist);
-  }
 }
 
 /**
@@ -77,7 +86,7 @@ async function fetchVersions(versionsUrl) {
 }
 
 /**
- * update versions
+ * update versions by adding stable and version entry
  * @param versionsJson
  * @param {string} specVersion
  */

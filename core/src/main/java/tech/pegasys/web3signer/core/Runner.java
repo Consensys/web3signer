@@ -21,31 +21,30 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
+import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.util.FileUtil;
+import tech.pegasys.web3signer.core.util.OpenApiSpecsExtractor;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ClientAuth;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
@@ -55,7 +54,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
-import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,12 +65,6 @@ public abstract class Runner implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String CONTENT_TYPE_TEXT_HTML = "text/html; charset=utf-8";
-  private static final String CONTENT_TYPE_YAML = "text/x-yaml";
-
-  public static final String OPENAPI_INDEX_RESOURCE = "openapi/index.html";
-
-  private static final String SWAGGER_ENDPOINT = "/swagger-ui";
   protected static final String JSON_RPC_PATH = "/rpc/v1";
 
   protected final Config config;
@@ -113,7 +105,20 @@ public abstract class Runner implements Runnable {
       }
       incSignerLoadCount(metricsSystem, artifactSignerProvider.availableIdentifiers().size());
 
-      final OpenAPI3RouterFactory routerFactory = getOpenAPI3RouterFactory(vertx);
+      final OpenApiSpecsExtractor openApiSpecsExtractor =
+          new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
+              .withConvertRelativeRefToAbsoluteRef(true)
+              .withForceDeleteOnJvmExit(true)
+              .build();
+      final Path openApiSpec =
+          openApiSpecsExtractor
+              .getSpecFilePathAtDestination(getOpenApiSpecResource())
+              .orElseThrow(
+                  () ->
+                      new RuntimeException(
+                          "Unable to load OpenApi spec " + getOpenApiSpecResource()));
+      final OpenAPI3RouterFactory routerFactory =
+          getOpenAPI3RouterFactory(vertx, openApiSpec.toString());
       // register access log handler first
       if (config.isAccessLogsEnabled()) {
         routerFactory.addGlobalHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
@@ -126,7 +131,7 @@ public abstract class Runner implements Runnable {
 
       final Router router = populateRouter(context);
       if (config.isSwaggerUIEnabled()) {
-        registerSwaggerUIRoute(router); // serve static openapi spec
+        new SwaggerUIRoute(router).register();
       }
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
@@ -165,12 +170,13 @@ public abstract class Runner implements Runnable {
 
   protected abstract String getOpenApiSpecResource();
 
-  private OpenAPI3RouterFactory getOpenAPI3RouterFactory(final Vertx vertx)
+  public static OpenAPI3RouterFactory getOpenAPI3RouterFactory(
+      final Vertx vertx, final String openapiSpecUrl)
       throws InterruptedException, ExecutionException {
     final CompletableFuture<OpenAPI3RouterFactory> completableFuture = new CompletableFuture<>();
     OpenAPI3RouterFactory.create(
         vertx,
-        getOpenApiSpecResource(),
+        openapiSpecUrl,
         ar -> {
           if (ar.succeeded()) {
             completableFuture.complete(ar.result());
@@ -221,25 +227,6 @@ public abstract class Runner implements Runnable {
 
   private void registerHttpHostAllowListHandler(final OpenAPI3RouterFactory openApiRouterFactory) {
     openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
-  }
-
-  private void registerSwaggerUIRoute(final Router router) throws IOException {
-    final URL indexResourceUrl = Resources.getResource(OPENAPI_INDEX_RESOURCE);
-    final URL openApiSpecUrl = Resources.getResource(getOpenApiSpecResource());
-    final String indexHtml = Resources.toString(indexResourceUrl, Charsets.UTF_8);
-    final String openApiSpecYaml = Resources.toString(openApiSpecUrl, Charsets.UTF_8);
-
-    router
-        .route(HttpMethod.GET, SWAGGER_ENDPOINT + "/web3signer.yaml")
-        .produces(CONTENT_TYPE_YAML)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(routingContext -> routingContext.response().end(openApiSpecYaml));
-
-    router
-        .routeWithRegex(HttpMethod.GET, SWAGGER_ENDPOINT + "|" + SWAGGER_ENDPOINT + "/*")
-        .produces(CONTENT_TYPE_TEXT_HTML)
-        .handler(ResponseContentTypeHandler.create())
-        .handler(routingContext -> routingContext.response().end(indexHtml));
   }
 
   private HttpServer createServerAndWait(

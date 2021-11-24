@@ -59,7 +59,7 @@ public class FilecoinRunner extends Runner {
 
   @Override
   protected String getOpenApiSpecResource() {
-    return "openapi/web3signer-filecoin.yaml";
+    return "filecoin/web3signer.yaml";
   }
 
   @Override

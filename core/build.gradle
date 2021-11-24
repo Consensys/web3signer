@@ -27,6 +27,7 @@ dependencies {
 
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-net'
+  implementation 'org.apache.tuweni:tuweni-io'
   implementation 'org.web3j:core'
 
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
@@ -71,6 +72,7 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
+  testImplementation 'io.vertx:vertx-junit5'
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
@@ -94,7 +96,7 @@ artifacts {
 }
 
 processResources {
-  filesMatching('openapi/web3signer-*.yaml') {
+  filesMatching('openapi-specs/**/web3signer.yaml') {
     filter {
       it.replace('@VERSION@', calculateVersion())
     }

@@ -106,7 +106,7 @@ public class Eth2Runner extends Runner {
 
   @Override
   protected String getOpenApiSpecResource() {
-    return "openapi/web3signer-eth2.yaml";
+    return "eth2/web3signer.yaml";
   }
 
   @Override
