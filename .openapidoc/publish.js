@@ -66,7 +66,7 @@ async function main() {
  */
 function prepareDistDir(dirPath) {
   log("Cleaning up " + dirPath)
-  fs.rmSync(dirPath, { recursive: true });
+  fs.rmSync(dirPath, { recursive: true, force: true });
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
