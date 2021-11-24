@@ -6,7 +6,7 @@ let defaultVersion = Object.keys(versions)[0];
 // or a default version (first one in list) if no matching version.
 function getSpecPath(version){
   let spec = (version in versions) ? versions[version].spec : versions[defaultVersion].spec;
-  return `${SPEC_PREFIX}${spec}.yaml`;
+  return `${spec}/${SPEC_PREFIX}/web3signer.yaml`;
 }
 
 // is the version passed as param the one displayed accoring to the url
@@ -33,7 +33,7 @@ function updateVersionsDropDown(versionFromUrl){
     if(isDisplayedVersion(version,versionFromUrl)){
       item.addClass("active");
       $('#dropdownMenuButton').text(`${version}${sourceText}`);
-      document.title = `PegaSys Web3Signer ETH2 API Documentation - ${version}`;
+      document.title = `Consensys Web3Signer ${SPEC_PREFIX} API Documentation - ${version}`;
     }
 
     item.appendTo("#versionsList");
