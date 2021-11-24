@@ -235,9 +235,8 @@ jobs:
   checkNodeVersion:
     executor: executor_node
     steps:
-      - run:
-          name: Node version
-          comand: node --version
+      - checkout
+      - run: node --version
 
   publishOpenApiSpec:
     executor: executor_node
