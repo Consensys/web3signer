@@ -124,19 +124,6 @@ public abstract class Runner implements Runnable {
         routerFactory.addGlobalHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
       }
 
-      // security handler for keymanager endpoints
-      routerFactory.addSecurityHandler(
-          "bearerAuth",
-          context -> {
-            // TODO Auth token security logic
-            final boolean autorized = true;
-            if (autorized) {
-              context.next();
-            } else {
-              context.response().setStatusCode(401).end("{ message: \"permission denied\" }");
-            }
-          });
-
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 

@@ -30,11 +30,18 @@ components:
       required: [message]
       properties:
         message:
-          description: "Message describing error"
+          description: "Detailed error message"
           type: string
-          example: "Internal server error"
+          example: "description of the error that occurred"
 
   responses:
+    BadRequest:
+      description: "Bad request. Request was malformed and could not be processed"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
     Unauthorized:
       description: "Unauthorized, no token is found"
       content:
@@ -50,7 +57,8 @@ components:
             $ref: "#/components/schemas/ErrorResponse"
 
     InternalError:
-      description: "Beacon node internal error."
+      description: "Internal server error. The server encountered an unexpected error indicative of
+                    a serious fault in the system, or a bug."
       content:
         application/json:
           schema:
