@@ -123,6 +123,7 @@ public abstract class Runner implements Runnable {
       if (config.isAccessLogsEnabled()) {
         routerFactory.addGlobalHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
       }
+
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
 

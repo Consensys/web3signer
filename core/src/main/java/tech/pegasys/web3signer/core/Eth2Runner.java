@@ -129,6 +129,19 @@ public class Eth2Runner extends Runner {
       final Optional<SlashingProtection> slashingProtection) {
     final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
 
+    // security handler for keymanager endpoints
+    routerFactory.addSecurityHandler(
+        "bearerAuth",
+        context -> {
+          // TODO Auth token security logic
+          final boolean authorized = true;
+          if (authorized) {
+            context.next();
+          } else {
+            context.response().setStatusCode(401).end("{ message: \"permission denied\" }");
+          }
+        });
+
     addPublicKeysListHandler(routerFactory, blsSignerProvider, ETH2_LIST.name(), errorHandler);
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
