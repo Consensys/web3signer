@@ -24,6 +24,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.FileHiddenUtil;
 import tech.pegasys.web3signer.TrackingLogAppender;
+import tech.pegasys.web3signer.core.multikey.metadata.SignerOrigin;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
 import tech.pegasys.web3signer.core.multikey.metadata.parser.SignerParser;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
@@ -310,6 +311,7 @@ class SignerLoaderTest {
   private List<ArtifactSigner> createArtifactSigner(final String privateKey) {
     return List.of(
         new BlsArtifactSigner(
-            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(privateKey)))));
+            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(privateKey))),
+            SignerOrigin.FILE_RAW));
   }
 }
