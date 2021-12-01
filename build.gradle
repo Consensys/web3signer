@@ -413,18 +413,20 @@ check.dependsOn checkLicense
 // simple for use in docker
 tasks.register("dockerDistUntar") {
   dependsOn distTar
-  dependsOn distZip
-  def dockerBuildDir = "build/docker-web3signer/"
+  def dockerBuildPath = "build/docker-web3signer/"
   def distTarFile = distTar.outputs.files.singleFile
   def distTarFileName = distTar.outputs.files.singleFile.name.replace(".tar.gz", "")
 
   doFirst {
-    new File(dockerBuildDir).mkdir()
+    def dockerBuildDir = new File(dockerBuildPath)
+    dockerBuildDir.deleteDir()
+    dockerBuildDir.mkdir()
     copy {
       from tarTree(distTarFile)
-      into(dockerBuildDir)
+      into(dockerBuildPath)
     }
-    file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/web3signer")
+    def dockerDist = file("${dockerBuildPath}/${distTarFileName}")
+    dockerDist.renameTo("${dockerBuildPath}/web3signer")
   }
 }
 
