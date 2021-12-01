@@ -478,29 +478,35 @@ task testDocker(type: Exec) {
   args "-c", "bash test.sh ${image}"
 }
 
-task dockerUpload(type: Exec) {
-  dependsOn distDocker
-  doFirst {
-    def dockerBuildVersion = rootProject.version
-    def imageName = "consensys/web3signer"
-    def image = "${imageName}:${dockerBuildVersion}"
-    def cmd = "docker push '${image}'"
+task dockerUpload {
+  dependsOn([distDocker])
+  def dockerBuildVersion = "${rootProject.version}".replace('+', '-')
 
-    def additionalTags = []
-
-    if (project.hasProperty('branch') && project.property('branch') == 'master') {
-      additionalTags.add('develop')
-    }
-
-    if (!isDevelopBuild) {
-      additionalTags.add('latest')
-      additionalTags.add(version.split(/\./)[0..1].join('.'))
-    }
-
-    additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
-    args "-c", "${cmd}"
+  def versionPrefixes = [dockerBuildVersion]
+  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+    versionPrefixes.add('develop')
   }
-  executable "sh"
+
+  if (!isDevelopBuild) {
+    versionPrefixes.add('latest')
+    versionPrefixes.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
+  }
+
+  doLast {
+    for (def variant in dockerVariants) {
+      def tags = ""
+      versionPrefixes.forEach { prefix -> tags += "-t ${dockerImageName}:${prefix.trim()}-${variant} "}
+      if (variant == dockerVariants[0]) {
+        versionPrefixes.forEach { prefix -> tags += "-t ${dockerImageName}:${prefix.trim()} "}
+      }
+
+      exec {
+        workingDir dockerBuildDir
+        executable "sh"
+        args "-c", "docker buildx build --platform ${dockerPlatforms} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} --push ${tags} ."
+      }
+    }
+  }
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
@@ -535,7 +541,7 @@ def buildTime() {
 // Otherwise, use develop
 def calculatePublishVersion() {
   if (!grgit) {
-    return 'UNKNOWN'
+    return 'develop'
   }
   def specificVersion = calculateVersion()
   def isReleaseBranch = grgit.branch.current().name.startsWith('release-')
@@ -551,7 +557,8 @@ def calculatePublishVersion() {
 @Memoized
 def calculateVersion() {
   if (!grgit) {
-    return 'UNKNOWN'
+    logger.warn("Not building from a git checkout. Version information will not be available. Building from a git checkout is strongly recommended.")
+    return 'UNKNOWN+develop'
   }
   String version = grgit.describe(tags: true)
   if (version == null) {
