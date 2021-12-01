@@ -463,19 +463,20 @@ task distDocker  {
   }
 }
 
-task testDocker(type: Exec) {
-  dependsOn distDocker
+task testDocker {
+  dependsOn([distDocker])
+  def dockerBuildVersion = 'develop'
   def dockerReportsDir = "docker/reports/"
-  def imageName = "consensys/web3signer"
-  def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
-  workingDir "docker"
-
   doFirst {
     new File(dockerReportsDir).mkdir()
   }
-
-  executable "sh"
-  args "-c", "bash test.sh ${image}"
+  doLast {
+    exec {
+      workingDir "docker"
+      executable "sh"
+      args "-c", "sh ./test.sh '${dockerImageName}:${dockerBuildVersion}'"
+    }
+  }
 }
 
 task dockerUpload {
