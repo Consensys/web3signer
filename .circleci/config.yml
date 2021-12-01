@@ -218,7 +218,8 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" testDocker dockerUpload
+            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" testDocker
+            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
       - notify
 
   publishOpenApiSpec:
