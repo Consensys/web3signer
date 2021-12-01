@@ -212,6 +212,18 @@ jobs:
             ./gradlew --no-daemon --parallel cloudSmithUpload
       - notify
 
+  buildDocker:
+    executor: machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: build and test Docker image
+          command: |
+            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" testDocker
+      - notify
+
   publishDocker:
     executor: machine_executor
     steps:
@@ -228,7 +240,6 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" testDocker
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
       - notify
 
@@ -307,6 +318,14 @@ workflows:
           context:
             - dockerhub-quorumengineering-ro
             - cloudsmith-protocols
+      - buildDocker:
+          requires:
+            - build
+          context:
+            - dockerhub-quorumengineering-ro
+          filters:
+            tags:
+              <<: *filters-release-tags
       - publishDocker:
           filters:
             branches:
@@ -317,5 +336,6 @@ workflows:
               <<: *filters-release-tags
           requires:
             - acceptanceTests
+            - buildDocker
           context:
             - dockerhub-quorumengineering-rw 
