@@ -1,5 +1,18 @@
 # Changelog
 
+## Next Release
+
+### Features Added
+- Docker images are now published with multi-arch support including Linux/amd64 and Linux/arm64
+- The default docker image now uses JDK 17 instead of 11. The JDK 11 image is still available with the version suffix `-jdk11`
+
+### Breaking Changes
+- The docker image now uses `web3signer` as user/group instead of `root` which may result in compatibility/permissions issues with existing directory mounts.  
+
+### Bugs Fixed
+
+---
+
 ## 21.10.0
 
 ### Features Added
