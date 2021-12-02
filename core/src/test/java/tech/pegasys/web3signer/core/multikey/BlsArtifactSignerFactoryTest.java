@@ -95,7 +95,7 @@ class BlsArtifactSignerFactoryTest {
             new HashicorpConnectionFactory(vertx),
             interlockKeyProvider,
             yubiHsmOpaqueDataProvider,
-            BlsArtifactSigner::new);
+            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin()));
   }
 
   @AfterEach

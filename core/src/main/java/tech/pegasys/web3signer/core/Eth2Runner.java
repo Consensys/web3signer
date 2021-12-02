@@ -191,7 +191,8 @@ public class Eth2Runner extends Runner {
                     hashicorpConnectionFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
-                    BlsArtifactSigner::new);
+                    (args) ->
+                        new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 
             signers.addAll(
                 SignerLoader.load(

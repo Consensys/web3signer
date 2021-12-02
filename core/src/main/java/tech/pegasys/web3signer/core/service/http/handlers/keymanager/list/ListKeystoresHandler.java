@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.core.service.http.handlers.keymanager.list;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
-import tech.pegasys.web3signer.core.multikey.metadata.SignerOrigin;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 
@@ -44,10 +43,16 @@ public class ListKeystoresHandler implements Handler<RoutingContext> {
   public void handle(final RoutingContext context) {
     final List<KeystoreInfo> data =
         artifactSignerProvider.availableIdentifiers().stream()
+            .sorted() // arbitrary sorting to make API calls repeatable
             .map(artifactSignerProvider::getSigner)
             .filter(signer -> signer.isPresent() && signer.get() instanceof BlsArtifactSigner)
             .map(signer -> (BlsArtifactSigner) signer.get())
-            .map(signer -> new KeystoreInfo(signer.getIdentifier(), null, isReadOnly(signer)))
+            .map(
+                signer ->
+                    new KeystoreInfo(
+                        signer.getIdentifier(),
+                        signer.getPath().isPresent() ? signer.getPath().get() : null,
+                        signer.isReadOnlyKey()))
             .collect(Collectors.toList());
     final ListKeystoresResponse response = new ListKeystoresResponse(data);
     try {
@@ -59,10 +64,5 @@ public class ListKeystoresHandler implements Handler<RoutingContext> {
     } catch (JsonProcessingException e) {
       context.fail(SERVER_ERROR, e);
     }
-  }
-
-  // only signers loaded from key store files are editable, everything else is read only
-  private boolean isReadOnly(BlsArtifactSigner signer) {
-    return signer.getOrigin() != SignerOrigin.FILE_KEYSTORE;
   }
 }

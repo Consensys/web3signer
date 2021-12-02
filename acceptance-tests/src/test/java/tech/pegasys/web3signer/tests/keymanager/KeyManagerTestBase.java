@@ -67,9 +67,13 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
     return publicKey.toString();
   }
 
-  protected Path createRawPrivateKeyFile(final String privateKey) {
-    final Path file = testDirectory.resolve(privateKey.hashCode() + ".yaml");
+  protected String createRawPrivateKeyFile(final String privateKey) {
+    final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes32.fromHexString(privateKey));
+    final BLSKeyPair keyPair = new BLSKeyPair(key);
+    final BLSPublicKey publicKey = keyPair.getPublicKey();
+    final String configFilename = publicKey.toString();
+    final Path file = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(file, privateKey, BLS);
-    return file;
+    return publicKey.toString();
   }
 }

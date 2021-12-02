@@ -240,7 +240,7 @@ public class MetadataFileHelpers {
             : new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
     final KeyStoreData keyStoreData =
-        KeyStore.encrypt(privateKey, publicKey, password, "", kdfParam, cipher);
+        KeyStore.encrypt(privateKey, publicKey, password, "m/12381/3600/0/0/0", kdfParam, cipher);
     try {
       KeyStoreLoader.saveToFile(keyStoreFilePath, keyStoreData);
     } catch (IOException e) {

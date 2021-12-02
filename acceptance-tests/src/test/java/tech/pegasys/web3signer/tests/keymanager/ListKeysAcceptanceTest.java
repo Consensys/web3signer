@@ -16,7 +16,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.is;
 
+import io.restassured.http.ContentType;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 
@@ -33,22 +35,26 @@ public class ListKeysAcceptanceTest extends KeyManagerTestBase {
   }
 
   @Test
-  public void onlyValidKeysAreReturnedInPublicKeyResponse() {
+  public void loadedKeysAreReturnedInPublicKeyResponse() {
     final String pubkey = createKeystoreYamlFile(BLS_PRIVATE_KEY_1);
     setupSignerWithKeyManagerApi();
-
     validateApiResponse(callListKeys(), "data.validating_pubkey", hasItem(pubkey));
+  }
+
+  @Test
+  public void pathIsReturnedForKeystoreFiles() {
+    createKeystoreYamlFile(BLS_PRIVATE_KEY_1);
+    setupSignerWithKeyManagerApi();
+    validateApiResponse(callListKeys(), "data.derivation_path", hasItem("m/12381/3600/0/0/0"));
   }
 
   @Test
   public void additionalPublicKeyAreReportedAfterReload() {
     final String firstPubKey = createKeystoreYamlFile(BLS_PRIVATE_KEY_1);
     setupSignerWithKeyManagerApi();
-
     validateApiResponse(callListKeys(), "data.validating_pubkey", hasItem(firstPubKey));
 
     final String secondPubKey = createKeystoreYamlFile(BLS_PRIVATE_KEY_2);
-    ;
     signer.callReload().then().statusCode(200);
 
     // reload is async
@@ -64,16 +70,25 @@ public class ListKeysAcceptanceTest extends KeyManagerTestBase {
   public void nonKeystoreKeysAreReadOnly() {
     createRawPrivateKeyFile(BLS_PRIVATE_KEY_1);
     setupSignerWithKeyManagerApi();
-
     validateApiResponse(callListKeys(), "data.readonly", hasItems(true));
   }
 
   @Test
   public void canReturnBothReadOnlyAndEditableKeystores() {
-    createKeystoreYamlFile(BLS_PRIVATE_KEY_1);
-    createRawPrivateKeyFile(BLS_PRIVATE_KEY_2);
+    final String firstPubkey = createKeystoreYamlFile(BLS_PRIVATE_KEY_1);
+    final String secondPubKey = createRawPrivateKeyFile(BLS_PRIVATE_KEY_2);
     setupSignerWithKeyManagerApi();
 
-    validateApiResponse(callListKeys(), "data.readonly", hasItems(true, false));
+    callListKeys()
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("data[0].readonly", is(false))
+        .and()
+        .body("data[0].validating_pubkey", is(firstPubkey))
+        .and()
+        .body("data[1].readonly", is(true))
+        .and()
+        .body("data[1].validating_pubkey", is(secondPubKey));
   }
 }

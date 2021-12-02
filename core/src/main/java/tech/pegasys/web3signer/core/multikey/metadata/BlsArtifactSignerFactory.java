@@ -26,8 +26,9 @@ import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.nio.file.Path;
+import java.util.Optional;
+import java.util.function.Function;
 
-import kotlin.jvm.functions.Function2;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -38,7 +39,7 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext
 public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   private final LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
-  private final Function2<BLSKeyPair, SignerOrigin, ArtifactSigner> signerFactory;
+  private final Function<BlsArtifactSignerArgs, ArtifactSigner> signerFactory;
 
   public BlsArtifactSignerFactory(
       final Path configsDirectory,
@@ -46,7 +47,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final HashicorpConnectionFactory connectionFactory,
       final InterlockKeyProvider interlockKeyProvider,
       final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider,
-      final Function2<BLSKeyPair, SignerOrigin, ArtifactSigner> signerFactory) {
+      final Function<BlsArtifactSignerArgs, ArtifactSigner> signerFactory) {
     super(connectionFactory, configsDirectory, interlockKeyProvider, yubiHsmOpaqueDataProvider);
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
@@ -60,9 +61,10 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
   @Override
   public ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
     try (final TimingContext ignored = privateKeyRetrievalTimer.labels("file-raw").startTimer()) {
-      return signerFactory.invoke(
-          new BLSKeyPair(BLSSecretKey.fromBytes(fileRawSigningMetadata.getPrivateKeyBytes())),
-          SignerOrigin.FILE_RAW);
+      return signerFactory.apply(
+          new BlsArtifactSignerArgs(
+              new BLSKeyPair(BLSSecretKey.fromBytes(fileRawSigningMetadata.getPrivateKeyBytes())),
+              SignerOrigin.FILE_RAW));
     }
   }
 
@@ -80,7 +82,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final Bytes privateKeyBytes = extractBytesFromVault(hashicorpMetadata);
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
-      return signerFactory.invoke(keyPair, SignerOrigin.HASHICORP);
+      return signerFactory.apply(new BlsArtifactSignerArgs(keyPair, SignerOrigin.HASHICORP));
     }
   }
 
@@ -90,7 +92,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final Bytes privateKeyBytes = extractBytesFromVault(azureSecretSigningMetadata);
       final BLSKeyPair keyPair =
           new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
-      return signerFactory.invoke(keyPair, SignerOrigin.AZURE);
+      return signerFactory.apply(new BlsArtifactSignerArgs(keyPair, SignerOrigin.AZURE));
     }
   }
 
@@ -99,7 +101,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     try (final TimingContext ignored = privateKeyRetrievalTimer.labels("interlock").startTimer()) {
       final Bytes32 keyBytes = Bytes32.wrap(extractBytesFromInterlock(interlockSigningMetadata));
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(keyBytes));
-      return signerFactory.invoke(keyPair, SignerOrigin.INTERLOCK);
+      return signerFactory.apply(new BlsArtifactSignerArgs(keyPair, SignerOrigin.INTERLOCK));
     }
   }
 
@@ -108,7 +110,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     try (final TimingContext ignored = privateKeyRetrievalTimer.labels("yubihsm").startTimer()) {
       final Bytes32 keyBytes = Bytes32.wrap(extractOpaqueDataFromYubiHsm(yubiHsmSigningMetadata));
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(keyBytes));
-      return signerFactory.invoke(keyPair, SignerOrigin.YUBI_HSM);
+      return signerFactory.apply(new BlsArtifactSignerArgs(keyPair, SignerOrigin.YUBI_HSM));
     }
   }
 
@@ -121,7 +123,9 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final String password = loadPassword(keystorePasswordFile);
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
-      return signerFactory.invoke(keyPair, SignerOrigin.FILE_KEYSTORE);
+      return signerFactory.apply(
+          new BlsArtifactSignerArgs(
+              keyPair, SignerOrigin.FILE_KEYSTORE, Optional.of(keyStoreData.getPath())));
     } catch (final KeyStoreValidationException e) {
       throw new SigningMetadataException(e.getMessage(), e);
     }

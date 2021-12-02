@@ -128,7 +128,7 @@ public class FilecoinRunner extends Runner {
                     hashicorpConnectionFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
-                    (keyPair, signerOrigin) -> new FcBlsArtifactSigner(keyPair, network));
+                    (args) -> new FcBlsArtifactSigner(args.getKeyPair(), network));
 
             final AbstractArtifactSignerFactory secpArtifactSignerFactory =
                 new Secp256k1ArtifactSignerFactory(
