@@ -54,6 +54,12 @@ executors:
     docker:
       - image: cimg/node:17.1.0
 
+  machine_executor:
+    machine:
+      image: ubuntu-2004:202008-01 #Ubuntu 20.04, docker 19.03, docker-compose 1.27.4
+      docker_layer_caching: true
+    working_directory: ~/project
+
 commands:
   prepare:
     description: "Prepare"
@@ -104,6 +110,16 @@ commands:
       - store_artifacts:
           path: build/test-reports
           destination: test-reports
+
+  install_docker_buildx:
+    description: "Install Docker buildx plugin"
+    steps:
+      - run:
+          name: "Install Docker buildx plugin"
+          command: |
+            mkdir -vp ~/.docker/cli-plugins/
+            curl --silent -L --output ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.7.0/buildx-v0.7.0.linux-amd64
+            chmod a+x ~/.docker/cli-plugins/docker-buildx
 
   notify:
     description: "Notify Slack"
@@ -179,28 +195,6 @@ jobs:
       - notify
       - capture_test_reports
 
-  buildDocker:
-    executor: executor_med
-    steps:
-      - prepare
-      - setup_remote_docker
-      - attach_workspace:
-          at: ~/project
-      - run:
-          name: hadoLint
-          command: |
-            docker run --rm -i hadolint/hadolint < docker/Dockerfile
-      - run:
-          name: build image
-          command: |
-            ./gradlew --no-daemon distDocker
-      - run:
-          name: test image
-          command: |
-            mkdir -p docker/reports
-            ./gradlew --no-daemon testDocker
-      - notify            
-
   publish:
     executor: executor_med
     steps:
@@ -217,21 +211,38 @@ jobs:
           command: |
             ./gradlew --no-daemon --parallel cloudSmithUpload
       - notify
-      
-  publishDocker:
-    executor: executor_med
+
+  buildDocker:
+    executor: machine_executor
     steps:
       - prepare
-      - setup_remote_docker
       - attach_workspace:
           at: ~/project
+      - run:
+          name: build and test Docker image
+          command: |
+            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" testDocker
+      - notify
+
+  publishDocker:
+    executor: machine_executor
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - install_docker_buildx
+      - run:
+          name: Configure Buildx for Multi-Arch
+          command: |
+            docker run --rm --privileged tonistiigi/binfmt:latest --install "linux/amd64,linux/arm64"
+            docker buildx create --use --driver docker-container
       - run:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
       - notify
-      
+
   publishOpenApiSpec:
     executor: executor_node
     steps:
@@ -282,14 +293,6 @@ workflows:
           filters:
             tags:
               <<: *filters-release-tags
-      - buildDocker:
-          requires:
-            - build
-          context:
-            - dockerhub-quorumengineering-ro
-          filters:
-            tags:
-              <<: *filters-release-tags
       - publishOpenApiSpec:
           filters:
             branches:
@@ -315,6 +318,14 @@ workflows:
           context:
             - dockerhub-quorumengineering-ro
             - cloudsmith-protocols
+      - buildDocker:
+          requires:
+            - build
+          context:
+            - dockerhub-quorumengineering-ro
+          filters:
+            tags:
+              <<: *filters-release-tags
       - publishDocker:
           filters:
             branches:

@@ -2,8 +2,8 @@ file:
   /opt/web3signer/bin/web3signer:
     exists: true
     mode: "0755"
-    owner: root
-    group: root
+    owner: web3signer
+    group: web3signer
     filetype: file
     contains: []
 port:

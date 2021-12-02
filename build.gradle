@@ -413,78 +413,98 @@ check.dependsOn checkLicense
 // simple for use in docker
 tasks.register("dockerDistUntar") {
   dependsOn distTar
-  dependsOn distZip
-  def dockerBuildDir = "build/docker-web3signer/"
+  def dockerBuildPath = "build/docker-web3signer/"
   def distTarFile = distTar.outputs.files.singleFile
   def distTarFileName = distTar.outputs.files.singleFile.name.replace(".tar.gz", "")
 
   doFirst {
-    new File(dockerBuildDir).mkdir()
+    def dockerBuildDir = new File(dockerBuildPath)
+    dockerBuildDir.deleteDir()
+    dockerBuildDir.mkdir()
     copy {
       from tarTree(distTarFile)
-      into(dockerBuildDir)
+      into(dockerBuildPath)
     }
-    file("${dockerBuildDir}/${distTarFileName}").renameTo("${dockerBuildDir}/web3signer")
+    def dockerDist = file("${dockerBuildPath}/${distTarFileName}")
+    dockerDist.renameTo("${dockerBuildPath}/web3signer")
   }
 }
 
-task distDocker(type: Exec) {
+def dockerImageName = "consensys/web3signer"
+def dockerVariants = ["jdk17", "jdk11",]
+def dockerPlatforms = "linux/amd64,linux/arm64"
+def dockerBuildDir = "build/docker-web3signer/"
+
+task distDocker  {
   dependsOn dockerDistUntar
-  def dockerBuildVersion = rootProject.version
-  def imageName = "consensys/web3signer"
-  def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
-  def dockerBuildDir = "build/docker-web3signer/"
-  workingDir "${dockerBuildDir}"
 
-  doFirst {
-    copy {
-      from file("${projectDir}/docker/Dockerfile")
-      into(workingDir)
+  def dockerBuildVersion = 'develop'
+  doLast {
+    for (def variant in dockerVariants) {
+      copy {
+        from file("${projectDir}/docker/${variant}/Dockerfile")
+        into(dockerBuildDir)
+      }
+      exec {
+        def image = "${dockerImageName}:${dockerBuildVersion}-${variant}"
+        workingDir dockerBuildDir
+        executable "sh"
+        args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+      }
+    }
+    // tag the "default" (which is the variant in the zero position)
+    exec {
+      executable "sh"
+      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${dockerBuildVersion}'"
     }
   }
-
-  executable "sh"
-  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
 }
 
-task testDocker(type: Exec) {
-  dependsOn distDocker
+task testDocker {
+  dependsOn([distDocker])
+  def dockerBuildVersion = 'develop'
   def dockerReportsDir = "docker/reports/"
-  def imageName = "consensys/web3signer"
-  def image = project.hasProperty('release.releaseVersion') ? "${imageName}:" + project.property('release.releaseVersion') : "${imageName}:${project.version}"
-  workingDir "docker"
-
   doFirst {
     new File(dockerReportsDir).mkdir()
   }
-
-  executable "sh"
-  args "-c", "bash test.sh ${image}"
+  doLast {
+    exec {
+      workingDir "docker"
+      executable "sh"
+      args "-c", "sh ./test.sh '${dockerImageName}:${dockerBuildVersion}'"
+    }
+  }
 }
 
-task dockerUpload(type: Exec) {
-  dependsOn distDocker
-  doFirst {
-    def dockerBuildVersion = rootProject.version
-    def imageName = "consensys/web3signer"
-    def image = "${imageName}:${dockerBuildVersion}"
-    def cmd = "docker push '${image}'"
+task dockerUpload {
+  dependsOn([distDocker])
+  def dockerBuildVersion = "${rootProject.version}".replace('+', '-')
 
-    def additionalTags = []
-
-    if (project.hasProperty('branch') && project.property('branch') == 'master') {
-      additionalTags.add('develop')
-    }
-
-    if (!isDevelopBuild) {
-      additionalTags.add('latest')
-      additionalTags.add(version.split(/\./)[0..1].join('.'))
-    }
-
-    additionalTags.each { tag -> cmd += " && docker tag '${image}' '${imageName}:${tag.trim()}' && docker push '${imageName}:${tag.trim()}'" }
-    args "-c", "${cmd}"
+  def versionPrefixes = [dockerBuildVersion]
+  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+    versionPrefixes.add('develop')
   }
-  executable "sh"
+
+  if (!isDevelopBuild) {
+    versionPrefixes.add('latest')
+    versionPrefixes.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
+  }
+
+  doLast {
+    for (def variant in dockerVariants) {
+      def tags = ""
+      versionPrefixes.forEach { prefix -> tags += "-t ${dockerImageName}:${prefix.trim()}-${variant} "}
+      if (variant == dockerVariants[0]) {
+        versionPrefixes.forEach { prefix -> tags += "-t ${dockerImageName}:${prefix.trim()} "}
+      }
+
+      exec {
+        workingDir dockerBuildDir
+        executable "sh"
+        args "-c", "docker buildx build --platform ${dockerPlatforms} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} --push ${tags} ."
+      }
+    }
+  }
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
@@ -519,7 +539,7 @@ def buildTime() {
 // Otherwise, use develop
 def calculatePublishVersion() {
   if (!grgit) {
-    return 'UNKNOWN'
+    return 'develop'
   }
   def specificVersion = calculateVersion()
   def isReleaseBranch = grgit.branch.current().name.startsWith('release-')
@@ -535,7 +555,8 @@ def calculatePublishVersion() {
 @Memoized
 def calculateVersion() {
   if (!grgit) {
-    return 'UNKNOWN'
+    logger.warn("Not building from a git checkout. Version information will not be available. Building from a git checkout is strongly recommended.")
+    return 'UNKNOWN+develop'
   }
   String version = grgit.describe(tags: true)
   if (version == null) {
