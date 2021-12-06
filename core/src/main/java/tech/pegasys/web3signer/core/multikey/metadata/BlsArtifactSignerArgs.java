@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright 2021 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,53 +10,39 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.signing;
+package tech.pegasys.web3signer.core.multikey.metadata;
 
-import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
-
-import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.web3signer.core.multikey.metadata.SignerOrigin;
 
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
-
-public class BlsArtifactSigner implements ArtifactSigner {
-
+public class BlsArtifactSignerArgs {
   private final BLSKeyPair keyPair;
   private final SignerOrigin origin;
   private final Optional<String> path;
 
-  public BlsArtifactSigner(
+  public BlsArtifactSignerArgs(
       final BLSKeyPair keyPair, final SignerOrigin origin, final Optional<String> path) {
     this.keyPair = keyPair;
     this.origin = origin;
     this.path = path;
   }
 
-  public BlsArtifactSigner(final BLSKeyPair keyPair, final SignerOrigin origin) {
+  public BlsArtifactSignerArgs(final BLSKeyPair keyPair, final SignerOrigin origin) {
     this.keyPair = keyPair;
     this.origin = origin;
     this.path = Optional.empty();
   }
 
-  @Override
-  public String getIdentifier() {
-    return normaliseIdentifier(keyPair.getPublicKey().toString());
+  public BLSKeyPair getKeyPair() {
+    return keyPair;
   }
 
-  @Override
-  public BlsArtifactSignature sign(final Bytes data) {
-    return new BlsArtifactSignature(BLS.sign(keyPair.getSecretKey(), data));
+  public SignerOrigin getOrigin() {
+    return origin;
   }
 
   public Optional<String> getPath() {
     return path;
-  }
-
-  // only signers loaded from key store files are editable, everything else is read only
-  public boolean isReadOnlyKey() {
-    return origin != SignerOrigin.FILE_KEYSTORE;
   }
 }

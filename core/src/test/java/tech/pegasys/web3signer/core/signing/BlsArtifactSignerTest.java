@@ -20,6 +20,7 @@ import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.web3signer.BLSTestUtil;
+import tech.pegasys.web3signer.core.multikey.metadata.SignerOrigin;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,8 @@ class BlsArtifactSignerTest {
   @Test
   void publicKeyIsReturnedAsIdentifier() {
     final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(4);
-    final BlsArtifactSigner blsArtifactSigner = new BlsArtifactSigner(keyPair);
+    final BlsArtifactSigner blsArtifactSigner =
+        new BlsArtifactSigner(keyPair, SignerOrigin.FILE_RAW);
     final String expectedIdentifier = normaliseIdentifier(keyPair.getPublicKey().toString());
     assertThat(blsArtifactSigner.getIdentifier()).isEqualTo(expectedIdentifier);
   }
@@ -39,7 +41,8 @@ class BlsArtifactSignerTest {
     final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(4);
     final BLSSignature expectedSignature = BLS.sign(keyPair.getSecretKey(), message);
 
-    final BlsArtifactSigner blsArtifactSigner = new BlsArtifactSigner(keyPair);
+    final BlsArtifactSigner blsArtifactSigner =
+        new BlsArtifactSigner(keyPair, SignerOrigin.FILE_RAW);
     final BlsArtifactSignature signature = blsArtifactSigner.sign(message);
 
     assertThat(signature.getSignatureData().toString()).isEqualTo(expectedSignature.toString());
