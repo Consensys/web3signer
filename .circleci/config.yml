@@ -240,6 +240,13 @@ jobs:
           name: Publish Docker
           command: |
             docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
+
+            # dct signing setup
+            mkdir -p $HOME/.docker/trust/private
+            echo $DCT_KEY | base64 --decode > $HOME/.docker/trust/private/$DCT_HASH.key
+            chmod 600 $HOME/.docker/trust/private/$DCT_HASH.key
+            docker trust key load $HOME/.docker/trust/private/$DCT_HASH.key --name opsquorum
+
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
       - notify
 
@@ -338,4 +345,6 @@ workflows:
             - acceptanceTests
             - buildDocker
           context:
-            - dockerhub-quorumengineering-rw 
+            - dockerhub-quorumengineering-rw
+            - dockerhub-opsquorum-dct
+
