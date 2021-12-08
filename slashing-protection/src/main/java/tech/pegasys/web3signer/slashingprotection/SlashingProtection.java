@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.slashingprotection;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -37,6 +38,8 @@ public interface SlashingProtection {
   void export(OutputStream output);
 
   void importData(InputStream output);
+
+  void importDataWithFilter(InputStream output, Optional<List<String>> pubkeys);
 
   void prune();
 }

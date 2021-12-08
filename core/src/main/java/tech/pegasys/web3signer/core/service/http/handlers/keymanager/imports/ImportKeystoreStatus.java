@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright 2021 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,16 +10,10 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http;
+package tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports;
 
-/** Operation IDs as defined in web3signer.yaml */
-public enum OpenApiOperationsId {
-  ETH2_SIGN,
-  ETH1_SIGN,
-  ETH2_LIST,
-  ETH1_LIST,
-  RELOAD,
-  UPCHECK,
-  KEYMANAGER_LIST,
-  KEYMANAGER_IMPORT,
+public enum ImportKeystoreStatus {
+  IMPORTED,
+  DUPLICATE,
+  ERROR
 }

@@ -33,7 +33,9 @@ import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRoot
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -127,6 +129,19 @@ public class DbSlashingProtection implements SlashingProtection {
     try {
       LOG.info("Importing slashing protection database");
       interchangeManager.importData(input);
+      LOG.info("Import complete");
+    } catch (final IOException | UnsupportedOperationException | IllegalArgumentException e) {
+      throw new RuntimeException("Failed to import database content", e);
+    }
+  }
+
+  @Override
+  public void importDataWithFilter(final InputStream input, final Optional<List<String>> pubkeys) {
+    try {
+      LOG.info(
+          "Importing slashing protection database for keys: "
+              + String.join(",", pubkeys.orElse(Collections.emptyList())));
+      interchangeManager.importDataWithFilter(input, pubkeys);
       LOG.info("Import complete");
     } catch (final IOException | UnsupportedOperationException | IllegalArgumentException e) {
       throw new RuntimeException("Failed to import database content", e);

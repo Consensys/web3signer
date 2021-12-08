@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -228,6 +229,11 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     @Override
     public void importData(final InputStream output) {
       delegate.importData(output);
+    }
+
+    @Override
+    public void importDataWithFilter(InputStream output, Optional<List<String>> pubkeys) {
+      delegate.importDataWithFilter(output, pubkeys);
     }
 
     @Override

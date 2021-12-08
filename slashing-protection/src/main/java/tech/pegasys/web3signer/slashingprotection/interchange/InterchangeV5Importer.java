@@ -24,6 +24,7 @@ import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRoot
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -70,7 +71,11 @@ public class InterchangeV5Importer {
   }
 
   public void importData(final InputStream input) throws IOException {
+    importDataWithFilter(input, Optional.empty());
+  }
 
+  public void importDataWithFilter(final InputStream input, final Optional<List<String>> pubkeys)
+      throws IOException {
     try (final JsonParser jsonParser = mapper.getFactory().createParser(input)) {
       final ObjectNode rootNode = mapper.readTree(jsonParser);
 
@@ -97,7 +102,7 @@ public class InterchangeV5Importer {
             for (int i = 0; i < dataNode.size(); i++) {
               try {
                 final JsonNode validatorNode = dataNode.get(i);
-                parseValidator(h, validatorNode);
+                parseValidator(h, validatorNode, pubkeys);
               } catch (final IllegalArgumentException e) {
                 LOG.error("Failed to parse validator {}, due to {}", i, e.getMessage());
                 throw e;
@@ -107,13 +112,19 @@ public class InterchangeV5Importer {
     }
   }
 
-  private void parseValidator(final Handle handle, final JsonNode node)
+  private void parseValidator(
+      final Handle handle, final JsonNode node, final Optional<List<String>> pubkeys)
       throws JsonProcessingException {
     if (node.isArray()) {
       throw new IllegalStateException("Element of 'data' was not an object");
     }
     final ObjectNode parentNode = (ObjectNode) node;
     final String pubKey = parentNode.required("pubkey").textValue();
+
+    if (pubkeys.isPresent() && !pubkeys.get().contains(pubKey)) {
+      LOG.info("Skipping data import for validator " + pubKey);
+      return;
+    }
     final List<Validator> validators =
         validatorsDao.registerValidators(handle, List.of(Bytes.fromHexString(pubKey)));
     if (validators.isEmpty()) {

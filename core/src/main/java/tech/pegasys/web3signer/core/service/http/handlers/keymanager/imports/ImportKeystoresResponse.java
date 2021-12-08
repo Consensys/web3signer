@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright 2021 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,19 +10,23 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.slashingprotection.interchange;
+package tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
-import java.util.Optional;
 
-public interface InterchangeManager {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-  void importData(InputStream in) throws IOException;
+public class ImportKeystoresResponse {
+  private final List<ImportKeystoreResult> data;
 
-  void importDataWithFilter(InputStream in, Optional<List<String>> pubkeys) throws IOException;
+  @JsonCreator
+  public ImportKeystoresResponse(@JsonProperty("data") List<ImportKeystoreResult> data) {
+    this.data = data;
+  }
 
-  void export(OutputStream out) throws IOException;
+  @JsonProperty("data")
+  public List<ImportKeystoreResult> getData() {
+    return data;
+  }
 }
