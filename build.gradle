@@ -515,37 +515,6 @@ task dockerUpload {
     }
 
 
-//  doLast {
-//    for (def variant in javaVariants) {
-//      dockerPlatforms.each { arch, os_arch ->
-//        def tags = ""
-//        def dctTags = []
-//        versionPrefixes.forEach { prefix ->
-//          tags += "-t ${dockerImageName}:${prefix.trim()}-${variant}-${arch} "
-//          dctTags.add("${dockerImageName}:${prefix.trim()}-${variant}-${arch}")
-//        }
-//        if (variant == javaVariants[0]) {
-//          versionPrefixes.forEach { prefix ->
-//            tags += "-t ${dockerImageName}:${prefix.trim()}-${arch} "
-//            dctTags.add("${dockerImageName}:${prefix.trim()}-${arch}")
-//          }
-//        }
-//
-//        exec {
-//          workingDir dockerBuildDir
-//          executable "sh"
-//          args "-c", "docker buildx build --platform ${os_arch} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} ${tags} ."
-//        }
-//
-//        for (def tag in dctTags) {
-//          exec {
-//            workingDir dockerBuildDir
-//            executable "sh"
-//            args "-c", "docker trust sign ${tag} && docker push ${tag}"
-//          }
-//        }
-//      }
-//    } // end java variant
   }
 }
 
