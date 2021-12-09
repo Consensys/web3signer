@@ -431,8 +431,11 @@ tasks.register("dockerDistUntar") {
 }
 
 def dockerImageName = "consensys/web3signer"
-def dockerVariants = ["jdk17", "jdk11",]
-def dockerPlatforms = "linux/amd64,linux/arm64"
+def javaVariants = ["jdk17", "jdk11"]
+def dockerPlatforms = [
+  "amd64": "linux/amd64",
+  "arm64": "linux/arm64"
+]
 def dockerBuildDir = "build/docker-web3signer/"
 
 task distDocker  {
@@ -440,7 +443,7 @@ task distDocker  {
 
   def dockerBuildVersion = 'develop'
   doLast {
-    for (def variant in dockerVariants) {
+    for (def variant in javaVariants) {
       copy {
         from file("${projectDir}/docker/${variant}/Dockerfile")
         into(dockerBuildDir)
@@ -455,7 +458,7 @@ task distDocker  {
     // tag the "default" (which is the variant in the zero position)
     exec {
       executable "sh"
-      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${dockerBuildVersion}'"
+      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${javaVariants[0]}' '${dockerImageName}:${dockerBuildVersion}'"
     }
   }
 }
@@ -479,8 +482,12 @@ task testDocker {
 task dockerUpload {
   dependsOn([distDocker])
   def dockerBuildVersion = "${rootProject.version}".replace('+', '-')
-
   def versionPrefixes = [dockerBuildVersion]
+  logger.warn(">>>> dockerBuildVersion: ")
+  logger.warn(dockerBuildVersion)
+  logger.warn(">>>> versionPrefixes")
+  logger.warn(versionPrefixes)
+
   if (project.hasProperty('branch') && project.property('branch') == 'master') {
     versionPrefixes.add('develop')
   }
@@ -491,34 +498,54 @@ task dockerUpload {
   }
 
   doLast {
-    for (def variant in dockerVariants) {
-      def tags = ""
-      def dctTags = []
-      versionPrefixes.forEach { prefix ->
-        tags += "-t ${dockerImageName}:${prefix.trim()}-${variant} "
-        dctTags.add("${dockerImageName}:${prefix.trim()}-${variant}")
-      }
-      if (variant == dockerVariants[0]) {
+    for (def variant in javaVariants) {
+      logger.warn(variant)
+      dockerPlatforms.each { arch, os_arch ->
+        logger.warn(arch)
+        def dctTags = []
         versionPrefixes.forEach { prefix ->
-          tags += "-t ${dockerImageName}:${prefix.trim()} "
-          dctTags.add("${dockerImageName}:${prefix.trim()}")
+          logger.warn("prefix---")
+          logger.warn(prefix)
         }
-      }
+        logger.warn("end arch ---")
 
-      exec {
-        workingDir dockerBuildDir
-        executable "sh"
-        args "-c", "docker buildx build --platform ${dockerPlatforms} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} ${tags} ."
       }
+      logger.warn("end variant ---")
 
-      for (def tag in dctTags) {
-        exec {
-          workingDir dockerBuildDir
-          executable "sh"
-          args "-c", "docker trust sign ${tag} && docker push ${tag}"
-        }
-      }
     }
+
+
+//  doLast {
+//    for (def variant in javaVariants) {
+//      dockerPlatforms.each { arch, os_arch ->
+//        def tags = ""
+//        def dctTags = []
+//        versionPrefixes.forEach { prefix ->
+//          tags += "-t ${dockerImageName}:${prefix.trim()}-${variant}-${arch} "
+//          dctTags.add("${dockerImageName}:${prefix.trim()}-${variant}-${arch}")
+//        }
+//        if (variant == javaVariants[0]) {
+//          versionPrefixes.forEach { prefix ->
+//            tags += "-t ${dockerImageName}:${prefix.trim()}-${arch} "
+//            dctTags.add("${dockerImageName}:${prefix.trim()}-${arch}")
+//          }
+//        }
+//
+//        exec {
+//          workingDir dockerBuildDir
+//          executable "sh"
+//          args "-c", "docker buildx build --platform ${os_arch} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} ${tags} ."
+//        }
+//
+//        for (def tag in dctTags) {
+//          exec {
+//            workingDir dockerBuildDir
+//            executable "sh"
+//            args "-c", "docker trust sign ${tag} && docker push ${tag}"
+//          }
+//        }
+//      }
+//    } // end java variant
   }
 }
 
