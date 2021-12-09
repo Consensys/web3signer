@@ -488,10 +488,12 @@ task dockerUpload {
   logger.warn(">>>> versionPrefixes")
   logger.warn(versionPrefixes)
 
+  // if master branch we add the 'develop' tag
   if (project.hasProperty('branch') && project.property('branch') == 'master') {
     versionPrefixes.add('develop')
   }
 
+  // not sure what this is?
   if (!isDevelopBuild) {
     versionPrefixes.add('latest')
     versionPrefixes.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
@@ -499,23 +501,35 @@ task dockerUpload {
 
   doLast {
     for (def variant in javaVariants) {
-      logger.warn(variant)
-      dockerPlatforms.each { arch, os_arch ->
-        logger.warn(arch)
-        def dctTags = []
-        versionPrefixes.forEach { prefix ->
-          logger.warn("prefix---")
-          logger.warn(prefix)
-        }
-        logger.warn("end arch ---")
-
+      copy {
+        from file("${projectDir}/docker/${variant}/Dockerfile")
+        into(dockerBuildDir)
       }
-      logger.warn("end variant ---")
+      dockerPlatforms.each { arch, os_arch ->
+        versionPrefixes.forEach { prefix ->
+          logger.warn('Building: '+ prefix + '-' + variant + '-' + arch )
+          def tag = "-t ${dockerImageName}:${prefix.trim()}-${variant}-${arch} "
 
+          exec {
+            def image = "${dockerImageName}:${dockerBuildVersion}-${variant}"
+            workingDir dockerBuildDir
+            executable "sh"
+            args "-c", "docker buildx build --platform ${os_arch} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} ${tag} ."
+          }
+
+          exec {
+            workingDir dockerBuildDir
+            executable "sh"
+            args "-c", "docker trust sign ${tag} "
+          }
+
+
+
+        }
+      }
     }
-
-
   }
+
 }
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {

@@ -339,10 +339,12 @@ workflows:
               only:
                 - master
                 - /^release-.*/
+                - dct-multi-arch
             tags:
               <<: *filters-release-tags
           requires:
 #            - acceptanceTests
+            - build
             - buildDocker
           context:
             - dockerhub-quorumengineering-rw
