@@ -1,6 +1,6 @@
 # Changelog
 
-## Next Release
+## 21.10.1
 
 ### Features Added
 - Docker images are now published with multi-arch support including Linux/amd64 and Linux/arm64
