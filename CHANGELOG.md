@@ -10,6 +10,7 @@
 - The docker image now uses `web3signer` as user/group instead of `root` which may result in compatibility/permissions issues with existing directory mounts.  
 
 ### Bugs Fixed
+- Updated log4j and explicitly disabled format message lookups.
 
 ---
 
