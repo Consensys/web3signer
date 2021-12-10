@@ -483,10 +483,6 @@ task dockerUpload {
   dependsOn([distDocker])
   def dockerBuildVersion = "${rootProject.version}".replace('+', '-')
   def versionPrefixes = [dockerBuildVersion]
-  logger.warn(">>>> dockerBuildVersion: ")
-  logger.warn(dockerBuildVersion)
-  logger.warn(">>>> versionPrefixes")
-  logger.warn(versionPrefixes)
 
   // if master branch we add the 'develop' tag
   if (project.hasProperty('branch') && project.property('branch') == 'master') {
@@ -508,19 +504,18 @@ task dockerUpload {
       dockerPlatforms.each { arch, os_arch ->
         versionPrefixes.forEach { prefix ->
           logger.warn('Building: '+ prefix + '-' + variant + '-' + arch )
-          def tag = "-t ${dockerImageName}:${prefix.trim()}-${variant}-${arch} "
+          def image = "${dockerImageName}:${prefix.trim()}-${variant}-${arch}"
 
           exec {
-            def image = "${dockerImageName}:${dockerBuildVersion}-${variant}"
             workingDir dockerBuildDir
             executable "sh"
-            args "-c", "docker buildx build --platform ${os_arch} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} ${tag} ."
+            args "-c", "docker buildx build --platform ${os_arch} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} . "
           }
 
           exec {
             workingDir dockerBuildDir
             executable "sh"
-            args "-c", "docker trust sign ${tag} "
+            args "-c", "docker trust sign ${image} "
           }
 
 
