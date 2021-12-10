@@ -1,5 +1,10 @@
 # Changelog
 
+## 21.10.2
+
+### Bugs fixed
+- Fix multi-arch JDK17 variant docker image to bundle Java 17 instead of Java 11
+
 ## 21.10.1
 
 ### Features Added
