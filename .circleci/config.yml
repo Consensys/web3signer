@@ -247,7 +247,8 @@ jobs:
             chmod 600 $HOME/.docker/trust/private/$DCT_HASH.key
             docker trust key load $HOME/.docker/trust/private/$DCT_HASH.key --name opsquorum
 
-            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
+            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload dockerContentTrust
+
       - notify
 
   publishOpenApiSpec:
@@ -284,47 +285,47 @@ workflows:
           filters:
             tags: &filters-release-tags
               only: /^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?/
-      - acceptanceTests:
-          requires:
-            - build
-          context:
-            - dockerhub-quorumengineering-ro
-          filters:
-            tags:
-              <<: *filters-release-tags
-      - performanceTests:
-          requires:
-            - build
-          context:
-            - dockerhub-quorumengineering-ro
-          filters:
-            tags:
-              <<: *filters-release-tags
-      - publishOpenApiSpec:
-          filters:
-            branches:
-              only:
-                - master
-                - /^release-.*/
-            tags:
-              <<: *filters-release-tags
-          requires:
-            - acceptanceTests
-          context:
-            - dockerhub-quorumengineering-ro
-      - publish:
-          filters:
-            branches:
-              only:
-                - master
-                - /^release-.*/
-            tags:
-              <<: *filters-release-tags
-          requires:
-            - acceptanceTests
-          context:
-            - dockerhub-quorumengineering-ro
-            - cloudsmith-protocols
+#      - acceptanceTests:
+#          requires:
+#            - build
+#          context:
+#            - dockerhub-quorumengineering-ro
+#          filters:
+#            tags:
+#              <<: *filters-release-tags
+#      - performanceTests:
+#          requires:
+#            - build
+#          context:
+#            - dockerhub-quorumengineering-ro
+#          filters:
+#            tags:
+#              <<: *filters-release-tags
+#      - publishOpenApiSpec:
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /^release-.*/
+#            tags:
+#              <<: *filters-release-tags
+#          requires:
+#            - acceptanceTests
+#          context:
+#            - dockerhub-quorumengineering-ro
+#      - publish:
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /^release-.*/
+#            tags:
+#              <<: *filters-release-tags
+#          requires:
+#            - acceptanceTests
+#          context:
+#            - dockerhub-quorumengineering-ro
+#            - cloudsmith-protocols
       - buildDocker:
           requires:
             - build
@@ -339,10 +340,12 @@ workflows:
               only:
                 - master
                 - /^release-.*/
+                - dct2
             tags:
               <<: *filters-release-tags
           requires:
-            - acceptanceTests
+#            - acceptanceTests
+            - build
             - buildDocker
           context:
             - dockerhub-quorumengineering-rw
