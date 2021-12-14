@@ -513,6 +513,43 @@ task dockerUpload {
   }
 }
 
+task dockerContentTrust {
+  dependsOn([distDocker, dockerUpload])
+  def dockerBuildVersion = "${rootProject.version}".replace('+', '-')
+
+  def versionPrefixes = [dockerBuildVersion]
+  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+    versionPrefixes.add('develop')
+  }
+
+  if (!isDevelopBuild) {
+    versionPrefixes.add('latest')
+    versionPrefixes.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
+  }
+
+  doLast {
+    for (def variant in dockerVariants) {
+      def dctTags = []
+      versionPrefixes.forEach { prefix ->
+        dctTags.add("${dockerImageName}:${prefix.trim()}-${variant}")
+      }
+      if (variant == dockerVariants[0]) {
+        versionPrefixes.forEach { prefix ->
+          dctTags.add("${dockerImageName}:${prefix.trim()}")
+        }
+      }
+
+      for (def tag in dctTags) {
+        exec {
+          workingDir dockerBuildDir
+          executable "sh"
+          args "-c", "docker trust sign ${tag} "
+        }
+      }
+    }
+  }
+}
+
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
   sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
