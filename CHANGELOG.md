@@ -1,6 +1,11 @@
 # Changelog
 
-## Next Release
+## 21.10.2
+
+### Bugs fixed
+- Fix multi-arch JDK17 variant docker image to bundle Java 17 instead of Java 11
+
+## 21.10.1
 
 ### Features Added
 - Docker images are now published with multi-arch support including Linux/amd64 and Linux/arm64
@@ -10,6 +15,7 @@
 - The docker image now uses `web3signer` as user/group instead of `root` which may result in compatibility/permissions issues with existing directory mounts.  
 
 ### Bugs Fixed
+- Updated log4j and explicitly disabled format message lookups.
 
 ---
 

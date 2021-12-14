@@ -344,9 +344,6 @@ workflows:
               <<: *filters-release-tags
           requires:
             - acceptanceTests
-            - build
             - buildDocker
           context:
-            - dockerhub-quorumengineering-rw
-            - dockerhub-opsquorum-dct
-
+            - dockerhub-quorumengineering-rw 

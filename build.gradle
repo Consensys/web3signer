@@ -341,7 +341,8 @@ applicationDefaultJvmArgs = [
   "-Dvertx.disableFileCPResolving=true",
   // We shutdown log4j ourselves, as otherwise his shutdown hook runs before our own and whatever
   // happens during shutdown is not logged.
-  "-Dlog4j.shutdownHookEnabled=false"
+  "-Dlog4j.shutdownHookEnabled=false",
+  "-Dlog4j2.formatMsgNoLookups=true"
 ]
 
 run {
@@ -498,6 +499,11 @@ task dockerUpload {
         versionPrefixes.forEach { prefix -> tags += "-t ${dockerImageName}:${prefix.trim()} "}
       }
 
+      copy {
+        from file("${projectDir}/docker/${variant}/Dockerfile")
+        into(dockerBuildDir)
+      }
+
       exec {
         workingDir dockerBuildDir
         executable "sh"
@@ -523,15 +529,12 @@ task dockerContentTrust {
 
   doLast {
     for (def variant in dockerVariants) {
-      def tags = ""
       def dctTags = []
       versionPrefixes.forEach { prefix ->
-        tags += "-t ${dockerImageName}:${prefix.trim()}-${variant} "
         dctTags.add("${dockerImageName}:${prefix.trim()}-${variant}")
       }
       if (variant == dockerVariants[0]) {
         versionPrefixes.forEach { prefix ->
-          tags += "-t ${dockerImageName}:${prefix.trim()} "
           dctTags.add("${dockerImageName}:${prefix.trim()}")
         }
       }
@@ -546,9 +549,6 @@ task dockerContentTrust {
     }
   }
 }
-
-
-
 
 task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
