@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.tests.keymanager;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoreStatus;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -53,7 +55,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
         .contentType(ContentType.JSON)
         .assertThat()
         .statusCode(200)
-        .body("data.status", hasItem("IMPORTED"));
+        .body("data.status", hasItem("imported"));
   }
 
   @Test
@@ -69,7 +71,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
         .contentType(ContentType.JSON)
         .assertThat()
         .statusCode(200)
-        .body("data.status", hasItem("DUPLICATE"));
+        .body("data.status", hasItem("duplicate"));
 
     assertThat(signer.listPublicKeys(KeyType.BLS).size()).isEqualTo(1);
   }
