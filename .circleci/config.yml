@@ -346,4 +346,6 @@ workflows:
             - acceptanceTests
             - buildDocker
           context:
-            - dockerhub-quorumengineering-rw 
+            - dockerhub-quorumengineering-rw
+            - dockerhub-opsquorum-dct
+
