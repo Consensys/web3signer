@@ -543,7 +543,7 @@ task dockerContentTrust {
         exec {
           workingDir dockerBuildDir
           executable "sh"
-          args "-c", "docker trust sign ${tag} "
+          args "-c", "docker pull ${tag} && docker trust sign ${tag} "
         }
       }
     }
