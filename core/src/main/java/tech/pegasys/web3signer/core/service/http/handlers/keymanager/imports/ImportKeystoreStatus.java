@@ -15,7 +15,10 @@ package tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public enum ImportKeystoreStatus {
-  @JsonProperty("imported") IMPORTED,
-  @JsonProperty("duplicate") DUPLICATE,
-  @JsonProperty("error") ERROR;
+  @JsonProperty("imported")
+  IMPORTED,
+  @JsonProperty("duplicate")
+  DUPLICATE,
+  @JsonProperty("error")
+  ERROR;
 }

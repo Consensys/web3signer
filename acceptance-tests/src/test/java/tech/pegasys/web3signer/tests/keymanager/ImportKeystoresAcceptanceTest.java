@@ -15,8 +15,6 @@ package tech.pegasys.web3signer.tests.keymanager;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoreStatus;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -83,6 +81,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
 
     callImportKeystores(composeRequestBody()).then().statusCode(200);
 
+    validateApiResponse(callListKeys(), "data.validating_pubkey", hasItem(PUBLIC_KEY));
     assertThat(signer.listPublicKeys(KeyType.BLS).size()).isEqualTo(1);
     assertThat(signer.listPublicKeys(KeyType.BLS).get(0)).isEqualTo(PUBLIC_KEY);
   }
@@ -95,26 +94,14 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
         jdbi.withHandle(h -> h.select("SELECT * from validators").mapToMap().list());
     assertThat(validatorsBefore).hasSize(0);
 
+    // call import with one keystore but 2 pubkeys in the slashing data
     callImportKeystores(composeRequestBody()).then().statusCode(200);
     final List<Map<String, Object>> validatorsAfter =
         jdbi.withHandle(h -> h.select("SELECT * from validators").mapToMap().list());
+    // assert that only one pubkey got inserted
     assertThat(validatorsAfter).hasSize(1);
     assertThat(validatorsAfter.get(0).get("public_key"))
         .isEqualTo(Bytes.fromHexString(PUBLIC_KEY).toArray());
-  }
-
-  @Test
-  public void importingAnExistingKeyDoesntImportSlashingData()
-      throws IOException, URISyntaxException {
-    // start with a loaded key and no slashing data
-    createBlsKey("eth2/bls_keystore.json", "somepassword");
-    setupSignerWithKeyManagerApi();
-    final Jdbi jdbi = Jdbi.create(signer.getSlashingDbUrl(), DB_USERNAME, DB_PASSWORD);
-    // import the same key that was already loaded
-    callImportKeystores(composeRequestBody()).then().statusCode(200);
-    final List<Map<String, Object>> validators =
-        jdbi.withHandle(h -> h.select("SELECT * from validators").mapToMap().list());
-    assertThat(validators).hasSize(0);
   }
 
   @Test
