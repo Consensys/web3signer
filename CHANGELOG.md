@@ -1,5 +1,11 @@
 # Changelog
 
+## 21.10.3
+
+### Bugs fixed
+- Updated log4j to 2.16.0 to mitigate JNDI attack via thread context. 
+---
+
 ## 21.10.2
 
 ### Bugs fixed
