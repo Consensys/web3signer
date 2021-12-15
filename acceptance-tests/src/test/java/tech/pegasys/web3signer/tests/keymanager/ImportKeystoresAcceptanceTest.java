@@ -126,7 +126,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
   private String composeRequestBody() throws IOException, URISyntaxException {
     String keystoreData = readFile("eth2/bls_keystore.json");
     String password = "somepassword";
-    String slashingProtectionData = readFile("slashing/slashingImport.json");
+    String slashingProtectionData = readFile("slashing/slashingImport_two_entries.json");
     final JsonObject requestBody =
         new JsonObject()
             .put("keystores", new JsonArray().add(keystoreData))
