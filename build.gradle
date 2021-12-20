@@ -514,7 +514,6 @@ task dockerUpload {
 }
 
 task dockerContentTrust {
-  dependsOn([distDocker, dockerUpload])
   def dockerBuildVersion = "${rootProject.version}".replace('+', '-')
 
   def versionPrefixes = [dockerBuildVersion]
@@ -541,7 +540,6 @@ task dockerContentTrust {
 
       for (def tag in dctTags) {
         exec {
-          workingDir dockerBuildDir
           executable "sh"
           args "-c", "docker pull ${tag} && docker trust sign ${tag} "
         }
