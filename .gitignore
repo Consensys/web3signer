@@ -27,3 +27,4 @@ tmp/
 build/
 out/
 docker/reports/*
+.vscode
