@@ -33,9 +33,7 @@ import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRoot
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -136,11 +134,9 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void importDataWithFilter(final InputStream input, final Optional<List<String>> pubkeys) {
+  public void importDataWithFilter(final InputStream input, final List<String> pubkeys) {
     try {
-      LOG.info(
-          "Importing slashing protection database for keys: "
-              + String.join(",", pubkeys.orElse(Collections.emptyList())));
+      LOG.info("Importing slashing protection database for keys: " + String.join(",", pubkeys));
       interchangeManager.importDataWithFilter(input, pubkeys);
       LOG.info("Import complete");
     } catch (final IOException | UnsupportedOperationException | IllegalArgumentException e) {

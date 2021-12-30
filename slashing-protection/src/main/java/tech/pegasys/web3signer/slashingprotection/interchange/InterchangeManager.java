@@ -16,13 +16,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
-import java.util.Optional;
 
 public interface InterchangeManager {
 
   void importData(InputStream in) throws IOException;
 
-  void importDataWithFilter(InputStream in, Optional<List<String>> pubkeys) throws IOException;
+  void importDataWithFilter(InputStream in, List<String> pubkeys) throws IOException;
 
   void export(OutputStream out) throws IOException;
 }

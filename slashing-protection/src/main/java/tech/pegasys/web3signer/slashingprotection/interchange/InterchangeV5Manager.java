@@ -62,13 +62,12 @@ public class InterchangeV5Manager implements InterchangeManager {
 
   @Override
   public void importData(final InputStream in) throws IOException {
-    importer.importData(in);
+    importer.importData(in, Optional.empty());
   }
 
   @Override
-  public void importDataWithFilter(InputStream in, Optional<List<String>> pubkeys)
-      throws IOException {
-    importer.importDataWithFilter(in, pubkeys);
+  public void importDataWithFilter(InputStream in, List<String> pubkeys) throws IOException {
+    importer.importData(in, Optional.of(pubkeys));
   }
 
   @Override
