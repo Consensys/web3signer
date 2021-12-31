@@ -96,6 +96,17 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
+  public Future<Void> removeSigner(final String identifier) {
+    return executorService.submit(
+        () -> {
+          signers.remove(identifier);
+          identifiers = Set.copyOf(signers.keySet());
+          LOG.info("Removed signer with identifier '{}'", identifier);
+          return null;
+        });
+  }
+
+  @Override
   public void close() {
     executorService.shutdownNow();
   }

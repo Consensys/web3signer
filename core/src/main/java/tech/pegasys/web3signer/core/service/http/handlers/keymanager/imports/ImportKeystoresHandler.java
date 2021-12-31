@@ -163,7 +163,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           results.add(new ImportKeystoreResult(ImportKeystoreStatus.IMPORTED, null));
         }
       } catch (Exception e) {
-        cleanupImportedKeystoreFiles(List.of(pubkey));
+        removeSignersAndCleanupImportedKeystoreFiles(List.of(pubkey));
         results.add(
             new ImportKeystoreResult(
                 ImportKeystoreStatus.ERROR, "Error importing keystore: " + e.getMessage()));
@@ -177,7 +177,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           .setStatusCode(SUCCESS)
           .end(objectMapper.writeValueAsString(new ImportKeystoresResponse(results)));
     } catch (Exception e) {
-      cleanupImportedKeystoreFiles(pubkeysToImport);
+      removeSignersAndCleanupImportedKeystoreFiles(pubkeysToImport);
       context.fail(SERVER_ERROR, e);
     }
   }
@@ -231,11 +231,12 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), signingMetadata);
   }
 
-  private void cleanupImportedKeystoreFiles(final List<String> pubkeys) {
+  private void removeSignersAndCleanupImportedKeystoreFiles(final List<String> pubkeys) {
     for (String pubkey : pubkeys) {
       try {
+        artifactSignerProvider.removeSigner(pubkey).get();
         Files.deleteIfExists(keystorePath.resolve(pubkey + ".yaml"));
-      } catch (IOException e) {
+      } catch (Exception e) {
         LOG.error("Failed to cleanup imported keystore file for key: " + pubkey);
       }
     }

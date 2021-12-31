@@ -70,7 +70,16 @@ public class InterchangeV5Importer {
     this.mapper = mapper;
   }
 
-  public void importData(final InputStream input, final Optional<List<String>> pubkeys)
+  public void importData(final InputStream input) throws IOException {
+    importDataInternal(input, Optional.empty());
+  }
+
+  public void importDataWithFilter(final InputStream input, final List<String> pubkeys)
+      throws IOException {
+    importDataInternal(input, Optional.of(pubkeys));
+  }
+
+  private void importDataInternal(final InputStream input, final Optional<List<String>> pubkeys)
       throws IOException {
     try (final JsonParser jsonParser = mapper.getFactory().createParser(input)) {
       final ObjectNode rootNode = mapper.readTree(jsonParser);
