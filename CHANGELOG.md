@@ -1,5 +1,15 @@
 # Changelog
 
+## 21.10.5
+### Bugs Fixed
+- Updated to log4j 2.17.1. Resolves two potential vulnerabilities which are only exploitable when using custom log4j configurations that are either writable by untrusted users or log data from the `ThreadContext`.
+
+---
+## 21.10.4
+### Bugs Fixed
+- Updated log4j to 2.17.0 to mitigate potential DOS vulnerability when the logging configuration uses a non-default Pattern Layout with a Context Lookup.
+
+---
 ## 21.10.3
 
 ### Bugs fixed

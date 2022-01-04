@@ -43,10 +43,12 @@ dependencyManagement {
 
     dependency 'javax.activation:activation:1.1.1'
 
-    dependency 'org.apache.logging.log4j:log4j-api:2.17.0'
-    dependency 'org.apache.logging.log4j:log4j:2.17.0'
-    dependency 'org.apache.logging.log4j:log4j-core:2.17.0'
-    dependency 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.0'
+    dependencySet(group: 'org.apache.logging.log4j', version: '2.17.1') {
+      entry 'log4j-api'
+      entry 'log4j'
+      entry 'log4j-core'
+      entry 'log4j-slf4j-impl'
+    }
 
     dependencySet(group: 'org.apache.tuweni', version: '0.10.0') {
       entry 'tuweni-net'
@@ -90,7 +92,7 @@ dependencyManagement {
 
     dependency 'tech.pegasys:jblst:0.3.3-1'
 
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.23') {
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '1.0.24') {
       entry 'bls-keystore'
       entry 'keystorage-hashicorp'
       entry 'keystorage-azure'
