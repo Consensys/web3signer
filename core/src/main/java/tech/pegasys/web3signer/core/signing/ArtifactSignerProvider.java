@@ -25,7 +25,7 @@ public interface ArtifactSignerProvider extends Closeable {
 
   Set<String> availableIdentifiers();
 
-  Future<Void> addSigner(final String identifier, final ArtifactSigner signer);
+  Future<Void> addSigner(final ArtifactSigner signer);
 
   Future<Void> removeSigner(final String identifier);
 

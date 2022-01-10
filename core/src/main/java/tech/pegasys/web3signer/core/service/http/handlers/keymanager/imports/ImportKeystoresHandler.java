@@ -154,15 +154,17 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
         } else {
           // new keystore to import
           // 1. validate and decrypt the keystore
-          final BlsArtifactSigner signer = validateKeystore(jsonKeystoreData, password);
+          final BlsArtifactSigner signer =
+              decryptKeystoreAndCreateSigner(jsonKeystoreData, password);
           // 2. write keystore file to disk
           createKeyStoreYamlFileAt(pubkey, jsonKeystoreData, password);
           // 3. add the new signer to the provider to make it available for signing
-          artifactSignerProvider.addSigner(pubkey, signer).get();
+          artifactSignerProvider.addSigner(signer).get();
           // 4. finally, add result to API response
           results.add(new ImportKeystoreResult(ImportKeystoreStatus.IMPORTED, null));
         }
       } catch (Exception e) {
+        // cleanup the current key being processed and continue
         removeSignersAndCleanupImportedKeystoreFiles(List.of(pubkey));
         results.add(
             new ImportKeystoreResult(
@@ -182,7 +184,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     }
   }
 
-  private BlsArtifactSigner validateKeystore(String jsonKeystoreData, String password)
+  private BlsArtifactSigner decryptKeystoreAndCreateSigner(String jsonKeystoreData, String password)
       throws JsonProcessingException, KeyStoreValidationException {
     final KeyStoreData keyStoreData = objectMapper.readValue(jsonKeystoreData, KeyStoreData.class);
     final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);

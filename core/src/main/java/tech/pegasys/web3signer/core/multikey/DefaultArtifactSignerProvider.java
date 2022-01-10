@@ -85,12 +85,12 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
-  public Future<Void> addSigner(final String identifier, final ArtifactSigner signer) {
+  public Future<Void> addSigner(final ArtifactSigner signer) {
     return executorService.submit(
         () -> {
-          signers.put(identifier, signer);
+          signers.put(signer.getIdentifier(), signer);
           identifiers = Set.copyOf(signers.keySet());
-          LOG.info("Loaded new signer for identifier '{}'", identifier);
+          LOG.info("Loaded new signer for identifier '{}'", signer.getIdentifier());
           return null;
         });
   }
