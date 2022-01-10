@@ -45,9 +45,30 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
   }
 
   @Test
-  public void validRequestBodyReturnsSuccess() throws IOException, URISyntaxException {
+  public void mismatchKeysAndPasswordsReturnsError() throws IOException, URISyntaxException {
+    setupSignerWithKeyManagerApi();
+    final Response response = callImportKeystores(composeMismatchedRequestBody());
+    response.then().assertThat().statusCode(400);
+  }
+
+  @Test
+  public void validRequestBodyWithSlashingdataReturnsSuccess()
+      throws IOException, URISyntaxException {
     setupSignerWithKeyManagerApi();
     final Response response = callImportKeystores(composeRequestBody());
+    response
+        .then()
+        .contentType(ContentType.JSON)
+        .assertThat()
+        .statusCode(200)
+        .body("data.status", hasItem("imported"));
+  }
+
+  @Test
+  public void validRequestBodyNoSlashingdataReturnsSuccess()
+      throws IOException, URISyntaxException {
+    setupSignerWithKeyManagerApi();
+    final Response response = callImportKeystores(composeRequestBodyNoSlashingData());
     response
         .then()
         .contentType(ContentType.JSON)
@@ -132,6 +153,27 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
             .put("keystores", new JsonArray().add(keystoreData))
             .put("passwords", new JsonArray().add(password))
             .put("slashing_protection", slashingProtectionData);
+    return requestBody.toString();
+  }
+
+  private String composeRequestBodyNoSlashingData() throws IOException, URISyntaxException {
+    String keystoreData = readFile("eth2/bls_keystore.json");
+    String password = "somepassword";
+    final JsonObject requestBody =
+        new JsonObject()
+            .put("keystores", new JsonArray().add(keystoreData))
+            .put("passwords", new JsonArray().add(password));
+    return requestBody.toString();
+  }
+
+  private String composeMismatchedRequestBody() throws IOException, URISyntaxException {
+    String keystoreData = readFile("eth2/bls_keystore.json");
+    String password = "somepassword";
+    String otherPassword = "someOtherPassword";
+    final JsonObject requestBody =
+        new JsonObject()
+            .put("keystores", new JsonArray().add(keystoreData))
+            .put("passwords", new JsonArray().add(password).add(otherPassword));
     return requestBody.toString();
   }
 }

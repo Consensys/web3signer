@@ -47,6 +47,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.api.RequestParameters;
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -128,7 +129,8 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     }
 
     // read slashing protection data if present and import data matching keys to import only
-    if (slashingProtection.isPresent()) {
+    if (slashingProtection.isPresent()
+        && !StringUtils.isEmpty(parsedBody.getSlashingProtection())) {
       try {
         final InputStream slashingProtectionData =
             new ByteArrayInputStream(
