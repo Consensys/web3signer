@@ -66,7 +66,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   private UInt64 altairForkEpoch;
 
   @CommandLine.Option(
-      names = {"--enable-key-manager-api"},
+      names = {"--key-manager-api-enabled"},
       paramLabel = "<BOOL>",
       description = "Enable the key manager API to manage key stores (default: ${DEFAULT-VALUE}).",
       arity = "1")
