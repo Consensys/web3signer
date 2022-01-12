@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.tests.keymanager;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 
+import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -49,6 +50,13 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
     setupSignerWithKeyManagerApi();
     final Response response = callImportKeystores(composeMismatchedRequestBody());
     response.then().assertThat().statusCode(400);
+  }
+
+  @Test
+  public void emptyKeystoresReturnSuccess() {
+    setupSignerWithKeyManagerApi();
+    final Response response = callImportKeystores("{\"keystores\": [], \"passwords\": [] }");
+    response.then().assertThat().statusCode(200);
   }
 
   @Test
@@ -127,7 +135,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
 
   @Test
   public void testRequestBodyParsing() throws IOException, URISyntaxException {
-    final ObjectMapper objectMapper = new ObjectMapper();
+    final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
     final ImportKeystoresRequestBody parsedBody =
         objectMapper.readValue(composeRequestBody(), ImportKeystoresRequestBody.class);
     assertThat(new JsonObject(parsedBody.getKeystores().get(0)).getInteger("version")).isEqualTo(4);

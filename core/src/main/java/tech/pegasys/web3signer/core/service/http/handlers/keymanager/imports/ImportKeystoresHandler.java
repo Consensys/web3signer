@@ -128,21 +128,27 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       return;
     }
 
-    // read slashing protection data if present and import data matching keys to import only
-    if (slashingProtection.isPresent()
-        && !StringUtils.isEmpty(parsedBody.getSlashingProtection())) {
+    // load existing keys
+    final Set<String> existingPubkeys = artifactSignerProvider.availableIdentifiers();
+
+    // filter out already loaded keys for slashing data import
+    final List<String> nonLoadedPubkeys = pubkeysToImport.stream()
+        .filter(key -> !existingPubkeys.contains(key))
+        .collect(Collectors.toList());
+
+    // read slashing protection data if present and import data matching non-loaded keys to import only
+    if (slashingProtection.isPresent() && !StringUtils.isEmpty(parsedBody.getSlashingProtection())) {
       try {
         final InputStream slashingProtectionData =
             new ByteArrayInputStream(
                 parsedBody.getSlashingProtection().getBytes(StandardCharsets.UTF_8));
-        slashingProtection.get().importDataWithFilter(slashingProtectionData, pubkeysToImport);
+        slashingProtection.get().importDataWithFilter(slashingProtectionData, nonLoadedPubkeys);
       } catch (Exception e) {
         context.fail(BAD_REQUEST, e);
         return;
       }
     }
 
-    final Set<String> existingPubkeys = artifactSignerProvider.availableIdentifiers();
     final List<ImportKeystoreResult> results = new ArrayList<>();
     for (int i = 0; i < parsedBody.getKeystores().size(); i++) {
       final String pubkey = pubkeysToImport.get(i);
