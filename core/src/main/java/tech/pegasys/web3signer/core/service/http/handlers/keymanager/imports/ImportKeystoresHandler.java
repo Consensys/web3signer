@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.core.multikey.metadata.SignerOrigin;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.core.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.ByteArrayInputStream;
@@ -117,11 +118,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       pubkeysToImport.addAll(
           parsedBody.getKeystores().stream()
               .map(json -> new JsonObject(json).getString("pubkey"))
-              .map(
-                  key ->
-                      key.startsWith("0x")
-                          ? key
-                          : "0x" + key) // always use 0x prefix for comparisons
+              .map(IdentifierUtils::normaliseIdentifier)
               .collect(Collectors.toList()));
     } catch (Exception e) {
       context.fail(BAD_REQUEST, e);
@@ -129,7 +126,10 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     }
 
     // load existing keys
-    final Set<String> existingPubkeys = artifactSignerProvider.availableIdentifiers();
+    final Set<String> existingPubkeys =
+        artifactSignerProvider.availableIdentifiers().stream()
+            .map(IdentifierUtils::normaliseIdentifier)
+            .collect(Collectors.toSet());
 
     // filter out already loaded keys for slashing data import
     final List<String> nonLoadedPubkeys =
