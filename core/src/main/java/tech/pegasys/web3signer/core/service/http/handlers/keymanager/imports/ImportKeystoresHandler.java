@@ -190,7 +190,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           .setStatusCode(SUCCESS)
           .end(objectMapper.writeValueAsString(new ImportKeystoresResponse(results)));
     } catch (Exception e) {
-      removeSignersAndCleanupImportedKeystoreFiles(pubkeysToImport);
+      removeSignersAndCleanupImportedKeystoreFiles(nonLoadedPubkeys);
       context.fail(SERVER_ERROR, e);
     }
   }
