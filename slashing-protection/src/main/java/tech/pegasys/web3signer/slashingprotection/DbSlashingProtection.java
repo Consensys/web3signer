@@ -134,6 +134,17 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
+  public void importDataWithFilter(final InputStream input, final List<String> pubkeys) {
+    try {
+      LOG.info("Importing slashing protection database for keys: " + String.join(",", pubkeys));
+      interchangeManager.importDataWithFilter(input, pubkeys);
+      LOG.info("Import complete");
+    } catch (final IOException | UnsupportedOperationException | IllegalArgumentException e) {
+      throw new RuntimeException("Failed to import database content", e);
+    }
+  }
+
+  @Override
   public void export(final OutputStream output) {
     try {
       LOG.info("Exporting slashing protection database");

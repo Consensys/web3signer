@@ -51,7 +51,7 @@ public class ListKeystoresHandler implements Handler<RoutingContext> {
                 signer ->
                     new KeystoreInfo(
                         signer.getIdentifier(),
-                        signer.getPath().isPresent() ? signer.getPath().get() : null,
+                        signer.getPath().orElse(null),
                         signer.isReadOnlyKey()))
             .collect(Collectors.toList());
     final ListKeystoresResponse response = new ListKeystoresResponse(data);
