@@ -85,6 +85,28 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
+  public Future<Void> addSigner(final ArtifactSigner signer) {
+    return executorService.submit(
+        () -> {
+          signers.put(signer.getIdentifier(), signer);
+          identifiers = Set.copyOf(signers.keySet());
+          LOG.info("Loaded new signer for identifier '{}'", signer.getIdentifier());
+          return null;
+        });
+  }
+
+  @Override
+  public Future<Void> removeSigner(final String identifier) {
+    return executorService.submit(
+        () -> {
+          signers.remove(identifier);
+          identifiers = Set.copyOf(signers.keySet());
+          LOG.info("Removed signer with identifier '{}'", identifier);
+          return null;
+        });
+  }
+
+  @Override
   public void close() {
     executorService.shutdownNow();
   }

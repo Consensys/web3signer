@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "interchange_format_version": "5",
+    "genesis_validators_root": "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673"
+  },
+  "data": [
+    {
+      "pubkey": "0x8f3f44b74d316c3293cced0c48c72e021ef8d145d136f2908931090e7181c3b777498128a348d07b0b9cd3921b5ca537",
+      "signed_blocks": [
+        {
+          "slot": "12345",
+          "signing_root": "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b"
+        }
+      ],
+      "signed_attestations": [
+        {
+          "source_epoch": "5",
+          "target_epoch": "6",
+          "signing_root": "0x30752da173420e64a66f6ca6b97c55a96390a3158a755ecd277812488bb84e57"
+        }
+      ]
+    },
+    {
+      "pubkey": "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884",
+      "signed_blocks": [
+        {
+          "slot": "12345",
+          "signing_root": "0x4ff6f743a43f3b4f95350831aeaf0a122a1a392922c45d804280284a69eb850b"
+        }
+      ],
+      "signed_attestations": [
+        {
+          "source_epoch": "5",
+          "target_epoch": "6",
+          "signing_root": "0x30752da173420e64a66f6ca6b97c55a96390a3158a755ecd277812488bb84e57"
+        }
+      ]
+    }
+  ]
+}

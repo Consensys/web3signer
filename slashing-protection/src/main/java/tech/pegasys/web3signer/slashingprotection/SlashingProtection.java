@@ -38,5 +38,7 @@ public interface SlashingProtection {
 
   void importData(InputStream output);
 
+  void importDataWithFilter(InputStream output, List<String> pubkeys);
+
   void prune();
 }

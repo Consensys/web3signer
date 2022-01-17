@@ -21,6 +21,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jdbi.v3.core.Jdbi;
@@ -61,6 +62,11 @@ public class InterchangeV5Manager implements InterchangeManager {
   @Override
   public void importData(final InputStream in) throws IOException {
     importer.importData(in);
+  }
+
+  @Override
+  public void importDataWithFilter(InputStream in, List<String> pubkeys) throws IOException {
+    importer.importDataWithFilter(in, pubkeys);
   }
 
   @Override

@@ -231,6 +231,11 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     }
 
     @Override
+    public void importDataWithFilter(InputStream output, List<String> pubkeys) {
+      delegate.importDataWithFilter(output, pubkeys);
+    }
+
+    @Override
     public void prune() {
       final Thread currentThread = Thread.currentThread();
       final LocalDateTime currentTime = LocalDateTime.now(ZoneId.systemDefault());
