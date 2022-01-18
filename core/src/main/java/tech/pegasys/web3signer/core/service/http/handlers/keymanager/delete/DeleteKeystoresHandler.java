@@ -75,7 +75,7 @@ public class DeleteKeystoresHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(RoutingContext context) {
-    // API spec - https://github.com/ethereum/keymanager-APIs/tree/master/flows#import
+    // API spec - https://github.com/ethereum/keymanager-APIs/tree/master/flows#delete
     final RequestParameters params = context.get("parsedParameters");
     final DeleteKeystoresRequestBody parsedBody;
     try {
