@@ -75,6 +75,7 @@ public class DeleteKeystoresHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(RoutingContext context) {
+    // API spec - https://github.com/ethereum/keymanager-APIs/tree/master/flows#import
     final RequestParameters params = context.get("parsedParameters");
     final DeleteKeystoresRequestBody parsedBody;
     try {
@@ -84,6 +85,7 @@ public class DeleteKeystoresHandler implements Handler<RoutingContext> {
       return;
     }
 
+    // normalize incoming keys to delete
     final List<String> pubkeysToDelete =
         parsedBody.getPubkeys().stream()
             .map(IdentifierUtils::normaliseIdentifier)
@@ -97,6 +99,7 @@ public class DeleteKeystoresHandler implements Handler<RoutingContext> {
 
     final List<DeleteKeystoreResult> results = new ArrayList<>();
     final List<String> keysToExport = new ArrayList<>();
+    // process each incoming key individually
     for (String pubkey : pubkeysToDelete) {
       try {
         final boolean isActive = activePubkeys.contains(pubkey);
@@ -135,6 +138,7 @@ public class DeleteKeystoresHandler implements Handler<RoutingContext> {
       }
     }
 
+    // export slashing protection data for 'deleted' and 'not_active' keys
     String slashingProtectionExport = null;
     if (slashingProtection.isPresent()) {
       try {
@@ -143,8 +147,17 @@ public class DeleteKeystoresHandler implements Handler<RoutingContext> {
         slashingProtectionExport = outputStream.toString(StandardCharsets.UTF_8);
       } catch (Exception e) {
         LOG.debug("Failed to export slashing data", e);
-        context.fail(SERVER_ERROR, e);
-        return;
+        // if export fails - set all results to error
+        final List<DeleteKeystoreResult> errorResults =
+            results.stream()
+                .map(
+                    result ->
+                        new DeleteKeystoreResult(
+                            DeleteKeystoreStatus.ERROR,
+                            "Error exporting slashing data: " + e.getMessage()))
+                .collect(Collectors.toList());
+        results.clear();
+        results.addAll(errorResults);
       }
     }
 
