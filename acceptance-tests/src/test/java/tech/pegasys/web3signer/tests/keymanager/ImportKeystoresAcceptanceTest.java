@@ -40,7 +40,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
       "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884";
 
   @Test
-  public void invalidRequestBodyReturnsError() {
+  public void invalidRequestBodyReturnsError() throws URISyntaxException {
     setupSignerWithKeyManagerApi();
     final Response response = callImportKeystores("{\"invalid\": \"json body\"}");
     response.then().assertThat().statusCode(400);
@@ -54,7 +54,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
   }
 
   @Test
-  public void emptyKeystoresReturnSuccess() {
+  public void emptyKeystoresReturnSuccess() throws URISyntaxException {
     setupSignerWithKeyManagerApi();
     final Response response = callImportKeystores("{\"keystores\": [], \"passwords\": [] }");
     response.then().assertThat().statusCode(200);
@@ -161,6 +161,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
     callImportKeystores(composeRequestBody()).then().statusCode(200);
     final List<Map<String, Object>> validatorsAfter =
         jdbi.withHandle(h -> h.select("SELECT * from validators").mapToMap().list());
+
     // assert that only one pubkey got inserted
     assertThat(validatorsAfter).hasSize(1);
     assertThat(validatorsAfter.get(0).get("public_key"))
