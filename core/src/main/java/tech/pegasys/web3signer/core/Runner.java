@@ -130,8 +130,10 @@ public abstract class Runner implements Runnable {
       routerFactory.addGlobalHandler(
           CorsHandler.create(buildCorsRegexFromConfig())
               .allowedHeader("*")
-              .allowedHeader("content-type")
-              .allowedMethod(HttpMethod.DELETE));
+              .allowedMethod(HttpMethod.GET)
+              .allowedMethod(HttpMethod.POST)
+              .allowedMethod(HttpMethod.DELETE)
+              .allowedMethod(HttpMethod.OPTIONS));
 
       registerUpcheckRoute(routerFactory, errorHandler);
       registerHttpHostAllowListHandler(routerFactory);
