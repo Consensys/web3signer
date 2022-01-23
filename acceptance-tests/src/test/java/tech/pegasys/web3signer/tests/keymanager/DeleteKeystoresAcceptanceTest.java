@@ -178,12 +178,12 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   }
 
   private String composeRequestBody() {
-    return composeRequestBody("0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884");
+    return composeRequestBody(
+        "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884");
   }
 
   private String composeRequestBody(final String pubkey) {
-    final JsonObject requestBody =
-        new JsonObject().put("pubkeys", new JsonArray().add(pubkey));
+    final JsonObject requestBody = new JsonObject().put("pubkeys", new JsonArray().add(pubkey));
     return requestBody.toString();
   }
 }
