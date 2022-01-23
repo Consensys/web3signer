@@ -29,7 +29,10 @@ import org.junit.jupiter.api.Test;
 
 public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
 
-  private final String singleEntrySlashingData =
+  private static final String BLS_PRIVATE_KEY_1 =
+      "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
+
+  private static final String singleEntrySlashingData =
       "{\"metadata\" : {\n"
           + "  \"interchange_format_version\" : \"5\",\n"
           + "  \"genesis_validators_root\" : \"0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673\"\n"
@@ -48,7 +51,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
           + "} ]\n"
           + "}";
 
-  private final String emptySlashingData =
+  private static final String emptySlashingData =
       "{\"metadata\" : {\n"
           + "  \"interchange_format_version\" : \"5\",\n"
           + "  \"genesis_validators_root\" : \"0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673\"\n"
@@ -151,6 +154,20 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   }
 
   @Test
+  public void deletingReadOnlyKeyReturnError() throws URISyntaxException {
+    final String readOnlyPubkey = createRawPrivateKeyFile(BLS_PRIVATE_KEY_1);
+    setupSignerWithKeyManagerApi(true);
+    callDeleteKeystores(composeRequestBody(readOnlyPubkey))
+        .then()
+        .contentType(ContentType.JSON)
+        .assertThat()
+        .statusCode(200)
+        .body("data[0].status", is("error"))
+        .and()
+        .body("slashing_protection", is(emptySlashingData));
+  }
+
+  @Test
   public void testRequestBodyParsing() throws IOException {
     final ObjectMapper objectMapper = new ObjectMapper();
     final DeleteKeystoresRequestBody parsedBody =
@@ -161,13 +178,12 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   }
 
   private String composeRequestBody() {
+    return composeRequestBody("0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884");
+  }
+
+  private String composeRequestBody(final String pubkey) {
     final JsonObject requestBody =
-        new JsonObject()
-            .put(
-                "pubkeys",
-                new JsonArray()
-                    .add(
-                        "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884"));
+        new JsonObject().put("pubkeys", new JsonArray().add(pubkey));
     return requestBody.toString();
   }
 }
