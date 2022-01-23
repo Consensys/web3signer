@@ -40,6 +40,7 @@ import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataP
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.KeystoreFileManager;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
@@ -185,7 +186,10 @@ public class Eth2Runner extends Runner {
           KEYMANAGER_DELETE.name(),
           new BlockingHandlerDecorator(
               new DeleteKeystoresHandler(
-                  objectMapper, config.getKeyConfigPath(), slashingProtection, blsSignerProvider),
+                  objectMapper,
+                  new KeystoreFileManager(config.getKeyConfigPath()),
+                  slashingProtection,
+                  blsSignerProvider),
               false));
     }
   }
