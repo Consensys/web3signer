@@ -1,7 +1,7 @@
-const fs = require("fs");
-const path = require("path");
-const yaml = require("js-yaml");
-const GitUrlParse = require("git-url-parse");
+import fs from "fs";
+import path from "path";
+import yaml from "js-yaml";
+import GitUrlParse from "git-url-parse";
 
 // modify following using env variables in CI environment
 const gitUrl =
@@ -17,7 +17,7 @@ const specDir =
 const specFile = specDir + "/eth2/web3signer.yaml";
 const versionsFileName = process.env.OA_VERSIONS_FILE_NAME || "versions.json";
 
-module.exports = {
+export default {
   getConfig,
 };
 
@@ -54,7 +54,7 @@ function calculateVersionDetails() {
 }
 
 function readVersionFromSpecFile(specFile) {
-  return yaml.safeLoad(fs.readFileSync(specFile, "utf8")).info.version;
+  return yaml.load(fs.readFileSync(specFile, "utf8")).info.version;
 }
 
 function isReleaseVersion(specVersion) {

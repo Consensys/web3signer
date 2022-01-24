@@ -1,9 +1,8 @@
-const fs = require("fs");
-const fetch = require("node-fetch");
-const ghpages = require("gh-pages");
-const tree = require('tree-node-cli');
-
-const config = require("./config.js");
+import fs from "fs";
+import fetch from "node-fetch";
+import ghpages from "gh-pages";
+import config from "./config.js";
+import tree from "tree-node-cli";
 
 const log = (...args) => console.log(...args); // eslint-disable-line no-console
 

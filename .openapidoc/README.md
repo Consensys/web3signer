@@ -9,6 +9,10 @@ The script assumes that the `gradle build` (from the root directory) has already
 Web3Signer specs under `../core/build/resources/main/openapi-specs`. 
 
 ## Procedure
+~~~
+npm ci
+node publish.js
+~~~
 The script performs following tasks:
 
 * Prepare config object (see `config.js`) which contains version details and gh-pages branch's [versions.json](https://github.com/ConsenSys/web3signer/raw/gh-pages/versions.json) details
