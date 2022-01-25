@@ -28,9 +28,12 @@ import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.infrastructure.async.SafeFuture;
+import tech.pegasys.teku.infrastructure.ssz.collections.SszBitlist;
+import tech.pegasys.teku.infrastructure.ssz.schema.collections.SszBitlistSchema;
+import tech.pegasys.teku.infrastructure.ssz.type.Bytes4;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.teku.spec.Spec;
-import tech.pegasys.teku.spec.SpecFactory;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.ContributionAndProof;
@@ -38,9 +41,6 @@ import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggr
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncCommitteeContribution;
 import tech.pegasys.teku.spec.logic.common.util.SyncCommitteeUtil;
 import tech.pegasys.teku.spec.util.DataStructureUtil;
-import tech.pegasys.teku.ssz.collections.SszBitlist;
-import tech.pegasys.teku.ssz.schema.collections.SszBitlistSchema;
-import tech.pegasys.teku.ssz.type.Bytes4;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregationSlot;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;
@@ -50,7 +50,6 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoRev
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 
-import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -63,7 +62,7 @@ public class Eth2RequestUtils {
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
 
   private static final UInt64 slot = UInt64.ZERO;
-  static final Spec spec = SpecFactory.create("mainnet", Optional.of(slot));
+  static final Spec spec = createEth2NetworkConfig("mainnet", slot).getSpec();
   static final SigningRootUtil signingRootUtil = new SigningRootUtil(spec);
   private static final DataStructureUtil dataStructureUtil = new DataStructureUtil(spec);
   private static final Bytes32 beaconBlockRoot = dataStructureUtil.randomBytes32();
@@ -81,6 +80,20 @@ public class Eth2RequestUtils {
 
   private static final Eth2BlockSigningRequestUtil ALTAIR_BLOCK_UTIL =
       new Eth2BlockSigningRequestUtil(SpecMilestone.ALTAIR);
+
+  static Eth2NetworkConfiguration createEth2NetworkConfig(
+      final String network, final UInt64 altairForkEpoch) {
+    Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
+    builder.applyNetworkDefaults(network);
+    if (altairForkEpoch != null) {
+      builder.altairForkEpoch(altairForkEpoch);
+    }
+    // TODO: Bellatrix fork epoch
+    //    if (bellatrixForkEpoch != null) {
+    //      builder.bellatrixForkEpoch(bellatrixForkEpoch);
+    //    }
+    return builder.build();
+  }
 
   public static Eth2SigningRequestBody createCannedRequest(final ArtifactType artifactType) {
     switch (artifactType) {
