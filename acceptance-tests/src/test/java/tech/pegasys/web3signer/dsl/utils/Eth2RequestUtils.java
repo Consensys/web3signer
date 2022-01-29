@@ -62,7 +62,8 @@ public class Eth2RequestUtils {
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
 
   private static final UInt64 slot = UInt64.ZERO;
-  static final Spec spec = createEth2NetworkConfig("mainnet", slot).getSpec();
+  static final Spec spec =
+      Eth2NetworkConfiguration.builder().applyNetworkDefaults("mainnet").build().getSpec();
   static final SigningRootUtil signingRootUtil = new SigningRootUtil(spec);
   private static final DataStructureUtil dataStructureUtil = new DataStructureUtil(spec);
   private static final Bytes32 beaconBlockRoot = dataStructureUtil.randomBytes32();
@@ -80,20 +81,6 @@ public class Eth2RequestUtils {
 
   private static final Eth2BlockSigningRequestUtil ALTAIR_BLOCK_UTIL =
       new Eth2BlockSigningRequestUtil(SpecMilestone.ALTAIR);
-
-  static Eth2NetworkConfiguration createEth2NetworkConfig(
-      final String network, final UInt64 altairForkEpoch) {
-    Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
-    builder.applyNetworkDefaults(network);
-    if (altairForkEpoch != null) {
-      builder.altairForkEpoch(altairForkEpoch);
-    }
-    // TODO: Bellatrix fork epoch
-    //    if (bellatrixForkEpoch != null) {
-    //      builder.bellatrixForkEpoch(bellatrixForkEpoch);
-    //    }
-    return builder.build();
-  }
 
   public static Eth2SigningRequestBody createCannedRequest(final ArtifactType artifactType) {
     switch (artifactType) {
