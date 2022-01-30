@@ -1,5 +1,12 @@
 # Changelog
 
+## Next Version
+### Breaking Changes
+- Update Vertx to 4.x.
+- Update signers to 2.0.0
+- Update various other dependencies to latest versions.
+
+---
 ## 21.10.5
 ### Bugs Fixed
 - Updated to log4j 2.17.1. Resolves two potential vulnerabilities which are only exploitable when using custom log4j configurations that are either writable by untrusted users or log data from the `ThreadContext`.
