@@ -46,7 +46,16 @@ public class KeystoreFileManager {
     this.keystorePath = keystorePath;
   }
 
-  public Optional<List<Path>> findKeystoreConfigFiles(final String pubkey) throws IOException {
+  public void deleteKeystoreFiles(final String pubkey) throws IOException {
+    final Optional<List<Path>> keystoreConfigFiles = findKeystoreConfigFiles(pubkey);
+    if (keystoreConfigFiles.isPresent()) {
+      for (final Path path : keystoreConfigFiles.get()) {
+        Files.deleteIfExists(path);
+      }
+    }
+  }
+
+  private Optional<List<Path>> findKeystoreConfigFiles(final String pubkey) throws IOException {
     // find keystore files and map them to their pubkeys
     try (final Stream<Path> fileStream = Files.list(keystorePath)) {
       Map<String, List<Path>> map =
