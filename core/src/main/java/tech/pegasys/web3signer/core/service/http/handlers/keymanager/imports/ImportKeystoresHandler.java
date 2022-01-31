@@ -201,7 +201,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
     final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
     return new BlsArtifactSigner(
-        keyPair, SignerOrigin.FILE_KEYSTORE, Optional.of(keyStoreData.getPath()));
+        keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.getPath()));
   }
 
   private ImportKeystoresRequestBody parseRequestBody(final RequestParameters params)

@@ -125,7 +125,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
       return signerFactory.apply(
           new BlsArtifactSignerArgs(
-              keyPair, SignerOrigin.FILE_KEYSTORE, Optional.of(keyStoreData.getPath())));
+              keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.getPath())));
     } catch (final KeyStoreValidationException e) {
       throw new SigningMetadataException(e.getMessage(), e);
     }
