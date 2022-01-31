@@ -25,6 +25,8 @@ dependencies {
   testImplementation 'org.apache.tuweni:tuweni-bytes'
   testImplementation 'org.apache.tuweni:tuweni-units'
 
+  testImplementation 'commons-io:commons-io:2.6'
+
   testRuntimeOnly 'javax.activation:activation'
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
@@ -120,8 +122,11 @@ task acceptanceTest(dependsOn: [
 
   systemProperty 'acctests.runWeb3SignerAsProcess', 'true'
   systemProperty 'vaultBinary', vaultBinary()
+  // embedded pg initdb needs following
+  environment "LC_CTYPE", "en_US.UTF-8"
+  environment "LC_ALL", "en_US.UTF-8"
 
   useJUnitPlatform()
   // toggle to show standard out and standard error of the test JVM(s) on the console
-  testLogging.showStandardStreams = false
+  testLogging.showStandardStreams = true
 }
