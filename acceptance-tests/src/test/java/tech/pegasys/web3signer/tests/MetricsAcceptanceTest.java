@@ -101,7 +101,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
             .withMetricsCategories("SIGNING")
             .withMetricsEnabled(true)
             .withMode("eth2")
-            .withAltairForkEpoch(0)
+            .withNetwork("minimal")
             .build();
     startSigner(signerConfiguration);
 
