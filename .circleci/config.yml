@@ -7,7 +7,7 @@ orbs:
 executors:
   executor_med:  # 2cpu, 4G ram
     docker:
-      - image: circleci/openjdk:11.0.8-jdk-buster
+      - image: cimg/openjdk:11.0
         auth:
           username: $DOCKER_USER_RO
           password: $DOCKER_PASSWORD_RO      
@@ -19,7 +19,7 @@ executors:
 
   executor_large: # 4cpu, 8G ram
     docker:
-      - image: circleci/openjdk:11.0.8-jdk-buster
+      - image: cimg/openjdk:11.0
         auth:
           username: $DOCKER_USER_RO
           password: $DOCKER_PASSWORD_RO    
@@ -32,7 +32,7 @@ executors:
   executor_large_with_fc_devnet: # 4cpu, 8G ram
     docker:
       # Primary container
-      - image: circleci/openjdk:11.0.8-jdk-buster
+      - image: cimg/openjdk:11.0
         auth:
           username: $DOCKER_USER_RO
           password: $DOCKER_PASSWORD_RO      
