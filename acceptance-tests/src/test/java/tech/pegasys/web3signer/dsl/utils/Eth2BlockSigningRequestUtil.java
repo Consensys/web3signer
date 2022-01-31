@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.dsl.utils;
 import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockBodyAltair;
+import tech.pegasys.teku.api.schema.phase0.BeaconBlockPhase0;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecMilestone;
@@ -114,7 +115,7 @@ public class Eth2BlockSigningRequestUtil {
           beaconBlock.getStateRoot(),
           getBeaconBlockBodyAltair(beaconBlock.getBody()));
     } else if (specMilestone == SpecMilestone.PHASE0) {
-      return new tech.pegasys.teku.api.schema.BeaconBlock(beaconBlock);
+      return new BeaconBlockPhase0(beaconBlock);
     }
 
     throw new IllegalStateException("Spec milestone not yet supported: " + specMilestone);

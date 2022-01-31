@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 import org.junit.jupiter.api.AfterEach;
@@ -254,7 +253,7 @@ class ServerSideTlsAcceptanceTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void clientMissingFromWhiteListCannotConnectToEthSigner(final boolean useConfigFile) {
+  void clientMissingFromAllowedListCannotConnectToEthSigner(final boolean useConfigFile) {
     signer = createTlsSigner(cert1, cert1, cert1, cert1, 0, useConfigFile);
     signer.start();
     signer.awaitStartupCompletion();
@@ -273,6 +272,6 @@ class ServerSideTlsAcceptanceTest {
                 .statusCode(200)
                 .body(equalToIgnoringCase("OK"));
 
-    assertThatThrownBy(request::run).isInstanceOf(SSLException.class);
+    assertThatThrownBy(request::run).isInstanceOf(IOException.class);
   }
 }

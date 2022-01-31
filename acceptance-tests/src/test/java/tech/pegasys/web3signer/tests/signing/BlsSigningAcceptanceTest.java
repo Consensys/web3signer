@@ -154,7 +154,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.SCRYPT);
 
-    setupEth2Signer();
+    setupMinimalWeb3Signer(artifactType);
 
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
     final Eth2SigningRequestBody requestWithMismatchedSigningRoot =
@@ -190,7 +190,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.SCRYPT);
 
-    setupEth2Signer();
+    setupMinimalWeb3Signer(ArtifactType.BLOCK);
 
     final Eth2SigningRequestBody request = Eth2RequestUtils.createBlockRequest();
 
@@ -238,11 +238,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private void signAndVerifySignature(
       final ArtifactType artifactType, final ContentType acceptMediaType)
       throws JsonProcessingException {
-    if (artifactType == ArtifactType.BLOCK_V2) {
-      setupEth2SignerMinimal();
-    } else {
-      setupEth2Signer();
-    }
+    setupMinimalWeb3Signer(artifactType);
 
     // openapi
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
@@ -253,6 +249,20 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final BLSSignature expectedSignature =
         BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
+  }
+
+  private void setupMinimalWeb3Signer(ArtifactType artifactType) {
+    switch (artifactType) {
+      case BLOCK_V2:
+      case SYNC_COMMITTEE_MESSAGE:
+      case SYNC_COMMITTEE_SELECTION_PROOF:
+      case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF:
+        setupEth2SignerMinimal();
+        break;
+      default:
+        setupEth2SignerMinimalWithoutAltairFork();
+        break;
+    }
   }
 
   private ContentType expectedContentType(final ContentType acceptMediaType) {

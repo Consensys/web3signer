@@ -64,6 +64,11 @@
       "moduleLicense": "IAIK of Graz University of Technology License",
       "moduleVersion": "1.4.7",
       "moduleName": "org.xipki.iaik:sunpkcs11-wrapper"
+    },
+    {
+      "moduleLicense": "Unicode/ICU License",
+      "moduleVersion": "58.2",
+      "moduleName": "com.ibm.icu:icu4j"
     }
   ],
   "overrideLicenses": [

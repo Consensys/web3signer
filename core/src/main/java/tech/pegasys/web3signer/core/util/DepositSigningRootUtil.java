@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.core.util;
 
+import tech.pegasys.teku.infrastructure.ssz.Merkleizable;
+import tech.pegasys.teku.infrastructure.ssz.type.Bytes4;
 import tech.pegasys.teku.spec.datastructures.state.ForkData;
 import tech.pegasys.teku.spec.datastructures.state.SigningData;
-import tech.pegasys.teku.ssz.Merkleizable;
-import tech.pegasys.teku.ssz.type.Bytes4;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
