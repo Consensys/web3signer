@@ -32,9 +32,9 @@ import tech.pegasys.teku.infrastructure.ssz.collections.SszBitlist;
 import tech.pegasys.teku.infrastructure.ssz.schema.collections.SszBitlistSchema;
 import tech.pegasys.teku.infrastructure.ssz.type.Bytes4;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
-import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecMilestone;
+import tech.pegasys.teku.spec.TestSpecFactory;
 import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.ContributionAndProof;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggregatorSelectionData;
@@ -62,17 +62,20 @@ public class Eth2RequestUtils {
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
 
   private static final UInt64 slot = UInt64.ZERO;
-  static final Spec spec =
-      Eth2NetworkConfiguration.builder().applyNetworkDefaults("mainnet").build().getSpec();
+  static final Spec spec = TestSpecFactory.createMinimalPhase0();
+
   static final SigningRootUtil signingRootUtil = new SigningRootUtil(spec);
-  private static final DataStructureUtil dataStructureUtil = new DataStructureUtil(spec);
+
+  // Altair Spec
+  static final Spec altairSpec = TestSpecFactory.createMinimalAltair();
+  private static final DataStructureUtil dataStructureUtil = new DataStructureUtil(altairSpec);
   private static final Bytes32 beaconBlockRoot = dataStructureUtil.randomBytes32();
   private static final tech.pegasys.teku.bls.BLSSignature aggregatorSignature =
       tech.pegasys.teku.bls.BLSSignature.fromBytesCompressed(
           Bytes.fromHexString(
               "0x8f5c34de9e22ceaa7e8d165fc0553b32f02188539e89e2cc91e2eb9077645986550d872ee3403204ae5d554eae3cac12124e18d2324bccc814775316aaef352abc0450812b3ca9fde96ecafa911b3b8bfddca8db4027f08e29c22a9c370ad933"));
   private static final SyncCommitteeUtil syncCommitteeUtil =
-      spec.getSyncCommitteeUtilRequired(slot);
+      altairSpec.getSyncCommitteeUtilRequired(slot);
   static final SyncCommitteeContribution contribution =
       dataStructureUtil.randomSyncCommitteeContribution(slot, beaconBlockRoot);
   static final ContributionAndProof contributionAndProof =
@@ -363,7 +366,7 @@ public class Eth2RequestUtils {
                   utils ->
                       utils.getSyncCommitteeMessageSigningRoot(
                           beaconBlockRoot,
-                          spec.computeEpochAtSlot(slot),
+                          altairSpec.computeEpochAtSlot(slot),
                           forkInfo.asInternalForkInfo()))
               .get();
     } catch (final InterruptedException | ExecutionException e) {
@@ -476,6 +479,7 @@ public class Eth2RequestUtils {
 
   private static SafeFuture<Bytes> signingRootFromSyncCommitteeUtils(
       final UInt64 slot, final Function<SyncCommitteeUtil, Bytes> createSigningRoot) {
-    return SafeFuture.of(() -> createSigningRoot.apply(spec.getSyncCommitteeUtilRequired(slot)));
+    return SafeFuture.of(
+        () -> createSigningRoot.apply(altairSpec.getSyncCommitteeUtilRequired(slot)));
   }
 }
