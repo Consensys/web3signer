@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
 
 import org.junit.jupiter.api.AfterEach;
