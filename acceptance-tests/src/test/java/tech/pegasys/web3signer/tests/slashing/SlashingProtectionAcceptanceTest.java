@@ -62,7 +62,6 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
             .withSlashingProtectionDbPassword(DB_PASSWORD)
             .withMetricsEnabled(true)
             .withNetwork("minimal")
-            //.withAltairForkEpoch(0)
             .withKeyStoreDirectory(testDirectory);
 
     final Path keyConfigFile = testDirectory.resolve("keyfile.yaml");
