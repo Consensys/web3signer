@@ -16,7 +16,7 @@ dependencyManagement {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.1'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.1'
 
-    dependencySet(group: 'com.google.errorprone', version: '2.7.1') {
+    dependencySet(group: 'com.google.errorprone', version: '2.10.0') {
       entry 'error_prone_annotation'
       entry 'error_prone_check_api'
       entry 'error_prone_core'
@@ -59,9 +59,9 @@ dependencyManagement {
       entry 'tuweni-io'
     }
 
-    dependency 'org.assertj:assertj-core:3.15.0'
+    dependency 'org.assertj:assertj-core:3.22.0'
 
-    dependency 'org.awaitility:awaitility:4.0.2'
+    dependency 'org.awaitility:awaitility:4.1.1'
 
     dependencySet(group: 'org.bouncycastle', version: '1.70') {
       entry 'bcpkix-jdk15on'
@@ -72,9 +72,11 @@ dependencyManagement {
     dependency 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
     dependency 'org.junit.jupiter:junit-jupiter-params:5.6.0'
 
-    dependency 'org.mockito:mockito-core:3.2.4'
-    dependency 'org.mockito:mockito-inline:3.2.4'
-    dependency 'org.mockito:mockito-junit-jupiter:3.2.4'
+    dependencySet(group: 'org.mockito', version: '4.2.0') {
+      entry 'mockito-core'
+      entry 'mockito-inline'
+      entry 'mockito-junit-jupiter'
+    }
 
     dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
 
@@ -107,8 +109,8 @@ dependencyManagement {
       entry 'acceptance-tests'
     }
 
-    dependency 'io.rest-assured:rest-assured:4.3.1'
-    dependency 'org.zeroturnaround:zt-exec:1.11'
+    dependency 'io.rest-assured:rest-assured:4.4.0'
+    dependency 'org.zeroturnaround:zt-exec:1.12'
     dependency 'org.web3j:core:4.8.9'
     // explicit declaring to override Java-WebSocket:1.3.8 transitive in web3j:core:4.8.9
     dependency 'org.java-websocket:Java-WebSocket:1.5.2'
