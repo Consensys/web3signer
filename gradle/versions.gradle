@@ -68,9 +68,11 @@ dependencyManagement {
       entry 'bcprov-jdk15on'
     }
 
-    dependency 'org.junit.jupiter:junit-jupiter-api:5.6.0'
-    dependency 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
-    dependency 'org.junit.jupiter:junit-jupiter-params:5.6.0'
+    dependencySet(group: 'org.junit.jupiter', version: '5.7.2') {
+      entry 'junit-jupiter-api'
+      entry 'junit-jupiter-engine'
+      entry 'junit-jupiter-params'
+    }
 
     dependencySet(group: 'org.mockito', version: '4.2.0') {
       entry 'mockito-core'
