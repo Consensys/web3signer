@@ -20,7 +20,7 @@ dependencies {
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
   implementation 'commons-io:commons-io'
-  implementation 'commons-lang:commons-lang'
+  implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.tuweni:tuweni-units'
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   implementation 'org.hyperledger.besu.internal:metrics-core'
@@ -49,7 +49,7 @@ dependencies {
 
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
-  testFixturesImplementation 'commons-lang:commons-lang'
+  testFixturesImplementation 'org.apache.commons:commons-lang3'
   testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
