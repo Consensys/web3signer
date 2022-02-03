@@ -1,10 +1,8 @@
 # Changelog
 
 ## Next Version
-### Breaking Changes
-- Update Vertx to 4.x.
-- Update signers to 2.0.0
-- Update various other dependencies to latest versions.
+### Bugs Fixed
+- Upgrade Vertx to 4.x, signers to 2.0.0 and various other dependencies to latest versions [#503](https://github.com/ConsenSys/web3signer/pull/503)
 
 ---
 ## 21.10.5
