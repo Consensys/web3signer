@@ -169,9 +169,11 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
               decryptKeystoreAndCreateSigner(jsonKeystoreData, password);
           // 2. write keystore file to disk
           createKeyStoreYamlFileAt(pubkey, jsonKeystoreData, password);
-          // 3. add the new signer to the provider to make it available for signing
+          // 3. register the validator in the slashing DB
+          slashingProtection.ifPresent(protection -> protection.registerValidators(List.of(Bytes.fromHexString(signer.getIdentifier()))));
+          // 4. add the new signer to the provider to make it available for signing
           artifactSignerProvider.addSigner(signer).get();
-          // 4. finally, add result to API response
+          // 5. finally, add result to API response
           results.add(new ImportKeystoreResult(ImportKeystoreStatus.IMPORTED, null));
         }
       } catch (Exception e) {
