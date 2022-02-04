@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.core.multikey.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.OBJECT_MAPPER;
+import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.YAML_MAPPER;
 
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -33,8 +33,7 @@ class YubiHsmSigningMetadataFileParsingTest {
   void yamlFileWithRequiredValuesIsSuccessfullyParsed() throws IOException {
     final URL testFile = Resources.getResource("yubihsm_required.yaml");
 
-    final SigningMetadata signingMetadata =
-        OBJECT_MAPPER.readValue(testFile, SigningMetadata.class);
+    final SigningMetadata signingMetadata = YAML_MAPPER.readValue(testFile, SigningMetadata.class);
 
     assertThat(signingMetadata).isInstanceOf(YubiHsmSigningMetadata.class);
 
@@ -51,8 +50,7 @@ class YubiHsmSigningMetadataFileParsingTest {
   void yamlFileWithCompleteValuesIsSuccessfullyParsed() throws IOException {
     final URL testFile = Resources.getResource("yubihsm_complete.yaml");
 
-    final SigningMetadata signingMetadata =
-        OBJECT_MAPPER.readValue(testFile, SigningMetadata.class);
+    final SigningMetadata signingMetadata = YAML_MAPPER.readValue(testFile, SigningMetadata.class);
 
     assertThat(signingMetadata).isInstanceOf(YubiHsmSigningMetadata.class);
 
@@ -70,7 +68,7 @@ class YubiHsmSigningMetadataFileParsingTest {
     final URL testFile = Resources.getResource("yubihsm_incomplete.yaml");
 
     assertThatExceptionOfType(JsonMappingException.class)
-        .isThrownBy(() -> OBJECT_MAPPER.readValue(testFile, SigningMetadata.class))
+        .isThrownBy(() -> YAML_MAPPER.readValue(testFile, SigningMetadata.class))
         .withMessageContaining("Missing required creator property 'connectorUrl'");
   }
 }
