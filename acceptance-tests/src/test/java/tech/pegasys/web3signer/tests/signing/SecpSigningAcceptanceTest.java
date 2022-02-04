@@ -36,7 +36,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
-import org.junit.jupiter.api.io.TempDir;
 import org.web3j.crypto.Sign.SignatureData;
 
 public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
@@ -57,12 +56,12 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
 
   @Test
-  public void signDataWithFileBasedKey(@TempDir Path keyConfigDirectory) throws URISyntaxException {
+  public void signDataWithFileBasedKey() throws URISyntaxException {
     final String keyPath =
         new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
 
     metadataFileHelpers.createKeyStoreYamlFileAt(
-        keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+        testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
         Path.of(keyPath),
         "pass",
         KeyType.SECP256K1);
@@ -71,7 +70,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @Test
-  public void signDataWithKeyFromHashicorp(@TempDir Path keyConfigDirectory) {
+  public void signDataWithKeyFromHashicorp() {
     final HashicorpNode hashicorpNode = HashicorpNode.createAndStartHashicorp(true);
     try {
       final String secretPath = "acceptanceTestSecretPath";
@@ -82,7 +81,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
           new HashicorpSigningParams(hashicorpNode, secretPath, secretName, KeyType.SECP256K1);
 
       metadataFileHelpers.createHashicorpYamlFileAt(
-          keyConfigDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"), hashicorpSigningParams);
+          testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"), hashicorpSigningParams);
 
       signAndVerifySignature();
     } finally {
@@ -97,9 +96,9 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_KEY_VAULT_NAME", matches = ".*"),
     @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
   })
-  public void signDataWithKeyInAzure(@TempDir Path keyConfigDirectory) {
+  public void signDataWithKeyInAzure() {
     metadataFileHelpers.createAzureKeyYamlFileAt(
-        keyConfigDirectory.resolve(AZURE_PUBLIC_KEY_HEX_STRING + ".yaml"),
+        testDirectory.resolve(AZURE_PUBLIC_KEY_HEX_STRING + ".yaml"),
         clientId,
         clientSecret,
         keyVaultName,

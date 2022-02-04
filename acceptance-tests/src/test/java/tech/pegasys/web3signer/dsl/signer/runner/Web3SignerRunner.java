@@ -97,15 +97,15 @@ public abstract class Web3SignerRunner {
 
   private void loadPortsFile() {
     final File portsFile = new File(dataPath.toFile(), PORTS_FILENAME);
-    LOG.info("Awaiting presence of ethsigner.ports file: {}", portsFile.getAbsolutePath());
+    LOG.info("Awaiting presence of {} file: {}", PORTS_FILENAME, portsFile.getAbsolutePath());
     awaitPortsFile(dataPath);
-    LOG.info("Found ethsigner.ports file: {}", portsFile.getAbsolutePath());
+    LOG.info("Found {} file: {}", PORTS_FILENAME, portsFile.getAbsolutePath());
 
     try (final FileInputStream fis = new FileInputStream(portsFile)) {
       portsProperties.load(fis);
-      LOG.info("EthSigner ports: {}", portsProperties);
+      LOG.info("Web3signer ports: {}", portsProperties);
     } catch (final IOException e) {
-      throw new RuntimeException("Error reading Web3Provider ports file", e);
+      throw new RuntimeException("Error reading Web3Signer ports file", e);
     }
   }
 
