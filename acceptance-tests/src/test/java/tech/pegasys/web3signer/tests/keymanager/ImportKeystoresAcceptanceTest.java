@@ -15,9 +15,16 @@ package tech.pegasys.web3signer.tests.keymanager;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasItem;
+import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
 
+import org.apache.tuweni.bytes.Bytes32;
+import tech.pegasys.teku.bls.BLS;
+import tech.pegasys.teku.bls.BLSSignature;
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.IOException;
@@ -33,6 +40,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
+import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 
 public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
 
@@ -147,6 +155,23 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
     validateApiResponse(callListKeys(), "data.validating_pubkey", hasItem(PUBLIC_KEY));
     assertThat(signer.listPublicKeys(KeyType.BLS).size()).isEqualTo(1);
     assertThat(signer.listPublicKeys(KeyType.BLS).get(0)).isEqualTo(PUBLIC_KEY);
+  }
+
+  @Test
+  public void canSignAfterImportingNewKey() throws IOException, URISyntaxException {
+    setupSignerWithKeyManagerApi();
+    // import keystore
+    callImportKeystores(composeRequestBody())
+        .then()
+        .contentType(ContentType.JSON)
+        .assertThat()
+        .statusCode(200)
+        .body("data.status", hasItem("imported"));
+    // Sign with it
+    final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
+    signer.eth2Sign(PUBLIC_KEY, request).then()
+        .assertThat()
+        .statusCode(200);
   }
 
   @Test
