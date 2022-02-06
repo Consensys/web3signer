@@ -62,8 +62,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import io.vertx.ext.web.openapi.RouterBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -123,11 +123,11 @@ public class Eth2Runner extends Runner {
         context.getMetricsSystem(),
         slashingProtection);
 
-    return context.getRouterFactory().getRouter();
+    return context.getRouterFactory().createRouter();
   }
 
   private void registerEth2Routes(
-      final OpenAPI3RouterFactory routerFactory,
+      final RouterBuilder routerFactory,
       final ArtifactSignerProvider blsSignerProvider,
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
@@ -135,7 +135,7 @@ public class Eth2Runner extends Runner {
     final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
 
     // security handler for keymanager endpoints
-    routerFactory.addSecurityHandler(
+    routerFactory.securityHandler(
         "bearerAuth",
         context -> {
           // TODO Auth token security logic
@@ -151,33 +151,39 @@ public class Eth2Runner extends Runner {
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    routerFactory.addHandlerByOperationId(
-        ETH2_SIGN.name(),
-        new BlockingHandlerDecorator(
-            new Eth2SignForIdentifierHandler(
-                blsSigner,
-                new HttpApiMetrics(metricsSystem, BLS),
-                new SlashingProtectionMetrics(metricsSystem),
-                slashingProtection,
-                objectMapper,
-                eth2Spec),
-            false));
-    routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
+    routerFactory
+        .operation(ETH2_SIGN.name())
+        .handler(
+            new BlockingHandlerDecorator(
+                new Eth2SignForIdentifierHandler(
+                    blsSigner,
+                    new HttpApiMetrics(metricsSystem, BLS),
+                    new SlashingProtectionMetrics(metricsSystem),
+                    slashingProtection,
+                    objectMapper,
+                    eth2Spec),
+                false))
+        .failureHandler(errorHandler);
 
     addReloadHandler(routerFactory, blsSignerProvider, RELOAD.name(), errorHandler);
 
     if (isKeyManagerApiEnabled) {
-      routerFactory.addHandlerByOperationId(
-          KEYMANAGER_LIST.name(),
-          new BlockingHandlerDecorator(
-              new ListKeystoresHandler(blsSignerProvider, objectMapper), false));
+      routerFactory
+          .operation(KEYMANAGER_LIST.name())
+          .handler(
+              new BlockingHandlerDecorator(
+                  new ListKeystoresHandler(blsSignerProvider, objectMapper), false));
 
-      routerFactory.addHandlerByOperationId(
-          KEYMANAGER_IMPORT.name(),
-          new BlockingHandlerDecorator(
-              new ImportKeystoresHandler(
-                  objectMapper, config.getKeyConfigPath(), slashingProtection, blsSignerProvider),
-              false));
+      routerFactory
+          .operation(KEYMANAGER_IMPORT.name())
+          .handler(
+              new BlockingHandlerDecorator(
+                  new ImportKeystoresHandler(
+                      objectMapper,
+                      config.getKeyConfigPath(),
+                      slashingProtection,
+                      blsSignerProvider),
+                  false));
     }
   }
 

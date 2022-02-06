@@ -51,10 +51,10 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import io.vertx.ext.web.openapi.RouterBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -117,11 +117,10 @@ public abstract class Runner implements Runnable {
                   () ->
                       new RuntimeException(
                           "Unable to load OpenApi spec " + getOpenApiSpecResource()));
-      final OpenAPI3RouterFactory routerFactory =
-          getOpenAPI3RouterFactory(vertx, openApiSpec.toString());
+      final RouterBuilder routerFactory = getOpenAPI3RouterFactory(vertx, openApiSpec.toString());
       // register access log handler first
       if (config.isAccessLogsEnabled()) {
-        routerFactory.addGlobalHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
+        routerFactory.rootHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
       }
 
       registerUpcheckRoute(routerFactory, errorHandler);
@@ -171,11 +170,11 @@ public abstract class Runner implements Runnable {
 
   protected abstract String getOpenApiSpecResource();
 
-  public static OpenAPI3RouterFactory getOpenAPI3RouterFactory(
+  public static RouterBuilder getOpenAPI3RouterFactory(
       final Vertx vertx, final String openapiSpecUrl)
       throws InterruptedException, ExecutionException {
-    final CompletableFuture<OpenAPI3RouterFactory> completableFuture = new CompletableFuture<>();
-    OpenAPI3RouterFactory.create(
+    final CompletableFuture<RouterBuilder> completableFuture = new CompletableFuture<>();
+    RouterBuilder.create(
         vertx,
         openapiSpecUrl,
         ar -> {
@@ -186,7 +185,7 @@ public abstract class Runner implements Runnable {
           }
         });
 
-    final OpenAPI3RouterFactory openAPI3RouterFactory = completableFuture.get();
+    final RouterBuilder openAPI3RouterFactory = completableFuture.get();
 
     // disable automatic response content handler as it doesn't handle some corner cases.
     // Our handlers must set content type header manually.
@@ -195,39 +194,42 @@ public abstract class Runner implements Runnable {
   }
 
   protected void addPublicKeysListHandler(
-      final OpenAPI3RouterFactory openAPI3RouterFactory,
+      final RouterBuilder openAPI3RouterFactory,
       final ArtifactSignerProvider artifactSignerProvider,
       final String operationId,
       final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory.addHandlerByOperationId(
-        operationId,
-        new BlockingHandlerDecorator(new PublicKeysListHandler(artifactSignerProvider), false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(operationId, errorHandler);
+    openAPI3RouterFactory
+        .operation(operationId)
+        .handler(
+            new BlockingHandlerDecorator(new PublicKeysListHandler(artifactSignerProvider), false))
+        .failureHandler(errorHandler);
   }
 
   protected void addReloadHandler(
-      final OpenAPI3RouterFactory openAPI3RouterFactory,
+      final RouterBuilder openAPI3RouterFactory,
       final ArtifactSignerProvider artifactSignerProvider,
       final String operationId,
       final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory.addHandlerByOperationId(
-        operationId,
-        routingContext -> {
-          artifactSignerProvider.load();
-          routingContext.response().setStatusCode(200).end();
-        });
-    openAPI3RouterFactory.addFailureHandlerByOperationId(operationId, errorHandler);
+    openAPI3RouterFactory
+        .operation(operationId)
+        .handler(
+            routingContext -> {
+              artifactSignerProvider.load();
+              routingContext.response().setStatusCode(200).end();
+            })
+        .failureHandler(errorHandler);
   }
 
   private void registerUpcheckRoute(
-      final OpenAPI3RouterFactory openAPI3RouterFactory, final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory.addHandlerByOperationId(
-        UPCHECK.name(), new BlockingHandlerDecorator(new UpcheckHandler(), false));
-    openAPI3RouterFactory.addFailureHandlerByOperationId(UPCHECK.name(), errorHandler);
+      final RouterBuilder openAPI3RouterFactory, final LogErrorHandler errorHandler) {
+    openAPI3RouterFactory
+        .operation(UPCHECK.name())
+        .handler(new BlockingHandlerDecorator(new UpcheckHandler(), false))
+        .failureHandler(errorHandler);
   }
 
-  private void registerHttpHostAllowListHandler(final OpenAPI3RouterFactory openApiRouterFactory) {
-    openApiRouterFactory.addGlobalHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
+  private void registerHttpHostAllowListHandler(final RouterBuilder openApiRouterFactory) {
+    openApiRouterFactory.rootHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
   }
 
   private HttpServer createServerAndWait(
