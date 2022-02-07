@@ -17,11 +17,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasItem;
 import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
 
-import org.apache.tuweni.bytes.Bytes32;
-import tech.pegasys.teku.bls.BLS;
-import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
-import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
@@ -40,7 +36,6 @@ import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
-import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 
 public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
 
@@ -169,9 +164,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
         .body("data.status", hasItem("imported"));
     // Sign with it
     final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
-    signer.eth2Sign(PUBLIC_KEY, request).then()
-        .assertThat()
-        .statusCode(200);
+    signer.eth2Sign(PUBLIC_KEY, request).then().assertThat().statusCode(200);
   }
 
   @Test
