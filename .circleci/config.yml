@@ -58,12 +58,18 @@ executors:
     machine:
       image: ubuntu-2004:202101-01
     resource_class: arm.medium
+    environment:
+      architecture: "arm64"
+      platform: "linux/arm64"
 
   machine_executor_amd64:
     machine:
       image: ubuntu-2004:202008-01 #Ubuntu 20.04, docker 19.03, docker-compose 1.27.4
       docker_layer_caching: true
     working_directory: ~/project
+    environment:
+      architecture: "amd64"
+      platform: "linux/amd64"
 
 commands:
   prepare:
@@ -116,17 +122,7 @@ commands:
           path: build/test-reports
           destination: test-reports
 
-  install_docker_buildx:
-    description: "Install Docker buildx plugin"
-    steps:
-      - run:
-          name: "Install Docker buildx plugin"
-          command: |
-            mkdir -vp ~/.docker/cli-plugins/
-            curl --silent -L --output ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.7.0/buildx-v0.7.0.linux-amd64
-            chmod a+x ~/.docker/cli-plugins/docker-buildx
-
-  sign_docker_images:
+  docker_trust_sign:
     description: "Sign docker images"
     steps:
       - run:
@@ -138,7 +134,15 @@ commands:
             echo $DCT_KEY | base64 --decode > $HOME/.docker/trust/private/$DCT_HASH.key
             chmod 600 $HOME/.docker/trust/private/$DCT_HASH.key
             docker trust key load $HOME/.docker/trust/private/$DCT_HASH.key --name opsquorum
-            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerContentTrust
+
+  docker_publish_images:
+    description: "Upload the docker images"
+    steps:
+      - run:
+          name: "Publish Docker Images"
+          command: |
+            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
+            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" uploadDocker
 
   notify:
     description: "Notify Slack"
@@ -243,42 +247,35 @@ jobs:
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" testDocker
       - notify
 
-  publishDocker:
+  publishDockerAmd64:
     executor: machine_executor_amd64
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
-      - install_docker_buildx
-      - run:
-          name: Configure Buildx for Multi-Arch
-          command: |
-            docker run --rm --privileged tonistiigi/binfmt:latest --install "linux/amd64,linux/arm64"
-            docker buildx create --use --driver docker-container
-      - run:
-          name: Publish Docker
-          command: |
-            docker login --username "${DOCKER_USER_RW}" --password "${DOCKER_PASSWORD_RW}"
-            ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" dockerUpload
-
+      - docker_trust_sign
+      - docker_publish_images
       - notify
 
-  signDockerAmd64:
-    executor: machine_executor_amd64
-    steps:
-      - prepare
-      - attach_workspace:
-          at: ~/project
-      - sign_docker_images
-      - notify
-
-  signDockerArm64:
+  publishDockerArm64:
     executor: machine_executor_arm64
     steps:
       - prepare
       - attach_workspace:
           at: ~/project
-      - sign_docker_images
+      - docker_trust_sign
+      - docker_publish_images
+      - notify
+
+  manifestDocker:
+    executor: executor_med
+    steps:
+      - prepare
+      - docker_trust_sign
+      - run:
+          name: Create and publish docker manifest
+          command: |
+            ./gradlew --no-daemon --parallel manifestDocker
       - notify
 
   publishOpenApiSpec:
@@ -364,7 +361,7 @@ workflows:
           filters:
             tags:
               <<: *filters-release-tags
-      - publishDocker:
+      - publishDockerAmd64:
           filters:
             branches:
               only:
@@ -377,7 +374,8 @@ workflows:
             - buildDocker
           context:
             - dockerhub-quorumengineering-rw
-      - signDockerAmd64:
+            - dockerhub-opsquorum-dct            
+      - publishDockerArm64:
           filters:
             branches:
               only:
@@ -386,21 +384,22 @@ workflows:
             tags:
               <<: *filters-release-tags
           requires:
-            - publishDocker
+            - acceptanceTests
+            - buildDocker
           context:
             - dockerhub-quorumengineering-rw
-            - dockerhub-opsquorum-dct
-      - signDockerArm64:
+            - dockerhub-opsquorum-dct        
+      - manifestDocker:
           filters:
             branches:
               only:
                 - master
                 - /^release-.*/
-                - dct3
             tags:
               <<: *filters-release-tags
-#          requires:
-#            - publishDocker
+          requires:
+            - publishDockerArm64
+            - publishDockerAmd64
           context:
             - dockerhub-quorumengineering-rw
-            - dockerhub-opsquorum-dct
+            - dockerhub-opsquorum-dct         
