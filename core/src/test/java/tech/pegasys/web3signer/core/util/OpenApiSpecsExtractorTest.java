@@ -45,10 +45,7 @@ class OpenApiSpecsExtractorTest {
 
     // assert that routerBuilder is able to load the extracted specs
     assertThatCode(
-            () ->
-                Runner.getRouterBuilder(vertx, specPath.get().toString())
-                    .securityHandler("bearerAuth", x -> {})
-                    .createRouter())
+            () -> Runner.getRouterBuilder(vertx, specPath.get().toString()))
         .doesNotThrowAnyException();
 
     // assert that relative ref has been converted to absolute ref
