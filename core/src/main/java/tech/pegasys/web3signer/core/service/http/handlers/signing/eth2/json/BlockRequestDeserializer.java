@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json;
 
-import com.fasterxml.jackson.core.ObjectCodec;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
 import tech.pegasys.teku.spec.SpecMilestone;
@@ -21,16 +20,14 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequ
 import java.io.IOException;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class BlockRequestDeserializer extends JsonDeserializer<BlockRequest> {
 
-  public BlockRequestDeserializer() {
-
-  }
+  public BlockRequestDeserializer() {}
 
   @Override
   public BlockRequest deserialize(final JsonParser p, final DeserializationContext ctxt)
