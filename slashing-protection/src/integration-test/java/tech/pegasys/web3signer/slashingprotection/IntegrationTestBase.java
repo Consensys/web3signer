@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import dsl.TestSlashingProtectionParameters;
 import org.apache.tuweni.bytes.Bytes;
@@ -42,7 +43,8 @@ import org.junit.jupiter.api.BeforeEach;
 
 public class IntegrationTestBase {
 
-  protected final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
+  protected final ObjectMapper mapper =
+      JsonMapper.builder().addModule(new InterchangeModule()).build();
 
   protected final ValidatorsDao validators = new ValidatorsDao();
   protected final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();

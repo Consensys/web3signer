@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.google.common.net.MediaType;
 import org.apache.commons.codec.Charsets;
@@ -42,7 +43,7 @@ public abstract class FilecoinJsonRpcEndpoint {
       Optional.ofNullable(System.getenv("WEB3SIGNER_BEARER_TOKEN"));
 
   private static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper().registerModule(new FilecoinJsonRpcModule());
+      JsonMapper.builder().addModule(new FilecoinJsonRpcModule()).build();
 
   private final JsonRpcClient jsonRpcClient;
   private final String rpcPath;

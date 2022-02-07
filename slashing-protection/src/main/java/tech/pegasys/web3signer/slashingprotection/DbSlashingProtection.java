@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.apache.logging.log4j.LogManager;
@@ -112,10 +112,11 @@ public class DbSlashingProtection implements SlashingProtection {
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao,
-            new ObjectMapper()
-                .registerModule(new InterchangeModule())
+            JsonMapper.builder()
+                .addModule(new InterchangeModule())
                 .configure(FLUSH_AFTER_WRITE_VALUE, true)
-                .enable(SerializationFeature.INDENT_OUTPUT));
+                .enable(SerializationFeature.INDENT_OUTPUT)
+                .build());
     this.dbPruner =
         new DbPruner(pruningJdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
     this.pruningEpochsToKeep = pruningEpochsToKeep;

@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json;
 
+import com.fasterxml.jackson.core.ObjectCodec;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
 import tech.pegasys.teku.spec.SpecMilestone;
@@ -26,24 +27,24 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class BlockRequestDeserializer extends JsonDeserializer<BlockRequest> {
-  private final ObjectMapper objectMapper;
 
-  public BlockRequestDeserializer(final ObjectMapper objectMapper) {
-    this.objectMapper = objectMapper;
+  public BlockRequestDeserializer() {
+
   }
 
   @Override
   public BlockRequest deserialize(final JsonParser p, final DeserializationContext ctxt)
       throws IOException {
-    final JsonNode node = p.getCodec().readTree(p);
+    final ObjectCodec codec = p.getCodec();
+    final JsonNode node = codec.readTree(p);
     final SpecMilestone specMilestone = SpecMilestone.valueOf(node.findValue("version").asText());
     final BeaconBlock beaconBlock;
     switch (specMilestone) {
       case ALTAIR:
-        beaconBlock = objectMapper.treeToValue(node.findValue("block"), BeaconBlockAltair.class);
+        beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlockAltair.class);
         break;
       case PHASE0:
-        beaconBlock = objectMapper.treeToValue(node.findValue("block"), BeaconBlock.class);
+        beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlock.class);
         break;
       default:
         throw new IOException("Unsupported Milestone during deserialization: " + specMilestone);

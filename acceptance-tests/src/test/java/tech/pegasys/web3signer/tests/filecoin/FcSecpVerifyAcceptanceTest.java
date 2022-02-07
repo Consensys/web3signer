@@ -29,6 +29,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.github.arteam.simplejsonrpc.core.domain.Request;
@@ -52,7 +53,7 @@ public class FcSecpVerifyAcceptanceTest extends AcceptanceTestBase {
     startSigner(new SignerConfigurationBuilder().withMode("filecoin").build());
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
-    final ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = JsonMapper.builder().build();
 
     final FilecoinSignature filecoinSignature =
         new FilecoinSignature(FcJsonRpc.SECP_VALUE, expectedBase64Signature);

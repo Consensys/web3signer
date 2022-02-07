@@ -45,6 +45,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.Bloc
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -62,11 +63,11 @@ public class SigningObjectMapperFactory {
         JsonMapper.builder()
             .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .addModule(web3SignerMappers())
             .build();
-    addWeb3SignerMappers();
   }
 
-  private void addWeb3SignerMappers() {
+  private Module web3SignerMappers() {
     final SimpleModule module =
         new SimpleModule("SigningJsonRpcModule", new Version(1, 0, 0, null, null, null));
     module.addDeserializer(Bytes.class, new HexDeserialiser());
@@ -97,9 +98,9 @@ public class SigningObjectMapperFactory {
     module.addDeserializer(SszBitvector.class, new SszBitvectorDeserializer());
     module.addSerializer(SszBitvector.class, new SszBitvectorSerializer());
 
-    module.addDeserializer(BlockRequest.class, new BlockRequestDeserializer(objectMapper));
+    module.addDeserializer(BlockRequest.class, new BlockRequestDeserializer());
 
-    objectMapper.registerModule(module);
+    return module;
   }
 
   public static ObjectMapper createObjectMapper() {
