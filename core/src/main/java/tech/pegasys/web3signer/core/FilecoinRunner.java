@@ -65,23 +65,23 @@ public class FilecoinRunner extends Runner {
   @Override
   protected Router populateRouter(final Context context) {
     addReloadHandler(
-        context.getRouterFactory(),
+        context.getRouterBuilder(),
         context.getArtifactSignerProvider(),
         RELOAD.name(),
         context.getErrorHandler());
 
     return registerFilecoinJsonRpcRoute(
-        context.getRouterFactory(),
+        context.getRouterBuilder(),
         context.getMetricsSystem(),
         context.getArtifactSignerProvider());
   }
 
   private Router registerFilecoinJsonRpcRoute(
-      final RouterBuilder routerFactory,
+      final RouterBuilder routerBuilder,
       final MetricsSystem metricsSystem,
       final ArtifactSignerProvider fcSigners) {
 
-    final Router router = routerFactory.createRouter();
+    final Router router = routerBuilder.createRouter();
 
     final FcJsonRpcMetrics fcJsonRpcMetrics = new FcJsonRpcMetrics(metricsSystem);
     final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, fcJsonRpcMetrics);

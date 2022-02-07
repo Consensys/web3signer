@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.core;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -64,8 +65,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 public abstract class Runner implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
-
-  protected static final String JSON_RPC_PATH = "/rpc/v1";
 
   protected final Config config;
 
@@ -117,17 +116,17 @@ public abstract class Runner implements Runnable {
                   () ->
                       new RuntimeException(
                           "Unable to load OpenApi spec " + getOpenApiSpecResource()));
-      final RouterBuilder routerFactory = getOpenAPI3RouterFactory(vertx, openApiSpec.toString());
+      final RouterBuilder routerBuilder = getRouterBuilder(vertx, openApiSpec.toString());
       // register access log handler first
       if (config.isAccessLogsEnabled()) {
-        routerFactory.rootHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
+        routerBuilder.rootHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
       }
 
-      registerUpcheckRoute(routerFactory, errorHandler);
-      registerHttpHostAllowListHandler(routerFactory);
+      registerUpcheckRoute(routerBuilder, errorHandler);
+      registerHttpHostAllowListHandler(routerBuilder);
 
       final Context context =
-          new Context(routerFactory, metricsSystem, errorHandler, vertx, artifactSignerProvider);
+          new Context(routerBuilder, metricsSystem, errorHandler, vertx, artifactSignerProvider);
 
       final Router router = populateRouter(context);
       if (config.isSwaggerUIEnabled()) {
@@ -170,13 +169,12 @@ public abstract class Runner implements Runnable {
 
   protected abstract String getOpenApiSpecResource();
 
-  public static RouterBuilder getOpenAPI3RouterFactory(
-      final Vertx vertx, final String openapiSpecUrl)
+  public static RouterBuilder getRouterBuilder(final Vertx vertx, final String specUrl)
       throws InterruptedException, ExecutionException {
     final CompletableFuture<RouterBuilder> completableFuture = new CompletableFuture<>();
     RouterBuilder.create(
         vertx,
-        openapiSpecUrl,
+        specUrl,
         ar -> {
           if (ar.succeeded()) {
             completableFuture.complete(ar.result());
@@ -185,20 +183,31 @@ public abstract class Runner implements Runnable {
           }
         });
 
-    final RouterBuilder openAPI3RouterFactory = completableFuture.get();
+    final RouterBuilder routerBuilder = completableFuture.get();
 
     // disable automatic response content handler as it doesn't handle some corner cases.
     // Our handlers must set content type header manually.
-    openAPI3RouterFactory.getOptions().setMountResponseContentTypeHandler(false);
-    return openAPI3RouterFactory;
+    routerBuilder.getOptions().setMountResponseContentTypeHandler(false);
+    routerBuilder.getSchemaParser().withStringFormatValidator("uint64", Runner::validateUInt64);
+    return routerBuilder;
+  }
+
+  private static boolean validateUInt64(final String value) {
+    try {
+      UInt64.valueOf(value);
+      return true;
+    } catch (RuntimeException e) {
+      LOG.warn("Validation failed for uint64 value: {}", value);
+      return false;
+    }
   }
 
   protected void addPublicKeysListHandler(
-      final RouterBuilder openAPI3RouterFactory,
+      final RouterBuilder routerBuilder,
       final ArtifactSignerProvider artifactSignerProvider,
       final String operationId,
       final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory
+    routerBuilder
         .operation(operationId)
         .handler(
             new BlockingHandlerDecorator(new PublicKeysListHandler(artifactSignerProvider), false))
@@ -206,11 +215,11 @@ public abstract class Runner implements Runnable {
   }
 
   protected void addReloadHandler(
-      final RouterBuilder openAPI3RouterFactory,
+      final RouterBuilder routerBuilder,
       final ArtifactSignerProvider artifactSignerProvider,
       final String operationId,
       final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory
+    routerBuilder
         .operation(operationId)
         .handler(
             routingContext -> {
@@ -221,15 +230,15 @@ public abstract class Runner implements Runnable {
   }
 
   private void registerUpcheckRoute(
-      final RouterBuilder openAPI3RouterFactory, final LogErrorHandler errorHandler) {
-    openAPI3RouterFactory
+      final RouterBuilder routerBuilder, final LogErrorHandler errorHandler) {
+    routerBuilder
         .operation(UPCHECK.name())
         .handler(new BlockingHandlerDecorator(new UpcheckHandler(), false))
         .failureHandler(errorHandler);
   }
 
-  private void registerHttpHostAllowListHandler(final RouterBuilder openApiRouterFactory) {
-    openApiRouterFactory.rootHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
+  private void registerHttpHostAllowListHandler(final RouterBuilder routerBuilder) {
+    routerBuilder.rootHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
   }
 
   private HttpServer createServerAndWait(

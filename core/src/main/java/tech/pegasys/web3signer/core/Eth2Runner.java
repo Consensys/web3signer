@@ -117,17 +117,17 @@ public class Eth2Runner extends Runner {
   @Override
   public Router populateRouter(final Context context) {
     registerEth2Routes(
-        context.getRouterFactory(),
+        context.getRouterBuilder(),
         context.getArtifactSignerProvider(),
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtection);
 
-    return context.getRouterFactory().createRouter();
+    return context.getRouterBuilder().createRouter();
   }
 
   private void registerEth2Routes(
-      final RouterBuilder routerFactory,
+      final RouterBuilder routerBuilder,
       final ArtifactSignerProvider blsSignerProvider,
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
@@ -135,7 +135,7 @@ public class Eth2Runner extends Runner {
     final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
 
     // security handler for keymanager endpoints
-    routerFactory.securityHandler(
+    routerBuilder.securityHandler(
         "bearerAuth",
         context -> {
           // TODO Auth token security logic
@@ -147,11 +147,11 @@ public class Eth2Runner extends Runner {
           }
         });
 
-    addPublicKeysListHandler(routerFactory, blsSignerProvider, ETH2_LIST.name(), errorHandler);
+    addPublicKeysListHandler(routerBuilder, blsSignerProvider, ETH2_LIST.name(), errorHandler);
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    routerFactory
+    routerBuilder
         .operation(ETH2_SIGN.name())
         .handler(
             new BlockingHandlerDecorator(
@@ -165,16 +165,16 @@ public class Eth2Runner extends Runner {
                 false))
         .failureHandler(errorHandler);
 
-    addReloadHandler(routerFactory, blsSignerProvider, RELOAD.name(), errorHandler);
+    addReloadHandler(routerBuilder, blsSignerProvider, RELOAD.name(), errorHandler);
 
     if (isKeyManagerApiEnabled) {
-      routerFactory
+      routerBuilder
           .operation(KEYMANAGER_LIST.name())
           .handler(
               new BlockingHandlerDecorator(
                   new ListKeystoresHandler(blsSignerProvider, objectMapper), false));
 
-      routerFactory
+      routerBuilder
           .operation(KEYMANAGER_IMPORT.name())
           .handler(
               new BlockingHandlerDecorator(

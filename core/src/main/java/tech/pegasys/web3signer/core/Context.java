@@ -20,27 +20,27 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Context {
-  private final RouterBuilder routerFactory;
+  private final RouterBuilder routerBuilder;
   private final MetricsSystem metricsSystem;
   private final LogErrorHandler errorHandler;
   private final Vertx vertx;
   private final ArtifactSignerProvider artifactSignerProvider;
 
   public Context(
-      final RouterBuilder routerFactory,
+      final RouterBuilder routerBuilder,
       final MetricsSystem metricsSystem,
       final LogErrorHandler errorHandler,
       final Vertx vertx,
       final ArtifactSignerProvider artifactSignerProvider) {
-    this.routerFactory = routerFactory;
+    this.routerBuilder = routerBuilder;
     this.metricsSystem = metricsSystem;
     this.errorHandler = errorHandler;
     this.vertx = vertx;
     this.artifactSignerProvider = artifactSignerProvider;
   }
 
-  public RouterBuilder getRouterFactory() {
-    return routerFactory;
+  public RouterBuilder getRouterBuilder() {
+    return routerBuilder;
   }
 
   public MetricsSystem getMetricsSystem() {

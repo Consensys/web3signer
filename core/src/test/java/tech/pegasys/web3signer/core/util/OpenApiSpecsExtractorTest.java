@@ -43,8 +43,12 @@ class OpenApiSpecsExtractorTest {
             .build();
     final Optional<Path> specPath = openApiSpecsExtractor.getSpecFilePathAtDestination(spec);
 
-    // assert that OpenAPI3RouterFactory is able to load the extracted specs
-    assertThatCode(() -> Runner.getOpenAPI3RouterFactory(vertx, specPath.get().toString()))
+    // assert that routerBuilder is able to load the extracted specs
+    assertThatCode(
+            () ->
+                Runner.getRouterBuilder(vertx, specPath.get().toString())
+                    .securityHandler("bearerAuth", x -> {})
+                    .createRouter())
         .doesNotThrowAnyException();
 
     // assert that relative ref has been converted to absolute ref

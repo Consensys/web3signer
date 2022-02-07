@@ -36,7 +36,7 @@ import org.apache.tuweni.io.Resources;
 
 /**
  * Extract OpenAPI specs from resources /openapi to a temporary folder on disk with capability to
- * fix relative $ref paths so that they can be used by OpenApi3RouterFactory which doesn't deal with
+ * fix relative $ref paths so that they can be used by RouterBuilder which doesn't deal with
  * relative $ref paths.
  */
 public class OpenApiSpecsExtractor {

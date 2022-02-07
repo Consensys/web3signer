@@ -54,16 +54,16 @@ public class Eth1Runner extends Runner {
 
   @Override
   protected Router populateRouter(final Context context) {
-    final RouterBuilder routerFactory = context.getRouterFactory();
+    final RouterBuilder routerBuilder = context.getRouterBuilder();
     final LogErrorHandler errorHandler = context.getErrorHandler();
     final ArtifactSignerProvider signerProvider = context.getArtifactSignerProvider();
 
     addPublicKeysListHandler(
-        routerFactory, signerProvider, ETH1_LIST.name(), context.getErrorHandler());
+        routerBuilder, signerProvider, ETH1_LIST.name(), context.getErrorHandler());
 
     final SignerForIdentifier<SecpArtifactSignature> secpSigner =
         new SignerForIdentifier<>(signerProvider, this::formatSecpSignature, SECP256K1);
-    routerFactory
+    routerBuilder
         .operation(ETH1_SIGN.name())
         .handler(
             new BlockingHandlerDecorator(
@@ -72,9 +72,9 @@ public class Eth1Runner extends Runner {
                 false))
         .failureHandler(errorHandler);
 
-    addReloadHandler(routerFactory, signerProvider, RELOAD.name(), context.getErrorHandler());
+    addReloadHandler(routerBuilder, signerProvider, RELOAD.name(), context.getErrorHandler());
 
-    return context.getRouterFactory().createRouter();
+    return context.getRouterBuilder().createRouter();
   }
 
   @Override
