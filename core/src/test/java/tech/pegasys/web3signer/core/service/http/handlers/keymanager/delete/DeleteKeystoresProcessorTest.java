@@ -129,15 +129,18 @@ class DeleteKeystoresProcessorTest {
   void testSlashingExportException() throws IOException {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
     when(artifactSignerProvider.removeSigner(any()))
-            .thenReturn(CompletableFuture.completedFuture(null));
+        .thenReturn(CompletableFuture.completedFuture(null));
     doNothing().when(keystoreFileManager).deleteKeystoreFiles(any());
-    doThrow(new RuntimeException("db error")).when(slashingProtection).exportWithFilter(any(), any());
+    doThrow(new RuntimeException("db error"))
+        .when(slashingProtection)
+        .exportWithFilter(any(), any());
 
     final DeleteKeystoresRequestBody requestBody =
-            new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY));
+        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY));
     final DeleteKeystoresResponse response = processor.process(requestBody);
     assertThat(response.getData().size()).isEqualTo(1);
-    assertThat(response.getData().get(0).getMessage()).isEqualTo("Error exporting slashing data: db error");
+    assertThat(response.getData().get(0).getMessage())
+        .isEqualTo("Error exporting slashing data: db error");
     assertThat(response.getData().get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.ERROR);
   }
 }

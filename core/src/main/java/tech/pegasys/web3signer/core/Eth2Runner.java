@@ -174,6 +174,7 @@ public class Eth2Runner extends Runner {
           KEYMANAGER_LIST.name(),
           new BlockingHandlerDecorator(
               new ListKeystoresHandler(blsSignerProvider, objectMapper), false));
+      routerFactory.addFailureHandlerByOperationId(KEYMANAGER_DELETE.name(), errorHandler);
 
       routerFactory.addHandlerByOperationId(
           KEYMANAGER_IMPORT.name(),
@@ -181,6 +182,7 @@ public class Eth2Runner extends Runner {
               new ImportKeystoresHandler(
                   objectMapper, config.getKeyConfigPath(), slashingProtection, blsSignerProvider),
               false));
+      routerFactory.addFailureHandlerByOperationId(KEYMANAGER_IMPORT.name(), errorHandler);
 
       routerFactory.addHandlerByOperationId(
           KEYMANAGER_DELETE.name(),
@@ -191,6 +193,7 @@ public class Eth2Runner extends Runner {
                   slashingProtection,
                   blsSignerProvider),
               false));
+      routerFactory.addFailureHandlerByOperationId(KEYMANAGER_DELETE.name(), errorHandler);
     }
   }
 
