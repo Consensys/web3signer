@@ -106,7 +106,7 @@ public abstract class Runner implements Runnable {
 
       final OpenApiSpecsExtractor openApiSpecsExtractor =
           new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
-              .withConvertRelativeRefToAbsoluteRef(false)
+              .withConvertRelativeRefToAbsoluteRef(true)
               .withForceDeleteOnJvmExit(true)
               .build();
       final Path openApiSpec =
