@@ -116,7 +116,7 @@ public abstract class Runner implements Runnable {
                   () ->
                       new RuntimeException(
                           "Unable to load OpenApi spec " + getOpenApiSpecResource()));
-      final RouterBuilder routerBuilder = getRouterBuilder(vertx, openApiSpec.toString());
+      final RouterBuilder routerBuilder = getRouterBuilder(vertx, openApiSpec.toUri().toString());
       // register access log handler first
       if (config.isAccessLogsEnabled()) {
         routerBuilder.rootHandler(LoggerHandler.create(LoggerFormat.DEFAULT));

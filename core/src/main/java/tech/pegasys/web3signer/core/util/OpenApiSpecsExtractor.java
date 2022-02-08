@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.util;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -134,11 +135,13 @@ public class OpenApiSpecsExtractor {
       final Path nonNormalizedRefPath = parent.resolve(Path.of(fileName));
       // remove any . or .. from path
       final Path normalizedPath = nonNormalizedRefPath.toAbsolutePath().normalize();
+      // ensure file:// is prepended
+      final URI normalizedUri = normalizedPath.toUri();
 
       final String updatedValue =
           StringUtils.isBlank(jsonPointer)
-              ? normalizedPath.toString()
-              : normalizedPath + "#" + jsonPointer;
+              ? normalizedUri.toString()
+              : normalizedUri + "#" + jsonPointer;
       entry.setValue(updatedValue);
     }
   }
