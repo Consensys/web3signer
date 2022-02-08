@@ -33,6 +33,7 @@ import tech.pegasys.web3signer.core.util.OpenApiSpecsExtractor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -116,7 +117,9 @@ public abstract class Runner implements Runnable {
                   () ->
                       new RuntimeException(
                           "Unable to load OpenApi spec " + getOpenApiSpecResource()));
-      final RouterBuilder routerBuilder = getRouterBuilder(vertx, openApiSpec.toUri().toString());
+      // vertx needs a scheme present (file://) to determine this is an absolute path
+      final URI openApiSpecUri = openApiSpec.toUri();
+      final RouterBuilder routerBuilder = getRouterBuilder(vertx, openApiSpecUri.toString());
       // register access log handler first
       if (config.isAccessLogsEnabled()) {
         routerBuilder.rootHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
@@ -188,6 +191,7 @@ public abstract class Runner implements Runnable {
     // disable automatic response content handler as it doesn't handle some corner cases.
     // Our handlers must set content type header manually.
     routerBuilder.getOptions().setMountResponseContentTypeHandler(false);
+    // vertx-json-schema fails to createRouter for unknown string type formats
     routerBuilder.getSchemaParser().withStringFormatValidator("uint64", Runner::validateUInt64);
     return routerBuilder;
   }

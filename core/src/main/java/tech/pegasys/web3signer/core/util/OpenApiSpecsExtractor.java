@@ -135,7 +135,7 @@ public class OpenApiSpecsExtractor {
       final Path nonNormalizedRefPath = parent.resolve(Path.of(fileName));
       // remove any . or .. from path
       final Path normalizedPath = nonNormalizedRefPath.toAbsolutePath().normalize();
-      // ensure file:// is prepended
+      // vertx needs a scheme present (file://) to determine this is an absolute path
       final URI normalizedUri = normalizedPath.toUri();
 
       final String updatedValue =
