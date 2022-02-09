@@ -1,7 +1,7 @@
 package tech.pegasys.web3signer.core.config;
 
 public interface AwsSecretsManagerParameters {
-  AwsAuthenticationMode getAwsAuthenticationMode();
+  AwsAuthenticationMode getAuthenticationMode();
   String getSecretName();
   String getSecretValue();
 }
