@@ -7,21 +7,34 @@ import tech.pegasys.web3signer.core.signing.KeyType;
 
 public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecretsManagerParameters {
 
+  private final AwsAuthenticationMode authenticationMode;
+  private final String region;
+  private final String accessKeyId;
+  private final String secretAccessKey;
   private final String secretName;
   private final String secretValue;
-  private final AwsAuthenticationMode authenticationMode;
 
-  protected AwsKeySigningMetadata(final String secretName, final String secretValue, final AwsAuthenticationMode authenticationMode) {
+  protected AwsKeySigningMetadata(final AwsAuthenticationMode authenticationMode, final String region, final String accessKeyId, final String secretAccessKey, final String secretName, final String secretValue) {
     super(KeyType.BLS);
+    this.authenticationMode = authenticationMode;
+    this.region = region;
+    this.accessKeyId = accessKeyId;
+    this.secretAccessKey = secretAccessKey;
     this.secretName = secretName;
     this.secretValue = secretValue;
-    this.authenticationMode = authenticationMode;
+
   }
 
   @Override
   public AwsAuthenticationMode getAuthenticationMode() {
     return this.authenticationMode;
   }
+
+  @Override
+  public String getAccessKeyId() { return accessKeyId; }
+
+  @Override
+  public String getSecretAccessKey() { return secretAccessKey; }
 
   @Override
   public String getSecretName() {
@@ -32,6 +45,9 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
   public String getSecretValue() {
     return secretValue;
   }
+
+  @Override
+  public String getRegion() { return region; }
 
   @Override
   public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {

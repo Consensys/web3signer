@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.core.multikey.metadata;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import tech.pegasys.signers.aws.AwsSecretsManager;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnection;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -22,6 +23,7 @@ import tech.pegasys.signers.hashicorp.TrustStoreType;
 import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
+import tech.pegasys.web3signer.core.config.AwsSecretsManagerFactory;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
@@ -98,6 +100,16 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
     }
   }
 
+  protected Bytes extractBytesFromSecretsManager(final AwsKeySigningMetadata metadata){
+    AwsSecretsManager awsSecretsManager = AwsSecretsManagerFactory.createAwsSecretsManager(metadata);
+    return awsSecretsManager
+      .fetchSecret(metadata.getSecretName())
+      .map(Bytes::fromHexString)
+      .orElseThrow(
+        () ->
+          new SigningMetadataException("Failed to fetch secret from AWS Secrets Manager"));
+  }
+
   protected Bytes extractOpaqueDataFromYubiHsm(YubiHsmSigningMetadata yubiHsmSigningMetadata) {
     try {
       return yubiHsmOpaqueDataProvider.fetchOpaqueData(yubiHsmSigningMetadata);
@@ -106,6 +118,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
           "Failed to fetch opaque data from YubiHSM: " + e.getMessage(), e);
     }
   }
+
 
   private Optional<TlsOptions> buildTlsOptions(final HashicorpSigningMetadata metadata) {
     if (metadata.getTlsEnabled()) {
