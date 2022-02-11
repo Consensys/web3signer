@@ -100,14 +100,14 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
     }
   }
 
-  protected Bytes extractBytesFromSecretsManager(final AwsKeySigningMetadata metadata){
-    AwsSecretsManager awsSecretsManager = AwsSecretsManagerFactory.createAwsSecretsManager(metadata);
+  protected Bytes extractBytesFromSecretsManager(final AwsKeySigningMetadata metadata) {
+    AwsSecretsManager awsSecretsManager =
+        AwsSecretsManagerFactory.createAwsSecretsManager(metadata);
     return awsSecretsManager
-      .fetchSecret(metadata.getSecretName())
-      .map(Bytes::fromHexString)
-      .orElseThrow(
-        () ->
-          new SigningMetadataException("Failed to fetch secret from AWS Secrets Manager"));
+        .fetchSecret(metadata.getSecretName())
+        .map(Bytes::fromHexString)
+        .orElseThrow(
+            () -> new SigningMetadataException("Failed to fetch secret from AWS Secrets Manager"));
   }
 
   protected Bytes extractOpaqueDataFromYubiHsm(YubiHsmSigningMetadata yubiHsmSigningMetadata) {
@@ -118,7 +118,6 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
           "Failed to fetch opaque data from YubiHSM: " + e.getMessage(), e);
     }
   }
-
 
   private Optional<TlsOptions> buildTlsOptions(final HashicorpSigningMetadata metadata) {
     if (metadata.getTlsEnabled()) {

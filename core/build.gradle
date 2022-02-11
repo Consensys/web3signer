@@ -58,6 +58,7 @@ dependencies {
 
   implementation 'tech.pegasys.signers.internal:keystorage-hashicorp'
   implementation 'tech.pegasys.signers.internal:keystorage-azure'
+  implementation 'tech.pegasys.signers.internal:keystorage-aws'
   implementation 'tech.pegasys.signers.internal:keystorage-interlock'
   implementation 'tech.pegasys.signers.internal:keystorage-yubihsm2'
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
