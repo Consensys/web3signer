@@ -17,13 +17,12 @@ import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_A
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
-import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagertParameters;
+import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.AwsAuthenticationMode;
-import tech.pegasys.web3signer.core.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.List;
@@ -133,36 +132,13 @@ public class Eth2SubCommand extends ModeSubCommand {
     validatePositiveValue(
         slashingProtectionParameters.getPruningSlotsPerEpoch(), "Pruning slots per epoch");
 
+    validateAzureParameters();
+    validateAwsParameters();
+  }
+
+  private void validateAzureParameters() {
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-
-      final List<String> missingAzureFields = Lists.newArrayList();
-
-      if (azureKeyVaultParameters.getKeyVaultName() == null) {
-        missingAzureFields.add("--azure-vault-name");
-      }
-
-      if (azureKeyVaultParameters.getAuthenticationMode() == CLIENT_SECRET) {
-        // client secret authentication mode requires all of following options
-        if (azureKeyVaultParameters.getClientSecret() == null) {
-          missingAzureFields.add("--azure-client-secret");
-        }
-
-        if (azureKeyVaultParameters.getClientId() == null) {
-          missingAzureFields.add("--azure-client-id");
-        }
-
-        if (azureKeyVaultParameters.getTenantId() == null) {
-          missingAzureFields.add("--azure-tenant-id");
-        }
-      } else if (azureKeyVaultParameters.getAuthenticationMode()
-          == USER_ASSIGNED_MANAGED_IDENTITY) {
-        if (azureKeyVaultParameters.getClientId() == null) {
-          missingAzureFields.add("--azure-client-id");
-        }
-      }
-
-      // no extra validation required for "system-assigned managed identity".
-
+      final List<String> missingAzureFields = missingAzureFields();
       if (!missingAzureFields.isEmpty()) {
         final String errorMsg =
             String.format(
@@ -170,30 +146,55 @@ public class Eth2SubCommand extends ModeSubCommand {
                 String.join(",", missingAzureFields));
         throw new ParameterException(commandSpec.commandLine(), errorMsg);
       }
-
-      validateAwsParameters(awsSecretsManagerParameters);
     }
   }
 
-  private void validateAwsParameters(AwsSecretsManagerParameters awsSecretsManagerParameters){
-    final List<String> missingAwsFields = missingAwsFields(awsSecretsManagerParameters);
-    if(!missingAwsFields.isEmpty()){
-      final String errorMsg =
-        String.format(
-          "AWS Secrets Manager was enabled, but the following parameters were missing [%s].",
-          String.join(",", missingAwsFields));
-      throw new ParameterException(commandSpec.commandLine(), errorMsg);
-    };
+  private List<String> missingAzureFields() {
+    final List<String> missingFields = Lists.newArrayList();
+    if (azureKeyVaultParameters.getKeyVaultName() == null) {
+      missingFields.add("--azure-vault-name");
+    }
+    if (azureKeyVaultParameters.getAuthenticationMode() == CLIENT_SECRET) {
+      // client secret authentication mode requires all of following options
+      if (azureKeyVaultParameters.getClientSecret() == null) {
+        missingFields.add("--azure-client-secret");
+      }
+
+      if (azureKeyVaultParameters.getClientId() == null) {
+        missingFields.add("--azure-client-id");
+      }
+
+      if (azureKeyVaultParameters.getTenantId() == null) {
+        missingFields.add("--azure-tenant-id");
+      }
+    } else if (azureKeyVaultParameters.getAuthenticationMode() == USER_ASSIGNED_MANAGED_IDENTITY) {
+      if (azureKeyVaultParameters.getClientId() == null) {
+        missingFields.add("--azure-client-id");
+      }
+    }
+    return missingFields;
   }
 
-  private List<String> missingAwsFields(AwsSecretsManagerParameters awsSecretsManagerParameters){
+  private void validateAwsParameters() {
+    final List<String> missingAwsFields = missingAwsFields();
+    if (!missingAwsFields.isEmpty()) {
+      final String errorMsg =
+          String.format(
+              "AWS Secrets Manager was enabled, but the following parameters were missing [%s].",
+              String.join(",", missingAwsFields));
+      throw new ParameterException(commandSpec.commandLine(), errorMsg);
+    }
+    ;
+  }
+
+  private List<String> missingAwsFields() {
     final List<String> missingFields = Lists.newArrayList();
-    if (awsSecretsManagerParameters.getAuthenticationMode() != null){
-      if (awsSecretsManagerParameters.getRegion() == null){
+    if (awsSecretsManagerParameters.getAuthenticationMode() != null) {
+      if (awsSecretsManagerParameters.getRegion() == null) {
         missingFields.add("--aws-region");
       }
 
-      if (awsSecretsManagerParameters.getAuthenticationMode() == AwsAuthenticationMode.SPECIFIED){
+      if (awsSecretsManagerParameters.getAuthenticationMode() == AwsAuthenticationMode.SPECIFIED) {
         if (awsSecretsManagerParameters.getAccessKeyId() == null) {
           missingFields.add("--aws-access-key-id");
         }
