@@ -17,7 +17,7 @@ import tech.pegasys.web3signer.core.config.AwsSecretsManagerParameters;
 
 import picocli.CommandLine.Option;
 
-public class PicoCliAwsKeyVaultParameters implements AwsSecretsManagerParameters {
+public class PicoCliAwsSecretsManagertParameters implements AwsSecretsManagerParameters {
 
   @Option(
       names = {"--aws-auth-mode"},
