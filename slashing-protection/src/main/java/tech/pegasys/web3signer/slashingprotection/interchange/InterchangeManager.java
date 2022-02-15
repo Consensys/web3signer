@@ -24,4 +24,6 @@ public interface InterchangeManager {
   void importDataWithFilter(InputStream in, List<String> pubkeys) throws IOException;
 
   void export(OutputStream out) throws IOException;
+
+  void exportWithFilter(OutputStream output, List<String> pubkeys) throws IOException;
 }
