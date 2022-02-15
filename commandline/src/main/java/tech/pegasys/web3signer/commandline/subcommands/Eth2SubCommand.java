@@ -18,9 +18,12 @@ import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_A
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
+import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagertParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.core.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.core.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.List;
@@ -80,6 +83,7 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin private PicoCliAwsSecretsManagertParameters awsSecretsManagerParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
 
   @Override
@@ -88,6 +92,7 @@ public class Eth2SubCommand extends ModeSubCommand {
         config,
         slashingProtectionParameters,
         azureKeyVaultParameters,
+        awsSecretsManagerParameters,
         eth2Spec,
         isKeyManagerApiEnabled);
   }
@@ -165,7 +170,43 @@ public class Eth2SubCommand extends ModeSubCommand {
                 String.join(",", missingAzureFields));
         throw new ParameterException(commandSpec.commandLine(), errorMsg);
       }
+
+      validateAwsParameters(awsSecretsManagerParameters);
     }
+  }
+
+  private void validateAwsParameters(AwsSecretsManagerParameters awsSecretsManagerParameters){
+    final List<String> missingAwsFields = missingAwsFields(awsSecretsManagerParameters);
+    if(!missingAwsFields.isEmpty()){
+      final String errorMsg =
+        String.format(
+          "AWS Secrets Manager was enabled, but the following parameters were missing [%s].",
+          String.join(",", missingAwsFields));
+      throw new ParameterException(commandSpec.commandLine(), errorMsg);
+    };
+  }
+
+  private List<String> missingAwsFields(AwsSecretsManagerParameters awsSecretsManagerParameters){
+    final List<String> missingFields = Lists.newArrayList();
+    if (awsSecretsManagerParameters.getAuthenticationMode() != null){
+      if (awsSecretsManagerParameters.getRegion() == null){
+        missingFields.add("--aws-region");
+      }
+
+      if (awsSecretsManagerParameters.getAuthenticationMode() == AwsAuthenticationMode.SPECIFIED){
+        if (awsSecretsManagerParameters.getAccessKeyId() == null) {
+          missingFields.add("--aws-access-key-id");
+        }
+        if (awsSecretsManagerParameters.getSecretAccessKey() == null) {
+          missingFields.add("-aws-secret-access-key");
+        }
+        if (awsSecretsManagerParameters.getSecretName() == null) {
+          missingFields.add("--aws-secret-name");
+        }
+      }
+    }
+
+    return missingFields;
   }
 
   private void validatePositiveValue(final long value, final String fieldName) {

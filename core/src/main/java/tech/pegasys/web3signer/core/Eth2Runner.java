@@ -24,6 +24,7 @@ import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.spec.Spec;
+import tech.pegasys.web3signer.core.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.Config;
@@ -75,6 +76,7 @@ public class Eth2Runner extends Runner {
 
   private final Optional<SlashingProtection> slashingProtection;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
+  private final AwsSecretsManagerParameters awsSecretsManagerParameters;
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
   private final Spec eth2Spec;
@@ -84,11 +86,13 @@ public class Eth2Runner extends Runner {
       final Config config,
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters,
+      final AwsSecretsManagerParameters awsSecretsManagerParameters,
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled) {
     super(config);
     this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
+    this.awsSecretsManagerParameters = awsSecretsManagerParameters;
     this.slashingProtectionParameters = slashingProtectionParameters;
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
     this.eth2Spec = eth2Spec;
