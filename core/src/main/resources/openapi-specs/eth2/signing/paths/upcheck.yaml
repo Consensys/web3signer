@@ -2,7 +2,8 @@ get:
   tags:
     - 'Server Status'
   summary: 'Server Status'
-  description: 'Web3Signer server status'
+  description: |
+    Checks the Web3Signer server status. Confirms if Web3Signer is connected and running. Not used by validator clients.
   operationId: 'UPCHECK'
   responses:
     '200':

@@ -16,8 +16,7 @@ import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.CLIENT
 import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
-import tech.pegasys.teku.spec.SpecFactory;
-import tech.pegasys.teku.spec.networks.Eth2Network;
+import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
@@ -25,7 +24,6 @@ import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import picocli.CommandLine;
@@ -66,6 +64,14 @@ public class Eth2SubCommand extends ModeSubCommand {
   private UInt64 altairForkEpoch;
 
   @CommandLine.Option(
+      names = {"--Xnetwork-bellatrix-fork-epoch"},
+      hidden = true,
+      paramLabel = "<epoch>",
+      description = "Override the Bellatrix fork activation epoch.",
+      arity = "1")
+  private UInt64 bellatrixForkEpoch;
+
+  @CommandLine.Option(
       names = {"--key-manager-api-enabled"},
       paramLabel = "<BOOL>",
       description = "Enable the key manager API to manage key stores (default: ${DEFAULT-VALUE}).",
@@ -86,15 +92,28 @@ public class Eth2SubCommand extends ModeSubCommand {
         isKeyManagerApiEnabled);
   }
 
+  private Eth2NetworkConfiguration createEth2NetworkConfig() {
+    Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
+    builder.applyNetworkDefaults(network);
+    if (altairForkEpoch != null) {
+      builder.altairForkEpoch(altairForkEpoch);
+    }
+    if (bellatrixForkEpoch != null) {
+      builder.bellatrixForkEpoch(bellatrixForkEpoch);
+    }
+    return builder.build();
+  }
+
   @Override
   protected void validateArgs() {
-    final String networkConfigName =
-        Eth2Network.fromStringLenient(network).map(Eth2Network::configName).orElse(network);
     try {
-      eth2Spec = SpecFactory.create(networkConfigName, Optional.ofNullable(altairForkEpoch));
+      Eth2NetworkConfiguration eth2NetworkConfig = createEth2NetworkConfig();
+      eth2Spec = eth2NetworkConfig.getSpec();
     } catch (final IllegalArgumentException e) {
       throw new ParameterException(
-          commandSpec.commandLine(), "Failed to load network spec: " + networkConfigName, e);
+          commandSpec.commandLine(),
+          "Failed to load network " + network + " due to " + e.getMessage(),
+          e);
     }
 
     if (slashingProtectionParameters.isEnabled()

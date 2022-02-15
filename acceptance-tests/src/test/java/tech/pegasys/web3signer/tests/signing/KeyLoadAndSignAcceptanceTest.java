@@ -145,7 +145,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupEth2Signer();
+    setupEth2SignerMinimalWithoutAltairFork();
 
     final Eth2SigningRequestBody blockRequest = Eth2RequestUtils.createBlockRequest();
     final JsonObject jsonObject =

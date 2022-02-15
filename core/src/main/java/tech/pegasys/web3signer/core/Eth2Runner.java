@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYMANAGER_DELETE;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYMANAGER_IMPORT;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYMANAGER_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
@@ -38,6 +39,8 @@ import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.KeystoreFileManager;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
@@ -171,6 +174,7 @@ public class Eth2Runner extends Runner {
           KEYMANAGER_LIST.name(),
           new BlockingHandlerDecorator(
               new ListKeystoresHandler(blsSignerProvider, objectMapper), false));
+      routerFactory.addFailureHandlerByOperationId(KEYMANAGER_DELETE.name(), errorHandler);
 
       routerFactory.addHandlerByOperationId(
           KEYMANAGER_IMPORT.name(),
@@ -178,6 +182,18 @@ public class Eth2Runner extends Runner {
               new ImportKeystoresHandler(
                   objectMapper, config.getKeyConfigPath(), slashingProtection, blsSignerProvider),
               false));
+      routerFactory.addFailureHandlerByOperationId(KEYMANAGER_IMPORT.name(), errorHandler);
+
+      routerFactory.addHandlerByOperationId(
+          KEYMANAGER_DELETE.name(),
+          new BlockingHandlerDecorator(
+              new DeleteKeystoresHandler(
+                  objectMapper,
+                  new KeystoreFileManager(config.getKeyConfigPath()),
+                  slashingProtection,
+                  blsSignerProvider),
+              false));
+      routerFactory.addFailureHandlerByOperationId(KEYMANAGER_DELETE.name(), errorHandler);
     }
   }
 

@@ -320,10 +320,10 @@ public abstract class Runner implements Runnable {
       constraints
           .getKnownClientsFile()
           .ifPresent(
-              whitelistFile ->
+              allowlistFile ->
                   result.setTrustOptions(
-                      VertxTrustOptions.whitelistClients(
-                          whitelistFile.toPath(), constraints.isCaAuthorizedClientAllowed())));
+                      VertxTrustOptions.allowlistClients(
+                          allowlistFile.toPath(), constraints.isCaAuthorizedClientAllowed())));
     } catch (final IllegalArgumentException e) {
       throw new InitializationException("Illegally formatted client fingerprint file.");
     }

@@ -221,8 +221,18 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     }
 
     @Override
+    public boolean isRegisteredValidator(final Bytes publicKey) {
+      return delegate.isRegisteredValidator(publicKey);
+    }
+
+    @Override
     public void export(final OutputStream output) {
       delegate.export(output);
+    }
+
+    @Override
+    public void exportWithFilter(OutputStream output, List<String> pubkeys) {
+      delegate.exportWithFilter(output, pubkeys);
     }
 
     @Override

@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.BytesArgumentFactory;
 import tech.pegasys.web3signer.slashingprotection.ArgumentFactories.UInt64ArgumentFactory;

@@ -23,10 +23,11 @@ dependencies {
   implementation 'org.hyperledger.besu.internal:metrics-core'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
-  implementation 'commons-lang:commons-lang'
+  implementation 'org.apache.commons:commons-lang3'
 
   implementation 'tech.pegasys.teku.internal:spec'
   implementation 'tech.pegasys.teku.internal:unsigned'
+  implementation 'tech.pegasys.teku.internal:networks'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 

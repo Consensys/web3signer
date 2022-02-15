@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.tests.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -54,14 +55,21 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
   }
 
   @ParameterizedTest
-  @EnumSource
+  @EnumSource(
+      value = SpecMilestone.class,
+      names = {"PHASE0", "ALTAIR"})
   void signAndVerifyBlockV2Signature(final SpecMilestone specMilestone) throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
 
-    if (specMilestone == SpecMilestone.ALTAIR) {
-      setupEth2SignerMinimal();
-    } else {
-      setupEth2SignerMinimalWithoutAltairFork();
+    switch (specMilestone) {
+      case ALTAIR:
+        setupEth2SignerMinimal();
+        break;
+      case PHASE0:
+        setupEth2SignerMinimalWithoutAltairFork();
+        break;
+      default:
+        fail("Spec milestone not yet supported" + specMilestone);
     }
 
     final Eth2SigningRequestBody request = util.createBlockV2Request();

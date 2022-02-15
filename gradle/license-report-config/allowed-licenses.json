@@ -62,8 +62,16 @@
     },
     {
       "moduleLicense": "IAIK of Graz University of Technology License",
-      "moduleVersion": "1.4.7",
+      "moduleVersion": "1.4.8",
       "moduleName": "org.xipki.iaik:sunpkcs11-wrapper"
+    },
+    {
+      "moduleLicense": "Unicode/ICU License",
+      "moduleVersion": "58.2",
+      "moduleName": "com.ibm.icu:icu4j"
+    },
+    {
+      "moduleName": "io.netty:netty-tcnative-classes"
     }
   ],
   "overrideLicenses": [
@@ -109,6 +117,10 @@
     },
     {
       "moduleName": "org.ow2.asm",
+      "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
+      "moduleName": "io.netty:netty-tcnative-classes",
       "moduleLicense": "Apache License, Version 2.0"
     }
   ]
