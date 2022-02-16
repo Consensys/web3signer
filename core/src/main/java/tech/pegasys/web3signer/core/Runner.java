@@ -39,6 +39,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -47,12 +48,14 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ClientAuth;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
@@ -124,6 +127,14 @@ public abstract class Runner implements Runnable {
       if (config.isAccessLogsEnabled()) {
         routerBuilder.rootHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
       }
+
+      routerBuilder.rootHandler(
+          CorsHandler.create(buildCorsRegexFromConfig())
+              .allowedHeader("*")
+              .allowedMethod(HttpMethod.GET)
+              .allowedMethod(HttpMethod.POST)
+              .allowedMethod(HttpMethod.DELETE)
+              .allowedMethod(HttpMethod.OPTIONS));
 
       registerUpcheckRoute(routerBuilder, errorHandler);
       registerHttpHostAllowListHandler(routerBuilder);
@@ -358,6 +369,19 @@ public abstract class Runner implements Runnable {
               + "This file will be deleted after the node is shutdown.");
     } catch (final Exception e) {
       LOG.warn("Error writing ports file", e);
+    }
+  }
+
+  private String buildCorsRegexFromConfig() {
+    if (config.getCorsAllowedOrigins().isEmpty()) {
+      return "";
+    }
+    if (config.getCorsAllowedOrigins().contains("*")) {
+      return ".*";
+    } else {
+      final StringJoiner stringJoiner = new StringJoiner("|");
+      config.getCorsAllowedOrigins().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);
+      return stringJoiner.toString();
     }
   }
 }
