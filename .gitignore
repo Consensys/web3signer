@@ -28,3 +28,4 @@ build/
 out/
 docker/reports/*
 .vscode
+.lh/*

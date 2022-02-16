@@ -15,9 +15,12 @@ package tech.pegasys.web3signer.tests.keymanager;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasItem;
+import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
 
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.IOException;
@@ -40,7 +43,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
       "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884";
 
   @Test
-  public void invalidRequestBodyReturnsError() {
+  public void invalidRequestBodyReturnsError() throws URISyntaxException {
     setupSignerWithKeyManagerApi();
     final Response response = callImportKeystores("{\"invalid\": \"json body\"}");
     response.then().assertThat().statusCode(400);
@@ -54,7 +57,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
   }
 
   @Test
-  public void emptyKeystoresReturnSuccess() {
+  public void emptyKeystoresReturnSuccess() throws URISyntaxException {
     setupSignerWithKeyManagerApi();
     final Response response = callImportKeystores("{\"keystores\": [], \"passwords\": [] }");
     response.then().assertThat().statusCode(200);
@@ -150,6 +153,21 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
   }
 
   @Test
+  public void canSignAfterImportingNewKey() throws IOException, URISyntaxException {
+    setupSignerWithKeyManagerApi();
+    // import keystore
+    callImportKeystores(composeRequestBody())
+        .then()
+        .contentType(ContentType.JSON)
+        .assertThat()
+        .statusCode(200)
+        .body("data.status", hasItem("imported"));
+    // Sign with it
+    final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
+    signer.eth2Sign(PUBLIC_KEY, request).then().assertThat().statusCode(200);
+  }
+
+  @Test
   public void importLoadsSlashingData() throws IOException, URISyntaxException {
     setupSignerWithKeyManagerApi();
     final Jdbi jdbi = Jdbi.create(signer.getSlashingDbUrl(), DB_USERNAME, DB_PASSWORD);
@@ -161,6 +179,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
     callImportKeystores(composeRequestBody()).then().statusCode(200);
     final List<Map<String, Object>> validatorsAfter =
         jdbi.withHandle(h -> h.select("SELECT * from validators").mapToMap().list());
+
     // assert that only one pubkey got inserted
     assertThat(validatorsAfter).hasSize(1);
     assertThat(validatorsAfter.get(0).get("public_key"))

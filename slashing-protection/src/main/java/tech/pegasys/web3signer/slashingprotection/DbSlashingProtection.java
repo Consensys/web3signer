@@ -157,6 +157,17 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
+  public void exportWithFilter(final OutputStream output, final List<String> pubkeys) {
+    try {
+      LOG.info("Exporting slashing protection database for keys: " + String.join(",", pubkeys));
+      interchangeManager.exportWithFilter(output, pubkeys);
+      LOG.info("Export complete");
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to export database content", e);
+    }
+  }
+
+  @Override
   public boolean maySignAttestation(
       final Bytes publicKey,
       final Bytes signingRoot,
@@ -263,6 +274,11 @@ public class DbSlashingProtection implements SlashingProtection {
           dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch);
         });
     LOG.info("Pruning slashing protection database complete");
+  }
+
+  @Override
+  public boolean isRegisteredValidator(final Bytes publicKey) {
+    return registeredValidators.get(publicKey) != null;
   }
 
   private int validatorId(final Bytes publicKey) {
