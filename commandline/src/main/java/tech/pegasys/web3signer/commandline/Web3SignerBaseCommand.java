@@ -30,6 +30,7 @@ import tech.pegasys.web3signer.slashingprotection.SlashingMetricCategory;
 import java.io.File;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -117,6 +118,13 @@ public class Web3SignerBaseCommand implements Config, Runnable {
       defaultValue = "localhost,127.0.0.1")
   private final AllowListHostsProperty httpHostAllowList = new AllowListHostsProperty();
 
+  // A list of origins URLs that are accepted by the JsonRpcHttpServer (CORS)
+  @Option(
+      names = {"--http-cors-origins"},
+      description = "Comma separated origin domain URLs for CORS validation (default: none)")
+  private final CorsAllowedOriginsProperty httpCorsAllowedOrigins =
+      new CorsAllowedOriginsProperty();
+
   @Option(
       names = {"--metrics-enabled"},
       description = "Set to start the metrics exporter (default: ${DEFAULT-VALUE})")
@@ -196,6 +204,11 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   }
 
   @Override
+  public Collection<String> getCorsAllowedOrigins() {
+    return httpCorsAllowedOrigins;
+  }
+
+  @Override
   public Path getDataPath() {
     return dataPath;
   }
@@ -264,6 +277,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
         .add("httpListenHost", httpListenHost)
         .add("httpListenPort", httpListenPort)
         .add("httpHostAllowList", httpHostAllowList)
+        .add("corsAllowedOrigins", httpCorsAllowedOrigins)
         .add("metricsEnabled", metricsEnabled)
         .add("metricsHost", metricsHost)
         .add("metricsPort", metricsPort)

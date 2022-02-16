@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.config;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -29,6 +30,8 @@ public interface Config {
   Integer getHttpListenPort();
 
   List<String> getHttpHostAllowList();
+
+  Collection<String> getCorsAllowedOrigins();
 
   Path getDataPath();
 
