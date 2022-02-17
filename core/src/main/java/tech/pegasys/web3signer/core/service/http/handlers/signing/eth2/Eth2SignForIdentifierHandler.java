@@ -46,7 +46,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.MIMEHeader;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.api.RequestParameters;
+import io.vertx.ext.web.validation.RequestParameters;
+import io.vertx.ext.web.validation.ValidationHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -88,8 +89,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext routingContext) {
     try (final TimingContext ignored = httpMetrics.getSigningTimer().startTimer()) {
-      LOG.debug("{} || {}", routingContext.normalisedPath(), routingContext.getBody());
-      final RequestParameters params = routingContext.get("parsedParameters");
+      LOG.debug("{} || {}", routingContext.normalizedPath(), routingContext.getBody());
+      final RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
       final String identifier = params.pathParameter("identifier").toString();
       final Eth2SigningRequestBody eth2SigningRequestBody;
       try {

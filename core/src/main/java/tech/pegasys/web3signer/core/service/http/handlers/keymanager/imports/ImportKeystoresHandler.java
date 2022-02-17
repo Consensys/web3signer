@@ -47,7 +47,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.api.RequestParameters;
+import io.vertx.ext.web.validation.RequestParameters;
+import io.vertx.ext.web.validation.ValidationHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,7 +82,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   @Override
   public void handle(RoutingContext context) {
     // API spec - https://github.com/ethereum/keymanager-APIs/tree/master/flows#import
-    final RequestParameters params = context.get("parsedParameters");
+    final RequestParameters params = context.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     final ImportKeystoresRequestBody parsedBody;
     try {
       parsedBody = parseRequestBody(params);

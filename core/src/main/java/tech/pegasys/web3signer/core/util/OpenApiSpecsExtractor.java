@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.util;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,7 +37,7 @@ import org.apache.tuweni.io.Resources;
 
 /**
  * Extract OpenAPI specs from resources /openapi to a temporary folder on disk with capability to
- * fix relative $ref paths so that they can be used by OpenApi3RouterFactory which doesn't deal with
+ * fix relative $ref paths so that they can be used by RouterBuilder which doesn't deal with
  * relative $ref paths.
  */
 public class OpenApiSpecsExtractor {
@@ -134,11 +135,13 @@ public class OpenApiSpecsExtractor {
       final Path nonNormalizedRefPath = parent.resolve(Path.of(fileName));
       // remove any . or .. from path
       final Path normalizedPath = nonNormalizedRefPath.toAbsolutePath().normalize();
+      // vertx needs a scheme present (file://) to determine this is an absolute path
+      final URI normalizedUri = normalizedPath.toUri();
 
       final String updatedValue =
           StringUtils.isBlank(jsonPointer)
-              ? normalizedPath.toString()
-              : normalizedPath + "#" + jsonPointer;
+              ? normalizedUri.toString()
+              : normalizedUri + "#" + jsonPointer;
       entry.setValue(updatedValue);
     }
   }
