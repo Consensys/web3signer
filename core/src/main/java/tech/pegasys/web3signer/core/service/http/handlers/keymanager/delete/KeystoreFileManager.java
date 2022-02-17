@@ -68,7 +68,7 @@ public class KeystoreFileManager {
                     try {
                       final String fileContent = Files.readString(path, StandardCharsets.UTF_8);
                       final SigningMetadata metaDataInfo =
-                          YamlSignerParser.OBJECT_MAPPER.readValue(
+                          YamlSignerParser.YAML_MAPPER.readValue(
                               fileContent, SigningMetadata.class);
                       if (metaDataInfo.getKeyType() == KeyType.BLS
                           && metaDataInfo instanceof FileKeyStoreMetadata) {

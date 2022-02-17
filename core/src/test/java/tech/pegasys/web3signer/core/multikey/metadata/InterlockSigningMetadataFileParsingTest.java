@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.core.multikey.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.OBJECT_MAPPER;
+import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.YAML_MAPPER;
 
 import tech.pegasys.web3signer.core.signing.KeyType;
 
@@ -33,8 +33,7 @@ class InterlockSigningMetadataFileParsingTest {
   void yamlFileIsSuccessfullyParsed() throws IOException {
     final URL testFile = Resources.getResource("interlock_test.yaml");
 
-    final SigningMetadata signingMetadata =
-        OBJECT_MAPPER.readValue(testFile, SigningMetadata.class);
+    final SigningMetadata signingMetadata = YAML_MAPPER.readValue(testFile, SigningMetadata.class);
 
     assertThat(signingMetadata).isInstanceOf(InterlockSigningMetadata.class);
 
@@ -52,7 +51,7 @@ class InterlockSigningMetadataFileParsingTest {
     final URL testFile = Resources.getResource("interlock_incomplete.yaml");
 
     assertThatExceptionOfType(JsonMappingException.class)
-        .isThrownBy(() -> OBJECT_MAPPER.readValue(testFile, SigningMetadata.class))
+        .isThrownBy(() -> YAML_MAPPER.readValue(testFile, SigningMetadata.class))
         .withMessageContaining("Missing required creator property 'volume'");
   }
 }

@@ -29,8 +29,8 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tuweni.io.Resources;
@@ -42,8 +42,8 @@ import org.apache.tuweni.io.Resources;
  */
 public class OpenApiSpecsExtractor {
   private static final String OPENAPI_RESOURCES_ROOT = "openapi-specs";
-  private static final ObjectMapper objectMapper =
-      new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
+  private static final ObjectMapper yamlMapper =
+      YAMLMapper.builder().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER).build();
 
   private final Path destinationDirectory;
   private final List<Path> destinationSpecPaths;
@@ -85,11 +85,11 @@ public class OpenApiSpecsExtractor {
               try {
                 // load openapi yaml in a map
                 final Map<String, Object> yamlMap =
-                    objectMapper.readValue(
+                    yamlMapper.readValue(
                         path.toFile(), new TypeReference<HashMap<String, Object>>() {});
                 fixRelativePathInOpenApiMap(path, yamlMap);
                 // write map back as yaml
-                objectMapper.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), yamlMap);
+                yamlMapper.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), yamlMap);
 
               } catch (final IOException e) {
                 throw new UncheckedIOException(e);

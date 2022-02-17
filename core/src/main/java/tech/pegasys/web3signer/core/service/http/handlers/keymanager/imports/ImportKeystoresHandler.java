@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -61,7 +61,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   public static final int SUCCESS = 200;
   public static final int BAD_REQUEST = 400;
   public static final int SERVER_ERROR = 500;
-  private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper YAML_OBJECT_MAPPER = YAMLMapper.builder().build();
 
   private final ObjectMapper objectMapper;
   private final Path keystorePath;

@@ -20,13 +20,15 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
 class SignedAttestationTest {
 
-  private final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
+  private final ObjectMapper mapper =
+      JsonMapper.builder().addModule(new InterchangeModule()).build();
 
   @Test
   @SuppressWarnings("unchecked")
@@ -35,7 +37,8 @@ class SignedAttestationTest {
         new SignedAttestation(UInt64.valueOf(1), UInt64.valueOf(2), Bytes.fromHexString("0x01"));
 
     final String jsonOutput = mapper.writeValueAsString(attestation);
-    final Map<String, String> jsonContent = new ObjectMapper().readValue(jsonOutput, Map.class);
+    final Map<String, String> jsonContent =
+        JsonMapper.builder().build().readValue(jsonOutput, Map.class);
 
     assertThat(jsonContent.get("source_epoch")).isEqualTo(attestation.getSourceEpoch().toString());
     assertThat(jsonContent.get("target_epoch")).isEqualTo(attestation.getTargetEpoch().toString());
@@ -51,7 +54,8 @@ class SignedAttestationTest {
 
     final String jsonOutput = mapper.writeValueAsString(attestation);
 
-    final Map<String, String> jsonContent = new ObjectMapper().readValue(jsonOutput, Map.class);
+    final Map<String, String> jsonContent =
+        JsonMapper.builder().build().readValue(jsonOutput, Map.class);
 
     assertThat(jsonContent.keySet()).doesNotContain("signing_root");
   }

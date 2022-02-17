@@ -26,15 +26,15 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 public class YamlSignerParser implements SignerParser {
 
-  public static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper(new YAMLFactory())
-          .registerModule(new SigningMetadataModule())
-          .enable(ACCEPT_CASE_INSENSITIVE_ENUMS);
+  public static final YAMLMapper YAML_MAPPER =
+      YAMLMapper.builder()
+          .addModule(new SigningMetadataModule())
+          .enable(ACCEPT_CASE_INSENSITIVE_ENUMS)
+          .build();
 
   private final Collection<AbstractArtifactSignerFactory> signerFactories;
 
@@ -46,7 +46,7 @@ public class YamlSignerParser implements SignerParser {
   public List<ArtifactSigner> parse(final String fileContent) {
     try {
       final SigningMetadata metaDataInfo =
-          OBJECT_MAPPER.readValue(fileContent, SigningMetadata.class);
+          YAML_MAPPER.readValue(fileContent, SigningMetadata.class);
 
       return signerFactories.stream()
           .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
