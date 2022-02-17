@@ -24,7 +24,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.api.RequestParameters;
+import io.vertx.ext.web.validation.RequestParameters;
+import io.vertx.ext.web.validation.ValidationHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -51,7 +52,7 @@ public class DeleteKeystoresHandler implements Handler<RoutingContext> {
   @Override
   public void handle(RoutingContext context) {
     // API spec - https://github.com/ethereum/keymanager-APIs/tree/master/flows#delete
-    final RequestParameters params = context.get("parsedParameters");
+    final RequestParameters params = context.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     final DeleteKeystoresRequestBody parsedBody;
     try {
       parsedBody = parseRequestBody(params);

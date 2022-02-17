@@ -65,8 +65,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import io.vertx.ext.web.openapi.RouterBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -120,17 +120,17 @@ public class Eth2Runner extends Runner {
   @Override
   public Router populateRouter(final Context context) {
     registerEth2Routes(
-        context.getRouterFactory(),
+        context.getRouterBuilder(),
         context.getArtifactSignerProvider(),
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtection);
 
-    return context.getRouterFactory().getRouter();
+    return context.getRouterBuilder().createRouter();
   }
 
   private void registerEth2Routes(
-      final OpenAPI3RouterFactory routerFactory,
+      final RouterBuilder routerBuilder,
       final ArtifactSignerProvider blsSignerProvider,
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
@@ -138,7 +138,7 @@ public class Eth2Runner extends Runner {
     final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
 
     // security handler for keymanager endpoints
-    routerFactory.addSecurityHandler(
+    routerBuilder.securityHandler(
         "bearerAuth",
         context -> {
           // TODO Auth token security logic
@@ -150,50 +150,57 @@ public class Eth2Runner extends Runner {
           }
         });
 
-    addPublicKeysListHandler(routerFactory, blsSignerProvider, ETH2_LIST.name(), errorHandler);
+    addPublicKeysListHandler(routerBuilder, blsSignerProvider, ETH2_LIST.name(), errorHandler);
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    routerFactory.addHandlerByOperationId(
-        ETH2_SIGN.name(),
-        new BlockingHandlerDecorator(
-            new Eth2SignForIdentifierHandler(
-                blsSigner,
-                new HttpApiMetrics(metricsSystem, BLS),
-                new SlashingProtectionMetrics(metricsSystem),
-                slashingProtection,
-                objectMapper,
-                eth2Spec),
-            false));
-    routerFactory.addFailureHandlerByOperationId(ETH2_SIGN.name(), errorHandler);
+    routerBuilder
+        .operation(ETH2_SIGN.name())
+        .handler(
+            new BlockingHandlerDecorator(
+                new Eth2SignForIdentifierHandler(
+                    blsSigner,
+                    new HttpApiMetrics(metricsSystem, BLS),
+                    new SlashingProtectionMetrics(metricsSystem),
+                    slashingProtection,
+                    objectMapper,
+                    eth2Spec),
+                false))
+        .failureHandler(errorHandler);
 
-    addReloadHandler(routerFactory, blsSignerProvider, RELOAD.name(), errorHandler);
+    addReloadHandler(routerBuilder, blsSignerProvider, RELOAD.name(), errorHandler);
 
     if (isKeyManagerApiEnabled) {
-      routerFactory.addHandlerByOperationId(
-          KEYMANAGER_LIST.name(),
-          new BlockingHandlerDecorator(
-              new ListKeystoresHandler(blsSignerProvider, objectMapper), false));
-      routerFactory.addFailureHandlerByOperationId(KEYMANAGER_DELETE.name(), errorHandler);
+      routerBuilder
+          .operation(KEYMANAGER_LIST.name())
+          .handler(
+              new BlockingHandlerDecorator(
+                  new ListKeystoresHandler(blsSignerProvider, objectMapper), false))
+          .failureHandler(errorHandler);
 
-      routerFactory.addHandlerByOperationId(
-          KEYMANAGER_IMPORT.name(),
-          new BlockingHandlerDecorator(
-              new ImportKeystoresHandler(
-                  objectMapper, config.getKeyConfigPath(), slashingProtection, blsSignerProvider),
-              false));
-      routerFactory.addFailureHandlerByOperationId(KEYMANAGER_IMPORT.name(), errorHandler);
+      routerBuilder
+          .operation(KEYMANAGER_IMPORT.name())
+          .handler(
+              new BlockingHandlerDecorator(
+                  new ImportKeystoresHandler(
+                      objectMapper,
+                      config.getKeyConfigPath(),
+                      slashingProtection,
+                      blsSignerProvider),
+                  false))
+          .failureHandler(errorHandler);
 
-      routerFactory.addHandlerByOperationId(
-          KEYMANAGER_DELETE.name(),
-          new BlockingHandlerDecorator(
-              new DeleteKeystoresHandler(
-                  objectMapper,
-                  new KeystoreFileManager(config.getKeyConfigPath()),
-                  slashingProtection,
-                  blsSignerProvider),
-              false));
-      routerFactory.addFailureHandlerByOperationId(KEYMANAGER_DELETE.name(), errorHandler);
+      routerBuilder
+          .operation(KEYMANAGER_DELETE.name())
+          .handler(
+              new BlockingHandlerDecorator(
+                  new DeleteKeystoresHandler(
+                      objectMapper,
+                      new KeystoreFileManager(config.getKeyConfigPath()),
+                      slashingProtection,
+                      blsSignerProvider),
+                  false))
+          .failureHandler(errorHandler);
     }
   }
 

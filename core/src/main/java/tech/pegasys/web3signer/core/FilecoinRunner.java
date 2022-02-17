@@ -45,8 +45,8 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.api.contract.openapi3.OpenAPI3RouterFactory;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
@@ -66,23 +66,23 @@ public class FilecoinRunner extends Runner {
   @Override
   protected Router populateRouter(final Context context) {
     addReloadHandler(
-        context.getRouterFactory(),
+        context.getRouterBuilder(),
         context.getArtifactSignerProvider(),
         RELOAD.name(),
         context.getErrorHandler());
 
     return registerFilecoinJsonRpcRoute(
-        context.getRouterFactory(),
+        context.getRouterBuilder(),
         context.getMetricsSystem(),
         context.getArtifactSignerProvider());
   }
 
   private Router registerFilecoinJsonRpcRoute(
-      final OpenAPI3RouterFactory routerFactory,
+      final RouterBuilder routerBuilder,
       final MetricsSystem metricsSystem,
       final ArtifactSignerProvider fcSigners) {
 
-    final Router router = routerFactory.getRouter();
+    final Router router = routerBuilder.createRouter();
 
     final FcJsonRpcMetrics fcJsonRpcMetrics = new FcJsonRpcMetrics(metricsSystem);
     final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, fcJsonRpcMetrics);
