@@ -101,7 +101,7 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   }
 
   protected Bytes extractBytesFromSecretsManager(final AwsKeySigningMetadata metadata) {
-    AwsSecretsManager awsSecretsManager =
+    final AwsSecretsManager awsSecretsManager =
         AwsSecretsManagerFactory.createAwsSecretsManager(metadata);
     return awsSecretsManager
         .fetchSecret(metadata.getSecretName())
@@ -110,7 +110,8 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
             () -> new SigningMetadataException("Failed to fetch secret from AWS Secrets Manager"));
   }
 
-  protected Bytes extractOpaqueDataFromYubiHsm(YubiHsmSigningMetadata yubiHsmSigningMetadata) {
+  protected Bytes extractOpaqueDataFromYubiHsm(
+      final YubiHsmSigningMetadata yubiHsmSigningMetadata) {
     try {
       return yubiHsmOpaqueDataProvider.fetchOpaqueData(yubiHsmSigningMetadata);
     } catch (final RuntimeException e) {

@@ -21,5 +21,7 @@ public interface AwsSecretsManagerParameters {
 
   String getSecretName();
 
+  String getSecretValue();
+
   String getRegion();
 }

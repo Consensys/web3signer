@@ -14,12 +14,6 @@ jar {
   }
 }
 
-repositories {
-  flatDir {
-    dirs '/Users/geopat/dev/signers/keystorage/aws/build/libs'
-  }
-}
-
 dependencies {
 
   implementation project(':slashing-protection')
