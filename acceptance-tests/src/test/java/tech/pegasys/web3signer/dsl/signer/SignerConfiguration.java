@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.signer;
 
+import tech.pegasys.web3signer.core.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
@@ -36,6 +37,7 @@ public class SignerConfiguration {
   private final List<String> metricsCategories;
   private final boolean metricsEnabled;
   private final Optional<AzureKeyVaultParameters> azureKeyVaultParameters;
+  private final Optional<AwsSecretsManagerParameters> awsSecretsManagerParameters;
   private Optional<TlsOptions> serverTlsOptions;
   private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
@@ -69,6 +71,7 @@ public class SignerConfiguration {
       final List<String> metricsCategories,
       final boolean metricsEnabled,
       final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
+      final Optional<AwsSecretsManagerParameters> awsSecretsManagerParameters,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
       final Optional<String> slashingProtectionDbUrl,
@@ -99,6 +102,7 @@ public class SignerConfiguration {
     this.metricsCategories = metricsCategories;
     this.metricsEnabled = metricsEnabled;
     this.azureKeyVaultParameters = azureKeyVaultParameters;
+    this.awsSecretsManagerParameters = awsSecretsManagerParameters;
     this.serverTlsOptions = serverTlsOptions;
     this.overriddenCaTrustStore = overriddenCaTrustStore;
     this.slashingProtectionDbUrl = slashingProtectionDbUrl;
