@@ -103,6 +103,7 @@ public class DbSlashingProtectionTest {
             1,
             HashBiMap.create(Map.of(PUBLIC_KEY1, VALIDATOR_ID)));
     when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(GVR));
+    when(validatorsDao.isEnabled(any(), eq(VALIDATOR_ID))).thenReturn(true);
   }
 
   @Test
@@ -185,6 +186,13 @@ public class DbSlashingProtectionTest {
 
     verify(signedBlocksDao, never())
         .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
+  }
+
+  @Test
+  public void blockCannotBeSignedIfValidatorDisabled() {
+    when(validatorsDao.isEnabled(any(), eq(VALIDATOR_ID))).thenReturn(false);
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
+    verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
   }
 
   @Test
@@ -547,6 +555,16 @@ public class DbSlashingProtectionTest {
 
     verify(signedAttestationsDao, never()).findMatchingAttestation(any(), anyInt(), any(), any());
     verify(signedAttestationsDao).findSurroundedAttestations(any(), anyInt(), any(), any());
+    verify(signedAttestationsDao, never()).insertAttestation(any(), any());
+  }
+
+  @Test
+  public void attestationCannotBeSignedIfValidatorDisabled() {
+    when(validatorsDao.isEnabled(any(), eq(VALIDATOR_ID))).thenReturn(false);
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+        .isFalse();
     verify(signedAttestationsDao, never()).insertAttestation(any(), any());
   }
 

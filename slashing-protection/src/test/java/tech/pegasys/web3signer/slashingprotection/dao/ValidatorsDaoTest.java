@@ -51,9 +51,9 @@ public class ValidatorsDaoTest {
 
   @Test
   public void retrievesSpecifiedValidatorsFromDb() {
-    insertValidator(handle, 100);
-    insertValidator(handle, 101);
-    insertValidator(handle, 102);
+    insertValidator(handle, Bytes.of(100));
+    insertValidator(handle, Bytes.of(101));
+    insertValidator(handle, Bytes.of(102));
 
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final List<Validator> registeredValidators =
@@ -78,9 +78,9 @@ public class ValidatorsDaoTest {
 
   @Test
   public void storesUnregisteredValidatorsInDb() {
-    insertValidator(handle, 100);
-    insertValidator(handle, 101);
-    insertValidator(handle, 102);
+    insertValidator(handle, Bytes.of(100));
+    insertValidator(handle, Bytes.of(101));
+    insertValidator(handle, Bytes.of(102));
 
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final List<Bytes> validators1 =
@@ -104,8 +104,23 @@ public class ValidatorsDaoTest {
     assertThat(validators.get(4)).isEqualToComparingFieldByField(new Validator(5, Bytes.of(104)));
   }
 
-  private void insertValidator(final Handle h, final int i) {
-    final byte[] value = Bytes.of(i).toArrayUnsafe();
-    h.execute("INSERT INTO validators (public_key) VALUES (?)", value);
+  @Test
+  public void isEnabledReturnsTrueForEnabledValidator() {
+    insertValidator(handle, Bytes.of(1), true);
+    assertThat(new ValidatorsDao().isEnabled(handle, 1)).isTrue();
+  }
+
+  @Test
+  public void isEnabledReturnsFalseForDisabledValidator() {
+    insertValidator(handle, Bytes.of(1), false);
+    assertThat(new ValidatorsDao().isEnabled(handle, 1)).isFalse();
+  }
+
+  private void insertValidator(final Handle h, final Bytes publicKey) {
+    insertValidator(h, publicKey, true);
+  }
+
+  private void insertValidator(final Handle h, final Bytes publicKey, final boolean enabled) {
+    h.execute("INSERT INTO validators (public_key, enabled) VALUES (?, ?)", publicKey, enabled);
   }
 }
