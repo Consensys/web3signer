@@ -21,20 +21,38 @@ import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 
 public class DatabaseUtil {
-  private static final String USERNAME = "postgres";
-  private static final String PASSWORD = "postgres";
+  public static final String USERNAME = "postgres";
+  public static final String PASSWORD = "postgres";
 
-  public static Jdbi setup() throws IOException {
-    final EmbeddedPostgres db = EmbeddedPostgres.start();
-    final Flyway flyway =
-        Flyway.configure()
-            .locations("/migrations/postgresql/")
-            .dataSource(db.getPostgresDatabase())
-            .load();
-    flyway.migrate();
+  public static TestDatabaseInfo create() {
+    try {
+      final EmbeddedPostgres db = EmbeddedPostgres.start();
+      final Flyway flyway =
+          Flyway.configure()
+              .locations("/migrations/postgresql/")
+              .dataSource(db.getPostgresDatabase())
+              .load();
+      flyway.migrate();
 
-    final String databaseUrl =
-        String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-    return DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD, null);
+      final String databaseUrl =
+          String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
+      final Jdbi jdbi =
+          DbConnection.createConnection(
+              databaseUrl, DatabaseUtil.USERNAME, DatabaseUtil.PASSWORD, null);
+      return new TestDatabaseInfo(db, jdbi);
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to create embedded postgres database", e);
+    }
+  }
+
+  public static class TestDatabaseInfo {
+
+    public final EmbeddedPostgres db;
+    public final Jdbi jdbi;
+
+    private TestDatabaseInfo(final EmbeddedPostgres db, final Jdbi jdbi) {
+      this.db = db;
+      this.jdbi = jdbi;
+    }
   }
 }

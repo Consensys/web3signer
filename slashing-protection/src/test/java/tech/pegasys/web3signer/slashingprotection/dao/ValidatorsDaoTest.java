@@ -14,34 +14,20 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import db.DatabaseUtil;
+import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-// This must be a junit4 for the JdbiRule to work
+@ExtendWith(DatabaseSetupExtension.class)
 public class ValidatorsDaoTest {
 
-  private Handle handle;
-
-  @Before
-  public void setup() throws IOException {
-    handle = DatabaseUtil.setup().open();
-  }
-
-  @After
-  public void cleanup() {
-    handle.close();
-  }
-
   @Test
-  public void retrievesSpecifiedValidatorsFromDb() {
+  public void retrievesSpecifiedValidatorsFromDb(final Handle handle) {
     insertValidator(handle, 100);
     insertValidator(handle, 101);
     insertValidator(handle, 102);
@@ -57,7 +43,7 @@ public class ValidatorsDaoTest {
   }
 
   @Test
-  public void storesValidatorsInDb() {
+  public void storesValidatorsInDb(final Handle handle) {
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final List<Validator> validators =
         validatorsDao.registerValidators(handle, List.of(Bytes.of(101), Bytes.of(102)));
@@ -68,7 +54,7 @@ public class ValidatorsDaoTest {
   }
 
   @Test
-  public void storesUnregisteredValidatorsInDb() {
+  public void storesUnregisteredValidatorsInDb(final Handle handle) {
     insertValidator(handle, 100);
     insertValidator(handle, 101);
     insertValidator(handle, 102);

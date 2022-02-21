@@ -37,7 +37,6 @@ dependencies {
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
-  testImplementation 'org.junit.jupiter:junit-jupiter-migrationsupport'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
@@ -56,6 +55,7 @@ dependencies {
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
   testFixturesImplementation 'org.apache.commons:commons-lang3'
   testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api'
 
   testFixturesImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
   testFixturesImplementation 'io.zonky.test:embedded-postgres'

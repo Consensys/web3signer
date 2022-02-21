@@ -15,49 +15,28 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import tech.pegasys.web3signer.slashingprotection.DbConnection;
-
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.testing.JdbiRule;
-import org.jdbi.v3.testing.Migration;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(DatabaseSetupExtension.class)
 public class SignedAttestationsDaoTest {
 
-  @Rule
-  public JdbiRule postgres =
-      JdbiRule.embeddedPostgres()
-          .withMigration(Migration.before().withPath("migrations/postgresql"));
-
-  private Handle handle;
   private final SignedAttestationsDao signedAttestationsDao = new SignedAttestationsDao();
   private final ValidatorsDao validatorsDao = new ValidatorsDao();
   private final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
 
-  @Before
-  public void setup() {
-    DbConnection.configureJdbi(postgres.getJdbi());
-    handle = postgres.getJdbi().open();
-  }
-
-  @After
-  public void cleanup() {
-    handle.close();
-  }
-
   @Test
-  public void findsNonMatchingAttestationInDb() {
-    insertValidator(Bytes.of(100), 1);
-    insertAttestation(1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
+  public void findsNonMatchingAttestationInDb(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertAttestation(handle, 1, Bytes.of(2), UInt64.valueOf(3), UInt64.valueOf(4));
 
     final List<SignedAttestation> existingAttestation =
         signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
@@ -68,7 +47,7 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void returnsEmptyForNonExistingAttestationInDb() {
+  public void returnsEmptyForNonExistingAttestationInDb(final Handle handle) {
     assertThat(
             signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
                 handle, 1, UInt64.valueOf(1), Bytes.of(2)))
@@ -80,7 +59,7 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void storesAttestationInDb() {
+  public void storesAttestationInDb(final Handle handle) {
     validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
     validatorsDao.registerValidators(handle, List.of(Bytes.of(101)));
     validatorsDao.registerValidators(handle, List.of(Bytes.of(102)));
@@ -97,7 +76,7 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void findsSurroundingAttestationInDb() {
+  public void findsSurroundingAttestationInDb(final Handle handle) {
     validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
     final SignedAttestation attestation1 = attestation(1, 2, 9, 2);
     final SignedAttestation attestation2 = attestation(1, 1, 10, 2);
@@ -132,7 +111,7 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void findsSurroundedAttestationInDb() {
+  public void findsSurroundedAttestationInDb(final Handle handle) {
     validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
     final SignedAttestation attestation1 = attestation(1, 3, 4, 2);
     final SignedAttestation attestation2 = attestation(1, 2, 5, 2);
@@ -167,7 +146,7 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void canCreateAttestationsWithNoSigningRoot() {
+  public void canCreateAttestationsWithNoSigningRoot(final Handle handle) {
     validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
     final SignedAttestation attestation =
         new SignedAttestation(1, UInt64.valueOf(3), UInt64.valueOf(4), null);
@@ -183,18 +162,18 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void existingCheckMatchesOnNullSigningRootThrowsException() {
-    insertValidator(Bytes.of(100), 1);
-    insertAttestation(1, null, UInt64.valueOf(2), UInt64.valueOf(3));
+  public void existingCheckMatchesOnNullSigningRootThrowsException(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertAttestation(handle, 1, null, UInt64.valueOf(2), UInt64.valueOf(3));
     assertThatThrownBy(
             () -> signedAttestationsDao.findMatchingAttestation(handle, 1, UInt64.valueOf(3), null))
         .isInstanceOf(NullPointerException.class);
   }
 
   @Test
-  public void findAttestationsNotMatchingSigningRootThrowsIfNullRequested() {
-    insertValidator(Bytes.of(100), 1);
-    insertAttestation(1, null, UInt64.valueOf(2), UInt64.valueOf(3));
+  public void findAttestationsNotMatchingSigningRootThrowsIfNullRequested(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertAttestation(handle, 1, null, UInt64.valueOf(2), UInt64.valueOf(3));
     assertThatThrownBy(
             () ->
                 signedAttestationsDao.findAttestationsForEpochWithDifferentSigningRoot(
@@ -203,11 +182,11 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void deletesAttestationsBelowEpoch() {
-    insertValidator(Bytes.of(1), 1);
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
+  public void deletesAttestationsBelowEpoch(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), 1);
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
     lowWatermarkDao.updateEpochWatermarksFor(handle, 1, UInt64.valueOf(4), UInt64.valueOf(4));
 
     signedAttestationsDao.deleteAttestationsBelowWatermark(handle, 1);
@@ -225,13 +204,13 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void deletingAttestationsDoesNotAffectAfterValidatorAttestations() {
-    insertValidator(Bytes.of(1), 1);
-    insertValidator(Bytes.of(2), 2);
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
-    insertAttestation(2, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+  public void deletingAttestationsDoesNotAffectAfterValidatorAttestations(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), 1);
+    insertValidator(handle, Bytes.of(2), 2);
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
+    insertAttestation(handle, 2, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
     lowWatermarkDao.updateEpochWatermarksFor(handle, 1, UInt64.valueOf(4), UInt64.valueOf(4));
     lowWatermarkDao.updateEpochWatermarksFor(handle, 2, UInt64.valueOf(5), UInt64.valueOf(6));
 
@@ -254,10 +233,10 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void doesNotDeleteAttestationsIfNoWatermark() {
-    insertValidator(Bytes.of(100), 1);
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
+  public void doesNotDeleteAttestationsIfNoWatermark(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
 
     signedAttestationsDao.deleteAttestationsBelowWatermark(handle, 1);
     final List<SignedAttestation> attestations =
@@ -268,14 +247,14 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void findsMaxTargetEpochForValidator() {
-    insertValidator(Bytes.of(1), 1);
-    insertValidator(Bytes.of(2), 2);
-    insertValidator(Bytes.of(3), 3);
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
-    insertAttestation(2, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+  public void findsMaxTargetEpochForValidator(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), 1);
+    insertValidator(handle, Bytes.of(2), 2);
+    insertValidator(handle, Bytes.of(3), 3);
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(4), UInt64.valueOf(5));
+    insertAttestation(handle, 2, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
 
     assertThat(signedAttestationsDao.findMaxTargetEpoch(handle, 1)).contains(UInt64.valueOf(5));
     assertThat(signedAttestationsDao.findMaxTargetEpoch(handle, 2)).contains(UInt64.valueOf(3));
@@ -283,11 +262,11 @@ public class SignedAttestationsDaoTest {
   }
 
   @Test
-  public void findsNearestAttestationForTargetEpoch() {
-    insertValidator(Bytes.of(1), 1);
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
-    insertAttestation(1, Bytes.of(1), UInt64.valueOf(7), UInt64.valueOf(8));
+  public void findsNearestAttestationForTargetEpoch(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), 1);
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(2), UInt64.valueOf(3));
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(3), UInt64.valueOf(4));
+    insertAttestation(handle, 1, Bytes.of(1), UInt64.valueOf(7), UInt64.valueOf(8));
 
     assertThat(
             signedAttestationsDao
@@ -301,11 +280,12 @@ public class SignedAttestationsDaoTest {
         .isEqualToComparingFieldByField(attestation(1, 7, 8, 1));
   }
 
-  private void insertValidator(final Bytes publicKey, final int validatorId) {
+  private void insertValidator(final Handle handle, final Bytes publicKey, final int validatorId) {
     handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
   }
 
   private void insertAttestation(
+      final Handle handle,
       final int validatorId,
       final Bytes signingRoot,
       final UInt64 sourceEpoch,
