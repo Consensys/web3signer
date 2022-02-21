@@ -14,34 +14,25 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.slashingprotection.DbConnection;
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import db.DatabaseUtil;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.testing.JdbiRule;
-import org.jdbi.v3.testing.Migration;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 // This must be a junit4 for the JdbiRule to work
 public class ValidatorsDaoTest {
 
-  @Rule
-  public JdbiRule postgres =
-      JdbiRule.embeddedPostgres()
-          .withMigration(Migration.before().withPath("migrations/postgresql"));
-
   private Handle handle;
 
   @Before
-  public void setup() {
-    DbConnection.configureJdbi(postgres.getJdbi());
-    handle = postgres.getJdbi().open();
+  public void setup() throws IOException {
+    handle = DatabaseUtil.setup().open();
   }
 
   @After
