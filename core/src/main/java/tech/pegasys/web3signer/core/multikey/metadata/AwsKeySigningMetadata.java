@@ -24,22 +24,19 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
   private final String accessKeyId;
   private final String secretAccessKey;
   private final String secretName;
-  private final String secretValue;
 
   protected AwsKeySigningMetadata(
       final AwsAuthenticationMode authenticationMode,
       final String region,
       final String accessKeyId,
       final String secretAccessKey,
-      final String secretName,
-      final String secretValue) {
+      final String secretName) {
     super(KeyType.BLS);
     this.authenticationMode = authenticationMode;
     this.region = region;
     this.accessKeyId = accessKeyId;
     this.secretAccessKey = secretAccessKey;
     this.secretName = secretName;
-    this.secretValue = secretValue;
   }
 
   @Override
@@ -60,11 +57,6 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
   @Override
   public String getSecretName() {
     return secretName;
-  }
-
-  @Override
-  public String getSecretValue() {
-    return secretValue;
   }
 
   @Override

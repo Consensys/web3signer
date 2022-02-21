@@ -22,20 +22,17 @@ public class DefaultAwsSecretsManagerParameters implements AwsSecretsManagerPara
   private final String accessKeyId;
   private final String secretAccessKey;
   private final String secretName;
-  private final String secretValue;
 
-  protected DefaultAwsSecretsManagerParameters(
+  public DefaultAwsSecretsManagerParameters(
       final String region,
       final String accessKeyId,
       final String secretAccessKey,
-      final String secretName,
-      final String secretValue) {
+      final String secretName) {
     this.authenticationMode = AwsAuthenticationMode.SPECIFIED;
     this.region = region;
     this.accessKeyId = accessKeyId;
     this.secretAccessKey = secretAccessKey;
     this.secretName = secretName;
-    this.secretValue = secretValue;
   }
 
   @Override
@@ -56,11 +53,6 @@ public class DefaultAwsSecretsManagerParameters implements AwsSecretsManagerPara
   @Override
   public String getSecretName() {
     return secretName;
-  }
-
-  @Override
-  public String getSecretValue() {
-    return secretValue;
   }
 
   @Override

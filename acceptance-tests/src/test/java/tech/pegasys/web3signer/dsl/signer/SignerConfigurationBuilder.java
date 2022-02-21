@@ -123,7 +123,7 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withAwsKeyVaultParameters(
+  public SignerConfigurationBuilder withAwsSecretsManagerParameters(
       final AwsSecretsManagerParameters awsSecretsManagerParameters) {
     this.awsSecretsManagerParameters = awsSecretsManagerParameters;
     return this;

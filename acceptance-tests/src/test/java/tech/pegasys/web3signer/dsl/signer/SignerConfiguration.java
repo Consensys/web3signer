@@ -177,6 +177,10 @@ public class SignerConfiguration {
     return azureKeyVaultParameters;
   }
 
+  public Optional<AwsSecretsManagerParameters> getAwsSecretsManagerParameters() {
+    return awsSecretsManagerParameters;
+  }
+
   public boolean isMetricsDynamicPortAllocation() {
     return metricsPort == UNASSIGNED_PORT;
   }
