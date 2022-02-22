@@ -28,8 +28,6 @@ import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.infrastructure.async.SafeFuture;
-import tech.pegasys.teku.infrastructure.ssz.collections.SszBitlist;
-import tech.pegasys.teku.infrastructure.ssz.schema.collections.SszBitlistSchema;
 import tech.pegasys.teku.infrastructure.ssz.type.Bytes4;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.Spec;
@@ -116,10 +114,11 @@ public class Eth2RequestUtils {
 
   private static Eth2SigningRequestBody createAggregateAndProof() {
     final ForkInfo forkInfo = forkInfo();
-    final SszBitlist sszBitlist = SszBitlistSchema.create(2048L).ofBits(4, 0, 0, 1, 1);
+    // final SszBitlist sszBitlist = SszBitlistSchema.create(2048L).ofBits(4, 0, 0, 1, 1);
+    final Bytes sszBytes = Bytes.of(0, 0, 1, 1);
     final Attestation attestation =
         new Attestation(
-            sszBitlist,
+            sszBytes,
             new AttestationData(
                 UInt64.ZERO,
                 UInt64.ZERO,
@@ -139,7 +138,7 @@ public class Eth2RequestUtils {
         new AggregateAndProof(UInt64.ONE, attestation, selectionProof);
     final Bytes signingRoot =
         signingRootUtil.signingRootForSignAggregateAndProof(
-            aggregateAndProof.asInternalAggregateAndProof(), forkInfo.asInternalForkInfo());
+            aggregateAndProof.asInternalAggregateAndProof(spec), forkInfo.asInternalForkInfo());
 
     return new Eth2SigningRequestBody(
         ArtifactType.AGGREGATE_AND_PROOF,
