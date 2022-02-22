@@ -23,7 +23,6 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
 import db.DatabaseUtil;
 import db.DatabaseUtil.TestDatabaseInfo;
 import dsl.InterchangeV5Format;
@@ -184,9 +183,5 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     exportOutput.close();
 
     return mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
-  }
-
-  private String getDatabaseUrl(final EmbeddedPostgres db) {
-    return String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
   }
 }
