@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
-import static tech.pegasys.web3signer.dsl.utils.EmbeddedDatabaseUtils.createEmbeddedDatabase;
-
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -27,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import db.DatabaseUtil;
 import org.apache.commons.io.FileUtils;
 
 public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
@@ -201,7 +200,9 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
 
     if (signerConfig.isSlashingProtectionEnabled()) {
       slashingProtectionDbUrl =
-          signerConfig.getSlashingProtectionDbUrl().or(() -> Optional.of(createEmbeddedDatabase()));
+          signerConfig
+              .getSlashingProtectionDbUrl()
+              .or(() -> Optional.of(DatabaseUtil.create().databaseUrl()));
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT, "eth2.slashing-protection-db-url", slashingProtectionDbUrl.get()));

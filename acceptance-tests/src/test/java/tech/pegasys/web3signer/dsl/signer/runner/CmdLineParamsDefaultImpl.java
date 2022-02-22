@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
-import static tech.pegasys.web3signer.dsl.utils.EmbeddedDatabaseUtils.createEmbeddedDatabase;
-
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -26,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.google.common.collect.Lists;
+import db.DatabaseUtil;
 
 public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
   private final SignerConfiguration signerConfig;
@@ -140,7 +139,9 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
 
     if (signerConfig.isSlashingProtectionEnabled()) {
       slashingProtectionDbUrl =
-          signerConfig.getSlashingProtectionDbUrl().or(() -> Optional.of(createEmbeddedDatabase()));
+          signerConfig
+              .getSlashingProtectionDbUrl()
+              .or(() -> Optional.of(DatabaseUtil.create().databaseUrl()));
       params.add("--slashing-protection-db-url");
       params.add(slashingProtectionDbUrl.get());
       params.add("--slashing-protection-db-username");

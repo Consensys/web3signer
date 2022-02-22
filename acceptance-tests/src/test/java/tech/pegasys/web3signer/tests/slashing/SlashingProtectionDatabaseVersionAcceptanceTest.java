@@ -17,10 +17,10 @@ import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.web3signer.dsl.utils.EmbeddedDatabaseUtils;
 
 import java.nio.file.Path;
 
+import db.DatabaseUtil;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -36,7 +36,7 @@ public class SlashingProtectionDatabaseVersionAcceptanceTest {
     // System.exit() call in the Web3signerApp (which exits the test, rather than terminating
     // the app (thus it work as expected with a ProcessRunner (i.e. when run from gradle)).
 
-    final String dbUrl = EmbeddedDatabaseUtils.createEmbeddedDatabase();
+    final String dbUrl = DatabaseUtil.create().databaseUrl();
     final Jdbi jdbi = Jdbi.create(dbUrl, DB_USERNAME, DB_PASSWORD);
     jdbi.useHandle(h -> h.execute("DROP TABLE database_version"));
 
