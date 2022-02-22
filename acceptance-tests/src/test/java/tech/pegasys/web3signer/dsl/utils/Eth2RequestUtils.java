@@ -114,7 +114,6 @@ public class Eth2RequestUtils {
 
   private static Eth2SigningRequestBody createAggregateAndProof() {
     final ForkInfo forkInfo = forkInfo();
-    // final SszBitlist sszBitlist = SszBitlistSchema.create(2048L).ofBits(4, 0, 0, 1, 1);
     final Bytes sszBytes = Bytes.of(0, 0, 1, 1);
     final Attestation attestation =
         new Attestation(
