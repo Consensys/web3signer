@@ -71,14 +71,12 @@ public class ReferenceTestRunner {
 
   public void setup() {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
-    slashingDatabase = testDatabaseInfo.db;
-    final String databaseUrl =
-        String.format("jdbc:postgresql://localhost:%d/postgres", slashingDatabase.getPort());
     final SlashingProtectionParameters slashingProtectionParameters =
-        new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD);
+        new TestSlashingProtectionParameters(testDatabaseInfo.databaseUrl(), USERNAME, PASSWORD);
     slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
-    jdbi = testDatabaseInfo.jdbi;
+    slashingDatabase = testDatabaseInfo.getDb();
+    jdbi = testDatabaseInfo.getJdbi();
   }
 
   public void cleanup() {

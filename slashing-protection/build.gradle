@@ -70,6 +70,8 @@ dependencies {
   integrationTestImplementation 'org.flywaydb:flyway-core'
   integrationTestImplementation 'com.opentable.components:otj-pg-embedded'
   integrationTestImplementation 'org.awaitility:awaitility'
+  integrationTestImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
+  integrationTestImplementation 'io.zonky.test:embedded-postgres'
   integrationTestImplementation sourceSets.testFixtures.output
 }
 

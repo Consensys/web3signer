@@ -31,11 +31,11 @@ public class DatabaseSetupExtension
   @Override
   public void beforeEach(final ExtensionContext context) {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
-    final Handle handle = testDatabaseInfo.jdbi.open();
+    final Handle handle = testDatabaseInfo.getJdbi().open();
 
     final Store store = context.getStore(Namespace.GLOBAL);
-    store.put("db", testDatabaseInfo.db);
-    store.put("jdbi", testDatabaseInfo.jdbi);
+    store.put("db", testDatabaseInfo.getDb());
+    store.put("jdbi", testDatabaseInfo.getJdbi());
     store.put("handle", handle);
   }
 

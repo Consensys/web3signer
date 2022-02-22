@@ -39,7 +39,7 @@ public class DatabaseUtil {
       final Jdbi jdbi =
           DbConnection.createConnection(
               databaseUrl, DatabaseUtil.USERNAME, DatabaseUtil.PASSWORD, null);
-      return new TestDatabaseInfo(db, jdbi);
+      return new TestDatabaseInfo(db, jdbi, flyway);
     } catch (IOException e) {
       throw new RuntimeException("Unable to create embedded postgres database", e);
     }
@@ -47,12 +47,30 @@ public class DatabaseUtil {
 
   public static class TestDatabaseInfo {
 
-    public final EmbeddedPostgres db;
-    public final Jdbi jdbi;
+    private final EmbeddedPostgres db;
+    private final Jdbi jdbi;
+    private final Flyway flyway;
 
-    private TestDatabaseInfo(final EmbeddedPostgres db, final Jdbi jdbi) {
+    private TestDatabaseInfo(final EmbeddedPostgres db, final Jdbi jdbi, final Flyway flyway) {
       this.db = db;
       this.jdbi = jdbi;
+      this.flyway = flyway;
+    }
+
+    public EmbeddedPostgres getDb() {
+      return db;
+    }
+
+    public Jdbi getJdbi() {
+      return jdbi;
+    }
+
+    public Flyway getFlyway() {
+      return flyway;
+    }
+
+    public String databaseUrl() {
+      return String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
     }
   }
 }

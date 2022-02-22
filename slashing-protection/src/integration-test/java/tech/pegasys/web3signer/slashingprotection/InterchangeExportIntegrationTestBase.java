@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import db.DatabaseUtil;
+import db.DatabaseUtil.TestDatabaseInfo;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
 import dsl.TestSlashingProtectionParameters;
@@ -93,9 +95,8 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
 
   @Test
   void failToExportIfGenesisValidatorRootDoesNotExist() throws IOException {
-    final EmbeddedPostgres db = setup();
-    final String databaseUrl = getDatabaseUrl(db);
-
+    final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
+    final String databaseUrl = testDatabaseInfo.databaseUrl();
     final OutputStream exportOutput = new ByteArrayOutputStream();
     final SlashingProtection slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(
