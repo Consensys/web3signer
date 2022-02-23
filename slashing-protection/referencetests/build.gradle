@@ -22,16 +22,15 @@ dependencies {
   testImplementation 'org.junit.jupiter:junit-jupiter-migrationsupport'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
-  testImplementation 'org.jdbi:jdbi3-testing'
-  testImplementation 'com.opentable.components:otj-pg-embedded'
-  testImplementation 'org.flywaydb:flyway-core'
+  testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
+  testImplementation 'io.zonky.test:embedded-postgres'
+  testImplementation 'org.jdbi:jdbi3-core'
   testImplementation 'org.apache.tuweni:tuweni-units'
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'org.apache.logging.log4j:log4j-api'
   testImplementation 'org.apache.logging.log4j:log4j-core'
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.7.0'
 
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
