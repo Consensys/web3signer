@@ -22,6 +22,11 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
 
   private static final String RO_AWS_ACCESS_KEY_ID = System.getenv("RO_AWS_ACCESS_KEY_ID");
   private static final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("RO_AWS_SECRET_ACCESS_KEY");
+  private static final String AWS_REGION = "us-east-2";
+
+  private static final String SECRET_NAME = "signers-aws-integration/acceptance-test-secret";
+  private static final String EXPECTED_SECRET =
+      "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
 
   @BeforeAll
   public static void setup() {
