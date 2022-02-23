@@ -16,6 +16,7 @@ import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
+import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -25,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import db.DatabaseUtil;
 import org.apache.commons.io.FileUtils;
 
 public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {

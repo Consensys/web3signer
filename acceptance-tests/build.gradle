@@ -67,6 +67,8 @@ dependencies {
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'signing-secp256k1-impl', classifier: 'test-fixtures')
   testImplementation (testFixtures(project(":slashing-protection")))
   testImplementation (testFixtures(project(":core")))
+  testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
+  testImplementation 'io.zonky.test:embedded-postgres'
 
   gatlingImplementation configurations.getByName("testImplementation")
 }
