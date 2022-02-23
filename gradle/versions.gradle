@@ -134,10 +134,6 @@ dependencyManagement {
       entry 'jdbi3-testing'
     }
 
-    // TODO remove this after moving to zonky
-    dependency 'com.opentable.components:otj-pg-embedded:0.13.3'
-
-    // TODO should be able to remove this after moving to zonky
     dependency 'org.flywaydb:flyway-core:6.1.1'
 
     dependency 'io.zonky.test.postgres:embedded-postgres-binaries-bom:11.15.0'

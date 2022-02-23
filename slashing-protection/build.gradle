@@ -40,11 +40,7 @@ dependencies {
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
 
-  // TODO should be able to remove these after moving to zonky
-  testImplementation 'org.jdbi:jdbi3-testing'
-  testImplementation 'com.opentable.components:otj-pg-embedded'
   testImplementation 'org.flywaydb:flyway-core'
-
   testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
   testImplementation 'io.zonky.test:embedded-postgres'
 
@@ -68,7 +64,6 @@ dependencies {
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation 'org.flywaydb:flyway-core'
-  integrationTestImplementation 'com.opentable.components:otj-pg-embedded'
   integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
   integrationTestImplementation 'io.zonky.test:embedded-postgres'
