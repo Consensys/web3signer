@@ -15,6 +15,7 @@ package db;
 import tech.pegasys.web3signer.slashingprotection.DbConnection;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.flywaydb.core.Flyway;
@@ -41,7 +42,7 @@ public class DatabaseUtil {
               databaseUrl, DatabaseUtil.USERNAME, DatabaseUtil.PASSWORD, null);
       return new TestDatabaseInfo(db, jdbi, flyway);
     } catch (IOException e) {
-      throw new RuntimeException("Unable to create embedded postgres database", e);
+      throw new UncheckedIOException("Unable to create embedded postgres database", e);
     }
   }
 
