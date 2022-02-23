@@ -28,28 +28,20 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 public class DatabaseSetupExtension
     implements BeforeEachCallback, AfterEachCallback, ParameterResolver {
 
+  private static final String DB_CONTEXT_KEY = "db";
+
   @Override
   public void beforeEach(final ExtensionContext context) {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
     final Handle handle = testDatabaseInfo.getJdbi().open();
-
-    final Store store = context.getStore(Namespace.GLOBAL);
-    store.put("db", testDatabaseInfo.getDb());
-    store.put("jdbi", testDatabaseInfo.getJdbi());
-    store.put("handle", handle);
+    storeDbContext(context, testDatabaseInfo, handle);
   }
 
   @Override
   public void afterEach(final ExtensionContext context) throws Exception {
-    final Store store = context.getStore(Namespace.GLOBAL);
-    final Object db = store.get("db");
-    if (db instanceof EmbeddedPostgres) {
-      ((EmbeddedPostgres) db).close();
-    }
-    final Object handle = store.get("handle");
-    if (handle instanceof Handle) {
-      ((Handle) handle).close();
-    }
+    final TestDbContext dbContext = getDbContext(context);
+    dbContext.getDb().close();
+    dbContext.getHandle().close();
   }
 
   @Override
@@ -66,16 +58,55 @@ public class DatabaseSetupExtension
   public Object resolveParameter(
       final ParameterContext parameterContext, final ExtensionContext extensionContext)
       throws ParameterResolutionException {
-    final Store store = extensionContext.getStore(Namespace.GLOBAL);
+    final TestDbContext dbContext = getDbContext(extensionContext);
     final Class<?> type = parameterContext.getParameter().getType();
     if (type.equals(Handle.class)) {
-      return store.get("handle");
+      return dbContext.getHandle();
     } else if (type.equals(Jdbi.class)) {
-      return store.get("jdbi");
+      return dbContext.getJdbi();
     } else if (type.equals(EmbeddedPostgres.class)) {
-      return store.get("db");
+      return dbContext.getDb();
     } else {
-      throw new RuntimeException("Unknown parameter");
+      throw new RuntimeException("Unknown parameter type " + type);
+    }
+  }
+
+  private TestDbContext getDbContext(final ExtensionContext extensionContext) {
+    return (TestDbContext) extensionContext.getStore(Namespace.GLOBAL).get(DB_CONTEXT_KEY);
+  }
+
+  private void storeDbContext(
+      final ExtensionContext context,
+      final TestDatabaseInfo testDatabaseInfo,
+      final Handle handle) {
+    final TestDbContext dbContext =
+        new TestDbContext(testDatabaseInfo.getDb(), testDatabaseInfo.getJdbi(), handle);
+    final Store store = context.getStore(Namespace.GLOBAL);
+    store.put(DB_CONTEXT_KEY, dbContext);
+  }
+
+  private static class TestDbContext {
+
+    private final EmbeddedPostgres db;
+    private final Jdbi jdbi;
+    private final Handle handle;
+
+    public TestDbContext(final EmbeddedPostgres db, final Jdbi jdbi, final Handle handle) {
+      this.db = db;
+      this.jdbi = jdbi;
+      this.handle = handle;
+    }
+
+    public EmbeddedPostgres getDb() {
+      return db;
+    }
+
+    public Jdbi getJdbi() {
+      return jdbi;
+    }
+
+    public Handle getHandle() {
+      return handle;
     }
   }
 }
