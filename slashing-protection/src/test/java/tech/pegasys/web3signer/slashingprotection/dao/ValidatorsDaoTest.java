@@ -14,43 +14,20 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.slashingprotection.DbConnection;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.testing.JdbiRule;
-import org.jdbi.v3.testing.Migration;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-// This must be a junit4 for the JdbiRule to work
+@ExtendWith(DatabaseSetupExtension.class)
 public class ValidatorsDaoTest {
 
-  @Rule
-  public JdbiRule postgres =
-      JdbiRule.embeddedPostgres()
-          .withMigration(Migration.before().withPath("migrations/postgresql"));
-
-  private Handle handle;
-
-  @Before
-  public void setup() {
-    DbConnection.configureJdbi(postgres.getJdbi());
-    handle = postgres.getJdbi().open();
-  }
-
-  @After
-  public void cleanup() {
-    handle.close();
-  }
-
   @Test
-  public void retrievesSpecifiedValidatorsFromDb() {
+  public void retrievesSpecifiedValidatorsFromDb(final Handle handle) {
     insertValidator(handle, 100);
     insertValidator(handle, 101);
     insertValidator(handle, 102);
@@ -66,7 +43,7 @@ public class ValidatorsDaoTest {
   }
 
   @Test
-  public void storesValidatorsInDb() {
+  public void storesValidatorsInDb(final Handle handle) {
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final List<Validator> validators =
         validatorsDao.registerValidators(handle, List.of(Bytes.of(101), Bytes.of(102)));
@@ -77,7 +54,7 @@ public class ValidatorsDaoTest {
   }
 
   @Test
-  public void storesUnregisteredValidatorsInDb() {
+  public void storesUnregisteredValidatorsInDb(final Handle handle) {
     insertValidator(handle, 100);
     insertValidator(handle, 101);
     insertValidator(handle, 102);
