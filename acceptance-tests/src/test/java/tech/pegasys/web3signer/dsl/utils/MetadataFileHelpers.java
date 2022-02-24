@@ -26,7 +26,6 @@ import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import tech.pegasys.signers.hashicorp.dsl.certificates.CertificateHelpers;
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.web3signer.core.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 
@@ -222,11 +221,11 @@ public class MetadataFileHelpers {
   }
 
   public void createAwsYamlFileAt(
-    final Path metadataFilePath,
-    final String awsRegion,
-    final String accessKeyId,
-    final String secretAccessKey,
-    final String secretName) {
+      final Path metadataFilePath,
+      final String awsRegion,
+      final String accessKeyId,
+      final String secretAccessKey,
+      final String secretName) {
     try {
       final Map<String, String> signingMetadata = new HashMap<>();
 
