@@ -15,8 +15,6 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
-
 import db.DatabaseSetupExtension;
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.Test;
@@ -30,7 +28,7 @@ public class TestDatabaseInfoVersionDaoTest {
   @Test
   public void migratedDatabaseReturnsValue(final Handle handle) {
     final int version = databaseVersionDao.findDatabaseVersion(handle);
-    assertThat(version).isEqualTo(SlashingProtectionFactory.EXPECTED_DATABASE_VERSION);
+    assertThat(version).isEqualTo(DatabaseVersionDao.EXPECTED_DATABASE_VERSION);
   }
 
   @Test

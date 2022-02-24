@@ -16,6 +16,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.DatabaseVersionDao;
 
+import java.util.Optional;
+
 import db.DatabaseUtil;
 import db.DatabaseUtil.TestDatabaseInfo;
 import org.flywaydb.core.Flyway;
@@ -30,8 +32,8 @@ public class DatabaseVersionIntegrationTest {
   @Test
   void ensureDatabaseVersionMatchesNumberOfMigrations() {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
-    final Flyway flyway = testDatabaseInfo.getFlyway();
-    final int countMigrations = flyway.info().applied().length;
+    final Optional<Flyway> flyway = testDatabaseInfo.getFlyway();
+    final int countMigrations = flyway.get().info().applied().length;
 
     final DatabaseVersionDao databaseVersionDao = new DatabaseVersionDao();
     final Jdbi jdbi = Jdbi.create(testDatabaseInfo.databaseUrl(), DB_USERNAME, DB_PASSWORD);

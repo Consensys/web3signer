@@ -13,13 +13,18 @@
 package tech.pegasys.web3signer.slashingprotection.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.slashingprotection.dao.DatabaseVersionDao.VALIDATOR_ENABLE_FLAG_VERSION;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import db.DatabaseSetupExtension;
+import db.DatabaseUtil;
+import db.DatabaseUtil.TestDatabaseInfo;
 import org.apache.tuweni.bytes.Bytes;
+import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -85,6 +90,33 @@ public class ValidatorsDaoTest {
   public void isEnabledReturnsTrueForEnabledValidator(final Handle handle) {
     insertValidator(handle, Bytes.of(1), true);
     assertThat(new ValidatorsDao().isEnabled(handle, 1)).isTrue();
+  }
+
+  @Test
+  public void isEnabledReturnsTrueForExistingValidator() {
+    final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.createWithoutMigration();
+    final Jdbi jdbi = testDatabaseInfo.getJdbi();
+
+    try (Handle handle = jdbi.open()) {
+      final String versionBeforeEnableFlag = String.valueOf(VALIDATOR_ENABLE_FLAG_VERSION - 1);
+      final Flyway flywayBeforeValidatorEnableFlag =
+          Flyway.configure()
+              .locations("/migrations/postgresql/")
+              .dataSource(testDatabaseInfo.getDb().getPostgresDatabase())
+              .target(versionBeforeEnableFlag)
+              .load();
+      flywayBeforeValidatorEnableFlag.migrate();
+
+      handle.execute("INSERT INTO validators (public_key) VALUES (?)", Bytes.of(100));
+
+      final Flyway flywayLatest =
+          Flyway.configure()
+              .locations("/migrations/postgresql/")
+              .dataSource(testDatabaseInfo.getDb().getPostgresDatabase())
+              .load();
+      flywayLatest.migrate();
+      assertThat(new ValidatorsDao().isEnabled(handle, 1)).isTrue();
+    }
   }
 
   @Test
