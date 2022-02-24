@@ -12,14 +12,20 @@
  */
 package tech.pegasys.web3signer.slashingprotection.dao;
 
+import static db.DatabaseUtil.MIGRATIONS_LOCATION;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.pegasys.web3signer.slashingprotection.dao.DatabaseVersionDao.VALIDATOR_ENABLE_FLAG_VERSION;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import db.DatabaseSetupExtension;
+import db.DatabaseUtil;
+import db.DatabaseUtil.TestDatabaseInfo;
 import org.apache.tuweni.bytes.Bytes;
+import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -28,9 +34,9 @@ public class ValidatorsDaoTest {
 
   @Test
   public void retrievesSpecifiedValidatorsFromDb(final Handle handle) {
-    insertValidator(handle, 100);
-    insertValidator(handle, 101);
-    insertValidator(handle, 102);
+    insertValidator(handle, Bytes.of(100));
+    insertValidator(handle, Bytes.of(101));
+    insertValidator(handle, Bytes.of(102));
 
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final List<Validator> registeredValidators =
@@ -55,9 +61,9 @@ public class ValidatorsDaoTest {
 
   @Test
   public void storesUnregisteredValidatorsInDb(final Handle handle) {
-    insertValidator(handle, 100);
-    insertValidator(handle, 101);
-    insertValidator(handle, 102);
+    insertValidator(handle, Bytes.of(100));
+    insertValidator(handle, Bytes.of(101));
+    insertValidator(handle, Bytes.of(102));
 
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final List<Bytes> validators1 =
@@ -81,8 +87,50 @@ public class ValidatorsDaoTest {
     assertThat(validators.get(4)).isEqualToComparingFieldByField(new Validator(5, Bytes.of(104)));
   }
 
-  private void insertValidator(final Handle h, final int i) {
-    final byte[] value = Bytes.of(i).toArrayUnsafe();
-    h.execute("INSERT INTO validators (public_key) VALUES (?)", value);
+  @Test
+  public void isEnabledReturnsTrueForEnabledValidator(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), true);
+    assertThat(new ValidatorsDao().isEnabled(handle, 1)).isTrue();
+  }
+
+  @Test
+  public void isEnabledReturnsTrueForExistingValidator() {
+    final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.createWithoutMigration();
+    final Jdbi jdbi = testDatabaseInfo.getJdbi();
+
+    try (Handle handle = jdbi.open()) {
+      final String versionBeforeEnableFlag = String.valueOf(VALIDATOR_ENABLE_FLAG_VERSION - 1);
+      final Flyway flywayBeforeValidatorEnableFlag =
+          Flyway.configure()
+              .locations(MIGRATIONS_LOCATION)
+              .dataSource(testDatabaseInfo.getDb().getPostgresDatabase())
+              .target(versionBeforeEnableFlag)
+              .load();
+      flywayBeforeValidatorEnableFlag.migrate();
+
+      handle.execute("INSERT INTO validators (public_key) VALUES (?)", Bytes.of(100));
+
+      final Flyway flywayLatest =
+          Flyway.configure()
+              .locations(MIGRATIONS_LOCATION)
+              .dataSource(testDatabaseInfo.getDb().getPostgresDatabase())
+              .load();
+      flywayLatest.migrate();
+      assertThat(new ValidatorsDao().isEnabled(handle, 1)).isTrue();
+    }
+  }
+
+  @Test
+  public void isEnabledReturnsFalseForDisabledValidator(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), false);
+    assertThat(new ValidatorsDao().isEnabled(handle, 1)).isFalse();
+  }
+
+  private void insertValidator(final Handle h, final Bytes publicKey) {
+    insertValidator(h, publicKey, true);
+  }
+
+  private void insertValidator(final Handle h, final Bytes publicKey, final boolean enabled) {
+    h.execute("INSERT INTO validators (public_key, enabled) VALUES (?, ?)", publicKey, enabled);
   }
 }
