@@ -26,6 +26,7 @@ import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import tech.pegasys.signers.hashicorp.dsl.certificates.CertificateHelpers;
 import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.web3signer.core.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 
@@ -218,6 +219,28 @@ public class MetadataFileHelpers {
     yaml.put("keyType", keyType.name());
 
     createYamlFile(metadataFilePath, yaml);
+  }
+
+  public void createAwsYamlFileAt(
+    final Path metadataFilePath,
+    final String awsRegion,
+    final String accessKeyId,
+    final String secretAccessKey,
+    final String secretName) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+
+      signingMetadata.put("type", "aws-secret");
+      signingMetadata.put("authenticationMode", "SPECIFIED");
+      signingMetadata.put("region", awsRegion);
+      signingMetadata.put("accessKeyId", accessKeyId);
+      signingMetadata.put("secretAccessKey", secretAccessKey);
+      signingMetadata.put("secretName", secretName);
+
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to construct aws yaml file", e);
+    }
   }
 
   private void createPasswordFile(final Path passwordFilePath, final String password) {

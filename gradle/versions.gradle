@@ -98,7 +98,7 @@ dependencyManagement {
       entry 'networks'
     }
 
-    dependency 'tech.pegasys:jblst:0.3.3-1'
+    dependency 'tech.pegasys:jblst:0.3.6-4'
 
     dependencySet(group: 'tech.pegasys.signers.internal', version: 'develop') {
       entry 'bls-keystore'

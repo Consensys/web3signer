@@ -1,18 +1,5 @@
-/*
- * Copyright 2020 ConsenSys AG.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- */
-package tech.pegasys.web3signer.tests;
+package tech.pegasys.web3signer.tests.publickeys;
 
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
@@ -25,18 +12,15 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.secretsmanager.model.CreateSecretRequest;
 import software.amazon.awssdk.services.secretsmanager.model.DeleteSecretRequest;
-import tech.pegasys.web3signer.core.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.core.signing.KeyType;
-import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.web3signer.dsl.utils.DefaultAwsSecretsManagerParameters;
 
-import java.util.List;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
+public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
 
   private final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
   private final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
@@ -46,19 +30,21 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
 
   private final String AWS_REGION = "us-east-2";
 
-  private SecretsManagerClient secretsManagerClient;
   private String secretName;
-  private final String SECRET_VALUE = "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
+  private String privateKey; // secret value
+  private String publicKey;
+
+  private SecretsManagerClient secretsManagerClient;
 
   private void checkEnvironmentVariables() {
     Assumptions.assumeTrue(
-        RW_AWS_ACCESS_KEY_ID != null, "Set RW_AWS_ACCESS_KEY_ID environment variable");
+      RW_AWS_ACCESS_KEY_ID != null, "Set RW_AWS_ACCESS_KEY_ID environment variable");
     Assumptions.assumeTrue(
-        RW_AWS_SECRET_ACCESS_KEY != null, "Set RW_AWS_SECRET_ACCESS_KEY environment variable");
+      RW_AWS_SECRET_ACCESS_KEY != null, "Set RW_AWS_SECRET_ACCESS_KEY environment variable");
     Assumptions.assumeTrue(
-        RO_AWS_ACCESS_KEY_ID != null, "Set RO_AWS_ACCESS_KEY_ID environment variable");
+      RO_AWS_ACCESS_KEY_ID != null, "Set RO_AWS_ACCESS_KEY_ID environment variable");
     Assumptions.assumeTrue(
-        RO_AWS_SECRET_ACCESS_KEY != null, "Set RO_AWS_SECRET_ACCESS_KEY environment variable");
+      RO_AWS_SECRET_ACCESS_KEY != null, "Set RO_AWS_SECRET_ACCESS_KEY environment variable");
   }
 
   private void setupSecretsManagerClient() {
@@ -74,9 +60,13 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   }
 
   private void createSecret() {
+
     secretName = "signers-aws-integration/" + UUID.randomUUID();
+
+    privateKey = privateKeys(KeyType.BLS)[0];
+    publicKey = BLS_PUBLIC_KEY_1;
     final CreateSecretRequest secretRequest =
-      CreateSecretRequest.builder().name(secretName).secretString(SECRET_VALUE).build();
+      CreateSecretRequest.builder().name(secretName).secretString(privateKey).build();
     secretsManagerClient.createSecret(secretRequest);
   }
 
@@ -104,17 +94,16 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void ensureSecretsInKeyVaultAreLoadedAndReportedViaPublicKeysApi() {
-      final AwsSecretsManagerParameters awsSecretsManagerParameters =
-      new DefaultAwsSecretsManagerParameters(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY, secretName);
-
-    final SignerConfigurationBuilder configBuilder =
-      new SignerConfigurationBuilder().withMode("eth2").withAwsSecretsManagerParameters(awsSecretsManagerParameters);
-
-    startSigner(configBuilder.build());
-
-    final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(SECRET_VALUE));
+  public void awsKeysReturnAppropriatePublicKey() {
+    metadataFileHelpers.createAwsYamlFileAt(
+      testDirectory.resolve(publicKey + ".yaml"),
+      AWS_REGION,
+      RO_AWS_ACCESS_KEY_ID,
+      RO_AWS_SECRET_ACCESS_KEY,
+      secretName
+      );
+    initAndStartSigner("eth2");
+    final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(BLS);
+    validateApiResponse(response, containsInAnyOrder(publicKey));
   }
-
 }

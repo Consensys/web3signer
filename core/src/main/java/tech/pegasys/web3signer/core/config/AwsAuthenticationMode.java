@@ -12,7 +12,9 @@
  */
 package tech.pegasys.web3signer.core.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum AwsAuthenticationMode {
-  ENVIRONMENT,
-  SPECIFIED
+  @JsonProperty("") ENVIRONMENT,
+  @JsonProperty("") SPECIFIED
 }
