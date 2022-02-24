@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.dao;
 
+import static db.DatabaseUtil.MIGRATIONS_LOCATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.slashingprotection.dao.DatabaseVersionDao.VALIDATOR_ENABLE_FLAG_VERSION;
 
@@ -101,7 +102,7 @@ public class ValidatorsDaoTest {
       final String versionBeforeEnableFlag = String.valueOf(VALIDATOR_ENABLE_FLAG_VERSION - 1);
       final Flyway flywayBeforeValidatorEnableFlag =
           Flyway.configure()
-              .locations("/migrations/postgresql/")
+              .locations(MIGRATIONS_LOCATION)
               .dataSource(testDatabaseInfo.getDb().getPostgresDatabase())
               .target(versionBeforeEnableFlag)
               .load();
@@ -111,7 +112,7 @@ public class ValidatorsDaoTest {
 
       final Flyway flywayLatest =
           Flyway.configure()
-              .locations("/migrations/postgresql/")
+              .locations(MIGRATIONS_LOCATION)
               .dataSource(testDatabaseInfo.getDb().getPostgresDatabase())
               .load();
       flywayLatest.migrate();

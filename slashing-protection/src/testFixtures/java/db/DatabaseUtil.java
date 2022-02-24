@@ -25,12 +25,13 @@ import org.jdbi.v3.core.Jdbi;
 public class DatabaseUtil {
   public static final String USERNAME = "postgres";
   public static final String PASSWORD = "postgres";
+  public static final String MIGRATIONS_LOCATION = "/migrations/postgresql/";
 
   public static TestDatabaseInfo create() {
     final TestDatabaseInfo testDatabaseInfo = createWithoutMigration();
     final Flyway flyway =
         Flyway.configure()
-            .locations("/migrations/postgresql/")
+            .locations(MIGRATIONS_LOCATION)
             .dataSource(testDatabaseInfo.getDb().getPostgresDatabase())
             .load();
     flyway.migrate();
