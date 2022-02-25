@@ -70,13 +70,22 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
   }
 
   @Test
-  public void awsKeysReturnAppropriatePublicKey() {
+  public void specifiedAwsKeysReturnAppropriatePublicKey() {
     metadataFileHelpers.createAwsYamlFileAt(
         testDirectory.resolve(publicKey + ".yaml"),
         AWS_REGION,
         RO_AWS_ACCESS_KEY_ID,
         RO_AWS_SECRET_ACCESS_KEY,
         secretName);
+    initAndStartSigner("eth2");
+    final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(BLS);
+    validateApiResponse(response, containsInAnyOrder(publicKey));
+  }
+
+  @Test
+  public void environmentAwsKeysReturnAppropriatePublicKey() {
+    metadataFileHelpers.createAwsYamlFileAt(
+        testDirectory.resolve(publicKey + ".yaml"), AWS_REGION, secretName);
     initAndStartSigner("eth2");
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(BLS);
     validateApiResponse(response, containsInAnyOrder(publicKey));

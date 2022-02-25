@@ -242,6 +242,22 @@ public class MetadataFileHelpers {
     }
   }
 
+  public void createAwsYamlFileAt(
+      final Path metadataFilePath, final String awsRegion, final String secretName) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+
+      signingMetadata.put("type", "aws-secret");
+      signingMetadata.put("authenticationMode", "ENVIRONMENT");
+      signingMetadata.put("region", awsRegion);
+      signingMetadata.put("secretName", secretName);
+
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to construct aws yaml file", e);
+    }
+  }
+
   private void createPasswordFile(final Path passwordFilePath, final String password) {
     try {
       Files.writeString(passwordFilePath, password);
