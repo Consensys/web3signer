@@ -63,8 +63,10 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
 
   @AfterAll
   void teardown() {
-    awsSecretsManagerUtil.deleteSecret();
-    awsSecretsManagerUtil.close();
+    if (awsSecretsManagerUtil != null) {
+      awsSecretsManagerUtil.deleteSecret();
+      awsSecretsManagerUtil.close();
+    }
   }
 
   @Test
