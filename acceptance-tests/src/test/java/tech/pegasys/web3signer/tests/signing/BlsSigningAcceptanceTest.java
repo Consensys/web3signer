@@ -171,6 +171,8 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         keyConfigFile, region, roAwsAccessKeyId, roAwsSecretAccessKey, secretName);
 
     signAndVerifySignature(ArtifactType.BLOCK);
+    awsSecretsManagerUtil.deleteSecret();
+    awsSecretsManagerUtil.close();
   }
 
   @ParameterizedTest
