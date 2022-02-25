@@ -69,9 +69,6 @@ dependencies {
   testImplementation (testFixtures(project(":core")))
 
   gatlingImplementation configurations.getByName("testImplementation")
-
-  implementation 'software.amazon.awssdk:auth'
-  implementation 'software.amazon.awssdk:secretsmanager'
 }
 
 test.enabled = false
