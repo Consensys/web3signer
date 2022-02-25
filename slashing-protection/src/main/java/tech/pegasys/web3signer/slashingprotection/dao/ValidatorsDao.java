@@ -64,4 +64,12 @@ public class ValidatorsDao {
         .mapTo(Boolean.class)
         .first();
   }
+
+  public void setEnabled(final Handle handle, final int validatorId, final boolean enabled) {
+    handle
+        .createUpdate("UPDATE validators SET enabled = :enabled WHERE id = :validator_id")
+        .bind("validator_id", validatorId)
+        .bind("enabled", enabled)
+        .execute();
+  }
 }

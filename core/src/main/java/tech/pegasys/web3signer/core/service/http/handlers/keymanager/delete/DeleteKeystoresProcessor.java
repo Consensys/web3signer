@@ -17,6 +17,7 @@ import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.core.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -36,14 +37,17 @@ public class DeleteKeystoresProcessor {
   private final KeystoreFileManager keystoreFileManager;
   private final Optional<SlashingProtection> slashingProtection;
   private final ArtifactSignerProvider signerProvider;
+  private final ValidatorsDao validatorsDao;
 
   public DeleteKeystoresProcessor(
       final KeystoreFileManager keystoreFileManager,
       final Optional<SlashingProtection> slashingProtection,
-      final ArtifactSignerProvider signerProvider) {
+      final ArtifactSignerProvider signerProvider,
+      final ValidatorsDao validatorsDao) {
     this.keystoreFileManager = keystoreFileManager;
     this.slashingProtection = slashingProtection;
     this.signerProvider = signerProvider;
+    this.validatorsDao = validatorsDao;
   }
 
   public DeleteKeystoresResponse process(final DeleteKeystoresRequestBody requestBody) {
@@ -68,13 +72,14 @@ public class DeleteKeystoresProcessor {
     for (String pubkey : pubkeysToDelete) {
       try {
         final Optional<ArtifactSigner> signer = signerProvider.getSigner(pubkey);
+        final Bytes pubKeyBytes = Bytes.fromHexString(pubkey);
 
         // check that key is active
         if (signer.isEmpty()) {
           // if not active, check if we ever had this key registered in the slashing DB
           final boolean wasRegistered =
               slashingProtection
-                  .map(protection -> protection.isRegisteredValidator(Bytes.fromHexString(pubkey)))
+                  .map(protection -> protection.isRegisteredValidator(pubKeyBytes))
                   .orElse(false);
 
           // if it was registered previously, return not_active and add to list of keys to export,
@@ -97,6 +102,8 @@ public class DeleteKeystoresProcessor {
           continue;
         }
 
+        // disable any further signing with validator for all web3signers that share the db
+        slashingProtection.ifPresent(s -> s.disableValidator(pubKeyBytes));
         // Remove active key from memory first, will stop any further signing with this key
         signerProvider.removeSigner(pubkey).get();
         // Then, delete the corresponding keystore file

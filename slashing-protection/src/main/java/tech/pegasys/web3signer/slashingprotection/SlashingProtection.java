@@ -45,4 +45,6 @@ public interface SlashingProtection {
   void importDataWithFilter(InputStream output, List<String> pubkeys);
 
   void prune();
+
+  void disableValidator(Bytes publicKey);
 }
