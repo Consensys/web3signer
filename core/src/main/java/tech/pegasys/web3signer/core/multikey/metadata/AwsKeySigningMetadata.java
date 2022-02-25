@@ -17,9 +17,9 @@ import tech.pegasys.web3signer.core.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+@JsonDeserialize(using = AwsKeySigningMetadataDeserializer.class)
 public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecretsManagerParameters {
 
   private final AwsAuthenticationMode authenticationMode;
@@ -28,13 +28,12 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
   private final String secretAccessKey;
   private final String secretName;
 
-  @JsonCreator
   public AwsKeySigningMetadata(
-      @JsonProperty("authenticationMode") final AwsAuthenticationMode authenticationMode,
-      @JsonProperty("region") final String region,
-      @JsonProperty("accessKeyId") final String accessKeyId,
-      @JsonProperty("secretAccessKey") final String secretAccessKey,
-      @JsonProperty("secretName") final String secretName) {
+      final AwsAuthenticationMode authenticationMode,
+      final String region,
+      final String accessKeyId,
+      final String secretAccessKey,
+      final String secretName) {
     super(KeyType.BLS);
     this.authenticationMode = authenticationMode;
     this.region = region;
