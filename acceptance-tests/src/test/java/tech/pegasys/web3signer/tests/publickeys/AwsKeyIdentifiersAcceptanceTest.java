@@ -16,8 +16,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.web3signer.core.signing.KeyType;
-
-import java.util.UUID;
+import tech.pegasys.web3signer.dsl.utils.AwsSecretsManagerUtil;
 
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
@@ -25,12 +24,6 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
-import software.amazon.awssdk.services.secretsmanager.model.CreateSecretRequest;
-import software.amazon.awssdk.services.secretsmanager.model.DeleteSecretRequest;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
@@ -44,10 +37,10 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
   private final String AWS_REGION = "us-east-2";
 
   private String secretName;
-  private String privateKey; // secret value
-  private String publicKey;
+  private final String privateKey = privateKeys(KeyType.BLS)[0]; // secret value
+  private final String publicKey = BLS_PUBLIC_KEY_1;
 
-  private SecretsManagerClient secretsManagerClient;
+  private AwsSecretsManagerUtil awsSecretsManagerUtil;
 
   private void checkEnvironmentVariables() {
     Assumptions.assumeTrue(
@@ -60,50 +53,18 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
         RO_AWS_SECRET_ACCESS_KEY != null, "Set RO_AWS_SECRET_ACCESS_KEY environment variable");
   }
 
-  private void setupSecretsManagerClient() {
-    final AwsBasicCredentials awsBasicCredentials =
-        AwsBasicCredentials.create(RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
-    final StaticCredentialsProvider credentialsProvider =
-        StaticCredentialsProvider.create(awsBasicCredentials);
-    secretsManagerClient =
-        SecretsManagerClient.builder()
-            .credentialsProvider(credentialsProvider)
-            .region(Region.of(AWS_REGION))
-            .build();
-  }
-
-  private void createSecret() {
-
-    secretName = "signers-aws-integration/" + UUID.randomUUID();
-
-    privateKey = privateKeys(KeyType.BLS)[0];
-    publicKey = BLS_PUBLIC_KEY_1;
-    final CreateSecretRequest secretRequest =
-        CreateSecretRequest.builder().name(secretName).secretString(privateKey).build();
-    secretsManagerClient.createSecret(secretRequest);
-  }
-
-  private void deleteSecret() {
-    final DeleteSecretRequest secretRequest =
-        DeleteSecretRequest.builder().secretId(secretName).build();
-    secretsManagerClient.deleteSecret(secretRequest);
-  }
-
-  private void closeClients() {
-    secretsManagerClient.close();
-  }
-
   @BeforeAll
   void setup() {
     checkEnvironmentVariables();
-    setupSecretsManagerClient();
-    createSecret();
+    awsSecretsManagerUtil =
+        new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
+    secretName = awsSecretsManagerUtil.createSecret(privateKey);
   }
 
   @AfterAll
   void teardown() {
-    deleteSecret();
-    closeClients();
+    awsSecretsManagerUtil.deleteSecret();
+    awsSecretsManagerUtil.close();
   }
 
   @Test
