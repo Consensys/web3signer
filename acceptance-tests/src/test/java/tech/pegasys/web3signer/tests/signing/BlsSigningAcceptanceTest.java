@@ -167,12 +167,15 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final String configFilename = keyPair.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createAwsYamlFileAt(
-        keyConfigFile, region, roAwsAccessKeyId, roAwsSecretAccessKey, secretName);
+    try {
+      metadataFileHelpers.createAwsYamlFileAt(
+          keyConfigFile, region, roAwsAccessKeyId, roAwsSecretAccessKey, secretName);
 
-    signAndVerifySignature(ArtifactType.BLOCK);
-    awsSecretsManagerUtil.deleteSecret();
-    awsSecretsManagerUtil.close();
+      signAndVerifySignature(ArtifactType.BLOCK);
+    } finally {
+      awsSecretsManagerUtil.deleteSecret();
+      awsSecretsManagerUtil.close();
+    }
   }
 
   @ParameterizedTest
