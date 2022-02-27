@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.multikey.metadata;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.OBJECT_MAPPER;
 
 import tech.pegasys.web3signer.core.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.signing.KeyType;
@@ -32,9 +33,9 @@ import org.junit.jupiter.api.Test;
 class AwsKeySigningMetadataDeserializerTest {
 
   private final String AWS_VALID_CONFIG_ENVIRONMENT_AUTH_MODE_PATH =
-      "src/test/resources/aws" + "/aws_valid_config_environment.yaml";
+      "src/test/resources/aws/aws_valid_config_environment.yaml";
   private final String AWS_VALID_CONFIG_SPECIFIED_AUTH_MODE_PATH =
-      "src/test/resources/aws" + "/aws_valid_config_specified.yaml";
+      "src/test/resources/aws/aws_valid_config_specified.yaml";
 
   private ObjectMapper objectMapper;
 
@@ -49,7 +50,7 @@ class AwsKeySigningMetadataDeserializerTest {
   @Test
   public void deserializeValidAwsConfigWithEnvironmentAuthMode() throws IOException {
     final AwsKeySigningMetadata deserializedMetadata =
-        objectMapper.readValue(
+        OBJECT_MAPPER.readValue(
             new File(AWS_VALID_CONFIG_ENVIRONMENT_AUTH_MODE_PATH), AwsKeySigningMetadata.class);
 
     assertThat(deserializedMetadata.getAuthenticationMode())
@@ -68,7 +69,7 @@ class AwsKeySigningMetadataDeserializerTest {
         stripField(configFile, AwsKeySigningMetadataDeserializer.SECRET_NAME);
 
     assertThatThrownBy(
-            () -> objectMapper.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
+            () -> OBJECT_MAPPER.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
         .isInstanceOf(JsonMappingException.class)
         .hasMessageContaining("Missing values for required parameters: secretName");
   }
@@ -80,7 +81,7 @@ class AwsKeySigningMetadataDeserializerTest {
         stripField(configFile, AwsKeySigningMetadataDeserializer.REGION);
 
     assertThatThrownBy(
-            () -> objectMapper.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
+            () -> OBJECT_MAPPER.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
         .isInstanceOf(JsonMappingException.class)
         .hasMessageContaining("Missing values for required parameters: region");
   }
@@ -88,7 +89,7 @@ class AwsKeySigningMetadataDeserializerTest {
   @Test
   public void deserializeValidAwsConfigWithSpecifiedAuthMode() throws IOException {
     final AwsKeySigningMetadata deserializedMetadata =
-        objectMapper.readValue(
+        OBJECT_MAPPER.readValue(
             new File(AWS_VALID_CONFIG_SPECIFIED_AUTH_MODE_PATH), AwsKeySigningMetadata.class);
 
     assertThat(deserializedMetadata.getAuthenticationMode())
@@ -107,7 +108,7 @@ class AwsKeySigningMetadataDeserializerTest {
         stripField(configFile, AwsKeySigningMetadataDeserializer.SECRET_NAME);
 
     assertThatThrownBy(
-            () -> objectMapper.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
+            () -> OBJECT_MAPPER.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
         .isInstanceOf(JsonMappingException.class)
         .hasMessageContaining("Missing values for required parameters: secretName");
   }
@@ -119,7 +120,7 @@ class AwsKeySigningMetadataDeserializerTest {
         stripField(configFile, AwsKeySigningMetadataDeserializer.REGION);
 
     assertThatThrownBy(
-            () -> objectMapper.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
+            () -> OBJECT_MAPPER.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
         .isInstanceOf(JsonMappingException.class)
         .hasMessageContaining("Missing values for required parameters: region");
   }
@@ -131,7 +132,7 @@ class AwsKeySigningMetadataDeserializerTest {
         stripField(configFile, AwsKeySigningMetadataDeserializer.ACCESS_KEY_ID);
 
     assertThatThrownBy(
-            () -> objectMapper.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
+            () -> OBJECT_MAPPER.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
         .isInstanceOf(JsonMappingException.class)
         .hasMessageContaining("Missing values for required parameters: accessKeyId");
   }
@@ -143,7 +144,7 @@ class AwsKeySigningMetadataDeserializerTest {
         stripField(configFile, AwsKeySigningMetadataDeserializer.SECRET_ACCESS_KEY);
 
     assertThatThrownBy(
-            () -> objectMapper.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
+            () -> OBJECT_MAPPER.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
         .isInstanceOf(JsonMappingException.class)
         .hasMessageContaining("Missing values for required parameters: secretAccessKey");
   }
@@ -155,20 +156,20 @@ class AwsKeySigningMetadataDeserializerTest {
         overrideField(configFile, AwsKeySigningMetadataDeserializer.AUTH_MODE, "foo");
 
     assertThatThrownBy(
-            () -> objectMapper.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
+            () -> OBJECT_MAPPER.readValue(configWithoutRequiredField, AwsKeySigningMetadata.class))
         .isInstanceOf(JsonMappingException.class)
         .hasMessageContaining("Error converting authenticationMode");
   }
 
   private String stripField(final File file, final String fieldName) throws IOException {
-    final ObjectNode node = (ObjectNode) objectMapper.readTree(file);
+    final ObjectNode node = (ObjectNode) OBJECT_MAPPER.readTree(file);
     node.remove(fieldName);
     return node.toString();
   }
 
   private String overrideField(final File file, final String fieldName, final String newValue)
       throws IOException {
-    final ObjectNode node = (ObjectNode) objectMapper.readTree(file);
+    final ObjectNode node = (ObjectNode) OBJECT_MAPPER.readTree(file);
     node.remove(fieldName);
     node.put(fieldName, newValue);
     return node.toString();
