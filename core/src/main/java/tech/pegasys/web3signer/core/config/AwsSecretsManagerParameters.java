@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 ConsenSys AG.
+ * Copyright 2022 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -10,14 +10,16 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.multikey.metadata;
+package tech.pegasys.web3signer.core.config;
 
-public enum SignerOrigin {
-  AZURE,
-  HASHICORP,
-  AWS,
-  INTERLOCK,
-  YUBI_HSM,
-  FILE_KEYSTORE,
-  FILE_RAW
+public interface AwsSecretsManagerParameters {
+  AwsAuthenticationMode getAuthenticationMode();
+
+  String getAccessKeyId();
+
+  String getSecretAccessKey();
+
+  String getSecretName();
+
+  String getRegion();
 }

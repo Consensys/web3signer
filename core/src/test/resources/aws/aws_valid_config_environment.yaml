@@ -1,0 +1,5 @@
+type: "aws-secret"
+keyType: "BLS"
+authenticationMode: "ENVIRONMENT"
+region: "ap-southeast-2"
+secretName: "NewSuperSecret"

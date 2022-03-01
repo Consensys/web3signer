@@ -114,6 +114,15 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     }
   }
 
+  @Override
+  public ArtifactSigner create(final AwsKeySigningMetadata awsKeySigningMetadata) {
+    try (final TimingContext ignored = privateKeyRetrievalTimer.labels("aws").startTimer()) {
+      final Bytes32 keyBytes = Bytes32.wrap(extractBytesFromSecretsManager(awsKeySigningMetadata));
+      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(keyBytes));
+      return signerFactory.apply(new BlsArtifactSignerArgs(keyPair, SignerOrigin.AWS));
+    }
+  }
+
   private ArtifactSigner createKeystoreArtifact(final FileKeyStoreMetadata fileKeyStoreMetadata) {
     final Path keystoreFile = makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystoreFile());
     final Path keystorePasswordFile =

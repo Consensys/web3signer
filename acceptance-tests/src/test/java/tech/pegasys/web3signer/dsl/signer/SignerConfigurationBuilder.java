@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.dsl.signer;
 
 import static java.util.Collections.emptyList;
 
+import tech.pegasys.web3signer.core.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
@@ -45,6 +46,7 @@ public class SignerConfigurationBuilder {
   private Path slashingProtectionDbPoolConfigurationFile = null;
   private String mode;
   private AzureKeyVaultParameters azureKeyVaultParameters;
+  private AwsSecretsManagerParameters awsSecretsManagerParameters;
   private Map<String, String> web3SignerEnvironment;
   private boolean enableSlashing = false;
   private String slashingProtectionDbUrl;
@@ -118,6 +120,12 @@ public class SignerConfigurationBuilder {
   public SignerConfigurationBuilder withAzureKeyVaultParameters(
       final AzureKeyVaultParameters azureKeyVaultParameters) {
     this.azureKeyVaultParameters = azureKeyVaultParameters;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withAwsSecretsManagerParameters(
+      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
+    this.awsSecretsManagerParameters = awsSecretsManagerParameters;
     return this;
   }
 
@@ -228,6 +236,7 @@ public class SignerConfigurationBuilder {
         metricsCategories,
         metricsEnabled,
         Optional.ofNullable(azureKeyVaultParameters),
+        Optional.ofNullable(awsSecretsManagerParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),
         Optional.ofNullable(slashingProtectionDbUrl),

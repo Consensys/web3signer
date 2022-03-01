@@ -183,6 +183,12 @@ public class DbSlashingProtection implements SlashingProtection {
     return jdbi.inTransaction(
         READ_COMMITTED,
         handle -> {
+          lockForValidator(handle, LockType.ATTESTATION, validatorId);
+
+          if (!validatorsDao.isEnabled(handle, validatorId)) {
+            return false;
+          }
+
           final AttestationValidator attestationValidator =
               new AttestationValidator(
                   handle,
@@ -197,8 +203,6 @@ public class DbSlashingProtection implements SlashingProtection {
           if (attestationValidator.sourceGreaterThanTargetEpoch()) {
             return false;
           }
-
-          lockForValidator(handle, LockType.ATTESTATION, validatorId);
 
           if (attestationValidator.hasSourceOlderThanWatermark()
               || attestationValidator.hasTargetOlderThanWatermark()
@@ -227,11 +231,15 @@ public class DbSlashingProtection implements SlashingProtection {
     return jdbi.inTransaction(
         READ_COMMITTED,
         h -> {
+          lockForValidator(h, LockType.BLOCK, validatorId);
+
+          if (!validatorsDao.isEnabled(h, validatorId)) {
+            return false;
+          }
+
           final BlockValidator blockValidator =
               new BlockValidator(
                   h, signingRoot, blockSlot, validatorId, signedBlocksDao, lowWatermarkDao);
-
-          lockForValidator(h, LockType.BLOCK, validatorId);
 
           if (blockValidator.isOlderThanWatermark()
               || blockValidator.directlyConflictsWithExistingEntry()) {

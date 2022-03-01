@@ -72,7 +72,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   private UInt64 bellatrixForkEpoch;
 
   @CommandLine.Option(
-      names = {"--key-manager-api-enabled"},
+      names = {"--key-manager-api-enabled", "--enable-key-manager-api"},
       paramLabel = "<BOOL>",
       description = "Enable the key manager API to manage key stores (default: ${DEFAULT-VALUE}).",
       arity = "1")
@@ -128,36 +128,12 @@ public class Eth2SubCommand extends ModeSubCommand {
     validatePositiveValue(
         slashingProtectionParameters.getPruningSlotsPerEpoch(), "Pruning slots per epoch");
 
+    validateAzureParameters();
+  }
+
+  private void validateAzureParameters() {
     if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-
-      final List<String> missingAzureFields = Lists.newArrayList();
-
-      if (azureKeyVaultParameters.getKeyVaultName() == null) {
-        missingAzureFields.add("--azure-vault-name");
-      }
-
-      if (azureKeyVaultParameters.getAuthenticationMode() == CLIENT_SECRET) {
-        // client secret authentication mode requires all of following options
-        if (azureKeyVaultParameters.getClientSecret() == null) {
-          missingAzureFields.add("--azure-client-secret");
-        }
-
-        if (azureKeyVaultParameters.getClientId() == null) {
-          missingAzureFields.add("--azure-client-id");
-        }
-
-        if (azureKeyVaultParameters.getTenantId() == null) {
-          missingAzureFields.add("--azure-tenant-id");
-        }
-      } else if (azureKeyVaultParameters.getAuthenticationMode()
-          == USER_ASSIGNED_MANAGED_IDENTITY) {
-        if (azureKeyVaultParameters.getClientId() == null) {
-          missingAzureFields.add("--azure-client-id");
-        }
-      }
-
-      // no extra validation required for "system-assigned managed identity".
-
+      final List<String> missingAzureFields = missingAzureFields();
       if (!missingAzureFields.isEmpty()) {
         final String errorMsg =
             String.format(
@@ -166,6 +142,32 @@ public class Eth2SubCommand extends ModeSubCommand {
         throw new ParameterException(commandSpec.commandLine(), errorMsg);
       }
     }
+  }
+
+  private List<String> missingAzureFields() {
+    final List<String> missingFields = Lists.newArrayList();
+    if (azureKeyVaultParameters.getKeyVaultName() == null) {
+      missingFields.add("--azure-vault-name");
+    }
+    if (azureKeyVaultParameters.getAuthenticationMode() == CLIENT_SECRET) {
+      // client secret authentication mode requires all of following options
+      if (azureKeyVaultParameters.getClientSecret() == null) {
+        missingFields.add("--azure-client-secret");
+      }
+
+      if (azureKeyVaultParameters.getKeyVaultName() == null) {
+        missingFields.add("--azure-vault-name");
+      }
+
+      if (azureKeyVaultParameters.getTenantId() == null) {
+        missingFields.add("--azure-tenant-id");
+      }
+    } else if (azureKeyVaultParameters.getAuthenticationMode() == USER_ASSIGNED_MANAGED_IDENTITY) {
+      if (azureKeyVaultParameters.getClientId() == null) {
+        missingFields.add("--azure-client-id");
+      }
+    }
+    return missingFields;
   }
 
   private void validatePositiveValue(final long value, final String fieldName) {
