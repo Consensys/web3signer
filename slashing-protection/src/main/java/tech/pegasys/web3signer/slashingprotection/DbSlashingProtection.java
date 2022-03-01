@@ -300,6 +300,17 @@ public class DbSlashingProtection implements SlashingProtection {
         });
   }
 
+  @Override
+  public void enableValidator(final Bytes publicKey) {
+    final int validatorId = validatorId(publicKey);
+    jdbi.useTransaction(
+        handle -> {
+          lockForValidator(handle, LockType.ATTESTATION, validatorId);
+          lockForValidator(handle, LockType.BLOCK, validatorId);
+          validatorsDao.setEnabled(handle, validatorId, true);
+        });
+  }
+
   private int validatorId(final Bytes publicKey) {
     final Integer validatorId = registeredValidators.get(publicKey);
     if (validatorId == null) {
