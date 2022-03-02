@@ -176,7 +176,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
               protection -> protection.registerValidators(List.of(pubKeyBytes)));
           // 4. add the new signer to the provider to make it available for signing
           artifactSignerProvider.addSigner(signer).get();
-          slashingProtection.ifPresent(s -> s.enableValidator(pubKeyBytes));
+          slashingProtection.ifPresent(s -> s.updateValidatorEnabledStatus(pubKeyBytes, true));
           // 5. finally, add result to API response
           results.add(new ImportKeystoreResult(ImportKeystoreStatus.IMPORTED, null));
         }

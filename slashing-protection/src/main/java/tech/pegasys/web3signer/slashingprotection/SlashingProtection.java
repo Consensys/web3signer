@@ -46,7 +46,7 @@ public interface SlashingProtection {
 
   void prune();
 
-  void disableValidator(Bytes publicKey);
+  boolean isEnabledValidator(Bytes publicKey);
 
-  void enableValidator(Bytes publicKey);
+  void updateValidatorEnabledStatus(Bytes publicKey, boolean enabled);
 }

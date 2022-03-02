@@ -46,6 +46,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 public class DbSlashingProtection implements SlashingProtection {
@@ -185,7 +186,7 @@ public class DbSlashingProtection implements SlashingProtection {
         handle -> {
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
 
-          if (!validatorsDao.isEnabled(handle, validatorId)) {
+          if (!isEnabled(handle, validatorId)) {
             return false;
           }
 
@@ -233,7 +234,7 @@ public class DbSlashingProtection implements SlashingProtection {
         h -> {
           lockForValidator(h, LockType.BLOCK, validatorId);
 
-          if (!validatorsDao.isEnabled(h, validatorId)) {
+          if (!isEnabled(h, validatorId)) {
             return false;
           }
 
@@ -290,25 +291,25 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void disableValidator(final Bytes publicKey) {
+  public boolean isEnabledValidator(final Bytes publicKey) {
     final int validatorId = validatorId(publicKey);
-    jdbi.useTransaction(
-        handle -> {
-          lockForValidator(handle, LockType.ATTESTATION, validatorId);
-          lockForValidator(handle, LockType.BLOCK, validatorId);
-          validatorsDao.setEnabled(handle, validatorId, false);
-        });
+    return jdbi.inTransaction(handle -> isEnabled(handle, validatorId));
   }
 
   @Override
-  public void enableValidator(final Bytes publicKey) {
+  public void updateValidatorEnabledStatus(final Bytes publicKey, final boolean enabled) {
     final int validatorId = validatorId(publicKey);
     jdbi.useTransaction(
+        READ_COMMITTED,
         handle -> {
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
           lockForValidator(handle, LockType.BLOCK, validatorId);
-          validatorsDao.setEnabled(handle, validatorId, true);
+          validatorsDao.setEnabled(handle, validatorId, enabled);
         });
+  }
+
+  private boolean isEnabled(final Handle handle, final int validatorId) {
+    return validatorsDao.isEnabled(handle, validatorId);
   }
 
   private int validatorId(final Bytes publicKey) {
