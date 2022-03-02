@@ -141,6 +141,11 @@ public class ValidatorsDaoTest {
   }
 
   @Test
+  public void isEnabledReturnsFalseForNonExistingValidator(final Handle handle) {
+    assertThat(new ValidatorsDao().isEnabled(handle, 1)).isFalse();
+  }
+
+  @Test
   public void canEnableAlreadyDisabledValidator(final Handle handle) {
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     insertValidator(handle, Bytes.of(1), false);
