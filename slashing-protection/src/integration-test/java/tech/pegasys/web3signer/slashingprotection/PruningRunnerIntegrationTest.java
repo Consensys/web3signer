@@ -255,6 +255,16 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
       pruningRunner.run();
     }
 
+    @Override
+    public boolean isEnabledValidator(final Bytes publicKey) {
+      return delegate.isEnabledValidator(publicKey);
+    }
+
+    @Override
+    public void updateValidatorEnabledStatus(final Bytes publicKey, final boolean enabled) {
+      delegate.updateValidatorEnabledStatus(publicKey, enabled);
+    }
+
     public List<PruningStat> getPruningStats() {
       return pruningStats;
     }
