@@ -93,6 +93,72 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
   }
 
   @Test
+  void exportingIncrementallyOnlyExportsSpecifiedValidators() throws IOException {
+    final Bytes32 gvr = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
+
+    final int VALIDATOR_COUNT = 6;
+    final int TOTAL_BLOCKS_SIGNED = 6;
+    final int TOTAL_ATTESTATIONS_SIGNED = 8;
+
+    for (int i = 0; i < VALIDATOR_COUNT; i++) {
+      final int validatorId = i + 1;
+      final Bytes validatorPublicKey = Bytes.of(validatorId);
+      slashingProtection.registerValidators(List.of(validatorPublicKey));
+
+      for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
+        insertBlockAt(UInt64.valueOf(b), validatorId);
+      }
+      for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
+        insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a), validatorId);
+      }
+
+      jdbi.useTransaction(
+          h -> {
+            lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, UInt64.ZERO);
+            lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, UInt64.ZERO, UInt64.ZERO);
+          });
+    }
+
+    // incrementally export only the even the public keys
+    final OutputStream exportOutput = new ByteArrayOutputStream();
+    slashingProtection.exportIncrementallyBegin(exportOutput);
+    for (int i = 0; i < VALIDATOR_COUNT; i += 2) {
+      slashingProtection.exportIncrementally(String.format("0x0%x", i + 1));
+    }
+    slashingProtection.exportIncrementallyFinish();
+    exportOutput.close();
+    final InterchangeV5Format outputObject =
+        mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
+
+    assertThat(outputObject.getMetadata().getFormatVersion()).isEqualTo("5");
+    assertThat(outputObject.getMetadata().getGenesisValidatorsRoot()).isEqualTo(gvr);
+
+    final List<SignedArtifacts> signedArtifacts = outputObject.getSignedArtifacts();
+    assertThat(signedArtifacts).hasSize(VALIDATOR_COUNT / 2);
+    for (int i = 0; i < VALIDATOR_COUNT; i += 2) {
+      final int validatorId = i + 1;
+      final SignedArtifacts signedArtifact = signedArtifacts.get(i / 2);
+      assertThat(signedArtifact.getPublicKey()).isEqualTo(String.format("0x0%x", validatorId));
+      assertThat(signedArtifact.getSignedBlocks()).hasSize(TOTAL_BLOCKS_SIGNED);
+      for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
+        final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock block =
+            signedArtifact.getSignedBlocks().get(b);
+        assertThat(block.getSigningRoot()).isEqualTo(Bytes.of(100));
+        assertThat(block.getSlot()).isEqualTo(UInt64.valueOf(b));
+      }
+
+      assertThat(signedArtifact.getSignedAttestations()).hasSize(TOTAL_ATTESTATIONS_SIGNED);
+      for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
+        final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation
+            attestation = signedArtifact.getSignedAttestations().get(a);
+        assertThat(attestation.getSigningRoot()).isEqualTo(Bytes.of(100));
+        assertThat(attestation.getSourceEpoch()).isEqualTo(UInt64.valueOf(a));
+        assertThat(attestation.getTargetEpoch()).isEqualTo(UInt64.valueOf(a));
+      }
+    }
+  }
+
+  @Test
   void failToExportIfGenesisValidatorRootDoesNotExist() throws IOException {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
     final String databaseUrl = testDatabaseInfo.databaseUrl();
