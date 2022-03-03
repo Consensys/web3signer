@@ -33,6 +33,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -98,7 +99,7 @@ public class InterchangeV5Exporter {
   }
 
   public void exportIncrementally(final String publicKey) {
-    populateInterchangeData(jsonGenerator, Optional.of(List.of(publicKey)));
+    populateInterchangeData(jsonGenerator, publicKey);
   }
 
   public void exportIncrementallyFinish() throws IOException {
@@ -145,6 +146,23 @@ public class InterchangeV5Exporter {
                     validator -> {
                       try {
                         populateValidatorRecord(h, validator, jsonGenerator, pubkeys);
+                      } catch (final IOException e) {
+                        throw new UncheckedIOException(
+                            "Failed to construct a validator entry in json", e);
+                      }
+                    }));
+  }
+
+  protected void populateInterchangeData(final JsonGenerator jsonGenerator, final String pubkey) {
+    jdbi.useTransaction(
+        h ->
+            validatorsDao.retrieveValidators(h, List.of(Bytes.fromHexString(pubkey))).stream()
+                .findFirst()
+                .ifPresent(
+                    validator -> {
+                      try {
+                        populateValidatorRecord(
+                            h, validator, jsonGenerator, Optional.of(List.of(pubkey)));
                       } catch (final IOException e) {
                         throw new UncheckedIOException(
                             "Failed to construct a validator entry in json", e);
