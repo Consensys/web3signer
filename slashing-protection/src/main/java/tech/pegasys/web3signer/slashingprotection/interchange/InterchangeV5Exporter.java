@@ -80,7 +80,7 @@ public class InterchangeV5Exporter {
   public void exportIncrementallyBegin(final OutputStream out) throws IOException {
     checkState(
         jsonGenerator == null,
-        "Already in exporting incrementally. Call exportIncrementallyFinish before calling exportIncrementallyBegin");
+        "Already exporting incrementally. Call exportIncrementallyFinish before calling exportIncrementallyBegin");
     jsonGenerator = mapper.getFactory().createGenerator(out);
     final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
     if (gvr.isEmpty()) {
