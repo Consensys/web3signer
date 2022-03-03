@@ -15,53 +15,31 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import tech.pegasys.web3signer.slashingprotection.DbConnection;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
-
+import db.DatabaseSetupExtension;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.testing.JdbiRule;
-import org.jdbi.v3.testing.Migration;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-public class DatabaseVersionDaoTest {
-
-  @Rule
-  public JdbiRule postgres =
-      JdbiRule.embeddedPostgres()
-          .withMigration(Migration.before().withPath("migrations/postgresql"));
+@ExtendWith(DatabaseSetupExtension.class)
+public class TestDatabaseInfoVersionDaoTest {
 
   private final DatabaseVersionDao databaseVersionDao = new DatabaseVersionDao();
-  private Handle handle;
-
-  @Before
-  public void setup() {
-    DbConnection.configureJdbi(postgres.getJdbi());
-    handle = postgres.getJdbi().open();
-  }
-
-  @After
-  public void cleanup() {
-    handle.close();
-  }
 
   @Test
-  public void migratedDatabaseReturnsValue() {
+  public void migratedDatabaseReturnsValue(final Handle handle) {
     final int version = databaseVersionDao.findDatabaseVersion(handle);
-    assertThat(version).isEqualTo(SlashingProtectionFactory.EXPECTED_DATABASE_VERSION);
+    assertThat(version).isEqualTo(DatabaseVersionDao.EXPECTED_DATABASE_VERSION);
   }
 
   @Test
-  public void missingTableThrowsException() {
+  public void missingTableThrowsException(final Handle handle) {
     handle.execute("DROP TABLE database_version");
     assertThatThrownBy(() -> databaseVersionDao.findDatabaseVersion(handle))
         .isInstanceOf(IllegalStateException.class);
   }
 
   @Test
-  public void missingEntryInTableThrowsException() {
+  public void missingEntryInTableThrowsException(final Handle handle) {
     handle.execute("DELETE FROM database_version");
     assertThatThrownBy(() -> databaseVersionDao.findDatabaseVersion(handle))
         .isInstanceOf(IllegalStateException.class);

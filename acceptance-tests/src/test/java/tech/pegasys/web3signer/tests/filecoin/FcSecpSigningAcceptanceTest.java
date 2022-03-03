@@ -32,6 +32,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.github.arteam.simplejsonrpc.core.domain.Request;
@@ -67,7 +68,7 @@ public class FcSecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     setupFilecoinSigner();
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
-    final ObjectMapper mapper = new ObjectMapper();
+    final ObjectMapper mapper = JsonMapper.builder().build();
     final Map<String, String> metaData = Map.of("type", "unknown");
     final JsonNode params =
         mapper.convertValue(

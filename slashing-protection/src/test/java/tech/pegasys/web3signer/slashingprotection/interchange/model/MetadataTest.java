@@ -20,19 +20,22 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 class MetadataTest {
 
-  private final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
+  private final ObjectMapper mapper =
+      JsonMapper.builder().addModule(new InterchangeModule()).build();
 
   @Test
   @SuppressWarnings("unchecked")
   void metadataHasCorrectlyNamedFields() throws JsonProcessingException {
     final Metadata medataData = new Metadata("5", Bytes.fromHexString("0x123456"));
     final String jsonOutput = mapper.writeValueAsString(medataData);
-    final Map<String, String> jsonContent = new ObjectMapper().readValue(jsonOutput, Map.class);
+    final Map<String, String> jsonContent =
+        JsonMapper.builder().build().readValue(jsonOutput, Map.class);
 
     assertThat(jsonContent.get("interchange_format_version"))
         .isEqualTo(medataData.getFormatVersion());

@@ -37,12 +37,12 @@ dependencies {
 
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
-  testImplementation 'org.junit.jupiter:junit-jupiter-migrationsupport'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
-  testImplementation 'org.jdbi:jdbi3-testing'
-  testImplementation 'com.opentable.components:otj-pg-embedded'
+
   testImplementation 'org.flywaydb:flyway-core'
+  testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
+  testImplementation 'io.zonky.test:embedded-postgres'
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.7.0'
@@ -51,6 +51,12 @@ dependencies {
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
   testFixturesImplementation 'org.apache.commons:commons-lang3'
   testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api'
+
+  testFixturesImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
+  testFixturesImplementation 'io.zonky.test:embedded-postgres'
+  testFixturesImplementation 'org.flywaydb:flyway-core'
+  testFixturesImplementation 'org.jdbi:jdbi3-core'
 
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
@@ -58,8 +64,9 @@ dependencies {
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation 'org.flywaydb:flyway-core'
-  integrationTestImplementation 'com.opentable.components:otj-pg-embedded'
   integrationTestImplementation 'org.awaitility:awaitility'
+  integrationTestImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
+  integrationTestImplementation 'io.zonky.test:embedded-postgres'
   integrationTestImplementation sourceSets.testFixtures.output
 }
 

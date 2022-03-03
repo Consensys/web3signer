@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.util;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -28,21 +29,21 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.tuweni.io.Resources;
 
 /**
  * Extract OpenAPI specs from resources /openapi to a temporary folder on disk with capability to
- * fix relative $ref paths so that they can be used by OpenApi3RouterFactory which doesn't deal with
+ * fix relative $ref paths so that they can be used by RouterBuilder which doesn't deal with
  * relative $ref paths.
  */
 public class OpenApiSpecsExtractor {
   private static final String OPENAPI_RESOURCES_ROOT = "openapi-specs";
-  private static final ObjectMapper objectMapper =
-      new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
+  private static final ObjectMapper yamlMapper =
+      YAMLMapper.builder().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER).build();
 
   private final Path destinationDirectory;
   private final List<Path> destinationSpecPaths;
@@ -84,11 +85,11 @@ public class OpenApiSpecsExtractor {
               try {
                 // load openapi yaml in a map
                 final Map<String, Object> yamlMap =
-                    objectMapper.readValue(
+                    yamlMapper.readValue(
                         path.toFile(), new TypeReference<HashMap<String, Object>>() {});
                 fixRelativePathInOpenApiMap(path, yamlMap);
                 // write map back as yaml
-                objectMapper.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), yamlMap);
+                yamlMapper.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), yamlMap);
 
               } catch (final IOException e) {
                 throw new UncheckedIOException(e);
@@ -134,11 +135,13 @@ public class OpenApiSpecsExtractor {
       final Path nonNormalizedRefPath = parent.resolve(Path.of(fileName));
       // remove any . or .. from path
       final Path normalizedPath = nonNormalizedRefPath.toAbsolutePath().normalize();
+      // vertx needs a scheme present (file://) to determine this is an absolute path
+      final URI normalizedUri = normalizedPath.toUri();
 
       final String updatedValue =
           StringUtils.isBlank(jsonPointer)
-              ? normalizedPath.toString()
-              : normalizedPath + "#" + jsonPointer;
+              ? normalizedUri.toString()
+              : normalizedUri + "#" + jsonPointer;
       entry.setValue(updatedValue);
     }
   }

@@ -15,45 +15,23 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import tech.pegasys.web3signer.slashingprotection.DbConnection;
-
 import java.util.List;
 import java.util.Optional;
 
+import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.testing.JdbiRule;
-import org.jdbi.v3.testing.Migration;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(DatabaseSetupExtension.class)
 public class MetadataDaoTest {
   private final MetadataDao metadataDao = new MetadataDao();
 
-  @Rule
-  public JdbiRule postgres =
-      JdbiRule.embeddedPostgres()
-          .withMigration(Migration.before().withPath("migrations/postgresql"));
-
-  private Handle handle;
-
-  @Before
-  public void setup() {
-    DbConnection.configureJdbi(postgres.getJdbi());
-    handle = postgres.getJdbi().open();
-  }
-
-  @After
-  public void cleanup() {
-    handle.close();
-  }
-
   @Test
-  public void findsExistingGvrInDb() {
-    insertGvr(Bytes32.leftPad(Bytes.of(3)));
+  public void findsExistingGvrInDb(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
 
     final Optional<Bytes32> existingGvr = metadataDao.findGenesisValidatorsRoot(handle);
     assertThat(existingGvr).isNotEmpty();
@@ -61,12 +39,12 @@ public class MetadataDaoTest {
   }
 
   @Test
-  public void returnsEmptyForNonExistingGvrInDb() {
+  public void returnsEmptyForNonExistingGvrInDb(final Handle handle) {
     assertThat(metadataDao.findGenesisValidatorsRoot(handle)).isEmpty();
   }
 
   @Test
-  public void insertsGvrIntoDb() {
+  public void insertsGvrIntoDb(final Handle handle) {
     final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(4));
     metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
 
@@ -80,7 +58,7 @@ public class MetadataDaoTest {
   }
 
   @Test
-  public void failsInsertingMultipleGvrIntoDb() {
+  public void failsInsertingMultipleGvrIntoDb(final Handle handle) {
     final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(4));
     metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
 
@@ -88,7 +66,7 @@ public class MetadataDaoTest {
         .hasMessageContaining("duplicate key value violates unique constraint");
   }
 
-  private void insertGvr(final Bytes genesisValidatorsRoot) {
+  private void insertGvr(final Handle handle, final Bytes genesisValidatorsRoot) {
     handle.execute(
         "INSERT INTO metadata (id, genesis_validators_root) VALUES (?, ?)",
         1,

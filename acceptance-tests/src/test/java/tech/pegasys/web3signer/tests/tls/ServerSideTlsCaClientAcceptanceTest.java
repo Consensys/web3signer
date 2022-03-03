@@ -97,7 +97,7 @@ public class ServerSideTlsCaClientAcceptanceTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void clientNotInCaFailedToConnectToEthSigner(
+  void clientNotInCaFailedToConnectToWeb3Signer(
       final boolean useConfigFile, @TempDir final Path tempDir) throws Exception {
     signer = createSigner(clientCert, tempDir, useConfigFile);
     signer.start();

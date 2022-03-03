@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import static db.DatabaseUtil.PASSWORD;
+import static db.DatabaseUtil.USERNAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.InputStream;
@@ -221,8 +223,18 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     }
 
     @Override
+    public boolean isRegisteredValidator(final Bytes publicKey) {
+      return delegate.isRegisteredValidator(publicKey);
+    }
+
+    @Override
     public void export(final OutputStream output) {
       delegate.export(output);
+    }
+
+    @Override
+    public void exportWithFilter(OutputStream output, List<String> pubkeys) {
+      delegate.exportWithFilter(output, pubkeys);
     }
 
     @Override

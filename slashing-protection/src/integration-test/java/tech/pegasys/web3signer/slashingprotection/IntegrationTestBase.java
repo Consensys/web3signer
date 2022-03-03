@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import static db.DatabaseUtil.PASSWORD;
+import static db.DatabaseUtil.USERNAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
@@ -25,24 +27,26 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import db.DatabaseUtil;
+import db.DatabaseUtil.TestDatabaseInfo;
 import dsl.TestSlashingProtectionParameters;
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 public class IntegrationTestBase {
 
-  protected final ObjectMapper mapper = new ObjectMapper().registerModule(new InterchangeModule());
+  protected final ObjectMapper mapper =
+      JsonMapper.builder().addModule(new InterchangeModule()).build();
 
   protected final ValidatorsDao validators = new ValidatorsDao();
   protected final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
@@ -54,28 +58,21 @@ public class IntegrationTestBase {
   protected Jdbi jdbi;
   protected SlashingProtection slashingProtection;
 
-  protected static final String USERNAME = "postgres";
-  protected static final String PASSWORD = "postgres";
   protected static final String GENESIS_VALIDATORS_ROOT =
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
   protected static final Bytes32 GVR = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
 
   @BeforeEach
   public void setupTest() {
-    try {
-      db = setup();
-      databaseUrl = String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
-      final Path dbCPConfigurationFile =
-          Path.of(getClass().getResource("/hikari.properties").getPath());
-      jdbi = DbConnection.createConnection(databaseUrl, USERNAME, PASSWORD, dbCPConfigurationFile);
-      slashingProtection =
-          SlashingProtectionFactory.createSlashingProtection(
-              new TestSlashingProtectionParameters(
-                  databaseUrl, USERNAME, PASSWORD, dbCPConfigurationFile));
-      insertGvr(GVR);
-    } catch (final IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
+    final SlashingProtectionParameters slashingProtectionParameters =
+        new TestSlashingProtectionParameters(testDatabaseInfo.databaseUrl(), USERNAME, PASSWORD);
+    slashingProtection =
+        SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
+    db = testDatabaseInfo.getDb();
+    jdbi = testDatabaseInfo.getJdbi();
+    databaseUrl = testDatabaseInfo.databaseUrl();
+    insertGvr(GVR);
   }
 
   @AfterEach()
@@ -88,19 +85,6 @@ public class IntegrationTestBase {
       }
       db = null;
     }
-  }
-
-  protected EmbeddedPostgres setup() throws IOException {
-    final EmbeddedPostgres slashingDatabase = EmbeddedPostgres.start();
-
-    final Flyway flyway =
-        Flyway.configure()
-            .locations("/migrations/postgresql/")
-            .dataSource(slashingDatabase.getPostgresDatabase())
-            .load();
-    flyway.migrate();
-
-    return slashingDatabase;
   }
 
   protected List<SignedAttestation> findAllAttestations() {

@@ -15,49 +15,28 @@ package tech.pegasys.web3signer.slashingprotection.dao;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import tech.pegasys.web3signer.slashingprotection.DbConnection;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.testing.JdbiRule;
-import org.jdbi.v3.testing.Migration;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(DatabaseSetupExtension.class)
 public class SignedBlocksDaoTest {
 
-  @Rule
-  public JdbiRule postgres =
-      JdbiRule.embeddedPostgres()
-          .withMigration(Migration.before().withPath("migrations/postgresql"));
-
-  private Handle handle;
   private final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
   private final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
 
-  @Before
-  public void setup() {
-    DbConnection.configureJdbi(postgres.getJdbi());
-    handle = postgres.getJdbi().open();
-  }
-
-  @After
-  public void cleanup() {
-    handle.close();
-  }
-
   @Test
-  public void findBlockWithDifferentSigningRootInDb() {
-    insertValidator(Bytes.of(100), 1);
-    insertBlock(1, 2, Bytes.of(3));
+  public void findBlockWithDifferentSigningRootInDb(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertBlock(handle, 1, 2, Bytes.of(3));
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
 
     final List<SignedBlock> existingBlocks =
@@ -71,9 +50,9 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void returnsEmptyIfTheOnlyBlockInSlotMatchesRequestedValue() {
-    insertValidator(Bytes.of(100), 1);
-    insertBlock(1, 2, Bytes.of(3));
+  public void returnsEmptyIfTheOnlyBlockInSlotMatchesRequestedValue(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertBlock(handle, 1, 2, Bytes.of(3));
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
     assertThat(
             signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
@@ -86,7 +65,7 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void storesBlockInDb() {
+  public void storesBlockInDb(final Handle handle) {
     final ValidatorsDao validatorsDao = new ValidatorsDao();
 
     validatorsDao.registerValidators(handle, List.of(Bytes.of(100)));
@@ -112,9 +91,9 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void canCreateBlocksWithNoSigningRoot() {
-    insertValidator(Bytes.of(100), 1);
-    insertBlock(1, 2, null);
+  public void canCreateBlocksWithNoSigningRoot(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertBlock(handle, 1, 2, null);
     final List<SignedBlock> blocks =
         signedBlocksDao.findBlockForSlotWithDifferentSigningRoot(
             handle, 1, UInt64.valueOf(2), Bytes.of(3));
@@ -124,9 +103,9 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void throwsIfMatchingAgainstNull() {
-    insertValidator(Bytes.of(100), 1);
-    insertBlock(1, 3, null);
+  public void throwsIfMatchingAgainstNull(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertBlock(handle, 1, 3, null);
 
     assertThatThrownBy(
             () ->
@@ -136,18 +115,18 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void findMatchingBlockThrowsIfMatchingOnNull() {
-    insertValidator(Bytes.of(100), 1);
-    insertBlock(1, 3, null);
+  public void findMatchingBlockThrowsIfMatchingOnNull(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertBlock(handle, 1, 3, null);
     assertThatThrownBy(() -> signedBlocksDao.findMatchingBlock(handle, 1, UInt64.valueOf(3), null))
         .isInstanceOf(NullPointerException.class);
   }
 
   @Test
-  public void deletesBlocksBelowWatermark() {
-    insertValidator(Bytes.of(100), 1);
-    insertBlock(1, 3, Bytes.of(1));
-    insertBlock(1, 4, Bytes.of(1));
+  public void deletesBlocksBelowWatermark(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertBlock(handle, 1, 3, Bytes.of(1));
+    insertBlock(handle, 1, 4, Bytes.of(1));
     lowWatermarkDao.updateSlotWatermarkFor(handle, 1, UInt64.valueOf(4));
 
     signedBlocksDao.deleteBlocksBelowWatermark(handle, 1);
@@ -163,13 +142,13 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void deletingBlocksDoesNotAffectAfterValidatorBlocks() {
-    insertValidator(Bytes.of(1), 1);
-    insertValidator(Bytes.of(2), 2);
-    insertBlock(1, 3, Bytes.of(1));
-    insertBlock(1, 4, Bytes.of(1));
-    insertBlock(2, 3, Bytes.of(1));
-    insertBlock(2, 4, Bytes.of(1));
+  public void deletingBlocksDoesNotAffectAfterValidatorBlocks(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), 1);
+    insertValidator(handle, Bytes.of(2), 2);
+    insertBlock(handle, 1, 3, Bytes.of(1));
+    insertBlock(handle, 1, 4, Bytes.of(1));
+    insertBlock(handle, 2, 3, Bytes.of(1));
+    insertBlock(handle, 2, 4, Bytes.of(1));
     lowWatermarkDao.updateSlotWatermarkFor(handle, 1, UInt64.valueOf(4));
     lowWatermarkDao.updateSlotWatermarkFor(handle, 2, UInt64.valueOf(5));
 
@@ -187,10 +166,10 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void doesNotDeleteBlocksIfNoWatermark() {
-    insertValidator(Bytes.of(100), 1);
-    insertBlock(1, 3, Bytes.of(1));
-    insertBlock(1, 4, Bytes.of(1));
+  public void doesNotDeleteBlocksIfNoWatermark(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    insertBlock(handle, 1, 3, Bytes.of(1));
+    insertBlock(handle, 1, 4, Bytes.of(1));
 
     signedBlocksDao.deleteBlocksBelowWatermark(handle, 1);
     final List<SignedBlock> blocks =
@@ -201,13 +180,13 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void findsMaxSlotForValidator() {
-    insertValidator(Bytes.of(1), 1);
-    insertValidator(Bytes.of(2), 2);
-    insertValidator(Bytes.of(3), 3);
-    insertBlock(1, 3, Bytes.of(1));
-    insertBlock(1, 4, Bytes.of(1));
-    insertBlock(2, 3, Bytes.of(1));
+  public void findsMaxSlotForValidator(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), 1);
+    insertValidator(handle, Bytes.of(2), 2);
+    insertValidator(handle, Bytes.of(3), 3);
+    insertBlock(handle, 1, 3, Bytes.of(1));
+    insertBlock(handle, 1, 4, Bytes.of(1));
+    insertBlock(handle, 2, 3, Bytes.of(1));
 
     assertThat(signedBlocksDao.findMaxSlot(handle, 1)).contains(UInt64.valueOf(4));
     assertThat(signedBlocksDao.findMaxSlot(handle, 2)).contains(UInt64.valueOf(3));
@@ -215,11 +194,11 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void findsNearestBlockForSlot() {
-    insertValidator(Bytes.of(1), 1);
-    insertBlock(1, 2, Bytes.of(1));
-    insertBlock(1, 3, Bytes.of(1));
-    insertBlock(1, 7, Bytes.of(1));
+  public void findsNearestBlockForSlot(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), 1);
+    insertBlock(handle, 1, 2, Bytes.of(1));
+    insertBlock(handle, 1, 3, Bytes.of(1));
+    insertBlock(handle, 1, 7, Bytes.of(1));
 
     assertThat(signedBlocksDao.findNearestBlockWithSlot(handle, 1, UInt64.valueOf(3)).get())
         .isEqualToComparingFieldByField(block(3, 1));
@@ -227,7 +206,8 @@ public class SignedBlocksDaoTest {
         .isEqualToComparingFieldByField(block(7, 1));
   }
 
-  private void insertBlock(final int validatorId, final int slot, final Bytes signingRoot) {
+  private void insertBlock(
+      final Handle handle, final int validatorId, final int slot, final Bytes signingRoot) {
     handle.execute(
         "INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)",
         validatorId,
@@ -235,7 +215,7 @@ public class SignedBlocksDaoTest {
         signingRoot);
   }
 
-  private void insertValidator(final Bytes publicKey, final int validatorId) {
+  private void insertValidator(final Handle handle, final Bytes publicKey, final int validatorId) {
     handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
   }
 

@@ -22,4 +22,5 @@ public enum OpenApiOperationsId {
   UPCHECK,
   KEYMANAGER_LIST,
   KEYMANAGER_IMPORT,
+  KEYMANAGER_DELETE,
 }

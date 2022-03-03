@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.io.Resources;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
@@ -50,9 +51,10 @@ public class SlashingImportAcceptanceTest extends AcceptanceTestBase {
   public static final String DB_PASSWORD = "postgres";
 
   private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper =
-      new com.fasterxml.jackson.databind.ObjectMapper()
-          .registerModule(new InterchangeModule())
-          .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+      JsonMapper.builder()
+          .addModule(new InterchangeModule())
+          .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+          .build();
 
   protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
 

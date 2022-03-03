@@ -36,15 +36,17 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.io.Resources;
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import db.DatabaseUtil;
+import db.DatabaseUtil.TestDatabaseInfo;
 import dsl.SignedArtifacts;
 import dsl.TestSlashingProtectionParameters;
+import io.zonky.test.db.postgres.embedded.EmbeddedPostgres;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -57,36 +59,24 @@ public class ReferenceTestRunner {
   private static final String PASSWORD = "postgres";
 
   private static final ObjectMapper objectMapper =
-      new ObjectMapper()
-          .registerModule(new InterchangeModule())
-          .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS);
+      JsonMapper.builder()
+          .addModule(new InterchangeModule())
+          .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+          .build();
   private final ValidatorsDao validators = new ValidatorsDao();
 
   private EmbeddedPostgres slashingDatabase;
-  private String databaseUrl;
   private SlashingProtection slashingProtection;
   private Jdbi jdbi;
 
-  public void setup() throws IOException {
-    slashingDatabase = EmbeddedPostgres.start();
-    final Flyway flyway =
-        Flyway.configure()
-            .locations("/migrations/postgresql/")
-            .dataSource(slashingDatabase.getPostgresDatabase())
-            .load();
-    flyway.migrate();
-    databaseUrl =
-        String.format("jdbc:postgresql://localhost:%d/postgres", slashingDatabase.getPort());
+  public void setup() {
+    final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
     final SlashingProtectionParameters slashingProtectionParameters =
-        new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD);
+        new TestSlashingProtectionParameters(testDatabaseInfo.databaseUrl(), USERNAME, PASSWORD);
     slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
-    jdbi =
-        DbConnection.createConnection(
-            slashingProtectionParameters.getDbUrl(),
-            slashingProtectionParameters.getDbUsername(),
-            slashingProtectionParameters.getDbPassword(),
-            slashingProtectionParameters.getDbPoolConfigurationFile());
+    slashingDatabase = testDatabaseInfo.getDb();
+    jdbi = testDatabaseInfo.getJdbi();
   }
 
   public void cleanup() {

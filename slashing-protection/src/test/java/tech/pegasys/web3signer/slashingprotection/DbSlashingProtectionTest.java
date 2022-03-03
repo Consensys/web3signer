@@ -20,6 +20,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -41,21 +42,20 @@ import java.util.Optional;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.transaction.TransactionIsolationLevel;
-import org.jdbi.v3.testing.JdbiRule;
-import org.jdbi.v3.testing.Migration;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@ExtendWith(DatabaseSetupExtension.class)
 @SuppressWarnings("ConstantConditions")
 public class DbSlashingProtectionTest {
 
@@ -75,24 +75,18 @@ public class DbSlashingProtectionTest {
   @Mock private MetadataDao metadataDao;
   @Mock private LowWatermarkDao lowWatermarkDao;
 
-  @Rule
-  public JdbiRule db =
-      JdbiRule.embeddedPostgres()
-          .withMigration(Migration.before().withPath("migrations/postgresql"));
-
   private DbSlashingProtection dbSlashingProtection;
-  private Jdbi jdbi;
+  private Jdbi slashingJdbi;
   private Jdbi pruningJdbi;
 
-  @Before
-  public void setup() {
-    final Jdbi tempJdbi = db.getJdbi();
-    DbConnection.configureJdbi(tempJdbi);
-    jdbi = spy(tempJdbi);
-    pruningJdbi = spy(tempJdbi);
+  @BeforeEach
+  public void setup(final Jdbi jdbi) {
+    DbConnection.configureJdbi(jdbi);
+    slashingJdbi = spy(jdbi);
+    pruningJdbi = spy(jdbi);
     dbSlashingProtection =
         new DbSlashingProtection(
-            jdbi,
+            slashingJdbi,
             pruningJdbi,
             validatorsDao,
             signedBlocksDao,
@@ -102,7 +96,8 @@ public class DbSlashingProtectionTest {
             1,
             1,
             HashBiMap.create(Map.of(PUBLIC_KEY1, VALIDATOR_ID)));
-    when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(GVR));
+    lenient().when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(GVR));
+    lenient().when(validatorsDao.isEnabled(any(), eq(VALIDATOR_ID))).thenReturn(true);
   }
 
   @Test
@@ -164,8 +159,7 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
-  public void blockCannotSignWhenNoRegisteredValidator() {
-    final Jdbi jdbi = db.getJdbi();
+  public void blockCannotSignWhenNoRegisteredValidator(final Jdbi jdbi) {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
@@ -185,6 +179,13 @@ public class DbSlashingProtectionTest {
 
     verify(signedBlocksDao, never())
         .insertBlockProposal(any(), refEq(new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT)));
+  }
+
+  @Test
+  public void blockCannotBeSignedIfValidatorDisabled() {
+    when(validatorsDao.isEnabled(any(), eq(VALIDATOR_ID))).thenReturn(false);
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
+    verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
   }
 
   @Test
@@ -328,8 +329,7 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
-  public void attestationCannotSignWhenNoRegisteredValidator() {
-    final Jdbi jdbi = db.getJdbi();
+  public void attestationCannotSignWhenNoRegisteredValidator(final Jdbi jdbi) {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
@@ -368,9 +368,8 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
-  public void registersValidatorsThatAreNotAlreadyInDb() {
+  public void registersValidatorsThatAreNotAlreadyInDb(final Jdbi jdbi) {
     final BiMap<Bytes, Integer> registeredValidators = HashBiMap.create();
-    final Jdbi jdbi = db.getJdbi();
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
@@ -551,6 +550,16 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
+  public void attestationCannotBeSignedIfValidatorDisabled() {
+    when(validatorsDao.isEnabled(any(), eq(VALIDATOR_ID))).thenReturn(false);
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+        .isFalse();
+    verify(signedAttestationsDao, never()).insertAttestation(any(), any());
+  }
+
+  @Test
   public void slashingProtectionEnactedIfAttestationWithInvalidGvr() {
     when(metadataDao.findGenesisValidatorsRoot(any()))
         .thenReturn(Optional.of(Bytes32.leftPad(Bytes.of(1))));
@@ -603,6 +612,6 @@ public class DbSlashingProtectionTest {
     dbSlashingProtection.prune();
     verify(pruningJdbi, atLeast(2))
         .inTransaction(eq(TransactionIsolationLevel.READ_UNCOMMITTED), any());
-    verifyNoInteractions(jdbi);
+    verifyNoInteractions(slashingJdbi);
   }
 }

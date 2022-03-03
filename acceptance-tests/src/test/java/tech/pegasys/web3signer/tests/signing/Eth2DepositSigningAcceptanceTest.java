@@ -34,6 +34,7 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.io.Resources;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
@@ -57,7 +58,7 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
 
     setupEth2Signer();
 
-    final ObjectMapper objectMapper = new ObjectMapper();
+    final ObjectMapper objectMapper = JsonMapper.builder().build();
 
     final Path testFilesPath = Path.of(Resources.getResource("eth2").getPath());
     try (final Stream<Path> files = Files.list(testFilesPath)) {

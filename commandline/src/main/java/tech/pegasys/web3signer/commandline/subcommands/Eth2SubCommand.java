@@ -72,7 +72,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   private UInt64 bellatrixForkEpoch;
 
   @CommandLine.Option(
-      names = {"--key-manager-api-enabled"},
+      names = {"--key-manager-api-enabled", "--enable-key-manager-api"},
       paramLabel = "<BOOL>",
       description = "Enable the key manager API to manage key stores (default: ${DEFAULT-VALUE}).",
       arity = "1")

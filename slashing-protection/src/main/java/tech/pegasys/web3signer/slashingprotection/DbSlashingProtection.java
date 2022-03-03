@@ -37,8 +37,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import org.apache.logging.log4j.LogManager;
@@ -112,10 +112,11 @@ public class DbSlashingProtection implements SlashingProtection {
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao,
-            new ObjectMapper()
-                .registerModule(new InterchangeModule())
+            JsonMapper.builder()
+                .addModule(new InterchangeModule())
                 .configure(FLUSH_AFTER_WRITE_VALUE, true)
-                .enable(SerializationFeature.INDENT_OUTPUT));
+                .enable(SerializationFeature.INDENT_OUTPUT)
+                .build());
     this.dbPruner =
         new DbPruner(pruningJdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
     this.pruningEpochsToKeep = pruningEpochsToKeep;
@@ -156,6 +157,17 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
+  public void exportWithFilter(final OutputStream output, final List<String> pubkeys) {
+    try {
+      LOG.info("Exporting slashing protection database for keys: " + String.join(",", pubkeys));
+      interchangeManager.exportWithFilter(output, pubkeys);
+      LOG.info("Export complete");
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to export database content", e);
+    }
+  }
+
+  @Override
   public boolean maySignAttestation(
       final Bytes publicKey,
       final Bytes signingRoot,
@@ -171,6 +183,12 @@ public class DbSlashingProtection implements SlashingProtection {
     return jdbi.inTransaction(
         READ_COMMITTED,
         handle -> {
+          lockForValidator(handle, LockType.ATTESTATION, validatorId);
+
+          if (!validatorsDao.isEnabled(handle, validatorId)) {
+            return false;
+          }
+
           final AttestationValidator attestationValidator =
               new AttestationValidator(
                   handle,
@@ -185,8 +203,6 @@ public class DbSlashingProtection implements SlashingProtection {
           if (attestationValidator.sourceGreaterThanTargetEpoch()) {
             return false;
           }
-
-          lockForValidator(handle, LockType.ATTESTATION, validatorId);
 
           if (attestationValidator.hasSourceOlderThanWatermark()
               || attestationValidator.hasTargetOlderThanWatermark()
@@ -215,11 +231,15 @@ public class DbSlashingProtection implements SlashingProtection {
     return jdbi.inTransaction(
         READ_COMMITTED,
         h -> {
+          lockForValidator(h, LockType.BLOCK, validatorId);
+
+          if (!validatorsDao.isEnabled(h, validatorId)) {
+            return false;
+          }
+
           final BlockValidator blockValidator =
               new BlockValidator(
                   h, signingRoot, blockSlot, validatorId, signedBlocksDao, lowWatermarkDao);
-
-          lockForValidator(h, LockType.BLOCK, validatorId);
 
           if (blockValidator.isOlderThanWatermark()
               || blockValidator.directlyConflictsWithExistingEntry()) {
@@ -262,6 +282,11 @@ public class DbSlashingProtection implements SlashingProtection {
           dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch);
         });
     LOG.info("Pruning slashing protection database complete");
+  }
+
+  @Override
+  public boolean isRegisteredValidator(final Bytes publicKey) {
+    return registeredValidators.get(publicKey) != null;
   }
 
   private int validatorId(final Bytes publicKey) {

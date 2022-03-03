@@ -23,7 +23,8 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 
-import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import db.DatabaseUtil;
+import db.DatabaseUtil.TestDatabaseInfo;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
 import dsl.TestSlashingProtectionParameters;
@@ -93,9 +94,8 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
 
   @Test
   void failToExportIfGenesisValidatorRootDoesNotExist() throws IOException {
-    final EmbeddedPostgres db = setup();
-    final String databaseUrl = getDatabaseUrl(db);
-
+    final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
+    final String databaseUrl = testDatabaseInfo.databaseUrl();
     final OutputStream exportOutput = new ByteArrayOutputStream();
     final SlashingProtection slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(
@@ -183,9 +183,5 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     exportOutput.close();
 
     return mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
-  }
-
-  private String getDatabaseUrl(final EmbeddedPostgres db) {
-    return String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
   }
 }

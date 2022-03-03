@@ -43,11 +43,12 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.api.RequestParameters;
+import io.vertx.ext.web.validation.RequestParameters;
+import io.vertx.ext.web.validation.ValidationHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,7 +61,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   public static final int SUCCESS = 200;
   public static final int BAD_REQUEST = 400;
   public static final int SERVER_ERROR = 500;
-  private static final ObjectMapper YAML_OBJECT_MAPPER = new ObjectMapper(new YAMLFactory());
+  private static final ObjectMapper YAML_OBJECT_MAPPER = YAMLMapper.builder().build();
 
   private final ObjectMapper objectMapper;
   private final Path keystorePath;
@@ -81,7 +82,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   @Override
   public void handle(RoutingContext context) {
     // API spec - https://github.com/ethereum/keymanager-APIs/tree/master/flows#import
-    final RequestParameters params = context.get("parsedParameters");
+    final RequestParameters params = context.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     final ImportKeystoresRequestBody parsedBody;
     try {
       parsedBody = parseRequestBody(params);
@@ -169,9 +170,14 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
               decryptKeystoreAndCreateSigner(jsonKeystoreData, password);
           // 2. write keystore file to disk
           createKeyStoreYamlFileAt(pubkey, jsonKeystoreData, password);
-          // 3. add the new signer to the provider to make it available for signing
+          // 3. register the validator in the slashing DB
+          slashingProtection.ifPresent(
+              protection ->
+                  protection.registerValidators(
+                      List.of(Bytes.fromHexString(signer.getIdentifier()))));
+          // 4. add the new signer to the provider to make it available for signing
           artifactSignerProvider.addSigner(signer).get();
-          // 4. finally, add result to API response
+          // 5. finally, add result to API response
           results.add(new ImportKeystoreResult(ImportKeystoreStatus.IMPORTED, null));
         }
       } catch (Exception e) {
@@ -201,7 +207,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
     final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
     return new BlsArtifactSigner(
-        keyPair, SignerOrigin.FILE_KEYSTORE, Optional.of(keyStoreData.getPath()));
+        keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.getPath()));
   }
 
   private ImportKeystoresRequestBody parseRequestBody(final RequestParameters params)
