@@ -173,7 +173,7 @@ public class DbSlashingProtection implements SlashingProtection {
       LOG.info("Exporting slashing protection database");
       interchangeManager.exportIncrementallyBegin(out);
     } catch (IOException e) {
-      throw new RuntimeException("Failed to initialise increment export of database content", e);
+      throw new RuntimeException("Failed to initialise incremental export of database content", e);
     }
   }
 
@@ -188,7 +188,7 @@ public class DbSlashingProtection implements SlashingProtection {
       interchangeManager.exportIncrementallyFinish();
       LOG.info("Export complete");
     } catch (IOException e) {
-      throw new RuntimeException("Failed to initialise increment export of database content", e);
+      throw new RuntimeException("Failed to finalise incremental export of database content", e);
     }
   }
 
