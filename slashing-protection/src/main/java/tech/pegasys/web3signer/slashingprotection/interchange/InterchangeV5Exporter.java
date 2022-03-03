@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -76,6 +78,9 @@ public class InterchangeV5Exporter {
   }
 
   public void exportIncrementallyBegin(final OutputStream out) throws IOException {
+    checkState(
+        jsonGenerator == null,
+        "Already in exporting incrementally. Call exportIncrementallyFinish before calling exportIncrementallyBegin");
     jsonGenerator = mapper.getFactory().createGenerator(out);
     final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
     if (gvr.isEmpty()) {
@@ -104,6 +109,7 @@ public class InterchangeV5Exporter {
     jsonGenerator.writeEndObject();
 
     jsonGenerator.close();
+    jsonGenerator = null;
   }
 
   private void exportInternal(final OutputStream out, final Optional<List<String>> pubkeys)
