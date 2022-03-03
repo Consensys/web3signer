@@ -39,15 +39,15 @@ public class InterchangeV5Exporter {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  protected static final String FORMAT_VERSION = "5";
+  private static final String FORMAT_VERSION = "5";
 
-  protected final Jdbi jdbi;
+  private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
-  protected final MetadataDao metadataDao;
+  private final MetadataDao metadataDao;
   private final LowWatermarkDao lowWatermarkDao;
-  protected final ObjectMapper mapper;
+  private final ObjectMapper mapper;
   private JsonGenerator jsonGenerator;
 
   public InterchangeV5Exporter(
