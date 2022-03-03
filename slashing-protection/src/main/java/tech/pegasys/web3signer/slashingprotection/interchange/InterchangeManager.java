@@ -25,11 +25,11 @@ public interface InterchangeManager {
 
   void exportData(OutputStream out) throws IOException;
 
-  void exportWithFilter(OutputStream output, List<String> pubkeys) throws IOException;
+  void exportDataWithFilter(OutputStream output, List<String> pubkeys) throws IOException;
 
-  void initialiseIncrementalExport(final OutputStream out) throws IOException;
+  void exportIncrementallyBegin(final OutputStream out) throws IOException;
 
-  void addPublicKeyToIncrementalExport(final String pubkey);
+  void exportIncrementally(final String pubkey);
 
-  void finaliseIncrementalExport() throws IOException;
+  void exportIncrementallyFinish() throws IOException;
 }

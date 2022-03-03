@@ -67,15 +67,15 @@ public class InterchangeV5Exporter {
     this.mapper = mapper;
   }
 
-  public void export(final OutputStream out) throws IOException {
+  public void exportData(final OutputStream out) throws IOException {
     exportInternal(out, Optional.empty());
   }
 
-  public void exportWithFilter(OutputStream out, List<String> pubkeys) throws IOException {
+  public void exportDataWithFilter(OutputStream out, List<String> pubkeys) throws IOException {
     exportInternal(out, Optional.of(pubkeys));
   }
 
-  public void initialiseIncrementalExport(final OutputStream out) throws IOException {
+  public void exportIncrementallyBegin(final OutputStream out) throws IOException {
     jsonGenerator = mapper.getFactory().createGenerator(out);
     final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
     if (gvr.isEmpty()) {
@@ -92,11 +92,11 @@ public class InterchangeV5Exporter {
     jsonGenerator.writeArrayFieldStart("data");
   }
 
-  public void addPublicKeyToIncrementalExport(final String publicKey) {
+  public void exportIncrementally(final String publicKey) {
     populateInterchangeData(jsonGenerator, Optional.of(List.of(publicKey)));
   }
 
-  public void finaliseIncrementalExport() throws IOException {
+  public void exportIncrementallyFinish() throws IOException {
     // end the data array
     jsonGenerator.writeEndArray();
 

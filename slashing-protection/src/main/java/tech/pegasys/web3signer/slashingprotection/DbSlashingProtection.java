@@ -157,10 +157,10 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void exportWithFilter(final OutputStream output, final List<String> pubkeys) {
+  public void exportDataWithFilter(final OutputStream output, final List<String> pubkeys) {
     try {
       LOG.info("Exporting slashing protection database for keys: " + String.join(",", pubkeys));
-      interchangeManager.exportWithFilter(output, pubkeys);
+      interchangeManager.exportDataWithFilter(output, pubkeys);
       LOG.info("Export complete");
     } catch (IOException e) {
       throw new RuntimeException("Failed to export database content", e);
@@ -168,24 +168,24 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void initialiseIncrementalExport(final OutputStream out) {
+  public void exportIncrementallyBegin(final OutputStream out) {
     try {
       LOG.info("Exporting slashing protection database");
-      interchangeManager.initialiseIncrementalExport(out);
+      interchangeManager.exportIncrementallyBegin(out);
     } catch (IOException e) {
       throw new RuntimeException("Failed to initialise increment export of database content", e);
     }
   }
 
   @Override
-  public void addPublicKeyToIncrementalExport(final String pubkey) {
-    interchangeManager.addPublicKeyToIncrementalExport(pubkey);
+  public void exportIncrementally(final String pubkey) {
+    interchangeManager.exportIncrementally(pubkey);
   }
 
   @Override
-  public void finaliseIncrementalExport() {
+  public void exportIncrementallyFinish() {
     try {
-      interchangeManager.finaliseIncrementalExport();
+      interchangeManager.exportIncrementallyFinish();
       LOG.info("Export complete");
     } catch (IOException e) {
       throw new RuntimeException("Failed to initialise increment export of database content", e);

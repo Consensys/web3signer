@@ -72,27 +72,27 @@ public class InterchangeV5Manager implements InterchangeManager {
 
   @Override
   public void exportData(final OutputStream out) throws IOException {
-    exporter.export(out);
+    exporter.exportData(out);
   }
 
   @Override
-  public void exportWithFilter(final OutputStream out, final List<String> pubkeys)
+  public void exportDataWithFilter(final OutputStream out, final List<String> pubkeys)
       throws IOException {
-    exporter.exportWithFilter(out, pubkeys);
+    exporter.exportDataWithFilter(out, pubkeys);
   }
 
   @Override
-  public void initialiseIncrementalExport(final OutputStream out) throws IOException {
-    exporter.initialiseIncrementalExport(out);
+  public void exportIncrementallyBegin(final OutputStream out) throws IOException {
+    exporter.exportIncrementallyBegin(out);
   }
 
   @Override
-  public void addPublicKeyToIncrementalExport(final String pubkey) {
-    exporter.addPublicKeyToIncrementalExport(pubkey);
+  public void exportIncrementally(final String pubkey) {
+    exporter.exportIncrementally(pubkey);
   }
 
   @Override
-  public void finaliseIncrementalExport() throws IOException {
-    exporter.finaliseIncrementalExport();
+  public void exportIncrementallyFinish() throws IOException {
+    exporter.exportIncrementallyFinish();
   }
 }

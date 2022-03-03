@@ -234,23 +234,23 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     }
 
     @Override
-    public void exportWithFilter(OutputStream output, List<String> pubkeys) {
-      delegate.exportWithFilter(output, pubkeys);
+    public void exportDataWithFilter(OutputStream output, List<String> pubkeys) {
+      delegate.exportDataWithFilter(output, pubkeys);
     }
 
     @Override
-    public void initialiseIncrementalExport(final OutputStream out) throws IOException {
-      delegate.initialiseIncrementalExport(out);
+    public void exportIncrementallyBegin(final OutputStream out) throws IOException {
+      delegate.exportIncrementallyBegin(out);
     }
 
     @Override
-    public void addPublicKeyToIncrementalExport(final String pubkey) {
-      delegate.addPublicKeyToIncrementalExport(pubkey);
+    public void exportIncrementally(final String pubkey) {
+      delegate.exportIncrementally(pubkey);
     }
 
     @Override
-    public void finaliseIncrementalExport() throws IOException {
-      delegate.finaliseIncrementalExport();
+    public void exportIncrementallyFinish() throws IOException {
+      delegate.exportIncrementallyFinish();
     }
 
     @Override

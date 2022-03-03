@@ -39,13 +39,13 @@ public interface SlashingProtection {
 
   void exportData(OutputStream output);
 
-  void exportWithFilter(OutputStream output, List<String> pubkeys);
+  void exportDataWithFilter(OutputStream output, List<String> pubkeys);
 
-  void initialiseIncrementalExport(final OutputStream out) throws IOException;
+  void exportIncrementallyBegin(final OutputStream out) throws IOException;
 
-  void addPublicKeyToIncrementalExport(final String pubkey);
+  void exportIncrementally(final String pubkey);
 
-  void finaliseIncrementalExport() throws IOException;
+  void exportIncrementallyFinish() throws IOException;
 
   void importData(InputStream output);
 
