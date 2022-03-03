@@ -39,15 +39,16 @@ public class InterchangeV5Exporter {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String FORMAT_VERSION = "5";
+  protected static final String FORMAT_VERSION = "5";
 
-  private final Jdbi jdbi;
+  protected final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
-  private final MetadataDao metadataDao;
+  protected final MetadataDao metadataDao;
   private final LowWatermarkDao lowWatermarkDao;
-  private final ObjectMapper mapper;
+  protected final ObjectMapper mapper;
+  private JsonGenerator jsonGenerator;
 
   public InterchangeV5Exporter(
       final Jdbi jdbi,
@@ -72,6 +73,37 @@ public class InterchangeV5Exporter {
 
   public void exportWithFilter(OutputStream out, List<String> pubkeys) throws IOException {
     exportInternal(out, Optional.of(pubkeys));
+  }
+
+  public void initialiseIncrementalExport(final OutputStream out) throws IOException {
+    jsonGenerator = mapper.getFactory().createGenerator(out);
+    final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
+    if (gvr.isEmpty()) {
+      throw new RuntimeException("No genesis validators root for slashing protection data");
+    }
+
+    jsonGenerator.writeStartObject();
+
+    final Metadata metadata = new Metadata(FORMAT_VERSION, gvr.get());
+
+    jsonGenerator.writeFieldName("metadata");
+    mapper.writeValue(jsonGenerator, metadata);
+
+    jsonGenerator.writeArrayFieldStart("data");
+  }
+
+  public void addPublicKeyToIncrementalExport(final String publicKey) {
+    populateInterchangeData(jsonGenerator, Optional.of(List.of(publicKey)));
+  }
+
+  public void finaliseIncrementalExport() throws IOException {
+    // end the data array
+    jsonGenerator.writeEndArray();
+
+    // end the interchange object
+    jsonGenerator.writeEndObject();
+
+    jsonGenerator.close();
   }
 
   private void exportInternal(final OutputStream out, final Optional<List<String>> pubkeys)

@@ -100,7 +100,7 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     final SlashingProtection slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(
             new TestSlashingProtectionParameters(databaseUrl, "postgres", "postgres"));
-    assertThatThrownBy(() -> slashingProtection.export(exportOutput))
+    assertThatThrownBy(() -> slashingProtection.exportData(exportOutput))
         .hasMessage("No genesis validators root for slashing protection data")
         .isInstanceOf(RuntimeException.class);
     exportOutput.close();
@@ -179,7 +179,7 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
 
   private InterchangeV5Format getExportObjectFromDatabase() throws IOException {
     final OutputStream exportOutput = new ByteArrayOutputStream();
-    slashingProtection.export(exportOutput);
+    slashingProtection.exportData(exportOutput);
     exportOutput.close();
 
     return mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);

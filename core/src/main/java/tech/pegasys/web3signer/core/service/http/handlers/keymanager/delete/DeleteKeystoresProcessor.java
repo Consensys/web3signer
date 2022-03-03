@@ -121,7 +121,10 @@ public class DeleteKeystoresProcessor {
     if (slashingProtection.isPresent()) {
       try {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        slashingProtection.get().exportWithFilter(outputStream, keysToExport);
+        final SlashingProtection slashingProtection = this.slashingProtection.get();
+        slashingProtection.initialiseIncrementalExport(outputStream);
+        keysToExport.forEach(slashingProtection::addPublicKeyToIncrementalExport);
+        slashingProtection.finaliseIncrementalExport();
         slashingProtectionExport = outputStream.toString(StandardCharsets.UTF_8);
       } catch (Exception e) {
         LOG.error("Failed to export slashing data", e);

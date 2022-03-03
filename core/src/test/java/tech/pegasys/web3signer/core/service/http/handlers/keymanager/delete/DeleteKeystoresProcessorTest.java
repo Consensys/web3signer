@@ -133,7 +133,7 @@ class DeleteKeystoresProcessorTest {
     doNothing().when(keystoreFileManager).deleteKeystoreFiles(any());
     doThrow(new RuntimeException("db error"))
         .when(slashingProtection)
-        .exportWithFilter(any(), any());
+        .addPublicKeyToIncrementalExport(any());
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY));

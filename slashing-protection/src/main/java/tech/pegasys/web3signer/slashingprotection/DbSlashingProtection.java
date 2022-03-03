@@ -146,10 +146,10 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void export(final OutputStream output) {
+  public void exportData(final OutputStream output) {
     try {
       LOG.info("Exporting slashing protection database");
-      interchangeManager.export(output);
+      interchangeManager.exportData(output);
       LOG.info("Export complete");
     } catch (IOException e) {
       throw new RuntimeException("Failed to export database content", e);
@@ -164,6 +164,31 @@ public class DbSlashingProtection implements SlashingProtection {
       LOG.info("Export complete");
     } catch (IOException e) {
       throw new RuntimeException("Failed to export database content", e);
+    }
+  }
+
+  @Override
+  public void initialiseIncrementalExport(final OutputStream out) {
+    try {
+      LOG.info("Exporting slashing protection database");
+      interchangeManager.initialiseIncrementalExport(out);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to initialise increment export of database content", e);
+    }
+  }
+
+  @Override
+  public void addPublicKeyToIncrementalExport(final String pubkey) {
+    interchangeManager.addPublicKeyToIncrementalExport(pubkey);
+  }
+
+  @Override
+  public void finaliseIncrementalExport() {
+    try {
+      interchangeManager.finaliseIncrementalExport();
+      LOG.info("Export complete");
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to initialise increment export of database content", e);
     }
   }
 

@@ -23,7 +23,13 @@ public interface InterchangeManager {
 
   void importDataWithFilter(InputStream in, List<String> pubkeys) throws IOException;
 
-  void export(OutputStream out) throws IOException;
+  void exportData(OutputStream out) throws IOException;
 
   void exportWithFilter(OutputStream output, List<String> pubkeys) throws IOException;
+
+  void initialiseIncrementalExport(final OutputStream out) throws IOException;
+
+  void addPublicKeyToIncrementalExport(final String pubkey);
+
+  void finaliseIncrementalExport() throws IOException;
 }

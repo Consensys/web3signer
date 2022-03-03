@@ -16,6 +16,7 @@ import static db.DatabaseUtil.PASSWORD;
 import static db.DatabaseUtil.USERNAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
@@ -228,13 +229,28 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     }
 
     @Override
-    public void export(final OutputStream output) {
-      delegate.export(output);
+    public void exportData(final OutputStream output) {
+      delegate.exportData(output);
     }
 
     @Override
     public void exportWithFilter(OutputStream output, List<String> pubkeys) {
       delegate.exportWithFilter(output, pubkeys);
+    }
+
+    @Override
+    public void initialiseIncrementalExport(final OutputStream out) throws IOException {
+      delegate.initialiseIncrementalExport(out);
+    }
+
+    @Override
+    public void addPublicKeyToIncrementalExport(final String pubkey) {
+      delegate.addPublicKeyToIncrementalExport(pubkey);
+    }
+
+    @Override
+    public void finaliseIncrementalExport() throws IOException {
+      delegate.finaliseIncrementalExport();
     }
 
     @Override
