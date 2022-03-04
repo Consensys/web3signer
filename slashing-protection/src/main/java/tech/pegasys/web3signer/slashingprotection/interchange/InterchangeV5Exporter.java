@@ -49,7 +49,6 @@ public class InterchangeV5Exporter {
   private final MetadataDao metadataDao;
   private final LowWatermarkDao lowWatermarkDao;
   private final ObjectMapper mapper;
-  private JsonGenerator jsonGenerator;
 
   public InterchangeV5Exporter(
       final Jdbi jdbi,
@@ -250,6 +249,7 @@ public class InterchangeV5Exporter {
   }
 
   public class IncrementalInterchangeV5Exporter implements IncrementalExporter {
+    final JsonGenerator jsonGenerator;
 
     public IncrementalInterchangeV5Exporter(final OutputStream outputStream) throws IOException {
       jsonGenerator = mapper.getFactory().createGenerator(outputStream);
