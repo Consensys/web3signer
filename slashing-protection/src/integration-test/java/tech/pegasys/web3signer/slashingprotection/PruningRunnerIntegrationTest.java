@@ -16,7 +16,8 @@ import static db.DatabaseUtil.PASSWORD;
 import static db.DatabaseUtil.USERNAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
@@ -239,18 +240,8 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     }
 
     @Override
-    public void exportIncrementallyBegin(final OutputStream out) throws IOException {
-      delegate.exportIncrementallyBegin(out);
-    }
-
-    @Override
-    public void exportIncrementally(final String pubkey) {
-      delegate.exportIncrementally(pubkey);
-    }
-
-    @Override
-    public void exportIncrementallyFinish() throws IOException {
-      delegate.exportIncrementallyFinish();
+    public IncrementalExporter createIncrementalExporter(final OutputStream out) {
+      return delegate.createIncrementalExporter(out);
     }
 
     @Override

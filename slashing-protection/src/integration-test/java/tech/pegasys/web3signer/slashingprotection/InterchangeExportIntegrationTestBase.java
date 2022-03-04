@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
 
 import java.io.ByteArrayOutputStream;
@@ -93,7 +94,7 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
   }
 
   @Test
-  void exportingIncrementallyOnlyExportsSpecifiedValidators() throws IOException {
+  void exportingIncrementallyOnlyExportsSpecifiedValidators() throws Exception {
     final Bytes32 gvr = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
 
     final int VALIDATOR_COUNT = 6;
@@ -121,12 +122,14 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
 
     // incrementally export only the even the public keys
     final OutputStream exportOutput = new ByteArrayOutputStream();
-    slashingProtection.exportIncrementallyBegin(exportOutput);
+    final IncrementalExporter incrementalExporter =
+        slashingProtection.createIncrementalExporter(exportOutput);
     for (int i = 0; i < VALIDATOR_COUNT; i += 2) {
-      slashingProtection.exportIncrementally(String.format("0x0%x", i + 1));
+      incrementalExporter.addPublicKey(String.format("0x0%x", i + 1));
     }
-    slashingProtection.exportIncrementallyFinish();
-    exportOutput.close();
+    incrementalExporter.finalise();
+    incrementalExporter.close();
+
     final InterchangeV5Format outputObject =
         mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
 

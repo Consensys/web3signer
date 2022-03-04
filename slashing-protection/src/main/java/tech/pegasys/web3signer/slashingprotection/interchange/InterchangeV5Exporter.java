@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -74,43 +72,12 @@ public class InterchangeV5Exporter {
     exportInternal(out, Optional.empty());
   }
 
+  public IncrementalExporter createIncrementalExporter(final OutputStream out) throws IOException {
+    return new IncrementalInterchangeV5Exporter(out);
+  }
+
   public void exportDataWithFilter(OutputStream out, List<String> pubkeys) throws IOException {
     exportInternal(out, Optional.of(pubkeys));
-  }
-
-  public void exportIncrementallyBegin(final OutputStream out) throws IOException {
-    checkState(
-        jsonGenerator == null,
-        "Already exporting incrementally. Call exportIncrementallyFinish before calling exportIncrementallyBegin");
-    jsonGenerator = mapper.getFactory().createGenerator(out);
-    final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
-    if (gvr.isEmpty()) {
-      throw new RuntimeException("No genesis validators root for slashing protection data");
-    }
-
-    jsonGenerator.writeStartObject();
-
-    final Metadata metadata = new Metadata(FORMAT_VERSION, gvr.get());
-
-    jsonGenerator.writeFieldName("metadata");
-    mapper.writeValue(jsonGenerator, metadata);
-
-    jsonGenerator.writeArrayFieldStart("data");
-  }
-
-  public void exportIncrementally(final String publicKey) {
-    populateInterchangeData(jsonGenerator, publicKey);
-  }
-
-  public void exportIncrementallyFinish() throws IOException {
-    // end the data array
-    jsonGenerator.writeEndArray();
-
-    // end the interchange object
-    jsonGenerator.writeEndObject();
-
-    jsonGenerator.close();
-    jsonGenerator = null;
   }
 
   private void exportInternal(final OutputStream out, final Optional<List<String>> pubkeys)
@@ -280,5 +247,45 @@ public class InterchangeV5Exporter {
               });
     }
     jsonGenerator.writeEndArray();
+  }
+
+  public class IncrementalInterchangeV5Exporter implements IncrementalExporter {
+
+    public IncrementalInterchangeV5Exporter(final OutputStream outputStream) throws IOException {
+      jsonGenerator = mapper.getFactory().createGenerator(outputStream);
+
+      final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
+      if (gvr.isEmpty()) {
+        throw new RuntimeException("No genesis validators root for slashing protection data");
+      }
+
+      jsonGenerator.writeStartObject();
+
+      final Metadata metadata = new Metadata(FORMAT_VERSION, gvr.get());
+
+      jsonGenerator.writeFieldName("metadata");
+      mapper.writeValue(jsonGenerator, metadata);
+
+      jsonGenerator.writeArrayFieldStart("data");
+    }
+
+    @Override
+    public void addPublicKey(final String publicKey) {
+      populateInterchangeData(jsonGenerator, publicKey);
+    }
+
+    @Override
+    public void finalise() throws IOException {
+      // end the data array
+      jsonGenerator.writeEndArray();
+
+      // end the interchange object
+      jsonGenerator.writeEndObject();
+    }
+
+    @Override
+    public void close() throws Exception {
+      jsonGenerator.close();
+    }
   }
 }

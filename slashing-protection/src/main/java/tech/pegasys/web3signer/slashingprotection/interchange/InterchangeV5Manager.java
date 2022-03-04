@@ -82,17 +82,7 @@ public class InterchangeV5Manager implements InterchangeManager {
   }
 
   @Override
-  public void exportIncrementallyBegin(final OutputStream out) throws IOException {
-    exporter.exportIncrementallyBegin(out);
-  }
-
-  @Override
-  public void exportIncrementally(final String pubkey) {
-    exporter.exportIncrementally(pubkey);
-  }
-
-  @Override
-  public void exportIncrementallyFinish() throws IOException {
-    exporter.exportIncrementallyFinish();
+  public IncrementalExporter createIncrementalExporter(final OutputStream out) throws IOException {
+    return exporter.createIncrementalExporter(out);
   }
 }

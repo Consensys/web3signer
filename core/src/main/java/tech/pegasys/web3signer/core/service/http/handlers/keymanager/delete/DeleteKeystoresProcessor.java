@@ -17,6 +17,7 @@ import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.core.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -122,9 +123,12 @@ public class DeleteKeystoresProcessor {
       try {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         final SlashingProtection slashingProtection = this.slashingProtection.get();
-        slashingProtection.exportIncrementallyBegin(outputStream);
-        keysToExport.forEach(slashingProtection::exportIncrementally);
-        slashingProtection.exportIncrementallyFinish();
+        try (IncrementalExporter incrementalExporter =
+            slashingProtection.createIncrementalExporter(outputStream)) {
+          keysToExport.forEach(incrementalExporter::addPublicKey);
+          incrementalExporter.finalise();
+        }
+
         slashingProtectionExport = outputStream.toString(StandardCharsets.UTF_8);
       } catch (Exception e) {
         LOG.error("Failed to export slashing data", e);

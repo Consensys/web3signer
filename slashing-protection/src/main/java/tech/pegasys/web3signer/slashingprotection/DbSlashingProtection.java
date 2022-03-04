@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
@@ -168,27 +169,12 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void exportIncrementallyBegin(final OutputStream out) {
+  public IncrementalExporter createIncrementalExporter(final OutputStream out) {
     try {
-      LOG.info("Exporting slashing protection database");
-      interchangeManager.exportIncrementallyBegin(out);
+      return interchangeManager.createIncrementalExporter(out);
     } catch (IOException e) {
-      throw new RuntimeException("Failed to initialise incremental export of database content", e);
-    }
-  }
-
-  @Override
-  public void exportIncrementally(final String pubkey) {
-    interchangeManager.exportIncrementally(pubkey);
-  }
-
-  @Override
-  public void exportIncrementallyFinish() {
-    try {
-      interchangeManager.exportIncrementallyFinish();
-      LOG.info("Export complete");
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to finalise incremental export of database content", e);
+      throw new RuntimeException(
+          "Failed to initialise incremental exporter for slashing protection data", e);
     }
   }
 

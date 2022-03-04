@@ -12,7 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import java.io.IOException;
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -41,11 +42,7 @@ public interface SlashingProtection {
 
   void exportDataWithFilter(OutputStream output, List<String> pubkeys);
 
-  void exportIncrementallyBegin(final OutputStream out) throws IOException;
-
-  void exportIncrementally(final String pubkey);
-
-  void exportIncrementallyFinish() throws IOException;
+  IncrementalExporter createIncrementalExporter(OutputStream out);
 
   void importData(InputStream output);
 
