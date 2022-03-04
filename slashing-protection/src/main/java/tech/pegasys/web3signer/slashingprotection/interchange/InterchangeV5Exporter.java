@@ -82,24 +82,34 @@ public class InterchangeV5Exporter {
   private void exportInternal(final OutputStream out, final Optional<List<String>> pubkeys)
       throws IOException {
     try (final JsonGenerator jsonGenerator = mapper.getFactory().createGenerator(out)) {
-      final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
-      if (gvr.isEmpty()) {
-        throw new RuntimeException("No genesis validators root for slashing protection data");
-      }
-
-      jsonGenerator.writeStartObject();
-
-      final Metadata metadata = new Metadata(FORMAT_VERSION, gvr.get());
-
-      jsonGenerator.writeFieldName("metadata");
-      mapper.writeValue(jsonGenerator, metadata);
-
-      jsonGenerator.writeArrayFieldStart("data");
+      startInterchangeExport(jsonGenerator);
       populateInterchangeData(jsonGenerator, pubkeys);
-      jsonGenerator.writeEndArray();
-
-      jsonGenerator.writeEndObject();
+      finaliseInterchangeExport(jsonGenerator);
     }
+  }
+
+  private void startInterchangeExport(final JsonGenerator jsonGenerator) throws IOException {
+    final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
+    if (gvr.isEmpty()) {
+      throw new RuntimeException("No genesis validators root for slashing protection data");
+    }
+
+    jsonGenerator.writeStartObject();
+
+    final Metadata metadata = new Metadata(FORMAT_VERSION, gvr.get());
+
+    jsonGenerator.writeFieldName("metadata");
+    mapper.writeValue(jsonGenerator, metadata);
+
+    jsonGenerator.writeArrayFieldStart("data");
+  }
+
+  private void finaliseInterchangeExport(final JsonGenerator jsonGenerator) throws IOException {
+    // end the data array
+    jsonGenerator.writeEndArray();
+
+    // end the interchange object
+    jsonGenerator.writeEndObject();
   }
 
   private void populateInterchangeData(
@@ -253,20 +263,7 @@ public class InterchangeV5Exporter {
 
     public IncrementalInterchangeV5Exporter(final OutputStream outputStream) throws IOException {
       jsonGenerator = mapper.getFactory().createGenerator(outputStream);
-
-      final Optional<Bytes32> gvr = jdbi.inTransaction(metadataDao::findGenesisValidatorsRoot);
-      if (gvr.isEmpty()) {
-        throw new RuntimeException("No genesis validators root for slashing protection data");
-      }
-
-      jsonGenerator.writeStartObject();
-
-      final Metadata metadata = new Metadata(FORMAT_VERSION, gvr.get());
-
-      jsonGenerator.writeFieldName("metadata");
-      mapper.writeValue(jsonGenerator, metadata);
-
-      jsonGenerator.writeArrayFieldStart("data");
+      startInterchangeExport(jsonGenerator);
     }
 
     @Override
@@ -276,11 +273,7 @@ public class InterchangeV5Exporter {
 
     @Override
     public void finalise() throws IOException {
-      // end the data array
-      jsonGenerator.writeEndArray();
-
-      // end the interchange object
-      jsonGenerator.writeEndObject();
+      finaliseInterchangeExport(jsonGenerator);
     }
 
     @Override
