@@ -20,16 +20,14 @@ import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.web3signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.SignerOrigin;
+import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.util.KeystoreConfigurationFilesCreator;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.core.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -43,7 +41,6 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -61,7 +58,6 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   public static final int SUCCESS = 200;
   public static final int BAD_REQUEST = 400;
   public static final int SERVER_ERROR = 500;
-  private static final ObjectMapper YAML_OBJECT_MAPPER = YAMLMapper.builder().build();
 
   private final ObjectMapper objectMapper;
   private final Path keystorePath;
@@ -169,7 +165,8 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           final BlsArtifactSigner signer =
               decryptKeystoreAndCreateSigner(jsonKeystoreData, password);
           // 2. write keystore file to disk
-          createKeyStoreYamlFileAt(pubkey, jsonKeystoreData, password);
+          new KeystoreConfigurationFilesCreator(keystorePath, pubkey, jsonKeystoreData)
+              .createFiles(password.toCharArray());
           // 3. register the validator in the slashing DB
           slashingProtection.ifPresent(
               protection ->
@@ -180,7 +177,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           // 5. finally, add result to API response
           results.add(new ImportKeystoreResult(ImportKeystoreStatus.IMPORTED, null));
         }
-      } catch (Exception e) {
+      } catch (final Exception e) {
         // cleanup the current key being processed and continue
         removeSignersAndCleanupImportedKeystoreFiles(List.of(pubkey));
         results.add(
@@ -219,35 +216,6 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   private void handleInvalidRequest(final RoutingContext routingContext, final Exception e) {
     LOG.info("Invalid import keystores request - " + routingContext.getBodyAsString(), e);
     routingContext.fail(BAD_REQUEST, e);
-  }
-
-  public void createKeyStoreYamlFileAt(
-      final String fileName, final String jsonKeystoreData, final String password)
-      throws IOException {
-
-    final Path yamlFile = keystorePath.resolve(fileName + ".yaml");
-
-    final String keystoreFileName = fileName + ".json";
-    final Path keystoreFile = yamlFile.getParent().resolve(keystoreFileName);
-    createTextFile(keystoreFile, jsonKeystoreData);
-
-    final String passwordFilename = fileName + ".password";
-    final Path passwordFile = yamlFile.getParent().resolve(passwordFilename);
-    createTextFile(passwordFile, password);
-
-    final FileKeyStoreMetadata data =
-        new FileKeyStoreMetadata(keystoreFile, passwordFile, KeyType.BLS);
-    createYamlFile(yamlFile, data);
-  }
-
-  private void createTextFile(final Path keystoreFile, final String jsonKeystoreData)
-      throws IOException {
-    Files.writeString(keystoreFile, jsonKeystoreData, StandardCharsets.UTF_8);
-  }
-
-  private void createYamlFile(final Path filePath, final FileKeyStoreMetadata signingMetadata)
-      throws IOException {
-    YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), signingMetadata);
   }
 
   private void removeSignersAndCleanupImportedKeystoreFiles(final List<String> pubkeys) {
