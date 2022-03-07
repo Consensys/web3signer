@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.slashingprotection.dao;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,25 +65,14 @@ public class ValidatorsDao {
         .first();
   }
 
-  public boolean hasSigned(final Handle handle, final Bytes publicKey) {
-
-    Optional<Integer> maybeValidatorId =
-        handle
-            .createQuery("SELECT id FROM validators WHERE public_key = ?")
-            .bind(0, publicKey)
-            .mapTo(Integer.class)
-            .findOne();
-
-    return maybeValidatorId
-        .map(
-            validatorId ->
-                handle
-                    .createQuery(
-                        "SELECT EXISTS(SELECT 1 FROM SIGNED_ATTESTATIONS WHERE validator_id = ?) OR EXISTS(SELECT 1 FROM SIGNED_BLOCKS WHERE validator_id = ?)")
-                    .bind(0, validatorId)
-                    .bind(1, validatorId)
-                    .mapTo(Boolean.class)
-                    .one())
-        .orElse(false);
+  public boolean hasSigned(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery(
+            "SELECT EXISTS(SELECT 1 FROM SIGNED_ATTESTATIONS WHERE validator_id = ?)"
+                + " OR EXISTS(SELECT 1 FROM SIGNED_BLOCKS WHERE validator_id = ?)")
+        .bind(0, validatorId)
+        .bind(1, validatorId)
+        .mapTo(Boolean.class)
+        .one();
   }
 }

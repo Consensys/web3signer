@@ -128,28 +128,23 @@ public class ValidatorsDaoTest {
   }
 
   @Test
-  public void hasSignedReturnsFalseWhenValidatorNotRegistered(final Handle handle) {
-    assertThat(new ValidatorsDao().hasSigned(handle, Bytes.of(9))).isFalse();
-  }
-
-  @Test
   public void hasSignedReturnsFalseWhenNoSignedBlocksOrAttestations(final Handle handle) {
     insertValidator(handle, 1, Bytes.of(9));
-    assertThat(new ValidatorsDao().hasSigned(handle, Bytes.of(9))).isFalse();
+    assertThat(new ValidatorsDao().hasSigned(handle, 1)).isFalse();
   }
 
   @Test
   public void hasSignedReturnsTrueWhenSignedBlock(final Handle handle) {
     insertValidator(handle, 1, Bytes.of(9));
     insertBlock(handle, 1);
-    assertThat(new ValidatorsDao().hasSigned(handle, Bytes.of(9))).isTrue();
+    assertThat(new ValidatorsDao().hasSigned(handle, 1)).isTrue();
   }
 
   @Test
   public void hasSignedReturnsTrueWhenSignedAttestation(final Handle handle) {
     insertValidator(handle, 1, Bytes.of(9));
     insertAttestation(handle, 1);
-    assertThat(new ValidatorsDao().hasSigned(handle, Bytes.of(9))).isTrue();
+    assertThat(new ValidatorsDao().hasSigned(handle, 1)).isTrue();
   }
 
   private void insertValidator(final Handle h, final Bytes publicKey) {

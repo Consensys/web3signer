@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -286,7 +287,14 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public boolean slashingProtectionDataExistsFor(final Bytes publicKey) {
-    return jdbi.inTransaction(READ_COMMITTED, handle -> validatorsDao.hasSigned(handle, publicKey));
+    final Optional<Integer> maybeValidatorId =
+        Optional.ofNullable(registeredValidators.get(publicKey));
+    return maybeValidatorId
+        .map(
+            validatorId ->
+                jdbi.inTransaction(
+                    READ_COMMITTED, handle -> validatorsDao.hasSigned(handle, validatorId)))
+        .orElse(false);
   }
 
   private int validatorId(final Bytes publicKey) {

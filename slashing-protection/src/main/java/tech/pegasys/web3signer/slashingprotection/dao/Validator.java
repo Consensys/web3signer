@@ -41,4 +41,9 @@ public class Validator {
   public void setPublicKey(final Bytes publicKey) {
     this.publicKey = publicKey;
   }
+
+  @Override
+  public String toString() {
+    return "Validator{" + "id=" + id + ", publicKey=" + publicKey + '}';
+  }
 }
