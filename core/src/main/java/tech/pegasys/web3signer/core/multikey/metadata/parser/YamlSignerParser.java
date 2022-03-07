@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 public class YamlSignerParser implements SignerParser {
@@ -33,6 +34,8 @@ public class YamlSignerParser implements SignerParser {
   public static final YAMLMapper YAML_MAPPER =
       YAMLMapper.builder()
           .addModule(new SigningMetadataModule())
+          .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
+          .disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID)
           .enable(ACCEPT_CASE_INSENSITIVE_ENUMS)
           .build();
 

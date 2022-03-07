@@ -21,7 +21,7 @@ import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.multikey.metadata.SignerOrigin;
-import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.util.KeystoreConfigurationFilesCreator;
+import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.KeystoreFileManager;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.core.util.IdentifierUtils;
@@ -149,6 +149,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       }
     }
 
+    final KeystoreFileManager keystoreFileManager = new KeystoreFileManager(keystorePath);
     final List<ImportKeystoreResult> results = new ArrayList<>();
     for (int i = 0; i < parsedBody.getKeystores().size(); i++) {
       final String pubkey = pubkeysToImport.get(i);
@@ -165,8 +166,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           final BlsArtifactSigner signer =
               decryptKeystoreAndCreateSigner(jsonKeystoreData, password);
           // 2. write keystore file to disk
-          new KeystoreConfigurationFilesCreator(keystorePath, pubkey, jsonKeystoreData)
-              .createFiles(password.toCharArray());
+          keystoreFileManager.createKeystoreFiles(pubkey, jsonKeystoreData, password.toCharArray());
           // 3. register the validator in the slashing DB
           slashingProtection.ifPresent(
               protection ->

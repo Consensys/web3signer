@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.core.multikey.metadata.parser;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadataException;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -36,6 +37,8 @@ public class SigningMetadataModule extends SimpleModule {
 
     addDeserializer(Bytes.class, new BytesDeserialiser());
     addSerializer(Bytes.class, new BytesSerializer());
+
+    addSerializer(Path.class, new NioPathSerializer());
   }
 
   public static class BytesDeserialiser extends JsonDeserializer<Bytes> {
@@ -79,6 +82,15 @@ public class SigningMetadataModule extends SimpleModule {
         final Bytes32 value, final JsonGenerator gen, final SerializerProvider serializers)
         throws IOException {
       gen.writeString(value.toString());
+    }
+  }
+
+  public static class NioPathSerializer extends JsonSerializer<Path> {
+    @Override
+    public void serialize(Path path, JsonGenerator gen, SerializerProvider serializers)
+        throws IOException {
+      // serialize Path without uri (Jackson's implementation uses uri)
+      gen.writeString(path.toString());
     }
   }
 }
