@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -36,9 +38,11 @@ public interface SlashingProtection {
 
   boolean isRegisteredValidator(Bytes publicKey);
 
-  void export(OutputStream output);
+  void exportData(OutputStream output);
 
-  void exportWithFilter(OutputStream output, List<String> pubkeys);
+  void exportDataWithFilter(OutputStream output, List<String> pubkeys);
+
+  IncrementalExporter createIncrementalExporter(OutputStream out);
 
   void importData(InputStream output);
 

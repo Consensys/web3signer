@@ -1,0 +1,7 @@
+type: "aws-secret"
+keyType: "BLS"
+authenticationMode: "SPECIFIED"
+region: "ap-southeast-2"
+accessKeyId: "foo"
+secretAccessKey: "bar"
+secretName: "NewSuperSecret"

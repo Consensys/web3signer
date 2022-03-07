@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
@@ -147,10 +148,10 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void export(final OutputStream output) {
+  public void exportData(final OutputStream output) {
     try {
       LOG.info("Exporting slashing protection database");
-      interchangeManager.export(output);
+      interchangeManager.exportData(output);
       LOG.info("Export complete");
     } catch (IOException e) {
       throw new RuntimeException("Failed to export database content", e);
@@ -158,13 +159,23 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void exportWithFilter(final OutputStream output, final List<String> pubkeys) {
+  public void exportDataWithFilter(final OutputStream output, final List<String> pubkeys) {
     try {
       LOG.info("Exporting slashing protection database for keys: " + String.join(",", pubkeys));
-      interchangeManager.exportWithFilter(output, pubkeys);
+      interchangeManager.exportDataWithFilter(output, pubkeys);
       LOG.info("Export complete");
     } catch (IOException e) {
       throw new RuntimeException("Failed to export database content", e);
+    }
+  }
+
+  @Override
+  public IncrementalExporter createIncrementalExporter(final OutputStream out) {
+    try {
+      return interchangeManager.createIncrementalExporter(out);
+    } catch (IOException e) {
+      throw new RuntimeException(
+          "Failed to initialise incremental exporter for slashing protection data", e);
     }
   }
 

@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.slashingprotection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock;
 
 import java.io.ByteArrayOutputStream;
@@ -93,6 +94,74 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
   }
 
   @Test
+  void exportingIncrementallyOnlyExportsSpecifiedValidators() throws Exception {
+    final Bytes32 gvr = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
+
+    final int VALIDATOR_COUNT = 6;
+    final int TOTAL_BLOCKS_SIGNED = 6;
+    final int TOTAL_ATTESTATIONS_SIGNED = 8;
+
+    for (int i = 0; i < VALIDATOR_COUNT; i++) {
+      final int validatorId = i + 1;
+      final Bytes validatorPublicKey = Bytes.of(validatorId);
+      slashingProtection.registerValidators(List.of(validatorPublicKey));
+
+      for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
+        insertBlockAt(UInt64.valueOf(b), validatorId);
+      }
+      for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
+        insertAttestationAt(UInt64.valueOf(a), UInt64.valueOf(a), validatorId);
+      }
+
+      jdbi.useTransaction(
+          h -> {
+            lowWatermarkDao.updateSlotWatermarkFor(h, validatorId, UInt64.ZERO);
+            lowWatermarkDao.updateEpochWatermarksFor(h, validatorId, UInt64.ZERO, UInt64.ZERO);
+          });
+    }
+
+    // incrementally export only the even the public keys
+    final OutputStream exportOutput = new ByteArrayOutputStream();
+    final IncrementalExporter incrementalExporter =
+        slashingProtection.createIncrementalExporter(exportOutput);
+    for (int i = 0; i < VALIDATOR_COUNT; i += 2) {
+      incrementalExporter.addPublicKey(String.format("0x0%x", i + 1));
+    }
+    incrementalExporter.finalise();
+    incrementalExporter.close();
+
+    final InterchangeV5Format outputObject =
+        mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
+
+    assertThat(outputObject.getMetadata().getFormatVersion()).isEqualTo("5");
+    assertThat(outputObject.getMetadata().getGenesisValidatorsRoot()).isEqualTo(gvr);
+
+    final List<SignedArtifacts> signedArtifacts = outputObject.getSignedArtifacts();
+    assertThat(signedArtifacts).hasSize(VALIDATOR_COUNT / 2);
+    for (int i = 0; i < VALIDATOR_COUNT; i += 2) {
+      final int validatorId = i + 1;
+      final SignedArtifacts signedArtifact = signedArtifacts.get(i / 2);
+      assertThat(signedArtifact.getPublicKey()).isEqualTo(String.format("0x0%x", validatorId));
+      assertThat(signedArtifact.getSignedBlocks()).hasSize(TOTAL_BLOCKS_SIGNED);
+      for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
+        final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedBlock block =
+            signedArtifact.getSignedBlocks().get(b);
+        assertThat(block.getSigningRoot()).isEqualTo(Bytes.of(100));
+        assertThat(block.getSlot()).isEqualTo(UInt64.valueOf(b));
+      }
+
+      assertThat(signedArtifact.getSignedAttestations()).hasSize(TOTAL_ATTESTATIONS_SIGNED);
+      for (int a = 0; a < TOTAL_ATTESTATIONS_SIGNED; a++) {
+        final tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation
+            attestation = signedArtifact.getSignedAttestations().get(a);
+        assertThat(attestation.getSigningRoot()).isEqualTo(Bytes.of(100));
+        assertThat(attestation.getSourceEpoch()).isEqualTo(UInt64.valueOf(a));
+        assertThat(attestation.getTargetEpoch()).isEqualTo(UInt64.valueOf(a));
+      }
+    }
+  }
+
+  @Test
   void failToExportIfGenesisValidatorRootDoesNotExist() throws IOException {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
     final String databaseUrl = testDatabaseInfo.databaseUrl();
@@ -100,7 +169,7 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     final SlashingProtection slashingProtection =
         SlashingProtectionFactory.createSlashingProtection(
             new TestSlashingProtectionParameters(databaseUrl, "postgres", "postgres"));
-    assertThatThrownBy(() -> slashingProtection.export(exportOutput))
+    assertThatThrownBy(() -> slashingProtection.exportData(exportOutput))
         .hasMessage("No genesis validators root for slashing protection data")
         .isInstanceOf(RuntimeException.class);
     exportOutput.close();
@@ -179,7 +248,7 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
 
   private InterchangeV5Format getExportObjectFromDatabase() throws IOException {
     final OutputStream exportOutput = new ByteArrayOutputStream();
-    slashingProtection.export(exportOutput);
+    slashingProtection.exportData(exportOutput);
     exportOutput.close();
 
     return mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);
