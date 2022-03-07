@@ -34,7 +34,7 @@ public interface SlashingProtection {
 
   void registerValidators(List<Bytes> validators);
 
-  boolean isRegisteredValidator(Bytes publicKey);
+  boolean slashingProtectionDataExistsFor(Bytes publicKey);
 
   void export(OutputStream output);
 

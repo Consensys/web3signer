@@ -223,8 +223,8 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     }
 
     @Override
-    public boolean isRegisteredValidator(final Bytes publicKey) {
-      return delegate.isRegisteredValidator(publicKey);
+    public boolean slashingProtectionDataExistsFor(final Bytes publicKey) {
+      return delegate.slashingProtectionDataExistsFor(publicKey);
     }
 
     @Override

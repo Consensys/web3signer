@@ -285,8 +285,8 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public boolean isRegisteredValidator(final Bytes publicKey) {
-    return registeredValidators.get(publicKey) != null;
+  public boolean slashingProtectionDataExistsFor(final Bytes publicKey) {
+    return jdbi.inTransaction(READ_COMMITTED, handle -> validatorsDao.hasSigned(handle, publicKey));
   }
 
   private int validatorId(final Bytes publicKey) {
