@@ -55,64 +55,59 @@ public class DeleteKeystoresProcessor {
             .collect(Collectors.toList());
 
     final List<String> keysToExport = new ArrayList<>();
-    // attempt to delete keys one by one, and return results with statuses
-    final List<DeleteKeystoreResult> results = processKeysToDelete(pubkeysToDelete, keysToExport);
+    final List<DeleteKeystoreResult> results = new ArrayList<>();
+
+    for (String pubkey : pubkeysToDelete) {
+      // attempt to delete keys one by one, and return results with statuses
+      results.add(processKeyToDelete(pubkey, keysToExport));
+    }
+
     // export slashing data for keys that were either 'deleted' or 'not_active'
     final String slashingProtectionExport = exportSlashingProtectionData(results, keysToExport);
     return new DeleteKeystoresResponse(results, slashingProtectionExport);
   }
 
-  private List<DeleteKeystoreResult> processKeysToDelete(
-      List<String> pubkeysToDelete, List<String> keysToExport) {
-    final List<DeleteKeystoreResult> results = new ArrayList<>();
-    // process each incoming key individually
-    for (String pubkey : pubkeysToDelete) {
-      try {
-        final Optional<ArtifactSigner> signer = signerProvider.getSigner(pubkey);
+  private DeleteKeystoreResult processKeyToDelete(String pubkey, List<String> keysToExport) {
+    try {
+      final Optional<ArtifactSigner> signer = signerProvider.getSigner(pubkey);
 
-        // check that key is active
-        if (signer.isEmpty()) {
-          // if not active, check if we ever had this key registered in the slashing DB
-          final boolean wasRegistered =
-              slashingProtection
-                  .map(protection -> protection.isRegisteredValidator(Bytes.fromHexString(pubkey)))
-                  .orElse(false);
+      // check that key is active
+      if (signer.isEmpty()) {
+        // if not active, check if we ever had this key registered in the slashing DB
+        final boolean wasRegistered =
+            slashingProtection
+                .map(protection -> protection.isRegisteredValidator(Bytes.fromHexString(pubkey)))
+                .orElse(false);
 
-          // if it was registered previously, return not_active and add to list of keys to export,
-          // otherwise not_found
-          if (wasRegistered) {
-            keysToExport.add(pubkey);
-            results.add(new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_ACTIVE, ""));
-          } else {
-            results.add(new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_FOUND, ""));
-          }
-          continue;
+        // if it was registered previously, return not_active and add to list of keys to export,
+        // otherwise not_found
+        if (wasRegistered) {
+          keysToExport.add(pubkey);
+          return new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_ACTIVE, "");
+        } else {
+          return new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_FOUND, "");
         }
-
-        // Check that key is read only, if so return an error status
-        if (signer.get() instanceof BlsArtifactSigner
-            && ((BlsArtifactSigner) signer.get()).isReadOnlyKey()) {
-          results.add(
-              new DeleteKeystoreResult(
-                  DeleteKeystoreStatus.ERROR, "Unable to delete readonly key: " + pubkey));
-          continue;
-        }
-
-        // Remove active key from memory first, will stop any further signing with this key
-        signerProvider.removeSigner(pubkey).get();
-        // Then, delete the corresponding keystore file
-        keystoreFileManager.deleteKeystoreFiles(pubkey);
-        // finally, add result response
-        keysToExport.add(pubkey);
-        results.add(new DeleteKeystoreResult(DeleteKeystoreStatus.DELETED, ""));
-      } catch (Exception e) {
-        LOG.error("Failed to delete keystore files", e);
-        results.add(
-            new DeleteKeystoreResult(
-                DeleteKeystoreStatus.ERROR, "Error deleting keystore file: " + e.getMessage()));
       }
+
+      // Check that key is read only, if so return an error status
+      if (signer.get() instanceof BlsArtifactSigner
+          && ((BlsArtifactSigner) signer.get()).isReadOnlyKey()) {
+        return new DeleteKeystoreResult(
+            DeleteKeystoreStatus.ERROR, "Unable to delete readonly key: " + pubkey);
+      }
+
+      // Remove active key from memory first, will stop any further signing with this key
+      signerProvider.removeSigner(pubkey).get();
+      // Then, delete the corresponding keystore file
+      keystoreFileManager.deleteKeystoreFiles(pubkey);
+      // finally, add result response
+      keysToExport.add(pubkey);
+      return new DeleteKeystoreResult(DeleteKeystoreStatus.DELETED, "");
+    } catch (Exception e) {
+      LOG.error("Failed to delete keystore files", e);
+      return new DeleteKeystoreResult(
+          DeleteKeystoreStatus.ERROR, "Error deleting keystore file: " + e.getMessage());
     }
-    return results;
   }
 
   private String exportSlashingProtectionData(
