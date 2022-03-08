@@ -223,8 +223,8 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     }
 
     @Override
-    public boolean slashingProtectionDataExistsFor(final Bytes publicKey) {
-      return delegate.slashingProtectionDataExistsFor(publicKey);
+    public boolean hasSlashingProtectionDataFor(final Bytes publicKey) {
+      return delegate.hasSlashingProtectionDataFor(publicKey);
     }
 
     @Override

@@ -73,7 +73,7 @@ public class DeleteKeystoresProcessor {
         if (signer.isEmpty()) {
           final boolean slashingProtectionDataExistsForPubKey =
               slashingProtection
-                  .map(sp -> sp.slashingProtectionDataExistsFor(Bytes.fromHexString(pubkey)))
+                  .map(sp -> sp.hasSlashingProtectionDataFor(Bytes.fromHexString(pubkey)))
                   .orElse(false);
 
           if (slashingProtectionDataExistsForPubKey) {

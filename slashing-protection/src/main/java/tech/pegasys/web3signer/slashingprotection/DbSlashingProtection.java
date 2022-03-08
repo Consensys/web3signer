@@ -286,7 +286,7 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public boolean slashingProtectionDataExistsFor(final Bytes publicKey) {
+  public boolean hasSlashingProtectionDataFor(final Bytes publicKey) {
     final Optional<Integer> maybeValidatorId =
         Optional.ofNullable(registeredValidators.get(publicKey));
     return maybeValidatorId
