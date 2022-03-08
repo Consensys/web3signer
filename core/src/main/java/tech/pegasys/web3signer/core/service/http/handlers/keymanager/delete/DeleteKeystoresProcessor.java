@@ -125,7 +125,7 @@ public class DeleteKeystoresProcessor {
         final SlashingProtection slashingProtection = this.slashingProtection.get();
         try (IncrementalExporter incrementalExporter =
             slashingProtection.createIncrementalExporter(outputStream)) {
-          keysToExport.forEach(incrementalExporter::addPublicKey);
+          keysToExport.forEach(incrementalExporter::export);
           incrementalExporter.finalise();
         }
 

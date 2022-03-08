@@ -267,7 +267,7 @@ public class InterchangeV5Exporter {
     }
 
     @Override
-    public void addPublicKey(final String publicKey) {
+    public void export(final String publicKey) {
       populateInterchangeData(jsonGenerator, publicKey);
     }
 
