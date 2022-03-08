@@ -68,10 +68,9 @@ public class ValidatorsDao {
   public boolean hasSigned(final Handle handle, final int validatorId) {
     return handle
         .createQuery(
-            "SELECT EXISTS(SELECT 1 FROM SIGNED_ATTESTATIONS WHERE validator_id = ?)"
-                + " OR EXISTS(SELECT 1 FROM SIGNED_BLOCKS WHERE validator_id = ?)")
-        .bind(0, validatorId)
-        .bind(1, validatorId)
+            "SELECT EXISTS(SELECT 1 FROM SIGNED_ATTESTATIONS WHERE validator_id = :validatorId)"
+                + " OR EXISTS(SELECT 1 FROM SIGNED_BLOCKS WHERE validator_id = :validatorId)")
+        .bind("validatorId", validatorId)
         .mapTo(Boolean.class)
         .one();
   }
