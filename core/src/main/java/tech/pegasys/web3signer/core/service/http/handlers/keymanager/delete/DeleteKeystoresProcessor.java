@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,37 +49,47 @@ public class DeleteKeystoresProcessor {
   }
 
   public DeleteKeystoresResponse process(final DeleteKeystoresRequestBody requestBody) {
-    // normalize incoming keys to delete
-    final List<String> pubkeysToDelete =
-        requestBody.getPubkeys().stream()
-            .map(IdentifierUtils::normaliseIdentifier)
-            .collect(Collectors.toList());
-
     final List<DeleteKeystoreResult> results = new ArrayList<>();
     final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
     try (final IncrementalExporter incrementalExporter = createIncrementalExporter(outputStream)) {
+      // normalize incoming keys to delete
+      final List<String> pubkeysToDelete =
+          requestBody.getPubkeys().stream()
+              .map(IdentifierUtils::normaliseIdentifier)
+              .collect(Collectors.toList());
+
       for (String pubkey : pubkeysToDelete) {
         results.add(processKeyToDelete(pubkey, incrementalExporter));
       }
-      incrementalExporter.finalise();
+
+      try {
+        incrementalExporter.finalise();
+      } catch (IOException ioException) {
+        LOG.error("Failed to export slashing data", ioException);
+        setAllResultsToError(results, ioException);
+      }
     } catch (Exception e) {
-      LOG.error("Failed to export slashing data", e);
-      // if export fails - set all results to error
-      final List<DeleteKeystoreResult> errorResults =
-          results.stream()
-              .map(
-                  result ->
-                      new DeleteKeystoreResult(
-                          DeleteKeystoreStatus.ERROR,
-                          "Error exporting slashing data: " + e.getMessage()))
-              .collect(Collectors.toList());
-      results.clear();
-      results.addAll(errorResults);
+      // Any unhandled error we want to bubble up so that we return an internal error response
+      throw new RuntimeException("Error deleting keystores", e);
     }
 
     final String slashingProtectionExport = outputStream.toString(StandardCharsets.UTF_8);
     return new DeleteKeystoresResponse(results, slashingProtectionExport);
+  }
+
+  private void setAllResultsToError(
+      final List<DeleteKeystoreResult> results, final IOException ioException) {
+    final List<DeleteKeystoreResult> errorResults =
+        results.stream()
+            .map(
+                result ->
+                    new DeleteKeystoreResult(
+                        DeleteKeystoreStatus.ERROR,
+                        "Error exporting slashing data: " + ioException.getMessage()))
+            .collect(Collectors.toList());
+    results.clear();
+    results.addAll(errorResults);
   }
 
   private IncrementalExporter createIncrementalExporter(final ByteArrayOutputStream outputStream) {
