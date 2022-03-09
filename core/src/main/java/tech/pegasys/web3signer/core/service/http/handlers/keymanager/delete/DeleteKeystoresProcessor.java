@@ -84,10 +84,10 @@ public class DeleteKeystoresProcessor {
   private IncrementalExporter createIncrementalExporter(final ByteArrayOutputStream outputStream) {
     return slashingProtection.isPresent()
         ? slashingProtection.get().createIncrementalExporter(outputStream)
-        // return no-op exporter if no slashing protection
+        // Using no-op exporter instead of returning an optional so can use try with for closing
         : new IncrementalExporter() {
           @Override
-          public void addPublicKey(final String publicKey) {}
+          public void export(final String publicKey) {}
 
           @Override
           public void finalise() {}
@@ -113,9 +113,9 @@ public class DeleteKeystoresProcessor {
         // if it was registered previously, return not_active and add to list of keys to export,
         // otherwise not_found
         if (wasRegistered) {
-          final Optional<DeleteKeystoreResult> exportSlashingDataError =
+          final Optional<DeleteKeystoreResult> exportError =
               exportSlashingData(pubkey, incrementalExporter);
-          return exportSlashingDataError.orElseGet(
+          return exportError.orElseGet(
               () -> new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_ACTIVE, ""));
         } else {
           return new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_FOUND, "");
@@ -139,16 +139,15 @@ public class DeleteKeystoresProcessor {
           DeleteKeystoreStatus.ERROR, "Error deleting keystore file: " + e.getMessage());
     }
 
-    final Optional<DeleteKeystoreResult> exportSlashingDataError =
+    final Optional<DeleteKeystoreResult> exportError =
         exportSlashingData(pubkey, incrementalExporter);
-    return exportSlashingDataError.orElseGet(
-        () -> new DeleteKeystoreResult(DeleteKeystoreStatus.DELETED, ""));
+    return exportError.orElseGet(() -> new DeleteKeystoreResult(DeleteKeystoreStatus.DELETED, ""));
   }
 
   private Optional<DeleteKeystoreResult> exportSlashingData(
       final String pubkey, final IncrementalExporter incrementalExporter) {
     try {
-      incrementalExporter.addPublicKey(pubkey);
+      incrementalExporter.export(pubkey);
       return Optional.empty();
     } catch (Exception e) {
       LOG.error("Failed to export slashing data for public key {}", pubkey, e);
