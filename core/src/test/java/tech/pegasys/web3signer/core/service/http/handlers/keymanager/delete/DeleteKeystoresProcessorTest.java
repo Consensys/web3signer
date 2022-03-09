@@ -134,7 +134,7 @@ class DeleteKeystoresProcessorTest {
     when(artifactSignerProvider.removeSigner(any()))
         .thenReturn(CompletableFuture.completedFuture(null));
     doNothing().when(keystoreFileManager).deleteKeystoreFiles(any());
-    doThrow(new RuntimeException("db error")).when(incrementalExporter).addPublicKey(any());
+    doThrow(new RuntimeException("db error")).when(incrementalExporter).export(any());
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY));

@@ -14,9 +14,8 @@ package tech.pegasys.web3signer.core.service.http;
 
 import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.api.schema.BLSSignature;
-import tech.pegasys.teku.infrastructure.ssz.collections.SszBitlist;
+import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.ssz.collections.SszBitvector;
-import tech.pegasys.teku.infrastructure.ssz.type.Bytes4;
 import tech.pegasys.teku.provider.BLSPubKeyDeserializer;
 import tech.pegasys.teku.provider.BLSPubKeySerializer;
 import tech.pegasys.teku.provider.BLSSignatureDeserializer;
@@ -28,8 +27,6 @@ import tech.pegasys.teku.provider.BytesDeserializer;
 import tech.pegasys.teku.provider.BytesSerializer;
 import tech.pegasys.teku.provider.DoubleDeserializer;
 import tech.pegasys.teku.provider.DoubleSerializer;
-import tech.pegasys.teku.provider.SszBitlistDeserializer;
-import tech.pegasys.teku.provider.SszBitlistSerializer;
 import tech.pegasys.teku.provider.SszBitvectorDeserializer;
 import tech.pegasys.teku.provider.SszBitvectorSerializer;
 import tech.pegasys.teku.provider.UInt64Deserializer;
@@ -93,8 +90,6 @@ public class SigningObjectMapperFactory {
     module.addDeserializer(BLSSignature.class, new BLSSignatureDeserializer());
     module.addSerializer(BLSSignature.class, new BLSSignatureSerializer());
 
-    module.addSerializer(SszBitlist.class, new SszBitlistSerializer());
-    module.addDeserializer(SszBitlist.class, new SszBitlistDeserializer());
     module.addDeserializer(SszBitvector.class, new SszBitvectorDeserializer());
     module.addSerializer(SszBitvector.class, new SszBitvectorSerializer());
 

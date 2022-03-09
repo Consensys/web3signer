@@ -125,7 +125,7 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     final IncrementalExporter incrementalExporter =
         slashingProtection.createIncrementalExporter(exportOutput);
     for (int i = 0; i < VALIDATOR_COUNT; i += 2) {
-      incrementalExporter.addPublicKey(String.format("0x0%x", i + 1));
+      incrementalExporter.export(String.format("0x0%x", i + 1));
     }
     incrementalExporter.finalise();
     incrementalExporter.close();

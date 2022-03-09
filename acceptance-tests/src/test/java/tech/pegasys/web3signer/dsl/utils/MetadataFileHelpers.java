@@ -220,6 +220,44 @@ public class MetadataFileHelpers {
     createYamlFile(metadataFilePath, yaml);
   }
 
+  public void createAwsYamlFileAt(
+      final Path metadataFilePath,
+      final String awsRegion,
+      final String accessKeyId,
+      final String secretAccessKey,
+      final String secretName) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+
+      signingMetadata.put("type", "aws-secret");
+      signingMetadata.put("authenticationMode", "SPECIFIED");
+      signingMetadata.put("region", awsRegion);
+      signingMetadata.put("accessKeyId", accessKeyId);
+      signingMetadata.put("secretAccessKey", secretAccessKey);
+      signingMetadata.put("secretName", secretName);
+
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to construct aws yaml file", e);
+    }
+  }
+
+  public void createAwsYamlFileAt(
+      final Path metadataFilePath, final String awsRegion, final String secretName) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+
+      signingMetadata.put("type", "aws-secret");
+      signingMetadata.put("authenticationMode", "ENVIRONMENT");
+      signingMetadata.put("region", awsRegion);
+      signingMetadata.put("secretName", secretName);
+
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to construct aws yaml file", e);
+    }
+  }
+
   private void createPasswordFile(final Path passwordFilePath, final String password) {
     try {
       Files.writeString(passwordFilePath, password);
