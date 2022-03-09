@@ -72,15 +72,12 @@ public class DeleteKeystoresProcessor {
 
         // check that key is active
         if (signer.isEmpty()) {
-          // if not active, check if we ever had this key registered in the slashing DB
-          final boolean wasRegistered =
+          final boolean slashingProtectionDataExistsForPubKey =
               slashingProtection
-                  .map(protection -> protection.isRegisteredValidator(Bytes.fromHexString(pubkey)))
+                  .map(sp -> sp.hasSlashingProtectionDataFor(Bytes.fromHexString(pubkey)))
                   .orElse(false);
 
-          // if it was registered previously, return not_active and add to list of keys to export,
-          // otherwise not_found
-          if (wasRegistered) {
+          if (slashingProtectionDataExistsForPubKey) {
             keysToExport.add(pubkey);
             results.add(new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_ACTIVE, ""));
           } else {
