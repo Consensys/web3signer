@@ -113,25 +113,22 @@ public class DeleteKeystoresProcessor {
     try {
       final Optional<ArtifactSigner> signer = signerProvider.getSigner(pubkey);
 
-      // check that key is active
-      if (signer.isEmpty()) {
-        // if not active, check if we ever had this key registered in the slashing DB
-        final boolean wasRegistered =
-            slashingProtection
-                .map(protection -> protection.isRegisteredValidator(Bytes.fromHexString(pubkey)))
-                .orElse(false);
+        // check that key is active
+        if (signer.isEmpty()) {
+          final boolean slashingProtectionDataExistsForPubKey =
+              slashingProtection
+                  .map(sp -> sp.hasSlashingProtectionDataFor(Bytes.fromHexString(pubkey)))
+                  .orElse(false);
 
-        // if it was registered previously, return not_active and add to list of keys to export,
-        // otherwise not_found
-        if (wasRegistered) {
-          final Optional<DeleteKeystoreResult> exportError =
-              exportSlashingData(pubkey, incrementalExporter);
-          return exportError.orElseGet(
-              () -> new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_ACTIVE, ""));
-        } else {
-          return new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_FOUND, "");
+          if (slashingProtectionDataExistsForPubKey) {
+            final Optional<DeleteKeystoreResult> exportError =
+                exportSlashingData(pubkey, incrementalExporter);
+            return exportError.orElseGet(
+                () -> new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_ACTIVE, ""));
+          } else {
+            return new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_FOUND, "");
+          }
         }
-      }
 
       // Check that key is read only, if so return an error status
       if (signer.get() instanceof BlsArtifactSigner

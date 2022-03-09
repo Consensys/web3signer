@@ -64,4 +64,14 @@ public class ValidatorsDao {
         .mapTo(Boolean.class)
         .first();
   }
+
+  public boolean hasSigned(final Handle handle, final int validatorId) {
+    return handle
+        .createQuery(
+            "SELECT EXISTS(SELECT 1 FROM SIGNED_ATTESTATIONS WHERE validator_id = :validatorId)"
+                + " OR EXISTS(SELECT 1 FROM SIGNED_BLOCKS WHERE validator_id = :validatorId)")
+        .bind("validatorId", validatorId)
+        .mapTo(Boolean.class)
+        .one();
+  }
 }
