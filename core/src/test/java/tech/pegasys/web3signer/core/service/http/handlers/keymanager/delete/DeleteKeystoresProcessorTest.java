@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 
 import java.io.IOException;
 import java.util.List;
@@ -43,6 +44,7 @@ class DeleteKeystoresProcessorTest {
   @Mock SlashingProtection slashingProtection;
   @Mock ArtifactSignerProvider artifactSignerProvider;
   @Mock ArtifactSigner signer;
+  @Mock IncrementalExporter incrementalExporter;
 
   DeleteKeystoresProcessor processor;
 
@@ -51,6 +53,7 @@ class DeleteKeystoresProcessorTest {
     processor =
         new DeleteKeystoresProcessor(
             keystoreFileManager, Optional.of(slashingProtection), artifactSignerProvider);
+    when(slashingProtection.createIncrementalExporter(any())).thenReturn(incrementalExporter);
   }
 
   @Test
@@ -131,9 +134,7 @@ class DeleteKeystoresProcessorTest {
     when(artifactSignerProvider.removeSigner(any()))
         .thenReturn(CompletableFuture.completedFuture(null));
     doNothing().when(keystoreFileManager).deleteKeystoreFiles(any());
-    doThrow(new RuntimeException("db error"))
-        .when(slashingProtection)
-        .exportWithFilter(any(), any());
+    doThrow(new RuntimeException("db error")).when(incrementalExporter).export(any());
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY));

@@ -65,7 +65,7 @@ public class Eth2ExportSubCommand implements Runnable {
       final SlashingProtection slashingProtection =
           createSlashingProtection(eth2Config.getSlashingProtectionParameters());
 
-      slashingProtection.export(outStream);
+      slashingProtection.exportData(outStream);
     } catch (final IOException e) {
       throw new UncheckedIOException("Unable to find output target file", e);
     } catch (final IllegalStateException e) {
