@@ -62,7 +62,8 @@ public class ValidatorsDao {
         .createQuery("SELECT enabled FROM validators WHERE id = ?")
         .bind(0, validatorId)
         .mapTo(Boolean.class)
-        .findFirst().orElse(false);
+        .findFirst()
+        .orElse(false);
   }
 
   public void setEnabled(final Handle handle, final int validatorId, final boolean enabled) {
