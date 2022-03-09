@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright 2022 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,19 +13,13 @@
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
 
-public interface InterchangeManager {
+public interface IncrementalExporter extends AutoCloseable {
 
-  void importData(InputStream in) throws IOException;
+  void export(String publicKey);
 
-  void importDataWithFilter(InputStream in, List<String> pubkeys) throws IOException;
+  void finalise() throws IOException;
 
-  void exportData(OutputStream out) throws IOException;
-
-  void exportDataWithFilter(OutputStream output, List<String> pubkeys) throws IOException;
-
-  IncrementalExporter createIncrementalExporter(OutputStream out) throws IOException;
+  @Override
+  void close() throws Exception;
 }

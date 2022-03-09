@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 
 import tech.pegasys.teku.api.schema.BLSPubKey;
-import tech.pegasys.teku.infrastructure.ssz.type.Bytes4;
+import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;

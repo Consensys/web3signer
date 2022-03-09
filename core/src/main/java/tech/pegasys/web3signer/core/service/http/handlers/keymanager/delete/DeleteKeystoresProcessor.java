@@ -17,6 +17,7 @@ import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.core.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
@@ -71,15 +72,12 @@ public class DeleteKeystoresProcessor {
 
         // check that key is active
         if (signer.isEmpty()) {
-          // if not active, check if we ever had this key registered in the slashing DB
-          final boolean wasRegistered =
+          final boolean slashingProtectionDataExistsForPubKey =
               slashingProtection
-                  .map(protection -> protection.isRegisteredValidator(Bytes.fromHexString(pubkey)))
+                  .map(sp -> sp.hasSlashingProtectionDataFor(Bytes.fromHexString(pubkey)))
                   .orElse(false);
 
-          // if it was registered previously, return not_active and add to list of keys to export,
-          // otherwise not_found
-          if (wasRegistered) {
+          if (slashingProtectionDataExistsForPubKey) {
             keysToExport.add(pubkey);
             results.add(new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_ACTIVE, ""));
           } else {
@@ -121,7 +119,13 @@ public class DeleteKeystoresProcessor {
     if (slashingProtection.isPresent()) {
       try {
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        slashingProtection.get().exportWithFilter(outputStream, keysToExport);
+        final SlashingProtection slashingProtection = this.slashingProtection.get();
+        try (IncrementalExporter incrementalExporter =
+            slashingProtection.createIncrementalExporter(outputStream)) {
+          keysToExport.forEach(incrementalExporter::export);
+          incrementalExporter.finalise();
+        }
+
         slashingProtectionExport = outputStream.toString(StandardCharsets.UTF_8);
       } catch (Exception e) {
         LOG.error("Failed to export slashing data", e);

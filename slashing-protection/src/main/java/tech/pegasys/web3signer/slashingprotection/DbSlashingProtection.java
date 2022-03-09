@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -146,10 +148,10 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void export(final OutputStream output) {
+  public void exportData(final OutputStream output) {
     try {
       LOG.info("Exporting slashing protection database");
-      interchangeManager.export(output);
+      interchangeManager.exportData(output);
       LOG.info("Export complete");
     } catch (IOException e) {
       throw new RuntimeException("Failed to export database content", e);
@@ -157,13 +159,23 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void exportWithFilter(final OutputStream output, final List<String> pubkeys) {
+  public void exportDataWithFilter(final OutputStream output, final List<String> pubkeys) {
     try {
       LOG.info("Exporting slashing protection database for keys: " + String.join(",", pubkeys));
-      interchangeManager.exportWithFilter(output, pubkeys);
+      interchangeManager.exportDataWithFilter(output, pubkeys);
       LOG.info("Export complete");
     } catch (IOException e) {
       throw new RuntimeException("Failed to export database content", e);
+    }
+  }
+
+  @Override
+  public IncrementalExporter createIncrementalExporter(final OutputStream out) {
+    try {
+      return interchangeManager.createIncrementalExporter(out);
+    } catch (IOException e) {
+      throw new RuntimeException(
+          "Failed to initialise incremental exporter for slashing protection data", e);
     }
   }
 
@@ -285,8 +297,15 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public boolean isRegisteredValidator(final Bytes publicKey) {
-    return registeredValidators.get(publicKey) != null;
+  public boolean hasSlashingProtectionDataFor(final Bytes publicKey) {
+    final Optional<Integer> maybeValidatorId =
+        Optional.ofNullable(registeredValidators.get(publicKey));
+    return maybeValidatorId
+        .map(
+            validatorId ->
+                jdbi.inTransaction(
+                    READ_COMMITTED, handle -> validatorsDao.hasSigned(handle, validatorId)))
+        .orElse(false);
   }
 
   private int validatorId(final Bytes publicKey) {
