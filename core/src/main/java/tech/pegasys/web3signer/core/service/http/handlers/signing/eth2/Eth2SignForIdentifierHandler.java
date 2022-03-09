@@ -229,7 +229,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       case AGGREGATE_AND_PROOF:
         checkArgument(body.getAggregateAndProof() != null, "aggregateAndProof must be specified");
         return signingRootUtil.signingRootForSignAggregateAndProof(
-            body.getAggregateAndProof().asInternalAggregateAndProof(),
+            body.getAggregateAndProof().asInternalAggregateAndProof(eth2Spec),
             body.getForkInfo().asInternalForkInfo());
       case AGGREGATION_SLOT:
         checkArgument(body.getAggregationSlot() != null, "aggregationSlot must be specified");

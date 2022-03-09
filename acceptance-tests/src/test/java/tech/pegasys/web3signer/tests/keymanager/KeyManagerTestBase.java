@@ -41,7 +41,6 @@ import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.hamcrest.Matcher;
-import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.io.TempDir;
 
 public class KeyManagerTestBase extends AcceptanceTestBase {
@@ -69,8 +68,6 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
         .withSlashingProtectionDbPassword(DB_PASSWORD)
         .withKeyManagerApiEnabled(true);
     startSigner(builder.build());
-    final Jdbi jdbi = Jdbi.create(signer.getSlashingDbUrl(), DB_USERNAME, DB_PASSWORD);
-    jdbi.withHandle(h -> h.execute("DELETE FROM validators"));
 
     if (insertSlashingProtectionData) {
       final SignerConfigurationBuilder importBuilder = new SignerConfigurationBuilder();

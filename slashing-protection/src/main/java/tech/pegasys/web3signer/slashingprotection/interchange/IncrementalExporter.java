@@ -16,7 +16,7 @@ import java.io.IOException;
 
 public interface IncrementalExporter extends AutoCloseable {
 
-  void addPublicKey(String publicKey);
+  void export(String publicKey);
 
   void finalise() throws IOException;
 

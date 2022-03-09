@@ -29,6 +29,7 @@ import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
+import tech.pegasys.web3signer.dsl.utils.AwsSecretsManagerUtil;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
@@ -143,6 +144,38 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         keyConfigFile, clientId, clientSecret, tenantId, keyVaultName, secretName);
 
     signAndVerifySignature(ArtifactType.BLOCK);
+  }
+
+  @Test
+  @EnabledIfEnvironmentVariables({
+    @EnabledIfEnvironmentVariable(named = "RW_AWS_ACCESS_KEY_ID", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "RW_AWS_SECRET_ACCESS_KEY", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "RO_AWS_ACCESS_KEY_ID", matches = ".*"),
+    @EnabledIfEnvironmentVariable(named = "RO_AWS_SECRET_ACCESS_KEY", matches = ".*")
+  })
+  public void ableToSignUsingAws() throws JsonProcessingException {
+    final String rwAwsAccessKeyId = System.getenv("RW_AWS_ACCESS_KEY_ID");
+    final String rwAwsSecretAccessKey = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
+    final String roAwsAccessKeyId = System.getenv("RO_AWS_ACCESS_KEY_ID");
+    final String roAwsSecretAccessKey = System.getenv("RO_AWS_SECRET_ACCESS_KEY");
+    final String region = "us-east-2";
+
+    AwsSecretsManagerUtil awsSecretsManagerUtil =
+        new AwsSecretsManagerUtil(region, rwAwsAccessKeyId, rwAwsSecretAccessKey);
+
+    final String secretName = awsSecretsManagerUtil.createSecret(PRIVATE_KEY);
+
+    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    try {
+      metadataFileHelpers.createAwsYamlFileAt(
+          keyConfigFile, region, roAwsAccessKeyId, roAwsSecretAccessKey, secretName);
+
+      signAndVerifySignature(ArtifactType.BLOCK);
+    } finally {
+      awsSecretsManagerUtil.deleteSecret();
+      awsSecretsManagerUtil.close();
+    }
   }
 
   @ParameterizedTest

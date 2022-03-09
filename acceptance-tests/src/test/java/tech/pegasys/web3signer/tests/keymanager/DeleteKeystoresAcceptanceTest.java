@@ -67,10 +67,23 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   }
 
   @Test
-  public void deletingNonExistingKeyReturnNotFound() throws URISyntaxException {
+  public void deletingExistingKeyWithNoSlashingProtectionDataTwiceReturnsNotFound()
+      throws URISyntaxException {
+    final String pubKey =
+        "0xa46bf94016af71e55ca0518fe6a8bd3852e01b3f959780a4faf3bbe461ac553c0a83f232cc5f2a4b827d8d3455b706e4";
     createBlsKey("eth2/bls_keystore_2.json", "otherpassword");
     setupSignerWithKeyManagerApi(true);
-    callDeleteKeystores(composeRequestBody())
+    callDeleteKeystores(composeRequestBody(pubKey))
+        .then()
+        .contentType(ContentType.JSON)
+        .assertThat()
+        .statusCode(200)
+        .body("data[0].status", is("deleted"))
+        .and()
+        .body("slashing_protection", is(emptySlashingData));
+
+    // call API again with same key should return not_found
+    callDeleteKeystores(composeRequestBody(pubKey))
         .then()
         .contentType(ContentType.JSON)
         .assertThat()

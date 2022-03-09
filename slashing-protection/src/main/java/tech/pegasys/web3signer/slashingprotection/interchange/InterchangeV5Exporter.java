@@ -262,18 +262,20 @@ public class InterchangeV5Exporter {
     final JsonGenerator jsonGenerator;
 
     public IncrementalInterchangeV5Exporter(final OutputStream outputStream) throws IOException {
+      LOG.info("Exporting slashing protection database");
       jsonGenerator = mapper.getFactory().createGenerator(outputStream);
       startInterchangeExport(jsonGenerator);
     }
 
     @Override
-    public void addPublicKey(final String publicKey) {
+    public void export(final String publicKey) {
       populateInterchangeData(jsonGenerator, publicKey);
     }
 
     @Override
     public void finalise() throws IOException {
       finaliseInterchangeExport(jsonGenerator);
+      LOG.info("Exporting complete");
     }
 
     @Override

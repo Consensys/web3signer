@@ -85,8 +85,7 @@ dependencyManagement {
     dependency 'org.hyperledger.besu:plugin-api:21.10.9'
     dependency 'org.hyperledger.besu.internal:metrics-core:21.10.9'
 
-    // TODO: Use latest release which contains new fixes
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '22.1.1') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '22.3.0') {
       entry 'bls'
       entry ('core') {
         exclude 'teku:data' // empty module which is incorrectly referenced in Teku's "core" pom
@@ -98,7 +97,7 @@ dependencyManagement {
       entry 'networks'
     }
 
-    dependency 'tech.pegasys:jblst:0.3.3-1'
+    dependency 'tech.pegasys:jblst:0.3.6-4'
 
     dependencySet(group: 'tech.pegasys.signers.internal', version: '2.1.0') {
       entry 'bls-keystore'
@@ -142,5 +141,11 @@ dependencyManagement {
 
     dependency 'com.github.ipld:java-cid:1.3.1'
     dependency 'net.jodah:failsafe:2.4.0'
+
+    dependencySet(group: 'software.amazon.awssdk', version: '2.17.125') {
+      entry 'bom'
+      entry 'auth'
+      entry 'secretsmanager'
+    }
   }
 }

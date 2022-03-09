@@ -34,7 +34,7 @@ import picocli.CommandLine.Spec;
 
 @Command(
     name = "import",
-    description = "Exports the slashing protection database",
+    description = "Imports the slashing protection database",
     subcommands = {HelpCommand.class},
     mixinStandardHelpOptions = true)
 public class Eth2ImportSubCommand implements Runnable {

@@ -95,7 +95,7 @@ class DeleteKeystoresProcessorTest {
   @Test
   void testSignerNotFound() {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.empty());
-    when(slashingProtection.isRegisteredValidator(any())).thenReturn(false);
+    when(slashingProtection.hasSlashingProtectionDataFor(any())).thenReturn(false);
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY));
@@ -110,7 +110,7 @@ class DeleteKeystoresProcessorTest {
   @Test
   void testSignerNotActive() {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.empty());
-    when(slashingProtection.isRegisteredValidator(any())).thenReturn(true);
+    when(slashingProtection.hasSlashingProtectionDataFor(any())).thenReturn(true);
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY));
@@ -198,7 +198,7 @@ class DeleteKeystoresProcessorTest {
     when(artifactSignerProvider.removeSigner(any()))
         .thenReturn(CompletableFuture.completedFuture(null));
     doNothing().when(keystoreFileManager).deleteKeystoreFiles(any());
-    doThrow(new RuntimeException("db error")).when(incrementalExporter).addPublicKey(any());
+    doThrow(new RuntimeException("db error")).when(incrementalExporter).export(any());
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY));
@@ -218,7 +218,7 @@ class DeleteKeystoresProcessorTest {
     doNothing().when(keystoreFileManager).deleteKeystoreFiles(any());
     doThrow(new RuntimeException("db error"))
         .when(slashingProtection)
-        .exportWithFilter(any(), any());
+        .exportDataWithFilter(any(), any());
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY));
@@ -242,7 +242,7 @@ class DeleteKeystoresProcessorTest {
     doNothing().when(keystoreFileManager).deleteKeystoreFiles(any());
     doThrow(new RuntimeException("db error"))
         .when(slashingProtection)
-        .exportWithFilter(any(), any());
+        .exportDataWithFilter(any(), any());
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY));

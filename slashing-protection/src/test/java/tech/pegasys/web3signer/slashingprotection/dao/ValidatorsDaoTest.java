@@ -23,6 +23,7 @@ import db.DatabaseSetupExtension;
 import db.DatabaseUtil;
 import db.DatabaseUtil.TestDatabaseInfo;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.flywaydb.core.Flyway;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -172,11 +173,54 @@ public class ValidatorsDaoTest {
     assertThat(validatorsDao.isEnabled(handle, 1)).isFalse();
   }
 
+  @Test
+  public void hasSignedReturnsFalseWhenNoSignedBlocksOrAttestations(final Handle handle) {
+    insertValidator(handle, 1, Bytes.of(9));
+    assertThat(new ValidatorsDao().hasSigned(handle, 1)).isFalse();
+  }
+
+  @Test
+  public void hasSignedReturnsTrueWhenSignedBlock(final Handle handle) {
+    insertValidator(handle, 1, Bytes.of(9));
+    insertBlock(handle, 1);
+    assertThat(new ValidatorsDao().hasSigned(handle, 1)).isTrue();
+  }
+
+  @Test
+  public void hasSignedReturnsTrueWhenSignedAttestation(final Handle handle) {
+    insertValidator(handle, 1, Bytes.of(9));
+    insertAttestation(handle, 1);
+    assertThat(new ValidatorsDao().hasSigned(handle, 1)).isTrue();
+  }
+
   private void insertValidator(final Handle h, final Bytes publicKey) {
     insertValidator(h, publicKey, true);
   }
 
   private void insertValidator(final Handle h, final Bytes publicKey, final boolean enabled) {
     h.execute("INSERT INTO validators (public_key, enabled) VALUES (?, ?)", publicKey, enabled);
+  }
+
+  private void insertValidator(final Handle h, final int validatorId, final Bytes publicKey) {
+    h.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
+  }
+
+  private void insertBlock(final Handle handle, final int validatorId) {
+    handle.execute(
+        "INSERT INTO signed_blocks (validator_id, slot, signing_root) VALUES (?, ?, ?)",
+        validatorId,
+        2,
+        Bytes.of(3));
+  }
+
+  private void insertAttestation(final Handle handle, final int validatorId) {
+    handle.execute(
+        "INSERT INTO signed_attestations "
+            + "(validator_id, signing_root, source_epoch, target_epoch) "
+            + "VALUES (?, ?, ?, ?)",
+        validatorId,
+        Bytes.of(2),
+        UInt64.valueOf(3),
+        UInt64.valueOf(4));
   }
 }

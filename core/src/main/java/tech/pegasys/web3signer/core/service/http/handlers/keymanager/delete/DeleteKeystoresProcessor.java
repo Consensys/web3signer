@@ -67,23 +67,17 @@ public class DeleteKeystoresProcessor {
     final List<DeleteKeystoreResult> results = new ArrayList<>();
     // process each incoming key individually
     for (String pubkey : pubkeysToDelete) {
-      final Bytes pubKeyBytes = Bytes.fromHexString(pubkey);
-      final Optional<Boolean> validatorEnabled =
-          slashingProtection.map(s -> s.isEnabledValidator(pubKeyBytes));
       try {
         final Optional<ArtifactSigner> signer = signerProvider.getSigner(pubkey);
 
         // check that key is active
         if (signer.isEmpty()) {
-          // if not active, check if we ever had this key registered in the slashing DB
-          final boolean wasRegistered =
+          final boolean slashingProtectionDataExistsForPubKey =
               slashingProtection
-                  .map(protection -> protection.isRegisteredValidator(pubKeyBytes))
+                  .map(sp -> sp.hasSlashingProtectionDataFor(Bytes.fromHexString(pubkey)))
                   .orElse(false);
 
-          // if it was registered previously, return not_active and add to list of keys to export,
-          // otherwise not_found
-          if (wasRegistered) {
+          if (slashingProtectionDataExistsForPubKey) {
             keysToExport.add(pubkey);
             results.add(new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_ACTIVE, ""));
           } else {
@@ -101,8 +95,6 @@ public class DeleteKeystoresProcessor {
           continue;
         }
 
-        // disable any further signing with validator for all web3signers that share the db
-        slashingProtection.ifPresent(s -> s.updateValidatorEnabledStatus(pubKeyBytes, false));
         // Remove active key from memory first, will stop any further signing with this key
         signerProvider.removeSigner(pubkey).get();
         // Then, delete the corresponding keystore file
@@ -111,11 +103,6 @@ public class DeleteKeystoresProcessor {
         keysToExport.add(pubkey);
         results.add(new DeleteKeystoreResult(DeleteKeystoreStatus.DELETED, ""));
       } catch (Exception e) {
-        slashingProtection.ifPresent(
-            slashingProtection ->
-                validatorEnabled.ifPresent(
-                    enabled ->
-                        slashingProtection.updateValidatorEnabledStatus(pubKeyBytes, enabled)));
         LOG.error("Failed to delete keystore files", e);
         results.add(
             new DeleteKeystoreResult(
@@ -135,18 +122,12 @@ public class DeleteKeystoresProcessor {
         final SlashingProtection slashingProtection = this.slashingProtection.get();
         try (IncrementalExporter incrementalExporter =
             slashingProtection.createIncrementalExporter(outputStream)) {
-          keysToExport.forEach(incrementalExporter::addPublicKey);
+          keysToExport.forEach(incrementalExporter::export);
           incrementalExporter.finalise();
         }
 
         slashingProtectionExport = outputStream.toString(StandardCharsets.UTF_8);
       } catch (Exception e) {
-        for (final String key : keysToExport) {
-          final Bytes publicKey = Bytes.fromHexString(key);
-          final boolean isEnabledValidator = slashingProtection.get().isEnabledValidator(publicKey);
-          slashingProtection.get().updateValidatorEnabledStatus(publicKey, isEnabledValidator);
-        }
-
         LOG.error("Failed to export slashing data", e);
         // if export fails - set all results to error
         final List<DeleteKeystoreResult> errorResults =
