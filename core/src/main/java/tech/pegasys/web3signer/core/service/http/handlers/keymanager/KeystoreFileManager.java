@@ -60,7 +60,7 @@ public class KeystoreFileManager {
   }
 
   /**
-   * Create Keystore metadata, json and password files
+   * Create Keystore metadata, json and password files.
    *
    * @param fileNameWithoutExtension File name, usually public key in hex string format, without
    *     extension.
@@ -79,16 +79,22 @@ public class KeystoreFileManager {
     final Path keystorePasswordFile =
         keystorePath.resolve(fileNameWithoutExtension + KEYSTORE_PASSWORD_EXTENSION);
 
-    // create yaml file first (so that if it fails we haven't written password file before it)
     final FileKeyStoreMetadata data =
         new FileKeyStoreMetadata(keystoreJsonFile, keystorePasswordFile, KeyType.BLS);
-    createYamlFile(metadataYamlFile, data);
+    try {
+      // create yaml file first (so that if it fails we haven't written password file before it)
+      createYamlFile(metadataYamlFile, data);
+      // keystore json file
+      Files.writeString(keystoreJsonFile, jsonKeystoreData, StandardCharsets.UTF_8);
+      // password file
+      Files.writeString(keystorePasswordFile, password, StandardCharsets.UTF_8);
+    } catch (final IOException e) {
+      deleteFile(metadataYamlFile);
+      deleteFile(keystoreJsonFile);
+      deleteFile(keystorePasswordFile);
 
-    // keystore json file
-    Files.writeString(keystoreJsonFile, jsonKeystoreData, StandardCharsets.UTF_8);
-
-    // password file
-    Files.writeString(keystorePasswordFile, password, StandardCharsets.UTF_8);
+      throw e;
+    }
   }
 
   private Optional<List<Path>> findKeystoreConfigFiles(final String pubkey) throws IOException {
@@ -138,5 +144,13 @@ public class KeystoreFileManager {
       final Path filePath, final FileKeyStoreMetadata signingMetadata) throws IOException {
     final String yamlContent = YAML_MAPPER.writeValueAsString(signingMetadata);
     Files.writeString(filePath, yamlContent);
+  }
+
+  private static void deleteFile(final Path file) {
+    try {
+      Files.deleteIfExists(file);
+    } catch (final IOException e) {
+      LOG.warn("Unable to delete file {} due to {}", file, e.getMessage());
+    }
   }
 }
