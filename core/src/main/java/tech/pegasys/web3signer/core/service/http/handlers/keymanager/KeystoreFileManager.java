@@ -82,9 +82,9 @@ public class KeystoreFileManager {
     final FileKeyStoreMetadata data =
         new FileKeyStoreMetadata(keystoreJsonFile, keystorePasswordFile, KeyType.BLS);
     try {
-      // create yaml file first (so that if it fails we haven't written password file before it)
+      // keystore metadata yaml file
       createYamlFile(metadataYamlFile, data);
-      // keystore json file
+      // keystore data json file
       Files.writeString(keystoreJsonFile, jsonKeystoreData, StandardCharsets.UTF_8);
       // password file
       Files.writeString(keystorePasswordFile, password, StandardCharsets.UTF_8);
