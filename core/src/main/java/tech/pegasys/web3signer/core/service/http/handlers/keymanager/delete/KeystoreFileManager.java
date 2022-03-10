@@ -26,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,9 +40,9 @@ import org.apache.logging.log4j.Logger;
 public class KeystoreFileManager {
 
   private static final Logger LOG = LogManager.getLogger();
-  private static final String YAML_EXTENSION = ".yaml";
-  private static final String JSON_EXTENSION = ".json";
-  private static final String PASSWORD_EXTENSION = ".password";
+  public static final String METADATA_YAML_EXTENSION = ".yaml";
+  public static final String KEYSTORE_JSON_EXTENSION = ".json";
+  public static final String KEYSTORE_PASSWORD_EXTENSION = ".password";
 
   private final Path keystorePath;
 
@@ -66,17 +65,18 @@ public class KeystoreFileManager {
    * @param fileNameWithoutExtension File name, usually public key, without extension.
    * @param jsonKeystoreData Keystore Json data which will be written to
    *     fileNameWithoutExtension.json
-   * @param password password char[] which will be written as pubkey.password. All the values in the
-   *     array will be reset after password is written.
+   * @param password password that will be written as fileNameWithoutExtension.password.
    * @throws IOException In case file write operations fail
    */
   public void createKeystoreFiles(
-      final String fileNameWithoutExtension, final String jsonKeystoreData, final char[] password)
+      final String fileNameWithoutExtension, final String jsonKeystoreData, final String password)
       throws IOException {
-    final Path metadataYamlFile = keystorePath.resolve(fileNameWithoutExtension + YAML_EXTENSION);
-    final Path keystoreJsonFile = keystorePath.resolve(fileNameWithoutExtension + JSON_EXTENSION);
+    final Path metadataYamlFile =
+        keystorePath.resolve(fileNameWithoutExtension + METADATA_YAML_EXTENSION);
+    final Path keystoreJsonFile =
+        keystorePath.resolve(fileNameWithoutExtension + KEYSTORE_JSON_EXTENSION);
     final Path keystorePasswordFile =
-        keystorePath.resolve(fileNameWithoutExtension + PASSWORD_EXTENSION);
+        keystorePath.resolve(fileNameWithoutExtension + KEYSTORE_PASSWORD_EXTENSION);
 
     // create yaml file first (so that if it fails we haven't written password file before it)
     final FileKeyStoreMetadata data =
@@ -87,10 +87,7 @@ public class KeystoreFileManager {
     Files.writeString(keystoreJsonFile, jsonKeystoreData, StandardCharsets.UTF_8);
 
     // password file
-    Files.writeString(keystorePasswordFile, new String(password), StandardCharsets.UTF_8);
-
-    // reset password array argument
-    Arrays.fill(password, ' ');
+    Files.writeString(keystorePasswordFile, password, StandardCharsets.UTF_8);
   }
 
   private Optional<List<Path>> findKeystoreConfigFiles(final String pubkey) throws IOException {

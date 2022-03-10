@@ -26,10 +26,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class KeystoreFileManagerTest {
+
   @Test
   void configurationFilesAreCreated(@TempDir Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir)
-        .createKeystoreFiles("filename", "{\"test\":true}", "password".toCharArray());
+        .createKeystoreFiles("filename", "{\"test\":true}", "password");
 
     final Path metadataYamlFile = parentDir.resolve("filename.yaml");
     final Path keystoreJsonFile = parentDir.resolve("filename.json");
@@ -43,7 +44,7 @@ class KeystoreFileManagerTest {
   @Test
   void yamlContentIsValidFileKeyStoreMetadata(@TempDir Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir)
-        .createKeystoreFiles("filename", "{\"test\":true}", "password".toCharArray());
+        .createKeystoreFiles("filename", "{\"test\":true}", "password");
 
     final Path metadataYamlFile = parentDir.resolve("filename.yaml");
 
@@ -57,7 +58,7 @@ class KeystoreFileManagerTest {
   @Test
   void yamlContentIsNotConverted(@TempDir Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir)
-        .createKeystoreFiles("filename", "{\"test\":true}", "password".toCharArray());
+        .createKeystoreFiles("filename", "{\"test\":true}", "password");
 
     final Path metadataYamlFile = parentDir.resolve("filename.yaml");
     final Path keystoreJsonFile = parentDir.resolve("filename.json");
@@ -77,7 +78,7 @@ class KeystoreFileManagerTest {
   @Test
   void passwordContentsAreWritten(@TempDir Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir)
-        .createKeystoreFiles("filename", "{\"test\":true}", "password".toCharArray());
+        .createKeystoreFiles("filename", "{\"test\":true}", "password");
 
     final Path keystorePasswordFile = parentDir.resolve("filename.password");
 
@@ -87,7 +88,7 @@ class KeystoreFileManagerTest {
   @Test
   void jsonDataIsWritten(@TempDir Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir)
-        .createKeystoreFiles("filename", "{\"test\":true}", "password".toCharArray());
+        .createKeystoreFiles("filename", "{\"test\":true}", "password");
 
     final Path keystoreJsonFile = parentDir.resolve("filename.json");
 
