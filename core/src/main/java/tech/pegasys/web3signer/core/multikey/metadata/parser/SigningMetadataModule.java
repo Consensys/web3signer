@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -38,7 +39,8 @@ public class SigningMetadataModule extends SimpleModule {
     addDeserializer(Bytes.class, new BytesDeserialiser());
     addSerializer(Bytes.class, new BytesSerializer());
 
-    addSerializer(Path.class, new NioPathSerializer());
+    // serialize Path without uri (Jackson's implementation uses uri)
+    addSerializer(Path.class, new ToStringSerializer());
   }
 
   public static class BytesDeserialiser extends JsonDeserializer<Bytes> {
@@ -82,15 +84,6 @@ public class SigningMetadataModule extends SimpleModule {
         final Bytes32 value, final JsonGenerator gen, final SerializerProvider serializers)
         throws IOException {
       gen.writeString(value.toString());
-    }
-  }
-
-  public static class NioPathSerializer extends JsonSerializer<Path> {
-    @Override
-    public void serialize(Path path, JsonGenerator gen, SerializerProvider serializers)
-        throws IOException {
-      // serialize Path without uri (Jackson's implementation uses uri)
-      gen.writeString(path.toString());
     }
   }
 }

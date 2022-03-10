@@ -35,6 +35,7 @@ import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.core.signing.KeyType;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +44,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.tuweni.bytes.Bytes32;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -212,6 +214,21 @@ class YamlSignerParserTest {
     final List<ArtifactSigner> result = signerParser.parse(yamlMetadata);
     assertThat(result).containsOnly(artifactSigner);
     verify(blsArtifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
+  }
+
+  @Test
+  void keyStoreMetaDataInfoWithHttpURIFailsWithException() throws IOException {
+    final Path passwordFile = configDir.resolve("keystore.password");
+
+    final Map<String, String> keystoreMetadataFile = new HashMap<>();
+    keystoreMetadataFile.put("type", "file-keystore");
+    keystoreMetadataFile.put(
+        "keystoreFile", URI.create("https://consensys.net/keystore.json").toString());
+    keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
+    final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(keystoreMetadataFile);
+
+    Assertions.assertThatThrownBy(() -> signerParser.parse(yamlMetadata))
+        .hasRootCauseMessage("Provider \"https\" not installed");
   }
 
   @Test
