@@ -18,6 +18,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.web3signer.core.service.http.handlers.keymanager.KeystoreFileManager;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;

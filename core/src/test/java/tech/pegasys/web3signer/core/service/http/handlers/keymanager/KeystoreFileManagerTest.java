@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete;
+package tech.pegasys.web3signer.core.service.http.handlers.keymanager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.YAML_MAPPER;

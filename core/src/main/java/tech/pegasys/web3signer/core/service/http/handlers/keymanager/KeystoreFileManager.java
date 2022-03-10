@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete;
+package tech.pegasys.web3signer.core.service.http.handlers.keymanager;
 
 import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.YAML_MAPPER;
 
@@ -62,10 +62,11 @@ public class KeystoreFileManager {
   /**
    * Create Keystore metadata, json and password files
    *
-   * @param fileNameWithoutExtension File name, usually public key, without extension.
+   * @param fileNameWithoutExtension File name, usually public key in hex string format, without
+   *     extension.
    * @param jsonKeystoreData Keystore Json data which will be written to
    *     fileNameWithoutExtension.json
-   * @param password password that will be written as fileNameWithoutExtension.password.
+   * @param password password that will be written to fileNameWithoutExtension.password file.
    * @throws IOException In case file write operations fail
    */
   public void createKeystoreFiles(

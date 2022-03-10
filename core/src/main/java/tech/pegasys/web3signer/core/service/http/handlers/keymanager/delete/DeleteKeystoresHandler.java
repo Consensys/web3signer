@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
+import tech.pegasys.web3signer.core.service.http.handlers.keymanager.KeystoreFileManager;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
