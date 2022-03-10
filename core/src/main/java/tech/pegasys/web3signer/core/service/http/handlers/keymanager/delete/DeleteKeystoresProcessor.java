@@ -96,16 +96,7 @@ public class DeleteKeystoresProcessor {
     return slashingProtection.isPresent()
         ? slashingProtection.get().createIncrementalExporter(outputStream)
         // Using no-op exporter instead of returning an optional so can use try with for closing
-        : new IncrementalExporter() {
-          @Override
-          public void export(final String publicKey) {}
-
-          @Override
-          public void finalise() {}
-
-          @Override
-          public void close() {}
-        };
+        : new NoOpIncrementalExporter();
   }
 
   private DeleteKeystoreResult processKeyToDelete(
@@ -121,10 +112,8 @@ public class DeleteKeystoresProcessor {
                 .orElse(false);
 
         if (slashingProtectionDataExistsForPubKey) {
-          final Optional<DeleteKeystoreResult> exportError =
-              exportSlashingData(pubkey, incrementalExporter);
-          return exportError.orElseGet(
-              () -> new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_ACTIVE, ""));
+          return attemptToExportWithSlashingData(
+              pubkey, incrementalExporter, DeleteKeystoreStatus.NOT_ACTIVE);
         } else {
           return new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_FOUND, "");
         }
@@ -147,21 +136,32 @@ public class DeleteKeystoresProcessor {
           DeleteKeystoreStatus.ERROR, "Error deleting keystore file: " + e.getMessage());
     }
 
-    final Optional<DeleteKeystoreResult> exportError =
-        exportSlashingData(pubkey, incrementalExporter);
-    return exportError.orElseGet(() -> new DeleteKeystoreResult(DeleteKeystoreStatus.DELETED, ""));
+    return attemptToExportWithSlashingData(
+        pubkey, incrementalExporter, DeleteKeystoreStatus.DELETED);
   }
 
-  private Optional<DeleteKeystoreResult> exportSlashingData(
-      final String pubkey, final IncrementalExporter incrementalExporter) {
+  private DeleteKeystoreResult attemptToExportWithSlashingData(
+      final String pubkey,
+      final IncrementalExporter incrementalExporter,
+      final DeleteKeystoreStatus status) {
     try {
       incrementalExporter.export(pubkey);
-      return Optional.empty();
+      return new DeleteKeystoreResult(status, "");
     } catch (Exception e) {
       LOG.error("Failed to export slashing data for public key {}", pubkey, e);
-      return Optional.of(
-          new DeleteKeystoreResult(
-              DeleteKeystoreStatus.ERROR, "Error exporting slashing data: " + e.getMessage()));
+      return new DeleteKeystoreResult(
+          DeleteKeystoreStatus.ERROR, "Error exporting slashing data: " + e.getMessage());
     }
+  }
+
+  private static class NoOpIncrementalExporter implements IncrementalExporter {
+    @Override
+    public void export(final String publicKey) {}
+
+    @Override
+    public void finalise() {}
+
+    @Override
+    public void close() throws Exception {}
   }
 }
