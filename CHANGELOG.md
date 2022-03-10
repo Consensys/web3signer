@@ -1,5 +1,9 @@
 # Changelog
 
+## 21.10.6
+### Bugs Fixed
+- Updated to PostgreSQL JDBC driver to 42.3.3. Resolves a potential vulnerability CVE-2022-21724.
+
 ## 21.10.5
 ### Bugs Fixed
 - Updated to log4j 2.17.1. Resolves two potential vulnerabilities which are only exploitable when using custom log4j configurations that are either writable by untrusted users or log data from the `ThreadContext`.
