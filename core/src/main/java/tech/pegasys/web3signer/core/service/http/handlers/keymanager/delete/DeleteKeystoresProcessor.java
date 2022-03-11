@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,100 +49,119 @@ public class DeleteKeystoresProcessor {
   }
 
   public DeleteKeystoresResponse process(final DeleteKeystoresRequestBody requestBody) {
-    // normalize incoming keys to delete
-    final List<String> pubkeysToDelete =
-        requestBody.getPubkeys().stream()
-            .map(IdentifierUtils::normaliseIdentifier)
-            .collect(Collectors.toList());
+    final List<DeleteKeystoreResult> results = new ArrayList<>();
+    final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-    final List<String> keysToExport = new ArrayList<>();
-    // attempt to delete keys one by one, and return results with statuses
-    final List<DeleteKeystoreResult> results = processKeysToDelete(pubkeysToDelete, keysToExport);
-    // export slashing data for keys that were either 'deleted' or 'not_active'
-    final String slashingProtectionExport = exportSlashingProtectionData(results, keysToExport);
+    try (final IncrementalExporter incrementalExporter = createIncrementalExporter(outputStream)) {
+      // normalize incoming keys to delete
+      final List<String> pubkeysToDelete =
+          requestBody.getPubkeys().stream()
+              .map(IdentifierUtils::normaliseIdentifier)
+              .collect(Collectors.toList());
+
+      for (String pubkey : pubkeysToDelete) {
+        results.add(processKeyToDelete(pubkey, incrementalExporter));
+      }
+
+      try {
+        incrementalExporter.finalise();
+      } catch (IOException ioException) {
+        LOG.error("Failed to export slashing data", ioException);
+        setAllResultsToError(results, ioException);
+      }
+    } catch (Exception e) {
+      // Any unhandled error we want to bubble up so that we return an internal error response
+      throw new RuntimeException("Error deleting keystores", e);
+    }
+
+    final String slashingProtectionExport = outputStream.toString(StandardCharsets.UTF_8);
     return new DeleteKeystoresResponse(results, slashingProtectionExport);
   }
 
-  private List<DeleteKeystoreResult> processKeysToDelete(
-      List<String> pubkeysToDelete, List<String> keysToExport) {
-    final List<DeleteKeystoreResult> results = new ArrayList<>();
-    // process each incoming key individually
-    for (String pubkey : pubkeysToDelete) {
-      try {
-        final Optional<ArtifactSigner> signer = signerProvider.getSigner(pubkey);
-
-        // check that key is active
-        if (signer.isEmpty()) {
-          final boolean slashingProtectionDataExistsForPubKey =
-              slashingProtection
-                  .map(sp -> sp.hasSlashingProtectionDataFor(Bytes.fromHexString(pubkey)))
-                  .orElse(false);
-
-          if (slashingProtectionDataExistsForPubKey) {
-            keysToExport.add(pubkey);
-            results.add(new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_ACTIVE, ""));
-          } else {
-            results.add(new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_FOUND, ""));
-          }
-          continue;
-        }
-
-        // Check that key is read only, if so return an error status
-        if (signer.get() instanceof BlsArtifactSigner
-            && ((BlsArtifactSigner) signer.get()).isReadOnlyKey()) {
-          results.add(
-              new DeleteKeystoreResult(
-                  DeleteKeystoreStatus.ERROR, "Unable to delete readonly key: " + pubkey));
-          continue;
-        }
-
-        // Remove active key from memory first, will stop any further signing with this key
-        signerProvider.removeSigner(pubkey).get();
-        // Then, delete the corresponding keystore file
-        keystoreFileManager.deleteKeystoreFiles(pubkey);
-        // finally, add result response
-        keysToExport.add(pubkey);
-        results.add(new DeleteKeystoreResult(DeleteKeystoreStatus.DELETED, ""));
-      } catch (Exception e) {
-        LOG.error("Failed to delete keystore files", e);
-        results.add(
-            new DeleteKeystoreResult(
-                DeleteKeystoreStatus.ERROR, "Error deleting keystore file: " + e.getMessage()));
-      }
-    }
-    return results;
+  private void setAllResultsToError(
+      final List<DeleteKeystoreResult> results, final IOException ioException) {
+    final List<DeleteKeystoreResult> errorResults =
+        results.stream()
+            .map(
+                result ->
+                    new DeleteKeystoreResult(
+                        DeleteKeystoreStatus.ERROR,
+                        "Error exporting slashing data: " + ioException.getMessage()))
+            .collect(Collectors.toList());
+    results.clear();
+    results.addAll(errorResults);
   }
 
-  private String exportSlashingProtectionData(
-      final List<DeleteKeystoreResult> results, final List<String> keysToExport) {
-    // export slashing protection data for 'deleted' and 'not_active' keys
-    String slashingProtectionExport = null;
-    if (slashingProtection.isPresent()) {
-      try {
-        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        final SlashingProtection slashingProtection = this.slashingProtection.get();
-        try (IncrementalExporter incrementalExporter =
-            slashingProtection.createIncrementalExporter(outputStream)) {
-          keysToExport.forEach(incrementalExporter::export);
-          incrementalExporter.finalise();
-        }
+  private IncrementalExporter createIncrementalExporter(final ByteArrayOutputStream outputStream) {
+    return slashingProtection.isPresent()
+        ? slashingProtection.get().createIncrementalExporter(outputStream)
+        // Using no-op exporter instead of returning an optional so can use try with for closing
+        : new NoOpIncrementalExporter();
+  }
 
-        slashingProtectionExport = outputStream.toString(StandardCharsets.UTF_8);
-      } catch (Exception e) {
-        LOG.error("Failed to export slashing data", e);
-        // if export fails - set all results to error
-        final List<DeleteKeystoreResult> errorResults =
-            results.stream()
-                .map(
-                    result ->
-                        new DeleteKeystoreResult(
-                            DeleteKeystoreStatus.ERROR,
-                            "Error exporting slashing data: " + e.getMessage()))
-                .collect(Collectors.toList());
-        results.clear();
-        results.addAll(errorResults);
+  private DeleteKeystoreResult processKeyToDelete(
+      String pubkey, final IncrementalExporter incrementalExporter) {
+    try {
+      final Optional<ArtifactSigner> signer = signerProvider.getSigner(pubkey);
+
+      // check that key is active
+      if (signer.isEmpty()) {
+        final boolean slashingProtectionDataExistsForPubKey =
+            slashingProtection
+                .map(sp -> sp.hasSlashingProtectionDataFor(Bytes.fromHexString(pubkey)))
+                .orElse(false);
+
+        if (slashingProtectionDataExistsForPubKey) {
+          return attemptToExportWithSlashingData(
+              pubkey, incrementalExporter, DeleteKeystoreStatus.NOT_ACTIVE);
+        } else {
+          return new DeleteKeystoreResult(DeleteKeystoreStatus.NOT_FOUND, "");
+        }
       }
+
+      // Check that key is read only, if so return an error status
+      if (signer.get() instanceof BlsArtifactSigner
+          && ((BlsArtifactSigner) signer.get()).isReadOnlyKey()) {
+        return new DeleteKeystoreResult(
+            DeleteKeystoreStatus.ERROR, "Unable to delete readonly key: " + pubkey);
+      }
+
+      // Remove active key from memory first, will stop any further signing with this key
+      signerProvider.removeSigner(pubkey).get();
+      // Then, delete the corresponding keystore file
+      keystoreFileManager.deleteKeystoreFiles(pubkey);
+    } catch (Exception e) {
+      LOG.error("Failed to delete keystore files", e);
+      return new DeleteKeystoreResult(
+          DeleteKeystoreStatus.ERROR, "Error deleting keystore file: " + e.getMessage());
     }
-    return slashingProtectionExport;
+
+    return attemptToExportWithSlashingData(
+        pubkey, incrementalExporter, DeleteKeystoreStatus.DELETED);
+  }
+
+  private DeleteKeystoreResult attemptToExportWithSlashingData(
+      final String pubkey,
+      final IncrementalExporter incrementalExporter,
+      final DeleteKeystoreStatus status) {
+    try {
+      incrementalExporter.export(pubkey);
+      return new DeleteKeystoreResult(status, "");
+    } catch (Exception e) {
+      LOG.error("Failed to export slashing data for public key {}", pubkey, e);
+      return new DeleteKeystoreResult(
+          DeleteKeystoreStatus.ERROR, "Error exporting slashing data: " + e.getMessage());
+    }
+  }
+
+  private static class NoOpIncrementalExporter implements IncrementalExporter {
+    @Override
+    public void export(final String publicKey) {}
+
+    @Override
+    public void finalise() {}
+
+    @Override
+    public void close() throws Exception {}
   }
 }
