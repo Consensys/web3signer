@@ -19,9 +19,6 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -29,9 +26,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.web3signer.BLSTestUtil;
-import org.apache.tuweni.bytes.Bytes;
-import org.mockito.InOrder;
-import org.mockito.Mockito;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
@@ -100,7 +94,8 @@ class DeleteKeystoresProcessorTest {
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
     processor.process(requestBody);
-    verify(slashingProtection).updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
+    verify(slashingProtection)
+        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
   }
 
   @Test
