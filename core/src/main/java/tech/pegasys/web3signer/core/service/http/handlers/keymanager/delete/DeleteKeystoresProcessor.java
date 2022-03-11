@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete;
 
+import tech.pegasys.web3signer.core.service.http.handlers.keymanager.KeystoreFileManager;
 import tech.pegasys.web3signer.core.signing.ArtifactSigner;
 import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;

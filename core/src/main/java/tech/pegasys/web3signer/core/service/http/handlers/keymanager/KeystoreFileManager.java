@@ -10,13 +10,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete;
+package tech.pegasys.web3signer.core.service.http.handlers.keymanager;
+
+import static tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser.YAML_MAPPER;
 
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.core.multikey.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.core.multikey.metadata.SigningMetadata;
-import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.core.util.IdentifierUtils;
 
@@ -39,6 +40,9 @@ import org.apache.logging.log4j.Logger;
 public class KeystoreFileManager {
 
   private static final Logger LOG = LogManager.getLogger();
+  public static final String METADATA_YAML_EXTENSION = ".yaml";
+  public static final String KEYSTORE_JSON_EXTENSION = ".json";
+  public static final String KEYSTORE_PASSWORD_EXTENSION = ".password";
 
   private final Path keystorePath;
 
@@ -55,6 +59,44 @@ public class KeystoreFileManager {
     }
   }
 
+  /**
+   * Create Keystore metadata, json and password files.
+   *
+   * @param fileNameWithoutExtension File name, usually public key in hex string format, without
+   *     extension.
+   * @param jsonKeystoreData Keystore Json data which will be written to
+   *     fileNameWithoutExtension.json
+   * @param password password that will be written to fileNameWithoutExtension.password file.
+   * @throws IOException In case file write operations fail
+   */
+  public void createKeystoreFiles(
+      final String fileNameWithoutExtension, final String jsonKeystoreData, final String password)
+      throws IOException {
+    final Path metadataYamlFile =
+        keystorePath.resolve(fileNameWithoutExtension + METADATA_YAML_EXTENSION);
+    final Path keystoreJsonFile =
+        keystorePath.resolve(fileNameWithoutExtension + KEYSTORE_JSON_EXTENSION);
+    final Path keystorePasswordFile =
+        keystorePath.resolve(fileNameWithoutExtension + KEYSTORE_PASSWORD_EXTENSION);
+
+    final FileKeyStoreMetadata data =
+        new FileKeyStoreMetadata(keystoreJsonFile, keystorePasswordFile, KeyType.BLS);
+    try {
+      // keystore metadata yaml file
+      createYamlFile(metadataYamlFile, data);
+      // keystore data json file
+      Files.writeString(keystoreJsonFile, jsonKeystoreData, StandardCharsets.UTF_8);
+      // password file
+      Files.writeString(keystorePasswordFile, password, StandardCharsets.UTF_8);
+    } catch (final IOException e) {
+      deleteFile(metadataYamlFile);
+      deleteFile(keystoreJsonFile);
+      deleteFile(keystorePasswordFile);
+
+      throw e;
+    }
+  }
+
   private Optional<List<Path>> findKeystoreConfigFiles(final String pubkey) throws IOException {
     // find keystore files and map them to their pubkeys
     try (final Stream<Path> fileStream = Files.list(keystorePath)) {
@@ -68,8 +110,7 @@ public class KeystoreFileManager {
                     try {
                       final String fileContent = Files.readString(path, StandardCharsets.UTF_8);
                       final SigningMetadata metaDataInfo =
-                          YamlSignerParser.YAML_MAPPER.readValue(
-                              fileContent, SigningMetadata.class);
+                          YAML_MAPPER.readValue(fileContent, SigningMetadata.class);
                       if (metaDataInfo.getKeyType() == KeyType.BLS
                           && metaDataInfo instanceof FileKeyStoreMetadata) {
                         final FileKeyStoreMetadata info = ((FileKeyStoreMetadata) metaDataInfo);
@@ -96,6 +137,20 @@ public class KeystoreFileManager {
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
       // return the matching file
       return Optional.ofNullable(map.get(pubkey));
+    }
+  }
+
+  private static void createYamlFile(
+      final Path filePath, final FileKeyStoreMetadata signingMetadata) throws IOException {
+    final String yamlContent = YAML_MAPPER.writeValueAsString(signingMetadata);
+    Files.writeString(filePath, yamlContent);
+  }
+
+  private static void deleteFile(final Path file) {
+    try {
+      Files.deleteIfExists(file);
+    } catch (final IOException e) {
+      LOG.warn("Unable to delete file {} due to {}", file, e.getMessage());
     }
   }
 }
