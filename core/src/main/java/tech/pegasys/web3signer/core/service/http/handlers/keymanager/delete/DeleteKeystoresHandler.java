@@ -70,7 +70,7 @@ public class DeleteKeystoresHandler implements Handler<RoutingContext> {
           .putHeader(CONTENT_TYPE, JSON_UTF_8)
           .setStatusCode(SUCCESS)
           .end(objectMapper.writeValueAsString(response));
-    } catch (JsonProcessingException e) {
+    } catch (Exception e) {
       context.fail(SERVER_ERROR, e);
     }
   }
