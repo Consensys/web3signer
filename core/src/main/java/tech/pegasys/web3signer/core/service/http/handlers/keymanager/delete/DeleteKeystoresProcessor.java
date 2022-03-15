@@ -129,7 +129,7 @@ public class DeleteKeystoresProcessor {
 
       // Remove active key from memory first, will stop any further signing with this key
       signerProvider.removeSigner(pubkey).get();
-      // Then, delete the corresponding keystore file
+      // Then, delete the corresponding keystore files
       keystoreFileManager.deleteKeystoreFiles(pubkey);
     } catch (Exception e) {
       LOG.error("Failed to delete keystore files", e);
