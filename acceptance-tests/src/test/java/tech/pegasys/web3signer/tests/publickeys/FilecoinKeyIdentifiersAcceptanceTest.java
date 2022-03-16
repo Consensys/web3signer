@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.tests.publickeys;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;

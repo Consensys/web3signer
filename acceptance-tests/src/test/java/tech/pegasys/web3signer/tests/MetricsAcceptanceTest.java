@@ -13,8 +13,8 @@
 package tech.pegasys.web3signer.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
-import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
+import static tech.pegasys.web3signer.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;

@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.dsl.signer;
 
-import tech.pegasys.web3signer.core.config.AwsSecretsManagerParameters;
-import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
 import java.nio.file.Path;
 import java.util.List;

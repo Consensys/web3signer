@@ -13,7 +13,8 @@
 package tech.pegasys.web3signer.core.service.http.metrics;
 
 import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
-import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.metrics.SigningMetricCategory;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
@@ -35,12 +36,12 @@ public class HttpApiMetrics {
             "Number of requests received which had illegally formatted body.");
     signingTimer =
         metricsSystem.createTimer(
-            Web3SignerMetricCategory.SIGNING,
+            SigningMetricCategory.SIGNING,
             keyType.name().toLowerCase() + "_signing_duration",
             "Duration of a signing event");
     missingSignerCounter =
         metricsSystem.createCounter(
-            Web3SignerMetricCategory.SIGNING,
+            SigningMetricCategory.SIGNING,
             keyType.name().toLowerCase() + "_missing_identifier_count",
             "Number of signing operations requested, for keys which are not available");
   }
@@ -61,7 +62,7 @@ public class HttpApiMetrics {
     if (signersLoadedCounter == null) {
       signersLoadedCounter =
           metricsSystem.createCounter(
-              Web3SignerMetricCategory.SIGNING,
+              SigningMetricCategory.SIGNING,
               "signers_loaded_count",
               "Number of keys loaded (combining SECP256k1 and BLS12-381");
     }

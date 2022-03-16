@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.core.metrics;
 
+import tech.pegasys.web3signer.signing.metrics.FilecoinMetricCategory;
+import tech.pegasys.web3signer.signing.metrics.SigningMetricCategory;
 import tech.pegasys.web3signer.slashingprotection.SlashingMetricCategory;
 
 import java.util.EnumSet;
@@ -23,9 +25,7 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 public enum Web3SignerMetricCategory implements MetricCategory {
-  HTTP("http"),
-  SIGNING("signing"),
-  FILECOIN("filecoin");
+  HTTP("http");
 
   private final String name;
 
@@ -37,6 +37,8 @@ public enum Web3SignerMetricCategory implements MetricCategory {
             .addAll(EnumSet.allOf(Web3SignerMetricCategory.class))
             .addAll(EnumSet.allOf(StandardMetricCategory.class))
             .addAll(EnumSet.allOf(SlashingMetricCategory.class))
+            .addAll(EnumSet.allOf(SigningMetricCategory.class))
+            .addAll(EnumSet.allOf(FilecoinMetricCategory.class))
             .build();
   }
 

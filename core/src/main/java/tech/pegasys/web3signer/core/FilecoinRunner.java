@@ -22,21 +22,21 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JS
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
-import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
-import tech.pegasys.web3signer.core.multikey.SignerLoader;
-import tech.pegasys.web3signer.core.multikey.metadata.AbstractArtifactSignerFactory;
-import tech.pegasys.web3signer.core.multikey.metadata.BlsArtifactSignerFactory;
-import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
-import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
-import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
-import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.core.signing.FcBlsArtifactSigner;
-import tech.pegasys.web3signer.core.signing.FcSecpArtifactSigner;
-import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.FcBlsArtifactSigner;
+import tech.pegasys.web3signer.signing.FcSecpArtifactSigner;
+import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.SignerLoader;
+import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFactory;
+import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
+import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
+import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
+import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
 
 import java.util.List;
 

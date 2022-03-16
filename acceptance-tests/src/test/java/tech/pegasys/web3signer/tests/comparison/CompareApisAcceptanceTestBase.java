@@ -15,11 +15,11 @@ package tech.pegasys.web3signer.tests.comparison;
 import static tech.pegasys.web3signer.dsl.lotus.FilecoinKeyType.BLS;
 import static tech.pegasys.web3signer.dsl.lotus.FilecoinKeyType.SECP256K1;
 
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.lotus.FilecoinKey;
 import tech.pegasys.web3signer.dsl.lotus.LotusNode;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.nio.file.Path;

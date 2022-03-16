@@ -17,10 +17,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-import tech.pegasys.web3signer.core.signing.KeyType;
-import tech.pegasys.web3signer.core.signing.filecoin.FilecoinAddress;
-import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.filecoin.FilecoinAddress;
+import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.web3signer.tests.signing.SigningAcceptanceTestBase;
 
 import java.io.File;

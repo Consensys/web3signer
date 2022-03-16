@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc;
 
-import tech.pegasys.web3signer.core.util.Blake2b;
+import tech.pegasys.web3signer.signing.util.Blake2b;
 
 import io.ipfs.cid.Cid;
 import io.ipfs.cid.Cid.Codec;

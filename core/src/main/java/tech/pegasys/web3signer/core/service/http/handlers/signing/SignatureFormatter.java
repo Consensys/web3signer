@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
-import tech.pegasys.web3signer.core.signing.ArtifactSignature;
+import tech.pegasys.web3signer.signing.ArtifactSignature;
 
 @FunctionalInterface
 public interface SignatureFormatter<T extends ArtifactSignature> {

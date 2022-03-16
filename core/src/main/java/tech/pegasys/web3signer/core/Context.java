@@ -13,7 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.openapi.RouterBuilder;

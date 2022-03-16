@@ -16,11 +16,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
-import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
 import java.util.Map;
 
