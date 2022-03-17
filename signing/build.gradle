@@ -42,18 +42,15 @@ dependencies {
   runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
   runtimeOnly 'tech.pegasys:jblst'
 
-  testImplementation (testFixtures(project(":core")))
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
+  testFixturesApi 'tech.pegasys.teku.internal:bls'
   testFixturesImplementation 'org.apache.commons:commons-lang3'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
-}
-
-artifacts {
-  testSupportArtifacts testSupportJar
+  testFixturesImplementation 'org.apache.tuweni:tuweni-bytes'
 }

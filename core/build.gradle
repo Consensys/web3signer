@@ -49,6 +49,7 @@ dependencies {
   implementation 'tech.pegasys.teku.internal:unsigned'
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 
+  testImplementation (testFixtures(project(":signing")))
   testImplementation 'io.vertx:vertx-junit5'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
@@ -63,13 +64,6 @@ dependencies {
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation sourceSets.testFixtures.output
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-
-  testFixturesApi 'tech.pegasys.teku.internal:bls'
-  testFixturesImplementation 'org.apache.tuweni:tuweni-bytes'
-}
-
-artifacts {
-  testSupportArtifacts testSupportJar
 }
 
 processResources {
