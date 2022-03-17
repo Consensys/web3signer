@@ -21,9 +21,9 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 public enum Web3SignerMetricCategory implements MetricCategory {
-  HTTP("http"),
-  FILECOIN("filecoin"),
   ETH2_SLASHING_PROTECTION("eth2_slashingprotection"),
+  FILECOIN("filecoin"),
+  HTTP("http"),
   SIGNING("signing");
 
   private final String name;
