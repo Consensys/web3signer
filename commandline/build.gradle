@@ -13,6 +13,7 @@ jar {
 
 dependencies {
 
+  implementation project(":common")
   implementation project(":core")
   implementation project(":slashing-protection")
   implementation project(":signing")

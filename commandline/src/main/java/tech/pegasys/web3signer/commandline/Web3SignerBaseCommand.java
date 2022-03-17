@@ -12,22 +12,19 @@
  */
 package tech.pegasys.web3signer.commandline;
 
+import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
-import static tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
 import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptionsValidator;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
+import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
-import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
-import tech.pegasys.web3signer.signing.metrics.FilecoinMetricCategory;
-import tech.pegasys.web3signer.signing.metrics.SigningMetricCategory;
-import tech.pegasys.web3signer.slashingprotection.SlashingMetricCategory;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -308,9 +305,6 @@ public class Web3SignerBaseCommand implements Config, Runnable {
 
     public Web3signerMetricCategoryConverter() {
       addCategories(Web3SignerMetricCategory.class);
-      addCategories(FilecoinMetricCategory.class);
-      addCategories(SigningMetricCategory.class);
-      addCategories(SlashingMetricCategory.class);
       addCategories(StandardMetricCategory.class);
     }
   }

@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.core.metrics;
 
-import static tech.pegasys.web3signer.slashingprotection.SlashingMetricCategory.ETH2_SLASHING_PROTECTION;
+import static tech.pegasys.web3signer.common.Web3SignerMetricCategory.ETH2_SLASHING_PROTECTION;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
