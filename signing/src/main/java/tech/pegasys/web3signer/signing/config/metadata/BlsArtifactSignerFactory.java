@@ -19,11 +19,11 @@ import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
-import tech.pegasys.web3signer.signing.metrics.SigningMetricCategory;
 
 import java.nio.file.Path;
 import java.util.Optional;
@@ -51,7 +51,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     super(connectionFactory, configsDirectory, interlockKeyProvider, yubiHsmOpaqueDataProvider);
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
-            SigningMetricCategory.SIGNING,
+            Web3SignerMetricCategory.SIGNING,
             "private_key_retrieval_time",
             "Time taken to retrieve private key",
             "signer");
