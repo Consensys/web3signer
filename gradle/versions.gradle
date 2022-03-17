@@ -83,7 +83,7 @@ dependencyManagement {
     dependency 'org.hyperledger.besu:plugin-api:21.10.9'
     dependency 'org.hyperledger.besu.internal:metrics-core:21.10.9'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '22.3.0') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '22.3.1') {
       entry 'bls'
       entry ('core') {
         exclude 'teku:data' // empty module which is incorrectly referenced in Teku's "core" pom

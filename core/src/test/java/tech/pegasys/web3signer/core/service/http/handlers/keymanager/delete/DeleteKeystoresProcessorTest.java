@@ -104,7 +104,7 @@ class DeleteKeystoresProcessorTest {
   }
 
   @Test
-  void testIOException() throws IOException {
+  void testErrorResponseWhenDeleteKeystoreFilesThrowsIOException() throws IOException {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
     when(artifactSignerProvider.removeSigner(any()))
         .thenReturn(CompletableFuture.completedFuture(null));
