@@ -80,8 +80,6 @@ dependencyManagement {
       entry 'mockito-junit-jupiter'
     }
 
-    dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
-
     dependency 'org.hyperledger.besu:plugin-api:21.10.9'
     dependency 'org.hyperledger.besu.internal:metrics-core:21.10.9'
 
@@ -119,8 +117,6 @@ dependencyManagement {
 
     dependency 'com.github.arteam:simple-json-rpc-server:1.2'
     dependency 'com.github.arteam:simple-json-rpc-client:1.2'
-
-    dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
 
     dependency 'com.azure:azure-security-keyvault-secrets:4.3.6'
     dependency 'com.azure:azure-identity:1.4.3'

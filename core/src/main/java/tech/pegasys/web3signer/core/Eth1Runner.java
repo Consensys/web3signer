@@ -15,24 +15,24 @@ package tech.pegasys.web3signer.core;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
-import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
+import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
-import tech.pegasys.web3signer.core.multikey.DefaultArtifactSignerProvider;
-import tech.pegasys.web3signer.core.multikey.SignerLoader;
-import tech.pegasys.web3signer.core.multikey.metadata.Secp256k1ArtifactSignerFactory;
-import tech.pegasys.web3signer.core.multikey.metadata.interlock.InterlockKeyProvider;
-import tech.pegasys.web3signer.core.multikey.metadata.parser.YamlSignerParser;
-import tech.pegasys.web3signer.core.multikey.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.core.signing.EthSecpArtifactSigner;
-import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
+import tech.pegasys.web3signer.signing.SecpArtifactSignature;
+import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.SignerLoader;
+import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
+import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
+import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
 import java.util.List;
 

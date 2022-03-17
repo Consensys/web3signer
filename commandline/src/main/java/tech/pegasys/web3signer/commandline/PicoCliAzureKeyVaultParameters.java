@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.commandline;
 
-import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
-import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
 import picocli.CommandLine.Option;
 

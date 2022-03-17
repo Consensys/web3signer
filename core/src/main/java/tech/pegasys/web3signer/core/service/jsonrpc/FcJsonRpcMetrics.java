@@ -12,10 +12,8 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc;
 
-import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
-import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
-
-import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.metrics.FilecoinMetricCategory;
 
 import io.vertx.ext.web.RoutingContext;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -36,40 +34,40 @@ public class FcJsonRpcMetrics {
   public FcJsonRpcMetrics(final MetricsSystem metricsSystem) {
     this.secpSigningRequestCounter =
         metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
-            SECP256K1.name().toLowerCase() + "_signing_request_count",
+            FilecoinMetricCategory.FILECOIN,
+            KeyType.SECP256K1.name().toLowerCase() + "_signing_request_count",
             "Number of signing requests made for SECP256k1 keys");
     this.blsSigningRequestCounter =
         metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
-            BLS.name().toLowerCase() + "_signing_request_count",
+            FilecoinMetricCategory.FILECOIN,
+            KeyType.BLS.name().toLowerCase() + "_signing_request_count",
             "Number of signing requests made for BLS keys");
     this.walletListRequestCounter =
         metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
+            FilecoinMetricCategory.FILECOIN,
             "wallet_list_count",
             "Number of times a Filecoin.WalletList request has been received");
     this.walletHasRequestCounter =
         metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
+            FilecoinMetricCategory.FILECOIN,
             "wallet_has_count",
             "Number of times a Filecoin.WalletHas request has been received");
     this.walletSignMessageRequestCounter =
         metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
+            FilecoinMetricCategory.FILECOIN,
             "wallet_sign_message_count",
             "Number of times a Filecoin.WalletSignMessage request has been received");
 
     this.signingTimer =
         metricsSystem.createLabelledTimer(
-            Web3SignerMetricCategory.FILECOIN,
+            FilecoinMetricCategory.FILECOIN,
             "wallet_sign_duration",
             "The duration for a signing operation",
             "keyType");
 
     this.totalFilecoinRequests =
         metricsSystem.createCounter(
-            Web3SignerMetricCategory.FILECOIN,
+            FilecoinMetricCategory.FILECOIN,
             "total_request_count",
             "Total number of Filecoin requests received");
   }

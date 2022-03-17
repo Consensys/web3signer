@@ -22,11 +22,11 @@ import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignature;
-import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
-import tech.pegasys.web3signer.core.signing.FcBlsArtifactSigner;
-import tech.pegasys.web3signer.core.signing.filecoin.FilecoinAddress;
-import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.web3signer.signing.BlsArtifactSignature;
+import tech.pegasys.web3signer.signing.FcBlsArtifactSigner;
+import tech.pegasys.web3signer.signing.filecoin.FilecoinAddress;
+import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.util.Base64;

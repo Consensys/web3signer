@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
-import tech.pegasys.web3signer.core.config.AwsAuthenticationMode;
-import tech.pegasys.web3signer.core.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 
 public class DefaultAwsSecretsManagerParameters implements AwsSecretsManagerParameters {
 

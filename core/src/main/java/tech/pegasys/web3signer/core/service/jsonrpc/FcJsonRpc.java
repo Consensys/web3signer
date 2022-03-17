@@ -15,14 +15,14 @@ package tech.pegasys.web3signer.core.service.jsonrpc;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import tech.pegasys.teku.bls.BLSSignature;
-import tech.pegasys.web3signer.core.signing.ArtifactSignature;
-import tech.pegasys.web3signer.core.signing.ArtifactSigner;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.core.signing.BlsArtifactSignature;
-import tech.pegasys.web3signer.core.signing.SecpArtifactSignature;
-import tech.pegasys.web3signer.core.signing.filecoin.FilecoinAddress;
-import tech.pegasys.web3signer.core.signing.filecoin.FilecoinVerify;
-import tech.pegasys.web3signer.core.signing.filecoin.exceptions.FilecoinSignerNotFoundException;
+import tech.pegasys.web3signer.signing.ArtifactSignature;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.BlsArtifactSignature;
+import tech.pegasys.web3signer.signing.SecpArtifactSignature;
+import tech.pegasys.web3signer.signing.filecoin.FilecoinAddress;
+import tech.pegasys.web3signer.signing.filecoin.FilecoinVerify;
+import tech.pegasys.web3signer.signing.filecoin.exceptions.FilecoinSignerNotFoundException;
 
 import java.util.Optional;
 import java.util.Set;

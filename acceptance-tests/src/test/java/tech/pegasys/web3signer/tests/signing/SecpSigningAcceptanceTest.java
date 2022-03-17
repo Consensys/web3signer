@@ -19,9 +19,9 @@ import static org.web3j.crypto.Sign.signedMessageToKey;
 
 import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import java.io.File;
 import java.math.BigInteger;

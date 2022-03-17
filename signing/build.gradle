@@ -1,0 +1,56 @@
+
+apply plugin: 'java-library'
+apply plugin: 'java-test-fixtures'
+
+jar {
+  archiveBaseName = 'web3signer-signing'
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
+}
+
+dependencies {
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+  implementation 'com.github.arteam:simple-json-rpc-server'
+  implementation 'commons-io:commons-io'
+  implementation 'io.vertx:vertx-core'
+  implementation 'org.apache.commons:commons-lang3'
+  implementation 'org.apache.logging.log4j:log4j-api'
+  implementation 'org.apache.logging.log4j:log4j-core'
+  implementation 'org.hyperledger.besu.internal:metrics-core'
+  implementation 'org.hyperledger.besu:plugin-api'
+  implementation 'org.web3j:core'
+  implementation 'tech.pegasys.signers.internal:bls-keystore'
+  implementation 'tech.pegasys.signers.internal:keystorage-aws'
+  implementation 'tech.pegasys.signers.internal:keystorage-azure'
+  implementation 'tech.pegasys.signers.internal:keystorage-hashicorp'
+  implementation 'tech.pegasys.signers.internal:keystorage-interlock'
+  implementation 'tech.pegasys.signers.internal:keystorage-yubihsm2'
+  implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
+  implementation 'tech.pegasys.signers.internal:signing-secp256k1-impl'
+  implementation 'tech.pegasys.teku.internal:bls'
+  implementation 'tech.pegasys.teku.internal:core'
+  implementation 'tech.pegasys.teku.internal:serializer'
+  implementation 'tech.pegasys.teku.internal:spec'
+  implementation 'tech.pegasys.teku.internal:unsigned'
+  runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
+  runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
+  runtimeOnly 'tech.pegasys:jblst'
+
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testImplementation 'org.mockito:mockito-junit-jupiter'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+
+  testFixturesApi 'tech.pegasys.teku.internal:bls'
+  testFixturesImplementation 'org.apache.commons:commons-lang3'
+  testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
+  testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
+  testFixturesImplementation 'org.apache.tuweni:tuweni-bytes'
+}

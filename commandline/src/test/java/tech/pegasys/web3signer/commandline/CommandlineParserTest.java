@@ -20,7 +20,7 @@ import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.Config;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
