@@ -26,9 +26,9 @@ import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.core.util.FileUtil;
 import tech.pegasys.web3signer.core.util.OpenApiSpecsExtractor;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;

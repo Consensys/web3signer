@@ -26,8 +26,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.web3signer.BLSTestUtil;
-import tech.pegasys.web3signer.core.signing.ArtifactSigner;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 
@@ -129,7 +130,7 @@ class DeleteKeystoresProcessorTest {
   }
 
   @Test
-  void testIOException() throws IOException {
+  void testErrorResponseWhenDeleteKeystoreFilesThrowsIOException() throws IOException {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
     when(artifactSignerProvider.removeSigner(any()))
         .thenReturn(CompletableFuture.completedFuture(null));
@@ -157,45 +158,6 @@ class DeleteKeystoresProcessorTest {
     assertThat(response.getData().get(0).getMessage())
         .isEqualTo("Error deleting keystore file: java.lang.InterruptedException: interrupted");
     assertThat(response.getData().get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.ERROR);
-  }
-
-  @Test
-  void disabledValidatorRemainsDisabledWhenDeleteFails() throws IOException {
-    when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-    when(slashingProtection.isEnabledValidator(Bytes.fromHexString(PUBLIC_KEY1))).thenReturn(false);
-    doThrow(new IOException("io error")).when(keystoreFileManager).deleteKeystoreFiles(any());
-
-    final DeleteKeystoresRequestBody requestBody =
-        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
-    processor.process(requestBody);
-
-    verify(slashingProtection, times(2))
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
-    verify(slashingProtection, never())
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), true);
-  }
-
-  @Test
-  void enabledValidatorRemainsEnabledWhenDeleteFails() throws IOException {
-    when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-    when(slashingProtection.isEnabledValidator(Bytes.fromHexString(PUBLIC_KEY1))).thenReturn(true);
-    doThrow(new IOException("io error")).when(keystoreFileManager).deleteKeystoreFiles(any());
-
-    final DeleteKeystoresRequestBody requestBody =
-        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
-    processor.process(requestBody);
-
-    final InOrder inorder = Mockito.inOrder(slashingProtection);
-    inorder
-        .verify(slashingProtection)
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
-    inorder
-        .verify(slashingProtection)
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), true);
   }
 
   @Test
@@ -248,6 +210,45 @@ class DeleteKeystoresProcessorTest {
     assertThat(results.get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.ERROR);
     assertThat(results.get(1).getMessage()).isEqualTo("");
     assertThat(results.get(1).getStatus()).isEqualTo(DeleteKeystoreStatus.DELETED);
+  }
+
+  @Test
+  void disabledValidatorRemainsDisabledWhenDeleteFails() throws IOException {
+    when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
+    when(artifactSignerProvider.removeSigner(any()))
+        .thenReturn(CompletableFuture.completedFuture(null));
+    when(slashingProtection.isEnabledValidator(Bytes.fromHexString(PUBLIC_KEY1))).thenReturn(false);
+    doThrow(new IOException("io error")).when(keystoreFileManager).deleteKeystoreFiles(any());
+
+    final DeleteKeystoresRequestBody requestBody =
+        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
+    processor.process(requestBody);
+
+    verify(slashingProtection, times(2))
+        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
+    verify(slashingProtection, never())
+        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), true);
+  }
+
+  @Test
+  void enabledValidatorRemainsEnabledWhenDeleteFails() throws IOException {
+    when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
+    when(artifactSignerProvider.removeSigner(any()))
+        .thenReturn(CompletableFuture.completedFuture(null));
+    when(slashingProtection.isEnabledValidator(Bytes.fromHexString(PUBLIC_KEY1))).thenReturn(true);
+    doThrow(new IOException("io error")).when(keystoreFileManager).deleteKeystoreFiles(any());
+
+    final DeleteKeystoresRequestBody requestBody =
+        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
+    processor.process(requestBody);
+
+    final InOrder inorder = Mockito.inOrder(slashingProtection);
+    inorder
+        .verify(slashingProtection)
+        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
+    inorder
+        .verify(slashingProtection)
+        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), true);
   }
 
   @Test

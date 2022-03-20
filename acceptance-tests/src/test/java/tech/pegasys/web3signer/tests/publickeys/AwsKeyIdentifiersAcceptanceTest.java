@@ -13,9 +13,8 @@
 package tech.pegasys.web3signer.tests.publickeys;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.utils.AwsSecretsManagerUtil;
 
 import io.restassured.response.Response;
@@ -37,7 +36,7 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
   private final String AWS_REGION = "us-east-2";
 
   private String secretName;
-  private final String privateKey = privateKeys(KeyType.BLS)[0]; // secret value
+  private final String privateKey = privateKeys(BLS)[0]; // secret value
   private final String publicKey = BLS_PUBLIC_KEY_1;
 
   private AwsSecretsManagerUtil awsSecretsManagerUtil;

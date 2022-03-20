@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.core.service.http.metrics;
 
-import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
-import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;

@@ -27,11 +27,11 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.utils.AwsSecretsManagerUtil;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import java.nio.file.Path;
 

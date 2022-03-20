@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.commandline.subcommands;
 
 import tech.pegasys.web3signer.core.FilecoinRunner;
 import tech.pegasys.web3signer.core.Runner;
-import tech.pegasys.web3signer.core.signing.filecoin.FilecoinNetwork;
+import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;

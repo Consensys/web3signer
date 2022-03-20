@@ -20,13 +20,13 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.collection.IsIn.in;
-import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
-import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
+import static tech.pegasys.web3signer.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import java.nio.file.Path;
 import java.util.List;

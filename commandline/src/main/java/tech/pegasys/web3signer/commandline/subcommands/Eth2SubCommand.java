@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
-import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.CLIENT_SECRET;
-import static tech.pegasys.web3signer.core.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
+import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.CLIENT_SECRET;
+import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
@@ -49,7 +49,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       names = {"--network"},
       paramLabel = "<NETWORK>",
       description =
-          "Predefined network configuration to use. Possible values: [mainnet, pyrmont, prater, minimal], file path"
+          "Predefined network configuration to use. Possible values: [mainnet, pyrmont, prater, kintsugi, kiln, minimal], file path"
               + " or URL to a YAML configuration file. Defaults to mainnet.",
       arity = "1")
   private String network = "mainnet";

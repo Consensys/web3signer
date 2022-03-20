@@ -14,9 +14,9 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-import tech.pegasys.web3signer.core.signing.KeyType
 import tech.pegasys.web3signer.dsl.signer.{Signer, SignerConfigurationBuilder}
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers
+import tech.pegasys.web3signer.signing.KeyType
 
 import scala.jdk.CollectionConverters.IterableHasAsScala
 import scala.concurrent.duration.DurationInt

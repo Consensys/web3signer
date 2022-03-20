@@ -21,7 +21,7 @@ import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
-import tech.pegasys.web3signer.core.signing.KeyType;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

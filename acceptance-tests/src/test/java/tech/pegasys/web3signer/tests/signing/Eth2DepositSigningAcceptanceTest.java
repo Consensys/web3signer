@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.tests.signing;
 
 import static io.restassured.http.ContentType.TEXT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
 import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;

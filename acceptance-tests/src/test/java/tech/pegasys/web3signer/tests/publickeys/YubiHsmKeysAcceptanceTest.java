@@ -15,12 +15,12 @@ package tech.pegasys.web3signer.tests.publickeys;
 import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static tech.pegasys.web3signer.core.util.IdentifierUtils.normaliseIdentifier;
+import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import java.nio.file.Path;
 import java.util.Map;

@@ -14,18 +14,20 @@ package tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
+import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_JSON_EXTENSION;
+import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_PASSWORD_EXTENSION;
+import static tech.pegasys.web3signer.signing.KeystoreFileManager.METADATA_YAML_EXTENSION;
 
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.web3signer.core.multikey.metadata.FileKeyStoreMetadata;
-import tech.pegasys.web3signer.core.multikey.metadata.SignerOrigin;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.core.signing.KeyType;
-import tech.pegasys.web3signer.core.util.IdentifierUtils;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.KeystoreFileManager;
+import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
+import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.io.ByteArrayInputStream;
@@ -39,11 +41,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -61,7 +63,6 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   public static final int SUCCESS = 200;
   public static final int BAD_REQUEST = 400;
   public static final int SERVER_ERROR = 500;
-  private static final ObjectMapper YAML_OBJECT_MAPPER = YAMLMapper.builder().build();
 
   private final ObjectMapper objectMapper;
   private final Path keystorePath;
@@ -153,6 +154,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       }
     }
 
+    final KeystoreFileManager keystoreFileManager = new KeystoreFileManager(keystorePath);
     final List<ImportKeystoreResult> results = new ArrayList<>();
     for (int i = 0; i < parsedBody.getKeystores().size(); i++) {
       final String pubkey = pubkeysToImport.get(i);
@@ -169,7 +171,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           final BlsArtifactSigner signer =
               decryptKeystoreAndCreateSigner(jsonKeystoreData, password);
           // 2. write keystore file to disk
-          createKeyStoreYamlFileAt(pubkey, jsonKeystoreData, password);
+          keystoreFileManager.createKeystoreFiles(pubkey, jsonKeystoreData, password);
           // 3. register the validator in the slashing DB
           final Bytes pubKeyBytes = Bytes.fromHexString(signer.getIdentifier());
           slashingProtection.ifPresent(
@@ -180,7 +182,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           // 5. finally, add result to API response
           results.add(new ImportKeystoreResult(ImportKeystoreStatus.IMPORTED, null));
         }
-      } catch (Exception e) {
+      } catch (final Exception e) {
         // cleanup the current key being processed and continue
         removeSignersAndCleanupImportedKeystoreFiles(List.of(pubkey));
         results.add(
@@ -195,7 +197,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           .putHeader(CONTENT_TYPE, JSON_UTF_8)
           .setStatusCode(SUCCESS)
           .end(objectMapper.writeValueAsString(new ImportKeystoresResponse(results)));
-    } catch (Exception e) {
+    } catch (final Exception e) {
       removeSignersAndCleanupImportedKeystoreFiles(nonLoadedPubkeys);
       context.fail(SERVER_ERROR, e);
     }
@@ -221,43 +223,25 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     routingContext.fail(BAD_REQUEST, e);
   }
 
-  public void createKeyStoreYamlFileAt(
-      final String fileName, final String jsonKeystoreData, final String password)
-      throws IOException {
-
-    final Path yamlFile = keystorePath.resolve(fileName + ".yaml");
-
-    final String keystoreFileName = fileName + ".json";
-    final Path keystoreFile = yamlFile.getParent().resolve(keystoreFileName);
-    createTextFile(keystoreFile, jsonKeystoreData);
-
-    final String passwordFilename = fileName + ".password";
-    final Path passwordFile = yamlFile.getParent().resolve(passwordFilename);
-    createTextFile(passwordFile, password);
-
-    final FileKeyStoreMetadata data =
-        new FileKeyStoreMetadata(keystoreFile, passwordFile, KeyType.BLS);
-    createYamlFile(yamlFile, data);
-  }
-
-  private void createTextFile(final Path keystoreFile, final String jsonKeystoreData)
-      throws IOException {
-    Files.writeString(keystoreFile, jsonKeystoreData, StandardCharsets.UTF_8);
-  }
-
-  private void createYamlFile(final Path filePath, final FileKeyStoreMetadata signingMetadata)
-      throws IOException {
-    YAML_OBJECT_MAPPER.writeValue(filePath.toFile(), signingMetadata);
-  }
-
   private void removeSignersAndCleanupImportedKeystoreFiles(final List<String> pubkeys) {
     for (String pubkey : pubkeys) {
       try {
         artifactSignerProvider.removeSigner(pubkey).get();
-        Files.deleteIfExists(keystorePath.resolve(pubkey + ".yaml"));
-      } catch (Exception e) {
-        LOG.error("Failed to cleanup imported keystore file for key: " + pubkey);
+      } catch (final InterruptedException | ExecutionException e) {
+        LOG.warn("Unable to remove signer for {} due to {}", pubkey, e.getMessage());
       }
+
+      deleteFile(keystorePath.resolve(pubkey + METADATA_YAML_EXTENSION));
+      deleteFile(keystorePath.resolve(pubkey + KEYSTORE_JSON_EXTENSION));
+      deleteFile(keystorePath.resolve(pubkey + KEYSTORE_PASSWORD_EXTENSION));
+    }
+  }
+
+  private void deleteFile(final Path file) {
+    try {
+      Files.deleteIfExists(file);
+    } catch (final IOException e) {
+      LOG.warn("Unable to delete file {} due to {}", file, e.getMessage());
     }
   }
 }

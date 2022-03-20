@@ -18,13 +18,13 @@ import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestati
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.BLSTestUtil;
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil.TestDatabaseInfo;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.io.IOException;

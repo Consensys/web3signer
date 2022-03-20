@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
-import tech.pegasys.web3signer.core.config.AzureAuthenticationMode;
-import tech.pegasys.web3signer.core.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
 public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
 

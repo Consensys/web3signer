@@ -14,8 +14,8 @@ package tech.pegasys.web3signer.tests.keymanager;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
+import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;

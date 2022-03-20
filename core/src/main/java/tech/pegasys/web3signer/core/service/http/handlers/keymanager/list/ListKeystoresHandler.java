@@ -15,8 +15,8 @@ package tech.pegasys.web3signer.core.service.http.handlers.keymanager.list;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 
 import java.util.List;
 import java.util.stream.Collectors;

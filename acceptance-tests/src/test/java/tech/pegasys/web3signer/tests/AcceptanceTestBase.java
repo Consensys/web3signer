@@ -12,11 +12,11 @@
  */
 package tech.pegasys.web3signer.tests;
 
-import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
-import tech.pegasys.web3signer.core.signing.KeyType;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import org.junit.jupiter.api.AfterEach;
 

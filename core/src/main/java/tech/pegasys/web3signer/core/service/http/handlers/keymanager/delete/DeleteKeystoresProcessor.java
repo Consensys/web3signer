@@ -12,10 +12,11 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete;
 
-import tech.pegasys.web3signer.core.signing.ArtifactSigner;
-import tech.pegasys.web3signer.core.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.core.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.core.util.IdentifierUtils;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.KeystoreFileManager;
+import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 
@@ -128,7 +129,7 @@ public class DeleteKeystoresProcessor {
 
       // Remove active key from memory first, will stop any further signing with this key
       signerProvider.removeSigner(pubkey).get();
-      // Then, delete the corresponding keystore file
+      // Then, delete the corresponding keystore files
       keystoreFileManager.deleteKeystoreFiles(pubkey);
     } catch (Exception e) {
       LOG.error("Failed to delete keystore files", e);

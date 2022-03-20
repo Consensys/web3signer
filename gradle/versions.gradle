@@ -80,12 +80,10 @@ dependencyManagement {
       entry 'mockito-junit-jupiter'
     }
 
-    dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
-
     dependency 'org.hyperledger.besu:plugin-api:21.10.9'
     dependency 'org.hyperledger.besu.internal:metrics-core:21.10.9'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '22.3.0') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '22.3.1') {
       entry 'bls'
       entry ('core') {
         exclude 'teku:data' // empty module which is incorrectly referenced in Teku's "core" pom
@@ -120,13 +118,11 @@ dependencyManagement {
     dependency 'com.github.arteam:simple-json-rpc-server:1.2'
     dependency 'com.github.arteam:simple-json-rpc-client:1.2'
 
-    dependency 'org.miracl.milagro.amcl:milagro-crypto-java:0.4.0'
-
     dependency 'com.azure:azure-security-keyvault-secrets:4.3.6'
     dependency 'com.azure:azure-identity:1.4.3'
 
     dependency 'com.zaxxer:HikariCP:3.4.5'
-    dependency 'org.postgresql:postgresql:42.2.20'
+    dependency 'org.postgresql:postgresql:42.3.3'
 
     dependencySet(group: 'org.jdbi', version: '3.14.4') {
       entry 'jdbi3-core'

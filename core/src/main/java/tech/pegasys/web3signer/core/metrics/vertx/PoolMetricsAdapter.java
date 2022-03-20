@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.core.metrics.vertx;
 
-import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 
 import io.vertx.core.spi.metrics.PoolMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;

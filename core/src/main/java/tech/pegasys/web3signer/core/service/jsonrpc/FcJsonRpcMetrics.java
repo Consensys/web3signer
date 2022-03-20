@@ -12,10 +12,8 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc;
 
-import static tech.pegasys.web3signer.core.signing.KeyType.BLS;
-import static tech.pegasys.web3signer.core.signing.KeyType.SECP256K1;
-
-import tech.pegasys.web3signer.core.metrics.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import io.vertx.ext.web.RoutingContext;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -37,12 +35,12 @@ public class FcJsonRpcMetrics {
     this.secpSigningRequestCounter =
         metricsSystem.createCounter(
             Web3SignerMetricCategory.FILECOIN,
-            SECP256K1.name().toLowerCase() + "_signing_request_count",
+            KeyType.SECP256K1.name().toLowerCase() + "_signing_request_count",
             "Number of signing requests made for SECP256k1 keys");
     this.blsSigningRequestCounter =
         metricsSystem.createCounter(
             Web3SignerMetricCategory.FILECOIN,
-            BLS.name().toLowerCase() + "_signing_request_count",
+            KeyType.BLS.name().toLowerCase() + "_signing_request_count",
             "Number of signing requests made for BLS keys");
     this.walletListRequestCounter =
         metricsSystem.createCounter(
