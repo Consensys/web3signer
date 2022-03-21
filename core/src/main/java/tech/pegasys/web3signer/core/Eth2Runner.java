@@ -39,6 +39,7 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
@@ -196,9 +197,10 @@ public class Eth2Runner extends Runner {
               new BlockingHandlerDecorator(
                   new DeleteKeystoresHandler(
                       objectMapper,
-                      new KeystoreFileManager(config.getKeyConfigPath()),
                       slashingProtection,
-                      blsSignerProvider),
+                      blsSignerProvider,
+                      new FileValidatorManager(
+                          blsSignerProvider, new KeystoreFileManager(config.getKeyConfigPath()))),
                   false))
           .failureHandler(errorHandler);
     }
