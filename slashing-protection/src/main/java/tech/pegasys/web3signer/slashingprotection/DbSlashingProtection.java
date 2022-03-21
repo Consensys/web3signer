@@ -72,29 +72,6 @@ public class DbSlashingProtection implements SlashingProtection {
       final MetadataDao metadataDao,
       final LowWatermarkDao lowWatermarkDao,
       final long pruningEpochsToKeep,
-      final long pruningSlotsPerEpoch) {
-    this(
-        jdbi,
-        pruningJdbi,
-        validatorsDao,
-        signedBlocksDao,
-        signedAttestationsDao,
-        metadataDao,
-        lowWatermarkDao,
-        pruningEpochsToKeep,
-        pruningSlotsPerEpoch,
-        new RegisteredValidators(jdbi, validatorsDao));
-  }
-
-  public DbSlashingProtection(
-      final Jdbi jdbi,
-      final Jdbi pruningJdbi,
-      final ValidatorsDao validatorsDao,
-      final SignedBlocksDao signedBlocksDao,
-      final SignedAttestationsDao signedAttestationsDao,
-      final MetadataDao metadataDao,
-      final LowWatermarkDao lowWatermarkDao,
-      final long pruningEpochsToKeep,
       final long pruningSlotsPerEpoch,
       final RegisteredValidators registeredValidators) {
     this.jdbi = jdbi;

@@ -171,7 +171,8 @@ public class DbSlashingProtectionTest {
             metadataDao,
             lowWatermarkDao,
             0,
-            0);
+            0,
+            new RegisteredValidators(jdbi, validatorsDao));
 
     assertThatThrownBy(
             () -> dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR))
@@ -341,7 +342,8 @@ public class DbSlashingProtectionTest {
             metadataDao,
             lowWatermarkDao,
             0,
-            0);
+            0,
+            new RegisteredValidators(jdbi, validatorsDao));
 
     assertThatThrownBy(
             () ->

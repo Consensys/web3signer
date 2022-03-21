@@ -167,7 +167,7 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     final String databaseUrl = testDatabaseInfo.databaseUrl();
     final OutputStream exportOutput = new ByteArrayOutputStream();
     final SlashingProtection slashingProtection =
-        SlashingProtectionFactory.createSlashingProtection(
+        SlashingProtectionContextFactory.create(
             new TestSlashingProtectionParameters(databaseUrl, "postgres", "postgres"));
     assertThatThrownBy(() -> slashingProtection.exportData(exportOutput))
         .hasMessage("No genesis validators root for slashing protection data")

@@ -67,8 +67,7 @@ public class IntegrationTestBase {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
     final SlashingProtectionParameters slashingProtectionParameters =
         new TestSlashingProtectionParameters(testDatabaseInfo.databaseUrl(), USERNAME, PASSWORD);
-    slashingProtection =
-        SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
+    slashingProtection = SlashingProtectionContextFactory.create(slashingProtectionParameters);
     db = testDatabaseInfo.getDb();
     jdbi = testDatabaseInfo.getJdbi();
     databaseUrl = testDatabaseInfo.databaseUrl();

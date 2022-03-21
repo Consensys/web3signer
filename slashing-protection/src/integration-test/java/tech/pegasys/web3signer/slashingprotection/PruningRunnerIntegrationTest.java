@@ -55,7 +55,7 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
         new ScheduledThreadPoolExecutor(
             1, new ThreadFactoryBuilder().setNameFormat("slashing-db-pruner" + "-%d").build());
     pruningSlashingProtection =
-        SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
+        SlashingProtectionContextFactory.create(slashingProtectionParameters);
     insertValidatorAndCreateSlashingData(pruningSlashingProtection, 10, 10, 1);
   }
 

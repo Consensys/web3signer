@@ -23,9 +23,9 @@ import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import org.jdbi.v3.core.Jdbi;
 
-public class SlashingProtectionFactory {
+public class SlashingProtectionContextFactory {
 
-  public static SlashingProtection createSlashingProtection(
+  public static SlashingProtectionContext create(
       final SlashingProtectionParameters slashingProtectionParameters) {
     final Jdbi jdbi =
         DbConnection.createConnection(
@@ -33,7 +33,6 @@ public class SlashingProtectionFactory {
             slashingProtectionParameters.getDbUsername(),
             slashingProtectionParameters.getDbPassword(),
             slashingProtectionParameters.getDbPoolConfigurationFile());
-
     verifyVersion(jdbi);
 
     // create separate Jdbi instance for pruning operations
@@ -44,11 +43,22 @@ public class SlashingProtectionFactory {
             slashingProtectionParameters.getDbPassword(),
             slashingProtectionParameters.getDbPoolConfigurationFile());
 
-    return createSlashingProtection(
-        jdbi,
-        pruningJdbi,
-        slashingProtectionParameters.getPruningEpochsToKeep(),
-        slashingProtectionParameters.getPruningSlotsPerEpoch());
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    final RegisteredValidators registeredValidators = new RegisteredValidators(jdbi, validatorsDao);
+    final DbSlashingProtection dbSlashingProtection =
+        new DbSlashingProtection(
+            jdbi,
+            pruningJdbi,
+            validatorsDao,
+            new SignedBlocksDao(),
+            new SignedAttestationsDao(),
+            new MetadataDao(),
+            new LowWatermarkDao(),
+            slashingProtectionParameters.getPruningEpochsToKeep(),
+            slashingProtectionParameters.getPruningSlotsPerEpoch(),
+            registeredValidators);
+    return new SlashingProtectionContext(
+        jdbi, pruningJdbi, registeredValidators, dbSlashingProtection);
   }
 
   private static void verifyVersion(final Jdbi jdbi) {
@@ -70,22 +80,5 @@ public class SlashingProtectionFactory {
               version, EXPECTED_DATABASE_VERSION);
       throw new IllegalStateException(errorMsg);
     }
-  }
-
-  private static SlashingProtection createSlashingProtection(
-      final Jdbi jdbi,
-      final Jdbi pruningJdbi,
-      final long pruningEpochsToKeep,
-      final long pruningSlotsPerEpoch) {
-    return new DbSlashingProtection(
-        jdbi,
-        pruningJdbi,
-        new ValidatorsDao(),
-        new SignedBlocksDao(),
-        new SignedAttestationsDao(),
-        new MetadataDao(),
-        new LowWatermarkDao(),
-        pruningEpochsToKeep,
-        pruningSlotsPerEpoch);
   }
 }
