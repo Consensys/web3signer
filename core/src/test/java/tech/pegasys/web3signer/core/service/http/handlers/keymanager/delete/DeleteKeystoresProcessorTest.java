@@ -20,7 +20,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,15 +33,12 @@ import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporte
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -80,19 +76,6 @@ class DeleteKeystoresProcessorTest {
     assertThat(response.getData().get(0).getMessage()).isEqualTo("");
     assertThat(response.getData().get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.DELETED);
     verify(validatorManager).deleteValidator(Bytes.fromHexString(PUBLIC_KEY1));
-  }
-
-  //  @Test
-  void validatorIsDisabledWhenDeleteIsSuccessful() throws IOException {
-    when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-
-    final DeleteKeystoresRequestBody requestBody =
-        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
-    processor.process(requestBody);
-    verify(slashingProtection)
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
   }
 
   @Test
@@ -185,85 +168,5 @@ class DeleteKeystoresProcessorTest {
     assertThat(results.get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.ERROR);
     assertThat(results.get(1).getMessage()).isEqualTo("");
     assertThat(results.get(1).getStatus()).isEqualTo(DeleteKeystoreStatus.DELETED);
-  }
-
-  //  @Test
-  void disabledValidatorRemainsDisabledWhenDeleteFails() {
-    when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-    when(slashingProtection.isEnabledValidator(Bytes.fromHexString(PUBLIC_KEY1))).thenReturn(false);
-
-    final DeleteKeystoresRequestBody requestBody =
-        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
-    processor.process(requestBody);
-
-    verify(slashingProtection, times(2))
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
-    verify(slashingProtection, never())
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), true);
-  }
-
-  //  @Test
-  void enabledValidatorRemainsEnabledWhenDeleteFails() {
-    when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-    when(slashingProtection.isEnabledValidator(Bytes.fromHexString(PUBLIC_KEY1))).thenReturn(true);
-
-    final DeleteKeystoresRequestBody requestBody =
-        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
-    processor.process(requestBody);
-
-    final InOrder inorder = Mockito.inOrder(slashingProtection);
-    inorder
-        .verify(slashingProtection)
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
-    inorder
-        .verify(slashingProtection)
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), true);
-  }
-
-  //  @Test
-  void enabledValidatorRemainsEnabledWhenSlashingExportFails() {
-    when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-    when(slashingProtection.isEnabledValidator(Bytes.fromHexString(PUBLIC_KEY1))).thenReturn(true);
-    doThrow(new RuntimeException("db error"))
-        .when(slashingProtection)
-        .exportDataWithFilter(any(), any());
-
-    final DeleteKeystoresRequestBody requestBody =
-        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
-    processor.process(requestBody);
-
-    final InOrder inorder = Mockito.inOrder(slashingProtection);
-    inorder
-        .verify(slashingProtection)
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
-    inorder
-        .verify(slashingProtection)
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), true);
-  }
-
-  //  @Test
-  void disabledValidatorRemainsDisabledWhenSlashingExportFails() {
-    when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-    when(slashingProtection.isEnabledValidator(Bytes.fromHexString(PUBLIC_KEY1))).thenReturn(false);
-    doThrow(new RuntimeException("db error"))
-        .when(slashingProtection)
-        .exportDataWithFilter(any(), any());
-
-    final DeleteKeystoresRequestBody requestBody =
-        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
-    processor.process(requestBody);
-
-    verify(slashingProtection, times(2))
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), false);
-    verify(slashingProtection, never())
-        .updateValidatorEnabledStatus(Bytes.fromHexString(PUBLIC_KEY1), true);
   }
 }
