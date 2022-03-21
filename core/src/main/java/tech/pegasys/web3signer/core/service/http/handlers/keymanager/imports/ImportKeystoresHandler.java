@@ -18,15 +18,8 @@ import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_JSON_
 import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_PASSWORD_EXTENSION;
 import static tech.pegasys.web3signer.signing.KeystoreFileManager.METADATA_YAML_EXTENSION;
 
-import tech.pegasys.signers.bls.keystore.KeyStore;
-import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
-import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
-import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.signing.KeystoreFileManager;
-import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
+import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
@@ -55,7 +48,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class ImportKeystoresHandler implements Handler<RoutingContext> {
 
@@ -68,16 +60,19 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   private final Path keystorePath;
   private final Optional<SlashingProtection> slashingProtection;
   private final ArtifactSignerProvider artifactSignerProvider;
+  private final ValidatorManager validatorManager;
 
   public ImportKeystoresHandler(
       final ObjectMapper objectMapper,
       final Path keystorePath,
       final Optional<SlashingProtection> slashingProtection,
-      final ArtifactSignerProvider artifactSignerProvider) {
+      final ArtifactSignerProvider artifactSignerProvider,
+      final ValidatorManager validatorManager) {
     this.objectMapper = objectMapper;
     this.keystorePath = keystorePath;
     this.slashingProtection = slashingProtection;
     this.artifactSignerProvider = artifactSignerProvider;
+    this.validatorManager = validatorManager;
   }
 
   @Override
@@ -154,7 +149,6 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       }
     }
 
-    final KeystoreFileManager keystoreFileManager = new KeystoreFileManager(keystorePath);
     final List<ImportKeystoreResult> results = new ArrayList<>();
     for (int i = 0; i < parsedBody.getKeystores().size(); i++) {
       final String pubkey = pubkeysToImport.get(i);
@@ -166,20 +160,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           // keystore already loaded
           results.add(new ImportKeystoreResult(ImportKeystoreStatus.DUPLICATE, null));
         } else {
-          // new keystore to import
-          // 1. validate and decrypt the keystore
-          final BlsArtifactSigner signer =
-              decryptKeystoreAndCreateSigner(jsonKeystoreData, password);
-          // 2. write keystore file to disk
-          keystoreFileManager.createKeystoreFiles(pubkey, jsonKeystoreData, password);
-          // 3. register the validator in the slashing DB
-          final Bytes pubKeyBytes = Bytes.fromHexString(signer.getIdentifier());
-          slashingProtection.ifPresent(
-              protection -> protection.registerValidators(List.of(pubKeyBytes)));
-          // 4. add the new signer to the provider to make it available for signing
-          artifactSignerProvider.addSigner(signer).get();
-          slashingProtection.ifPresent(s -> s.updateValidatorEnabledStatus(pubKeyBytes, true));
-          // 5. finally, add result to API response
+          validatorManager.addValidator(Bytes.fromHexString(pubkey), jsonKeystoreData, password);
           results.add(new ImportKeystoreResult(ImportKeystoreStatus.IMPORTED, null));
         }
       } catch (final Exception e) {
@@ -201,15 +182,6 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       removeSignersAndCleanupImportedKeystoreFiles(nonLoadedPubkeys);
       context.fail(SERVER_ERROR, e);
     }
-  }
-
-  private BlsArtifactSigner decryptKeystoreAndCreateSigner(String jsonKeystoreData, String password)
-      throws JsonProcessingException, KeyStoreValidationException {
-    final KeyStoreData keyStoreData = objectMapper.readValue(jsonKeystoreData, KeyStoreData.class);
-    final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-    final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
-    return new BlsArtifactSigner(
-        keyPair, SignerOrigin.FILE_KEYSTORE, Optional.ofNullable(keyStoreData.getPath()));
   }
 
   private ImportKeystoresRequestBody parseRequestBody(final RequestParameters params)

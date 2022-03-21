@@ -12,13 +12,11 @@
  */
 package tech.pegasys.web3signer.signing;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
+import org.apache.tuweni.bytes.Bytes;
 
 public interface ValidatorManager {
 
-  void deleteValidator(final String pubkey)
-      throws ExecutionException, InterruptedException, IOException;
+  void deleteValidator(final Bytes publicKey);
 
-  void addValidator();
+  void addValidator(final Bytes publicKey, final String keystore, final String password);
 }

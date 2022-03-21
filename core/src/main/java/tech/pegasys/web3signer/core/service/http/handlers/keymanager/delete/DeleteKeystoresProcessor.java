@@ -127,7 +127,7 @@ public class DeleteKeystoresProcessor {
             DeleteKeystoreStatus.ERROR, "Unable to delete readonly key: " + pubkey);
       }
 
-      validatorManager.deleteValidator(pubkey);
+      validatorManager.deleteValidator(Bytes.fromHexString(pubkey));
     } catch (Exception e) {
       LOG.error("Failed to delete keystore files", e);
       return new DeleteKeystoreResult(

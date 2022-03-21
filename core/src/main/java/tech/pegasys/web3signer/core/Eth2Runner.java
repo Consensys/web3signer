@@ -179,6 +179,10 @@ public class Eth2Runner extends Runner {
                   new ListKeystoresHandler(blsSignerProvider, objectMapper), false))
           .failureHandler(errorHandler);
 
+      final FileValidatorManager fileValidatorManager =
+          new FileValidatorManager(
+              blsSignerProvider, new KeystoreFileManager(config.getKeyConfigPath()), objectMapper);
+
       routerBuilder
           .operation(KEYMANAGER_IMPORT.name())
           .handler(
@@ -187,7 +191,8 @@ public class Eth2Runner extends Runner {
                       objectMapper,
                       config.getKeyConfigPath(),
                       slashingProtection,
-                      blsSignerProvider),
+                      blsSignerProvider,
+                      fileValidatorManager),
                   false))
           .failureHandler(errorHandler);
 
@@ -196,11 +201,7 @@ public class Eth2Runner extends Runner {
           .handler(
               new BlockingHandlerDecorator(
                   new DeleteKeystoresHandler(
-                      objectMapper,
-                      slashingProtection,
-                      blsSignerProvider,
-                      new FileValidatorManager(
-                          blsSignerProvider, new KeystoreFileManager(config.getKeyConfigPath()))),
+                      objectMapper, slashingProtection, blsSignerProvider, fileValidatorManager),
                   false))
           .failureHandler(errorHandler);
     }

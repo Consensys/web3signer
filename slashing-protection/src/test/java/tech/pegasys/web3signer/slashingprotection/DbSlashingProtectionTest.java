@@ -95,7 +95,8 @@ public class DbSlashingProtectionTest {
             lowWatermarkDao,
             1,
             1,
-            HashBiMap.create(Map.of(PUBLIC_KEY1, VALIDATOR_ID)));
+            new RegisteredValidators(
+                slashingJdbi, validatorsDao, HashBiMap.create(Map.of(PUBLIC_KEY1, VALIDATOR_ID))));
     lenient().when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(GVR));
     lenient().when(validatorsDao.isEnabled(any(), eq(VALIDATOR_ID))).thenReturn(true);
   }
@@ -369,7 +370,9 @@ public class DbSlashingProtectionTest {
 
   @Test
   public void registersValidatorsThatAreNotAlreadyInDb(final Jdbi jdbi) {
-    final BiMap<Bytes, Integer> registeredValidators = HashBiMap.create();
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(jdbi, validatorsDao, registeredValidatorsMap);
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
@@ -386,12 +389,12 @@ public class DbSlashingProtectionTest {
     when(validatorsDao.registerValidators(any(), any())).thenCallRealMethod();
 
     dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1));
-    assertThat(registeredValidators).hasSize(1);
+    assertThat(registeredValidatorsMap).hasSize(1);
 
     dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3));
-    assertThat(registeredValidators).hasSize(3);
+    assertThat(registeredValidatorsMap).hasSize(3);
     // because 'id' is a sequence, the values will be 1, 2, 3
-    assertThat(registeredValidators)
+    assertThat(registeredValidatorsMap)
         .isEqualTo(Map.of(PUBLIC_KEY1, 1, PUBLIC_KEY2, 2, PUBLIC_KEY3, 3));
   }
 

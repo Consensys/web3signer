@@ -79,7 +79,7 @@ class DeleteKeystoresProcessorTest {
     assertThat(response.getData().size()).isEqualTo(1);
     assertThat(response.getData().get(0).getMessage()).isEqualTo("");
     assertThat(response.getData().get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.DELETED);
-    verify(validatorManager).deleteValidator(PUBLIC_KEY1);
+    verify(validatorManager).deleteValidator(Bytes.fromHexString(PUBLIC_KEY1));
   }
 
   //  @Test
@@ -126,16 +126,16 @@ class DeleteKeystoresProcessorTest {
   }
 
   @Test
-  void testErrorResponseWhenValidatorManagerThrowsException() throws Exception {
+  void testErrorResponseWhenValidatorManagerThrowsException() {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    doThrow(new IOException("io error")).when(validatorManager).deleteValidator(any());
+    doThrow(new RuntimeException("error")).when(validatorManager).deleteValidator(any());
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
     final DeleteKeystoresResponse response = processor.process(requestBody);
     assertThat(response.getData().size()).isEqualTo(1);
     assertThat(response.getData().get(0).getMessage())
-        .isEqualTo("Error deleting keystore file: io error");
+        .isEqualTo("Error deleting keystore file: error");
     assertThat(response.getData().get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.ERROR);
   }
 
@@ -154,8 +154,8 @@ class DeleteKeystoresProcessorTest {
       assertThat(result.getMessage()).isEqualTo("Error exporting slashing data: db error");
       assertThat(result.getStatus()).isEqualTo(DeleteKeystoreStatus.ERROR);
     }
-    verify(validatorManager).deleteValidator(PUBLIC_KEY1);
-    verify(validatorManager).deleteValidator(PUBLIC_KEY2);
+    verify(validatorManager).deleteValidator(Bytes.fromHexString(PUBLIC_KEY1));
+    verify(validatorManager).deleteValidator(Bytes.fromHexString(PUBLIC_KEY2));
   }
 
   @Test
