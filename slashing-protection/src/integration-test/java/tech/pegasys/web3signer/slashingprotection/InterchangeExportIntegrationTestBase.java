@@ -47,7 +47,9 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     for (int i = 0; i < VALIDATOR_COUNT; i++) {
       final int validatorId = i + 1;
       final Bytes validatorPublicKey = Bytes.of(validatorId);
-      slashingProtection.registerValidators(List.of(validatorPublicKey));
+      slashingProtectionContext
+          .getRegisteredValidators()
+          .registerValidators(List.of(validatorPublicKey));
 
       for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
         insertBlockAt(UInt64.valueOf(b), validatorId);
@@ -104,7 +106,9 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     for (int i = 0; i < VALIDATOR_COUNT; i++) {
       final int validatorId = i + 1;
       final Bytes validatorPublicKey = Bytes.of(validatorId);
-      slashingProtection.registerValidators(List.of(validatorPublicKey));
+      slashingProtectionContext
+          .getRegisteredValidators()
+          .registerValidators(List.of(validatorPublicKey));
 
       for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
         insertBlockAt(UInt64.valueOf(b), validatorId);
@@ -123,7 +127,7 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     // incrementally export only the even the public keys
     final OutputStream exportOutput = new ByteArrayOutputStream();
     final IncrementalExporter incrementalExporter =
-        slashingProtection.createIncrementalExporter(exportOutput);
+        slashingProtectionContext.getSlashingProtection().createIncrementalExporter(exportOutput);
     for (int i = 0; i < VALIDATOR_COUNT; i += 2) {
       incrementalExporter.export(String.format("0x0%x", i + 1));
     }
@@ -166,10 +170,11 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
     final String databaseUrl = testDatabaseInfo.databaseUrl();
     final OutputStream exportOutput = new ByteArrayOutputStream();
-    final SlashingProtection slashingProtection =
+    final SlashingProtectionContext slashingProtectionContext =
         SlashingProtectionContextFactory.create(
             new TestSlashingProtectionParameters(databaseUrl, "postgres", "postgres"));
-    assertThatThrownBy(() -> slashingProtection.exportData(exportOutput))
+    assertThatThrownBy(
+            () -> slashingProtectionContext.getSlashingProtection().exportData(exportOutput))
         .hasMessage("No genesis validators root for slashing protection data")
         .isInstanceOf(RuntimeException.class);
     exportOutput.close();
@@ -181,7 +186,9 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
     final int TOTAL_BLOCKS_SIGNED = 6;
     final UInt64 BLOCK_SLOT_WATER_MARK = UInt64.valueOf(3);
     final Bytes validatorPublicKey = Bytes.of(1);
-    slashingProtection.registerValidators(List.of(validatorPublicKey));
+    slashingProtectionContext
+        .getRegisteredValidators()
+        .registerValidators(List.of(validatorPublicKey));
     for (int b = 0; b < TOTAL_BLOCKS_SIGNED; b++) {
       insertBlockAt(UInt64.valueOf(b), 1);
     }
@@ -204,7 +211,9 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
   @Test
   void onlyAttestationsWhichAreAboveBothSourceAndTargetWatermarksAreImported() throws IOException {
     final Bytes validatorPublicKey = Bytes.of(1);
-    slashingProtection.registerValidators(List.of(validatorPublicKey));
+    slashingProtectionContext
+        .getRegisteredValidators()
+        .registerValidators(List.of(validatorPublicKey));
     final int TOTAL_ATTESTATIONS_SIGNED = 6;
     final int EPOCH_OFFSET = 10;
     final UInt64 ATTESTATION_SLOT_WATER_MARK = UInt64.valueOf(3);
@@ -227,7 +236,9 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
   void onlyAttestationsWhichAreAboveBothSourceAndTargetWatermarksAreImportedTargetOnly()
       throws IOException {
     final Bytes validatorPublicKey = Bytes.of(1);
-    slashingProtection.registerValidators(List.of(validatorPublicKey));
+    slashingProtectionContext
+        .getRegisteredValidators()
+        .registerValidators(List.of(validatorPublicKey));
     final int TOTAL_ATTESTATIONS_SIGNED = 6;
     final int EPOCH_OFFSET = 10;
     final UInt64 ATTESTATION_SLOT_WATER_MARK = UInt64.valueOf(12);
@@ -248,7 +259,7 @@ public class InterchangeExportIntegrationTestBase extends IntegrationTestBase {
 
   private InterchangeV5Format getExportObjectFromDatabase() throws IOException {
     final OutputStream exportOutput = new ByteArrayOutputStream();
-    slashingProtection.exportData(exportOutput);
+    slashingProtectionContext.getSlashingProtection().exportData(exportOutput);
     exportOutput.close();
 
     return mapper.readValue(exportOutput.toString(), InterchangeV5Format.class);

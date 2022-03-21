@@ -25,7 +25,11 @@ public class InterchangeImportBadJsonFormattingIntegrationTestBase extends Integ
   @Test
   void incorrectlyTypedDataFieldThrowsException() {
     final URL importFile = Resources.getResource("interchange/dataFieldNotArray.json");
-    assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
+    assertThatThrownBy(
+            () ->
+                slashingProtectionContext
+                    .getSlashingProtection()
+                    .importData(importFile.openStream()))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("Failed to import database content");
     assertDbIsEmpty(jdbi);
@@ -34,21 +38,25 @@ public class InterchangeImportBadJsonFormattingIntegrationTestBase extends Integ
   @Test
   void missingDataSectionInImportResultsInAnEmptyDatabase() throws IOException {
     final URL importFile = Resources.getResource("interchange/missingDataField.json");
-    slashingProtection.importData(importFile.openStream());
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
     assertDbIsEmpty(jdbi);
   }
 
   @Test
   void emptyDataSectionInImportResultsInAnEmptyDatabase() throws IOException {
     final URL importFile = Resources.getResource("interchange/emptyDataArray.json");
-    slashingProtection.importData(importFile.openStream());
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
     assertDbIsEmpty(jdbi);
   }
 
   @Test
   void anErrorInSubsequentBlockRollsbackToAnEmptyDatabase() {
     final URL importFile = Resources.getResource("interchange/errorInSecondBlock.json");
-    assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
+    assertThatThrownBy(
+            () ->
+                slashingProtectionContext
+                    .getSlashingProtection()
+                    .importData(importFile.openStream()))
         .isInstanceOf(RuntimeException.class)
         .hasMessage(("Failed to import database content"));
     assertDbIsEmpty(jdbi);
@@ -57,7 +65,11 @@ public class InterchangeImportBadJsonFormattingIntegrationTestBase extends Integ
   @Test
   void missingPublicKeyFieldThrowsExceptionAndLeavesDbEmpty() {
     final URL importFile = Resources.getResource("interchange/missingPublicKey.json");
-    assertThatThrownBy(() -> slashingProtection.importData(importFile.openStream()))
+    assertThatThrownBy(
+            () ->
+                slashingProtectionContext
+                    .getSlashingProtection()
+                    .importData(importFile.openStream()))
         .isInstanceOf(RuntimeException.class)
         .hasMessage(("Failed to import database content"));
     assertDbIsEmpty(jdbi);
