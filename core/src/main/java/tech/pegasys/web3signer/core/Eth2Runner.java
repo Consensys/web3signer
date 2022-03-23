@@ -20,6 +20,7 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYM
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
+import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -215,7 +216,7 @@ public class Eth2Runner extends Runner {
 
           try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                  new YubiHsmOpaqueDataProvider()) {
+                  new YubiHsmOpaqueDataProvider(); final AwsSecretsManagerProvider awsSecretsManagerProvider = new AwsSecretsManagerProvider(4)) {
             final AbstractArtifactSignerFactory artifactSignerFactory =
                 new BlsArtifactSignerFactory(
                     config.getKeyConfigPath(),
@@ -223,6 +224,7 @@ public class Eth2Runner extends Runner {
                     hashicorpConnectionFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
+                    awsSecretsManagerProvider,
                     (args) ->
                         new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 
