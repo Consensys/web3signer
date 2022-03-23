@@ -239,12 +239,6 @@ public class DbSlashingProtection implements SlashingProtection {
         });
   }
 
-  // TODO call registerValidators in the RegisteredValidators class directly
-  @Override
-  public void registerValidators(final List<Bytes> validators) {
-    registeredValidators.registerValidators(validators);
-  }
-
   @Override
   public void prune() {
     final Set<Integer> validatorKeys = registeredValidators.validatorIds();

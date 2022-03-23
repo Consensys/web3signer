@@ -34,8 +34,6 @@ public interface SlashingProtection {
   boolean maySignBlock(
       Bytes publicKey, Bytes signingRoot, UInt64 blockSlot, Bytes32 genesisValidatorsRoot);
 
-  void registerValidators(List<Bytes> validators);
-
   boolean hasSlashingProtectionDataFor(Bytes publicKey);
 
   void exportData(OutputStream output);
