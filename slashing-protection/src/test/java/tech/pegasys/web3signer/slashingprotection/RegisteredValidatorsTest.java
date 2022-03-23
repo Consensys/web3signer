@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -38,6 +39,57 @@ class RegisteredValidatorsTest {
   private static final Bytes PUBLIC_KEY2 = Bytes.of(43);
   private static final Bytes PUBLIC_KEY3 = Bytes.of(44);
   @Mock private ValidatorsDao validatorsDao;
+  @Mock private Jdbi mockJdbi;
+
+  @Test
+  public void retrievesValidatorIdForRegisteredValidator() {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, registeredValidatorsMap);
+    registeredValidatorsMap.put(PUBLIC_KEY1, 1);
+    registeredValidatorsMap.put(PUBLIC_KEY2, 2);
+
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY1)).hasValue(1);
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY2)).hasValue(2);
+  }
+
+  @Test
+  public void retrievesEmptyValidatorIdForUnregisteredValidator() {
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, HashBiMap.create());
+    assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY3)).isEmpty();
+  }
+
+  @Test
+  public void retrievesPublicKeyForRegisteredValidator() {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, registeredValidatorsMap);
+    registeredValidatorsMap.put(PUBLIC_KEY1, 1);
+    registeredValidatorsMap.put(PUBLIC_KEY2, 2);
+
+    assertThat(registeredValidators.getPublicKeyForValidatorId(1)).hasValue(PUBLIC_KEY1);
+    assertThat(registeredValidators.getPublicKeyForValidatorId(2)).hasValue(PUBLIC_KEY2);
+  }
+
+  @Test
+  public void retrievesEmptyPublicKeyForUnregisteredValidator() {
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, HashBiMap.create());
+    assertThat(registeredValidators.getPublicKeyForValidatorId(1)).isEmpty();
+  }
+
+  @Test
+  public void retrievesAllValidatorIds() {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, registeredValidatorsMap);
+    registeredValidatorsMap.put(PUBLIC_KEY1, 1);
+    registeredValidatorsMap.put(PUBLIC_KEY2, 2);
+    registeredValidatorsMap.put(PUBLIC_KEY3, 3);
+
+    assertThat(registeredValidators.validatorIds()).isEqualTo(Set.of(1, 2, 3));
+  }
 
   @Test
   public void registersValidatorsThatAreNotAlreadyInDb(final Jdbi jdbi) {

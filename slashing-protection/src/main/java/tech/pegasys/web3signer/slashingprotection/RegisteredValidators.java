@@ -17,6 +17,7 @@ import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMIT
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -48,7 +49,7 @@ public class RegisteredValidators {
   }
 
   public Set<Integer> validatorIds() {
-    return registeredValidators.values();
+    return Collections.unmodifiableSet(registeredValidators.values());
   }
 
   public Optional<Bytes> getPublicKeyForValidatorId(final int validatorId) {
