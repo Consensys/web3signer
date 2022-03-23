@@ -57,7 +57,7 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
     pruningSlashingProtectionContext =
         SlashingProtectionContextFactory.create(slashingProtectionParameters);
     insertValidatorAndCreateSlashingData(
-        pruningSlashingProtectionContext.getSlashingProtection(), 10, 10, 1);
+        pruningSlashingProtectionContext.getRegisteredValidators(), 10, 10, 1);
   }
 
   @AfterEach
@@ -220,11 +220,6 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
         final UInt64 blockSlot,
         final Bytes32 genesisValidatorsRoot) {
       return delegate.maySignBlock(publicKey, signingRoot, blockSlot, genesisValidatorsRoot);
-    }
-
-    @Override
-    public void registerValidators(final List<Bytes> validators) {
-      delegate.registerValidators(validators);
     }
 
     @Override

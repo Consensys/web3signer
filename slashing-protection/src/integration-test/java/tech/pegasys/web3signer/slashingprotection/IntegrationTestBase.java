@@ -165,12 +165,12 @@ public class IntegrationTestBase {
   }
 
   protected void insertValidatorAndCreateSlashingData(
-      final SlashingProtection slashingProtection,
+      final RegisteredValidators registeredValidators,
       final int noOfBlocks,
       final int noOfAttestations,
       final int validatorId) {
     final Bytes validatorPublicKey = Bytes.of(validatorId);
-    slashingProtection.registerValidators(List.of(validatorPublicKey));
+    registeredValidators.registerValidators(List.of(validatorPublicKey));
     createSlashingData(noOfBlocks, noOfAttestations, validatorId);
   }
 

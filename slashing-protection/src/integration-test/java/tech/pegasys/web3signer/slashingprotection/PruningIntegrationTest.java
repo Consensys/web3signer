@@ -52,7 +52,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
                 databaseUrl, USERNAME, PASSWORD, amountToKeep, slotsPerEpoch));
     final int size = 10;
     insertValidatorAndCreateSlashingData(
-        slashingProtectionContext.getSlashingProtection(), size, size, 1);
+        slashingProtectionContext.getRegisteredValidators(), size, size, 1);
     final List<SignedAttestation> allAttestations = fetchAttestations(1);
     final List<SignedBlock> allBlocks = fetchBlocks(1);
 
@@ -86,7 +86,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
     jdbi.withHandle(h -> validators.registerValidators(h, List.of(Bytes.of(1))));
     createSlashingData(2, 2, 1);
     insertValidatorAndCreateSlashingData(
-        slashingProtectionContext.getSlashingProtection(), 2, 2, 2);
+        slashingProtectionContext.getRegisteredValidators(), 2, 2, 2);
 
     slashingProtectionContext.getSlashingProtection().prune();
 
@@ -103,7 +103,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
         SlashingProtectionContextFactory.create(
             new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1));
     insertValidatorAndCreateSlashingData(
-        slashingProtectionContext.getSlashingProtection(), 10, 10, 1);
+        slashingProtectionContext.getRegisteredValidators(), 10, 10, 1);
     jdbi.useTransaction(
         h -> {
           lowWatermarkDao.updateSlotWatermarkFor(h, 1, UInt64.valueOf(8));
