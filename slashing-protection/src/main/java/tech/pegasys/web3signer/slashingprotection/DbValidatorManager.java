@@ -43,9 +43,10 @@ public class DbValidatorManager implements ValidatorManager {
   public void deleteValidator(final Bytes publicKey) {
     jdbi.useTransaction(
         handle -> {
-          fileValidatorManager.deleteValidator(publicKey);
+          // First disable the validator in the database to prevent all w3s from signing
           final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
           validatorsDao.setEnabled(handle, validatorId, false);
+          fileValidatorManager.deleteValidator(publicKey);
         });
   }
 

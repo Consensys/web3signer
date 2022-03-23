@@ -17,60 +17,55 @@ jar {
 dependencies {
   implementation project(':common')
   implementation project(':signing')
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   implementation 'com.google.guava:guava'
+  implementation 'com.google.guava:guava'
+  implementation 'com.zaxxer:HikariCP'
+  implementation 'commons-io:commons-io'
+  implementation 'net.jodah:failsafe:2.4.0'
+  implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.logging.log4j:log4j-core'
-  implementation 'commons-io:commons-io'
-  implementation 'org.apache.commons:commons-lang3'
   implementation 'org.apache.tuweni:tuweni-units'
-  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   implementation 'org.hyperledger.besu.internal:metrics-core'
-  implementation 'com.zaxxer:HikariCP'
-  implementation 'org.postgresql:postgresql'
+  implementation 'org.hyperledger.besu:plugin-api'
   implementation 'org.jdbi:jdbi3-core'
   implementation 'org.jdbi:jdbi3-sqlobject'
-  implementation 'org.hyperledger.besu:plugin-api'
-  implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'com.google.guava:guava'
-  implementation 'net.jodah:failsafe:2.4.0'
+  implementation 'org.postgresql:postgresql'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 
+  testImplementation 'io.zonky.test:embedded-postgres'
+  testImplementation 'org.assertj:assertj-core'
+  testImplementation 'org.flywaydb:flyway-core'
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
-  testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
-
-  testImplementation 'org.flywaydb:flyway-core'
   testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
-  testImplementation 'io.zonky.test:embedded-postgres'
+  testImplementation (testFixtures(project(":signing")))
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.7.0'
 
+  testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
+  testFixturesImplementation 'io.zonky.test:embedded-postgres'
+  testFixturesImplementation 'org.apache.commons:commons-lang3'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
-  testFixturesImplementation 'org.apache.commons:commons-lang3'
-  testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
-  testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api'
-
-  testFixturesImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
-  testFixturesImplementation 'io.zonky.test:embedded-postgres'
   testFixturesImplementation 'org.flywaydb:flyway-core'
   testFixturesImplementation 'org.jdbi:jdbi3-core'
+  testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testFixturesImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
 
-  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  integrationTestImplementation 'io.zonky.test:embedded-postgres'
+  integrationTestImplementation 'org.assertj:assertj-core'
+  integrationTestImplementation 'org.awaitility:awaitility'
+  integrationTestImplementation 'org.flywaydb:flyway-core'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-params'
-  integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
-  integrationTestImplementation 'org.flywaydb:flyway-core'
-  integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
-  integrationTestImplementation 'io.zonky.test:embedded-postgres'
   integrationTestImplementation sourceSets.testFixtures.output
-}
-
-artifacts {
-  testSupportArtifacts testSupportJar
+  integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
