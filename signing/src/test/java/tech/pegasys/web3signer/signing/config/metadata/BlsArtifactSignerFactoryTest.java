@@ -86,7 +86,6 @@ class BlsArtifactSignerFactoryTest {
     yubiHsmOpaqueDataProvider = new YubiHsmOpaqueDataProvider();
     awsSecretsManagerProvider = new AwsSecretsManagerProvider(100);
 
-
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
             configDir,

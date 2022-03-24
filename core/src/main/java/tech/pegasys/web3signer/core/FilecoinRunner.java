@@ -123,7 +123,8 @@ public class FilecoinRunner extends Runner {
           try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
-              final AwsSecretsManagerProvider awsSecretsManagerProvider = new AwsSecretsManagerProvider(100);) {
+              final AwsSecretsManagerProvider awsSecretsManagerProvider =
+                  new AwsSecretsManagerProvider(100); ) {
 
             final AbstractArtifactSignerFactory blsArtifactSignerFactory =
                 new BlsArtifactSignerFactory(

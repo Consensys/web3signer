@@ -18,7 +18,8 @@ import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 public class AwsSecretsManagerFactory {
 
   public static AwsSecretsManager createAwsSecretsManager(
-    final AwsSecretsManagerProvider awsSecretsManagerProvider, AwsSecretsManagerParameters awsSecretsManagerParameters) {
+      final AwsSecretsManagerProvider awsSecretsManagerProvider,
+      AwsSecretsManagerParameters awsSecretsManagerParameters) {
     switch (awsSecretsManagerParameters.getAuthenticationMode()) {
       case SPECIFIED:
         return awsSecretsManagerProvider.createAwsSecretsManager(

@@ -56,6 +56,12 @@ public class AwsSecretsManagerUtil {
     secretsManagerClient.deleteSecret(secretRequest);
   }
 
+  public void deleteSecret(String secretName) {
+    final DeleteSecretRequest secretRequest =
+        DeleteSecretRequest.builder().secretId(secretName).build();
+    secretsManagerClient.deleteSecret(secretRequest);
+  }
+
   public void close() {
     secretsManagerClient.close();
   }

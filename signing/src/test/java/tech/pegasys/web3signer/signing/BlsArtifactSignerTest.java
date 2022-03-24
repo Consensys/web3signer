@@ -18,11 +18,13 @@ import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIden
 
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 class BlsArtifactSignerTest {
@@ -46,5 +48,14 @@ class BlsArtifactSignerTest {
     final BlsArtifactSignature signature = blsArtifactSigner.sign(message);
 
     assertThat(signature.getSignatureData().toString()).isEqualTo(expectedSignature.toString());
+  }
+
+  @Test
+  void generateKeys_DELETEME() {
+    final Bytes32 privateKey =
+        Bytes32.fromHexString("0x3842bb5488f6a9189ae0716dd0815456ae8fceb293675cdbc5477277b4a5ac1b");
+    System.out.println(privateKey);
+    final BLSKeyPair blsKeyPair2 = new BLSKeyPair(BLSSecretKey.fromBytes(privateKey));
+    System.out.println(blsKeyPair2.getPublicKey());
   }
 }

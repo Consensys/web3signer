@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata;
 
-import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.api.Signer;
 import tech.pegasys.signers.secp256k1.azure.AzureConfig;
@@ -41,13 +40,13 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   private final boolean needToHash;
 
   public Secp256k1ArtifactSignerFactory(
-    final HashicorpConnectionFactory hashicorpConnectionFactory,
-    final Path configsDirectory,
-    final AzureKeyVaultSignerFactory azureCloudSignerFactory,
-    final InterlockKeyProvider interlockKeyProvider,
-    final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider,
+      final HashicorpConnectionFactory hashicorpConnectionFactory,
+      final Path configsDirectory,
+      final AzureKeyVaultSignerFactory azureCloudSignerFactory,
+      final InterlockKeyProvider interlockKeyProvider,
+      final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider,
       final Function<Signer, ArtifactSigner> signerFactory,
-    final boolean needToHash) {
+      final boolean needToHash) {
     super(
         hashicorpConnectionFactory,
         configsDirectory,

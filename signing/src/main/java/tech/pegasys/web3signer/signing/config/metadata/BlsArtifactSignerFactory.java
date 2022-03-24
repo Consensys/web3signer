@@ -148,12 +148,12 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   protected Bytes extractBytesFromSecretsManager(final AwsKeySigningMetadata metadata) {
     final AwsSecretsManager awsSecretsManager =
-      AwsSecretsManagerFactory.createAwsSecretsManager(awsSecretsManagerProvider, metadata);
+        AwsSecretsManagerFactory.createAwsSecretsManager(awsSecretsManagerProvider, metadata);
     return awsSecretsManager
-      .fetchSecret(metadata.getSecretName())
-      .map(Bytes::fromHexString)
-      .orElseThrow(
-        () -> new SigningMetadataException("Failed to fetch secret from AWS Secrets Manager"));
+        .fetchSecret(metadata.getSecretName())
+        .map(Bytes::fromHexString)
+        .orElseThrow(
+            () -> new SigningMetadataException("Failed to fetch secret from AWS Secrets Manager"));
   }
 
   @Override

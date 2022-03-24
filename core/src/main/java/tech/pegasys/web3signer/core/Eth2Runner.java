@@ -216,7 +216,9 @@ public class Eth2Runner extends Runner {
 
           try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                  new YubiHsmOpaqueDataProvider(); final AwsSecretsManagerProvider awsSecretsManagerProvider = new AwsSecretsManagerProvider(4)) {
+                  new YubiHsmOpaqueDataProvider();
+              final AwsSecretsManagerProvider awsSecretsManagerProvider =
+                  new AwsSecretsManagerProvider(4)) {
             final AbstractArtifactSignerFactory artifactSignerFactory =
                 new BlsArtifactSignerFactory(
                     config.getKeyConfigPath(),

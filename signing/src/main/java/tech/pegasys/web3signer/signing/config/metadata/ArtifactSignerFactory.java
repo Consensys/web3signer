@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata;
 
-import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 
 public interface ArtifactSignerFactory {
