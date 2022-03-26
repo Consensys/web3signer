@@ -36,6 +36,11 @@ public class DefaultAwsSecretsManagerParameters implements AwsSecretsManagerPara
   }
 
   @Override
+  public boolean isAwsSecretsManagerEnabled() {
+    return true;
+  }
+
+  @Override
   public AwsAuthenticationMode getAuthenticationMode() {
     return this.authenticationMode;
   }

@@ -43,6 +43,11 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
   }
 
   @Override
+  public boolean isAwsSecretsManagerEnabled() {
+    return true;
+  }
+
+  @Override
   public AwsAuthenticationMode getAuthenticationMode() {
     return this.authenticationMode;
   }
@@ -57,7 +62,6 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
     return secretAccessKey;
   }
 
-  @Override
   public String getSecretName() {
     return secretName;
   }

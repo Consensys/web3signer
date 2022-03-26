@@ -13,13 +13,14 @@
 package tech.pegasys.web3signer.signing.config;
 
 public interface AwsSecretsManagerParameters {
+
+  boolean isAwsSecretsManagerEnabled();
+
   AwsAuthenticationMode getAuthenticationMode();
 
   String getAccessKeyId();
 
   String getSecretAccessKey();
-
-  String getSecretName();
 
   String getRegion();
 }

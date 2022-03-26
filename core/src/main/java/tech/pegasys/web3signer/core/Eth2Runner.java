@@ -20,6 +20,7 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYM
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
+import tech.pegasys.signers.aws.AwsSecretsManager;
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -45,6 +46,9 @@ import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
+import tech.pegasys.web3signer.signing.config.AwsBulkLoader;
 import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
@@ -79,6 +83,7 @@ public class Eth2Runner extends Runner {
 
   private final Optional<SlashingProtection> slashingProtection;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
+  private final AwsSecretsManagerParameters awsSecretsManagerParameters;
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
   private final Spec eth2Spec;
@@ -88,11 +93,13 @@ public class Eth2Runner extends Runner {
       final Config config,
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters,
+      final AwsSecretsManagerParameters awsSecretsManagerParameters,
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled) {
     super(config);
     this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
+    this.awsSecretsManagerParameters = awsSecretsManagerParameters;
     this.slashingProtectionParameters = slashingProtectionParameters;
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
     this.eth2Spec = eth2Spec;
@@ -238,7 +245,11 @@ public class Eth2Runner extends Runner {
           }
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-            signers.addAll(loadAzureSigners());
+            signers.addAll(bulkLoadAzureSigners());
+          }
+
+          if (awsSecretsManagerParameters.isAwsSecretsManagerEnabled()) {
+            signers.addAll(bulkLoadAwsSigners());
           }
 
           final List<Bytes> validators =
@@ -276,7 +287,7 @@ public class Eth2Runner extends Runner {
     dbPrunerRunner.schedule();
   }
 
-  final Collection<ArtifactSigner> loadAzureSigners() {
+  final Collection<ArtifactSigner> bulkLoadAzureSigners() {
     final AzureKeyVault keyVault =
         AzureKeyVaultFactory.createAzureKeyVault(azureKeyVaultParameters);
 
@@ -292,6 +303,15 @@ public class Eth2Runner extends Runner {
             return null;
           }
         });
+  }
+
+  final Collection<BlsArtifactSigner> bulkLoadAwsSigners() {
+    final AwsSecretsManagerProvider awsSecretsManagerProvider =
+        new AwsSecretsManagerProvider(config.getAwsCacheMaximumSize());
+    final AwsSecretsManager awsSecretsManager =
+        AwsSecretsManagerFactory.createAwsSecretsManager(
+            awsSecretsManagerProvider, awsSecretsManagerParameters);
+    return AwsBulkLoader.load(awsSecretsManager, awsSecretsManager.getAvailableSecrets());
   }
 
   private String formatBlsSignature(final BlsArtifactSignature signature) {

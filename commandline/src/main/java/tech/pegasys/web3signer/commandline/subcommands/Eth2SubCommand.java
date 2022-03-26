@@ -17,6 +17,7 @@ import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.USE
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
+import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
@@ -80,6 +81,7 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin private PicoCliAwsSecretsManagerParameters awsKeyVaultParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
 
   @Override
@@ -88,6 +90,7 @@ public class Eth2SubCommand extends ModeSubCommand {
         config,
         slashingProtectionParameters,
         azureKeyVaultParameters,
+        awsKeyVaultParameters,
         eth2Spec,
         isKeyManagerApiEnabled);
   }

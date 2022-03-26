@@ -161,7 +161,7 @@ public class SignerLoader {
     LOG.debug(ExceptionUtils.getStackTrace(t));
   }
 
-  private static int numberOfThreads() {
+  static int numberOfThreads() {
     // try to allocate between 1-5 threads (based on processor cores) to process files in parallel
     int defaultNumberOfThreads = Runtime.getRuntime().availableProcessors() / 2;
 
