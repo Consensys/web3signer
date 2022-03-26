@@ -56,4 +56,6 @@ public interface Config {
   Boolean isSwaggerUIEnabled();
 
   Boolean isAccessLogsEnabled();
+
+  long getAwsCacheMaximumSize();
 }

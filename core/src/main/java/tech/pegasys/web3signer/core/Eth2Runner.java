@@ -218,7 +218,7 @@ public class Eth2Runner extends Runner {
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
               final AwsSecretsManagerProvider awsSecretsManagerProvider =
-                  new AwsSecretsManagerProvider(4)) {
+                  new AwsSecretsManagerProvider(config.getAwsCacheMaximumSize())) {
             final AbstractArtifactSignerFactory artifactSignerFactory =
                 new BlsArtifactSignerFactory(
                     config.getKeyConfigPath(),

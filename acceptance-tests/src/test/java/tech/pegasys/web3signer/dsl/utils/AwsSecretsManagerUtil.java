@@ -53,7 +53,7 @@ public class AwsSecretsManagerUtil {
   public String createSecret(final String name, final String value) {
     final String secretName = "web3signer-aws-integration/util/" + name;
     final CreateSecretRequest secretRequest =
-          CreateSecretRequest.builder().name(name).secretString(value).build();
+        CreateSecretRequest.builder().name(name).secretString(value).build();
     secretsManagerClient.createSecret(secretRequest);
     return secretName;
   }
