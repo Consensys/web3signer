@@ -45,6 +45,7 @@ public class DbValidatorManager implements ValidatorManager {
         handle -> {
           // First disable the validator in the database to prevent all w3s from signing
           final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
+          DbLocker.lockAllForValidator(handle, validatorId);
           validatorsDao.setEnabled(handle, validatorId, false);
           fileValidatorManager.deleteValidator(publicKey);
         });
@@ -57,6 +58,7 @@ public class DbValidatorManager implements ValidatorManager {
           fileValidatorManager.addValidator(publicKey, keystore, password);
           registeredValidators.registerValidators(List.of(publicKey));
           final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
+          DbLocker.lockAllForValidator(handle, validatorId);
           validatorsDao.setEnabled(handle, validatorId, true);
         });
   }
