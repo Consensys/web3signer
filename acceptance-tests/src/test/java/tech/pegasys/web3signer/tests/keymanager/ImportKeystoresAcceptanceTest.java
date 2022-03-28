@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.tests.keymanager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils.createAttestationRequest;
 
@@ -154,6 +155,37 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
 
   @Test
   public void canSignAfterImportingNewKey() throws IOException, URISyntaxException {
+    setupSignerWithKeyManagerApi();
+
+    // import keystore
+    callImportKeystores(composeRequestBody())
+        .then()
+        .contentType(ContentType.JSON)
+        .assertThat()
+        .statusCode(200)
+        .body("data.status", hasItem("imported"));
+
+    // delete keystore. this will disable the validator in the slashing protection db
+    final JsonObject requestBody = new JsonObject().put("pubkeys", new JsonArray().add(PUBLIC_KEY));
+    callDeleteKeystores(requestBody.toString());
+    validateApiResponse(callListKeys(), "data.validating_pubkey", empty());
+
+    // import again
+    callImportKeystores(composeRequestBody())
+        .then()
+        .contentType(ContentType.JSON)
+        .assertThat()
+        .statusCode(200)
+        .body("data.status", hasItem("imported"));
+    validateApiResponse(callListKeys(), "data.validating_pubkey", hasItem(PUBLIC_KEY));
+
+    // Sign with it
+    final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
+    signer.eth2Sign(PUBLIC_KEY, request).then().assertThat().statusCode(200);
+  }
+
+  @Test
+  public void canSignPreviouslyDeletedKeyAfterImporting() throws IOException, URISyntaxException {
     setupSignerWithKeyManagerApi();
     // import keystore
     callImportKeystores(composeRequestBody())
