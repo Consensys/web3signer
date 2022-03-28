@@ -47,6 +47,8 @@ class FileValidatorManagerTest {
       Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");
   private static final Bytes IV = Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789");
   private static final BLSKeyPair BLS_KEY_PAIR = BLSTestUtil.randomKeyPair(1);
+  private static final ObjectMapper OBJECT_MAPPER =
+      new ObjectMapper().registerModule(new SigningMetadataModule());
 
   @Mock private ArtifactSignerProvider artifactSignerProvider;
   @Mock private KeystoreFileManager keystoreFileManager;
@@ -98,8 +100,6 @@ class FileValidatorManagerTest {
             pbkdf2Param,
             cipher);
 
-    return new ObjectMapper()
-        .registerModule(new SigningMetadataModule())
-        .writeValueAsString(keyStoreData);
+    return OBJECT_MAPPER.writeValueAsString(keyStoreData);
   }
 }

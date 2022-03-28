@@ -65,12 +65,16 @@ public class FileValidatorManager implements ValidatorManager {
       keystoreFileManager.createKeystoreFiles(signer.getIdentifier(), keystore, password);
       // 3. add the new signer to the provider to make it available for signing
       signerProvider.addSigner(signer).get();
-    } catch (IOException | InterruptedException | ExecutionException e) {
+    } catch (IOException
+        | InterruptedException
+        | ExecutionException
+        | KeyStoreValidationException e) {
       throw new IllegalStateException("Unable to add validator", e);
     }
   }
 
-  private BlsArtifactSigner decryptKeystoreAndCreateSigner(String jsonKeystoreData, String password)
+  private BlsArtifactSigner decryptKeystoreAndCreateSigner(
+      final String jsonKeystoreData, final String password)
       throws JsonProcessingException, KeyStoreValidationException {
     final KeyStoreData keyStoreData = objectMapper.readValue(jsonKeystoreData, KeyStoreData.class);
     final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
