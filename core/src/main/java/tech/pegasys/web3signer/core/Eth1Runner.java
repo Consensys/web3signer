@@ -98,10 +98,11 @@ public class Eth1Runner extends Runner {
                     EthSecpArtifactSigner::new,
                     true);
 
-            return SignerLoader.load(
-                config.getKeyConfigPath(),
-                "yaml",
-                new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
+            return new SignerLoader()
+                .load(
+                    config.getKeyConfigPath(),
+                    "yaml",
+                    new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
           }
         });
   }

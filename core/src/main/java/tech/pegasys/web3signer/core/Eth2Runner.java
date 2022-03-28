@@ -256,10 +256,11 @@ public class Eth2Runner extends Runner {
                         new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 
             signers.addAll(
-                SignerLoader.load(
-                    config.getKeyConfigPath(),
-                    "yaml",
-                    new YamlSignerParser(List.of(artifactSignerFactory))));
+                new SignerLoader()
+                    .load(
+                        config.getKeyConfigPath(),
+                        "yaml",
+                        new YamlSignerParser(List.of(artifactSignerFactory))));
           }
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {

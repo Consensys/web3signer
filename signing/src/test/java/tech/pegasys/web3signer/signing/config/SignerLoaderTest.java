@@ -83,7 +83,7 @@ class SignerLoaderTest {
     when(signerParser.parse(Files.readString(metadataFile, StandardCharsets.UTF_8)))
         .thenReturn(artifactSigner);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
 
     verify(signerParser).parse(Files.readString(metadataFile, StandardCharsets.UTF_8));
     assertThat(signerList.size()).isOne();
@@ -96,7 +96,7 @@ class SignerLoaderTest {
     final Path metadataFile = createFileInConfigsDirectory(filename, PRIVATE_KEY1);
     when(signerParser.parse(ArgumentMatchers.any())).thenReturn(artifactSigner);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
@@ -109,7 +109,7 @@ class SignerLoaderTest {
     final Path metadataFile = createFileInConfigsDirectory(filename, PRIVATE_KEY1);
     when(signerParser.parse(ArgumentMatchers.any())).thenReturn(artifactSigner);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
@@ -123,7 +123,7 @@ class SignerLoaderTest {
     createFileInConfigsDirectory(filename, PRIVATE_KEY1);
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList).isEmpty();
     verifyNoMoreInteractions(signerParser);
@@ -134,7 +134,7 @@ class SignerLoaderTest {
     createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, "NOT_A_VALID_KEY");
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList).isEmpty();
   }
@@ -144,7 +144,7 @@ class SignerLoaderTest {
     final Path missingDir = configsDirectory.resolve("idontexist");
     createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(missingDir, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(missingDir, FILE_EXTENSION, signerParser));
 
     assertThat(signerList).isEmpty();
   }
@@ -162,7 +162,7 @@ class SignerLoaderTest {
         .thenReturn(createArtifactSigner(PRIVATE_KEY1));
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isEqualTo(1);
   }
@@ -174,7 +174,7 @@ class SignerLoaderTest {
     when(signerParser.parse(ArgumentMatchers.any())).thenReturn(artifactSigner);
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
@@ -186,7 +186,7 @@ class SignerLoaderTest {
     createEmptyFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION);
     createEmptyFileInConfigsDirectory(PUBLIC_KEY2 + "." + FILE_EXTENSION);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
     assertThat(signerList).isEmpty();
   }
 
@@ -212,7 +212,7 @@ class SignerLoaderTest {
         .thenReturn(createArtifactSigner(PRIVATE_KEY2));
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY2);
@@ -237,7 +237,7 @@ class SignerLoaderTest {
         .thenReturn(createArtifactSigner(PRIVATE_KEY3));
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList).hasSize(3);
     assertThat(signerList.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList()))
@@ -261,7 +261,7 @@ class SignerLoaderTest {
 
     try {
       createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
-      SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
+      new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
 
       final Optional<LogEvent> event =
           logAppender.getLogMessagesReceived().stream()
@@ -283,7 +283,7 @@ class SignerLoaderTest {
     when(signerParser.parse(ArgumentMatchers.any())).thenThrow(SigningMetadataException.class);
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(SignerLoader.load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
 
     assertThat(signerList).isEmpty();
   }
