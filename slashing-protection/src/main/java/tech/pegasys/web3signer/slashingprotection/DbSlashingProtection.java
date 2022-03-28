@@ -173,6 +173,10 @@ public class DbSlashingProtection implements SlashingProtection {
           lockForValidator(handle, LockType.ATTESTATION, validatorId);
 
           if (!isEnabled(handle, validatorId)) {
+            LOG.warn(
+                "Signing attempted for disabled validator {}. To sign with this validator"
+                    + " you must import the validator keystore using the key manager import API",
+                publicKey);
             return false;
           }
 
@@ -221,6 +225,10 @@ public class DbSlashingProtection implements SlashingProtection {
           lockForValidator(h, LockType.BLOCK, validatorId);
 
           if (!isEnabled(h, validatorId)) {
+            LOG.warn(
+                "Signing attempted for disabled validator {}. To sign with this validator"
+                    + " you must import the validator keystore using the key manager import API",
+                publicKey);
             return false;
           }
 

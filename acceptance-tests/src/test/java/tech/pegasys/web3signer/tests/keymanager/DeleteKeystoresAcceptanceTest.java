@@ -15,14 +15,12 @@ package tech.pegasys.web3signer.tests.keymanager;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 
-import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.web3signer.dsl.utils.Eth2BlockSigningRequestUtil;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 
 import java.io.IOException;
@@ -243,8 +241,8 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
     signer.eth2Sign(firstPubkey, attestationRequest, ContentType.TEXT).then().statusCode(404);
     signer2.eth2Sign(firstPubkey, attestationRequest, ContentType.TEXT).then().statusCode(412);
 
-    final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(SpecMilestone.ALTAIR);
-    final Eth2SigningRequestBody blockRequest = util.createBlockV2Request();
+    final Eth2SigningRequestBody blockRequest =
+        Eth2RequestUtils.createCannedRequest(ArtifactType.BLOCK_V2);
     signer.eth2Sign(firstPubkey, blockRequest, ContentType.TEXT).then().statusCode(404);
     signer2.eth2Sign(firstPubkey, blockRequest, ContentType.TEXT).then().statusCode(412);
   }
