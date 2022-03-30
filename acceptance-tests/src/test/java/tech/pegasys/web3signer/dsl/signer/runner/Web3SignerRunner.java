@@ -110,9 +110,12 @@ public abstract class Web3SignerRunner {
   }
 
   private void awaitPortsFile(final Path dataDir) {
-    final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 30;
+    //    final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 30;
+    //    final File file = new File(dataDir.toFile(), PORTS_FILENAME);
+    //    Awaitility.waitAtMost(secondsToWait, TimeUnit.SECONDS)
+    final int minutesToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 120;
     final File file = new File(dataDir.toFile(), PORTS_FILENAME);
-    Awaitility.waitAtMost(secondsToWait, TimeUnit.SECONDS)
+    Awaitility.waitAtMost(minutesToWait, TimeUnit.MINUTES)
         .until(
             () -> {
               if (file.exists()) {

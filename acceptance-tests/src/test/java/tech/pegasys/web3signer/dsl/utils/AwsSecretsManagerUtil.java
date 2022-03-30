@@ -50,11 +50,15 @@ public class AwsSecretsManagerUtil {
     return secretName;
   }
 
-  public String createSecret(final String name, final String value) {
-    final String secretName = "web3signer-aws-integration/util/" + name;
+  public String createSecretWithName(String secretName, String secretValue) {
     final CreateSecretRequest secretRequest =
-          CreateSecretRequest.builder().name(name).secretString(value).build();
+        CreateSecretRequest.builder().name(secretName).secretString(secretValue).build();
     secretsManagerClient.createSecret(secretRequest);
+    return secretName;
+  }
+
+  public String createSecretName() {
+    secretName = "signers-aws-integration/" + UUID.randomUUID();
     return secretName;
   }
 
@@ -68,6 +72,10 @@ public class AwsSecretsManagerUtil {
     final DeleteSecretRequest secretRequest =
         DeleteSecretRequest.builder().secretId(secretName).build();
     secretsManagerClient.deleteSecret(secretRequest);
+  }
+
+  public SecretsManagerClient getSecretsManagerClient() {
+    return secretsManagerClient;
   }
 
   public void close() {
