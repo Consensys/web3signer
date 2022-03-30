@@ -50,7 +50,7 @@ public class AwsKeyPerfAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
   private final String RO_AWS_ACCESS_KEY_ID = System.getenv("RO_AWS_ACCESS_KEY_ID");
   private final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("RO_AWS_SECRET_ACCESS_KEY");
 
-  private final String AWS_REGION = "ap-southeast-2";
+  static final String AWS_REGION = "ap-southeast-2";
 
   private final List<AwsKeyInfo> awsKeyInfos = new ArrayList<>();
   private AwsSecretsManagerUtil awsSecretsManagerUtil;
@@ -69,27 +69,17 @@ public class AwsKeyPerfAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
   }
 
   @BeforeAll
-  void setup() throws IOException {
+  void setup() {
     checkEnvironmentVariables();
     awsSecretsManagerUtil =
         new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
 
-    String fileName = "secretNames.txt";
-    Files.deleteIfExists(Paths.get(fileName));
-
-    FileOutputStream fos = new FileOutputStream(fileName, true);
-
     for (int i = 0; i < NO_KEYS_TO_CREATE; i++) {
-      final String awsSecretName = awsSecretsManagerUtil.createSecretName();
       final BLSKeyPair blsKeyPair = BLSTestUtil.randomKeyPair(i);
+      final String privateKeyInHex = blsKeyPair.getSecretKey().toBytes().toHexString();
+      final String awsSecretName = awsSecretsManagerUtil.createSecret(privateKeyInHex);
       awsKeyInfos.add(new AwsKeyInfo(awsSecretName, blsKeyPair));
-      fos.write((awsSecretName + "\n").getBytes(StandardCharsets.UTF_8));
     }
-    fos.close();
-
-    System.err.println("[PERF TEST] " + fileName + " written");
-
-    createSecrets(awsKeyInfos);
   }
 
   @AfterAll
@@ -125,7 +115,8 @@ public class AwsKeyPerfAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
       }
       customThreadPool.shutdown();
       customThreadPool.awaitTermination(30, TimeUnit.SECONDS);
-      deleteAllTestKeys();
+//      System.err.println("\n[PERF TEST] Second delete pass...");
+//      deleteAllTestKeys();
       awsSecretsManagerUtil.close();
       System.err.println("\n[PERF TEST] loaded " + awsKeyInfos.size() + " keys in " + timeTaken);
     }
@@ -190,24 +181,6 @@ public class AwsKeyPerfAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
     timeTaken =
         DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
     System.err.println("[PERF TEST] loaded " + awsKeyInfos.size() + " keys in " + timeTaken);
-  }
-
-  public void createSecrets(List<AwsKeyInfo> awsKeyInfos) {
-
-    final Instant start = Instant.now();
-    //    ForkJoinPool customThreadPool = new ForkJoinPool(1);
-
-    for (AwsKeyInfo awsKeyInfo : awsKeyInfos) {
-      //      customThreadPool.submit(() -> {
-      final String privateKeyInHex = awsKeyInfo.blsKeyPair.getSecretKey().toBytes().toHexString();
-      awsSecretsManagerUtil.createSecretWithName(awsKeyInfo.secretName, privateKeyInHex);
-      //      });
-    }
-
-    final String timeTaken =
-        DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
-    System.err.println(
-        "[PERF TEST] created " + awsKeyInfos.size() + " secrets. timeTaken = " + timeTaken);
   }
 
   public static class AwsKeyInfo {

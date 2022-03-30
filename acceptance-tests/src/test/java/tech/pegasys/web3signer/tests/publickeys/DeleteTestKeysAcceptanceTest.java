@@ -38,9 +38,6 @@ public class DeleteTestKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   private final String RO_AWS_ACCESS_KEY_ID = System.getenv("RO_AWS_ACCESS_KEY_ID");
   private final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("RO_AWS_SECRET_ACCESS_KEY");
 
-  //  private final String AWS_REGION = "us-east-2";
-  private final String AWS_REGION = "ap-southeast-2";
-
   private AwsSecretsManagerUtil awsSecretsManagerUtil;
 
   private void checkEnvironmentVariables() {
@@ -58,7 +55,7 @@ public class DeleteTestKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   void setup() throws IOException {
     checkEnvironmentVariables();
     awsSecretsManagerUtil =
-        new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
+        new AwsSecretsManagerUtil(AwsKeyPerfAcceptanceTest.AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
   }
 
   @AfterAll
@@ -90,8 +87,8 @@ public class DeleteTestKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
                   customThreadPool.submit(
                       () -> {
                         secretsManagerClient.deleteSecret(secretRequest);
-                        System.out.println("deleted" + name);
-                        System.out.println("deleted " + count.incrementAndGet());
+                        System.err.println("[DELETE KEYS] deleted" + name);
+                        System.err.println("[DELETE KEYS] deleted " + count.incrementAndGet());
                       });
                 }
               });
@@ -99,10 +96,10 @@ public class DeleteTestKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     int currSubmissionCount = customThreadPool.getQueuedSubmissionCount();
     while (customThreadPool.getQueuedSubmissionCount() > 0) {
       if (customThreadPool.getQueuedSubmissionCount() == currSubmissionCount) {
-        System.out.print(".");
+        System.err.print(".");
       } else {
         final int queuedSubmissionCount = customThreadPool.getQueuedSubmissionCount();
-        System.out.print("\n queuedSubmissionCount=" + queuedSubmissionCount);
+        System.err.print("\n[DELETE KEYS] queuedSubmissionCount=" + queuedSubmissionCount);
         currSubmissionCount = queuedSubmissionCount;
       }
       Thread.sleep(10);

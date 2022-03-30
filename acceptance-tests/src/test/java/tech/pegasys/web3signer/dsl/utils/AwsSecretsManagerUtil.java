@@ -50,18 +50,6 @@ public class AwsSecretsManagerUtil {
     return secretName;
   }
 
-  public String createSecretWithName(String secretName, String secretValue) {
-    final CreateSecretRequest secretRequest =
-        CreateSecretRequest.builder().name(secretName).secretString(secretValue).build();
-    secretsManagerClient.createSecret(secretRequest);
-    return secretName;
-  }
-
-  public String createSecretName() {
-    secretName = "signers-aws-integration/" + UUID.randomUUID();
-    return secretName;
-  }
-
   public void deleteSecret() {
     final DeleteSecretRequest secretRequest =
         DeleteSecretRequest.builder().secretId(secretName).build();
