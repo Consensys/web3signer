@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -58,6 +59,27 @@ class RegisteredValidatorsTest {
     final RegisteredValidators registeredValidators =
         new RegisteredValidators(mockJdbi, validatorsDao, HashBiMap.create());
     assertThat(registeredValidators.getValidatorIdForPublicKey(PUBLIC_KEY3)).isEmpty();
+  }
+
+  @Test
+  public void mustRetrieveReturnsValidatorIdForRegisteredValidator() {
+    final BiMap<Bytes, Integer> registeredValidatorsMap = HashBiMap.create();
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, registeredValidatorsMap);
+    registeredValidatorsMap.put(PUBLIC_KEY1, 1);
+    registeredValidatorsMap.put(PUBLIC_KEY2, 2);
+
+    assertThat(registeredValidators.mustGetValidatorIdForPublicKey(PUBLIC_KEY1)).isEqualTo(1);
+    assertThat(registeredValidators.mustGetValidatorIdForPublicKey(PUBLIC_KEY2)).isEqualTo(2);
+  }
+
+  @Test
+  public void mustRetrieveThrowsErrorsForUnregisteredValidator() {
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(mockJdbi, validatorsDao, HashBiMap.create());
+    assertThatThrownBy(() -> registeredValidators.mustGetValidatorIdForPublicKey(PUBLIC_KEY3))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Unregistered validator for " + PUBLIC_KEY3);
   }
 
   @Test
