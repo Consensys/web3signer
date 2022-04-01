@@ -156,7 +156,20 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
   @Test
   public void canSignAfterImportingNewKey() throws IOException, URISyntaxException {
     setupSignerWithKeyManagerApi();
+    // import keystore
+    callImportKeystores(composeRequestBody())
+        .then()
+        .contentType(ContentType.JSON)
+        .assertThat()
+        .statusCode(200)
+        .body("data.status", hasItem("imported"));
+    // Sign with it
+    final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
+    signer.eth2Sign(PUBLIC_KEY, request).then().assertThat().statusCode(200);
+  }
 
+  @Test
+  public void canSignPreviouslyDeletedKeyAfterImporting() throws IOException, URISyntaxException {
     // import keystore
     callImportKeystores(composeRequestBody())
         .then()
@@ -179,21 +192,6 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
         .body("data.status", hasItem("imported"));
     validateApiResponse(callListKeys(), "data.validating_pubkey", hasItem(PUBLIC_KEY));
 
-    // Sign with it
-    final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
-    signer.eth2Sign(PUBLIC_KEY, request).then().assertThat().statusCode(200);
-  }
-
-  @Test
-  public void canSignPreviouslyDeletedKeyAfterImporting() throws IOException, URISyntaxException {
-    setupSignerWithKeyManagerApi();
-    // import keystore
-    callImportKeystores(composeRequestBody())
-        .then()
-        .contentType(ContentType.JSON)
-        .assertThat()
-        .statusCode(200)
-        .body("data.status", hasItem("imported"));
     // Sign with it
     final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
     signer.eth2Sign(PUBLIC_KEY, request).then().assertThat().statusCode(200);
