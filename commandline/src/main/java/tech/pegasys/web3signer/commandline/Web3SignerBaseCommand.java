@@ -183,7 +183,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   @Option(
       names = {"--aws-cache-maximum-size"},
       description = "Maximum cache size for AWS Secrets Manager (default: ${DEFAULT-VALUE})")
-  private final long awsCacheMaximumSize = 1;
+  private long awsCacheMaximumSize = 1;
 
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
