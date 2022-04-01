@@ -170,6 +170,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
 
   @Test
   public void canSignPreviouslyDeletedKeyAfterImporting() throws IOException, URISyntaxException {
+    setupSignerWithKeyManagerApi();
     // import keystore
     callImportKeystores(composeRequestBody())
         .then()
