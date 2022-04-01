@@ -34,6 +34,7 @@ import java.util.concurrent.Future;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,7 +49,7 @@ class FileValidatorManagerTest {
   private static final Bytes IV = Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789");
   private static final BLSKeyPair BLS_KEY_PAIR = BLSTestUtil.randomKeyPair(1);
   private static final ObjectMapper OBJECT_MAPPER =
-      new ObjectMapper().registerModule(new SigningMetadataModule());
+      JsonMapper.builder().addModule(new SigningMetadataModule()).build();
 
   @Mock private ArtifactSignerProvider artifactSignerProvider;
   @Mock private KeystoreFileManager keystoreFileManager;
