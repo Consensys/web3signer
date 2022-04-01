@@ -89,20 +89,6 @@ public class ValidatorsDaoTest {
   }
 
   @Test
-  public void registeringValidatorsDoesNotEnableDisabledValidators(final Handle handle) {
-    insertValidator(handle, Bytes.of(100), false);
-    insertValidator(handle, Bytes.of(101), false);
-    insertValidator(handle, Bytes.of(102), false);
-
-    final ValidatorsDao validatorsDao = new ValidatorsDao();
-    validatorsDao.registerValidators(handle, List.of(Bytes.of(100), Bytes.of(101), Bytes.of(102)));
-
-    assertThat(validatorsDao.isEnabled(handle, 1)).isFalse();
-    assertThat(validatorsDao.isEnabled(handle, 2)).isFalse();
-    assertThat(validatorsDao.isEnabled(handle, 3)).isFalse();
-  }
-
-  @Test
   public void isEnabledReturnsTrueForEnabledValidator(final Handle handle) {
     insertValidator(handle, Bytes.of(1), true);
     assertThat(new ValidatorsDao().isEnabled(handle, 1)).isTrue();
