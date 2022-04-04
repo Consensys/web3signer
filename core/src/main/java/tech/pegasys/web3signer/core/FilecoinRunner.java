@@ -142,10 +142,12 @@ public class FilecoinRunner extends Runner {
                     signer -> new FcSecpArtifactSigner(signer, network),
                     false);
 
-            return SignerLoader.load(
-                config.getKeyConfigPath(),
-                "yaml",
-                new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+            return new SignerLoader()
+                .load(
+                    config.getKeyConfigPath(),
+                    "yaml",
+                    new YamlSignerParser(
+                        List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
           }
         });
   }

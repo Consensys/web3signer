@@ -16,7 +16,7 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.KeystoreFileManager;
+import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.Optional;
@@ -42,12 +42,11 @@ public class DeleteKeystoresHandler implements Handler<RoutingContext> {
 
   public DeleteKeystoresHandler(
       final ObjectMapper objectMapper,
-      final KeystoreFileManager keystoreFileManager,
       final Optional<SlashingProtection> slashingProtection,
-      final ArtifactSignerProvider signerProvider) {
+      final ArtifactSignerProvider signerProvider,
+      final ValidatorManager validatorManager) {
     this.objectMapper = objectMapper;
-    processor =
-        new DeleteKeystoresProcessor(keystoreFileManager, slashingProtection, signerProvider);
+    processor = new DeleteKeystoresProcessor(slashingProtection, signerProvider, validatorManager);
   }
 
   @Override

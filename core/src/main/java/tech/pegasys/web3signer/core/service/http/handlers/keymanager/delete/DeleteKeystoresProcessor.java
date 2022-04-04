@@ -15,7 +15,7 @@ package tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.signing.KeystoreFileManager;
+import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
@@ -36,17 +36,17 @@ public class DeleteKeystoresProcessor {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final KeystoreFileManager keystoreFileManager;
   private final Optional<SlashingProtection> slashingProtection;
   private final ArtifactSignerProvider signerProvider;
+  private final ValidatorManager validatorManager;
 
   public DeleteKeystoresProcessor(
-      final KeystoreFileManager keystoreFileManager,
       final Optional<SlashingProtection> slashingProtection,
-      final ArtifactSignerProvider signerProvider) {
-    this.keystoreFileManager = keystoreFileManager;
+      final ArtifactSignerProvider signerProvider,
+      final ValidatorManager validatorManager) {
     this.slashingProtection = slashingProtection;
     this.signerProvider = signerProvider;
+    this.validatorManager = validatorManager;
   }
 
   public DeleteKeystoresResponse process(final DeleteKeystoresRequestBody requestBody) {
@@ -101,7 +101,7 @@ public class DeleteKeystoresProcessor {
   }
 
   private DeleteKeystoreResult processKeyToDelete(
-      String pubkey, final IncrementalExporter incrementalExporter) {
+      final String pubkey, final IncrementalExporter incrementalExporter) {
     try {
       final Optional<ArtifactSigner> signer = signerProvider.getSigner(pubkey);
 
@@ -127,10 +127,7 @@ public class DeleteKeystoresProcessor {
             DeleteKeystoreStatus.ERROR, "Unable to delete readonly key: " + pubkey);
       }
 
-      // Remove active key from memory first, will stop any further signing with this key
-      signerProvider.removeSigner(pubkey).get();
-      // Then, delete the corresponding keystore files
-      keystoreFileManager.deleteKeystoreFiles(pubkey);
+      validatorManager.deleteValidator(Bytes.fromHexString(pubkey));
     } catch (Exception e) {
       LOG.error("Failed to delete keystore files", e);
       return new DeleteKeystoreResult(

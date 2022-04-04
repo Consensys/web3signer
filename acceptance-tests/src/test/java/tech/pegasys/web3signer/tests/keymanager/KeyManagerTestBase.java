@@ -45,7 +45,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class KeyManagerTestBase extends AcceptanceTestBase {
   private static final String KEYSTORE_ENDPOINT = "/eth/v1/keystores";
-  private static final Long MINIMAL_ALTAIR_FORK = 0L;
+  protected static final Long MINIMAL_ALTAIR_FORK = 0L;
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
   protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
@@ -61,6 +61,7 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder
         .withKeyStoreDirectory(testDirectory)
+        .withNetwork("minimal")
         .withMode("eth2")
         .withAltairForkEpoch(MINIMAL_ALTAIR_FORK)
         .withSlashingEnabled(true)
@@ -88,6 +89,10 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
   }
 
   public Response callListKeys() {
+    return given().baseUri(signer.getUrl()).get(KEYSTORE_ENDPOINT);
+  }
+
+  public Response callListKeys(final Signer signer) {
     return given().baseUri(signer.getUrl()).get(KEYSTORE_ENDPOINT);
   }
 

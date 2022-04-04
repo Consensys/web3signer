@@ -344,7 +344,7 @@ public class Eth2RequestUtils {
         null);
   }
 
-  private static ForkInfo forkInfo() {
+  public static ForkInfo forkInfo() {
     final Fork fork =
         new Fork(
             Bytes4.fromHexString("0x00000001"),

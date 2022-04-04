@@ -46,9 +46,9 @@ public class SignerLoader {
   private static final Logger LOG = LogManager.getLogger();
   private static final long FILES_PROCESSED_TO_REPORT = 10;
   private static final int MAX_FORK_JOIN_THREADS = 5;
-  private static final Set<Path> loadedConfigurationFiles = new HashSet<>();
+  private final Set<Path> loadedConfigurationFiles = new HashSet<>();
 
-  public static Collection<ArtifactSigner> load(
+  public Collection<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
     final Instant start = Instant.now();
     LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
@@ -67,7 +67,7 @@ public class SignerLoader {
     return processMetadataFilesInParallel(configFilesContent, signerParser);
   }
 
-  private static Map<Path, String> getConfigFilesContents(
+  private Map<Path, String> getConfigFilesContents(
       final Path configsDirectory, final String fileExtension) {
     // read configuration files without converting them to signers first.
     // Avoid reading files which are already loaded/processed
@@ -93,7 +93,7 @@ public class SignerLoader {
     return emptyMap();
   }
 
-  private static Collection<ArtifactSigner> processMetadataFilesInParallel(
+  private Collection<ArtifactSigner> processMetadataFilesInParallel(
       final Map<Path, String> configFilesContent, final SignerParser signerParser) {
     // use custom fork-join pool instead of common. Limit number of threads to avoid Azure bug
     ForkJoinPool forkJoinPool = null;
@@ -112,7 +112,7 @@ public class SignerLoader {
     return emptySet();
   }
 
-  private static Set<ArtifactSigner> parseMetadataFiles(
+  private Set<ArtifactSigner> parseMetadataFiles(
       final Map<Path, String> configFilesContents, final SignerParser signerParser) {
     LOG.info("Parsing configuration metadata files");
 
@@ -146,14 +146,13 @@ public class SignerLoader {
     return artifactSigners;
   }
 
-  private static boolean matchesFileExtension(
-      final String validFileExtension, final Path filename) {
+  private boolean matchesFileExtension(final String validFileExtension, final Path filename) {
     final boolean isHidden = filename.toFile().isHidden();
     final String extension = FilenameUtils.getExtension(filename.toString());
     return !isHidden && extension.toLowerCase().endsWith(validFileExtension.toLowerCase());
   }
 
-  private static void renderException(final Throwable t, final String filename) {
+  private void renderException(final Throwable t, final String filename) {
     LOG.error(
         "Error parsing signing metadata file {}: {}",
         filename,
@@ -161,7 +160,7 @@ public class SignerLoader {
     LOG.debug(ExceptionUtils.getStackTrace(t));
   }
 
-  private static int numberOfThreads() {
+  private int numberOfThreads() {
     // try to allocate between 1-5 threads (based on processor cores) to process files in parallel
     int defaultNumberOfThreads = Runtime.getRuntime().availableProcessors() / 2;
 

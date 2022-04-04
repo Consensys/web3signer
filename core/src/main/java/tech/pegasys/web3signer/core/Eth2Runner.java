@@ -39,7 +39,9 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
+import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
@@ -51,9 +53,11 @@ import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyPro
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.slashingprotection.DbPrunerRunner;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory;
+import tech.pegasys.web3signer.slashingprotection.DbValidatorManager;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContext;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFactory;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
+import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.util.Collection;
 import java.util.List;
@@ -76,7 +80,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 public class Eth2Runner extends Runner {
   private static final Logger LOG = LogManager.getLogger();
 
-  private final Optional<SlashingProtection> slashingProtection;
+  private final Optional<SlashingProtectionContext> slashingProtectionContext;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
@@ -90,7 +94,7 @@ public class Eth2Runner extends Runner {
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled) {
     super(config);
-    this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
+    this.slashingProtectionContext = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.slashingProtectionParameters = slashingProtectionParameters;
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
@@ -98,12 +102,11 @@ public class Eth2Runner extends Runner {
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
   }
 
-  private Optional<SlashingProtection> createSlashingProtection(
+  private Optional<SlashingProtectionContext> createSlashingProtection(
       final SlashingProtectionParameters slashingProtectionParameters) {
     if (slashingProtectionParameters.isEnabled()) {
       try {
-        return Optional.of(
-            SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters));
+        return Optional.of(SlashingProtectionContextFactory.create(slashingProtectionParameters));
       } catch (final IllegalStateException e) {
         throw new InitializationException(e.getMessage(), e);
       }
@@ -124,7 +127,7 @@ public class Eth2Runner extends Runner {
         context.getArtifactSignerProvider(),
         context.getErrorHandler(),
         context.getMetricsSystem(),
-        slashingProtection);
+        slashingProtectionContext);
 
     return context.getRouterBuilder().createRouter();
   }
@@ -134,7 +137,7 @@ public class Eth2Runner extends Runner {
       final ArtifactSignerProvider blsSignerProvider,
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
-      final Optional<SlashingProtection> slashingProtection) {
+      final Optional<SlashingProtectionContext> slashingProtectionContext) {
     final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
 
     // security handler for keymanager endpoints
@@ -162,7 +165,7 @@ public class Eth2Runner extends Runner {
                     blsSigner,
                     new HttpApiMetrics(metricsSystem, BLS),
                     new SlashingProtectionMetrics(metricsSystem),
-                    slashingProtection,
+                    slashingProtectionContext.map(SlashingProtectionContext::getSlashingProtection),
                     objectMapper,
                     eth2Spec),
                 false))
@@ -178,6 +181,9 @@ public class Eth2Runner extends Runner {
                   new ListKeystoresHandler(blsSignerProvider, objectMapper), false))
           .failureHandler(errorHandler);
 
+      final ValidatorManager validatorManager =
+          createValidatorManager(blsSignerProvider, objectMapper);
+
       routerBuilder
           .operation(KEYMANAGER_IMPORT.name())
           .handler(
@@ -185,8 +191,10 @@ public class Eth2Runner extends Runner {
                   new ImportKeystoresHandler(
                       objectMapper,
                       config.getKeyConfigPath(),
-                      slashingProtection,
-                      blsSignerProvider),
+                      slashingProtectionContext.map(
+                          SlashingProtectionContext::getSlashingProtection),
+                      blsSignerProvider,
+                      validatorManager),
                   false))
           .failureHandler(errorHandler);
 
@@ -196,11 +204,32 @@ public class Eth2Runner extends Runner {
               new BlockingHandlerDecorator(
                   new DeleteKeystoresHandler(
                       objectMapper,
-                      new KeystoreFileManager(config.getKeyConfigPath()),
-                      slashingProtection,
-                      blsSignerProvider),
+                      slashingProtectionContext.map(
+                          SlashingProtectionContext::getSlashingProtection),
+                      blsSignerProvider,
+                      validatorManager),
                   false))
           .failureHandler(errorHandler);
+    }
+  }
+
+  private ValidatorManager createValidatorManager(
+      final ArtifactSignerProvider artifactSignerProvider, final ObjectMapper objectMapper) {
+    final FileValidatorManager fileValidatorManager =
+        new FileValidatorManager(
+            artifactSignerProvider,
+            new KeystoreFileManager(config.getKeyConfigPath()),
+            objectMapper);
+    if (slashingProtectionContext.isPresent()) {
+      final SlashingProtectionContext slashingProtectionContext =
+          this.slashingProtectionContext.get();
+      return new DbValidatorManager(
+          fileValidatorManager,
+          slashingProtectionContext.getRegisteredValidators(),
+          slashingProtectionContext.getSlashingProtectionJdbi(),
+          new ValidatorsDao());
+    } else {
+      return fileValidatorManager;
     }
   }
 
@@ -227,10 +256,11 @@ public class Eth2Runner extends Runner {
                         new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 
             signers.addAll(
-                SignerLoader.load(
-                    config.getKeyConfigPath(),
-                    "yaml",
-                    new YamlSignerParser(List.of(artifactSignerFactory))));
+                new SignerLoader()
+                    .load(
+                        config.getKeyConfigPath(),
+                        "yaml",
+                        new YamlSignerParser(List.of(artifactSignerFactory))));
           }
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
@@ -245,8 +275,8 @@ public class Eth2Runner extends Runner {
           if (validators.isEmpty()) {
             LOG.warn("No BLS keys loaded. Check that the key store has BLS key config files");
           } else {
-            slashingProtection.ifPresent(
-                slashingProtection1 -> slashingProtection1.registerValidators(validators));
+            slashingProtectionContext.ifPresent(
+                context -> context.getRegisteredValidators().registerValidators(validators));
           }
           return signers;
         });
@@ -255,7 +285,7 @@ public class Eth2Runner extends Runner {
   @Override
   public void run() {
     super.run();
-    if (pruningEnabled && slashingProtection.isPresent()) {
+    if (pruningEnabled && slashingProtectionContext.isPresent()) {
       scheduleAndExecuteInitialDbPruning();
     }
   }
@@ -264,7 +294,7 @@ public class Eth2Runner extends Runner {
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
             slashingProtectionParameters,
-            slashingProtection.get(),
+            slashingProtectionContext.get().getSlashingProtection(),
             Executors.newScheduledThreadPool(1));
     if (slashingProtectionParameters.isPruningAtBootEnabled()) {
       dbPrunerRunner.execute();

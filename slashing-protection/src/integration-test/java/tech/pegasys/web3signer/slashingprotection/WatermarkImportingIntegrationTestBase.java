@@ -46,7 +46,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
   public void importSetsBlockWatermarkToLowestInImportWhenDatabaseIsEmpty()
       throws JsonProcessingException {
     final InputStream input = createInputDataWith(List.of(5, 4), emptyList());
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(4), null, null));
@@ -56,14 +56,14 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
   public void blockWaterMarkIsUpdatedIfImportMinimumBlockLargerThanCurrentWatermark()
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
     insertBlockAt(UInt64.valueOf(3), VALIDATOR_ID);
     insertBlockAt(UInt64.valueOf(10), VALIDATOR_ID);
     jdbi.useHandle(h -> lowWatermarkDao.updateSlotWatermarkFor(h, VALIDATOR_ID, UInt64.valueOf(3)));
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(3));
 
     final InputStream input = createInputDataWith(List.of(4, 8), emptyList());
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(4));
   }
 
@@ -71,13 +71,13 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
   public void blockWatermarkIsNotUpdatedIfLowestBlockInImportIsLowerThanCurrentWatermark()
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
     insertBlockAt(UInt64.valueOf(3), VALIDATOR_ID);
     insertBlockAt(UInt64.valueOf(10), VALIDATOR_ID);
     jdbi.useHandle(h -> lowWatermarkDao.updateSlotWatermarkFor(h, VALIDATOR_ID, UInt64.valueOf(3)));
 
     final InputStream input = createInputDataWith(List.of(2, 50), emptyList());
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(3));
   }
 
@@ -86,14 +86,14 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
       throws JsonProcessingException {
     final UInt64 initialBlockSlot = UInt64.valueOf(3);
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
     insertBlockAt(initialBlockSlot, VALIDATOR_ID);
     insertBlockAt(UInt64.valueOf(10), VALIDATOR_ID);
     jdbi.useHandle(h -> lowWatermarkDao.updateSlotWatermarkFor(h, VALIDATOR_ID, initialBlockSlot));
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(initialBlockSlot);
 
     final InputStream input = createInputDataWith(List.of(50, 2), emptyList());
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID).getSlot()).isEqualTo(UInt64.valueOf(3));
   }
 
@@ -103,7 +103,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
     final InputStream input =
         createInputDataWith(
             emptyList(), List.of(new ImmutablePair<>(3, 4), new ImmutablePair<>(2, 5)));
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(2), UInt64.valueOf(4)));
@@ -113,7 +113,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
   public void attestationWatermarksUpdatedIfImportHasLargerValuesThanMaxExistingAttestation()
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
     insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), VALIDATOR_ID);
     insertAttestationAt(UInt64.valueOf(7), UInt64.valueOf(8), VALIDATOR_ID);
     jdbi.useHandle(
@@ -128,7 +128,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
     final InputStream input =
         createInputDataWith(
             emptyList(), List.of(new ImmutablePair<>(8, 10), new ImmutablePair<>(9, 15)));
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
 
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
@@ -139,7 +139,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
   public void importDataIsLowerThanCurrentWatermarkDoesNotResultInChangeToAttestationWatermark()
       throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
     insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), VALIDATOR_ID);
     insertAttestationAt(UInt64.valueOf(9), UInt64.valueOf(10), VALIDATOR_ID);
     jdbi.useHandle(
@@ -148,7 +148,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
                 h, VALIDATOR_ID, UInt64.valueOf(3), UInt64.valueOf(4)));
 
     final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(1, 2)));
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
@@ -157,7 +157,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
   @Test
   public void onlyTargetEpochCanBeUpdated() throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
     insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), VALIDATOR_ID);
     insertAttestationAt(UInt64.valueOf(9), UInt64.valueOf(10), VALIDATOR_ID);
     jdbi.useHandle(
@@ -167,7 +167,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
 
     final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(3, 12)));
 
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(12)));
@@ -176,7 +176,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
   @Test
   public void onlySourceEpochCanBeUpdated() throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
     insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(6), VALIDATOR_ID);
     insertAttestationAt(UInt64.valueOf(7), UInt64.valueOf(10), VALIDATOR_ID);
     jdbi.useHandle(
@@ -186,7 +186,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
 
     final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(4, 5)));
 
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(4), UInt64.valueOf(6)));
@@ -195,7 +195,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
   @Test
   public void emptyImportIsSuccessfulAndDoesNotUpdateWatermarks() throws JsonProcessingException {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
     insertAttestationAt(UInt64.valueOf(3), UInt64.valueOf(4), VALIDATOR_ID);
     jdbi.useHandle(
         h ->
@@ -206,7 +206,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
     jdbi.useHandle(h -> lowWatermarkDao.updateSlotWatermarkFor(h, VALIDATOR_ID, UInt64.valueOf(6)));
 
     final InputStream input = createInputDataWith(emptyList(), emptyList());
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(
@@ -217,7 +217,7 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
   public void emptyImportToAnEmptyDatabaseIsSuccessfulAndDoesNotUpdateWatermark()
       throws JsonProcessingException {
     final InputStream input = createInputDataWith(emptyList(), emptyList());
-    slashingProtection.importData(input);
+    slashingProtectionContext.getSlashingProtection().importData(input);
     Optional<SigningWatermark> watermark =
         jdbi.withHandle(h -> lowWatermarkDao.findLowWatermarkForValidator(h, VALIDATOR_ID));
     assertThat(watermark).isEmpty();

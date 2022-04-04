@@ -62,7 +62,16 @@ public class ValidatorsDao {
         .createQuery("SELECT enabled FROM validators WHERE id = ?")
         .bind(0, validatorId)
         .mapTo(Boolean.class)
-        .first();
+        .findFirst()
+        .orElse(false);
+  }
+
+  public void setEnabled(final Handle handle, final int validatorId, final boolean enabled) {
+    handle
+        .createUpdate("UPDATE validators SET enabled = :enabled WHERE id = :validator_id")
+        .bind("validator_id", validatorId)
+        .bind("enabled", enabled)
+        .execute();
   }
 
   public boolean hasSigned(final Handle handle, final int validatorId) {

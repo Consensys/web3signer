@@ -15,11 +15,18 @@ package tech.pegasys.web3signer.tests.keymanager;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 
+import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresRequestBody;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.dsl.signer.Signer;
+import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
+import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -178,6 +185,66 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .body("data[0].status", is("error"))
         .and()
         .body("slashing_protection", is(emptySlashingData));
+  }
+
+  @Test
+  public void deletingDisablesSigningForAllWeb3Signers()
+      throws URISyntaxException, JsonProcessingException {
+    final String firstPubkey = createBlsKey("eth2/bls_keystore.json", "somepassword");
+    final String secondPubKey = createBlsKey("eth2/bls_keystore_2.json", "otherpassword");
+    setupSignerWithKeyManagerApi(true);
+
+    final SignerConfiguration signer2Configuration =
+        new SignerConfigurationBuilder()
+            .withKeyStoreDirectory(testDirectory)
+            .withMode("eth2")
+            .withNetwork("minimal")
+            .withAltairForkEpoch(MINIMAL_ALTAIR_FORK)
+            .withSlashingEnabled(true)
+            .withSlashingProtectionDbUrl(signer.getSlashingDbUrl())
+            .withSlashingProtectionDbUsername(DB_USERNAME)
+            .withSlashingProtectionDbPassword(DB_PASSWORD)
+            .withKeyManagerApiEnabled(true)
+            .build();
+    final Signer signer2 = new Signer(signer2Configuration, null);
+    signer2.start();
+    signer2.awaitStartupCompletion();
+
+    callDeleteKeystores(composeRequestBody())
+        .then()
+        .contentType(ContentType.JSON)
+        .assertThat()
+        .statusCode(200)
+        .body("data[0].status", is("deleted"))
+        .and()
+        .body("slashing_protection", is(singleEntrySlashingData));
+
+    callListKeys()
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("data.size()", is(1))
+        .and()
+        .body("data[0].validating_pubkey", is(secondPubKey));
+
+    callListKeys(signer2)
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("data.size()", is(2))
+        .and()
+        .body("data[0].validating_pubkey", is(firstPubkey))
+        .body("data[1].validating_pubkey", is(secondPubKey));
+
+    final Eth2SigningRequestBody attestationRequest =
+        Eth2RequestUtils.createCannedRequest(ArtifactType.ATTESTATION);
+    signer.eth2Sign(firstPubkey, attestationRequest, ContentType.TEXT).then().statusCode(404);
+    signer2.eth2Sign(firstPubkey, attestationRequest, ContentType.TEXT).then().statusCode(412);
+
+    final Eth2SigningRequestBody blockRequest =
+        Eth2RequestUtils.createCannedRequest(ArtifactType.BLOCK_V2);
+    signer.eth2Sign(firstPubkey, blockRequest, ContentType.TEXT).then().statusCode(404);
+    signer2.eth2Sign(firstPubkey, blockRequest, ContentType.TEXT).then().statusCode(412);
   }
 
   @Test
