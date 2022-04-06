@@ -181,9 +181,11 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   private final Boolean accessLogsEnabled = false;
 
   @Option(
-      names = {"--aws-cache-maximum-size"},
-      description = "Maximum cache size for AWS Secrets Manager (default: ${DEFAULT-VALUE})")
-  private final long awsCacheMaximumSize = 1;
+      names = {"--aws-connection-cache-size"},
+      paramLabel = "<maximum connections cache for AWS Secrets Manager>",
+      description =
+          "Maximum number of connections to cache to the AWS Secrets Manager (default: ${DEFAULT-VALUE})")
+  private long awsCacheMaximumSize = 1;
 
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
