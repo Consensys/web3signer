@@ -146,7 +146,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     }
   }
 
-  protected Bytes extractBytesFromSecretsManager(final AwsKeySigningMetadata metadata) {
+  private Bytes extractBytesFromSecretsManager(final AwsKeySigningMetadata metadata) {
     final AwsSecretsManager awsSecretsManager =
         AwsSecretsManagerFactory.createAwsSecretsManager(awsSecretsManagerProvider, metadata);
     return awsSecretsManager

@@ -51,9 +51,9 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
+  private static final int AWS_CACHE_MAXIMUM_SIZE = 1;
   private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
-  private final int AWS_CACHE_MAXIMUM_SIZE = 1;
 
   public FilecoinRunner(final Config config, final FilecoinNetwork network) {
     super(config);

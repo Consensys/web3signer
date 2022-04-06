@@ -91,7 +91,7 @@ public class Eth2Runner extends Runner {
       final AzureKeyVaultParameters azureKeyVaultParameters,
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled,
-      long awsCacheMaximumSize) {
+      final long awsCacheMaximumSize) {
     super(config);
     this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
