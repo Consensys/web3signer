@@ -83,13 +83,15 @@ public class Eth2Runner extends Runner {
   private final boolean pruningEnabled;
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
+  private final long awsCacheMaximumSize;
 
   public Eth2Runner(
       final Config config,
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters,
       final Spec eth2Spec,
-      final boolean isKeyManagerApiEnabled) {
+      final boolean isKeyManagerApiEnabled,
+      long awsCacheMaximumSize) {
     super(config);
     this.slashingProtection = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
@@ -97,6 +99,7 @@ public class Eth2Runner extends Runner {
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
+    this.awsCacheMaximumSize = awsCacheMaximumSize;
   }
 
   private Optional<SlashingProtection> createSlashingProtection(
@@ -218,7 +221,7 @@ public class Eth2Runner extends Runner {
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
               final AwsSecretsManagerProvider awsSecretsManagerProvider =
-                  new AwsSecretsManagerProvider(config.getAwsCacheMaximumSize())) {
+                  new AwsSecretsManagerProvider(awsCacheMaximumSize)) {
             final AbstractArtifactSignerFactory artifactSignerFactory =
                 new BlsArtifactSignerFactory(
                     config.getKeyConfigPath(),

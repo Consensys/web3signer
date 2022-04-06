@@ -180,13 +180,6 @@ public class Web3SignerBaseCommand implements Config, Runnable {
       description = "Enable access logs (default: ${DEFAULT-VALUE})")
   private final Boolean accessLogsEnabled = false;
 
-  @Option(
-      names = {"--aws-connection-cache-size"},
-      paramLabel = "<maximum connections cache for AWS Secrets Manager>",
-      description =
-          "Maximum number of connections to cache to the AWS Secrets Manager (default: ${DEFAULT-VALUE})")
-  private long awsCacheMaximumSize = 1;
-
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
   @Override
@@ -274,11 +267,6 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   }
 
   @Override
-  public long getAwsCacheMaximumSize() {
-    return awsCacheMaximumSize;
-  }
-
-  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -296,7 +284,6 @@ public class Web3SignerBaseCommand implements Config, Runnable {
         .add("metricsHostAllowList", metricsHostAllowList)
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
-        .add("awsCacheMaximumSize", awsCacheMaximumSize)
         .toString();
   }
 

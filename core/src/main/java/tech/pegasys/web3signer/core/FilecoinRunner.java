@@ -53,6 +53,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 public class FilecoinRunner extends Runner {
   private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
+  private final int AWS_CACHE_MAXIMUM_SIZE = 1;
 
   public FilecoinRunner(final Config config, final FilecoinNetwork network) {
     super(config);
@@ -124,7 +125,7 @@ public class FilecoinRunner extends Runner {
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
               final AwsSecretsManagerProvider awsSecretsManagerProvider =
-                  new AwsSecretsManagerProvider(config.getAwsCacheMaximumSize()); ) {
+                  new AwsSecretsManagerProvider(AWS_CACHE_MAXIMUM_SIZE)) {
 
             final AbstractArtifactSignerFactory blsArtifactSignerFactory =
                 new BlsArtifactSignerFactory(
