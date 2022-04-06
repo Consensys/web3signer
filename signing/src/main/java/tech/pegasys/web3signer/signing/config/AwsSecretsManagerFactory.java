@@ -13,19 +13,21 @@
 package tech.pegasys.web3signer.signing.config;
 
 import tech.pegasys.signers.aws.AwsSecretsManager;
+import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 
 public class AwsSecretsManagerFactory {
 
   public static AwsSecretsManager createAwsSecretsManager(
-      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
+      final AwsSecretsManagerProvider awsSecretsManagerProvider,
+      AwsSecretsManagerParameters awsSecretsManagerParameters) {
     switch (awsSecretsManagerParameters.getAuthenticationMode()) {
       case SPECIFIED:
-        return AwsSecretsManager.createAwsSecretsManager(
+        return awsSecretsManagerProvider.createAwsSecretsManager(
             awsSecretsManagerParameters.getAccessKeyId(),
             awsSecretsManagerParameters.getSecretAccessKey(),
             awsSecretsManagerParameters.getRegion());
       default:
-        return AwsSecretsManager.createAwsSecretsManager(awsSecretsManagerParameters.getRegion());
+        return awsSecretsManagerProvider.createAwsSecretsManager();
     }
   }
 }

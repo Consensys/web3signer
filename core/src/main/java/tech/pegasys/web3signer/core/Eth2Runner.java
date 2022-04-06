@@ -20,6 +20,7 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYM
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
+import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -86,13 +87,15 @@ public class Eth2Runner extends Runner {
   private final boolean pruningEnabled;
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
+  private final long awsCacheMaximumSize;
 
   public Eth2Runner(
       final Config config,
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters,
       final Spec eth2Spec,
-      final boolean isKeyManagerApiEnabled) {
+      final boolean isKeyManagerApiEnabled,
+      final long awsCacheMaximumSize) {
     super(config);
     this.slashingProtectionContext = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
@@ -100,6 +103,7 @@ public class Eth2Runner extends Runner {
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
+    this.awsCacheMaximumSize = awsCacheMaximumSize;
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -244,7 +248,9 @@ public class Eth2Runner extends Runner {
 
           try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                  new YubiHsmOpaqueDataProvider()) {
+                  new YubiHsmOpaqueDataProvider();
+              final AwsSecretsManagerProvider awsSecretsManagerProvider =
+                  new AwsSecretsManagerProvider(awsCacheMaximumSize)) {
             final AbstractArtifactSignerFactory artifactSignerFactory =
                 new BlsArtifactSignerFactory(
                     config.getKeyConfigPath(),
@@ -252,6 +258,7 @@ public class Eth2Runner extends Runner {
                     hashicorpConnectionFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
+                    awsSecretsManagerProvider,
                     (args) ->
                         new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 

@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.signing.config.metadata;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import tech.pegasys.signers.aws.AwsSecretsManager;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnection;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -24,7 +23,6 @@ import tech.pegasys.signers.hashicorp.config.ConnectionParameters;
 import tech.pegasys.signers.hashicorp.config.KeyDefinition;
 import tech.pegasys.signers.hashicorp.config.TlsOptions;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
@@ -98,16 +96,6 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
       throw new SigningMetadataException(
           "Failed to fetch secret from Interlock: " + e.getMessage(), e);
     }
-  }
-
-  protected Bytes extractBytesFromSecretsManager(final AwsKeySigningMetadata metadata) {
-    final AwsSecretsManager awsSecretsManager =
-        AwsSecretsManagerFactory.createAwsSecretsManager(metadata);
-    return awsSecretsManager
-        .fetchSecret(metadata.getSecretName())
-        .map(Bytes::fromHexString)
-        .orElseThrow(
-            () -> new SigningMetadataException("Failed to fetch secret from AWS Secrets Manager"));
   }
 
   protected Bytes extractOpaqueDataFromYubiHsm(

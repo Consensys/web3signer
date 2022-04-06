@@ -38,10 +38,6 @@ public class AwsSecretsManagerUtil {
             .build();
   }
 
-  public AwsSecretsManagerUtil(String region) {
-    secretsManagerClient = SecretsManagerClient.builder().region(Region.of(region)).build();
-  }
-
   public String createSecret(String secretValue) {
     secretName = "signers-aws-integration/" + UUID.randomUUID();
     final CreateSecretRequest secretRequest =

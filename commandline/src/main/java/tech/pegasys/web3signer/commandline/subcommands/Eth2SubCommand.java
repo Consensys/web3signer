@@ -78,6 +78,13 @@ public class Eth2SubCommand extends ModeSubCommand {
       arity = "1")
   private boolean isKeyManagerApiEnabled = false;
 
+  @CommandLine.Option(
+      names = {"--aws-connection-cache-size"},
+      paramLabel = "<LONG>",
+      description =
+          "Maximum number of connections to cache to the AWS Secrets Manager (default: ${DEFAULT-VALUE})")
+  private long awsCacheMaximumSize = 1;
+
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
@@ -89,7 +96,8 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionParameters,
         azureKeyVaultParameters,
         eth2Spec,
-        isKeyManagerApiEnabled);
+        isKeyManagerApiEnabled,
+        awsCacheMaximumSize);
   }
 
   private Eth2NetworkConfiguration createEth2NetworkConfig() {

@@ -19,6 +19,7 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
+import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
@@ -50,6 +51,7 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
+  private static final int AWS_CACHE_MAXIMUM_SIZE = 1;
   private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
 
@@ -121,7 +123,9 @@ public class FilecoinRunner extends Runner {
 
           try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                  new YubiHsmOpaqueDataProvider()) {
+                  new YubiHsmOpaqueDataProvider();
+              final AwsSecretsManagerProvider awsSecretsManagerProvider =
+                  new AwsSecretsManagerProvider(AWS_CACHE_MAXIMUM_SIZE)) {
 
             final AbstractArtifactSignerFactory blsArtifactSignerFactory =
                 new BlsArtifactSignerFactory(
@@ -130,6 +134,7 @@ public class FilecoinRunner extends Runner {
                     hashicorpConnectionFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
+                    awsSecretsManagerProvider,
                     (args) -> new FcBlsArtifactSigner(args.getKeyPair(), network));
 
             final AbstractArtifactSignerFactory secpArtifactSignerFactory =

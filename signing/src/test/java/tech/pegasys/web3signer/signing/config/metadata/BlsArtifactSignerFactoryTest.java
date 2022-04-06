@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
+import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.model.Cipher;
@@ -63,6 +64,7 @@ class BlsArtifactSignerFactoryTest {
   private Vertx vertx;
   private InterlockKeyProvider interlockKeyProvider;
   private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
+  private AwsSecretsManagerProvider awsSecretsManagerProvider;
 
   @BeforeAll
   static void setupKeystoreFiles() throws IOException {
@@ -82,6 +84,7 @@ class BlsArtifactSignerFactoryTest {
     vertx = Vertx.vertx();
     interlockKeyProvider = new InterlockKeyProvider(vertx);
     yubiHsmOpaqueDataProvider = new YubiHsmOpaqueDataProvider();
+    awsSecretsManagerProvider = new AwsSecretsManagerProvider(100);
 
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
@@ -90,6 +93,7 @@ class BlsArtifactSignerFactoryTest {
             new HashicorpConnectionFactory(vertx),
             interlockKeyProvider,
             yubiHsmOpaqueDataProvider,
+            awsSecretsManagerProvider,
             (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin()));
   }
 
