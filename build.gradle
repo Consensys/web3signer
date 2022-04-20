@@ -111,7 +111,7 @@ allprojects {
   targetCompatibility = 11
 
   repositories {
-    jcenter()
+    mavenLocal() // TODO: Remove once local testing is finished
     mavenCentral()
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
     maven { url "https://artifacts.consensys.net/public/teku/maven/" }

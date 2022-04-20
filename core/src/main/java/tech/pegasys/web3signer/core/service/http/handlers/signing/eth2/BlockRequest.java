@@ -13,19 +13,28 @@
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
 import tech.pegasys.teku.api.schema.BeaconBlock;
+import tech.pegasys.teku.api.schema.BeaconBlockHeader;
 import tech.pegasys.teku.spec.SpecMilestone;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.BlockRequestDeserializer;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonDeserialize(using = BlockRequestDeserializer.class)
 public class BlockRequest {
   private final SpecMilestone version;
   private final BeaconBlock beaconBlock;
+  private final BeaconBlockHeader beaconBlockHeader;
 
   public BlockRequest(
       @JsonProperty("version") final SpecMilestone version,
-      @JsonProperty("block") final BeaconBlock beaconBlock) {
+      @JsonProperty("block") final BeaconBlock beaconBlock,
+      @JsonProperty("block_header") final BeaconBlockHeader beaconBlockHeader) {
     this.version = version;
     this.beaconBlock = beaconBlock;
+    this.beaconBlockHeader = beaconBlockHeader;
   }
 
   @JsonProperty("version")
@@ -36,5 +45,10 @@ public class BlockRequest {
   @JsonProperty("block")
   public BeaconBlock getBeaconBlock() {
     return beaconBlock;
+  }
+
+  @JsonProperty("block_header")
+  public BeaconBlockHeader getBeaconBlockHeader() {
+    return beaconBlockHeader;
   }
 }

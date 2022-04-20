@@ -20,7 +20,6 @@ import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.compute_d
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.api.schema.AttestationData;
-import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
 import tech.pegasys.teku.api.schema.altair.SyncCommitteeContribution;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
@@ -176,13 +175,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     final ForkInfo forkInfo = eth2SigningRequestBody.getForkInfo();
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
-        return maySignBlock(publicKey, signingRoot, eth2SigningRequestBody.getBlock(), forkInfo);
       case BLOCK_V2:
-        return maySignBlock(
-            publicKey,
-            signingRoot,
-            eth2SigningRequestBody.getBlockRequest().getBeaconBlock(),
-            forkInfo);
+        return maySignBlock(publicKey, signingRoot, getBlockSlot(eth2SigningRequestBody), forkInfo);
       case ATTESTATION:
         final AttestationData attestation = eth2SigningRequestBody.getAttestation();
         return slashingProtection
@@ -198,12 +192,31 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     }
   }
 
+  private UInt64 getBlockSlot(final Eth2SigningRequestBody eth2SigningRequestBody) {
+    if (eth2SigningRequestBody.getBlock() != null) {
+      return UInt64.valueOf(eth2SigningRequestBody.getBlock().slot.bigIntegerValue());
+    }
+
+    if (eth2SigningRequestBody.getBlockRequest() != null) {
+      if (eth2SigningRequestBody.getBlockRequest().getBeaconBlock() != null) {
+        return UInt64.valueOf(
+            eth2SigningRequestBody.getBlockRequest().getBeaconBlock().slot.bigIntegerValue());
+      }
+
+      if (eth2SigningRequestBody.getBlockRequest().getBeaconBlockHeader() != null) {
+        return UInt64.valueOf(
+            eth2SigningRequestBody.getBlockRequest().getBeaconBlockHeader().slot.bigIntegerValue());
+      }
+    }
+
+    throw new IllegalStateException("Either BlockRequest or Block must be present");
+  }
+
   private boolean maySignBlock(
       final Bytes publicKey,
       final Bytes signingRoot,
-      final BeaconBlock beaconBlock,
+      final UInt64 blockSlot,
       final ForkInfo forkInfo) {
-    final UInt64 blockSlot = UInt64.valueOf(beaconBlock.slot.bigIntegerValue());
     return slashingProtection
         .get()
         .maySignBlock(publicKey, signingRoot, blockSlot, forkInfo.getGenesisValidatorsRoot());
@@ -218,9 +231,19 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             body.getForkInfo().asInternalForkInfo());
       case BLOCK_V2:
         checkArgument(body.getBlockRequest() != null, "beacon_block must be specified");
-        return signingRootUtil.signingRootForSignBlock(
-            body.getBlockRequest().getBeaconBlock().asInternalBeaconBlock(eth2Spec),
-            body.getForkInfo().asInternalForkInfo());
+
+        if (body.getBlockRequest().getBeaconBlock() != null) {
+          return signingRootUtil.signingRootForSignBlock(
+              body.getBlockRequest().getBeaconBlock().asInternalBeaconBlock(eth2Spec),
+              body.getForkInfo().asInternalForkInfo());
+        } else if (body.getBlockRequest().getBeaconBlockHeader() != null) {
+          return signingRootUtil.signingRootForSignBlock(
+              body.getBlockRequest().getBeaconBlockHeader().asInternalBeaconBlockHeader(),
+              body.getForkInfo().asInternalForkInfo());
+        } else {
+          throw new IllegalArgumentException("Either block or block_header must be specified");
+        }
+
       case ATTESTATION:
         checkArgument(body.getAttestation() != null, "attestation must be specified");
         return signingRootUtil.signingRootForSignAttestationData(

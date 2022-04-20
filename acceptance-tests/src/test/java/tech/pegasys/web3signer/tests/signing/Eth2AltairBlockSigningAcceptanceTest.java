@@ -55,9 +55,7 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
   }
 
   @ParameterizedTest
-  @EnumSource(
-      value = SpecMilestone.class,
-      names = {"PHASE0", "ALTAIR"})
+  @EnumSource(value = SpecMilestone.class)
   void signAndVerifyBlockV2Signature(final SpecMilestone specMilestone) throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
 
