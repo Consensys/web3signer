@@ -393,6 +393,7 @@ components:
       properties:
         beacon_block:
           anyOf:
+            - $ref: '#/components/schemas/BlockRequestBellatrix'
             - $ref: '#/components/schemas/BlockRequestAltair'
             - $ref: '#/components/schemas/BlockRequestPhase0'
       required:
@@ -421,6 +422,18 @@ components:
       required:
         - version
         - block
+    BlockRequestBellatrix:
+      type: object
+      properties:
+        version:
+          type: string
+          description: 'version to identify block request type.'
+          example: BELLATRIX
+        block_header:
+          $ref: "#/components/schemas/BeaconBlockHeader"
+      required:
+        - version
+        - block_header
     BeaconBlockAltair:
       type: "object"
       properties:
