@@ -19,6 +19,8 @@ import static tech.pegasys.web3signer.signing.KeyType.BLS;
 import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.teku.spec.SpecMilestone;
+import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
@@ -56,7 +58,7 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
     metadataFileHelpers.createUnencryptedYamlFileAt(
         testDirectory.resolve("2.yaml"), PRIVATE_KEY2, BLS);
 
-    setupEth2Signer();
+    setupEth2Signer(Eth2Network.MAINNET, SpecMilestone.ALTAIR);
 
     final ObjectMapper objectMapper = JsonMapper.builder().build();
 

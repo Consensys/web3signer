@@ -68,7 +68,8 @@ public class Eth2SubCommand extends ModeSubCommand {
       hidden = true,
       paramLabel = "<epoch>",
       description = "Override the Bellatrix fork activation epoch.",
-      arity = "1")
+      arity = "1",
+      converter = UInt64Converter.class)
   private UInt64 bellatrixForkEpoch;
 
   @CommandLine.Option(

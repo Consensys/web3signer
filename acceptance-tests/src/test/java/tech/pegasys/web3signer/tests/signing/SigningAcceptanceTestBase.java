@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.tests.signing;
 
+import tech.pegasys.teku.spec.SpecMilestone;
+import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
@@ -38,28 +40,27 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected void setupEth2Signer() {
+  protected void setupEth2Signer(final Eth2Network eth2Network, final SpecMilestone specMilestone) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder
         .withKeyStoreDirectory(testDirectory)
         .withMode("eth2")
-        .withAltairForkEpoch(MINIMAL_ALTAIR_FORK);
-    startSigner(builder.build());
-  }
+        .withNetwork(eth2Network.configName());
 
-  protected void setupEth2SignerMinimal() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder
-        .withKeyStoreDirectory(testDirectory)
-        .withMode("eth2")
-        .withNetwork("minimal")
-        .withAltairForkEpoch(MINIMAL_ALTAIR_FORK);
-    startSigner(builder.build());
-  }
+    switch (specMilestone) {
+      case PHASE0:
+        break;
+      case ALTAIR:
+        builder.withAltairForkEpoch(MINIMAL_ALTAIR_FORK);
+        break;
+      case BELLATRIX:
+        builder.withAltairForkEpoch(MINIMAL_ALTAIR_FORK);
+        builder.withBellatrixForkEpoch(MINIMAL_ALTAIR_FORK);
+        break;
+      default:
+        throw new IllegalStateException(specMilestone + " is not yet implemented for Signing AT");
+    }
 
-  protected void setupEth2SignerMinimalWithoutAltairFork() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory).withMode("eth2").withNetwork("minimal");
     startSigner(builder.build());
   }
 

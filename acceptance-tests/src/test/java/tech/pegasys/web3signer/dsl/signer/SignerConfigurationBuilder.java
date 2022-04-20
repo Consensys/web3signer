@@ -59,6 +59,7 @@ public class SignerConfigurationBuilder {
   private long slashingPruningSlotsPerEpoch = 1;
   private long slashingPruningInterval = 1;
   private Long altairForkEpoch = null;
+  private Long bellatrixForkEpoch = null;
   private String network = null;
   private boolean keyManagerApiEnabled = false;
 
@@ -211,6 +212,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withBellatrixForkEpoch(final long bellatrixForkEpoch) {
+    this.bellatrixForkEpoch = bellatrixForkEpoch;
+    return this;
+  }
+
   public SignerConfigurationBuilder withNetwork(final String network) {
     this.network = network;
     return this;
@@ -255,6 +261,7 @@ public class SignerConfigurationBuilder {
         useConfigFile,
         Optional.ofNullable(slashingProtectionDbPoolConfigurationFile),
         Optional.ofNullable(altairForkEpoch),
+        Optional.ofNullable(bellatrixForkEpoch),
         Optional.ofNullable(network),
         keyManagerApiEnabled);
   }
