@@ -237,7 +237,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
               body.getBlockRequest().getBeaconBlock().asInternalBeaconBlock(eth2Spec),
               body.getForkInfo().asInternalForkInfo());
         } else if (body.getBlockRequest().getBeaconBlockHeader() != null) {
-          return signingRootUtil.signingRootForSignBlock(
+          return signingRootUtil.signingRootForSignBlockHeader(
               body.getBlockRequest().getBeaconBlockHeader().asInternalBeaconBlockHeader(),
               body.getForkInfo().asInternalForkInfo());
         } else {
