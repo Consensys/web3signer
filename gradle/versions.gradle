@@ -94,6 +94,7 @@ dependencyManagement {
       entry 'unsigned'
       entry 'async'
       entry 'networks'
+      entry 'json'
     }
 
     dependency 'tech.pegasys:jblst:0.3.6-4'
