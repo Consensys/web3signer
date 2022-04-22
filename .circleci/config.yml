@@ -64,7 +64,7 @@ executors:
 
   machine_executor_amd64:
     machine:
-      image: ubuntu-2004:202008-01 #Ubuntu 20.04, docker 19.03, docker-compose 1.27.4
+      image: ubuntu-2004:202201-02 # Ubuntu 20.04, Docker v20.10.12, Docker Compose v1.29.2
       docker_layer_caching: true
     working_directory: ~/project
     environment:
@@ -160,8 +160,7 @@ jobs:
           name: Build
           command: |
             git submodule update --init --recursive
-            ./gradlew --no-daemon --refresh-dependencies
-            ./gradlew --no-daemon --parallel build
+            ./gradlew --no-daemon --refresh-dependencies --parallel build
       - run:
           name: Test
           no_output_timeout: 20m
