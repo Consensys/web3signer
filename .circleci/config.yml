@@ -56,7 +56,7 @@ executors:
 
   machine_executor_arm64:
     machine:
-      image: ubuntu-2004:202101-01
+      image: ubuntu-2004:202201-02 # Ubuntu 20.04, Docker v20.10.12, Docker Compose v1.29.2
     resource_class: arm.medium
     environment:
       architecture: "arm64"
