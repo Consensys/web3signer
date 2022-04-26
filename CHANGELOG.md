@@ -2,6 +2,9 @@
 
 ## 22.4.0
 
+### Breaking Changes
+- Upgrade published docker images to latest Ubuntu LTS. This may require docker runtimes to be upgraded as well.  
+
 ### Features Added
 - Migrate from the deprecated `vertx-web-api-contract` module to `vertx-web-openapi` [#506](https://github.com/ConsenSys/web3signer/pull/506)
 - Migrate jackson `ObjectMapper` instances to `JsonMapper` and `YamlMapper` builders to resolve deprecation warnings [#507](https://github.com/ConsenSys/web3signer/pull/507)
