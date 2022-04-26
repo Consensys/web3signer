@@ -41,20 +41,7 @@ public class Eth2BlockSigningRequestUtil {
   private final Bytes signingRoot;
 
   public Eth2BlockSigningRequestUtil(final SpecMilestone specMilestone) {
-    final Spec spec;
-    switch (specMilestone) {
-      case ALTAIR:
-        spec = TestSpecFactory.createMinimalAltair();
-        break;
-      case PHASE0:
-        spec = TestSpecFactory.createMinimalPhase0();
-        break;
-      case BELLATRIX:
-        spec = TestSpecFactory.createMinimalBellatrix();
-        break;
-      default:
-        throw new IllegalStateException("Spec Milestone not yet supported: " + specMilestone);
-    }
+    final Spec spec = TestSpecFactory.createMinimal(specMilestone);
     this.specMilestone = specMilestone;
     dataStructureUtil = new DataStructureUtil(spec);
     signingRootUtil = new SigningRootUtil(spec);
@@ -69,7 +56,9 @@ public class Eth2BlockSigningRequestUtil {
 
   public Eth2SigningRequestBody createBlockV2Request() {
     final BlockRequest blockRequest =
-        new BlockRequest(specMilestone, getBeaconBlock(), getBeaconBlockHeader());
+        specMilestone.isGreaterThanOrEqualTo(SpecMilestone.BELLATRIX)
+            ? new BlockRequest(specMilestone, getBeaconBlockHeader())
+            : new BlockRequest(specMilestone, getBeaconBlock());
 
     return new Eth2SigningRequestBody(
         ArtifactType.BLOCK_V2,

@@ -38,22 +38,24 @@ public class BlockRequestDeserializer extends JsonDeserializer<BlockRequest> {
     final SpecMilestone specMilestone = SpecMilestone.valueOf(node.findValue("version").asText());
     final BeaconBlock beaconBlock;
     final BeaconBlockHeader beaconBlockHeader;
+    final BlockRequest blockRequest;
     // TODO: Add tests for deserialization where block or block_header is null/empty
     switch (specMilestone) {
       case PHASE0:
         beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlock.class);
-        beaconBlockHeader = null;
+        blockRequest = new BlockRequest(specMilestone, beaconBlock);
         break;
       case ALTAIR:
         beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlockAltair.class);
-        beaconBlockHeader = null;
+        blockRequest = new BlockRequest(specMilestone, beaconBlock);
         break;
       default:
         // BELLATRIX and onward, we only need block_header instead of complete block
-        beaconBlock = null;
         beaconBlockHeader =
             codec.treeToValue(node.findValue("block_header"), BeaconBlockHeader.class);
+        blockRequest = new BlockRequest(specMilestone, beaconBlockHeader);
+        break;
     }
-    return new BlockRequest(specMilestone, beaconBlock, beaconBlockHeader);
+    return blockRequest;
   }
 }
