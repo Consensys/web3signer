@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
-import tech.pegasys.signers.aws.AwsSecretsManager;
+import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
@@ -25,15 +25,14 @@ import java.util.stream.Collectors;
 public class AwsBulkLoader extends KeystorageBulkLoader {
 
   public static Collection<BlsArtifactSigner> load(
-      final AwsSecretsManager awsSecretsManager, final List<String> secretNames) {
-    final Set<Optional<String>> secrets = fetchSecrets(awsSecretsManager, secretNames);
+      final AwsSecretsManagerProvider awsSecretsManagerProvider, final List<String> secretNames) {
+    final Set<Optional<String>> secrets = fetchSecrets(awsSecretsManagerProvider, secretNames);
    return mapToSigner(secrets.stream(), SignerOrigin.AWS);
   }
 
   private static Set<Optional<String>> fetchSecrets(
-      final AwsSecretsManager awsSecretsManager, final List<String> secretNames) {
-    return secretNames.parallelStream()
-        .map(awsSecretsManager::fetchSecret)
-        .collect(Collectors.toSet());
+      final AwsSecretsManagerProvider awsSecretsManagerProvider, final List<String> secretNames) {
+    return awsSecretsManagerProvider.createAwsSecretsManager().mapSecrets()
+
   }
 }
