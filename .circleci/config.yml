@@ -91,14 +91,20 @@ commands:
           when: always
           command: |
             rm -rf build/test-output
-            FILES=`find . -name test-results`
+            FILES=`find . -name reports -not -path './build/reports'`
             for FILE in $FILES
             do
               MODULE=`echo "$FILE" | sed -e 's@./\(.*\)/build/test-results@\1@'`
               TARGET="build/test-output/$MODULE"
+              SOURCE="${FILE}/tests/test"
               mkdir -p "$TARGET"
-              cp -rf ${FILE}/*/* "$TARGET"
+              if [[ -d "$SOURCE" ]]; then
+                cp -rf "$SOURCE" "$TARGET"
+              fi
             done
+            if [[ -f 'build/reports/dependency-check-report.html' ]]; then
+              cp 'build/reports/dependency-check-report.html' 'build/test-reports'
+            fi
       - store_test_results:
           path: build/test-output
 
@@ -161,6 +167,10 @@ jobs:
           command: |
             git submodule update --init --recursive
             ./gradlew --no-daemon --parallel build
+      - run:
+          name: Dependency vulnerability scan
+          command: |
+            ./gradlew --no-daemon dependencyCheckAggregate
       - run:
           name: Test
           no_output_timeout: 20m
