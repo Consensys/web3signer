@@ -3,7 +3,7 @@
 ## 22.4.0
 
 ### Breaking Changes
-- Upgrade published docker images to latest Ubuntu LTS. This may require docker runtimes to be upgraded as well.  
+- Because the web3signer docker image uses the latest LTS tag (ubuntu:latest), the container host may require an update to the latest container runtime. See [Ubuntu bug](https://bugs.launchpad.net/ubuntu/+source/libseccomp/+bug/1916485) for more details.
 
 ### Features Added
 - Migrate from the deprecated `vertx-web-api-contract` module to `vertx-web-openapi` [#506](https://github.com/ConsenSys/web3signer/pull/506)
