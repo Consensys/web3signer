@@ -66,15 +66,15 @@ public class ReferenceTestRunner {
   private final ValidatorsDao validators = new ValidatorsDao();
 
   private EmbeddedPostgres slashingDatabase;
-  private SlashingProtection slashingProtection;
+  private SlashingProtectionContext slashingProtectionContext;
   private Jdbi jdbi;
 
   public void setup() {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
     final SlashingProtectionParameters slashingProtectionParameters =
         new TestSlashingProtectionParameters(testDatabaseInfo.databaseUrl(), USERNAME, PASSWORD);
-    slashingProtection =
-        SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
+    slashingProtectionContext =
+        SlashingProtectionContextFactory.create(slashingProtectionParameters);
     slashingDatabase = testDatabaseInfo.getDb();
     jdbi = testDatabaseInfo.getJdbi();
   }
@@ -127,14 +127,16 @@ public class ReferenceTestRunner {
         // web3signer doesn't allow for partial imports, so - if it is expected, then
         // expect import to throw.
         if (step.isShouldSucceed()) {
-          slashingProtection.importData(
-              new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
+          slashingProtectionContext
+              .getSlashingProtection()
+              .importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8)));
           verifyImport(step, gvr);
         } else {
           assertThatThrownBy(
                   () ->
-                      slashingProtection.importData(
-                          new ByteArrayInputStream(interchangeContent.getBytes(UTF_8))))
+                      slashingProtectionContext
+                          .getSlashingProtection()
+                          .importData(new ByteArrayInputStream(interchangeContent.getBytes(UTF_8))))
               .isInstanceOf(RuntimeException.class);
         }
       }
@@ -155,8 +157,10 @@ public class ReferenceTestRunner {
     assertThat(validatorsInModel).containsExactlyInAnyOrderElementsOf(publicKeysInDb);
 
     // need to register the validators with slashingProtection before testing blocks/attestations
-    slashingProtection.registerValidators(
-        validatorsInModel.stream().map(Bytes::fromHexString).collect(Collectors.toList()));
+    slashingProtectionContext
+        .getRegisteredValidators()
+        .registerValidators(
+            validatorsInModel.stream().map(Bytes::fromHexString).collect(Collectors.toList()));
 
     validateAttestations(step.getAttestations(), gvr);
     validateBlocks(step.getBlocks(), gvr);
@@ -177,12 +181,14 @@ public class ReferenceTestRunner {
     for (int i = 0; i < attestations.size(); i++) {
       final AttestationTestModel attestation = attestations.get(i);
       final boolean result =
-          slashingProtection.maySignAttestation(
-              attestation.getPublickKey(),
-              attestation.getSigningRoot(),
-              attestation.getSourceEpoch(),
-              attestation.getTargetEpoch(),
-              gvr);
+          slashingProtectionContext
+              .getSlashingProtection()
+              .maySignAttestation(
+                  attestation.getPublickKey(),
+                  attestation.getSigningRoot(),
+                  attestation.getSourceEpoch(),
+                  attestation.getTargetEpoch(),
+                  gvr);
       if (!attestation.isShouldSucceed()) {
         assertThat(result).isFalse();
       } else if (!result) {
@@ -199,8 +205,9 @@ public class ReferenceTestRunner {
     for (int i = 0; i < blocks.size(); i++) {
       final BlockTestModel block = blocks.get(i);
       final boolean result =
-          slashingProtection.maySignBlock(
-              block.getPublickKey(), block.getSigningRoot(), block.getSlot(), gvr);
+          slashingProtectionContext
+              .getSlashingProtection()
+              .maySignBlock(block.getPublickKey(), block.getSigningRoot(), block.getSlot(), gvr);
       // NOTE: Ref tests are only fail if you sign something which is flagged as "!should_Succeed".
       // (i.e. a "reject" response is always correct)
       if (!block.isShouldSucceed()) {

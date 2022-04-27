@@ -15,23 +15,26 @@ package tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.KeystoreFileManager;
+import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,11 +47,11 @@ class DeleteKeystoresProcessorTest {
   static final String PUBLIC_KEY1 = BLSTestUtil.randomKeyPair(1).getPublicKey().toString();
   static final String PUBLIC_KEY2 = BLSTestUtil.randomKeyPair(2).getPublicKey().toString();
 
-  @Mock KeystoreFileManager keystoreFileManager;
   @Mock SlashingProtection slashingProtection;
   @Mock ArtifactSignerProvider artifactSignerProvider;
   @Mock ArtifactSigner signer;
   @Mock IncrementalExporter incrementalExporter;
+  @Mock ValidatorManager validatorManager;
 
   DeleteKeystoresProcessor processor;
 
@@ -56,18 +59,15 @@ class DeleteKeystoresProcessorTest {
   void setup() {
     processor =
         new DeleteKeystoresProcessor(
-            keystoreFileManager, Optional.of(slashingProtection), artifactSignerProvider);
+            Optional.of(slashingProtection), artifactSignerProvider, validatorManager);
     lenient()
         .when(slashingProtection.createIncrementalExporter(any()))
         .thenReturn(incrementalExporter);
   }
 
   @Test
-  void testSuccess() throws IOException {
+  void testSuccess() throws Exception {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-    doNothing().when(keystoreFileManager).deleteKeystoreFiles(any());
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
@@ -75,6 +75,7 @@ class DeleteKeystoresProcessorTest {
     assertThat(response.getData().size()).isEqualTo(1);
     assertThat(response.getData().get(0).getMessage()).isEqualTo("");
     assertThat(response.getData().get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.DELETED);
+    verify(validatorManager).deleteValidator(Bytes.fromHexString(PUBLIC_KEY1));
   }
 
   @Test
@@ -88,6 +89,8 @@ class DeleteKeystoresProcessorTest {
     assertThat(response.getData().size()).isEqualTo(1);
     assertThat(response.getData().get(0).getMessage()).isEqualTo("");
     assertThat(response.getData().get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.NOT_FOUND);
+    verify(slashingProtection, never())
+        .updateValidatorEnabledStatus(eq(Bytes.fromHexString(PUBLIC_KEY1)), anyBoolean());
   }
 
   @Test
@@ -101,45 +104,27 @@ class DeleteKeystoresProcessorTest {
     assertThat(response.getData().size()).isEqualTo(1);
     assertThat(response.getData().get(0).getMessage()).isEqualTo("");
     assertThat(response.getData().get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.NOT_ACTIVE);
+    verify(slashingProtection, never())
+        .updateValidatorEnabledStatus(eq(Bytes.fromHexString(PUBLIC_KEY1)), anyBoolean());
   }
 
   @Test
-  void testErrorResponseWhenDeleteKeystoreFilesThrowsIOException() throws IOException {
+  void testErrorResponseWhenValidatorManagerThrowsException() {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-    doThrow(new IOException("io error")).when(keystoreFileManager).deleteKeystoreFiles(any());
+    doThrow(new RuntimeException("error")).when(validatorManager).deleteValidator(any());
 
     final DeleteKeystoresRequestBody requestBody =
         new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
     final DeleteKeystoresResponse response = processor.process(requestBody);
     assertThat(response.getData().size()).isEqualTo(1);
     assertThat(response.getData().get(0).getMessage())
-        .isEqualTo("Error deleting keystore file: io error");
+        .isEqualTo("Error deleting keystore file: error");
     assertThat(response.getData().get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.ERROR);
   }
 
   @Test
-  void testInterruptedException() {
+  void testSlashingExportFailsAllDeletesWhenIncrementalExportFinaliseFails() throws Exception {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.failedFuture(new InterruptedException("interrupted")));
-
-    final DeleteKeystoresRequestBody requestBody =
-        new DeleteKeystoresRequestBody(List.of(PUBLIC_KEY1));
-    final DeleteKeystoresResponse response = processor.process(requestBody);
-    assertThat(response.getData().size()).isEqualTo(1);
-    assertThat(response.getData().get(0).getMessage())
-        .isEqualTo("Error deleting keystore file: java.lang.InterruptedException: interrupted");
-    assertThat(response.getData().get(0).getStatus()).isEqualTo(DeleteKeystoreStatus.ERROR);
-  }
-
-  @Test
-  void testSlashingExportFailsAllDeletesWhenIncrementalExportFinaliseFails() throws IOException {
-    when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-    doNothing().when(keystoreFileManager).deleteKeystoreFiles(any());
     doThrow(new IOException("db error")).when(incrementalExporter).finalise();
 
     final DeleteKeystoresRequestBody requestBody =
@@ -152,6 +137,8 @@ class DeleteKeystoresProcessorTest {
       assertThat(result.getMessage()).isEqualTo("Error exporting slashing data: db error");
       assertThat(result.getStatus()).isEqualTo(DeleteKeystoreStatus.ERROR);
     }
+    verify(validatorManager).deleteValidator(Bytes.fromHexString(PUBLIC_KEY1));
+    verify(validatorManager).deleteValidator(Bytes.fromHexString(PUBLIC_KEY2));
   }
 
   @Test
@@ -167,11 +154,8 @@ class DeleteKeystoresProcessorTest {
   }
 
   @Test
-  void slashingExportFailOnlyAffectsIndividualKeyStore() throws IOException {
+  void slashingExportFailOnlyAffectsIndividualKeyStore() {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
-    when(artifactSignerProvider.removeSigner(any()))
-        .thenReturn(CompletableFuture.completedFuture(null));
-    doNothing().when(keystoreFileManager).deleteKeystoreFiles(any());
     doThrow(new RuntimeException("db error")).when(incrementalExporter).export(PUBLIC_KEY1);
 
     final DeleteKeystoresRequestBody requestBody =

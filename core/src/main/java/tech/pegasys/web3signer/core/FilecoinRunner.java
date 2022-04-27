@@ -51,6 +51,7 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
+  private static final int AWS_CACHE_MAXIMUM_SIZE = 1;
   private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
 
@@ -124,7 +125,11 @@ public class FilecoinRunner extends Runner {
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
               final AwsSecretsManagerProvider awsSecretsManagerProvider =
+<<<<<<< HEAD
                   new AwsSecretsManagerProvider(config.getAwsCacheMaximumSize()); ) {
+=======
+                  new AwsSecretsManagerProvider(AWS_CACHE_MAXIMUM_SIZE)) {
+>>>>>>> dba20c8c4ad4f34197c2ce526e5c5d043e634eb4
 
             final AbstractArtifactSignerFactory blsArtifactSignerFactory =
                 new BlsArtifactSignerFactory(
@@ -146,10 +151,12 @@ public class FilecoinRunner extends Runner {
                     signer -> new FcSecpArtifactSigner(signer, network),
                     false);
 
-            return SignerLoader.load(
-                config.getKeyConfigPath(),
-                "yaml",
-                new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+            return new SignerLoader()
+                .load(
+                    config.getKeyConfigPath(),
+                    "yaml",
+                    new YamlSignerParser(
+                        List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
           }
         });
   }

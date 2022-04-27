@@ -41,8 +41,10 @@ public class WatermarkUpdatesIntegrationTestBase extends IntegrationTestBase {
   public void blockWatermarkIsSetOnFirstBlock() {
     final UInt64 blockSlot = UInt64.valueOf(3);
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    slashingProtection.maySignBlock(PUBLIC_KEY, Bytes.of(100), blockSlot, GVR);
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext
+        .getSlashingProtection()
+        .maySignBlock(PUBLIC_KEY, Bytes.of(100), blockSlot, GVR);
 
     assertThat(findAllBlocks()).hasSize(1);
     assertThat(getWatermark(VALIDATOR_ID))
@@ -52,20 +54,26 @@ public class WatermarkUpdatesIntegrationTestBase extends IntegrationTestBase {
   @Test
   public void blockWatermarkDoesNotChangeOnSecondBlock() {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    slashingProtection.maySignBlock(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(3), GVR);
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext
+        .getSlashingProtection()
+        .maySignBlock(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(3), GVR);
     assertThat(findAllBlocks()).hasSize(1);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
 
-    slashingProtection.maySignBlock(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(4), GVR);
+    slashingProtectionContext
+        .getSlashingProtection()
+        .maySignBlock(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(4), GVR);
     assertThat(findAllBlocks()).hasSize(2);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
 
-    slashingProtection.maySignBlock(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(5), GVR);
+    slashingProtectionContext
+        .getSlashingProtection()
+        .maySignBlock(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(5), GVR);
     assertThat(findAllBlocks()).hasSize(3);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
@@ -75,9 +83,10 @@ public class WatermarkUpdatesIntegrationTestBase extends IntegrationTestBase {
   @Test
   public void attestationWatermarkIsSetOnFirstAttestation() {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    slashingProtection.maySignAttestation(
-        PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(3), UInt64.valueOf(4), GVR);
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext
+        .getSlashingProtection()
+        .maySignAttestation(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(3), UInt64.valueOf(4), GVR);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
@@ -86,11 +95,13 @@ public class WatermarkUpdatesIntegrationTestBase extends IntegrationTestBase {
   @Test
   public void attestationWatermarkIsNotChangedOnSubsequentAttestations() {
     insertValidator(PUBLIC_KEY, VALIDATOR_ID);
-    slashingProtection.registerValidators(List.of(PUBLIC_KEY));
-    slashingProtection.maySignAttestation(
-        PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(3), UInt64.valueOf(4), GVR);
-    slashingProtection.maySignAttestation(
-        PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(4), UInt64.valueOf(5), GVR);
+    slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(PUBLIC_KEY));
+    slashingProtectionContext
+        .getSlashingProtection()
+        .maySignAttestation(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(3), UInt64.valueOf(4), GVR);
+    slashingProtectionContext
+        .getSlashingProtection()
+        .maySignAttestation(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(4), UInt64.valueOf(5), GVR);
     assertThat(getWatermark(VALIDATOR_ID))
         .isEqualToComparingFieldByField(
             new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));

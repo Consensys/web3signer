@@ -128,6 +128,38 @@ public class ValidatorsDaoTest {
   }
 
   @Test
+  public void isEnabledReturnsFalseForNonExistingValidator(final Handle handle) {
+    assertThat(new ValidatorsDao().isEnabled(handle, 1)).isFalse();
+  }
+
+  @Test
+  public void canEnableAlreadyDisabledValidator(final Handle handle) {
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    insertValidator(handle, Bytes.of(1), false);
+
+    handle.useTransaction(h -> validatorsDao.setEnabled(h, 1, true));
+    assertThat(validatorsDao.isEnabled(handle, 1)).isTrue();
+  }
+
+  @Test
+  public void canDisableDefaultEnabledValidator(final Handle handle) {
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    insertValidator(handle, Bytes.of(1));
+
+    handle.useTransaction(h -> validatorsDao.setEnabled(h, 1, false));
+    assertThat(validatorsDao.isEnabled(handle, 1)).isFalse();
+  }
+
+  @Test
+  public void canDisableEnabledValidator(final Handle handle) {
+    final ValidatorsDao validatorsDao = new ValidatorsDao();
+    insertValidator(handle, Bytes.of(1), true);
+
+    handle.useTransaction(h -> validatorsDao.setEnabled(h, 1, false));
+    assertThat(validatorsDao.isEnabled(handle, 1)).isFalse();
+  }
+
+  @Test
   public void hasSignedReturnsFalseWhenNoSignedBlocksOrAttestations(final Handle handle) {
     insertValidator(handle, 1, Bytes.of(9));
     assertThat(new ValidatorsDao().hasSigned(handle, 1)).isFalse();

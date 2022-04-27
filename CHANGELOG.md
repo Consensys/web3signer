@@ -1,14 +1,21 @@
 # Changelog
 
-## Next Version
+## 22.4.0
+
+### Breaking Changes
+- Because the web3signer docker image uses the latest LTS tag (ubuntu:latest), the container host may require an update to the latest container runtime. See [Ubuntu bug](https://bugs.launchpad.net/ubuntu/+source/libseccomp/+bug/1916485) for more details.
 
 ### Features Added
 - Migrate from the deprecated `vertx-web-api-contract` module to `vertx-web-openapi` [#506](https://github.com/ConsenSys/web3signer/pull/506)
 - Migrate jackson `ObjectMapper` instances to `JsonMapper` and `YamlMapper` builders to resolve deprecation warnings [#507](https://github.com/ConsenSys/web3signer/pull/507)
+- Add `iputils-ping` and `net-tools` to docker image to support waiting for dependent services in tools such as docker-compose and Kubernetes [#525](https://github.com/ConsenSys/web3signer/pull/535)
 - Updated Teku libraries to provide support for `kiln` network
+- Support for BLS private keys in AWS Secrets Manager
+- Early access support for [eth2 Key Manager API](https://ethereum.github.io/keymanager-APIs/)
 
 ### Bugs Fixed
 - Upgrade Vertx to 4.x, signers to 2.0.0 and various other dependencies to latest versions [#503](https://github.com/ConsenSys/web3signer/pull/503)
+- DB scripts executed in numeric order (instead of alphanumeric) when using docker instead of flyway to execute [#526](https://github.com/ConsenSys/web3signer/pull/526)
 
 ---
 ## 21.10.6

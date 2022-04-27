@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
@@ -62,8 +61,6 @@ public class DbSlashingProtectionTest {
   private static final int VALIDATOR_ID = 1;
   private static final UInt64 SLOT = UInt64.valueOf(2);
   private static final Bytes PUBLIC_KEY1 = Bytes.of(42);
-  private static final Bytes PUBLIC_KEY2 = Bytes.of(43);
-  private static final Bytes PUBLIC_KEY3 = Bytes.of(44);
   private static final Bytes SIGNING_ROOT = Bytes.of(3);
   private static final UInt64 SOURCE_EPOCH = UInt64.valueOf(10);
   private static final UInt64 TARGET_EPOCH = UInt64.valueOf(20);
@@ -95,7 +92,8 @@ public class DbSlashingProtectionTest {
             lowWatermarkDao,
             1,
             1,
-            HashBiMap.create(Map.of(PUBLIC_KEY1, VALIDATOR_ID)));
+            new RegisteredValidators(
+                slashingJdbi, validatorsDao, HashBiMap.create(Map.of(PUBLIC_KEY1, VALIDATOR_ID))));
     lenient().when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(GVR));
     lenient().when(validatorsDao.isEnabled(any(), eq(VALIDATOR_ID))).thenReturn(true);
   }
@@ -170,7 +168,8 @@ public class DbSlashingProtectionTest {
             metadataDao,
             lowWatermarkDao,
             0,
-            0);
+            0,
+            new RegisteredValidators(jdbi, validatorsDao));
 
     assertThatThrownBy(
             () -> dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR))
@@ -340,7 +339,8 @@ public class DbSlashingProtectionTest {
             metadataDao,
             lowWatermarkDao,
             0,
-            0);
+            0,
+            new RegisteredValidators(jdbi, validatorsDao));
 
     assertThatThrownBy(
             () ->
@@ -365,34 +365,6 @@ public class DbSlashingProtectionTest {
         .isFalse();
     verifyNoInteractions(signedAttestationsDao);
     verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
-  }
-
-  @Test
-  public void registersValidatorsThatAreNotAlreadyInDb(final Jdbi jdbi) {
-    final BiMap<Bytes, Integer> registeredValidators = HashBiMap.create();
-    final DbSlashingProtection dbSlashingProtection =
-        new DbSlashingProtection(
-            jdbi,
-            jdbi,
-            validatorsDao,
-            signedBlocksDao,
-            signedAttestationsDao,
-            metadataDao,
-            lowWatermarkDao,
-            0,
-            0,
-            registeredValidators);
-
-    when(validatorsDao.registerValidators(any(), any())).thenCallRealMethod();
-
-    dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1));
-    assertThat(registeredValidators).hasSize(1);
-
-    dbSlashingProtection.registerValidators(List.of(PUBLIC_KEY1, PUBLIC_KEY2, PUBLIC_KEY3));
-    assertThat(registeredValidators).hasSize(3);
-    // because 'id' is a sequence, the values will be 1, 2, 3
-    assertThat(registeredValidators)
-        .isEqualTo(Map.of(PUBLIC_KEY1, 1, PUBLIC_KEY2, 2, PUBLIC_KEY3, 3));
   }
 
   @Test

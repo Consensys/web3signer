@@ -56,7 +56,7 @@ public class IntegrationTestBase {
   protected EmbeddedPostgres db;
   protected String databaseUrl;
   protected Jdbi jdbi;
-  protected SlashingProtection slashingProtection;
+  protected SlashingProtectionContext slashingProtectionContext;
 
   protected static final String GENESIS_VALIDATORS_ROOT =
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
@@ -67,8 +67,8 @@ public class IntegrationTestBase {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
     final SlashingProtectionParameters slashingProtectionParameters =
         new TestSlashingProtectionParameters(testDatabaseInfo.databaseUrl(), USERNAME, PASSWORD);
-    slashingProtection =
-        SlashingProtectionFactory.createSlashingProtection(slashingProtectionParameters);
+    slashingProtectionContext =
+        SlashingProtectionContextFactory.create(slashingProtectionParameters);
     db = testDatabaseInfo.getDb();
     jdbi = testDatabaseInfo.getJdbi();
     databaseUrl = testDatabaseInfo.databaseUrl();
@@ -165,12 +165,12 @@ public class IntegrationTestBase {
   }
 
   protected void insertValidatorAndCreateSlashingData(
-      final SlashingProtection slashingProtection,
+      final RegisteredValidators registeredValidators,
       final int noOfBlocks,
       final int noOfAttestations,
       final int validatorId) {
     final Bytes validatorPublicKey = Bytes.of(validatorId);
-    slashingProtection.registerValidators(List.of(validatorPublicKey));
+    registeredValidators.registerValidators(List.of(validatorPublicKey));
     createSlashingData(noOfBlocks, noOfAttestations, validatorId);
   }
 

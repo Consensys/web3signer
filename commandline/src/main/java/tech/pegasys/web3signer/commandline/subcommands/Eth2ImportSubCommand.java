@@ -12,10 +12,9 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
-import static tech.pegasys.web3signer.slashingprotection.SlashingProtectionFactory.createSlashingProtection;
-
 import tech.pegasys.web3signer.core.InitializationException;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContext;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -62,10 +61,10 @@ public class Eth2ImportSubCommand implements Runnable {
     }
 
     try (final InputStream inStream = new FileInputStream(from)) {
-      final SlashingProtection slashingProtection =
-          createSlashingProtection(eth2Config.getSlashingProtectionParameters());
+      final SlashingProtectionContext slashingProtectionContext =
+          SlashingProtectionContextFactory.create(eth2Config.getSlashingProtectionParameters());
 
-      slashingProtection.importData(inStream);
+      slashingProtectionContext.getSlashingProtection().importData(inStream);
     } catch (final IOException e) {
       throw new UncheckedIOException("Unable to find input file", e);
     } catch (final IllegalStateException e) {

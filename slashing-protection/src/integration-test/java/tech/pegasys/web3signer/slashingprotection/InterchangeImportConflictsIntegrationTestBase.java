@@ -32,8 +32,10 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
   @Test
   void duplicateEntriesAreNotInsertedToDatabase() throws IOException {
     final URL importFile = Resources.getResource("interchange/singleValidBlock.json");
-    slashingProtection.importData(importFile.openStream());
-    slashingProtection.importData(importFile.openStream()); // attempt to reimport
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
+    slashingProtectionContext
+        .getSlashingProtection()
+        .importData(importFile.openStream()); // attempt to reimport
     final List<SignedBlock> blocksInDb = findAllBlocks();
     assertThat(blocksInDb).hasSize(1);
     assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));
@@ -48,7 +50,7 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
   @Test
   void conflictingBlocksInSameSlotAreNotInsertedToDatabase() throws IOException {
     final URL importFile = Resources.getResource("interchange/conflictingBlocks.json");
-    slashingProtection.importData(importFile.openStream());
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
 
     final List<SignedBlock> blocksInDb = findAllBlocks();
     assertThat(blocksInDb).hasSize(1);
@@ -64,8 +66,10 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
   @Test
   void canLoadFileWithDuplicateBlocks() throws IOException {
     final URL importFile = Resources.getResource("interchange/duplicateBlocks.json");
-    slashingProtection.importData(importFile.openStream());
-    slashingProtection.importData(importFile.openStream()); // attempt to reimport
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
+    slashingProtectionContext
+        .getSlashingProtection()
+        .importData(importFile.openStream()); // attempt to reimport
 
     final List<SignedBlock> blocksInDb = findAllBlocks();
     assertThat(blocksInDb).hasSize(1);
@@ -81,8 +85,10 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
   @Test
   void doNotDuplicateAttestations() throws IOException {
     final URL importFile = Resources.getResource("interchange/singleValidAttestation.json");
-    slashingProtection.importData(importFile.openStream());
-    slashingProtection.importData(importFile.openStream()); // attempt to reimport
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
+    slashingProtectionContext
+        .getSlashingProtection()
+        .importData(importFile.openStream()); // attempt to reimport
 
     final List<SignedAttestation> attestationsInDb = findAllAttestations();
     assertThat(attestationsInDb).hasSize(1);
@@ -96,8 +102,10 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
   @Test
   void canLoadAFileWithDuplicateAttestationsButOnlyOneInserted() throws IOException {
     final URL importFile = Resources.getResource("interchange/duplicateAttestation.json");
-    slashingProtection.importData(importFile.openStream());
-    slashingProtection.importData(importFile.openStream()); // attempt to reimport
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
+    slashingProtectionContext
+        .getSlashingProtection()
+        .importData(importFile.openStream()); // attempt to reimport
 
     final List<SignedAttestation> attestationsInDb = findAllAttestations();
     assertThat(attestationsInDb).hasSize(1);
@@ -111,7 +119,7 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
   @Test
   void canLoadInterchangeFormatWithMissingSigningRootForBlock() throws IOException {
     final URL importFile = Resources.getResource("interchange/multipleNullSigningRootBlock.json");
-    slashingProtection.importData(importFile.openStream());
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
 
     final List<SignedBlock> blocksInDb = findAllBlocks();
     assertThat(blocksInDb).hasSize(2);
@@ -127,8 +135,8 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
   @Test
   void duplicateNullBlockEntriesAreNotCreatedOnReImport() throws IOException {
     final URL importFile = Resources.getResource("interchange/multipleNullSigningRootBlock.json");
-    slashingProtection.importData(importFile.openStream());
-    slashingProtection.importData(importFile.openStream());
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
 
     final List<SignedBlock> blocksInDb = findAllBlocks();
     assertThat(blocksInDb).hasSize(2);
@@ -145,7 +153,7 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
   void canLoadInterchangeFormatWithMissingSigningRootForAttestation() throws IOException {
     final URL importFile =
         Resources.getResource("interchange/multipleNullSigningRootAttestation.json");
-    slashingProtection.importData(importFile.openStream());
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
 
     final List<SignedAttestation> attestationsInDb = findAllAttestations();
     assertThat(attestationsInDb).hasSize(2);
@@ -164,8 +172,8 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
   void duplicateNullAttestationEntriesAreNotCreatedOnReImport() throws IOException {
     final URL importFile =
         Resources.getResource("interchange/multipleNullSigningRootAttestation.json");
-    slashingProtection.importData(importFile.openStream());
-    slashingProtection.importData(importFile.openStream());
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
 
     final List<SignedAttestation> attestationsInDb = findAllAttestations();
     assertThat(attestationsInDb).hasSize(2);
@@ -189,7 +197,7 @@ public class InterchangeImportConflictsIntegrationTestBase extends IntegrationTe
                 "INSERT INTO validators (id, public_key) VALUES (1, ?)",
                 Bytes.fromHexString(
                     "0xb845089a1457f811bfc000588fbb4e713669be8ce060ea6be3c6ece09afc3794106c91ca73acda5e5457122d58723bed")));
-    slashingProtection.importData(importFile.openStream());
+    slashingProtectionContext.getSlashingProtection().importData(importFile.openStream());
     final List<SignedBlock> blocksInDb = findAllBlocks();
     assertThat(blocksInDb).hasSize(1);
     assertThat(blocksInDb.get(0).getSlot()).isEqualTo(UInt64.valueOf(12345));

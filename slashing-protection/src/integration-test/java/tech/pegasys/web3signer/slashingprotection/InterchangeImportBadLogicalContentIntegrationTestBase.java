@@ -47,7 +47,11 @@ public class InterchangeImportBadLogicalContentIntegrationTestBase extends Integ
 
     final byte[] jsonInput = mapper.writeValueAsBytes(interchangeData);
 
-    assertThatThrownBy(() -> slashingProtection.importData(new ByteArrayInputStream(jsonInput)))
+    assertThatThrownBy(
+            () ->
+                slashingProtectionContext
+                    .getSlashingProtection()
+                    .importData(new ByteArrayInputStream(jsonInput)))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("Failed to import database content");
     assertDbIsEmpty(jdbi);
@@ -64,7 +68,11 @@ public class InterchangeImportBadLogicalContentIntegrationTestBase extends Integ
 
     final byte[] jsonInput = mapper.writeValueAsBytes(interchangeData);
 
-    assertThatThrownBy(() -> slashingProtection.importData(new ByteArrayInputStream(jsonInput)))
+    assertThatThrownBy(
+            () ->
+                slashingProtectionContext
+                    .getSlashingProtection()
+                    .importData(new ByteArrayInputStream(jsonInput)))
         .isInstanceOf(RuntimeException.class)
         .hasMessage("Failed to import database content");
     assertDbIsEmpty(jdbi);

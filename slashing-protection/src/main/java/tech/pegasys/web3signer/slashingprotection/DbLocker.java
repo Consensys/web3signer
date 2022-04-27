@@ -25,4 +25,10 @@ public class DbLocker {
       final Handle handle, final LockType lockType, final int validatorId) {
     handle.execute("SELECT pg_advisory_xact_lock(?, ?)", lockType.ordinal(), validatorId);
   }
+
+  public static void lockAllForValidator(final Handle handle, final int validatorId) {
+    for (LockType type : LockType.values()) {
+      lockForValidator(handle, type, validatorId);
+    }
+  }
 }

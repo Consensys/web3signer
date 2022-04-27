@@ -54,7 +54,7 @@ public class Eth2BlockSigningRequestUtil {
     this.specMilestone = specMilestone;
     dataStructureUtil = new DataStructureUtil(spec);
     signingRootUtil = new SigningRootUtil(spec);
-    tekuForkInfo = dataStructureUtil.randomForkInfo();
+    tekuForkInfo = Eth2RequestUtils.forkInfo().asInternalForkInfo();
     tekuFork = new Fork(tekuForkInfo.getFork());
     forkInfo =
         new tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo(

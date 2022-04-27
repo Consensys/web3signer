@@ -97,8 +97,12 @@ dependencyManagement {
 
     dependency 'tech.pegasys:jblst:0.3.6-4'
 
+<<<<<<< HEAD
     // todo; change version before release
     dependencySet(group: 'tech.pegasys.signers.internal', version: 'develop') {
+=======
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '2.2.0') {
+>>>>>>> dba20c8c4ad4f34197c2ce526e5c5d043e634eb4
       entry 'bls-keystore'
       entry 'keystorage-hashicorp'
       entry 'keystorage-azure'
