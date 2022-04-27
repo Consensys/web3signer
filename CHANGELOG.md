@@ -2,6 +2,9 @@
 
 ## 22.4.0
 
+### Breaking Changes
+- Because the web3signer docker image uses the latest LTS tag (ubuntu:latest), the container host may require an update to the latest container runtime. See [Ubuntu bug](https://bugs.launchpad.net/ubuntu/+source/libseccomp/+bug/1916485) for more details.
+
 ### Features Added
 - Migrate from the deprecated `vertx-web-api-contract` module to `vertx-web-openapi` [#506](https://github.com/ConsenSys/web3signer/pull/506)
 - Migrate jackson `ObjectMapper` instances to `JsonMapper` and `YamlMapper` builders to resolve deprecation warnings [#507](https://github.com/ConsenSys/web3signer/pull/507)
