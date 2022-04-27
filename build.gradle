@@ -157,11 +157,11 @@ allprojects {
   dependencyCheck {
     failBuildOnCVSS = 4 // Fail on medium CVSS severity
     skipConfigurations = [
-            'integrationTestCompileClasspath',
-            'integrationTestRuntimeClasspath'
+      'integrationTestCompileClasspath',
+      'integrationTestRuntimeClasspath'
     ]
     skipProjects = [
-            ':acceptance-tests'
+      ':acceptance-tests'
     ]
   }
 
