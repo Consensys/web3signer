@@ -59,7 +59,10 @@ public class Eth2BlockSigningRequestUtil {
         specMilestone.isGreaterThanOrEqualTo(SpecMilestone.BELLATRIX)
             ? new BlockRequest(specMilestone, getBeaconBlockHeader())
             : new BlockRequest(specMilestone, getBeaconBlock());
+    return createBlockV2Request(blockRequest);
+  }
 
+  public Eth2SigningRequestBody createBlockV2Request(final BlockRequest blockRequest) {
     return new Eth2SigningRequestBody(
         ArtifactType.BLOCK_V2,
         signingRoot,

@@ -39,7 +39,6 @@ public class BlockRequestDeserializer extends JsonDeserializer<BlockRequest> {
     final BeaconBlock beaconBlock;
     final BeaconBlockHeader beaconBlockHeader;
     final BlockRequest blockRequest;
-    // TODO: Add tests for deserialization where block or block_header is null/empty
     switch (specMilestone) {
       case PHASE0:
         beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlock.class);

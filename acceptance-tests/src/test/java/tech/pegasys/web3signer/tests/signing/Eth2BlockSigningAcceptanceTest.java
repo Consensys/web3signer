@@ -21,6 +21,7 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.utils.Eth2BlockSigningRequestUtil;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -28,6 +29,7 @@ import tech.pegasys.web3signer.signing.KeyType;
 
 import java.nio.file.Path;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
@@ -82,5 +84,20 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final BLSSignature expectedSignature =
         BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
+  }
+
+  @Test
+  void emptyBlockRequestReturnsBadRequestStatus() throws JsonProcessingException {
+    final Eth2BlockSigningRequestUtil util =
+        new Eth2BlockSigningRequestUtil(SpecMilestone.BELLATRIX);
+    setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.BELLATRIX);
+
+    // send empty block and block_header (i.e. only version)
+    final Eth2SigningRequestBody request =
+        util.createBlockV2Request(new BlockRequest(SpecMilestone.BELLATRIX, null, null));
+    final Response response =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
+
+    response.then().statusCode(400);
   }
 }
