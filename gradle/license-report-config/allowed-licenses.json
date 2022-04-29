@@ -62,16 +62,17 @@
     },
     {
       "moduleLicense": "IAIK of Graz University of Technology License",
-      "moduleVersion": "1.4.8",
       "moduleName": "org.xipki.iaik:sunpkcs11-wrapper"
     },
     {
       "moduleLicense": "Unicode/ICU License",
-      "moduleVersion": "58.2",
       "moduleName": "com.ibm.icu:icu4j"
     },
     {
       "moduleName": "io.netty:netty-tcnative-classes"
+    },
+    {
+      "moduleName": "org.antlr:ST4"
     }
   ],
   "overrideLicenses": [
@@ -122,6 +123,22 @@
     {
       "moduleName": "io.netty:netty-tcnative-classes",
       "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
+      "moduleName": "org.antlr:ST4",
+      "moduleLicense": "The BSD License"
+    },
+    {
+      "moduleName": "com.google.protobuf:protobuf-java",
+      "moduleLicense": "The BSD License"
+    },
+    {
+      "moduleName": "com.google.protobuf:protobuf-java-util",
+      "moduleLicense": "The BSD License"
+    },
+    {
+      "moduleName": "org.java-websocket:Java-WebSocket",
+      "moduleLicense": "MIT License"
     }
   ]
 }
