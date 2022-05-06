@@ -1,5 +1,11 @@
 # Changelog
 
+## 22.4.1
+
+### Features Added
+- Update various library dependencies
+
+---
 ## 22.4.0
 
 ### Breaking Changes

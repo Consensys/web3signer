@@ -25,6 +25,7 @@ buildscript {
   }
   dependencies {
     classpath 'tech.pegasys.internal.license.reporter:license-reporter:1.0.1'
+    classpath 'org.owasp:dependency-check-gradle:7.1.0.1'
   }
 }
 
@@ -91,6 +92,7 @@ allprojects {
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'jacoco'
   apply plugin: 'net.ltgt.errorprone'
+  apply plugin: 'org.owasp.dependencycheck'
   apply from: "${rootDir}/gradle/versions.gradle"
 
   version = rootProject.version
@@ -149,6 +151,17 @@ allprojects {
       target '**/*.groovy'
       licenseHeaderFile "${rootDir}/gradle/spotless.java.license", 'import'
     }
+  }
+
+  dependencyCheck {
+    failBuildOnCVSS = 4 // Fail on medium CVSS severity
+    skipConfigurations = [
+      'integrationTestCompileClasspath',
+      'integrationTestRuntimeClasspath'
+    ]
+    skipProjects = [
+      ':acceptance-tests'
+    ]
   }
 
   tasks.withType(JavaCompile) {
