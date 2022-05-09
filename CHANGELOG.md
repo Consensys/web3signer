@@ -1,5 +1,13 @@
 # Changelog
 
+## Next release
+### Breaking Changes
+- ETH2 Mode - block signing request (BLOCK_V2), starting from BELLATRIX fork, use block_header instead of block. [#547](https://github.com/ConsenSys/web3signer/pull/547)
+
+### Features Added
+- Added support for optimized block signing requests starting from Bellatrix fork. [#437](https://github.com/ConsenSys/web3signer/issues/437)
+
+---
 ## 22.4.1
 
 ### Features Added

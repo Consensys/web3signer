@@ -403,6 +403,8 @@ components:
       properties:
         version:
           type: string
+          enum:
+            - PHASE0
           description: 'version to identify block request type.'
           example: PHASE0
         block:
@@ -415,6 +417,8 @@ components:
       properties:
         version:
           type: string
+          enum:
+            - ALTAIR
           description: 'version to identify block request type.'
           example: ALTAIR
         block:
@@ -427,6 +431,8 @@ components:
       properties:
         version:
           type: string
+          enum:
+            - BELLATRIX
           description: 'version to identify block request type.'
           example: BELLATRIX
         block_header:
