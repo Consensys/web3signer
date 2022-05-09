@@ -28,6 +28,7 @@ import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggregatorSelectionDataSchema;
 import tech.pegasys.teku.spec.logic.common.util.SyncCommitteeUtil;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
+import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
@@ -193,23 +194,24 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   }
 
   private UInt64 getBlockSlot(final Eth2SigningRequestBody eth2SigningRequestBody) {
-    if (eth2SigningRequestBody.getBlock() != null) {
-      return UInt64.valueOf(eth2SigningRequestBody.getBlock().slot.bigIntegerValue());
+    final UInt64 blockSlot;
+    if (eth2SigningRequestBody.getType() == ArtifactType.BLOCK) {
+      blockSlot = UInt64.valueOf(eth2SigningRequestBody.getBlock().slot.bigIntegerValue());
+    } else {
+      final BlockRequest blockRequest = eth2SigningRequestBody.getBlockRequest();
+      switch (blockRequest.getVersion()) {
+        case PHASE0:
+        case ALTAIR:
+          blockSlot = UInt64.valueOf(blockRequest.getBeaconBlock().slot.bigIntegerValue());
+          break;
+        case BELLATRIX:
+        default:
+          blockSlot = UInt64.valueOf(blockRequest.getBeaconBlockHeader().slot.bigIntegerValue());
+          break;
+      }
     }
 
-    if (eth2SigningRequestBody.getBlockRequest() != null) {
-      if (eth2SigningRequestBody.getBlockRequest().getBeaconBlock() != null) {
-        return UInt64.valueOf(
-            eth2SigningRequestBody.getBlockRequest().getBeaconBlock().slot.bigIntegerValue());
-      }
-
-      if (eth2SigningRequestBody.getBlockRequest().getBeaconBlockHeader() != null) {
-        return UInt64.valueOf(
-            eth2SigningRequestBody.getBlockRequest().getBeaconBlockHeader().slot.bigIntegerValue());
-      }
-    }
-
-    throw new IllegalStateException("Either BlockRequest or Block must be present");
+    return blockSlot;
   }
 
   private boolean maySignBlock(
@@ -231,19 +233,25 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             body.getForkInfo().asInternalForkInfo());
       case BLOCK_V2:
         checkArgument(body.getBlockRequest() != null, "beacon_block must be specified");
-
-        if (body.getBlockRequest().getBeaconBlock() != null) {
-          return signingRootUtil.signingRootForSignBlock(
-              body.getBlockRequest().getBeaconBlock().asInternalBeaconBlock(eth2Spec),
-              body.getForkInfo().asInternalForkInfo());
-        } else if (body.getBlockRequest().getBeaconBlockHeader() != null) {
-          return signingRootUtil.signingRootForSignBlockHeader(
-              body.getBlockRequest().getBeaconBlockHeader().asInternalBeaconBlockHeader(),
-              body.getForkInfo().asInternalForkInfo());
-        } else {
-          throw new IllegalArgumentException("Either block or block_header must be specified");
+        final Bytes blockV2SigningRoot;
+        switch (body.getBlockRequest().getVersion()) {
+          case PHASE0:
+          case ALTAIR:
+            blockV2SigningRoot =
+                signingRootUtil.signingRootForSignBlock(
+                    body.getBlockRequest().getBeaconBlock().asInternalBeaconBlock(eth2Spec),
+                    body.getForkInfo().asInternalForkInfo());
+            break;
+          case BELLATRIX:
+          default:
+            blockV2SigningRoot =
+                signingRootUtil.signingRootForSignBlockHeader(
+                    body.getBlockRequest().getBeaconBlockHeader().asInternalBeaconBlockHeader(),
+                    body.getForkInfo().asInternalForkInfo());
+            break;
         }
 
+        return blockV2SigningRoot;
       case ATTESTATION:
         checkArgument(body.getAttestation() != null, "attestation must be specified");
         return signingRootUtil.signingRootForSignAttestationData(

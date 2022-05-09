@@ -20,33 +20,32 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.Bloc
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.google.common.annotations.VisibleForTesting;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonDeserialize(using = BlockRequestDeserializer.class)
 public class BlockRequest {
   private final SpecMilestone version;
-  private final BeaconBlock beaconBlock;
-  private final BeaconBlockHeader beaconBlockHeader;
-
-  public BlockRequest(
-      @JsonProperty("version") final SpecMilestone version,
-      @JsonProperty("block") final BeaconBlock beaconBlock,
-      @JsonProperty("block_header") final BeaconBlockHeader beaconBlockHeader) {
-    this.version = version;
-    this.beaconBlock = beaconBlock;
-    this.beaconBlockHeader = beaconBlockHeader;
-  }
+  private final BeaconBlock beaconBlock; // will be used for PHASE0 and ALTAIR spec
+  private final BeaconBlockHeader beaconBlockHeader; // will be used for BELLATRIX and later spec
 
   public BlockRequest(final SpecMilestone version, final BeaconBlock beaconBlock) {
-    this(version, beaconBlock, null);
+    this.version = version;
+    this.beaconBlock = beaconBlock;
+    this.beaconBlockHeader = null;
   }
 
   public BlockRequest(final SpecMilestone version, final BeaconBlockHeader beaconBlockHeader) {
-    this(version, null, beaconBlockHeader);
+    this.version = version;
+    this.beaconBlock = null;
+    this.beaconBlockHeader = beaconBlockHeader;
   }
 
+  @VisibleForTesting
   public BlockRequest(final SpecMilestone version) {
-    this(version, null, null);
+    this.version = version;
+    this.beaconBlock = null;
+    this.beaconBlockHeader = null;
   }
 
   @JsonProperty("version")
