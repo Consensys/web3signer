@@ -166,7 +166,7 @@ jobs:
           name: Build
           command: |
             git submodule update --init --recursive
-            ./gradlew --no-daemon --refresh-dependencies --parallel build
+            ./gradlew --no-daemon --parallel build
       - run:
           name: Dependency vulnerability scan
           command: |
