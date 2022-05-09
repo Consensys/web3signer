@@ -45,6 +45,10 @@ public class BlockRequest {
     this(version, null, beaconBlockHeader);
   }
 
+  public BlockRequest(final SpecMilestone version) {
+    this(version, null, null);
+  }
+
   @JsonProperty("version")
   public SpecMilestone getVersion() {
     return version;

@@ -55,11 +55,16 @@ public class Eth2BlockSigningRequestUtil {
   }
 
   public Eth2SigningRequestBody createBlockV2Request() {
-    final BlockRequest blockRequest =
-        specMilestone.isGreaterThanOrEqualTo(SpecMilestone.BELLATRIX)
-            ? new BlockRequest(specMilestone, getBeaconBlockHeader())
-            : new BlockRequest(specMilestone, getBeaconBlock());
-    return createBlockV2Request(blockRequest);
+    switch (specMilestone) {
+      case PHASE0:
+      case ALTAIR:
+        return createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlock()));
+      case BELLATRIX:
+        return createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlockHeader()));
+      default:
+        throw new IllegalStateException(
+            "Spec not yet implemented for BLOCKV2 Signing AT: " + specMilestone);
+    }
   }
 
   public Eth2SigningRequestBody createBlockV2Request(final BlockRequest blockRequest) {
@@ -103,6 +108,15 @@ public class Eth2BlockSigningRequestUtil {
         null);
   }
 
+  private BeaconBlockHeader getBeaconBlockHeader() {
+    return new BeaconBlockHeader(
+        beaconBlock.getSlot(),
+        beaconBlock.getProposerIndex(),
+        beaconBlock.getParentRoot(),
+        beaconBlock.getStateRoot(),
+        beaconBlock.getBodyRoot());
+  }
+
   private tech.pegasys.teku.api.schema.BeaconBlock getBeaconBlock() {
     switch (specMilestone) {
       case PHASE0:
@@ -115,7 +129,7 @@ public class Eth2BlockSigningRequestUtil {
             beaconBlock.getStateRoot(),
             getBeaconBlockBodyAltair(beaconBlock.getBody()));
       default:
-        return null; // for BELLATRIX and onward, we don't need beacon block body
+        throw new IllegalStateException("BeaconBlock only supported for PHASE0 and ALTAIR in AT");
     }
   }
 
@@ -124,18 +138,5 @@ public class Eth2BlockSigningRequestUtil {
     return new BeaconBlockBodyAltair(
         tech.pegasys.teku.spec.datastructures.blocks.blockbody.versions.altair.BeaconBlockBodyAltair
             .required(body));
-  }
-
-  private BeaconBlockHeader getBeaconBlockHeader() {
-    if (specMilestone.isGreaterThanOrEqualTo(SpecMilestone.BELLATRIX)) {
-      return new BeaconBlockHeader(
-          beaconBlock.getSlot(),
-          beaconBlock.getProposerIndex(),
-          beaconBlock.getParentRoot(),
-          beaconBlock.getStateRoot(),
-          beaconBlock.getBodyRoot());
-    }
-
-    return null;
   }
 }

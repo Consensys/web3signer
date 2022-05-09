@@ -57,7 +57,9 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
   }
 
   @ParameterizedTest
-  @EnumSource(value = SpecMilestone.class)
+  @EnumSource(
+      value = SpecMilestone.class,
+      names = {"PHASE0", "ALTAIR", "BELLATRIX"})
   void signAndVerifyBlockV2Signature(final SpecMilestone specMilestone) throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
 
@@ -92,9 +94,8 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
         new Eth2BlockSigningRequestUtil(SpecMilestone.BELLATRIX);
     setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.BELLATRIX);
 
-    // send empty block and block_header (i.e. only version)
     final Eth2SigningRequestBody request =
-        util.createBlockV2Request(new BlockRequest(SpecMilestone.BELLATRIX, null, null));
+        util.createBlockV2Request(new BlockRequest(SpecMilestone.BELLATRIX));
     final Response response =
         signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
 
