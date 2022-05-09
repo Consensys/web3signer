@@ -393,9 +393,9 @@ components:
       properties:
         beacon_block:
           anyOf:
-            - $ref: '#/components/schemas/BlockRequestBellatrix'
-            - $ref: '#/components/schemas/BlockRequestAltair'
             - $ref: '#/components/schemas/BlockRequestPhase0'
+            - $ref: '#/components/schemas/BlockRequestAltair'
+            - $ref: '#/components/schemas/BlockRequestBellatrix'
       required:
         - beacon_block
     BlockRequestPhase0:

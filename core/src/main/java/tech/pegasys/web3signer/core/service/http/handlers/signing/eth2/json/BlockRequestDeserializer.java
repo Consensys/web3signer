@@ -48,12 +48,14 @@ public class BlockRequestDeserializer extends JsonDeserializer<BlockRequest> {
         beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlockAltair.class);
         blockRequest = new BlockRequest(specMilestone, beaconBlock);
         break;
-      default:
-        // BELLATRIX and onward, we only need block_header instead of complete block
+      case BELLATRIX:
+        // for BELLATRIX we only need block_header instead of complete block
         beaconBlockHeader =
             codec.treeToValue(node.findValue("block_header"), BeaconBlockHeader.class);
         blockRequest = new BlockRequest(specMilestone, beaconBlockHeader);
         break;
+      default:
+        throw new IllegalStateException("Fork version not yet supported: " + specMilestone);
     }
     return blockRequest;
   }
