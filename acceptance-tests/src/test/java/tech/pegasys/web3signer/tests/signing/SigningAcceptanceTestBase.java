@@ -26,7 +26,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class SigningAcceptanceTestBase extends AcceptanceTestBase {
   protected @TempDir Path testDirectory;
-  private static final Long MINIMAL_ALTAIR_FORK = 0L;
 
   protected void setupEth1Signer() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
@@ -47,21 +46,29 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
         .withMode("eth2")
         .withNetwork(eth2Network.configName());
 
+    setForkEpochs(specMilestone, builder);
+
+    startSigner(builder.build());
+  }
+
+  private void setForkEpochs(SpecMilestone specMilestone, SignerConfigurationBuilder builder) {
     switch (specMilestone) {
       case PHASE0:
         break;
       case ALTAIR:
-        builder.withAltairForkEpoch(MINIMAL_ALTAIR_FORK);
+        builder.withAltairForkEpoch(0L);
         break;
       case BELLATRIX:
-        builder.withAltairForkEpoch(MINIMAL_ALTAIR_FORK);
-        builder.withBellatrixForkEpoch(MINIMAL_ALTAIR_FORK);
+        // As we are setting manual epoch, Teku libraries doesn't seem to work when Bellatrix epoch
+        // is set to 0 while Altair is not set (as it attempts to calculate difference
+        // between two forks). Hence, set both forks to 0.
+        builder.withAltairForkEpoch(0L);
+        builder.withBellatrixForkEpoch(0L);
         break;
       default:
-        throw new IllegalStateException(specMilestone + " is not yet implemented for Signing AT");
+        throw new IllegalStateException(
+            "Setting manual fork epoch is not yet implemented for " + specMilestone);
     }
-
-    startSigner(builder.build());
   }
 
   protected Bytes verifyAndGetSignatureResponse(final Response response) {
