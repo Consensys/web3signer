@@ -6,7 +6,7 @@
 
 ### Features Added
 - Added support for optimized block signing requests starting from Bellatrix fork. [#437](https://github.com/ConsenSys/web3signer/issues/437)
-- Support for Gnosis network in Eth2 mode. `--network gnosis`
+- Early access: Support for Gnosis network in Eth2 mode. `--network gnosis`
 
 ---
 ## 22.4.1
