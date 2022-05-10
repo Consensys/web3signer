@@ -406,7 +406,6 @@ components:
           enum:
             - PHASE0
           description: 'version to identify block request type.'
-          example: PHASE0
         block:
           $ref: "#/components/schemas/BeaconBlock"
       required:
@@ -420,7 +419,6 @@ components:
           enum:
             - ALTAIR
           description: 'version to identify block request type.'
-          example: ALTAIR
         block:
           $ref: "#/components/schemas/BeaconBlockAltair"
       required:
@@ -434,7 +432,6 @@ components:
           enum:
             - BELLATRIX
           description: 'version to identify block request type.'
-          example: BELLATRIX
         block_header:
           $ref: "#/components/schemas/BeaconBlockHeader"
       required:
