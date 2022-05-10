@@ -57,6 +57,8 @@ public class SignerConfiguration {
   private final long slashingPruningSlotsPerEpoch;
   private final long slashingPruningInterval;
   private final Optional<Long> altairForkEpoch;
+
+  private final Optional<Long> bellatrixForkEpoch;
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
 
@@ -90,6 +92,7 @@ public class SignerConfiguration {
       final boolean useConfigFile,
       final Optional<Path> slashingDbPoolConfigurationFile,
       final Optional<Long> altairForkEpoch,
+      final Optional<Long> bellatrixForkEpoch,
       final Optional<String> network,
       final boolean keyManagerApiEnabled) {
     this.hostname = hostname;
@@ -121,6 +124,7 @@ public class SignerConfiguration {
     this.useConfigFile = useConfigFile;
     this.slashingProtectionDbPoolConfigurationFile = slashingDbPoolConfigurationFile;
     this.altairForkEpoch = altairForkEpoch;
+    this.bellatrixForkEpoch = bellatrixForkEpoch;
     this.network = network;
     this.keyManagerApiEnabled = keyManagerApiEnabled;
   }
@@ -247,6 +251,10 @@ public class SignerConfiguration {
 
   public Optional<Long> getAltairForkEpoch() {
     return altairForkEpoch;
+  }
+
+  public Optional<Long> getBellatrixForkEpoch() {
+    return bellatrixForkEpoch;
   }
 
   public Optional<String> getNetwork() {

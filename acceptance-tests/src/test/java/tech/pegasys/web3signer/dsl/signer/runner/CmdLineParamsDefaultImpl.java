@@ -180,6 +180,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Long.toString(signerConfig.getAltairForkEpoch().get()));
     }
 
+    if (signerConfig.getBellatrixForkEpoch().isPresent()) {
+      params.add("--Xnetwork-bellatrix-fork-epoch");
+      params.add(Long.toString(signerConfig.getBellatrixForkEpoch().get()));
+    }
+
     if (signerConfig.getNetwork().isPresent()) {
       params.add("--network");
       params.add(signerConfig.getNetwork().get());

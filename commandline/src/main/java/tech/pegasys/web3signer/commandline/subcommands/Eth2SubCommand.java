@@ -49,7 +49,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       names = {"--network"},
       paramLabel = "<NETWORK>",
       description =
-          "Predefined network configuration to use. Possible values: [mainnet, pyrmont, prater, kintsugi, kiln, minimal], file path"
+          "Predefined network configuration to use. Possible values: [mainnet, pyrmont, prater, kintsugi, kiln, gnosis, minimal], file path"
               + " or URL to a YAML configuration file. Defaults to mainnet.",
       arity = "1")
   private String network = "mainnet";
@@ -68,7 +68,8 @@ public class Eth2SubCommand extends ModeSubCommand {
       hidden = true,
       paramLabel = "<epoch>",
       description = "Override the Bellatrix fork activation epoch.",
-      arity = "1")
+      arity = "1",
+      converter = UInt64Converter.class)
   private UInt64 bellatrixForkEpoch;
 
   @CommandLine.Option(

@@ -38,6 +38,7 @@ dependencies {
   implementation 'tech.pegasys.teku.internal:bls'
   implementation 'tech.pegasys.teku.internal:core'
   implementation 'tech.pegasys.teku.internal:serializer'
+  implementation 'tech.pegasys.teku.internal:jackson'
   implementation 'tech.pegasys.teku.internal:spec'
   implementation 'tech.pegasys.teku.internal:unsigned'
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'

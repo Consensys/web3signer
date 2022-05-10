@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
+import tech.pegasys.teku.api.schema.BeaconBlockHeader;
 import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockBodyAltair;
@@ -40,17 +41,7 @@ public class Eth2BlockSigningRequestUtil {
   private final Bytes signingRoot;
 
   public Eth2BlockSigningRequestUtil(final SpecMilestone specMilestone) {
-    final Spec spec;
-    switch (specMilestone) {
-      case ALTAIR:
-        spec = TestSpecFactory.createMinimalAltair();
-        break;
-      case PHASE0:
-        spec = TestSpecFactory.createMinimalPhase0();
-        break;
-      default:
-        throw new IllegalStateException("Spec Milestone not yet supported: " + specMilestone);
-    }
+    final Spec spec = TestSpecFactory.createMinimal(specMilestone);
     this.specMilestone = specMilestone;
     dataStructureUtil = new DataStructureUtil(spec);
     signingRootUtil = new SigningRootUtil(spec);
@@ -64,8 +55,19 @@ public class Eth2BlockSigningRequestUtil {
   }
 
   public Eth2SigningRequestBody createBlockV2Request() {
-    final BlockRequest blockRequest = new BlockRequest(specMilestone, getBeaconBlock());
+    switch (specMilestone) {
+      case PHASE0:
+      case ALTAIR:
+        return createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlock()));
+      case BELLATRIX:
+        return createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlockHeader()));
+      default:
+        throw new IllegalStateException(
+            "Spec not yet implemented for BLOCKV2 Signing AT: " + specMilestone);
+    }
+  }
 
+  public Eth2SigningRequestBody createBlockV2Request(final BlockRequest blockRequest) {
     return new Eth2SigningRequestBody(
         ArtifactType.BLOCK_V2,
         signingRoot,
@@ -106,19 +108,29 @@ public class Eth2BlockSigningRequestUtil {
         null);
   }
 
-  private tech.pegasys.teku.api.schema.BeaconBlock getBeaconBlock() {
-    if (specMilestone == SpecMilestone.ALTAIR) {
-      return new BeaconBlockAltair(
-          beaconBlock.getSlot(),
-          beaconBlock.getProposerIndex(),
-          beaconBlock.getParentRoot(),
-          beaconBlock.getStateRoot(),
-          getBeaconBlockBodyAltair(beaconBlock.getBody()));
-    } else if (specMilestone == SpecMilestone.PHASE0) {
-      return new BeaconBlockPhase0(beaconBlock);
-    }
+  private BeaconBlockHeader getBeaconBlockHeader() {
+    return new BeaconBlockHeader(
+        beaconBlock.getSlot(),
+        beaconBlock.getProposerIndex(),
+        beaconBlock.getParentRoot(),
+        beaconBlock.getStateRoot(),
+        beaconBlock.getBodyRoot());
+  }
 
-    throw new IllegalStateException("Spec milestone not yet supported: " + specMilestone);
+  private tech.pegasys.teku.api.schema.BeaconBlock getBeaconBlock() {
+    switch (specMilestone) {
+      case PHASE0:
+        return new BeaconBlockPhase0(beaconBlock);
+      case ALTAIR:
+        return new BeaconBlockAltair(
+            beaconBlock.getSlot(),
+            beaconBlock.getProposerIndex(),
+            beaconBlock.getParentRoot(),
+            beaconBlock.getStateRoot(),
+            getBeaconBlockBodyAltair(beaconBlock.getBody()));
+      default:
+        throw new IllegalStateException("BeaconBlock only supported for PHASE0 and ALTAIR in AT");
+    }
   }
 
   private BeaconBlockBodyAltair getBeaconBlockBodyAltair(
