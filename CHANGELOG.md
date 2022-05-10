@@ -1,5 +1,11 @@
 # Changelog
 
+## 22.5.0
+
+### Bugs Fixed
+- Keys loaded using the AWS secrets manager with environment config didn't work when using web identity tokens due to missing sts library.
+
+---
 ## 22.4.1
 
 ### Features Added
