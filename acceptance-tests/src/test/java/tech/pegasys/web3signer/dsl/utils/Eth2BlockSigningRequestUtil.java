@@ -18,12 +18,12 @@ import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockBodyAltair;
 import tech.pegasys.teku.api.schema.phase0.BeaconBlockPhase0;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.TestSpecFactory;
 import tech.pegasys.teku.spec.datastructures.blocks.BeaconBlock;
 import tech.pegasys.teku.spec.datastructures.state.ForkInfo;
-import tech.pegasys.teku.spec.util.DataStructureUtil;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
@@ -32,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class Eth2BlockSigningRequestUtil {
   private final SpecMilestone specMilestone;
-  private final DataStructureUtil dataStructureUtil;
+  private final BeaconBlockUtil beaconBlockUtil;
   private final SigningRootUtil signingRootUtil;
   private final ForkInfo tekuForkInfo;
   private final Fork tekuFork;
@@ -43,14 +43,27 @@ public class Eth2BlockSigningRequestUtil {
   public Eth2BlockSigningRequestUtil(final SpecMilestone specMilestone) {
     final Spec spec = TestSpecFactory.createMinimal(specMilestone);
     this.specMilestone = specMilestone;
-    dataStructureUtil = new DataStructureUtil(spec);
+    beaconBlockUtil = new BeaconBlockUtil(spec);
     signingRootUtil = new SigningRootUtil(spec);
     tekuForkInfo = Eth2RequestUtils.forkInfo().asInternalForkInfo();
     tekuFork = new Fork(tekuForkInfo.getFork());
     forkInfo =
         new tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo(
             tekuFork, tekuForkInfo.getGenesisValidatorsRoot());
-    beaconBlock = dataStructureUtil.randomBeaconBlock(0);
+    beaconBlock = beaconBlockUtil.randomBeaconBlock(UInt64.valueOf(0L));
+    signingRoot = signingRootUtil.signingRootForSignBlock(beaconBlock, tekuForkInfo);
+  }
+
+  public Eth2BlockSigningRequestUtil(final Spec spec, long forkEpoch, long beaconBlockSlot) {
+    this.specMilestone = spec.atEpoch(UInt64.valueOf(forkEpoch)).getMilestone();
+    beaconBlockUtil = new BeaconBlockUtil(spec);
+    signingRootUtil = new SigningRootUtil(spec);
+    tekuForkInfo = Eth2RequestUtils.forkInfo(forkEpoch).asInternalForkInfo();
+    tekuFork = new Fork(tekuForkInfo.getFork());
+    forkInfo =
+        new tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo(
+            tekuFork, tekuForkInfo.getGenesisValidatorsRoot());
+    beaconBlock = beaconBlockUtil.randomBeaconBlock(UInt64.valueOf(beaconBlockSlot));
     signingRoot = signingRootUtil.signingRootForSignBlock(beaconBlock, tekuForkInfo);
   }
 
