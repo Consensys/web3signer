@@ -56,10 +56,10 @@ public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBa
 
   @Test
   void signAndVerifyBlockV2Signature() throws Exception {
-    Path networkConfig = Path.of(Resources.getResource("eth2/network_config.yaml").getPath());
+    final Path networkConfig = Path.of(Resources.getResource("eth2/network_config.yaml").getPath());
     setupEth2SignerWithCustomNetworkConfig(networkConfig.toString());
 
-    Spec spec = SpecFactory.create(networkConfig.toString());
+    final Spec spec = SpecFactory.create(networkConfig.toString());
 
     // network_config.yaml: slots per epoch: 6, Altair fork epoch: 6, Bellatrix fork epoch: 8
     for (int forkEpoch = 4; forkEpoch < 10; forkEpoch++) {
@@ -70,7 +70,8 @@ public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBa
     }
   }
 
-  private void assertResponse(Spec spec, long forkEpoch, long slot) throws JsonProcessingException {
+  private void assertResponse(final Spec spec, final long forkEpoch, final long slot)
+      throws JsonProcessingException {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(spec, forkEpoch, slot);
     final Eth2SigningRequestBody request = util.createBlockV2Request();
     final Response response =
