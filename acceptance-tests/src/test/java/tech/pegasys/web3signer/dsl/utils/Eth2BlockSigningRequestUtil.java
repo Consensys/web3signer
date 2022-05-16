@@ -54,8 +54,9 @@ public class Eth2BlockSigningRequestUtil {
     signingRoot = signingRootUtil.signingRootForSignBlock(beaconBlock, tekuForkInfo);
   }
 
-  public Eth2BlockSigningRequestUtil(final Spec spec, long forkEpoch, long beaconBlockSlot) {
-    this.specMilestone = spec.atEpoch(UInt64.valueOf(forkEpoch)).getMilestone();
+  public Eth2BlockSigningRequestUtil(
+      final Spec spec, final long forkEpoch, final long beaconBlockSlot) {
+    specMilestone = spec.atEpoch(UInt64.valueOf(forkEpoch)).getMilestone();
     beaconBlockUtil = new BeaconBlockUtil(spec);
     signingRootUtil = new SigningRootUtil(spec);
     tekuForkInfo = Eth2RequestUtils.forkInfo(forkEpoch).asInternalForkInfo();
