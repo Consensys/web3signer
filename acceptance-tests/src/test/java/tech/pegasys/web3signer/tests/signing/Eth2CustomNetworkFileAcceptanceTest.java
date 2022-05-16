@@ -19,14 +19,17 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
+import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecFactory;
+import tech.pegasys.teku.spec.datastructures.util.ForkAndSpecMilestone;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.utils.Eth2BlockSigningRequestUtil;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.nio.file.Path;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.io.Resources;
@@ -38,6 +41,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBase {
+  private static final Path NETWORK_CONFIG_PATH =
+      Path.of(Resources.getResource("eth2/network_config.yaml").getPath());
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
@@ -55,22 +60,21 @@ public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBa
   }
 
   @Test
-  void signAndVerifyBlockV2Signature() throws Exception {
-    final Path networkConfig = Path.of(Resources.getResource("eth2/network_config.yaml").getPath());
-    setupEth2SignerWithCustomNetworkConfig(networkConfig.toString());
+  void signAndVerifyBlockV2SignatureForAllEnabledMilestones() throws Exception {
+    setupEth2SignerWithCustomNetworkConfig(NETWORK_CONFIG_PATH);
 
-    final Spec spec = SpecFactory.create(networkConfig.toString());
+    final Spec spec = SpecFactory.create(NETWORK_CONFIG_PATH.toString());
+    final List<ForkAndSpecMilestone> enabledMilestones = spec.getEnabledMilestones();
+    assertThat(enabledMilestones.size()).isEqualTo(3);
 
-    // network_config.yaml: slots per epoch: 6, Altair fork epoch: 6, Bellatrix fork epoch: 8
-    for (int forkEpoch = 4; forkEpoch < 10; forkEpoch++) {
-      final int startingSlot = forkEpoch * 6;
-      for (int slot = startingSlot; slot < startingSlot + 6; slot++) {
-        assertResponse(spec, forkEpoch, slot);
-      }
+    for (final ForkAndSpecMilestone enabledMilestone : enabledMilestones) {
+      final UInt64 forkEpoch = enabledMilestone.getFork().getEpoch();
+      final UInt64 startSlot = spec.computeStartSlotAtEpoch(forkEpoch);
+      assertResponse(spec, forkEpoch, startSlot);
     }
   }
 
-  private void assertResponse(final Spec spec, final long forkEpoch, final long slot)
+  private void assertResponse(final Spec spec, final UInt64 forkEpoch, final UInt64 slot)
       throws JsonProcessingException {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(spec, forkEpoch, slot);
     final Eth2SigningRequestBody request = util.createBlockV2Request();

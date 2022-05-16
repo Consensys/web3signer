@@ -51,7 +51,7 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected void setupEth2SignerWithCustomNetworkConfig(final String networkConfigFile) {
+  protected void setupEth2SignerWithCustomNetworkConfig(final Path networkConfigFile) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory).withMode("eth2").withNetwork(networkConfigFile);
 
