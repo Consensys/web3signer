@@ -87,7 +87,7 @@ public class DeleteTestKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
                   customThreadPool.submit(
                       () -> {
                         secretsManagerClient.deleteSecret(secretRequest);
-                        System.err.println("[DELETE KEYS] deleted" + name);
+                        System.err.println("[DELETE KEYS] deleted " + name);
                         System.err.println("[DELETE KEYS] deleted " + count.incrementAndGet());
                       });
                 }

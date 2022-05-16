@@ -50,7 +50,8 @@ public class AwsKeyPerfAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
   private final String RO_AWS_ACCESS_KEY_ID = System.getenv("RO_AWS_ACCESS_KEY_ID");
   private final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("RO_AWS_SECRET_ACCESS_KEY");
 
-  static final String AWS_REGION = "ap-southeast-2";
+//  static final String AWS_REGION = "ap-southeast-2";
+  static final String AWS_REGION = "us-east-2";
 
   private final List<AwsKeyInfo> awsKeyInfos = new ArrayList<>();
   private AwsSecretsManagerUtil awsSecretsManagerUtil;
