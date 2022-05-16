@@ -35,10 +35,10 @@ public class BeaconBlockUtil {
   }
 
   public BeaconBlock randomBeaconBlock(UInt64 slotNum) {
-    UInt64 proposerIndex = util.randomUInt64();
-    Bytes32 previousRoot = util.randomBytes32();
-    Bytes32 stateRoot = util.randomBytes32();
-    BeaconBlockBody body = this.randomBeaconBlockBody(slotNum);
+    final UInt64 proposerIndex = util.randomUInt64();
+    final Bytes32 previousRoot = util.randomBytes32();
+    final Bytes32 stateRoot = util.randomBytes32();
+    final BeaconBlockBody body = randomBeaconBlockBody(slotNum);
     return new BeaconBlock(
         util.getSpec().atSlot(slotNum).getSchemaDefinitions().getBeaconBlockSchema(),
         slotNum,
@@ -48,40 +48,39 @@ public class BeaconBlockUtil {
         body);
   }
 
-  public BeaconBlockBody randomBeaconBlockBody(final UInt64 slotNum) {
-    BeaconBlockBodySchema<?> schema =
+  private BeaconBlockBody randomBeaconBlockBody(final UInt64 slotNum) {
+    final BeaconBlockBodySchema<?> schema =
         util.getSpec().atSlot(slotNum).getSchemaDefinitions().getBeaconBlockBodySchema();
     return schema.createBlockBody(
-        (builder) -> {
-          builder
-              .randaoReveal(util.randomSignature())
-              .eth1Data(util.randomEth1Data())
-              .graffiti(Bytes32.ZERO)
-              .proposerSlashings(
-                  util.randomSszList(
-                      schema.getProposerSlashingsSchema(), util::randomProposerSlashing, 1L))
-              .attesterSlashings(
-                  util.randomSszList(
-                      schema.getAttesterSlashingsSchema(), util::randomAttesterSlashing, 1L))
-              .attestations(
-                  util.randomSszList(schema.getAttestationsSchema(), util::randomAttestation, 3L))
-              .deposits(
-                  util.randomSszList(
-                      schema.getDepositsSchema(), util::randomDepositWithoutIndex, 1L))
-              .voluntaryExits(
-                  util.randomSszList(
-                      schema.getVoluntaryExitsSchema(), util::randomSignedVoluntaryExit, 1L))
-              .syncAggregate(() -> util.randomSyncAggregateIfRequiredBySchema(schema))
-              .executionPayload(() -> randomExecutionPayloadIfRequiredBySchema(schema, slotNum));
-        });
+        (builder) ->
+            builder
+                .randaoReveal(util.randomSignature())
+                .eth1Data(util.randomEth1Data())
+                .graffiti(Bytes32.ZERO)
+                .proposerSlashings(
+                    util.randomSszList(
+                        schema.getProposerSlashingsSchema(), util::randomProposerSlashing, 1L))
+                .attesterSlashings(
+                    util.randomSszList(
+                        schema.getAttesterSlashingsSchema(), util::randomAttesterSlashing, 1L))
+                .attestations(
+                    util.randomSszList(schema.getAttestationsSchema(), util::randomAttestation, 3L))
+                .deposits(
+                    util.randomSszList(
+                        schema.getDepositsSchema(), util::randomDepositWithoutIndex, 1L))
+                .voluntaryExits(
+                    util.randomSszList(
+                        schema.getVoluntaryExitsSchema(), util::randomSignedVoluntaryExit, 1L))
+                .syncAggregate(() -> util.randomSyncAggregateIfRequiredBySchema(schema))
+                .executionPayload(() -> randomExecutionPayloadIfRequiredBySchema(schema, slotNum)));
   }
 
-  public ExecutionPayload randomExecutionPayloadIfRequiredBySchema(
-      BeaconBlockBodySchema<?> schema, final UInt64 slotNum) {
+  private ExecutionPayload randomExecutionPayloadIfRequiredBySchema(
+      final BeaconBlockBodySchema<?> schema, final UInt64 slotNum) {
     return schema.toVersionBellatrix().map(__ -> randomExecutionPayload(slotNum)).orElse(null);
   }
 
-  public ExecutionPayload randomExecutionPayload(final UInt64 slotNum) {
+  private ExecutionPayload randomExecutionPayload(final UInt64 slotNum) {
     final SpecConfigBellatrix specConfigBellatrix =
         SpecConfigBellatrix.required(util.getSpec().getGenesisSpecConfig());
     return SchemaDefinitionsBellatrix.required(
