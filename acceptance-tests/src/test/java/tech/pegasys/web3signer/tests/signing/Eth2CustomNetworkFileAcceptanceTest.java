@@ -18,7 +18,6 @@ import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecFactory;
@@ -57,32 +56,45 @@ public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBa
     final String configFilename = publicKey.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+
+    setupEth2SignerWithCustomNetworkConfig(NETWORK_CONFIG_PATH);
   }
 
   @Test
   void signAndVerifyBlockV2SignatureForAllEnabledMilestones() throws Exception {
-    setupEth2SignerWithCustomNetworkConfig(NETWORK_CONFIG_PATH);
-
     final Spec spec = SpecFactory.create(NETWORK_CONFIG_PATH.toString());
     final List<ForkAndSpecMilestone> enabledMilestones = spec.getEnabledMilestones();
     assertThat(enabledMilestones.size()).isEqualTo(3);
 
-    for (final ForkAndSpecMilestone enabledMilestone : enabledMilestones) {
-      final UInt64 forkEpoch = enabledMilestone.getFork().getEpoch();
-      final UInt64 startSlot = spec.computeStartSlotAtEpoch(forkEpoch);
-      assertResponse(spec, forkEpoch, startSlot);
+    for (final ForkAndSpecMilestone forkAndSpecMilestone : enabledMilestones) {
+      final Eth2SigningRequestBody request =
+          createBlockV2SigningRequest(spec, forkAndSpecMilestone);
+      final Bytes signingRootSignature = sendSignRequestAndReceiveSignature(request);
+      final Bytes expectedSigningRootSignature =
+          calculateSigningRootSignature(request.getSigningRoot());
+
+      assertThat(signingRootSignature).isEqualTo(expectedSigningRootSignature);
     }
   }
 
-  private void assertResponse(final Spec spec, final UInt64 forkEpoch, final UInt64 slot)
+  private Eth2SigningRequestBody createBlockV2SigningRequest(
+      final Spec spec, final ForkAndSpecMilestone forkAndMilestone) {
+    final UInt64 forkEpoch = forkAndMilestone.getFork().getEpoch();
+    final UInt64 startSlot = spec.computeStartSlotAtEpoch(forkEpoch);
+
+    final Eth2BlockSigningRequestUtil util =
+        new Eth2BlockSigningRequestUtil(spec, forkEpoch, startSlot);
+    return util.createBlockV2Request();
+  }
+
+  private Bytes sendSignRequestAndReceiveSignature(final Eth2SigningRequestBody request)
       throws JsonProcessingException {
-    final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(spec, forkEpoch, slot);
-    final Eth2SigningRequestBody request = util.createBlockV2Request();
     final Response response =
         signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
-    final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
-    final BLSSignature expectedSignature =
-        BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
-    assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
+    return verifyAndGetSignatureResponse(response, ContentType.JSON);
+  }
+
+  private Bytes calculateSigningRootSignature(final Bytes signingRoot) {
+    return BLS.sign(keyPair.getSecretKey(), signingRoot).toBytesCompressed();
   }
 }
