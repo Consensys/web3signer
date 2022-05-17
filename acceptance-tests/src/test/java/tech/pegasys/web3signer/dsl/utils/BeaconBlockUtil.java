@@ -34,7 +34,7 @@ public class BeaconBlockUtil {
     util = new DataStructureUtil(spec);
   }
 
-  public BeaconBlock randomBeaconBlock(UInt64 slotNum) {
+  public BeaconBlock randomBeaconBlock(final UInt64 slotNum) {
     final UInt64 proposerIndex = util.randomUInt64();
     final Bytes32 previousRoot = util.randomBytes32();
     final Bytes32 stateRoot = util.randomBytes32();
