@@ -20,12 +20,6 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYM
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.stream.Stream;
-import org.apache.commons.io.FilenameUtils;
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.bls.keystore.KeyStore;
@@ -61,7 +55,6 @@ import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
-import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
@@ -72,11 +65,16 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFacto
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
@@ -84,6 +82,7 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import io.vertx.ext.web.openapi.RouterBuilder;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -348,21 +347,31 @@ public class Eth2Runner extends Runner {
 
   final Collection<ArtifactSigner> loadKeystoreSigners() {
     try (final Stream<Path> fileStream = Files.list(keystoreParameters.getKeystoresPath())) {
-      return fileStream.map(keystoreFile -> {
-            try {
-              LOG.debug("Loading keystore {}", keystoreFile);
-              final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
-              final String key = FilenameUtils.removeExtension(keystoreFile.getFileName().toString());
-              final Path passwordPath = keystoreParameters.getKeystoresPasswordsPath()
-                  .resolve(key + ".txt");
-              final String password = Files.readString(passwordPath);
-              final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-              final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
-              return new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE);
-            } catch (final KeyStoreValidationException | IOException e) {
-              throw new SigningMetadataException(e.getMessage(), e);
-            }
-          }).parallel().collect(Collectors.toList());
+      return fileStream
+          .parallel()
+          .map(
+              keystoreFile -> {
+                try {
+                  LOG.debug("Loading keystore {}", keystoreFile);
+                  final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
+                  final String key =
+                      FilenameUtils.removeExtension(keystoreFile.getFileName().toString());
+                  final Path passwordPath =
+                      keystoreParameters.getKeystoresPasswordsPath().resolve(key + ".txt");
+                  final String password = Files.readString(passwordPath);
+                  final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
+                  final BLSKeyPair keyPair =
+                      new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
+                  final BlsArtifactSigner artifactSigner =
+                      new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE);
+                  return Optional.of(artifactSigner);
+                } catch (final KeyStoreValidationException | IOException e) {
+                  LOG.error("Keystore could not be loaded {}", keystoreFile, e);
+                  return Optional.<ArtifactSigner>empty();
+                }
+              })
+          .flatMap(Optional::stream)
+          .collect(Collectors.toList());
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied keystore directory", e);
       return Collections.emptyList();
