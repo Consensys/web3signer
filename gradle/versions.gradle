@@ -31,7 +31,7 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.6.2'
 
-    dependencySet(group: 'io.vertx', version: '4.2.6') {
+    dependencySet(group: 'io.vertx', version: '4.3.0') {
       entry 'vertx-codegen'
       entry 'vertx-core'
       entry 'vertx-unit'
@@ -39,6 +39,22 @@ dependencyManagement {
       entry 'vertx-web'
       entry 'vertx-web-openapi'
       entry 'vertx-junit5'
+    }
+
+    // overriding to 4.1.77 manually to address CVE-2022-24823
+    dependencySet(group: 'io.netty', version: '4.1.77.Final') {
+      entry 'netty-all'
+
+      entry 'netty-codec'
+      entry 'netty-codec-dns'
+      entry 'netty-codec-http'
+      entry 'netty-codec-http2'
+      entry 'netty-codec-socks'
+
+      entry 'netty-handler'
+      entry 'netty-handler-proxy'
+
+      entry 'netty-resolver-dns'
     }
 
     dependency 'javax.activation:activation:1.1.1'
