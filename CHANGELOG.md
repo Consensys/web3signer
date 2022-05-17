@@ -1,5 +1,23 @@
 # Changelog
 
+## 22.5.0
+### Breaking Changes
+- ETH2 Mode - block signing request (BLOCK_V2), starting from BELLATRIX fork, use block_header instead of block. [#547](https://github.com/ConsenSys/web3signer/pull/547)
+
+### Features Added
+- Added support for optimized block signing requests starting from Bellatrix fork. [#437](https://github.com/ConsenSys/web3signer/issues/437)
+- Early access: Support for Gnosis network in Eth2 mode. `--network gnosis`
+
+### Bugs Fixed
+- Keys loaded using the AWS secrets manager with environment config didn't work when using web identity tokens due to missing sts library.
+
+---
+## 22.4.1
+
+### Features Added
+- Update various library dependencies
+
+---
 ## 22.4.0
 
 ### Breaking Changes

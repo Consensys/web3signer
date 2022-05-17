@@ -20,7 +20,6 @@ import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.compute_d
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.api.schema.AttestationData;
-import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
 import tech.pegasys.teku.api.schema.altair.SyncCommitteeContribution;
 import tech.pegasys.teku.core.signatures.SigningRootUtil;
@@ -29,6 +28,7 @@ import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggregatorSelectionDataSchema;
 import tech.pegasys.teku.spec.logic.common.util.SyncCommitteeUtil;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
+import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
@@ -176,13 +176,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     final ForkInfo forkInfo = eth2SigningRequestBody.getForkInfo();
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
-        return maySignBlock(publicKey, signingRoot, eth2SigningRequestBody.getBlock(), forkInfo);
       case BLOCK_V2:
-        return maySignBlock(
-            publicKey,
-            signingRoot,
-            eth2SigningRequestBody.getBlockRequest().getBeaconBlock(),
-            forkInfo);
+        return maySignBlock(publicKey, signingRoot, getBlockSlot(eth2SigningRequestBody), forkInfo);
       case ATTESTATION:
         final AttestationData attestation = eth2SigningRequestBody.getAttestation();
         return slashingProtection
@@ -198,12 +193,32 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     }
   }
 
+  private UInt64 getBlockSlot(final Eth2SigningRequestBody eth2SigningRequestBody) {
+    final UInt64 blockSlot;
+    if (eth2SigningRequestBody.getType() == ArtifactType.BLOCK) {
+      blockSlot = UInt64.valueOf(eth2SigningRequestBody.getBlock().slot.bigIntegerValue());
+    } else {
+      final BlockRequest blockRequest = eth2SigningRequestBody.getBlockRequest();
+      switch (blockRequest.getVersion()) {
+        case PHASE0:
+        case ALTAIR:
+          blockSlot = UInt64.valueOf(blockRequest.getBeaconBlock().slot.bigIntegerValue());
+          break;
+        case BELLATRIX:
+        default:
+          blockSlot = UInt64.valueOf(blockRequest.getBeaconBlockHeader().slot.bigIntegerValue());
+          break;
+      }
+    }
+
+    return blockSlot;
+  }
+
   private boolean maySignBlock(
       final Bytes publicKey,
       final Bytes signingRoot,
-      final BeaconBlock beaconBlock,
+      final UInt64 blockSlot,
       final ForkInfo forkInfo) {
-    final UInt64 blockSlot = UInt64.valueOf(beaconBlock.slot.bigIntegerValue());
     return slashingProtection
         .get()
         .maySignBlock(publicKey, signingRoot, blockSlot, forkInfo.getGenesisValidatorsRoot());
@@ -218,9 +233,25 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             body.getForkInfo().asInternalForkInfo());
       case BLOCK_V2:
         checkArgument(body.getBlockRequest() != null, "beacon_block must be specified");
-        return signingRootUtil.signingRootForSignBlock(
-            body.getBlockRequest().getBeaconBlock().asInternalBeaconBlock(eth2Spec),
-            body.getForkInfo().asInternalForkInfo());
+        final Bytes blockV2SigningRoot;
+        switch (body.getBlockRequest().getVersion()) {
+          case PHASE0:
+          case ALTAIR:
+            blockV2SigningRoot =
+                signingRootUtil.signingRootForSignBlock(
+                    body.getBlockRequest().getBeaconBlock().asInternalBeaconBlock(eth2Spec),
+                    body.getForkInfo().asInternalForkInfo());
+            break;
+          case BELLATRIX:
+          default:
+            blockV2SigningRoot =
+                signingRootUtil.signingRootForSignBlockHeader(
+                    body.getBlockRequest().getBeaconBlockHeader().asInternalBeaconBlockHeader(),
+                    body.getForkInfo().asInternalForkInfo());
+            break;
+        }
+
+        return blockV2SigningRoot;
       case ATTESTATION:
         checkArgument(body.getAttestation() != null, "attestation must be specified");
         return signingRootUtil.signingRootForSignAttestationData(

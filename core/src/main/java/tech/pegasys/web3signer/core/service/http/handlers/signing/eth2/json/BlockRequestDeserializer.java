@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json;
 
 import tech.pegasys.teku.api.schema.BeaconBlock;
+import tech.pegasys.teku.api.schema.BeaconBlockHeader;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
@@ -36,16 +37,26 @@ public class BlockRequestDeserializer extends JsonDeserializer<BlockRequest> {
     final JsonNode node = codec.readTree(p);
     final SpecMilestone specMilestone = SpecMilestone.valueOf(node.findValue("version").asText());
     final BeaconBlock beaconBlock;
+    final BeaconBlockHeader beaconBlockHeader;
+    final BlockRequest blockRequest;
     switch (specMilestone) {
-      case ALTAIR:
-        beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlockAltair.class);
-        break;
       case PHASE0:
         beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlock.class);
+        blockRequest = new BlockRequest(specMilestone, beaconBlock);
+        break;
+      case ALTAIR:
+        beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlockAltair.class);
+        blockRequest = new BlockRequest(specMilestone, beaconBlock);
+        break;
+      case BELLATRIX:
+        // for BELLATRIX we only need block_header instead of complete block
+        beaconBlockHeader =
+            codec.treeToValue(node.findValue("block_header"), BeaconBlockHeader.class);
+        blockRequest = new BlockRequest(specMilestone, beaconBlockHeader);
         break;
       default:
-        throw new IOException("Unsupported Milestone during deserialization: " + specMilestone);
+        throw new IllegalStateException("Fork version not yet supported: " + specMilestone);
     }
-    return new BlockRequest(specMilestone, beaconBlock);
+    return blockRequest;
   }
 }

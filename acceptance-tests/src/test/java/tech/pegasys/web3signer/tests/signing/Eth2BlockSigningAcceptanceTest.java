@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.tests.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -21,6 +20,8 @@ import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.spec.SpecMilestone;
+import tech.pegasys.teku.spec.networks.Eth2Network;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.utils.Eth2BlockSigningRequestUtil;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -28,6 +29,7 @@ import tech.pegasys.web3signer.signing.KeyType;
 
 import java.nio.file.Path;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
@@ -37,7 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
-public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
+public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
@@ -57,20 +59,11 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
   @ParameterizedTest
   @EnumSource(
       value = SpecMilestone.class,
-      names = {"PHASE0", "ALTAIR"})
+      names = {"PHASE0", "ALTAIR", "BELLATRIX"})
   void signAndVerifyBlockV2Signature(final SpecMilestone specMilestone) throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
 
-    switch (specMilestone) {
-      case ALTAIR:
-        setupEth2SignerMinimal();
-        break;
-      case PHASE0:
-        setupEth2SignerMinimalWithoutAltairFork();
-        break;
-      default:
-        fail("Spec milestone not yet supported" + specMilestone);
-    }
+    setupEth2Signer(Eth2Network.MINIMAL, specMilestone);
 
     final Eth2SigningRequestBody request = util.createBlockV2Request();
     final Response response =
@@ -84,7 +77,7 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
   @Test
   void signAndVerifyLegacyBlockSignature() throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(SpecMilestone.PHASE0);
-    setupEth2SignerMinimalWithoutAltairFork();
+    setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.PHASE0);
 
     final Eth2SigningRequestBody request = util.createLegacyBlockRequest();
     final Response response =
@@ -93,5 +86,19 @@ public class Eth2AltairBlockSigningAcceptanceTest extends SigningAcceptanceTestB
     final BLSSignature expectedSignature =
         BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
+  }
+
+  @Test
+  void emptyBlockRequestReturnsBadRequestStatus() throws JsonProcessingException {
+    final Eth2BlockSigningRequestUtil util =
+        new Eth2BlockSigningRequestUtil(SpecMilestone.BELLATRIX);
+    setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.BELLATRIX);
+
+    final Eth2SigningRequestBody request =
+        util.createBlockV2Request(new BlockRequest(SpecMilestone.BELLATRIX));
+    final Response response =
+        signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
+
+    response.then().statusCode(400);
   }
 }

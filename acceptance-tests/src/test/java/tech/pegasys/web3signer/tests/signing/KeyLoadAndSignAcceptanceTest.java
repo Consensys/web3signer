@@ -21,6 +21,8 @@ import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.teku.spec.SpecMilestone;
+import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
@@ -59,7 +61,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     if (keyType == KeyType.BLS) {
       setupEth1Signer();
     } else {
-      setupEth2Signer();
+      setupEth2Signer(Eth2Network.MAINNET, SpecMilestone.ALTAIR);
     }
     final String body = createBody(keyType);
     given()
@@ -82,7 +84,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupEth2Signer();
+    setupEth2Signer(Eth2Network.MAINNET, SpecMilestone.ALTAIR);
 
     // without client-side openapi validator
     given()
@@ -103,7 +105,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupEth2Signer();
+    setupEth2Signer(Eth2Network.MAINNET, SpecMilestone.ALTAIR);
 
     // without OpenAPI validation filter
     given()
@@ -124,7 +126,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupEth2Signer();
+    setupEth2Signer(Eth2Network.MAINNET, SpecMilestone.ALTAIR);
 
     // without OpenAPI validation filter
     given()
@@ -145,7 +147,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupEth2SignerMinimalWithoutAltairFork();
+    setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.PHASE0);
 
     final Eth2SigningRequestBody blockRequest = Eth2RequestUtils.createBlockRequest();
     final JsonObject jsonObject =
