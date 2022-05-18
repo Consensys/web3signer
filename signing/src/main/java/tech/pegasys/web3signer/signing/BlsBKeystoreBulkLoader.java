@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,31 +41,37 @@ public class BlsBKeystoreBulkLoader {
   private static final Logger LOG = LogManager.getLogger();
 
   public Collection<ArtifactSigner> load(final KeystoreParameters keystoreParameters) {
+    final List<Path> keystoreFiles = keystoreFiles(keystoreParameters);
+    return keystoreFiles.parallelStream()
+        .map(keystoreFile -> createSignerForKeystore(keystoreParameters, keystoreFile))
+        .flatMap(Optional::stream)
+        .collect(Collectors.toList());
+  }
+
+  private Optional<? extends ArtifactSigner> createSignerForKeystore(
+      final KeystoreParameters keystoreParameters, final Path keystoreFile) {
+    try {
+      LOG.debug("Loading keystore {}", keystoreFile);
+      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
+      final String key = FilenameUtils.removeExtension(keystoreFile.getFileName().toString());
+      final Path passwordPath =
+          keystoreParameters.getKeystoresPasswordsPath().resolve(key + ".txt");
+      final String password = Files.readString(passwordPath);
+      final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
+      final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
+      final BlsArtifactSigner artifactSigner =
+          new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE);
+      return Optional.of(artifactSigner);
+    } catch (final KeyStoreValidationException | IOException e) {
+      LOG.error("Keystore could not be loaded {}", keystoreFile, e);
+      return Optional.empty();
+    }
+  }
+
+  private List<Path> keystoreFiles(final KeystoreParameters keystoreParameters) {
     try (final Stream<Path> fileStream = Files.list(keystoreParameters.getKeystoresPath())) {
       return fileStream
-          .parallel()
-          .map(
-              keystoreFile -> {
-                try {
-                  LOG.debug("Loading keystore {}", keystoreFile);
-                  final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
-                  final String key =
-                      FilenameUtils.removeExtension(keystoreFile.getFileName().toString());
-                  final Path passwordPath =
-                      keystoreParameters.getKeystoresPasswordsPath().resolve(key + ".txt");
-                  final String password = Files.readString(passwordPath);
-                  final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-                  final BLSKeyPair keyPair =
-                      new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
-                  final BlsArtifactSigner artifactSigner =
-                      new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE);
-                  return Optional.of(artifactSigner);
-                } catch (final KeyStoreValidationException | IOException e) {
-                  LOG.error("Keystore could not be loaded {}", keystoreFile, e);
-                  return Optional.<ArtifactSigner>empty();
-                }
-              })
-          .flatMap(Optional::stream)
+          .filter(path -> FilenameUtils.getExtension(path.toString()).equalsIgnoreCase("json"))
           .collect(Collectors.toList());
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied keystore directory", e);
