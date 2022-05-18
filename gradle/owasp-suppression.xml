@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress>
+        <notes><![CDATA[
+          Suppress CVE-2022-24823 till VertX version catch up with the latest netty version.
+          ]]></notes>
+        <cve>CVE-2022-24823</cve>
+    </suppress>
+</suppressions>
