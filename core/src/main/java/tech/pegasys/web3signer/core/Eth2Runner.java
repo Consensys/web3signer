@@ -44,6 +44,7 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.BlsBKeystoreBulkLoader;
 import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
@@ -289,7 +290,8 @@ public class Eth2Runner extends Runner {
           }
 
           if (keystoreParameters.isEnabled()) {
-            signers.addAll(loadKeystoreSigners());
+            final BlsBKeystoreBulkLoader blsBKeystoreBulkLoader = new BlsBKeystoreBulkLoader();
+            signers.addAll(blsBKeystoreBulkLoader.load(keystoreParameters));
           }
 
           final List<Bytes> validators =
