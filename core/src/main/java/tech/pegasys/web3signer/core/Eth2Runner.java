@@ -291,7 +291,10 @@ public class Eth2Runner extends Runner {
 
           if (keystoreParameters.isEnabled()) {
             final BlsBKeystoreBulkLoader blsBKeystoreBulkLoader = new BlsBKeystoreBulkLoader();
-            signers.addAll(blsBKeystoreBulkLoader.load(keystoreParameters));
+            signers.addAll(
+                blsBKeystoreBulkLoader.load(
+                    keystoreParameters.getKeystoresPath(),
+                    keystoreParameters.getKeystoresPasswordsPath()));
           }
 
           final List<Bytes> validators =
