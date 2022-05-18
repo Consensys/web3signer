@@ -222,6 +222,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withNetwork(final Path networkConfigFile) {
+    this.network = networkConfigFile.toString();
+    return this;
+  }
+
   public SignerConfigurationBuilder withKeyManagerApiEnabled(final boolean keyManagerApiEnabled) {
     this.keyManagerApiEnabled = keyManagerApiEnabled;
     return this;

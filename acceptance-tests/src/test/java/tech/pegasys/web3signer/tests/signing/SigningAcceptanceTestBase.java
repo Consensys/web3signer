@@ -51,6 +51,15 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
+  protected void setupEth2SignerWithCustomNetworkConfig(final Path networkConfigFile) {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory).withMode("eth2").withNetwork(networkConfigFile);
+
+    // no need to set custom fork epochs as they are meant to be provided in networkConfigFile
+
+    startSigner(builder.build());
+  }
+
   private void setForkEpochs(SpecMilestone specMilestone, SignerConfigurationBuilder builder) {
     switch (specMilestone) {
       case PHASE0:

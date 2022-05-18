@@ -354,6 +354,16 @@ public class Eth2RequestUtils {
     return new ForkInfo(fork, genesisValidatorsRoot);
   }
 
+  public static ForkInfo forkInfo(long epoch) {
+    final Fork fork =
+        new Fork(
+            Bytes4.fromHexString("0x00000001"),
+            Bytes4.fromHexString("0x00000001"),
+            UInt64.valueOf(epoch));
+    final Bytes32 genesisValidatorsRoot = Bytes32.fromHexString(GENESIS_VALIDATORS_ROOT);
+    return new ForkInfo(fork, genesisValidatorsRoot);
+  }
+
   private static Eth2SigningRequestBody createSyncCommitteeMessageRequest() {
     final ForkInfo forkInfo = forkInfo();
     final Bytes signingRoot;
