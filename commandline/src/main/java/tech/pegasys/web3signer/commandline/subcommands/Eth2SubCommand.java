@@ -22,6 +22,7 @@ import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoreParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.signing.config.KeystoreParameters;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.List;
@@ -141,6 +142,7 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionParameters.getPruningSlotsPerEpoch(), "Pruning slots per epoch");
 
     validateAzureParameters();
+    validateKeystoreParameters(keystoreParameters);
   }
 
   private void validateAzureParameters() {
@@ -180,6 +182,15 @@ public class Eth2SubCommand extends ModeSubCommand {
       }
     }
     return missingFields;
+  }
+
+  private void validateKeystoreParameters(final KeystoreParameters keystoreParameters) {
+    if (keystoreParameters.hasKeystoresPasswordsPath()
+        && keystoreParameters.hasKeystoresPasswordFile()) {
+      throw new ParameterException(
+          commandSpec.commandLine(),
+          "Only one of --keystores-passwords-path or --keystores-password-file options can be specified");
+    }
   }
 
   private void validatePositiveValue(final long value, final String fieldName) {

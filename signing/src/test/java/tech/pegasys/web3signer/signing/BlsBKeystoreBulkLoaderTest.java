@@ -43,8 +43,8 @@ class BlsBKeystoreBulkLoaderTest {
   private static final Bytes IV = Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789");
   private static final BLSKeyPair KEY_PAIR_1 = BLSTestUtil.randomKeyPair(0);
   private static final BLSKeyPair KEY_PAIR_2 = BLSTestUtil.randomKeyPair(1);
-  public static final String KEYSTORE_PASSWORD_1 = "password1";
-  public static final String KEYSTORE_PASSWORD_2 = "password2";
+  private static final String KEYSTORE_PASSWORD_1 = "password1";
+  private static final String KEYSTORE_PASSWORD_2 = "password2";
   private final BlsBKeystoreBulkLoader loader = new BlsBKeystoreBulkLoader();
 
   // TODO can use a password file instead of password directory
@@ -52,7 +52,8 @@ class BlsBKeystoreBulkLoaderTest {
   @Test
   void loadingEmptyKeystoreDirReturnsNoSigners(
       final @TempDir Path keystoreDir, final @TempDir Path passwordDir) {
-    final Collection<ArtifactSigner> signers = loader.load(keystoreDir, passwordDir);
+    final Collection<ArtifactSigner> signers =
+        loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
     assertThat(signers).isEmpty();
   }
 
@@ -60,7 +61,25 @@ class BlsBKeystoreBulkLoaderTest {
   void loadsMultipleKeystores(final @TempDir Path keystoreDir, final @TempDir Path passwordDir) {
     createKeystore(KEY_PAIR_1, keystoreDir, passwordDir, "password1");
     createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
-    final Collection<ArtifactSigner> signers = loader.load(keystoreDir, passwordDir);
+    final Collection<ArtifactSigner> signers =
+        loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
+    assertThat(signers).hasSize(2);
+    assertThatSignerHasPublicKey(signers, KEY_PAIR_1);
+    assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
+  }
+
+  @Test
+  void loadsMultipleKeystoresUsingSinglePasswordFile(final @TempDir Path tempDir)
+      throws IOException {
+    final Path keystoreDir = tempDir.resolve("keystores");
+    Files.createDirectory(keystoreDir);
+    createKeystoreFile(KEY_PAIR_1, keystoreDir, KEYSTORE_PASSWORD_1);
+    createKeystoreFile(KEY_PAIR_2, keystoreDir, KEYSTORE_PASSWORD_1);
+    final Path passwordFile = tempDir.resolve("password.txt");
+    Files.writeString(passwordFile, KEYSTORE_PASSWORD_1);
+
+    final Collection<ArtifactSigner> signers =
+        loader.loadKeystoresUsingPasswordFile(keystoreDir, passwordFile);
     assertThat(signers).hasSize(2);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
@@ -77,7 +96,8 @@ class BlsBKeystoreBulkLoaderTest {
     final Path targetPath = keystoreDir.resolve(KEY_PAIR_1.getPublicKey() + ".ignored");
     Files.move(sourcePath, targetPath);
 
-    final Collection<ArtifactSigner> signers = loader.load(keystoreDir, passwordDir);
+    final Collection<ArtifactSigner> signers =
+        loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
     assertThat(signers).hasSize(1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
   }
@@ -88,7 +108,8 @@ class BlsBKeystoreBulkLoaderTest {
     createKeystoreFile(KEY_PAIR_1, keystoreDir, KEYSTORE_PASSWORD_1);
     createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
 
-    final Collection<ArtifactSigner> signers = loader.load(keystoreDir, passwordDir);
+    final Collection<ArtifactSigner> signers =
+        loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
     assertThat(signers).hasSize(1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
   }
@@ -100,7 +121,8 @@ class BlsBKeystoreBulkLoaderTest {
     createKeystorePasswordFile(KEY_PAIR_1, passwordDir, KEYSTORE_PASSWORD_1);
     createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
 
-    final Collection<ArtifactSigner> signers = loader.load(keystoreDir, passwordDir);
+    final Collection<ArtifactSigner> signers =
+        loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
     assertThat(signers).hasSize(1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
   }
@@ -108,7 +130,10 @@ class BlsBKeystoreBulkLoaderTest {
   @Test
   void invalidKeystoreDirectoryThrowsError(
       final @TempDir Path keystoreDir, final @TempDir Path passwordDir) {
-    assertThatThrownBy(() -> loader.load(keystoreDir.resolve("invalidKeystorePath"), passwordDir))
+    assertThatThrownBy(
+            () ->
+                loader.loadKeystoresUsingPasswordDir(
+                    keystoreDir.resolve("invalidKeystorePath"), passwordDir))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Unable to access the supplied keystore directory");
   }

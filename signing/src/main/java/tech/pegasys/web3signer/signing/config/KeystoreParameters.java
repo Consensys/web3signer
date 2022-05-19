@@ -20,5 +20,17 @@ public interface KeystoreParameters {
 
   Path getKeystoresPasswordsPath();
 
-  boolean isEnabled();
+  Path getKeystoresPasswordFile();
+
+  default boolean isEnabled() {
+    return getKeystoresPath() != null;
+  }
+
+  default boolean hasKeystoresPasswordsPath() {
+    return getKeystoresPath() != null;
+  }
+
+  default boolean hasKeystoresPasswordFile() {
+    return getKeystoresPasswordFile() != null;
+  }
 }

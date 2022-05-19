@@ -38,22 +38,42 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BlsBKeystoreBulkLoader {
   private static final Logger LOG = LogManager.getLogger();
 
-  public Collection<ArtifactSigner> load(
+  public Collection<ArtifactSigner> loadKeystoresUsingPasswordDir(
       final Path keystoresDirectory, final Path passwordsDirectory) {
     final List<Path> keystoreFiles = keystoreFiles(keystoresDirectory);
     return keystoreFiles.parallelStream()
-        .map(keystoreFile -> createSignerForKeystore(keystoreFile, passwordsDirectory))
+        .map(
+            keystoreFile ->
+                createSignerForKeystore(
+                    keystoreFile,
+                    key -> Files.readString(passwordsDirectory.resolve(key + ".txt"))))
+        .flatMap(Optional::stream)
+        .collect(Collectors.toList());
+  }
+
+  public Collection<ArtifactSigner> loadKeystoresUsingPasswordFile(
+      final Path keystoresDirectory, final Path passwordFile) {
+    final List<Path> keystoreFiles = keystoreFiles(keystoresDirectory);
+    final String password;
+    try {
+      password = Files.readString(passwordFile);
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to read the password file", e);
+    }
+
+    return keystoreFiles.parallelStream()
+        .map(keystoreFile -> createSignerForKeystore(keystoreFile, key -> password))
         .flatMap(Optional::stream)
         .collect(Collectors.toList());
   }
 
   private Optional<? extends ArtifactSigner> createSignerForKeystore(
-      final Path keystoreFile, final Path passwordsDirectory) {
+      final Path keystoreFile, final PasswordRetriever passwordRetriever) {
     try {
       LOG.debug("Loading keystore {}", keystoreFile);
       final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
       final String key = FilenameUtils.removeExtension(keystoreFile.getFileName().toString());
-      final String password = retrievePassword(passwordsDirectory, key);
+      final String password = passwordRetriever.retrievePassword(key);
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
       final BlsArtifactSigner artifactSigner =
@@ -65,10 +85,9 @@ public class BlsBKeystoreBulkLoader {
     }
   }
 
-  private String retrievePassword(final Path passwordsDirectory, final String key)
-      throws IOException {
-    final Path passwordPath = passwordsDirectory.resolve(key + ".txt");
-    return Files.readString(passwordPath);
+  @FunctionalInterface
+  private interface PasswordRetriever {
+    String retrievePassword(final String key) throws IOException;
   }
 
   private List<Path> keystoreFiles(final Path keystoresPath) {

@@ -29,8 +29,16 @@ public class PicoKeystoreParameters implements KeystoreParameters {
       names = {"--keystores-passwords-path"},
       description =
           "The path to a directory with the corresponding passwords file for the keystores."
-              + " Filename for the password without the extension must match the keystore filename.")
+              + " Filename for the password without the extension must match the keystore filename."
+              + " This cannot be set if --keystores-password-file is also specified.")
   private Path keystoresPasswordsPath;
+
+  @Option(
+      names = {"--keystores-password-file"},
+      description =
+          "The path to a file that contains the password that all keystores use."
+              + " This cannot be set if --keystores-passwords-path is also specified.")
+  private Path keystoresPasswordFile;
 
   @Override
   public Path getKeystoresPath() {
@@ -43,7 +51,7 @@ public class PicoKeystoreParameters implements KeystoreParameters {
   }
 
   @Override
-  public boolean isEnabled() {
-    return keystoresPath != null;
+  public Path getKeystoresPasswordFile() {
+    return keystoresPasswordFile;
   }
 }
