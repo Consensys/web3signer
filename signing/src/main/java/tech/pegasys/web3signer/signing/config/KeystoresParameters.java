@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.signing.config;
 
 import java.nio.file.Path;
 
-public interface KeystoreParameters {
+public interface KeystoresParameters {
 
   Path getKeystoresPath();
 
@@ -27,7 +27,7 @@ public interface KeystoreParameters {
   }
 
   default boolean hasKeystoresPasswordsPath() {
-    return getKeystoresPath() != null;
+    return getKeystoresPasswordsPath() != null;
   }
 
   default boolean hasKeystoresPasswordFile() {

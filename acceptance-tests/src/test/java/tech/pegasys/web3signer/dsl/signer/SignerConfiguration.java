@@ -16,6 +16,7 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -38,6 +39,7 @@ public class SignerConfiguration {
   private final boolean metricsEnabled;
   private final Optional<AzureKeyVaultParameters> azureKeyVaultParameters;
   private final Optional<AwsSecretsManagerParameters> awsSecretsManagerParameters;
+  private final Optional<KeystoresParameters> keystoresParameters;
   private Optional<TlsOptions> serverTlsOptions;
   private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
@@ -74,6 +76,7 @@ public class SignerConfiguration {
       final boolean metricsEnabled,
       final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
       final Optional<AwsSecretsManagerParameters> awsSecretsManagerParameters,
+      final Optional<KeystoresParameters> keystoresParameters,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
       final Optional<String> slashingProtectionDbUrl,
@@ -106,6 +109,7 @@ public class SignerConfiguration {
     this.metricsEnabled = metricsEnabled;
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.awsSecretsManagerParameters = awsSecretsManagerParameters;
+    this.keystoresParameters = keystoresParameters;
     this.serverTlsOptions = serverTlsOptions;
     this.overriddenCaTrustStore = overriddenCaTrustStore;
     this.slashingProtectionDbUrl = slashingProtectionDbUrl;
@@ -183,6 +187,10 @@ public class SignerConfiguration {
 
   public Optional<AwsSecretsManagerParameters> getAwsSecretsManagerParameters() {
     return awsSecretsManagerParameters;
+  }
+
+  public Optional<KeystoresParameters> getKeystoresParameters() {
+    return keystoresParameters;
   }
 
   public boolean isMetricsDynamicPortAllocation() {

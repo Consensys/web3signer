@@ -14,40 +14,26 @@ package tech.pegasys.web3signer.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
-import tech.pegasys.signers.bls.keystore.KeyStore;
-import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
-import tech.pegasys.signers.bls.keystore.model.Cipher;
-import tech.pegasys.signers.bls.keystore.model.CipherFunction;
-import tech.pegasys.signers.bls.keystore.model.KdfParam;
-import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
-import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
+import tech.pegasys.web3signer.KeystoreUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class BlsBKeystoreBulkLoaderTest {
 
-  private static final Bytes SALT =
-      Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");
-  private static final Bytes IV = Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789");
   private static final BLSKeyPair KEY_PAIR_1 = BLSTestUtil.randomKeyPair(0);
   private static final BLSKeyPair KEY_PAIR_2 = BLSTestUtil.randomKeyPair(1);
   private static final String KEYSTORE_PASSWORD_1 = "password1";
   private static final String KEYSTORE_PASSWORD_2 = "password2";
   private final BlsBKeystoreBulkLoader loader = new BlsBKeystoreBulkLoader();
-
-  // TODO can use a password file instead of password directory
 
   @Test
   void loadingEmptyKeystoreDirReturnsNoSigners(
@@ -59,8 +45,8 @@ class BlsBKeystoreBulkLoaderTest {
 
   @Test
   void loadsMultipleKeystores(final @TempDir Path keystoreDir, final @TempDir Path passwordDir) {
-    createKeystore(KEY_PAIR_1, keystoreDir, passwordDir, "password1");
-    createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
+    KeystoreUtil.createKeystore(KEY_PAIR_1, keystoreDir, passwordDir, "password1");
+    KeystoreUtil.createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
     final Collection<ArtifactSigner> signers =
         loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
     assertThat(signers).hasSize(2);
@@ -73,8 +59,8 @@ class BlsBKeystoreBulkLoaderTest {
       throws IOException {
     final Path keystoreDir = tempDir.resolve("keystores");
     Files.createDirectory(keystoreDir);
-    createKeystoreFile(KEY_PAIR_1, keystoreDir, KEYSTORE_PASSWORD_1);
-    createKeystoreFile(KEY_PAIR_2, keystoreDir, KEYSTORE_PASSWORD_1);
+    KeystoreUtil.createKeystoreFile(KEY_PAIR_1, keystoreDir, KEYSTORE_PASSWORD_1);
+    KeystoreUtil.createKeystoreFile(KEY_PAIR_2, keystoreDir, KEYSTORE_PASSWORD_1);
     final Path passwordFile = tempDir.resolve("password.txt");
     Files.writeString(passwordFile, KEYSTORE_PASSWORD_1);
 
@@ -88,8 +74,8 @@ class BlsBKeystoreBulkLoaderTest {
   @Test
   void ignoresNonJsonFiles(final @TempDir Path keystoreDir, final @TempDir Path passwordDir)
       throws IOException {
-    createKeystore(KEY_PAIR_1, keystoreDir, passwordDir, KEYSTORE_PASSWORD_1);
-    createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
+    KeystoreUtil.createKeystore(KEY_PAIR_1, keystoreDir, passwordDir, KEYSTORE_PASSWORD_1);
+    KeystoreUtil.createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
 
     // rename keypair 0 so it now ignored
     final Path sourcePath = keystoreDir.resolve(KEY_PAIR_1.getPublicKey() + ".json");
@@ -105,8 +91,8 @@ class BlsBKeystoreBulkLoaderTest {
   @Test
   void keystoreWithoutPasswordIsIgnoredAndRemainingKeystoresAreLoaded(
       final @TempDir Path keystoreDir, final @TempDir Path passwordDir) {
-    createKeystoreFile(KEY_PAIR_1, keystoreDir, KEYSTORE_PASSWORD_1);
-    createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
+    KeystoreUtil.createKeystoreFile(KEY_PAIR_1, keystoreDir, KEYSTORE_PASSWORD_1);
+    KeystoreUtil.createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
 
     final Collection<ArtifactSigner> signers =
         loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
@@ -118,8 +104,8 @@ class BlsBKeystoreBulkLoaderTest {
   void invalidKeystoreIsIgnoredAndRemainingKeystoresAreLoaded(
       final @TempDir Path keystoreDir, final @TempDir Path passwordDir) throws IOException {
     Files.writeString(keystoreDir.resolve(KEY_PAIR_1.getPublicKey() + ".json"), "{}");
-    createKeystorePasswordFile(KEY_PAIR_1, passwordDir, KEYSTORE_PASSWORD_1);
-    createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
+    KeystoreUtil.createKeystorePasswordFile(KEY_PAIR_1, passwordDir, KEYSTORE_PASSWORD_1);
+    KeystoreUtil.createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
 
     final Collection<ArtifactSigner> signers =
         loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
@@ -141,39 +127,5 @@ class BlsBKeystoreBulkLoaderTest {
   private void assertThatSignerHasPublicKey(
       final Collection<ArtifactSigner> signers, final BLSKeyPair keyPair0) {
     assertThat(signers).anyMatch(s -> s.getIdentifier().equals(keyPair0.getPublicKey().toString()));
-  }
-
-  private void createKeystore(
-      final BLSKeyPair keyPair,
-      final Path keystoreDir,
-      final Path passwordDir,
-      final String password) {
-    createKeystoreFile(keyPair, keystoreDir, password);
-    createKeystorePasswordFile(keyPair, passwordDir, password);
-  }
-
-  private void createKeystorePasswordFile(
-      final BLSKeyPair keyPair, final Path passwordDir, final String password) {
-    try {
-      Files.writeString(passwordDir.resolve(keyPair.getPublicKey().toString() + ".txt"), password);
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to write password file");
-    }
-  }
-
-  private void createKeystoreFile(
-      final BLSKeyPair keyPair, final Path keystoreDir, final String password) {
-    final KdfParam kdfParam = new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
-    final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
-    final Bytes48 publicKey = keyPair.getPublicKey().toBytesCompressed();
-    final KeyStoreData keyStoreData =
-        KeyStore.encrypt(
-            keyPair.getSecretKey().toBytes(), publicKey, password, "", kdfParam, cipher);
-    try {
-      KeyStoreLoader.saveToFile(keystoreDir.resolve(publicKey + ".json"), keyStoreData);
-      publicKey.toHexString();
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to create keystore file", e);
-    }
   }
 }

@@ -56,4 +56,5 @@ dependencies {
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
   testFixturesImplementation 'org.apache.tuweni:tuweni-bytes'
+  testFixturesImplementation 'tech.pegasys.signers.internal:bls-keystore'
 }

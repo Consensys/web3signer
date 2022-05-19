@@ -12,13 +12,13 @@
  */
 package tech.pegasys.web3signer.commandline.config;
 
-import tech.pegasys.web3signer.signing.config.KeystoreParameters;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
 
 import picocli.CommandLine.Option;
 
-public class PicoKeystoreParameters implements KeystoreParameters {
+public class PicoKeystoresParameters implements KeystoresParameters {
 
   @Option(
       names = {"--keystores-path"},
