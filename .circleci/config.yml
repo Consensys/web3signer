@@ -167,6 +167,9 @@ jobs:
           command: |
             git submodule update --init --recursive
             ./gradlew --no-daemon --parallel build
+      - store_artifacts:
+          path: build/distributions
+          destination: distributions
       - run:
           name: Dependency vulnerability scan
           command: |
