@@ -52,6 +52,7 @@ dependencies {
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
   testFixturesApi 'tech.pegasys.teku.internal:bls'
+  testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testFixturesImplementation 'org.apache.commons:commons-lang3'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
