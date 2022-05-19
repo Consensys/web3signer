@@ -124,6 +124,18 @@ class BlsBKeystoreBulkLoaderTest {
         .hasMessage("Unable to access the supplied keystore directory");
   }
 
+  @Test
+  void invalidKeystorePasswordFileThrowsError(final @TempDir Path tempDir) throws IOException {
+    final Path keystoreDir = tempDir.resolve("keystores");
+    Files.createDirectory(keystoreDir);
+    assertThatThrownBy(
+            () ->
+                loader.loadKeystoresUsingPasswordFile(
+                    keystoreDir, tempDir.resolve("invalidPasswordFilePath")))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Unable to read the password file");
+  }
+
   private void assertThatSignerHasPublicKey(
       final Collection<ArtifactSigner> signers, final BLSKeyPair keyPair0) {
     assertThat(signers).anyMatch(s -> s.getIdentifier().equals(keyPair0.getPublicKey().toString()));
