@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline.config;
 
+import tech.pegasys.web3signer.commandline.DefaultCommandValues;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
@@ -22,7 +23,8 @@ public class PicoKeystoresParameters implements KeystoresParameters {
 
   @Option(
       names = {"--keystores-path"},
-      description = "The path to a directory storing Eth2 keystores")
+      description = "The path to a directory storing Eth2 keystores",
+      paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP)
   private Path keystoresPath;
 
   @Option(
@@ -30,14 +32,16 @@ public class PicoKeystoresParameters implements KeystoresParameters {
       description =
           "The path to a directory with the corresponding passwords file for the keystores."
               + " Filename for the password without the extension must match the keystore filename."
-              + " This cannot be set if --keystores-password-file is also specified.")
+              + " This cannot be set if --keystores-password-file is also specified.",
+      paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP)
   private Path keystoresPasswordsPath;
 
   @Option(
       names = {"--keystores-password-file"},
       description =
           "The path to a file that contains the password that all keystores use."
-              + " This cannot be set if --keystores-passwords-path is also specified.")
+              + " This cannot be set if --keystores-passwords-path is also specified.",
+      paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP)
   private Path keystoresPasswordFile;
 
   @Override
