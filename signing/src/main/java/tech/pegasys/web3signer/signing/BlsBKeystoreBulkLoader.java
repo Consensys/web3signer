@@ -21,6 +21,7 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -57,8 +58,8 @@ public class BlsBKeystoreBulkLoader {
     final String password;
     try {
       password = Files.readString(passwordFile);
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to read the password file", e);
+    } catch (final IOException e) {
+      throw new UncheckedIOException("Unable to read the password file", e);
     }
 
     return keystoreFiles.parallelStream()
@@ -96,7 +97,7 @@ public class BlsBKeystoreBulkLoader {
           .filter(path -> FilenameUtils.getExtension(path.toString()).equalsIgnoreCase("json"))
           .collect(Collectors.toList());
     } catch (final IOException e) {
-      throw new IllegalStateException("Unable to access the supplied keystore directory", e);
+      throw new UncheckedIOException("Unable to access the supplied keystore directory", e);
     }
   }
 }
