@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.signing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.UncheckedIOException;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.KeystoreUtil;
@@ -120,7 +121,7 @@ class BlsBKeystoreBulkLoaderTest {
             () ->
                 loader.loadKeystoresUsingPasswordDir(
                     keystoreDir.resolve("invalidKeystorePath"), passwordDir))
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(UncheckedIOException.class)
         .hasMessage("Unable to access the supplied keystore directory");
   }
 
@@ -132,7 +133,7 @@ class BlsBKeystoreBulkLoaderTest {
             () ->
                 loader.loadKeystoresUsingPasswordFile(
                     keystoreDir, tempDir.resolve("invalidPasswordFilePath")))
-        .isInstanceOf(IllegalStateException.class)
+        .isInstanceOf(UncheckedIOException.class)
         .hasMessage("Unable to read the password file");
   }
 
