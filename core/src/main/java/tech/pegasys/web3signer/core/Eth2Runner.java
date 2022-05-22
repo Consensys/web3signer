@@ -40,7 +40,7 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.signing.BlsBKeystoreBulkLoader;
+import tech.pegasys.web3signer.signing.BlsKeystoreBulkLoader;
 import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
@@ -280,13 +280,13 @@ public class Eth2Runner extends Runner {
           }
 
           if (keystoresParameters.isEnabled()) {
-            final BlsBKeystoreBulkLoader blsBKeystoreBulkLoader = new BlsBKeystoreBulkLoader();
+            final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
             final Collection<ArtifactSigner> keystoreSigners =
                 keystoresParameters.hasKeystoresPasswordsPath()
-                    ? blsBKeystoreBulkLoader.loadKeystoresUsingPasswordDir(
+                    ? blsKeystoreBulkLoader.loadKeystoresUsingPasswordDir(
                         keystoresParameters.getKeystoresPath(),
                         keystoresParameters.getKeystoresPasswordsPath())
-                    : blsBKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
+                    : blsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
                         keystoresParameters.getKeystoresPath(),
                         keystoresParameters.getKeystoresPasswordFile());
             signers.addAll(keystoreSigners);

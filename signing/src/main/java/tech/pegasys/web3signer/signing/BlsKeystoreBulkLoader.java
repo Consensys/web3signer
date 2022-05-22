@@ -36,7 +36,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class BlsBKeystoreBulkLoader {
+public class BlsKeystoreBulkLoader {
   private static final Logger LOG = LogManager.getLogger();
 
   public Collection<ArtifactSigner> loadKeystoresUsingPasswordDir(

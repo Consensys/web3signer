@@ -28,13 +28,13 @@ import java.util.Collection;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-class BlsBKeystoreBulkLoaderTest {
+class BlsKeystoreBulkLoaderTest {
 
   private static final BLSKeyPair KEY_PAIR_1 = BLSTestUtil.randomKeyPair(0);
   private static final BLSKeyPair KEY_PAIR_2 = BLSTestUtil.randomKeyPair(1);
   private static final String KEYSTORE_PASSWORD_1 = "password1";
   private static final String KEYSTORE_PASSWORD_2 = "password2";
-  private final BlsBKeystoreBulkLoader loader = new BlsBKeystoreBulkLoader();
+  private final BlsKeystoreBulkLoader loader = new BlsKeystoreBulkLoader();
 
   @Test
   void loadingEmptyKeystoreDirReturnsNoSigners(
