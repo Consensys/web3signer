@@ -1,5 +1,9 @@
 # Changelog
 
+## Next version
+### Features Added
+- Eth2 keystore bulk loading allowing a directory of keystores to be loaded without config files
+
 ## 22.5.0
 ### Breaking Changes
 - ETH2 Mode - block signing request (BLOCK_V2), starting from BELLATRIX fork, use block_header instead of block. [#547](https://github.com/ConsenSys/web3signer/pull/547)
