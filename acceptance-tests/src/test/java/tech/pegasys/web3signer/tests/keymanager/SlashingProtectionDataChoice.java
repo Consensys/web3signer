@@ -13,6 +13,6 @@
 package tech.pegasys.web3signer.tests.keymanager;
 
 public enum SlashingProtectionDataChoice {
-  WITH_PROTECTION_DATA,
-  WITHOUT_PROTECTION_DATA
+  WITH_SLASHING_PROTECTION_DATA,
+  WITHOUT_SLASHING_PROTECTION_DATA
 }
