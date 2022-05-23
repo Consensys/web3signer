@@ -55,7 +55,7 @@ public class KeystoreUtil {
 
   public static void createKeystoreFile(
       final BLSKeyPair keyPair, final Path keystoreDir, final String password) {
-    final KdfParam kdfParam = new Pbkdf2Param(32, 262144, HMAC_SHA256, SALT);
+    final KdfParam kdfParam = new Pbkdf2Param(32, 2, HMAC_SHA256, SALT);
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
     final Bytes48 publicKey = keyPair.getPublicKey().toBytesCompressed();
     final KeyStoreData keyStoreData =
