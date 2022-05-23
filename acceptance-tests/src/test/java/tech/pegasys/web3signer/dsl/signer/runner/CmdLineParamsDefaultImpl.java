@@ -17,6 +17,7 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -96,6 +97,19 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
         params.add(azureParams.getClientSecret());
         params.add("--azure-tenant-id");
         params.add(azureParams.getTenantId());
+      }
+      if (signerConfig.getKeystoresParameters().isPresent()) {
+        final KeystoresParameters keystoresParameters = signerConfig.getKeystoresParameters().get();
+        params.add("--keystores-path");
+        params.add(keystoresParameters.getKeystoresPath().toAbsolutePath().toString());
+        if (keystoresParameters.getKeystoresPasswordsPath() != null) {
+          params.add("--keystores-passwords-path");
+          params.add(keystoresParameters.getKeystoresPasswordsPath().toAbsolutePath().toString());
+        }
+        if (keystoresParameters.getKeystoresPasswordFile() != null) {
+          params.add("--keystores-password-file");
+          params.add(keystoresParameters.getKeystoresPasswordFile().toAbsolutePath().toString());
+        }
       }
     }
 

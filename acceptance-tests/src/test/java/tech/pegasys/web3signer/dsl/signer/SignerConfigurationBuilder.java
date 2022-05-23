@@ -18,6 +18,7 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -62,6 +63,7 @@ public class SignerConfigurationBuilder {
   private Long bellatrixForkEpoch = null;
   private String network = null;
   private boolean keyManagerApiEnabled = false;
+  private KeystoresParameters keystoresParameters;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -127,6 +129,12 @@ public class SignerConfigurationBuilder {
   public SignerConfigurationBuilder withAwsSecretsManagerParameters(
       final AwsSecretsManagerParameters awsSecretsManagerParameters) {
     this.awsSecretsManagerParameters = awsSecretsManagerParameters;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withKeystoresParameters(
+      final KeystoresParameters keystoresParameters) {
+    this.keystoresParameters = keystoresParameters;
     return this;
   }
 
@@ -248,6 +256,7 @@ public class SignerConfigurationBuilder {
         metricsEnabled,
         Optional.ofNullable(azureKeyVaultParameters),
         Optional.ofNullable(awsSecretsManagerParameters),
+        Optional.ofNullable(keystoresParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),
         Optional.ofNullable(slashingProtectionDbUrl),

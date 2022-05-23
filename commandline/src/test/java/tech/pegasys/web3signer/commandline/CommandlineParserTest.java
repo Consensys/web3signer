@@ -367,6 +367,23 @@ class CommandlineParserTest {
             "Error parsing parameters: --tls-allow-any-client cannot be set to true when --tls-known-clients-file is specified or --tls-allow-ca-clients is set to true");
   }
 
+  @Test
+  void keystoreOptionsWithBothPasswordDirAndPasswordFileFailsToParse() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "eth2 --slashing-protection-enabled=false ";
+    cmdline += "--keystores-path=keystores ";
+    cmdline += "--keystores-passwords-path=keystore-passwords ";
+    cmdline += "--keystores-password-file=password.txt";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: Only one of --keystores-passwords-path or --keystores-password-file options can be specified");
+  }
+
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(
       final String paramToRemove, final Supplier<T> actualValueGetter, final T expectedValue) {
 
