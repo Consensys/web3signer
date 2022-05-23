@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.NoOpIncrementalExp
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,11 +95,12 @@ public class DeleteKeystoresProcessor {
     results.addAll(errorResults);
   }
 
-  private IncrementalExporter createIncrementalExporter(final ByteArrayOutputStream outputStream) {
-    return slashingProtection.isPresent()
-        ? slashingProtection.get().createIncrementalExporter(outputStream)
-        // Using no-op exporter instead of returning an optional so can use try with for closing
-        : new NoOpIncrementalExporter(outputStream);
+  private IncrementalExporter createIncrementalExporter(final OutputStream outputStream) {
+    return slashingProtection
+        .map(sp -> sp.createIncrementalExporter(outputStream))
+        // nothing to export if slashing protection is not available, hence use no-op exporter so
+        // that outputStream can be closed nicely.
+        .orElseGet(() -> new NoOpIncrementalExporter(outputStream));
   }
 
   private DeleteKeystoreResult processKeyToDelete(

@@ -147,6 +147,8 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public IncrementalExporter createIncrementalExporter(final OutputStream out) {
+    // when GVR is empty, there is no slashing data to export, hence return a No-Op exporter that
+    // can nicely close OutputStream.
     if (!gvrValidator.genesisValidatorRootExists()) {
       return new NoOpIncrementalExporter(out);
     }
