@@ -16,6 +16,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.tests.keymanager.SlashingProtectionDataChoice.WITH_PROTECTION_DATA;
 
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
@@ -53,11 +54,11 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
   @TempDir protected Path testDirectory;
 
   protected void setupSignerWithKeyManagerApi() throws URISyntaxException {
-    setupSignerWithKeyManagerApi(false);
+    setupSignerWithKeyManagerApi(WITH_PROTECTION_DATA);
   }
 
-  protected void setupSignerWithKeyManagerApi(final boolean insertSlashingProtectionData)
-      throws URISyntaxException {
+  protected void setupSignerWithKeyManagerApi(
+      final SlashingProtectionDataChoice slashingProtectionDataChoice) throws URISyntaxException {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder
         .withKeyStoreDirectory(testDirectory)
@@ -70,7 +71,7 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
         .withKeyManagerApiEnabled(true);
     startSigner(builder.build());
 
-    if (insertSlashingProtectionData) {
+    if (slashingProtectionDataChoice == WITH_PROTECTION_DATA) {
       final SignerConfigurationBuilder importBuilder = new SignerConfigurationBuilder();
       importBuilder
           .withMode("eth2")

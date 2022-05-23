@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
+import tech.pegasys.web3signer.slashingprotection.interchange.NoOpIncrementalExporter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -97,7 +98,7 @@ public class DeleteKeystoresProcessor {
     return slashingProtection.isPresent()
         ? slashingProtection.get().createIncrementalExporter(outputStream)
         // Using no-op exporter instead of returning an optional so can use try with for closing
-        : new NoOpIncrementalExporter();
+        : new NoOpIncrementalExporter(outputStream);
   }
 
   private DeleteKeystoreResult processKeyToDelete(
@@ -150,16 +151,5 @@ public class DeleteKeystoresProcessor {
       return new DeleteKeystoreResult(
           DeleteKeystoreStatus.ERROR, "Error exporting slashing data: " + e.getMessage());
     }
-  }
-
-  private static class NoOpIncrementalExporter implements IncrementalExporter {
-    @Override
-    public void export(final String publicKey) {}
-
-    @Override
-    public void finalise() {}
-
-    @Override
-    public void close() throws Exception {}
   }
 }

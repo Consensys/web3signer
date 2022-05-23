@@ -26,6 +26,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporte
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
+import tech.pegasys.web3signer.slashingprotection.interchange.NoOpIncrementalExporter;
 import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRootValidator;
@@ -146,9 +147,13 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public IncrementalExporter createIncrementalExporter(final OutputStream out) {
+    if (!gvrValidator.genesisValidatorRootExists()) {
+      return new NoOpIncrementalExporter(out);
+    }
+
     try {
       return interchangeManager.createIncrementalExporter(out);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException(
           "Failed to initialise incremental exporter for slashing protection data", e);
     }
