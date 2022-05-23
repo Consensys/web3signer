@@ -23,15 +23,16 @@ public class PicoKeystoresParameters implements KeystoresParameters {
 
   @Option(
       names = {"--keystores-path"},
-      description = "The path to a directory storing Eth2 keystores",
+      description =
+          "The path to a directory storing Eth2 keystores. Keystore files must use a .json file extension.",
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP)
   private Path keystoresPath;
 
   @Option(
       names = {"--keystores-passwords-path"},
       description =
-          "The path to a directory with the corresponding passwords file for the keystores."
-              + " Filename for the password without the extension must match the keystore filename."
+          "The path to a directory with the corresponding password files for the keystores."
+              + " Filename must match the corresponding keystore filename but with a .txt extension."
               + " This cannot be set if --keystores-password-file is also specified.",
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP)
   private Path keystoresPasswordsPath;
