@@ -67,6 +67,9 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
           + "\"data\" : [ ]\n"
           + "}";
 
+  private static final String EMPTY_SLASHING_DATA_WITHOUT_GVR =
+      "{\"metadata\" : {\n  \"interchange_format_version\" : \"5\"\n},\n\"data\" : [ ]\n}";
+
   @Test
   public void invalidRequestBodyReturnsError() throws URISyntaxException {
     setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
@@ -272,7 +275,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .statusCode(200)
         .body("data[0].status", is("deleted"))
         .and()
-        .body("slashing_protection", is(""));
+        .body("slashing_protection", is(EMPTY_SLASHING_DATA_WITHOUT_GVR));
   }
 
   private String composeRequestBody() {

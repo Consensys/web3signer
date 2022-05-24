@@ -25,7 +25,7 @@ import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeJsonProvider;
 import tech.pegasys.web3signer.slashingprotection.interchange.model.SignedAttestation;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
@@ -97,7 +97,8 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
     exportSigner.start();
     waitFor(() -> assertThat(exportSigner.isRunning()).isFalse());
 
-    final ObjectMapper mapper = JsonMapper.builder().addModule(new InterchangeModule()).build();
+    final ObjectMapper mapper =
+        JsonMapper.builder().addModule(new InterchangeJsonProvider()).build();
 
     final InterchangeV5Format mappedData =
         mapper.readValue(exportFile.toFile(), InterchangeV5Format.class);

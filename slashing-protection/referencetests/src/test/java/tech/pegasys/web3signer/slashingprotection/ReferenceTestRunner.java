@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeJsonProvider;
 import tech.pegasys.web3signer.slashingprotection.model.AttestationTestModel;
 import tech.pegasys.web3signer.slashingprotection.model.BlockTestModel;
 import tech.pegasys.web3signer.slashingprotection.model.Step;
@@ -34,9 +34,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.io.Resources;
 import db.DatabaseUtil;
 import db.DatabaseUtil.TestDatabaseInfo;
@@ -58,11 +56,7 @@ public class ReferenceTestRunner {
   private static final String USERNAME = "postgres";
   private static final String PASSWORD = "postgres";
 
-  private static final ObjectMapper objectMapper =
-      JsonMapper.builder()
-          .addModule(new InterchangeModule())
-          .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-          .build();
+  private static final ObjectMapper objectMapper = new InterchangeJsonProvider().getJsonMapper();
   private final ValidatorsDao validators = new ValidatorsDao();
 
   private EmbeddedPostgres slashingDatabase;

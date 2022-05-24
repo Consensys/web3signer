@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.slashingprotection.interchange;
 import java.io.IOException;
 
 public interface IncrementalExporter extends AutoCloseable {
-
   void export(String publicKey);
 
   void finalise() throws IOException;
