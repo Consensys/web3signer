@@ -19,10 +19,12 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 /** Only export metadata in JSON format without gvr and slashing protection data. */
 public class NoOpIncrementalInterchangeV5Exporter implements IncrementalExporter {
   private final JsonGenerator jsonGenerator;
+  private static final JsonMapper JSON_MAPPER = new InterchangeJsonProvider().getJsonMapper();
 
   public NoOpIncrementalInterchangeV5Exporter(final OutputStream outputStream)
       throws UncheckedIOException {

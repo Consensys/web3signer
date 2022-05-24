@@ -34,7 +34,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import dsl.InterchangeV5Format;
 import dsl.SignedArtifacts;
 import io.restassured.response.Response;
@@ -97,8 +96,7 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
     exportSigner.start();
     waitFor(() -> assertThat(exportSigner.isRunning()).isFalse());
 
-    final ObjectMapper mapper =
-        JsonMapper.builder().addModule(new InterchangeJsonProvider()).build();
+    final ObjectMapper mapper = new InterchangeJsonProvider().getJsonMapper();
 
     final InterchangeV5Format mappedData =
         mapper.readValue(exportFile.toFile(), InterchangeV5Format.class);
