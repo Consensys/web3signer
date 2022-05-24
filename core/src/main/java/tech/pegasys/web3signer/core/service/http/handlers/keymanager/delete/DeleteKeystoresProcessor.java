@@ -18,8 +18,8 @@ import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.interchange.EmptyDataIncrementalInterchangeV5Exporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
-import tech.pegasys.web3signer.slashingprotection.interchange.NoOpIncrementalInterchangeV5Exporter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -100,7 +100,7 @@ public class DeleteKeystoresProcessor {
         .map(sp -> sp.createIncrementalExporter(outputStream))
         // nothing to export if slashing protection is not available, hence use no-op exporter so
         // that outputStream can be closed nicely.
-        .orElseGet(() -> new NoOpIncrementalInterchangeV5Exporter(outputStream));
+        .orElseGet(() -> new EmptyDataIncrementalInterchangeV5Exporter(outputStream));
   }
 
   private DeleteKeystoreResult processKeyToDelete(

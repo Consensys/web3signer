@@ -16,7 +16,6 @@ import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITI
 import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
 import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 
-import com.fasterxml.jackson.databind.MapperFeature;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Deserializer;
@@ -24,7 +23,6 @@ import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Serialiser;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.apache.tuweni.bytes.Bytes;

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import static tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Exporter.FORMAT_VERSION;
+
 import tech.pegasys.web3signer.slashingprotection.interchange.model.Metadata;
 
 import java.io.IOException;
@@ -22,21 +24,23 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
 /** Only export metadata in JSON format without gvr and slashing protection data. */
-public class NoOpIncrementalInterchangeV5Exporter implements IncrementalExporter {
+public class EmptyDataIncrementalInterchangeV5Exporter implements IncrementalExporter {
   private final JsonGenerator jsonGenerator;
   private static final JsonMapper JSON_MAPPER = new InterchangeJsonProvider().getJsonMapper();
 
-  public NoOpIncrementalInterchangeV5Exporter(final OutputStream outputStream)
+  public EmptyDataIncrementalInterchangeV5Exporter(final OutputStream outputStream)
       throws UncheckedIOException {
     try {
       jsonGenerator = JSON_MAPPER.getFactory().createGenerator(outputStream);
       jsonGenerator.writeStartObject();
-      final Metadata metadata = new Metadata("5", null);
 
       jsonGenerator.writeFieldName("metadata");
-      JSON_MAPPER.writeValue(jsonGenerator, metadata);
+      JSON_MAPPER.writeValue(jsonGenerator, new Metadata(FORMAT_VERSION, null));
 
       jsonGenerator.writeArrayFieldStart("data");
+      jsonGenerator.writeEndArray();
+
+      jsonGenerator.writeEndObject();
     } catch (final IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -46,20 +50,10 @@ public class NoOpIncrementalInterchangeV5Exporter implements IncrementalExporter
   public void export(final String publicKey) {}
 
   @Override
-  public void finalise() {
-    try {
-      // end the data array
-      jsonGenerator.writeEndArray();
-
-      // end the interchange object
-      jsonGenerator.writeEndObject();
-    } catch (final IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
+  public void finalise() {}
 
   @Override
-  public void close() throws Exception {
+  public void close() throws IOException {
     jsonGenerator.close();
   }
 }

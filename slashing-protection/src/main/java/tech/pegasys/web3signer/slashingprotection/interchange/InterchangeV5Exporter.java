@@ -40,7 +40,7 @@ public class InterchangeV5Exporter {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private static final String FORMAT_VERSION = "5";
+  static final String FORMAT_VERSION = "5";
 
   private final Jdbi jdbi;
   private final ValidatorsDao validatorsDao;

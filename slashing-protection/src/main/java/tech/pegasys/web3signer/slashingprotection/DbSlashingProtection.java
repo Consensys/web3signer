@@ -21,10 +21,10 @@ import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.EmptyDataIncrementalInterchangeV5Exporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
-import tech.pegasys.web3signer.slashingprotection.interchange.NoOpIncrementalInterchangeV5Exporter;
 import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.GenesisValidatorRootValidator;
@@ -141,7 +141,7 @@ public class DbSlashingProtection implements SlashingProtection {
     // when GVR is empty, there is no slashing data to export, hence return a No-Op exporter that
     // can nicely close OutputStream.
     if (!gvrValidator.genesisValidatorRootExists()) {
-      return new NoOpIncrementalInterchangeV5Exporter(out);
+      return new EmptyDataIncrementalInterchangeV5Exporter(out);
     }
 
     try {
