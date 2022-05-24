@@ -12,14 +12,18 @@
  */
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
+import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
 import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
+import static com.fasterxml.jackson.databind.SerializationFeature.INDENT_OUTPUT;
 
+import com.fasterxml.jackson.databind.MapperFeature;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Deserializer;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Serialiser;
 
 import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -33,12 +37,13 @@ public class InterchangeJsonProvider {
     jsonMapper =
         JsonMapper.builder()
             .configure(FLUSH_AFTER_WRITE_VALUE, true)
-            .enable(SerializationFeature.INDENT_OUTPUT)
+            .addModule(buildInterchangeJsonModule())
+            .enable(ACCEPT_CASE_INSENSITIVE_ENUMS)
+            .enable(INDENT_OUTPUT)
             .build();
-    registerInterchangeModule();
   }
 
-  private void registerInterchangeModule() {
+  private static Module buildInterchangeJsonModule() {
     final SimpleModule module =
         new SimpleModule("InterchangeJsonModule", new Version(1, 0, 0, null, null, null));
     module.addDeserializer(Bytes.class, new HexDeserialiser());
@@ -46,7 +51,7 @@ public class InterchangeJsonProvider {
     module.addDeserializer(UInt64.class, new StringUInt64Deserializer());
     module.addSerializer(UInt64.class, new StringUInt64Serialiser());
 
-    jsonMapper.registerModule(module);
+    return module;
   }
 
   public JsonMapper getJsonMapper() {
