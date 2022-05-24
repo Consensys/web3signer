@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import db.DatabaseUtil;
 import db.DatabaseUtil.TestDatabaseInfo;
 import dsl.TestSlashingProtectionParameters;
@@ -45,8 +44,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 public class IntegrationTestBase {
 
-  protected final ObjectMapper mapper =
-      JsonMapper.builder().addModule(new InterchangeJsonProvider()).build();
+  protected final ObjectMapper mapper = new InterchangeJsonProvider().getJsonMapper();
 
   protected final ValidatorsDao validators = new ValidatorsDao();
   protected final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
