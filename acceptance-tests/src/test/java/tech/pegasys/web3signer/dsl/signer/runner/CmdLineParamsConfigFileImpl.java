@@ -17,6 +17,7 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -119,6 +120,28 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                 YAML_STRING_FMT, "eth2.azure-client-secret", azureParams.getClientSecret()));
         yamlConfig.append(
             String.format(YAML_STRING_FMT, "eth2.azure-tenant-id", azureParams.getTenantId()));
+      }
+      if (signerConfig.getKeystoresParameters().isPresent()) {
+        final KeystoresParameters keystoresParameters = signerConfig.getKeystoresParameters().get();
+        yamlConfig.append(
+            String.format(
+                YAML_STRING_FMT,
+                "eth2.keystores-path",
+                keystoresParameters.getKeystoresPath().toAbsolutePath()));
+        if (keystoresParameters.getKeystoresPasswordsPath() != null) {
+          yamlConfig.append(
+              String.format(
+                  YAML_STRING_FMT,
+                  "eth2.keystores-passwords-path",
+                  keystoresParameters.getKeystoresPasswordsPath().toAbsolutePath()));
+        }
+        if (keystoresParameters.getKeystoresPasswordFile() != null) {
+          yamlConfig.append(
+              String.format(
+                  YAML_STRING_FMT,
+                  "eth2.keystores-password-file",
+                  keystoresParameters.getKeystoresPasswordFile().toAbsolutePath()));
+        }
       }
 
       if (signerConfig.getSlashingExportPath().isPresent()) {

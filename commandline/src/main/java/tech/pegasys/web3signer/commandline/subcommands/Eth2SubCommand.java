@@ -19,8 +19,10 @@ import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
+import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
 import java.util.List;
@@ -88,6 +90,7 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin private PicoKeystoresParameters keystoreParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
 
   @Override
@@ -96,6 +99,7 @@ public class Eth2SubCommand extends ModeSubCommand {
         config,
         slashingProtectionParameters,
         azureKeyVaultParameters,
+        keystoreParameters,
         eth2Spec,
         isKeyManagerApiEnabled,
         awsCacheMaximumSize);
@@ -138,6 +142,7 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionParameters.getPruningSlotsPerEpoch(), "Pruning slots per epoch");
 
     validateAzureParameters();
+    validateKeystoreParameters(keystoreParameters);
   }
 
   private void validateAzureParameters() {
@@ -177,6 +182,15 @@ public class Eth2SubCommand extends ModeSubCommand {
       }
     }
     return missingFields;
+  }
+
+  private void validateKeystoreParameters(final KeystoresParameters keystoresParameters) {
+    if (keystoresParameters.hasKeystoresPasswordsPath()
+        && keystoresParameters.hasKeystoresPasswordFile()) {
+      throw new ParameterException(
+          commandSpec.commandLine(),
+          "Only one of --keystores-passwords-path or --keystores-password-file options can be specified");
+    }
   }
 
   private void validatePositiveValue(final long value, final String fieldName) {

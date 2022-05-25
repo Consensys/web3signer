@@ -40,12 +40,14 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.BlsKeystoreBulkLoader;
 import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
@@ -85,6 +87,7 @@ public class Eth2Runner extends Runner {
   private final AzureKeyVaultParameters azureKeyVaultParameters;
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
+  private final KeystoresParameters keystoresParameters;
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
   private final long awsCacheMaximumSize;
@@ -93,6 +96,7 @@ public class Eth2Runner extends Runner {
       final Config config,
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters,
+      final KeystoresParameters keystoresParameters,
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled,
       final long awsCacheMaximumSize) {
@@ -101,6 +105,7 @@ public class Eth2Runner extends Runner {
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.slashingProtectionParameters = slashingProtectionParameters;
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
+    this.keystoresParameters = keystoresParameters;
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
     this.awsCacheMaximumSize = awsCacheMaximumSize;
@@ -272,6 +277,19 @@ public class Eth2Runner extends Runner {
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
             signers.addAll(loadAzureSigners());
+          }
+
+          if (keystoresParameters.isEnabled()) {
+            final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
+            final Collection<ArtifactSigner> keystoreSigners =
+                keystoresParameters.hasKeystoresPasswordsPath()
+                    ? blsKeystoreBulkLoader.loadKeystoresUsingPasswordDir(
+                        keystoresParameters.getKeystoresPath(),
+                        keystoresParameters.getKeystoresPasswordsPath())
+                    : blsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
+                        keystoresParameters.getKeystoresPath(),
+                        keystoresParameters.getKeystoresPasswordFile());
+            signers.addAll(keystoreSigners);
           }
 
           final List<Bytes> validators =

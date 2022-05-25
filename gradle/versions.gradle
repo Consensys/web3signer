@@ -113,7 +113,7 @@ dependencyManagement {
 
     dependency 'io.rest-assured:rest-assured:4.4.0'
     dependency 'org.zeroturnaround:zt-exec:1.12'
-    dependency('org.web3j:core:4.9.1') {
+    dependency('org.web3j:core:4.9.2') {
       exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
     }
 
@@ -156,5 +156,10 @@ dependencyManagement {
       entry 'protobuf-java'
       entry 'protobuf-java-util'
     }
+    /*
+      com.squareup.okhttp3:logging-interceptor:4.9.0
+      \--- org.web3j:core:4.9.2
+     */
+    dependency 'com.squareup.okhttp3:logging-interceptor:4.9.3'
   }
 }
