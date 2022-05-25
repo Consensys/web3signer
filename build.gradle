@@ -163,6 +163,11 @@ allprojects {
     skipProjects = [
       ':acceptance-tests'
     ]
+    analyzers {
+      ossIndex {
+        enabled = false
+      }
+    }
   }
 
   tasks.withType(JavaCompile) {
