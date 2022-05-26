@@ -1,8 +1,12 @@
 # Changelog
 
 ## Next version
+### Breaking Changes
+- Removed network definition for kintsugi testnet
+
 ### Features Added
 - Eth2 keystore bulk loading allowing a directory of keystores to be loaded without config files
+- Added support for ropsten testnet
 
 ## 22.5.0
 ### Breaking Changes
