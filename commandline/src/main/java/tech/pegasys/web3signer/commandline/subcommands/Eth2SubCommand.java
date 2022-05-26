@@ -49,8 +49,8 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
 
-  private static class Networks extends ArrayList<String> {
-    Networks() {
+  private static class NetworkCliCompletionCandidates extends ArrayList<String> {
+    NetworkCliCompletionCandidates() {
       super(
           Arrays.stream(Eth2Network.values())
               .map(Eth2Network::configName)
@@ -64,7 +64,7 @@ public class Eth2SubCommand extends ModeSubCommand {
       names = {"--network"},
       paramLabel = "<NETWORK>",
       defaultValue = "mainnet",
-      completionCandidates = Networks.class,
+      completionCandidates = NetworkCliCompletionCandidates.class,
       description =
           "Predefined network configuration to use. Possible values: [${COMPLETION-CANDIDATES}], file path"
               + " or URL to a YAML configuration file. Defaults to ${DEFAULT-VALUE}.",
