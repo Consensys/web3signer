@@ -3,6 +3,7 @@
 ## Next version
 ### Features Added
 - Eth2 keystore bulk loading allowing a directory of keystores to be loaded without config files
+- Updated Teku libraries to provide support for `ropsten` network
 
 ## 22.5.0
 ### Breaking Changes
