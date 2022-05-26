@@ -14,9 +14,11 @@ package tech.pegasys.web3signer.slashingprotection.interchange.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Metadata {
 
   private final String formatVersion;

@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import db.DatabaseUtil;
 import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Jdbi;
@@ -49,7 +48,6 @@ public class InterchangeV5ExporterTest {
   @Mock private SignedAttestationsDao signedAttestationsDao;
   @Mock private MetadataDao metadataDao;
   @Mock private LowWatermarkDao lowWatermarkDao;
-  @Mock private ObjectMapper mapper;
 
   private static final String PUBLIC_KEY = "0x01";
 
@@ -64,8 +62,7 @@ public class InterchangeV5ExporterTest {
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
-            lowWatermarkDao,
-            mapper);
+            lowWatermarkDao);
     final Validator validator = new Validator(1, Bytes.fromHexString(PUBLIC_KEY));
     when(validatorsDao.retrieveValidators(any(), any())).thenReturn(List.of(validator));
     when(lowWatermarkDao.findLowWatermarkForValidator(any(), eq(1)))

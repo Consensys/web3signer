@@ -16,6 +16,7 @@ import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.tests.keymanager.SlashingProtectionDataChoice.WITHOUT_SLASHING_PROTECTION_DATA;
 
 import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
@@ -53,11 +54,11 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
   @TempDir protected Path testDirectory;
 
   protected void setupSignerWithKeyManagerApi() throws URISyntaxException {
-    setupSignerWithKeyManagerApi(false);
+    setupSignerWithKeyManagerApi(WITHOUT_SLASHING_PROTECTION_DATA);
   }
 
-  protected void setupSignerWithKeyManagerApi(final boolean insertSlashingProtectionData)
-      throws URISyntaxException {
+  protected void setupSignerWithKeyManagerApi(
+      final SlashingProtectionDataChoice slashingProtectionDataChoice) throws URISyntaxException {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder
         .withKeyStoreDirectory(testDirectory)
@@ -70,22 +71,24 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
         .withKeyManagerApiEnabled(true);
     startSigner(builder.build());
 
-    if (insertSlashingProtectionData) {
-      final SignerConfigurationBuilder importBuilder = new SignerConfigurationBuilder();
-      importBuilder
-          .withMode("eth2")
-          .withSlashingEnabled(true)
-          .withSlashingProtectionDbUrl(signer.getSlashingDbUrl())
-          .withSlashingProtectionDbUsername(DB_USERNAME)
-          .withSlashingProtectionDbPassword(DB_PASSWORD)
-          .withKeyStoreDirectory(testDirectory)
-          .withSlashingImportPath(getResourcePath("slashing/slashingImport_two_entries.json"))
-          .withHttpPort(12345); // prevent wait for Ports file in AT
-
-      final Signer importSigner = new Signer(importBuilder.build(), null);
-      importSigner.start();
-      waitFor(() -> assertThat(importSigner.isRunning()).isFalse());
+    if (slashingProtectionDataChoice == WITHOUT_SLASHING_PROTECTION_DATA) {
+      return;
     }
+
+    final SignerConfigurationBuilder importBuilder = new SignerConfigurationBuilder();
+    importBuilder
+        .withMode("eth2")
+        .withSlashingEnabled(true)
+        .withSlashingProtectionDbUrl(signer.getSlashingDbUrl())
+        .withSlashingProtectionDbUsername(DB_USERNAME)
+        .withSlashingProtectionDbPassword(DB_PASSWORD)
+        .withKeyStoreDirectory(testDirectory)
+        .withSlashingImportPath(getResourcePath("slashing/slashingImport_two_entries.json"))
+        .withHttpPort(12345); // prevent wait for Ports file in AT
+
+    final Signer importSigner = new Signer(importBuilder.build(), null);
+    importSigner.start();
+    waitFor(() -> assertThat(importSigner.isRunning()).isFalse());
   }
 
   public Response callListKeys() {

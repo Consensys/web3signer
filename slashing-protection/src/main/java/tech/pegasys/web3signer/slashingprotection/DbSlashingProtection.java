@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import static com.fasterxml.jackson.databind.SerializationFeature.FLUSH_AFTER_WRITE_VALUE;
 import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMITTED;
 import static tech.pegasys.web3signer.slashingprotection.DbLocker.lockForValidator;
 
@@ -22,9 +21,9 @@ import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
+import tech.pegasys.web3signer.slashingprotection.interchange.EmptyDataIncrementalInterchangeV5Exporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeManager;
-import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
 import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeV5Manager;
 import tech.pegasys.web3signer.slashingprotection.validator.AttestationValidator;
 import tech.pegasys.web3signer.slashingprotection.validator.BlockValidator;
@@ -38,8 +37,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -88,12 +85,7 @@ public class DbSlashingProtection implements SlashingProtection {
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
-            lowWatermarkDao,
-            JsonMapper.builder()
-                .addModule(new InterchangeModule())
-                .configure(FLUSH_AFTER_WRITE_VALUE, true)
-                .enable(SerializationFeature.INDENT_OUTPUT)
-                .build());
+            lowWatermarkDao);
     this.dbPruner =
         new DbPruner(pruningJdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
     this.pruningEpochsToKeep = pruningEpochsToKeep;
@@ -146,9 +138,15 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public IncrementalExporter createIncrementalExporter(final OutputStream out) {
+    // when GVR is empty, there is no slashing data to export, hence return a No-Op exporter that
+    // can nicely close OutputStream.
+    if (!gvrValidator.genesisValidatorRootExists()) {
+      return new EmptyDataIncrementalInterchangeV5Exporter(out);
+    }
+
     try {
       return interchangeManager.createIncrementalExporter(out);
-    } catch (IOException e) {
+    } catch (final IOException e) {
       throw new RuntimeException(
           "Failed to initialise incremental exporter for slashing protection data", e);
     }
