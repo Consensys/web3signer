@@ -1,12 +1,15 @@
 # Changelog
 
-## Next version
+## 22.5.1
 ### Breaking Changes
 - Removed network definition for kintsugi testnet
 
 ### Features Added
 - Eth2 keystore bulk loading allowing a directory of keystores to be loaded without config files
 - Added support for ropsten testnet
+
+### Bugs Fixed
+- Fixes issue when using key manager delete API failed when there was no slashing protection data [#537](https://github.com/ConsenSys/web3signer/issues/537)
 
 ## 22.5.0
 ### Breaking Changes
