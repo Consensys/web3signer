@@ -157,7 +157,7 @@ dependencyManagement {
       entry 'protobuf-java-util'
     }
     /*
-      com.squareup.okhttp3:logging-interceptor:4.9.0
+      com.squareup.okhttp3:logging-interceptor:4.9.0 // CVE-2021-0341
       \--- org.web3j:core:4.9.2
      */
     dependency 'com.squareup.okhttp3:logging-interceptor:4.9.3'

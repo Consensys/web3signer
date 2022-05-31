@@ -252,7 +252,7 @@ public class DbSlashingProtection implements SlashingProtection {
     final AtomicInteger pruningCount = new AtomicInteger();
     validatorKeys.forEach(
         v -> {
-          LOG.debug(
+          LOG.trace(
               "Pruning {} of {} validator {}",
               pruningCount::incrementAndGet,
               validatorKeys::size,
