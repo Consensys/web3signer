@@ -73,34 +73,32 @@ public class AttestationImporter {
       final String attestationIdentifierString =
           String.format("Attestation with index %d for validator %s", i, validator.getPublicKey());
 
-      // if the attestation is illegal formatted, it cannot be imported
       if (attestationValidator.sourceGreaterThanTargetEpoch()) {
         LOG.warn("{} - source is greater than target epoch", attestationIdentifierString);
-      } else {
+      }
 
-        if (attestationValidator.isSurroundedByExistingAttestation()) {
-          LOG.warn("{} - is surrounded by existing entries", attestationIdentifierString);
-        }
+      if (attestationValidator.isSurroundedByExistingAttestation()) {
+        LOG.warn("{} - is surrounded by existing entries", attestationIdentifierString);
+      }
 
-        if (attestationValidator.surroundsExistingAttestation()) {
-          LOG.warn("{} - surrounds an existing entry", attestationIdentifierString);
-        }
+      if (attestationValidator.surroundsExistingAttestation()) {
+        LOG.warn("{} - surrounds an existing entry", attestationIdentifierString);
+      }
 
-        if (jsonAttestation.getSigningRoot() == null) {
-          if (nullAttestationAlreadyExistsInTargetEpoch(jsonAttestation.getTargetEpoch())) {
-            LOG.warn("{} - already exists in database, not imported", attestationIdentifierString);
-          } else {
-            persist(jsonAttestation);
-          }
+      if (jsonAttestation.getSigningRoot() == null) {
+        if (nullAttestationAlreadyExistsInTargetEpoch(jsonAttestation.getTargetEpoch())) {
+          LOG.warn("{} - already exists in database, not imported", attestationIdentifierString);
         } else {
-          if (attestationValidator.directlyConflictsWithExistingEntry()) {
-            LOG.warn(
-                "{} - conflicts with an existing entry, not imported", attestationIdentifierString);
-          } else if (attestationValidator.alreadyExists()) {
-            LOG.debug("{} - already exists in database, not imported", attestationIdentifierString);
-          } else {
-            persist(jsonAttestation);
-          }
+          persist(jsonAttestation);
+        }
+      } else {
+        if (attestationValidator.directlyConflictsWithExistingEntry()) {
+          LOG.warn(
+              "{} - conflicts with an existing entry, not imported", attestationIdentifierString);
+        } else if (attestationValidator.alreadyExists()) {
+          LOG.debug("{} - already exists in database, not imported", attestationIdentifierString);
+        } else {
+          persist(jsonAttestation);
         }
       }
     }

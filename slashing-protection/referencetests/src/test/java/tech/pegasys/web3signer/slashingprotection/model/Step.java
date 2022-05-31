@@ -20,7 +20,7 @@ import dsl.InterchangeV5Format;
 public class Step {
 
   final boolean shouldSucceed;
-  final boolean allowPartialImport;
+  final boolean containsSlashableData;
   final InterchangeV5Format interchangeContent;
 
   final List<BlockTestModel> blocks;
@@ -28,15 +28,15 @@ public class Step {
 
   public Step(
       @JsonProperty(value = "should_succeed", required = true) final boolean shouldSucceed,
-      @JsonProperty(value = "allow_partial_import", required = true)
-          final boolean allowPartialImport,
+      @JsonProperty(value = "contains_slashable_data", required = true)
+          final boolean containsSlashableData,
       @JsonProperty(value = "interchange", required = true)
           final InterchangeV5Format interchangeContent,
       @JsonProperty(value = "blocks", required = true) final List<BlockTestModel> blocks,
       @JsonProperty(value = "attestations", required = true)
           final List<AttestationTestModel> attestations) {
     this.shouldSucceed = shouldSucceed;
-    this.allowPartialImport = allowPartialImport;
+    this.containsSlashableData = containsSlashableData;
     this.interchangeContent = interchangeContent;
     this.blocks = blocks;
     this.attestations = attestations;
@@ -44,10 +44,6 @@ public class Step {
 
   public boolean isShouldSucceed() {
     return shouldSucceed;
-  }
-
-  public boolean isAllowPartialImport() {
-    return allowPartialImport;
   }
 
   public InterchangeV5Format getInterchangeContent() {
