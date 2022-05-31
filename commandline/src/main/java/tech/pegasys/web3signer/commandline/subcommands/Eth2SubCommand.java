@@ -17,6 +17,7 @@ import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.USE
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
+import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
@@ -25,7 +26,10 @@ import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import picocli.CommandLine;
@@ -45,16 +49,27 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "eth2";
 
+  private static class NetworkCliCompletionCandidates extends ArrayList<String> {
+    NetworkCliCompletionCandidates() {
+      super(
+          Arrays.stream(Eth2Network.values())
+              .map(Eth2Network::configName)
+              .collect(Collectors.toList()));
+    }
+  }
+
   @Spec CommandSpec commandSpec;
 
   @CommandLine.Option(
       names = {"--network"},
       paramLabel = "<NETWORK>",
+      defaultValue = "mainnet",
+      completionCandidates = NetworkCliCompletionCandidates.class,
       description =
-          "Predefined network configuration to use. Possible values: [mainnet, pyrmont, prater, kintsugi, kiln, gnosis, minimal], file path"
-              + " or URL to a YAML configuration file. Defaults to mainnet.",
+          "Predefined network configuration to use. Possible values: [${COMPLETION-CANDIDATES}], file path"
+              + " or URL to a YAML configuration file. Defaults to ${DEFAULT-VALUE}.",
       arity = "1")
-  private String network = "mainnet";
+  private String network;
 
   @CommandLine.Option(
       names = {"--Xnetwork-altair-fork-epoch"},
@@ -92,6 +107,10 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
   @Mixin private PicoKeystoresParameters keystoreParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
+
+  public Eth2SubCommand() {
+    network = "mainnet";
+  }
 
   @Override
   public Runner createRunner() {

@@ -10,15 +10,9 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.slashingprotection.interchange;
+package tech.pegasys.web3signer.tests.keymanager;
 
-import java.io.IOException;
-
-public interface IncrementalExporter extends AutoCloseable {
-  void export(String publicKey);
-
-  void finalise() throws IOException;
-
-  @Override
-  void close() throws Exception;
+public enum SlashingProtectionDataChoice {
+  WITH_SLASHING_PROTECTION_DATA,
+  WITHOUT_SLASHING_PROTECTION_DATA
 }

@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.slashingprotection.interchange.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeJsonProvider;
 
 import java.util.Map;
 
@@ -27,8 +27,7 @@ import org.junit.jupiter.api.Test;
 
 class SignedBlockTest {
 
-  private final ObjectMapper mapper =
-      JsonMapper.builder().addModule(new InterchangeModule()).build();
+  private final ObjectMapper mapper = new InterchangeJsonProvider().getJsonMapper();
 
   @Test
   @SuppressWarnings("unchecked")

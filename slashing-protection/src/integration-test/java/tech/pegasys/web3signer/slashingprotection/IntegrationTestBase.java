@@ -23,7 +23,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
-import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeModule;
+import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeJsonProvider;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import db.DatabaseUtil;
 import db.DatabaseUtil.TestDatabaseInfo;
 import dsl.TestSlashingProtectionParameters;
@@ -45,8 +44,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 public class IntegrationTestBase {
 
-  protected final ObjectMapper mapper =
-      JsonMapper.builder().addModule(new InterchangeModule()).build();
+  protected final ObjectMapper mapper = new InterchangeJsonProvider().getJsonMapper();
 
   protected final ValidatorsDao validators = new ValidatorsDao();
   protected final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();

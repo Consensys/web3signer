@@ -18,10 +18,12 @@ import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
+import tech.pegasys.web3signer.slashingprotection.interchange.EmptyDataIncrementalInterchangeV5Exporter;
 import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,11 +95,12 @@ public class DeleteKeystoresProcessor {
     results.addAll(errorResults);
   }
 
-  private IncrementalExporter createIncrementalExporter(final ByteArrayOutputStream outputStream) {
-    return slashingProtection.isPresent()
-        ? slashingProtection.get().createIncrementalExporter(outputStream)
-        // Using no-op exporter instead of returning an optional so can use try with for closing
-        : new NoOpIncrementalExporter();
+  private IncrementalExporter createIncrementalExporter(final OutputStream outputStream) {
+    return slashingProtection
+        .map(sp -> sp.createIncrementalExporter(outputStream))
+        // nothing to export if slashing protection is not available, hence use no-op exporter so
+        // that outputStream can be closed nicely.
+        .orElseGet(() -> new EmptyDataIncrementalInterchangeV5Exporter(outputStream));
   }
 
   private DeleteKeystoreResult processKeyToDelete(
@@ -150,16 +153,5 @@ public class DeleteKeystoresProcessor {
       return new DeleteKeystoreResult(
           DeleteKeystoreStatus.ERROR, "Error exporting slashing data: " + e.getMessage());
     }
-  }
-
-  private static class NoOpIncrementalExporter implements IncrementalExporter {
-    @Override
-    public void export(final String publicKey) {}
-
-    @Override
-    public void finalise() {}
-
-    @Override
-    public void close() throws Exception {}
   }
 }

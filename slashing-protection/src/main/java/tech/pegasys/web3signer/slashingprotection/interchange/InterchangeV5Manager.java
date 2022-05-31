@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jdbi.v3.core.Jdbi;
 
 public class InterchangeV5Manager implements InterchangeManager {
@@ -37,8 +36,7 @@ public class InterchangeV5Manager implements InterchangeManager {
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
       final MetadataDao metadataDao,
-      final LowWatermarkDao lowWatermarkDao,
-      final ObjectMapper mapper) {
+      final LowWatermarkDao lowWatermarkDao) {
     exporter =
         new InterchangeV5Exporter(
             jdbi,
@@ -46,8 +44,7 @@ public class InterchangeV5Manager implements InterchangeManager {
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
-            lowWatermarkDao,
-            mapper);
+            lowWatermarkDao);
     importer =
         new InterchangeV5Importer(
             jdbi,
@@ -55,8 +52,7 @@ public class InterchangeV5Manager implements InterchangeManager {
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
-            lowWatermarkDao,
-            mapper);
+            lowWatermarkDao);
   }
 
   @Override

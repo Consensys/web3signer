@@ -14,6 +14,8 @@ package tech.pegasys.web3signer.tests.keymanager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static tech.pegasys.web3signer.tests.keymanager.SlashingProtectionDataChoice.WITHOUT_SLASHING_PROTECTION_DATA;
+import static tech.pegasys.web3signer.tests.keymanager.SlashingProtectionDataChoice.WITH_SLASHING_PROTECTION_DATA;
 
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresRequestBody;
@@ -35,7 +37,6 @@ import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
 
 public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
-
   private static final String BLS_PRIVATE_KEY_1 =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
@@ -66,9 +67,12 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
           + "\"data\" : [ ]\n"
           + "}";
 
+  private static final String EMPTY_SLASHING_DATA_WITHOUT_GVR =
+      "{\"metadata\" : {\n  \"interchange_format_version\" : \"5\"\n},\n\"data\" : [ ]\n}";
+
   @Test
   public void invalidRequestBodyReturnsError() throws URISyntaxException {
-    setupSignerWithKeyManagerApi(true);
+    setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
     final Response response = callDeleteKeystores("{\"invalid\": \"json body\"}");
     response.then().assertThat().statusCode(400);
   }
@@ -79,7 +83,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
     final String pubKey =
         "0xa46bf94016af71e55ca0518fe6a8bd3852e01b3f959780a4faf3bbe461ac553c0a83f232cc5f2a4b827d8d3455b706e4";
     createBlsKey("eth2/bls_keystore_2.json", "otherpassword");
-    setupSignerWithKeyManagerApi(true);
+    setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
     callDeleteKeystores(composeRequestBody(pubKey))
         .then()
         .contentType(ContentType.JSON)
@@ -103,7 +107,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   @Test
   public void deletingExistingKeyReturnDeleted() throws URISyntaxException {
     createBlsKey("eth2/bls_keystore.json", "somepassword");
-    setupSignerWithKeyManagerApi(true);
+    setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
     callDeleteKeystores(composeRequestBody())
         .then()
         .contentType(ContentType.JSON)
@@ -117,7 +121,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   @Test
   public void deletingExistingTwiceReturnsNotActive() throws URISyntaxException {
     createBlsKey("eth2/bls_keystore.json", "somepassword");
-    setupSignerWithKeyManagerApi(true);
+    setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
     callDeleteKeystores(composeRequestBody())
         .then()
         .contentType(ContentType.JSON)
@@ -143,7 +147,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   public void deletingRemovesSignerFromActiveSigners() throws URISyntaxException {
     final String firstPubkey = createBlsKey("eth2/bls_keystore.json", "somepassword");
     final String secondPubKey = createBlsKey("eth2/bls_keystore_2.json", "otherpassword");
-    setupSignerWithKeyManagerApi(true);
+    setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
 
     callListKeys()
         .then()
@@ -176,7 +180,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   @Test
   public void deletingReadOnlyKeyReturnError() throws URISyntaxException {
     final String readOnlyPubkey = createRawPrivateKeyFile(BLS_PRIVATE_KEY_1);
-    setupSignerWithKeyManagerApi(true);
+    setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
     callDeleteKeystores(composeRequestBody(readOnlyPubkey))
         .then()
         .contentType(ContentType.JSON)
@@ -192,7 +196,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
       throws URISyntaxException, JsonProcessingException {
     final String firstPubkey = createBlsKey("eth2/bls_keystore.json", "somepassword");
     final String secondPubKey = createBlsKey("eth2/bls_keystore_2.json", "otherpassword");
-    setupSignerWithKeyManagerApi(true);
+    setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
 
     final SignerConfiguration signer2Configuration =
         new SignerConfigurationBuilder()
@@ -255,6 +259,23 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
     assertThat(parsedBody.getPubkeys().get(0))
         .isEqualTo(
             "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884");
+  }
+
+  @Test
+  public void deletingExistingKeyWithNoSlashingProtectionReturnDeleted() throws URISyntaxException {
+
+    createBlsKey("eth2/bls_keystore.json", "somepassword");
+
+    setupSignerWithKeyManagerApi(WITHOUT_SLASHING_PROTECTION_DATA);
+
+    callDeleteKeystores(composeRequestBody())
+        .then()
+        .contentType(ContentType.JSON)
+        .assertThat()
+        .statusCode(200)
+        .body("data[0].status", is("deleted"))
+        .and()
+        .body("slashing_protection", is(EMPTY_SLASHING_DATA_WITHOUT_GVR));
   }
 
   private String composeRequestBody() {
