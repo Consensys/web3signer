@@ -46,10 +46,6 @@ public class Step {
     return shouldSucceed;
   }
 
-  public boolean isContainsSlashableData() {
-    return containsSlashableData;
-  }
-
   public InterchangeV5Format getInterchangeContent() {
     return interchangeContent;
   }
