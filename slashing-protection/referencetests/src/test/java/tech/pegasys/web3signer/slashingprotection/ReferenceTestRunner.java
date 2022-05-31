@@ -165,7 +165,7 @@ public class ReferenceTestRunner {
 
     final List<String> publicKeysInDb = getValidatorPublicKeysFromDb();
 
-    assertThat(validatorsInModel).containsExactlyInAnyOrderElementsOf(publicKeysInDb);
+    assertThat(publicKeysInDb).containsAll(validatorsInModel);
 
     // need to register the validators with slashingProtection before testing blocks/attestations
     slashingProtectionContext
