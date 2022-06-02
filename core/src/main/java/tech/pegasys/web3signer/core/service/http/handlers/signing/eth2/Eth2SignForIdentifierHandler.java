@@ -149,7 +149,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       final Eth2SigningRequestBody eth2SigningRequestBody,
       final Bytes signingRoot,
       final String signature) {
-    try {
+    try(final TimingContext ignored = slashingMetrics.getDatabaseTimer().startTimer()) {
       if (maySign(Bytes.fromHexString(identifier), signingRoot, eth2SigningRequestBody)) {
         slashingMetrics.incrementSigningsPermitted();
         respondWithSignature(routingContext, signature);

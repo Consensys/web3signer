@@ -16,11 +16,14 @@ import static tech.pegasys.web3signer.common.Web3SignerMetricCategory.ETH2_SLASH
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 
 public class SlashingProtectionMetrics {
 
   private final Counter preventedSignings;
   private final Counter permittedSignings;
+  private final OperationTimer databaseTimer;
 
   public SlashingProtectionMetrics(final MetricsSystem metricsSystem) {
     this.permittedSignings =
@@ -34,6 +37,12 @@ public class SlashingProtectionMetrics {
             ETH2_SLASHING_PROTECTION,
             "prevented_signings",
             "The number of prevented signings due to violation of slashing conditions.");
+
+    this.databaseTimer =
+        metricsSystem.createTimer(
+            ETH2_SLASHING_PROTECTION,
+            "slashing_protection_database_duration",
+            "Time spent reading and writing to the slashing database while signing");
   }
 
   public void incrementSigningsPrevented() {
@@ -42,5 +51,9 @@ public class SlashingProtectionMetrics {
 
   public void incrementSigningsPermitted() {
     permittedSignings.inc();
+  }
+
+  public OperationTimer getDatabaseTimer() {
+    return databaseTimer;
   }
 }
