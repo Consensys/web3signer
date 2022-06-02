@@ -17,7 +17,6 @@ import static tech.pegasys.web3signer.common.Web3SignerMetricCategory.ETH2_SLASH
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
-import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 
 public class SlashingProtectionMetrics {
 
