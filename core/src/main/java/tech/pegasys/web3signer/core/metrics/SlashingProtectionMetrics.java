@@ -40,7 +40,7 @@ public class SlashingProtectionMetrics {
     this.databaseTimer =
         metricsSystem.createTimer(
             ETH2_SLASHING_PROTECTION,
-            "slashing_protection_database_duration",
+            "database_duration",
             "Time spent reading and writing to the slashing database while signing");
   }
 
