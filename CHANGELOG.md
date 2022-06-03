@@ -1,5 +1,10 @@
 # Changelog
 
+## 22.6.0
+
+### Features Added
+- Added new metric `eth2_slashingprotection_database_duration` to track time spent performing database queries during either block or attestation signing operations
+
 ## 22.5.1
 ### Breaking Changes
 - Removed network definition for kintsugi testnet
