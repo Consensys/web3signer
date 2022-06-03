@@ -177,17 +177,24 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     switch (eth2SigningRequestBody.getType()) {
       case BLOCK:
       case BLOCK_V2:
-        return maySignBlock(publicKey, signingRoot, getBlockSlot(eth2SigningRequestBody), forkInfo);
+        try (final TimingContext ignored =
+            slashingMetrics.getDatabaseTimer().labels("block").startTimer()) {
+          return maySignBlock(
+              publicKey, signingRoot, getBlockSlot(eth2SigningRequestBody), forkInfo);
+        }
       case ATTESTATION:
         final AttestationData attestation = eth2SigningRequestBody.getAttestation();
-        return slashingProtection
-            .get()
-            .maySignAttestation(
-                publicKey,
-                signingRoot,
-                toUInt64(attestation.source.epoch),
-                toUInt64(attestation.target.epoch),
-                forkInfo.getGenesisValidatorsRoot());
+        try (final TimingContext ignored =
+            slashingMetrics.getDatabaseTimer().labels("attestation").startTimer()) {
+          return slashingProtection
+              .get()
+              .maySignAttestation(
+                  publicKey,
+                  signingRoot,
+                  toUInt64(attestation.source.epoch),
+                  toUInt64(attestation.target.epoch),
+                  forkInfo.getGenesisValidatorsRoot());
+        }
       default:
         return true;
     }
