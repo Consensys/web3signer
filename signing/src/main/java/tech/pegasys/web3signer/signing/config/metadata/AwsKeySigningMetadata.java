@@ -57,7 +57,6 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
     return secretAccessKey;
   }
 
-  @Override
   public String getSecretName() {
     return secretName;
   }

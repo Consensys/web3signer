@@ -18,11 +18,13 @@ import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.USE
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.teku.spec.networks.Eth2Network;
+import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
@@ -96,16 +98,10 @@ public class Eth2SubCommand extends ModeSubCommand {
       arity = "1")
   private boolean isKeyManagerApiEnabled = false;
 
-  @CommandLine.Option(
-      names = {"--aws-connection-cache-size"},
-      paramLabel = "<LONG>",
-      description =
-          "Maximum number of connections to cache to the AWS Secrets Manager (default: ${DEFAULT-VALUE})")
-  private long awsCacheMaximumSize = 1;
-
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
   @Mixin private PicoKeystoresParameters keystoreParameters;
+  @Mixin private PicoCliAwsSecretsManagerParameters awsSecretsManagerParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
 
   public Eth2SubCommand() {
@@ -121,7 +117,7 @@ public class Eth2SubCommand extends ModeSubCommand {
         keystoreParameters,
         eth2Spec,
         isKeyManagerApiEnabled,
-        awsCacheMaximumSize);
+        awsSecretsManagerParameters);
   }
 
   private Eth2NetworkConfiguration createEth2NetworkConfig() {
@@ -162,6 +158,7 @@ public class Eth2SubCommand extends ModeSubCommand {
 
     validateAzureParameters();
     validateKeystoreParameters(keystoreParameters);
+    validateAwsSecretsManageParameters();
   }
 
   private void validateAzureParameters() {
@@ -210,6 +207,38 @@ public class Eth2SubCommand extends ModeSubCommand {
           commandSpec.commandLine(),
           "Only one of --keystores-passwords-path or --keystores-password-file options can be specified");
     }
+  }
+
+  private void validateAwsSecretsManageParameters() {
+    if (awsSecretsManagerParameters.isAwsSecretsManagerEnabled()) {
+      final List<String> missingFields = missingAwsSecretsManagerFields();
+      if (!missingFields.isEmpty()) {
+        final String errorMsg =
+            String.format(
+                "AWS Secrets Manager access was enabled, but the following parameters were missing [%s].",
+                String.join(",", missingFields));
+        throw new ParameterException(commandSpec.commandLine(), errorMsg);
+      }
+    }
+  }
+
+  private List<String> missingAwsSecretsManagerFields() {
+    final List<String> missingFields = Lists.newArrayList();
+    if (awsSecretsManagerParameters.getAuthenticationMode() == AwsAuthenticationMode.SPECIFIED) {
+      if (awsSecretsManagerParameters.getAccessKeyId() == null) {
+        missingFields.add("--aws-secrets-access-key-id");
+      }
+
+      if (awsSecretsManagerParameters.getSecretAccessKey() == null) {
+        missingFields.add("--aws-secrets-secret-access-key");
+      }
+
+      if (awsSecretsManagerParameters.getRegion() == null) {
+        missingFields.add("--aws-secrets-region");
+      }
+    }
+
+    return missingFields;
   }
 
   private void validatePositiveValue(final long value, final String fieldName) {

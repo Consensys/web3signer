@@ -20,6 +20,7 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYM
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
+import tech.pegasys.signers.aws.AwsSecretsManager;
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -44,6 +45,8 @@ import tech.pegasys.web3signer.signing.BlsKeystoreBulkLoader;
 import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
@@ -90,7 +93,7 @@ public class Eth2Runner extends Runner {
   private final KeystoresParameters keystoresParameters;
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
-  private final long awsCacheMaximumSize;
+  private final AwsSecretsManagerParameters awsSecretsManagerParameters;
 
   public Eth2Runner(
       final Config config,
@@ -99,7 +102,7 @@ public class Eth2Runner extends Runner {
       final KeystoresParameters keystoresParameters,
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled,
-      final long awsCacheMaximumSize) {
+      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
     super(config);
     this.slashingProtectionContext = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
@@ -108,7 +111,7 @@ public class Eth2Runner extends Runner {
     this.keystoresParameters = keystoresParameters;
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
-    this.awsCacheMaximumSize = awsCacheMaximumSize;
+    this.awsSecretsManagerParameters = awsSecretsManagerParameters;
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -255,7 +258,8 @@ public class Eth2Runner extends Runner {
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
               final AwsSecretsManagerProvider awsSecretsManagerProvider =
-                  new AwsSecretsManagerProvider(awsCacheMaximumSize)) {
+                  new AwsSecretsManagerProvider(
+                      awsSecretsManagerParameters.getAwsCacheMaximumSize())) {
             final AbstractArtifactSignerFactory artifactSignerFactory =
                 new BlsArtifactSignerFactory(
                     config.getKeyConfigPath(),
@@ -292,6 +296,14 @@ public class Eth2Runner extends Runner {
             signers.addAll(keystoreSigners);
           }
 
+          if (awsSecretsManagerParameters.isAwsSecretsManagerEnabled()) {
+            try (final AwsSecretsManagerProvider awsSecretsManagerProvider =
+                new AwsSecretsManagerProvider(
+                    awsSecretsManagerParameters.getAwsCacheMaximumSize())) {
+              signers.addAll(loadAwsSecretsManagerSigners(awsSecretsManagerProvider));
+            }
+          }
+
           final List<Bytes> validators =
               signers.stream()
                   .map(ArtifactSigner::getIdentifier)
@@ -304,6 +316,29 @@ public class Eth2Runner extends Runner {
                 context -> context.getRegisteredValidators().registerValidators(validators));
           }
           return signers;
+        });
+  }
+
+  private Collection<ArtifactSigner> loadAwsSecretsManagerSigners(
+      final AwsSecretsManagerProvider awsSecretsManagerProvider) {
+    final AwsSecretsManager awsSecretsManager =
+        AwsSecretsManagerFactory.createAwsSecretsManager(
+            awsSecretsManagerProvider, awsSecretsManagerParameters);
+    return awsSecretsManager.mapSecrets(
+        awsSecretsManagerParameters.getPrefixesFilter(),
+        awsSecretsManagerParameters.getTagNamesFilter(),
+        awsSecretsManagerParameters.getTagValuesFilter(),
+        (key, value) -> {
+          try {
+            final Bytes privateKeyBytes = Bytes.fromHexString(value);
+            final BLSKeyPair keyPair =
+                new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
+            return new BlsArtifactSigner(keyPair, SignerOrigin.AZURE);
+          } catch (final Exception e) {
+            LOG.error("Failed to load secret named {} from AWS secrets manager.", key);
+            // note: This won't cause web3signer to restart
+            return null;
+          }
         });
   }
 
