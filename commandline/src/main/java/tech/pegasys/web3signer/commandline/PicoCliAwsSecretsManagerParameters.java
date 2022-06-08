@@ -77,7 +77,7 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   private List<String> tagsNameFilters = Collections.emptyList();
 
   @Option(
-      names = "--aws-secrets-prefixes-filter",
+      names = "--aws-secrets-tag-values-filter",
       description =
           "Optional comma-separated list of tag values filter to apply while fetching secrets from AWS secrets manager."
               + " (Default: ${DEFAULT-VALUE})")
