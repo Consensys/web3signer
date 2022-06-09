@@ -297,10 +297,14 @@ public class Eth2Runner extends Runner {
           }
 
           if (awsSecretsManagerParameters.isAwsSecretsManagerEnabled()) {
+            LOG.info("Loading keys from AWS secrets manager ... ");
             try (final AwsSecretsManagerProvider awsSecretsManagerProvider =
                 new AwsSecretsManagerProvider(
                     awsSecretsManagerParameters.getAwsCacheMaximumSize())) {
-              signers.addAll(loadAwsSecretsManagerSigners(awsSecretsManagerProvider));
+              Collection<ArtifactSigner> awsSigners =
+                  loadAwsSecretsManagerSigners(awsSecretsManagerProvider);
+              LOG.info("AWS secrets managers keys loaded: [{}]", awsSigners.size());
+              signers.addAll(awsSigners);
             }
           }
 
