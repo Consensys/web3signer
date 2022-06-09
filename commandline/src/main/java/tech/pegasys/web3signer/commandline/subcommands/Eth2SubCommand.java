@@ -12,7 +12,10 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.CLIENT_SECRET;
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
@@ -230,15 +233,15 @@ public class Eth2SubCommand extends ModeSubCommand {
     final List<String> missingFields = Lists.newArrayList();
     if (awsSecretsManagerParameters.getAuthenticationMode() == AwsAuthenticationMode.SPECIFIED) {
       if (awsSecretsManagerParameters.getAccessKeyId() == null) {
-        missingFields.add("--aws-secrets-access-key-id");
+        missingFields.add(AWS_SECRETS_ACCESS_KEY_ID_OPTION);
       }
 
       if (awsSecretsManagerParameters.getSecretAccessKey() == null) {
-        missingFields.add("--aws-secrets-secret-access-key");
+        missingFields.add(AWS_SECRETS_SECRET_ACCESS_KEY_OPTION);
       }
 
       if (awsSecretsManagerParameters.getRegion() == null) {
-        missingFields.add("--aws-secrets-region");
+        missingFields.add(AWS_SECRETS_REGION_OPTION);
       }
     }
 
