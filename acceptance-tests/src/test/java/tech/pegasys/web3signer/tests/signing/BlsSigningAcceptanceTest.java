@@ -178,21 +178,23 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String roAwsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
     final String roAwsSecretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
     final String region = Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
+    final String publicKey = keyPair.getPublicKey().toString();
 
     final AwsSecretsManagerUtil awsSecretsManagerUtil =
         new AwsSecretsManagerUtil(region, rwAwsAccessKeyId, rwAwsSecretAccessKey);
 
-    final String secretName = awsSecretsManagerUtil.createSecret(PRIVATE_KEY);
+    awsSecretsManagerUtil.createSecret(publicKey, PRIVATE_KEY);
+    final String fullyPrefixKeyName = awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey;
 
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final String configFilename = publicKey.substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     try {
       metadataFileHelpers.createAwsYamlFileAt(
-          keyConfigFile, region, roAwsAccessKeyId, roAwsSecretAccessKey, secretName);
+          keyConfigFile, region, roAwsAccessKeyId, roAwsSecretAccessKey, fullyPrefixKeyName);
 
       signAndVerifySignature(ArtifactType.BLOCK);
     } finally {
-      awsSecretsManagerUtil.deleteSecret(secretName);
+      awsSecretsManagerUtil.deleteSecret(publicKey);
       awsSecretsManagerUtil.close();
     }
   }

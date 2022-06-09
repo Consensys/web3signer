@@ -24,8 +24,11 @@ import software.amazon.awssdk.services.secretsmanager.model.DeleteSecretRequest;
 public class AwsSecretsManagerUtil {
 
   private final SecretsManagerClient secretsManagerClient;
+  private static final String SECRETS_MANAGER_PREFIX = "signers-aws-integration/";
+  private final String secretNamePrefix;
 
-  public AwsSecretsManagerUtil(String region, String accessKeyId, String secretAccessKey) {
+  public AwsSecretsManagerUtil(
+      final String region, final String accessKeyId, final String secretAccessKey) {
     final AwsBasicCredentials awsBasicCredentials =
         AwsBasicCredentials.create(accessKeyId, secretAccessKey);
     final StaticCredentialsProvider credentialsProvider =
@@ -35,19 +38,26 @@ public class AwsSecretsManagerUtil {
             .credentialsProvider(credentialsProvider)
             .region(Region.of(region))
             .build();
+
+    secretNamePrefix = SECRETS_MANAGER_PREFIX + UUID.randomUUID() + "/";
   }
 
-  public String createSecret(String secretValue) {
-    final String secretName = "signers-aws-integration/" + UUID.randomUUID();
+  public String getSecretsManagerPrefix() {
+    return secretNamePrefix;
+  }
+
+  public void createSecret(String secretName, String secretValue) {
     final CreateSecretRequest secretRequest =
-        CreateSecretRequest.builder().name(secretName).secretString(secretValue).build();
+        CreateSecretRequest.builder()
+            .name(secretNamePrefix + secretName)
+            .secretString(secretValue)
+            .build();
     secretsManagerClient.createSecret(secretRequest);
-    return secretName;
   }
 
   public void deleteSecret(final String secretName) {
     final DeleteSecretRequest secretRequest =
-        DeleteSecretRequest.builder().secretId(secretName).build();
+        DeleteSecretRequest.builder().secretId(secretNamePrefix + secretName).build();
     secretsManagerClient.deleteSecret(secretRequest);
   }
 

@@ -10,23 +10,23 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.tests.publickeys;
+package tech.pegasys.web3signer.tests.bulkloading;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static tech.pegasys.web3signer.signing.KeyType.BLS;
-
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.dsl.utils.AwsSecretsManagerUtil;
+import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
-import io.restassured.response.Response;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledIfEnvironmentVariable(
     named = "RW_AWS_ACCESS_KEY_ID",
     matches = ".*",
@@ -47,58 +47,48 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
     named = "AWS_REGION",
     matches = ".*",
     disabledReason = "AWS_REGION env variable is required")
-public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
-
-  private final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
-  private final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
-
-  private final String RO_AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
-  private final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
-
+@TestInstance(TestInstance.Lifecycle.PER_CLASS) // same instance is shared across test methods
+public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
+  private static final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
+  private static final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
+  // private static final String RO_AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
+  // private static final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
   private static final String AWS_REGION =
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
-
-  private final String privateKey = privateKeys(BLS)[0]; // secret value
-  private final String publicKey = BLS_PUBLIC_KEY_1;
-
+  private static final String BLS_PRIVATE_KEY_1 =
+      "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
+  private static final String BLS_PRIVATE_KEY_2 =
+      "32ae313afff2daa2ef7005a7f834bdf291855608fe82c24d30be6ac2017093a8";
+  private static final BLSSecretKey key1 =
+      BLSSecretKey.fromBytes(Bytes32.fromHexString(BLS_PRIVATE_KEY_1));
+  private static final BLSSecretKey key2 =
+      BLSSecretKey.fromBytes(Bytes32.fromHexString(BLS_PRIVATE_KEY_1));
   private AwsSecretsManagerUtil awsSecretsManagerUtil;
+  private final List<String> awsKeysIdentifiers = new ArrayList<>();
 
   @BeforeAll
-  void setup() {
+  void setupAwsResources() {
+    awsKeysIdentifiers.add(new BLSKeyPair(key1).getPublicKey().toString());
+    awsKeysIdentifiers.add(new BLSKeyPair(key2).getPublicKey().toString());
+
     awsSecretsManagerUtil =
         new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
-    awsSecretsManagerUtil.createSecret(publicKey, privateKey);
+
+    awsSecretsManagerUtil.createSecret(awsKeysIdentifiers.get(0), BLS_PRIVATE_KEY_1);
+    awsSecretsManagerUtil.createSecret(awsKeysIdentifiers.get(1), BLS_PRIVATE_KEY_2);
   }
 
   @AfterAll
-  void teardown() {
+  void cleanUpAwsResources() {
     if (awsSecretsManagerUtil != null) {
-      awsSecretsManagerUtil.deleteSecret(publicKey);
+      awsKeysIdentifiers.forEach(
+          identifier -> {
+            try {
+              awsSecretsManagerUtil.deleteSecret(identifier);
+            } catch (RuntimeException ignored) {
+            }
+          });
       awsSecretsManagerUtil.close();
     }
-  }
-
-  @Test
-  public void specifiedAwsKeysReturnAppropriatePublicKey() {
-    metadataFileHelpers.createAwsYamlFileAt(
-        testDirectory.resolve(publicKey + ".yaml"),
-        AWS_REGION,
-        RO_AWS_ACCESS_KEY_ID,
-        RO_AWS_SECRET_ACCESS_KEY,
-        awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey);
-    initAndStartSigner("eth2");
-    final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(BLS);
-    validateApiResponse(response, containsInAnyOrder(publicKey));
-  }
-
-  @Test
-  public void environmentAwsKeysReturnAppropriatePublicKey() {
-    metadataFileHelpers.createAwsYamlFileAt(
-        testDirectory.resolve(publicKey + ".yaml"),
-        AWS_REGION,
-        awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey);
-    initAndStartSigner("eth2");
-    final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(BLS);
-    validateApiResponse(response, containsInAnyOrder(publicKey));
   }
 }
