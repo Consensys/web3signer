@@ -1,9 +1,15 @@
 # Changelog
 
+## Next release
+### Features Added
+- Private keys bulk loading from AWS Secrets Manager via cli options in eth2 mode [#499](https://github.com/ConsenSys/web3signer/issues/499)
+
+---
 ## 22.6.0
 
 ### Features Added
 - Added new metric `eth2_slashingprotection_database_duration` to track time spent performing database queries during either block or attestation signing operations
+---
 
 ## 22.5.1
 ### Breaking Changes
@@ -16,6 +22,7 @@
 ### Bugs Fixed
 - Fixes issue when using key manager delete API failed when there was no slashing protection data [#537](https://github.com/ConsenSys/web3signer/issues/537)
 
+---
 ## 22.5.0
 ### Breaking Changes
 - ETH2 Mode - block signing request (BLOCK_V2), starting from BELLATRIX fork, use block_header instead of block. [#547](https://github.com/ConsenSys/web3signer/pull/547)
