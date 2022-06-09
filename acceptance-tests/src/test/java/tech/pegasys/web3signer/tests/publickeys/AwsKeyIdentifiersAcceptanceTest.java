@@ -17,23 +17,46 @@ import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
 import tech.pegasys.web3signer.dsl.utils.AwsSecretsManagerUtil;
 
+import java.util.Optional;
+
 import io.restassured.response.Response;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@EnabledIfEnvironmentVariable(
+    named = "RW_AWS_ACCESS_KEY_ID",
+    matches = ".*",
+    disabledReason = "RW_AWS_ACCESS_KEY_ID env variable is required")
+@EnabledIfEnvironmentVariable(
+    named = "RW_AWS_SECRET_ACCESS_KEY",
+    matches = ".*",
+    disabledReason = "RW_AWS_SECRET_ACCESS_KEY env variable is required")
+@EnabledIfEnvironmentVariable(
+    named = "AWS_ACCESS_KEY_ID",
+    matches = ".*",
+    disabledReason = "AWS_ACCESS_KEY_ID env variable is required")
+@EnabledIfEnvironmentVariable(
+    named = "AWS_SECRET_ACCESS_KEY",
+    matches = ".*",
+    disabledReason = "AWS_SECRET_ACCESS_KEY env variable is required")
+@EnabledIfEnvironmentVariable(
+    named = "AWS_REGION",
+    matches = ".*",
+    disabledReason = "AWS_REGION env variable is required")
 public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
 
   private final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
   private final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
 
-  private final String RO_AWS_ACCESS_KEY_ID = System.getenv("RO_AWS_ACCESS_KEY_ID");
-  private final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("RO_AWS_SECRET_ACCESS_KEY");
+  private final String RO_AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
+  private final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
 
-  private final String AWS_REGION = "us-east-2";
+  private static final String AWS_REGION =
+      Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
 
   private String secretName;
   private final String privateKey = privateKeys(BLS)[0]; // secret value
@@ -41,20 +64,8 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
 
   private AwsSecretsManagerUtil awsSecretsManagerUtil;
 
-  private void checkEnvironmentVariables() {
-    Assumptions.assumeTrue(
-        RW_AWS_ACCESS_KEY_ID != null, "Set RW_AWS_ACCESS_KEY_ID environment variable");
-    Assumptions.assumeTrue(
-        RW_AWS_SECRET_ACCESS_KEY != null, "Set RW_AWS_SECRET_ACCESS_KEY environment variable");
-    Assumptions.assumeTrue(
-        RO_AWS_ACCESS_KEY_ID != null, "Set RO_AWS_ACCESS_KEY_ID environment variable");
-    Assumptions.assumeTrue(
-        RO_AWS_SECRET_ACCESS_KEY != null, "Set RO_AWS_SECRET_ACCESS_KEY environment variable");
-  }
-
   @BeforeAll
   void setup() {
-    checkEnvironmentVariables();
     awsSecretsManagerUtil =
         new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
     secretName = awsSecretsManagerUtil.createSecret(privateKey);
