@@ -12,10 +12,20 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ENABLED_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_PREFIXES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
+
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -24,6 +34,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -143,6 +154,8 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                   keystoresParameters.getKeystoresPasswordFile().toAbsolutePath()));
         }
       }
+
+      yamlConfig.append(awsSecretsManagerOptions());
 
       if (signerConfig.getSlashingExportPath().isPresent()) {
         params.add("export"); // sub-sub command
@@ -295,7 +308,70 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     return yamlConfig.toString();
   }
 
-  private String createCommaSeparatedList(final List<String> values) {
+  private String awsSecretsManagerOptions() {
+    final StringBuilder yamlConfig = new StringBuilder();
+
+    if (signerConfig.getAwsSecretsManagerParameters().isPresent()) {
+      final AwsSecretsManagerParameters awsSecretsManagerParameters =
+          signerConfig.getAwsSecretsManagerParameters().get();
+      yamlConfig.append(
+          String.format(
+              YAML_BOOLEAN_FMT,
+              "eth2." + AWS_SECRETS_ENABLED_OPTION.substring(2),
+              awsSecretsManagerParameters.isAwsSecretsManagerEnabled()));
+
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_AUTH_MODE_OPTION.substring(2),
+              awsSecretsManagerParameters.getAuthenticationMode().name()));
+
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_ACCESS_KEY_ID_OPTION.substring(2),
+              awsSecretsManagerParameters.getAccessKeyId()));
+
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_SECRET_ACCESS_KEY_OPTION.substring(2),
+              awsSecretsManagerParameters.getSecretAccessKey()));
+
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_REGION_OPTION.substring(2),
+              awsSecretsManagerParameters.getRegion()));
+
+      if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
+        yamlConfig.append(
+            String.format(
+                YAML_STRING_FMT,
+                "eth2." + AWS_SECRETS_PREFIXES_FILTER_OPTION.substring(2),
+                createCommaSeparatedList(awsSecretsManagerParameters.getPrefixesFilter())));
+      }
+
+      if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
+        yamlConfig.append(
+            String.format(
+                YAML_STRING_FMT,
+                "eth2." + AWS_SECRETS_TAG_NAMES_FILTER_OPTION.substring(2),
+                createCommaSeparatedList(awsSecretsManagerParameters.getTagNamesFilter())));
+      }
+
+      if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
+        yamlConfig.append(
+            String.format(
+                YAML_STRING_FMT,
+                "eth2." + AWS_SECRETS_TAG_VALUES_FILTER_OPTION.substring(2),
+                createCommaSeparatedList(awsSecretsManagerParameters.getTagValuesFilter())));
+      }
+    }
+    return yamlConfig.toString();
+  }
+
+  private String createCommaSeparatedList(final Collection<String> values) {
     return String.join(",", values);
   }
 }

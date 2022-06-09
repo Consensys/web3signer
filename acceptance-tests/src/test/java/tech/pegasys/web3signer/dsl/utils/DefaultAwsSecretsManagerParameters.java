@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.dsl.utils;
 import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 
+import java.util.Collection;
+
 public class DefaultAwsSecretsManagerParameters implements AwsSecretsManagerParameters {
 
   private final AwsAuthenticationMode authenticationMode;
@@ -22,12 +24,18 @@ public class DefaultAwsSecretsManagerParameters implements AwsSecretsManagerPara
   private final String accessKeyId;
   private final String secretAccessKey;
 
+  private final Collection<String> prefixFilter;
+
   public DefaultAwsSecretsManagerParameters(
-      final String region, final String accessKeyId, final String secretAccessKey) {
+      final String region,
+      final String accessKeyId,
+      final String secretAccessKey,
+      final Collection<String> prefixFilter) {
     this.authenticationMode = AwsAuthenticationMode.SPECIFIED;
     this.region = region;
     this.accessKeyId = accessKeyId;
     this.secretAccessKey = secretAccessKey;
+    this.prefixFilter = prefixFilter;
   }
 
   @Override
@@ -48,5 +56,10 @@ public class DefaultAwsSecretsManagerParameters implements AwsSecretsManagerPara
   @Override
   public String getRegion() {
     return region;
+  }
+
+  @Override
+  public Collection<String> getPrefixesFilter() {
+    return prefixFilter;
   }
 }
