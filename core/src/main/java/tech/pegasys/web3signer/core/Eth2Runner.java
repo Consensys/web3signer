@@ -337,7 +337,7 @@ public class Eth2Runner extends Runner {
             final Bytes privateKeyBytes = Bytes.fromHexString(value);
             final BLSKeyPair keyPair =
                 new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
-            return new BlsArtifactSigner(keyPair, SignerOrigin.AZURE);
+            return new BlsArtifactSigner(keyPair, SignerOrigin.AWS);
           } catch (final Exception e) {
             LOG.error("Failed to load secret named {} from AWS secrets manager.", key);
             // note: This won't cause web3signer to restart
