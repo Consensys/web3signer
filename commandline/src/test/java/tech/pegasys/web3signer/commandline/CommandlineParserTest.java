@@ -15,12 +15,18 @@ package tech.pegasys.web3signer.commandline;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.CmdlineHelpers.removeFieldFrom;
 import static tech.pegasys.web3signer.CmdlineHelpers.validBaseCommandOptions;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ENABLED_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -382,6 +388,76 @@ class CommandlineParserTest {
     assertThat(commandError.toString())
         .contains(
             "Error parsing parameters: Only one of --keystores-passwords-path or --keystores-password-file options can be specified");
+  }
+
+  @Test
+  void awsSpecifiedAuthModeFailsToParseWithoutRequiredParameters() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        String.format(
+            "eth2 --slashing-protection-enabled=false %s=true %s=%s",
+            AWS_SECRETS_ENABLED_OPTION,
+            AWS_SECRETS_AUTH_MODE_OPTION,
+            AwsAuthenticationMode.SPECIFIED);
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: --aws-secrets-auth-mode=SPECIFIED, but the following parameters were missing [--aws-secrets-access-key-id, --aws-secrets-secret-access-key, --aws-secrets-region].");
+  }
+
+  @Test
+  void awsSecretsUnknownAuthModeFailsToParse() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        String.format(
+            "eth2 --slashing-protection-enabled=false %s=%s %s=UNKNOWN",
+            AWS_SECRETS_ENABLED_OPTION, Boolean.TRUE, AWS_SECRETS_AUTH_MODE_OPTION);
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: Invalid value for option '--aws-secrets-auth-mode': expected one of [ENVIRONMENT, SPECIFIED] (case-sensitive) but was 'UNKNOWN'");
+  }
+
+  @Test
+  void awsSpecifiedAuthModeParseWithAllRequiredParameters() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        String.format(
+            "eth2 --slashing-protection-enabled=false %s=%s %s=%s %s=test %s=test %s=us-east-2",
+            AWS_SECRETS_ENABLED_OPTION,
+            Boolean.TRUE,
+            AWS_SECRETS_AUTH_MODE_OPTION,
+            AwsAuthenticationMode.SPECIFIED,
+            AWS_SECRETS_ACCESS_KEY_ID_OPTION,
+            AWS_SECRETS_SECRET_ACCESS_KEY_OPTION,
+            AWS_SECRETS_REGION_OPTION);
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isZero();
+  }
+
+  @Test
+  void awsSecretsEnabledParseWithDefaultOptions() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        String.format(
+            "eth2 --slashing-protection-enabled=false %s=%s",
+            AWS_SECRETS_ENABLED_OPTION, Boolean.TRUE);
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isZero();
   }
 
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(

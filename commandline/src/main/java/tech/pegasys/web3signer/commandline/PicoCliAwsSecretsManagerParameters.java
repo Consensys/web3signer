@@ -23,9 +23,20 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerParameters {
+  public static final String AWS_SECRETS_ENABLED_OPTION = "--aws-secrets-enabled";
+  public static final String AWS_SECRETS_AUTH_MODE_OPTION = "--aws-secrets-auth-mode";
+  public static final String AWS_SECRETS_ACCESS_KEY_ID_OPTION = "--aws-secrets-access-key-id";
+  public static final String AWS_SECRETS_SECRET_ACCESS_KEY_OPTION =
+      "--aws-secrets-secret-access-key";
+  public static final String AWS_SECRETS_REGION_OPTION = "--aws-secrets-region";
+  public static final String AWS_SECRETS_PREFIXES_FILTER_OPTION = "--aws-secrets-prefixes-filter";
+  public static final String AWS_SECRETS_TAG_NAMES_FILTER_OPTION = "--aws-secrets-tag-names-filter";
+  public static final String AWS_SECRETS_TAG_VALUES_FILTER_OPTION =
+      "--aws-secrets-tag-values-filter";
+  public static final String AWS_CONNECTION_CACHE_SIZE_OPTION = "--aws-connection-cache-size";
 
   @Option(
-      names = {"--aws-secrets-enabled"},
+      names = {AWS_SECRETS_ENABLED_OPTION},
       description =
           "Set true if Web3signer should try and load all keys from AWS Secrets Manager service."
               + " (Default: ${DEFAULT-VALUE})",
@@ -33,7 +44,7 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   private boolean awsSecretsManagerEnabled = false;
 
   @Option(
-      names = {"--aws-secrets-auth-mode"},
+      names = {AWS_SECRETS_AUTH_MODE_OPTION},
       description =
           "Authentication mode for AWS Secrets Manager service. Valid Values: [${COMPLETION-CANDIDATES}]"
               + " (Default: ${DEFAULT-VALUE})",
@@ -41,50 +52,49 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   private AwsAuthenticationMode authenticationMode = AwsAuthenticationMode.ENVIRONMENT;
 
   @Option(
-      names = {"--aws-secrets-access-key-id"},
+      names = {AWS_SECRETS_ACCESS_KEY_ID_OPTION},
       description =
           "AWS Access Key Id to authenticate Aws Secrets Manager. Required for SPECIFIED authentication mode.",
       paramLabel = "<ACCESS_KEY_ID>")
   private String accessKeyId;
 
   @Option(
-      names = {"--aws-secrets-secret-access-key"},
+      names = {AWS_SECRETS_SECRET_ACCESS_KEY_OPTION},
       description =
           "AWS Secret Access Key to authenticate Aws Secrets Manager. Required for SPECIFIED authentication mode.",
       paramLabel = "<SECRET_ACCESS_KEY>")
   private String secretAccessKey;
 
   @Option(
-      names = {"--aws-secrets-region"},
+      names = {AWS_SECRETS_REGION_OPTION},
       description =
-          "AWS region where Secrets Manager service is available. Required for SPECIFIED authentication mode."
-              + " (Default: ${DEFAULT-VALUE})",
+          "AWS region where Secrets Manager service is available. Required for SPECIFIED authentication mode.",
       paramLabel = "<Region>")
-  private String region = "us-east-1";
+  private String region;
 
   @Option(
-      names = "--aws-secrets-prefixes-filter",
+      names = AWS_SECRETS_PREFIXES_FILTER_OPTION,
       description =
           "Optional comma-separated list of secret name's prefix filter to apply while fetching secrets from AWS secrets manager."
               + " (Default: ${DEFAULT-VALUE})")
   private List<String> prefixesFilter = Collections.emptyList();
 
   @Option(
-      names = "--aws-secrets-tag-names-filter",
+      names = AWS_SECRETS_TAG_NAMES_FILTER_OPTION,
       description =
           "Optional comma-separated list of tag names filter to apply while fetching secrets from AWS secrets manager."
               + " (Default: ${DEFAULT-VALUE})")
   private List<String> tagsNameFilters = Collections.emptyList();
 
   @Option(
-      names = "--aws-secrets-tag-values-filter",
+      names = AWS_SECRETS_TAG_VALUES_FILTER_OPTION,
       description =
           "Optional comma-separated list of tag values filter to apply while fetching secrets from AWS secrets manager."
               + " (Default: ${DEFAULT-VALUE})")
   private List<String> tagsValueFilters = Collections.emptyList();
 
   @CommandLine.Option(
-      names = {"--aws-connection-cache-size"},
+      names = {AWS_CONNECTION_CACHE_SIZE_OPTION},
       paramLabel = "<LONG>",
       description =
           "Maximum number of connections to cache to the AWS Secrets Manager (default: ${DEFAULT-VALUE})")

@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.CLIENT_SECRET;
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
@@ -211,18 +212,21 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   private void validateAwsSecretsManageParameters() {
     if (awsSecretsManagerParameters.isAwsSecretsManagerEnabled()) {
-      final List<String> missingFields = missingAwsSecretsManagerFields();
-      if (!missingFields.isEmpty()) {
+      final List<String> specifiedAuthModeMissingFields =
+          missingAwsSecretsManagerParametersForSpecified();
+      if (!specifiedAuthModeMissingFields.isEmpty()) {
         final String errorMsg =
             String.format(
-                "AWS Secrets Manager access was enabled, but the following parameters were missing [%s].",
-                String.join(",", missingFields));
+                "%s=%s, but the following parameters were missing [%s].",
+                AWS_SECRETS_AUTH_MODE_OPTION,
+                AwsAuthenticationMode.SPECIFIED,
+                String.join(", ", specifiedAuthModeMissingFields));
         throw new ParameterException(commandSpec.commandLine(), errorMsg);
       }
     }
   }
 
-  private List<String> missingAwsSecretsManagerFields() {
+  private List<String> missingAwsSecretsManagerParametersForSpecified() {
     final List<String> missingFields = Lists.newArrayList();
     if (awsSecretsManagerParameters.getAuthenticationMode() == AwsAuthenticationMode.SPECIFIED) {
       if (awsSecretsManagerParameters.getAccessKeyId() == null) {
