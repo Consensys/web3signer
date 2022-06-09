@@ -24,7 +24,6 @@ import software.amazon.awssdk.services.secretsmanager.model.DeleteSecretRequest;
 public class AwsSecretsManagerUtil {
 
   private final SecretsManagerClient secretsManagerClient;
-  private String secretName;
 
   public AwsSecretsManagerUtil(String region, String accessKeyId, String secretAccessKey) {
     final AwsBasicCredentials awsBasicCredentials =
@@ -39,14 +38,14 @@ public class AwsSecretsManagerUtil {
   }
 
   public String createSecret(String secretValue) {
-    secretName = "signers-aws-integration/" + UUID.randomUUID();
+    final String secretName = "signers-aws-integration/" + UUID.randomUUID();
     final CreateSecretRequest secretRequest =
         CreateSecretRequest.builder().name(secretName).secretString(secretValue).build();
     secretsManagerClient.createSecret(secretRequest);
     return secretName;
   }
 
-  public void deleteSecret() {
+  public void deleteSecret(final String secretName) {
     final DeleteSecretRequest secretRequest =
         DeleteSecretRequest.builder().secretId(secretName).build();
     secretsManagerClient.deleteSecret(secretRequest);

@@ -175,7 +175,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
       signAndVerifySignature(ArtifactType.BLOCK);
     } finally {
-      awsSecretsManagerUtil.deleteSecret();
+      awsSecretsManagerUtil.deleteSecret(secretName);
       awsSecretsManagerUtil.close();
     }
   }
