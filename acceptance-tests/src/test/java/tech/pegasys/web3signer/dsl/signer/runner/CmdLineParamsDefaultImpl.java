@@ -58,7 +58,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     params.add(String.valueOf(signerConfig.httpPort()));
     if (!signerConfig.getHttpHostAllowList().isEmpty()) {
       params.add("--http-host-allowlist");
-      params.add(createCommaSeparatedList(signerConfig.getHttpHostAllowList()));
+      params.add(String.join(",", signerConfig.getHttpHostAllowList()));
     }
     params.add("--key-store-path");
     params.add(signerConfig.getKeyStorePath().toString());
@@ -68,11 +68,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Integer.toString(signerConfig.getMetricsPort()));
       if (!signerConfig.getMetricsHostAllowList().isEmpty()) {
         params.add("--metrics-host-allowlist");
-        params.add(createCommaSeparatedList(signerConfig.getMetricsHostAllowList()));
+        params.add(String.join(",", signerConfig.getMetricsHostAllowList()));
       }
       if (!signerConfig.getMetricsCategories().isEmpty()) {
         params.add("--metrics-category");
-        params.add(createCommaSeparatedList(signerConfig.getMetricsCategories()));
+        params.add(String.join(",", signerConfig.getMetricsCategories()));
       }
     }
 
@@ -122,7 +122,9 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
         }
       }
 
-      params.addAll(awsCliOptions());
+      signerConfig
+          .getAwsSecretsManagerParameters()
+          .ifPresent(awsParams -> params.addAll(awsBulkLoadingOptions(awsParams)));
     }
 
     return params;
@@ -224,45 +226,39 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     return params;
   }
 
-  private String createCommaSeparatedList(final Collection<String> values) {
-    return String.join(",", values);
-  }
-
-  private Collection<String> awsCliOptions() {
+  private Collection<String> awsBulkLoadingOptions(
+      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
     final List<String> params = new ArrayList<>();
 
-    if (signerConfig.getAwsSecretsManagerParameters().isPresent()) {
-      final AwsSecretsManagerParameters awsSecretsManagerParameters =
-          signerConfig.getAwsSecretsManagerParameters().get();
-      params.add(AWS_SECRETS_ENABLED_OPTION + "=" + awsSecretsManagerParameters.isEnabled());
+    params.add(AWS_SECRETS_ENABLED_OPTION + "=" + awsSecretsManagerParameters.isEnabled());
 
-      params.add(AWS_SECRETS_AUTH_MODE_OPTION);
-      params.add(awsSecretsManagerParameters.getAuthenticationMode().name());
+    params.add(AWS_SECRETS_AUTH_MODE_OPTION);
+    params.add(awsSecretsManagerParameters.getAuthenticationMode().name());
 
-      params.add(AWS_SECRETS_ACCESS_KEY_ID_OPTION);
-      params.add(awsSecretsManagerParameters.getAccessKeyId());
+    params.add(AWS_SECRETS_ACCESS_KEY_ID_OPTION);
+    params.add(awsSecretsManagerParameters.getAccessKeyId());
 
-      params.add(AWS_SECRETS_SECRET_ACCESS_KEY_OPTION);
-      params.add(awsSecretsManagerParameters.getSecretAccessKey());
+    params.add(AWS_SECRETS_SECRET_ACCESS_KEY_OPTION);
+    params.add(awsSecretsManagerParameters.getSecretAccessKey());
 
-      params.add(AWS_SECRETS_REGION_OPTION);
-      params.add(awsSecretsManagerParameters.getRegion());
+    params.add(AWS_SECRETS_REGION_OPTION);
+    params.add(awsSecretsManagerParameters.getRegion());
 
-      if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
-        params.add(AWS_SECRETS_PREFIXES_FILTER_OPTION);
-        params.add(createCommaSeparatedList(awsSecretsManagerParameters.getPrefixesFilter()));
-      }
-
-      if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
-        params.add(AWS_SECRETS_TAG_NAMES_FILTER_OPTION);
-        params.add(createCommaSeparatedList(awsSecretsManagerParameters.getTagNamesFilter()));
-      }
-
-      if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
-        params.add(AWS_SECRETS_TAG_VALUES_FILTER_OPTION);
-        params.add(createCommaSeparatedList(awsSecretsManagerParameters.getTagValuesFilter()));
-      }
+    if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
+      params.add(AWS_SECRETS_PREFIXES_FILTER_OPTION);
+      params.add(String.join(",", awsSecretsManagerParameters.getPrefixesFilter()));
     }
+
+    if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
+      params.add(AWS_SECRETS_TAG_NAMES_FILTER_OPTION);
+      params.add(String.join(",", awsSecretsManagerParameters.getTagNamesFilter()));
+    }
+
+    if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
+      params.add(AWS_SECRETS_TAG_VALUES_FILTER_OPTION);
+      params.add(String.join(",", awsSecretsManagerParameters.getTagValuesFilter()));
+    }
+
     return params;
   }
 }

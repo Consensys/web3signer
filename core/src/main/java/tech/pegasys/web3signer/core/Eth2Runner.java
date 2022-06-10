@@ -45,6 +45,7 @@ import tech.pegasys.web3signer.signing.BlsKeystoreBulkLoader;
 import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
+import tech.pegasys.web3signer.signing.bulkloading.AWSBulkLoadingArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
@@ -297,14 +298,13 @@ public class Eth2Runner extends Runner {
           }
 
           if (awsSecretsManagerParameters.isEnabled()) {
-            LOG.info("Loading keys from AWS secrets manager ... ");
-            try (final AwsSecretsManagerProvider awsSecretsManagerProvider =
-                new AwsSecretsManagerProvider(awsSecretsManagerParameters.getCacheMaximumSize())) {
-              Collection<ArtifactSigner> awsSigners =
-                  loadAwsSecretsManagerSigners(awsSecretsManagerProvider);
-              LOG.info("AWS secrets managers keys loaded: [{}]", awsSigners.size());
-              signers.addAll(awsSigners);
-            }
+            LOG.info("Bulk loading keys from AWS Secrets Manager ... ");
+            final AWSBulkLoadingArtifactSignerProvider awsBulkLoadingArtifactSignerProvider =
+                new AWSBulkLoadingArtifactSignerProvider();
+            final Collection<ArtifactSigner> awsSigners =
+                awsBulkLoadingArtifactSignerProvider.load(awsSecretsManagerParameters);
+            LOG.info("Keys loaded from AWS Secrets Manager: [{}]", awsSigners.size());
+            signers.addAll(awsSigners);
           }
 
           final List<Bytes> validators =

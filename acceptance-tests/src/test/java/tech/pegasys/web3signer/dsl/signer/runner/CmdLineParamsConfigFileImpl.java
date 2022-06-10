@@ -34,7 +34,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,7 +67,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
           String.format(
               YAML_STRING_FMT,
               "http-host-allowlist",
-              createCommaSeparatedList(signerConfig.getHttpHostAllowList())));
+              String.join(",", signerConfig.getHttpHostAllowList())));
     }
     yamlConfig.append(
         String.format(
@@ -83,7 +82,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
             String.format(
                 YAML_STRING_FMT,
                 "metrics-host-allowlist",
-                createCommaSeparatedList(signerConfig.getMetricsHostAllowList())));
+                String.join(",", signerConfig.getMetricsHostAllowList())));
       }
       if (!signerConfig.getMetricsCategories().isEmpty()) {
         yamlConfig.append(
@@ -91,7 +90,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                 YAML_STRING_FMT,
                 "metrics-categories", // config-file can only use longest options if more than one
                 // option is specified.
-                createCommaSeparatedList(signerConfig.getMetricsCategories())));
+                String.join(",", signerConfig.getMetricsCategories())));
       }
     }
 
@@ -102,8 +101,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     yamlConfig.append(String.format(YAML_BOOLEAN_FMT, "access-logs-enabled", Boolean.TRUE));
 
     if (signerConfig.isHttpDynamicPortAllocation()) {
-      yamlConfig.append(
-          String.format(YAML_STRING_FMT, "data-path", dataPath.toAbsolutePath().toString()));
+      yamlConfig.append(String.format(YAML_STRING_FMT, "data-path", dataPath.toAbsolutePath()));
     }
 
     yamlConfig.append(createServerTlsArgs());
@@ -155,7 +153,9 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
         }
       }
 
-      yamlConfig.append(awsSecretsManagerOptions());
+      signerConfig
+          .getAwsSecretsManagerParameters()
+          .ifPresent(awsParams -> yamlConfig.append(awsBulkLoadingOptions(awsParams)));
 
       if (signerConfig.getSlashingExportPath().isPresent()) {
         params.add("export"); // sub-sub command
@@ -163,14 +163,14 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
             String.format(
                 YAML_STRING_FMT,
                 "eth2.export.to",
-                signerConfig.getSlashingExportPath().get().toAbsolutePath().toString()));
+                signerConfig.getSlashingExportPath().get().toAbsolutePath()));
       } else if (signerConfig.getSlashingImportPath().isPresent()) {
         params.add("import"); // sub-sub command
         yamlConfig.append(
             String.format(
                 YAML_STRING_FMT,
                 "eth2.import.from",
-                signerConfig.getSlashingImportPath().get().toAbsolutePath().toString()));
+                signerConfig.getSlashingImportPath().get().toAbsolutePath()));
       }
     }
 
@@ -216,7 +216,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               String.format(
                   YAML_STRING_FMT,
                   "tls-known-clients-file",
-                  constraints.getKnownClientsFile().get().toString()));
+                  constraints.getKnownClientsFile().get()));
         }
         if (constraints.isCaAuthorizedClientAllowed()) {
           yamlConfig.append(String.format(YAML_BOOLEAN_FMT, "tls-allow-ca-clients", Boolean.TRUE));
@@ -308,70 +308,64 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     return yamlConfig.toString();
   }
 
-  private String awsSecretsManagerOptions() {
+  private String awsBulkLoadingOptions(
+      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
     final StringBuilder yamlConfig = new StringBuilder();
 
-    if (signerConfig.getAwsSecretsManagerParameters().isPresent()) {
-      final AwsSecretsManagerParameters awsSecretsManagerParameters =
-          signerConfig.getAwsSecretsManagerParameters().get();
-      yamlConfig.append(
-          String.format(
-              YAML_BOOLEAN_FMT,
-              "eth2." + AWS_SECRETS_ENABLED_OPTION.substring(2),
-              awsSecretsManagerParameters.isEnabled()));
+    yamlConfig.append(
+        String.format(
+            YAML_BOOLEAN_FMT,
+            "eth2." + AWS_SECRETS_ENABLED_OPTION.substring(2),
+            awsSecretsManagerParameters.isEnabled()));
 
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth2." + AWS_SECRETS_AUTH_MODE_OPTION.substring(2),
+            awsSecretsManagerParameters.getAuthenticationMode().name()));
+
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth2." + AWS_SECRETS_ACCESS_KEY_ID_OPTION.substring(2),
+            awsSecretsManagerParameters.getAccessKeyId()));
+
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth2." + AWS_SECRETS_SECRET_ACCESS_KEY_OPTION.substring(2),
+            awsSecretsManagerParameters.getSecretAccessKey()));
+
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth2." + AWS_SECRETS_REGION_OPTION.substring(2),
+            awsSecretsManagerParameters.getRegion()));
+
+    if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
-              "eth2." + AWS_SECRETS_AUTH_MODE_OPTION.substring(2),
-              awsSecretsManagerParameters.getAuthenticationMode().name()));
-
-      yamlConfig.append(
-          String.format(
-              YAML_STRING_FMT,
-              "eth2." + AWS_SECRETS_ACCESS_KEY_ID_OPTION.substring(2),
-              awsSecretsManagerParameters.getAccessKeyId()));
-
-      yamlConfig.append(
-          String.format(
-              YAML_STRING_FMT,
-              "eth2." + AWS_SECRETS_SECRET_ACCESS_KEY_OPTION.substring(2),
-              awsSecretsManagerParameters.getSecretAccessKey()));
-
-      yamlConfig.append(
-          String.format(
-              YAML_STRING_FMT,
-              "eth2." + AWS_SECRETS_REGION_OPTION.substring(2),
-              awsSecretsManagerParameters.getRegion()));
-
-      if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
-        yamlConfig.append(
-            String.format(
-                YAML_STRING_FMT,
-                "eth2." + AWS_SECRETS_PREFIXES_FILTER_OPTION.substring(2),
-                createCommaSeparatedList(awsSecretsManagerParameters.getPrefixesFilter())));
-      }
-
-      if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
-        yamlConfig.append(
-            String.format(
-                YAML_STRING_FMT,
-                "eth2." + AWS_SECRETS_TAG_NAMES_FILTER_OPTION.substring(2),
-                createCommaSeparatedList(awsSecretsManagerParameters.getTagNamesFilter())));
-      }
-
-      if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
-        yamlConfig.append(
-            String.format(
-                YAML_STRING_FMT,
-                "eth2." + AWS_SECRETS_TAG_VALUES_FILTER_OPTION.substring(2),
-                createCommaSeparatedList(awsSecretsManagerParameters.getTagValuesFilter())));
-      }
+              "eth2." + AWS_SECRETS_PREFIXES_FILTER_OPTION.substring(2),
+              String.join(",", awsSecretsManagerParameters.getPrefixesFilter())));
     }
-    return yamlConfig.toString();
-  }
 
-  private String createCommaSeparatedList(final Collection<String> values) {
-    return String.join(",", values);
+    if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_TAG_NAMES_FILTER_OPTION.substring(2),
+              String.join(",", awsSecretsManagerParameters.getTagNamesFilter())));
+    }
+
+    if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_TAG_VALUES_FILTER_OPTION.substring(2),
+              String.join(",", awsSecretsManagerParameters.getTagValuesFilter())));
+    }
+
+    return yamlConfig.toString();
   }
 }
