@@ -481,6 +481,38 @@ class CommandlineParserTest {
         .contains("v1", "v2", "v3");
   }
 
+  @Test
+  void awsWithoutModeDefaultsToSpecified() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        String.format(
+            "eth2 --slashing-protection-enabled=false %s=%s %s=test %s=test %s=us-east-2 %s=p1,p2,p3 %s=t1,t2,t3 %s=v1,v2,v3",
+            AWS_SECRETS_ENABLED_OPTION,
+            Boolean.TRUE,
+            AWS_SECRETS_ACCESS_KEY_ID_OPTION,
+            AWS_SECRETS_SECRET_ACCESS_KEY_OPTION,
+            AWS_SECRETS_REGION_OPTION,
+            AWS_SECRETS_PREFIXES_FILTER_OPTION,
+            AWS_SECRETS_TAG_NAMES_FILTER_OPTION,
+            AWS_SECRETS_TAG_VALUES_FILTER_OPTION);
+
+    MockEth2SubCommand mockEth2SubCommand = new MockEth2SubCommand();
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters()).isNull();
+
+    parser.registerSubCommands(mockEth2SubCommand);
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isZero();
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getAuthenticationMode())
+        .isEqualTo(AwsAuthenticationMode.SPECIFIED);
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getPrefixesFilter())
+        .contains("p1", "p2", "p3");
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getTagNamesFilter())
+        .contains("t1", "t2", "t3");
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getTagValuesFilter())
+        .contains("v1", "v2", "v3");
+  }
+
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(
       final String paramToRemove, final Supplier<T> actualValueGetter, final T expectedValue) {
 
