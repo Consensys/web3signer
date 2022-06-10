@@ -49,7 +49,7 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
           "Authentication mode for AWS Secrets Manager service. Valid Values: [${COMPLETION-CANDIDATES}]"
               + " (Default: ${DEFAULT-VALUE})",
       paramLabel = "<AUTHENTICATION_MODE>")
-  private AwsAuthenticationMode authenticationMode = AwsAuthenticationMode.ENVIRONMENT;
+  private AwsAuthenticationMode authenticationMode = AwsAuthenticationMode.SPECIFIED;
 
   @Option(
       names = {AWS_SECRETS_ACCESS_KEY_ID_OPTION},
@@ -76,21 +76,24 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
       names = AWS_SECRETS_PREFIXES_FILTER_OPTION,
       description =
           "Optional comma-separated list of secret name's prefix filter to apply while fetching secrets from AWS secrets manager."
-              + " (Default: ${DEFAULT-VALUE})")
+              + " (Default: ${DEFAULT-VALUE})",
+      split = ",")
   private List<String> prefixesFilter = Collections.emptyList();
 
   @Option(
       names = AWS_SECRETS_TAG_NAMES_FILTER_OPTION,
       description =
           "Optional comma-separated list of tag names filter to apply while fetching secrets from AWS secrets manager."
-              + " (Default: ${DEFAULT-VALUE})")
+              + " (Default: ${DEFAULT-VALUE})",
+      split = ",")
   private List<String> tagsNameFilters = Collections.emptyList();
 
   @Option(
       names = AWS_SECRETS_TAG_VALUES_FILTER_OPTION,
       description =
           "Optional comma-separated list of tag values filter to apply while fetching secrets from AWS secrets manager."
-              + " (Default: ${DEFAULT-VALUE})")
+              + " (Default: ${DEFAULT-VALUE})",
+      split = ",")
   private List<String> tagsValueFilters = Collections.emptyList();
 
   @CommandLine.Option(

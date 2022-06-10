@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -263,6 +264,11 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public SlashingProtectionParameters getSlashingProtectionParameters() {
     return slashingProtectionParameters;
+  }
+
+  @VisibleForTesting
+  public PicoCliAwsSecretsManagerParameters getAwsSecretsManagerParameters() {
+    return awsSecretsManagerParameters;
   }
 
   static class UInt64Converter implements CommandLine.ITypeConverter<UInt64> {
