@@ -324,23 +324,29 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
             "eth2." + AWS_SECRETS_AUTH_MODE_OPTION.substring(2),
             awsSecretsManagerParameters.getAuthenticationMode().name()));
 
-    yamlConfig.append(
-        String.format(
-            YAML_STRING_FMT,
-            "eth2." + AWS_SECRETS_ACCESS_KEY_ID_OPTION.substring(2),
-            awsSecretsManagerParameters.getAccessKeyId()));
+    if (awsSecretsManagerParameters.getAccessKeyId() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_ACCESS_KEY_ID_OPTION.substring(2),
+              awsSecretsManagerParameters.getAccessKeyId()));
+    }
 
-    yamlConfig.append(
-        String.format(
-            YAML_STRING_FMT,
-            "eth2." + AWS_SECRETS_SECRET_ACCESS_KEY_OPTION.substring(2),
-            awsSecretsManagerParameters.getSecretAccessKey()));
+    if (awsSecretsManagerParameters.getSecretAccessKey() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_SECRET_ACCESS_KEY_OPTION.substring(2),
+              awsSecretsManagerParameters.getSecretAccessKey()));
+    }
 
-    yamlConfig.append(
-        String.format(
-            YAML_STRING_FMT,
-            "eth2." + AWS_SECRETS_REGION_OPTION.substring(2),
-            awsSecretsManagerParameters.getRegion()));
+    if (awsSecretsManagerParameters.getRegion() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_REGION_OPTION.substring(2),
+              awsSecretsManagerParameters.getRegion()));
+    }
 
     if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
       yamlConfig.append(
