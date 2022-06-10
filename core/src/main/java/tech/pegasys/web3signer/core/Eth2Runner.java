@@ -87,12 +87,12 @@ public class Eth2Runner extends Runner {
 
   private final Optional<SlashingProtectionContext> slashingProtectionContext;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
+  private final AwsSecretsManagerParameters awsSecretsManagerParameters;
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
   private final KeystoresParameters keystoresParameters;
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
-  private final AwsSecretsManagerParameters awsSecretsManagerParameters;
 
   public Eth2Runner(
       final Config config,
