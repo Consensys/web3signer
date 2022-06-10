@@ -12,9 +12,9 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_BULK_LOADING_ENABLED_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ENABLED_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_PREFIXES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_REGION_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
@@ -234,7 +234,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     if (signerConfig.getAwsSecretsManagerParameters().isPresent()) {
       final AwsSecretsManagerParameters awsSecretsManagerParameters =
           signerConfig.getAwsSecretsManagerParameters().get();
-      params.add(AWS_BULK_LOADING_ENABLED_OPTION + "=" + awsSecretsManagerParameters.isEnabled());
+      params.add(AWS_SECRETS_ENABLED_OPTION + "=" + awsSecretsManagerParameters.isEnabled());
 
       params.add(AWS_SECRETS_AUTH_MODE_OPTION);
       params.add(awsSecretsManagerParameters.getAuthenticationMode().name());

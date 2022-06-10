@@ -23,7 +23,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerParameters {
-  public static final String AWS_BULK_LOADING_ENABLED_OPTION = "--aws-bulk-loading-enabled";
+  public static final String AWS_SECRETS_ENABLED_OPTION = "--aws-secrets-enabled";
   public static final String AWS_SECRETS_AUTH_MODE_OPTION = "--aws-secrets-auth-mode";
   public static final String AWS_SECRETS_ACCESS_KEY_ID_OPTION = "--aws-secrets-access-key-id";
   public static final String AWS_SECRETS_SECRET_ACCESS_KEY_OPTION =
@@ -36,7 +36,7 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   public static final String AWS_CONNECTION_CACHE_SIZE_OPTION = "--aws-connection-cache-size";
 
   @Option(
-      names = AWS_BULK_LOADING_ENABLED_OPTION,
+      names = AWS_SECRETS_ENABLED_OPTION,
       description =
           "Set to true to enable bulk loading from the AWS Secrets Manager service."
               + " (Default: ${DEFAULT-VALUE})",
