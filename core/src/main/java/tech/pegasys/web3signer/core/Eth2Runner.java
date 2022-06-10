@@ -20,7 +20,6 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYM
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
-import tech.pegasys.signers.aws.AwsSecretsManager;
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.azure.AzureKeyVault;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -46,7 +45,6 @@ import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.bulkloading.AWSBulkLoadingArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
@@ -319,23 +317,6 @@ public class Eth2Runner extends Runner {
                 context -> context.getRegisteredValidators().registerValidators(validators));
           }
           return signers;
-        });
-  }
-
-  private Collection<ArtifactSigner> loadAwsSecretsManagerSigners(
-      final AwsSecretsManagerProvider awsSecretsManagerProvider) {
-    final AwsSecretsManager awsSecretsManager =
-        AwsSecretsManagerFactory.createAwsSecretsManager(
-            awsSecretsManagerProvider, awsSecretsManagerParameters);
-    return awsSecretsManager.mapSecrets(
-        awsSecretsManagerParameters.getPrefixesFilter(),
-        awsSecretsManagerParameters.getTagNamesFilter(),
-        awsSecretsManagerParameters.getTagValuesFilter(),
-        (key, value) -> {
-          final Bytes privateKeyBytes = Bytes.fromHexString(value);
-          final BLSKeyPair keyPair =
-              new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
-          return new BlsArtifactSigner(keyPair, SignerOrigin.AWS);
         });
   }
 

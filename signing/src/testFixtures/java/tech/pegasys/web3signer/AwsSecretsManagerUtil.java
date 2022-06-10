@@ -10,9 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.dsl.utils;
+package tech.pegasys.web3signer;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -20,6 +23,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.secretsmanager.model.CreateSecretRequest;
 import software.amazon.awssdk.services.secretsmanager.model.DeleteSecretRequest;
+import software.amazon.awssdk.services.secretsmanager.model.Tag;
 
 public class AwsSecretsManagerUtil {
 
@@ -46,11 +50,16 @@ public class AwsSecretsManagerUtil {
     return secretNamePrefix;
   }
 
-  public void createSecret(String secretName, String secretValue) {
+  public void createSecret(String secretName, String secretValue, final Map<String, String> tags) {
+    Set<Tag> awsTags =
+        tags.keySet().stream()
+            .map(tagName -> Tag.builder().key(tagName).value(tags.get(tagName)).build())
+            .collect(Collectors.toSet());
     final CreateSecretRequest secretRequest =
         CreateSecretRequest.builder()
             .name(secretNamePrefix + secretName)
             .secretString(secretValue)
+            .tags(awsTags)
             .build();
     secretsManagerClient.createSecret(secretRequest);
   }

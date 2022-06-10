@@ -235,14 +235,20 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     params.add(AWS_SECRETS_AUTH_MODE_OPTION);
     params.add(awsSecretsManagerParameters.getAuthenticationMode().name());
 
-    params.add(AWS_SECRETS_ACCESS_KEY_ID_OPTION);
-    params.add(awsSecretsManagerParameters.getAccessKeyId());
+    if (awsSecretsManagerParameters.getAccessKeyId() != null) {
+      params.add(AWS_SECRETS_ACCESS_KEY_ID_OPTION);
+      params.add(awsSecretsManagerParameters.getAccessKeyId());
+    }
 
-    params.add(AWS_SECRETS_SECRET_ACCESS_KEY_OPTION);
-    params.add(awsSecretsManagerParameters.getSecretAccessKey());
+    if (awsSecretsManagerParameters.getSecretAccessKey() != null) {
+      params.add(AWS_SECRETS_SECRET_ACCESS_KEY_OPTION);
+      params.add(awsSecretsManagerParameters.getSecretAccessKey());
+    }
 
-    params.add(AWS_SECRETS_REGION_OPTION);
-    params.add(awsSecretsManagerParameters.getRegion());
+    if (awsSecretsManagerParameters.getRegion() != null) {
+      params.add(AWS_SECRETS_REGION_OPTION);
+      params.add(awsSecretsManagerParameters.getRegion());
+    }
 
     if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
       params.add(AWS_SECRETS_PREFIXES_FILTER_OPTION);

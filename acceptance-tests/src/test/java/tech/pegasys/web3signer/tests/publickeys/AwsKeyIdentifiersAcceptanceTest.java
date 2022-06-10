@@ -15,8 +15,9 @@ package tech.pegasys.web3signer.tests.publickeys;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
-import tech.pegasys.web3signer.dsl.utils.AwsSecretsManagerUtil;
+import tech.pegasys.web3signer.AwsSecretsManagerUtil;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import io.restassured.response.Response;
@@ -67,7 +68,7 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
   void setup() {
     awsSecretsManagerUtil =
         new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
-    awsSecretsManagerUtil.createSecret(publicKey, privateKey);
+    awsSecretsManagerUtil.createSecret(publicKey, privateKey, Collections.emptyMap());
   }
 
   @AfterAll

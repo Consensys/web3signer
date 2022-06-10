@@ -31,9 +31,10 @@ public class AWSBulkLoadingArtifactSignerProvider {
 
   public Collection<ArtifactSigner> load(final AwsSecretsManagerParameters parameters) {
     try (final AwsSecretsManagerProvider awsSecretsManagerProvider =
-        new AwsSecretsManagerProvider(parameters.getCacheMaximumSize())) {
-      final AwsSecretsManager awsSecretsManager =
-          AwsSecretsManagerFactory.createAwsSecretsManager(awsSecretsManagerProvider, parameters);
+            new AwsSecretsManagerProvider(parameters.getCacheMaximumSize());
+        final AwsSecretsManager awsSecretsManager =
+            AwsSecretsManagerFactory.createAwsSecretsManager(
+                awsSecretsManagerProvider, parameters)) {
       return awsSecretsManager.mapSecrets(
           parameters.getPrefixesFilter(),
           parameters.getTagNamesFilter(),

@@ -16,14 +16,16 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.AwsSecretsManagerUtil;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.web3signer.dsl.utils.AwsSecretsManagerUtil;
-import tech.pegasys.web3signer.dsl.utils.DefaultAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParametersBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -82,7 +84,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
               new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(key)))
                   .getPublicKey()
                   .toString();
-          awsSecretsManagerUtil.createSecret(pubKey, key);
+          awsSecretsManagerUtil.createSecret(pubKey, key, Collections.emptyMap());
           awsKeysIdentifiers.add(pubKey);
         });
   }
@@ -91,11 +93,39 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   @ValueSource(booleans = {true, false})
   void secretsAreLoadedFromAWSSecretsManagerAndReportedByPublicApi(final boolean useConfigFile) {
     final AwsSecretsManagerParameters awsSecretsManagerParameters =
-        new DefaultAwsSecretsManagerParameters(
-            AWS_REGION,
-            RO_AWS_ACCESS_KEY_ID,
-            RO_AWS_SECRET_ACCESS_KEY,
-            List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()));
+        AwsSecretsManagerParametersBuilder.anAwsSecretsManagerParameters()
+            .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
+            .withRegion(AWS_REGION)
+            .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
+            .withSecretAccessKey(RO_AWS_SECRET_ACCESS_KEY)
+            .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
+            .build();
+
+    final SignerConfigurationBuilder configBuilder =
+        new SignerConfigurationBuilder()
+            .withUseConfigFile(useConfigFile)
+            .withMode("eth2")
+            .withAwsSecretsManagerParameters(awsSecretsManagerParameters);
+
+    startSigner(configBuilder.build());
+
+    signer
+        .callApiPublicKeys(KeyType.BLS)
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("", containsInAnyOrder(awsKeysIdentifiers.toArray()));
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void secretsAreLoadedFromAWSSecretsManagerWithEnvironmentAuthModeAndReportedByPublicApi(
+      final boolean useConfigFile) {
+    final AwsSecretsManagerParameters awsSecretsManagerParameters =
+        AwsSecretsManagerParametersBuilder.anAwsSecretsManagerParameters()
+            .withAuthenticationMode(AwsAuthenticationMode.ENVIRONMENT)
+            .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
+            .build();
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()

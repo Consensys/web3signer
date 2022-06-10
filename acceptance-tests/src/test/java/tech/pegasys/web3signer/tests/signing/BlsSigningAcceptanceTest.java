@@ -27,15 +27,16 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
+import tech.pegasys.web3signer.AwsSecretsManagerUtil;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
-import tech.pegasys.web3signer.dsl.utils.AwsSecretsManagerUtil;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -183,7 +184,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final AwsSecretsManagerUtil awsSecretsManagerUtil =
         new AwsSecretsManagerUtil(region, rwAwsAccessKeyId, rwAwsSecretAccessKey);
 
-    awsSecretsManagerUtil.createSecret(publicKey, PRIVATE_KEY);
+    awsSecretsManagerUtil.createSecret(publicKey, PRIVATE_KEY, Collections.emptyMap());
     final String fullyPrefixKeyName = awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey;
 
     final String configFilename = publicKey.substring(2);
