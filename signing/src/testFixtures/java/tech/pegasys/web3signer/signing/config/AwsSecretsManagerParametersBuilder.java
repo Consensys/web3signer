@@ -14,16 +14,15 @@ package tech.pegasys.web3signer.signing.config;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 public final class AwsSecretsManagerParametersBuilder {
   private AwsAuthenticationMode authenticationMode = AwsAuthenticationMode.SPECIFIED;
   private String accessKeyId;
   private String secretAccessKey;
   private String region;
-  private List<String> prefixesFilter = Collections.emptyList();
-  private List<String> tagsNameFilters = Collections.emptyList();
-  private List<String> tagsValueFilters = Collections.emptyList();
+  private Collection<String> prefixesFilter = Collections.emptyList();
+  private Collection<String> tagsNameFilters = Collections.emptyList();
+  private Collection<String> tagsValueFilters = Collections.emptyList();
   private long cacheMaximumSize = 1;
 
   private AwsSecretsManagerParametersBuilder() {}
@@ -38,32 +37,35 @@ public final class AwsSecretsManagerParametersBuilder {
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withAccessKeyId(String accessKeyId) {
+  public AwsSecretsManagerParametersBuilder withAccessKeyId(final String accessKeyId) {
     this.accessKeyId = accessKeyId;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withSecretAccessKey(String secretAccessKey) {
+  public AwsSecretsManagerParametersBuilder withSecretAccessKey(final String secretAccessKey) {
     this.secretAccessKey = secretAccessKey;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withRegion(String region) {
+  public AwsSecretsManagerParametersBuilder withRegion(final String region) {
     this.region = region;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withPrefixesFilter(List<String> prefixesFilter) {
+  public AwsSecretsManagerParametersBuilder withPrefixesFilter(
+      final Collection<String> prefixesFilter) {
     this.prefixesFilter = prefixesFilter;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withTagsNameFilters(List<String> tagsNameFilters) {
+  public AwsSecretsManagerParametersBuilder withTagsNameFilters(
+      final Collection<String> tagsNameFilters) {
     this.tagsNameFilters = tagsNameFilters;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withTagsValueFilters(List<String> tagsValueFilters) {
+  public AwsSecretsManagerParametersBuilder withTagsValueFilters(
+      final Collection<String> tagsValueFilters) {
     this.tagsValueFilters = tagsValueFilters;
     return this;
   }
@@ -100,23 +102,23 @@ public final class AwsSecretsManagerParametersBuilder {
   }
 
   private static class TestAwsSecretsManagerParameters implements AwsSecretsManagerParameters {
-    private AwsAuthenticationMode authenticationMode = AwsAuthenticationMode.SPECIFIED;
-    private String accessKeyId;
-    private String secretAccessKey;
-    private String region;
-    private List<String> prefixesFilter = Collections.emptyList();
-    private List<String> tagsNameFilters = Collections.emptyList();
-    private List<String> tagsValueFilters = Collections.emptyList();
-    private long cacheMaximumSize = 1;
+    private final AwsAuthenticationMode authenticationMode;
+    private final String accessKeyId;
+    private final String secretAccessKey;
+    private final String region;
+    private final Collection<String> prefixesFilter;
+    private final Collection<String> tagsNameFilters;
+    private final Collection<String> tagsValueFilters;
+    private long cacheMaximumSize;
 
     TestAwsSecretsManagerParameters(
         final AwsAuthenticationMode authenticationMode,
         final String accessKeyId,
         final String secretAccessKey,
         final String region,
-        final List<String> prefixesFilter,
-        final List<String> tagsNameFilters,
-        final List<String> tagsValueFilters,
+        final Collection<String> prefixesFilter,
+        final Collection<String> tagsNameFilters,
+        final Collection<String> tagsValueFilters,
         final long cacheMaximumSize) {
       this.authenticationMode = authenticationMode;
       this.accessKeyId = accessKeyId;
