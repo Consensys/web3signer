@@ -120,9 +120,9 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionParameters,
         azureKeyVaultParameters,
         keystoreParameters,
+        awsSecretsManagerParameters,
         eth2Spec,
-        isKeyManagerApiEnabled,
-        awsSecretsManagerParameters);
+        isKeyManagerApiEnabled);
   }
 
   private Eth2NetworkConfiguration createEth2NetworkConfig() {

@@ -100,9 +100,9 @@ public class Eth2Runner extends Runner {
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters,
       final KeystoresParameters keystoresParameters,
+      final AwsSecretsManagerParameters awsSecretsManagerParameters,
       final Spec eth2Spec,
-      final boolean isKeyManagerApiEnabled,
-      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
+      final boolean isKeyManagerApiEnabled) {
     super(config);
     this.slashingProtectionContext = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
