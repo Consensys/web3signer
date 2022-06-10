@@ -12,9 +12,9 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_BULK_LOADING_ENABLED_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ENABLED_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_PREFIXES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_REGION_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
@@ -317,8 +317,8 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       yamlConfig.append(
           String.format(
               YAML_BOOLEAN_FMT,
-              "eth2." + AWS_SECRETS_ENABLED_OPTION.substring(2),
-              awsSecretsManagerParameters.isAwsSecretsManagerEnabled()));
+              "eth2." + AWS_BULK_LOADING_ENABLED_OPTION.substring(2),
+              awsSecretsManagerParameters.isEnabled()));
 
       yamlConfig.append(
           String.format(

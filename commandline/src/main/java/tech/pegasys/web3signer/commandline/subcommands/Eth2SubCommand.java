@@ -215,7 +215,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   }
 
   private void validateAwsSecretsManageParameters() {
-    if (awsSecretsManagerParameters.isAwsSecretsManagerEnabled()) {
+    if (awsSecretsManagerParameters.isEnabled()) {
       final List<String> specifiedAuthModeMissingFields =
           missingAwsSecretsManagerParametersForSpecified();
       if (!specifiedAuthModeMissingFields.isEmpty()) {

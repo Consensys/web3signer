@@ -43,6 +43,11 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
   }
 
   @Override
+  public boolean isEnabled() {
+    return true;
+  }
+
+  @Override
   public AwsAuthenticationMode getAuthenticationMode() {
     return this.authenticationMode;
   }

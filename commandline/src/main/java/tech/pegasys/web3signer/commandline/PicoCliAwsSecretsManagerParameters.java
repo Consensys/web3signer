@@ -23,7 +23,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerParameters {
-  public static final String AWS_SECRETS_ENABLED_OPTION = "--aws-secrets-enabled";
+  public static final String AWS_BULK_LOADING_ENABLED_OPTION = "--aws-bulk-loading-enabled";
   public static final String AWS_SECRETS_AUTH_MODE_OPTION = "--aws-secrets-auth-mode";
   public static final String AWS_SECRETS_ACCESS_KEY_ID_OPTION = "--aws-secrets-access-key-id";
   public static final String AWS_SECRETS_SECRET_ACCESS_KEY_OPTION =
@@ -36,15 +36,15 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   public static final String AWS_CONNECTION_CACHE_SIZE_OPTION = "--aws-connection-cache-size";
 
   @Option(
-      names = {AWS_SECRETS_ENABLED_OPTION},
+      names = AWS_BULK_LOADING_ENABLED_OPTION,
       description =
-          "Set true if Web3signer should try and load all keys from AWS Secrets Manager service."
+          "Set to true to enable bulk loading from the AWS Secrets Manager service."
               + " (Default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>")
   private boolean awsSecretsManagerEnabled = false;
 
   @Option(
-      names = {AWS_SECRETS_AUTH_MODE_OPTION},
+      names = AWS_SECRETS_AUTH_MODE_OPTION,
       description =
           "Authentication mode for AWS Secrets Manager service. Valid Values: [${COMPLETION-CANDIDATES}]"
               + " (Default: ${DEFAULT-VALUE})",
@@ -75,7 +75,7 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   @Option(
       names = AWS_SECRETS_PREFIXES_FILTER_OPTION,
       description =
-          "Optional comma-separated list of secret name's prefix filter to apply while fetching secrets from AWS secrets manager."
+          "Optional comma-separated list of secret name prefixes filter to apply while fetching secrets from AWS secrets manager."
               + " (Default: ${DEFAULT-VALUE})",
       split = ",")
   private List<String> prefixesFilter = Collections.emptyList();
@@ -101,10 +101,10 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
       paramLabel = "<LONG>",
       description =
           "Maximum number of connections to cache to the AWS Secrets Manager (default: ${DEFAULT-VALUE})")
-  private long awsCacheMaximumSize = 1;
+  private long cacheMaximumSize = 1;
 
   @Override
-  public boolean isAwsSecretsManagerEnabled() {
+  public boolean isEnabled() {
     return awsSecretsManagerEnabled;
   }
 
@@ -129,8 +129,8 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   }
 
   @Override
-  public long getAwsCacheMaximumSize() {
-    return awsCacheMaximumSize;
+  public long getCacheMaximumSize() {
+    return cacheMaximumSize;
   }
 
   @Override

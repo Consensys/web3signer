@@ -15,9 +15,9 @@ package tech.pegasys.web3signer.commandline;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.CmdlineHelpers.removeFieldFrom;
 import static tech.pegasys.web3signer.CmdlineHelpers.validBaseCommandOptions;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_BULK_LOADING_ENABLED_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ENABLED_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_PREFIXES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_REGION_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
@@ -399,7 +399,7 @@ class CommandlineParserTest {
     cmdline +=
         String.format(
             "eth2 --slashing-protection-enabled=false %s=true %s=%s",
-            AWS_SECRETS_ENABLED_OPTION,
+            AWS_BULK_LOADING_ENABLED_OPTION,
             AWS_SECRETS_AUTH_MODE_OPTION,
             AwsAuthenticationMode.SPECIFIED);
 
@@ -418,7 +418,7 @@ class CommandlineParserTest {
     cmdline +=
         String.format(
             "eth2 --slashing-protection-enabled=false %s=%s %s=UNKNOWN",
-            AWS_SECRETS_ENABLED_OPTION, Boolean.TRUE, AWS_SECRETS_AUTH_MODE_OPTION);
+            AWS_BULK_LOADING_ENABLED_OPTION, Boolean.TRUE, AWS_SECRETS_AUTH_MODE_OPTION);
 
     parser.registerSubCommands(new MockEth2SubCommand());
     final int result = parser.parseCommandLine(cmdline.split(" "));
@@ -435,7 +435,7 @@ class CommandlineParserTest {
     cmdline +=
         String.format(
             "eth2 --slashing-protection-enabled=false %s=%s %s=%s %s=test %s=test %s=us-east-2",
-            AWS_SECRETS_ENABLED_OPTION,
+            AWS_BULK_LOADING_ENABLED_OPTION,
             Boolean.TRUE,
             AWS_SECRETS_AUTH_MODE_OPTION,
             AwsAuthenticationMode.SPECIFIED,
@@ -455,7 +455,7 @@ class CommandlineParserTest {
     cmdline +=
         String.format(
             "eth2 --slashing-protection-enabled=false %s=%s %s=%s %s=test %s=test %s=us-east-2 %s=p1,p2,p3 %s=t1,t2,t3 %s=v1,v2,v3",
-            AWS_SECRETS_ENABLED_OPTION,
+            AWS_BULK_LOADING_ENABLED_OPTION,
             Boolean.TRUE,
             AWS_SECRETS_AUTH_MODE_OPTION,
             AwsAuthenticationMode.SPECIFIED,
@@ -487,7 +487,7 @@ class CommandlineParserTest {
     cmdline +=
         String.format(
             "eth2 --slashing-protection-enabled=false %s=%s %s=test %s=test %s=us-east-2 %s=p1,p2,p3 %s=t1,t2,t3 %s=v1,v2,v3",
-            AWS_SECRETS_ENABLED_OPTION,
+            AWS_BULK_LOADING_ENABLED_OPTION,
             Boolean.TRUE,
             AWS_SECRETS_ACCESS_KEY_ID_OPTION,
             AWS_SECRETS_SECRET_ACCESS_KEY_OPTION,

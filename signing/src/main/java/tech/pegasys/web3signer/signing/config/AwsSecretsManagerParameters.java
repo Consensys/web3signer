@@ -16,9 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public interface AwsSecretsManagerParameters {
-  default boolean isAwsSecretsManagerEnabled() {
-    return true;
-  }
+  boolean isEnabled();
 
   AwsAuthenticationMode getAuthenticationMode();
 
@@ -28,7 +26,7 @@ public interface AwsSecretsManagerParameters {
 
   String getRegion();
 
-  default long getAwsCacheMaximumSize() {
+  default long getCacheMaximumSize() {
     return 1;
   }
 

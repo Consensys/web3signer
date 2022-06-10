@@ -259,7 +259,7 @@ public class Eth2Runner extends Runner {
                   new YubiHsmOpaqueDataProvider();
               final AwsSecretsManagerProvider awsSecretsManagerProvider =
                   new AwsSecretsManagerProvider(
-                      awsSecretsManagerParameters.getAwsCacheMaximumSize())) {
+                      awsSecretsManagerParameters.getCacheMaximumSize())) {
             final AbstractArtifactSignerFactory artifactSignerFactory =
                 new BlsArtifactSignerFactory(
                     config.getKeyConfigPath(),
@@ -296,11 +296,10 @@ public class Eth2Runner extends Runner {
             signers.addAll(keystoreSigners);
           }
 
-          if (awsSecretsManagerParameters.isAwsSecretsManagerEnabled()) {
+          if (awsSecretsManagerParameters.isEnabled()) {
             LOG.info("Loading keys from AWS secrets manager ... ");
             try (final AwsSecretsManagerProvider awsSecretsManagerProvider =
-                new AwsSecretsManagerProvider(
-                    awsSecretsManagerParameters.getAwsCacheMaximumSize())) {
+                new AwsSecretsManagerProvider(awsSecretsManagerParameters.getCacheMaximumSize())) {
               Collection<ArtifactSigner> awsSigners =
                   loadAwsSecretsManagerSigners(awsSecretsManagerProvider);
               LOG.info("AWS secrets managers keys loaded: [{}]", awsSigners.size());
