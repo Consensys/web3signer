@@ -76,7 +76,7 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
       names = AWS_SECRETS_PREFIXES_FILTER_OPTION,
       description =
           "Optional comma-separated list of secret name prefixes filter to apply while fetching secrets from AWS secrets manager."
-              + " (Default: ${DEFAULT-VALUE})",
+              + " Applied as AND operation with other filters. (Default: ${DEFAULT-VALUE})",
       split = ",")
   private List<String> prefixesFilter = Collections.emptyList();
 
@@ -84,15 +84,15 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
       names = AWS_SECRETS_TAG_NAMES_FILTER_OPTION,
       description =
           "Optional comma-separated list of tag names filter to apply while fetching secrets from AWS secrets manager."
-              + " (Default: ${DEFAULT-VALUE})",
+              + " Applied as AND operation with other filters. (Default: ${DEFAULT-VALUE})",
       split = ",")
   private List<String> tagsNameFilters = Collections.emptyList();
 
   @Option(
       names = AWS_SECRETS_TAG_VALUES_FILTER_OPTION,
       description =
-          "Optional comma-separated list of tag values filter to apply while fetching secrets from AWS secrets manager."
-              + " (Default: ${DEFAULT-VALUE})",
+          "Optional comma-separated list of tag values filter to apply (with other filters) while fetching secrets from AWS secrets manager."
+              + " Applied as AND operation with other filters. (Default: ${DEFAULT-VALUE})",
       split = ",")
   private List<String> tagsValueFilters = Collections.emptyList();
 
