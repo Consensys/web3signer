@@ -348,28 +348,28 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               awsSecretsManagerParameters.getRegion()));
     }
 
-    if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
+    if (!awsSecretsManagerParameters.getPrefixFilters().isEmpty()) {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
               "eth2." + AWS_SECRETS_PREFIXES_FILTER_OPTION.substring(2),
-              String.join(",", awsSecretsManagerParameters.getPrefixesFilter())));
+              String.join(",", awsSecretsManagerParameters.getPrefixFilters())));
     }
 
-    if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
+    if (!awsSecretsManagerParameters.getTagNameFilters().isEmpty()) {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
               "eth2." + AWS_SECRETS_TAG_NAMES_FILTER_OPTION.substring(2),
-              String.join(",", awsSecretsManagerParameters.getTagNamesFilter())));
+              String.join(",", awsSecretsManagerParameters.getTagNameFilters())));
     }
 
-    if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
+    if (!awsSecretsManagerParameters.getTagValueFilters().isEmpty()) {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
               "eth2." + AWS_SECRETS_TAG_VALUES_FILTER_OPTION.substring(2),
-              String.join(",", awsSecretsManagerParameters.getTagValuesFilter())));
+              String.join(",", awsSecretsManagerParameters.getTagValueFilters())));
     }
 
     return yamlConfig.toString();

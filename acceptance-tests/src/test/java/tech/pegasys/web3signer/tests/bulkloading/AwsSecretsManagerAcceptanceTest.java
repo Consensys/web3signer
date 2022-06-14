@@ -94,9 +94,9 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             .withRegion(AWS_REGION)
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
             .withSecretAccessKey(RO_AWS_SECRET_ACCESS_KEY)
-            .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
-            .withTagsNameFilters(List.of("TagName0", "TagName1"))
-            .withTagsValueFilters(List.of("TagValue0", "TagValue1", "TagValue2"))
+            .withPrefixFilters(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
+            .withTagNameFilters(List.of("TagName0", "TagName1"))
+            .withTagValueFilters(List.of("TagValue0", "TagValue1", "TagValue2"))
             .build();
 
     final SignerConfigurationBuilder configBuilder =
@@ -128,9 +128,9 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
     final AwsSecretsManagerParameters awsSecretsManagerParameters =
         AwsSecretsManagerParametersBuilder.anAwsSecretsManagerParameters()
             .withAuthenticationMode(AwsAuthenticationMode.ENVIRONMENT)
-            .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
-            .withTagsNameFilters(List.of("TagName2", "TagName3"))
-            .withTagsValueFilters(List.of("TagValue0", "TagValue2", "TagValue3"))
+            .withPrefixFilters(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
+            .withTagNameFilters(List.of("TagName2", "TagName3"))
+            .withTagValueFilters(List.of("TagValue0", "TagValue2", "TagValue3"))
             .build();
 
     final SignerConfigurationBuilder configBuilder =

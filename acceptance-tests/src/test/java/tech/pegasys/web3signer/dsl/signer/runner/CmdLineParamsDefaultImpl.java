@@ -250,19 +250,19 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(awsSecretsManagerParameters.getRegion());
     }
 
-    if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
+    if (!awsSecretsManagerParameters.getPrefixFilters().isEmpty()) {
       params.add(AWS_SECRETS_PREFIXES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getPrefixesFilter()));
+      params.add(String.join(",", awsSecretsManagerParameters.getPrefixFilters()));
     }
 
-    if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
+    if (!awsSecretsManagerParameters.getTagNameFilters().isEmpty()) {
       params.add(AWS_SECRETS_TAG_NAMES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getTagNamesFilter()));
+      params.add(String.join(",", awsSecretsManagerParameters.getTagNameFilters()));
     }
 
-    if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
+    if (!awsSecretsManagerParameters.getTagValueFilters().isEmpty()) {
       params.add(AWS_SECRETS_TAG_VALUES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getTagValuesFilter()));
+      params.add(String.join(",", awsSecretsManagerParameters.getTagValueFilters()));
     }
 
     return params;

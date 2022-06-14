@@ -473,11 +473,11 @@ class CommandlineParserTest {
     final int result = parser.parseCommandLine(cmdline.split(" "));
 
     assertThat(result).isZero();
-    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getPrefixesFilter())
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getPrefixFilters())
         .contains("p1", "p2", "p3");
-    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getTagNamesFilter())
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getTagNameFilters())
         .contains("t1", "t2", "t3");
-    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getTagValuesFilter())
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getTagValueFilters())
         .contains("v1", "v2", "v3");
   }
 
@@ -505,11 +505,11 @@ class CommandlineParserTest {
     assertThat(result).isZero();
     assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getAuthenticationMode())
         .isEqualTo(AwsAuthenticationMode.SPECIFIED);
-    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getPrefixesFilter())
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getPrefixFilters())
         .contains("p1", "p2", "p3");
-    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getTagNamesFilter())
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getTagNameFilters())
         .contains("t1", "t2", "t3");
-    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getTagValuesFilter())
+    assertThat(mockEth2SubCommand.getAwsSecretsManagerParameters().getTagValueFilters())
         .contains("v1", "v2", "v3");
   }
 

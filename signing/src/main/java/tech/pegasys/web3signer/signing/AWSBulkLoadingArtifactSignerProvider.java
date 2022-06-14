@@ -34,9 +34,9 @@ public class AWSBulkLoadingArtifactSignerProvider {
             AwsSecretsManagerFactory.createAwsSecretsManager(
                 awsSecretsManagerProvider, parameters)) {
       return awsSecretsManager.mapSecrets(
-          parameters.getPrefixesFilter(),
-          parameters.getTagNamesFilter(),
-          parameters.getTagValuesFilter(),
+          parameters.getPrefixFilters(),
+          parameters.getTagNameFilters(),
+          parameters.getTagValueFilters(),
           (key, value) -> {
             final Bytes privateKeyBytes = Bytes.fromHexString(value);
             final BLSKeyPair keyPair =

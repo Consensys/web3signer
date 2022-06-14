@@ -76,25 +76,25 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
       names = AWS_SECRETS_PREFIXES_FILTER_OPTION,
       description =
           "Optional comma-separated list of secret name prefixes filter to apply while fetching secrets from AWS secrets manager."
-              + " Applied as AND operation with other filters. (Default: ${DEFAULT-VALUE})",
+              + " Applied as AND operation with other filters.",
       split = ",")
-  private List<String> prefixesFilter = Collections.emptyList();
+  private List<String> prefixFilters = Collections.emptyList();
 
   @Option(
       names = AWS_SECRETS_TAG_NAMES_FILTER_OPTION,
       description =
           "Optional comma-separated list of tag names filter to apply while fetching secrets from AWS secrets manager."
-              + " Applied as AND operation with other filters. (Default: ${DEFAULT-VALUE})",
+              + " Applied as AND operation with other filters.",
       split = ",")
-  private List<String> tagsNameFilters = Collections.emptyList();
+  private List<String> tagNameFilters = Collections.emptyList();
 
   @Option(
       names = AWS_SECRETS_TAG_VALUES_FILTER_OPTION,
       description =
-          "Optional comma-separated list of tag values filter to apply (with other filters) while fetching secrets from AWS secrets manager."
-              + " Applied as AND operation with other filters. (Default: ${DEFAULT-VALUE})",
+          "Optional comma-separated list of tag values filter to apply while fetching secrets from AWS secrets manager."
+              + " Applied as AND operation with other filters.",
       split = ",")
-  private List<String> tagsValueFilters = Collections.emptyList();
+  private List<String> tagValueFilters = Collections.emptyList();
 
   @CommandLine.Option(
       names = {AWS_CONNECTION_CACHE_SIZE_OPTION},
@@ -134,17 +134,17 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   }
 
   @Override
-  public Collection<String> getPrefixesFilter() {
-    return prefixesFilter;
+  public Collection<String> getPrefixFilters() {
+    return prefixFilters;
   }
 
   @Override
-  public Collection<String> getTagNamesFilter() {
-    return tagsNameFilters;
+  public Collection<String> getTagNameFilters() {
+    return tagNameFilters;
   }
 
   @Override
-  public Collection<String> getTagValuesFilter() {
-    return tagsValueFilters;
+  public Collection<String> getTagValueFilters() {
+    return tagValueFilters;
   }
 }
