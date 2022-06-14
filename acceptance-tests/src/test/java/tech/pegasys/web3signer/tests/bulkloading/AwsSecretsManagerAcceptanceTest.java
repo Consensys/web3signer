@@ -13,9 +13,9 @@
 package tech.pegasys.web3signer.tests.bulkloading;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasSize;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.AwsSecretsManagerUtil;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.signing.KeyType;
@@ -24,13 +24,13 @@ import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParametersBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import io.restassured.http.ContentType;
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -66,27 +66,23 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   private static final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
   private static final String AWS_REGION =
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
-  private static final List<String> BLS_PRIVATE_KEYS =
-      List.of(
-          "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35",
-          "32ae313afff2daa2ef7005a7f834bdf291855608fe82c24d30be6ac2017093a8");
   private AwsSecretsManagerUtil awsSecretsManagerUtil;
-  private final List<String> awsKeysIdentifiers = new ArrayList<>();
+  private final List<BLSKeyPair> blsKeyPairs = new ArrayList<>();
 
   @BeforeAll
   void setupAwsResources() {
     awsSecretsManagerUtil =
         new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
+    final SecureRandom secureRandom = new SecureRandom();
 
-    BLS_PRIVATE_KEYS.forEach(
-        key -> {
-          final String pubKey =
-              new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(key)))
-                  .getPublicKey()
-                  .toString();
-          awsSecretsManagerUtil.createSecret(pubKey, key, Collections.emptyMap());
-          awsKeysIdentifiers.add(pubKey);
-        });
+    for (int i = 0; i < 4; i++) {
+      final BLSKeyPair blsKeyPair = BLSKeyPair.random(secureRandom);
+      awsSecretsManagerUtil.createSecret(
+          blsKeyPair.getPublicKey().toString(),
+          blsKeyPair.getSecretKey().toBytes().toHexString(),
+          Map.of("TagName" + i, "TagValue" + i));
+      blsKeyPairs.add(blsKeyPair);
+    }
   }
 
   @ParameterizedTest
@@ -99,6 +95,8 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
             .withSecretAccessKey(RO_AWS_SECRET_ACCESS_KEY)
             .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
+            .withTagsNameFilters(List.of("TagName0", "TagName1"))
+            .withTagsValueFilters(List.of("TagValue0", "TagValue1", "TagValue2"))
             .build();
 
     final SignerConfigurationBuilder configBuilder =
@@ -114,7 +112,13 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("", containsInAnyOrder(awsKeysIdentifiers.toArray()));
+        .body(
+            "",
+            containsInAnyOrder(
+                blsKeyPairs.get(0).getPublicKey().toString(),
+                blsKeyPairs.get(1).getPublicKey().toString()),
+            "",
+            hasSize(2));
   }
 
   @ParameterizedTest
@@ -125,6 +129,8 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
         AwsSecretsManagerParametersBuilder.anAwsSecretsManagerParameters()
             .withAuthenticationMode(AwsAuthenticationMode.ENVIRONMENT)
             .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
+            .withTagsNameFilters(List.of("TagName2", "TagName3"))
+            .withTagsValueFilters(List.of("TagValue0", "TagValue2", "TagValue3"))
             .build();
 
     final SignerConfigurationBuilder configBuilder =
@@ -140,16 +146,22 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("", containsInAnyOrder(awsKeysIdentifiers.toArray()));
+        .body(
+            "",
+            containsInAnyOrder(
+                blsKeyPairs.get(2).getPublicKey().toString(),
+                blsKeyPairs.get(3).getPublicKey().toString()),
+            "",
+            hasSize(2));
   }
 
   @AfterAll
   void cleanUpAwsResources() {
     if (awsSecretsManagerUtil != null) {
-      awsKeysIdentifiers.forEach(
-          identifier -> {
+      blsKeyPairs.forEach(
+          keyPair -> {
             try {
-              awsSecretsManagerUtil.deleteSecret(identifier);
+              awsSecretsManagerUtil.deleteSecret(keyPair.getPublicKey().toString());
             } catch (RuntimeException ignored) {
             }
           });
