@@ -78,7 +78,7 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
           "Optional comma-separated list of secret name prefixes filter to apply while fetching secrets from AWS secrets manager."
               + " Applied as AND operation with other filters.",
       split = ",")
-  private List<String> prefixFilters = Collections.emptyList();
+  private List<String> prefixesFilter = Collections.emptyList();
 
   @Option(
       names = AWS_SECRETS_TAG_NAMES_FILTER_OPTION,
@@ -86,7 +86,7 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
           "Optional comma-separated list of tag names filter to apply while fetching secrets from AWS secrets manager."
               + " Applied as AND operation with other filters.",
       split = ",")
-  private List<String> tagNameFilters = Collections.emptyList();
+  private List<String> tagNamesFilter = Collections.emptyList();
 
   @Option(
       names = AWS_SECRETS_TAG_VALUES_FILTER_OPTION,
@@ -94,7 +94,7 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
           "Optional comma-separated list of tag values filter to apply while fetching secrets from AWS secrets manager."
               + " Applied as AND operation with other filters.",
       split = ",")
-  private List<String> tagValueFilters = Collections.emptyList();
+  private List<String> tagValuesFilter = Collections.emptyList();
 
   @CommandLine.Option(
       names = {AWS_CONNECTION_CACHE_SIZE_OPTION},
@@ -134,17 +134,17 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   }
 
   @Override
-  public Collection<String> getPrefixFilters() {
-    return prefixFilters;
+  public Collection<String> getPrefixesFilter() {
+    return prefixesFilter;
   }
 
   @Override
-  public Collection<String> getTagNameFilters() {
-    return tagNameFilters;
+  public Collection<String> getTagNamesFilter() {
+    return tagNamesFilter;
   }
 
   @Override
-  public Collection<String> getTagValueFilters() {
-    return tagValueFilters;
+  public Collection<String> getTagValuesFilter() {
+    return tagValuesFilter;
   }
 }

@@ -20,9 +20,9 @@ public final class AwsSecretsManagerParametersBuilder {
   private String accessKeyId;
   private String secretAccessKey;
   private String region;
-  private Collection<String> prefixFilters = Collections.emptyList();
-  private Collection<String> tagNameFilters = Collections.emptyList();
-  private Collection<String> tagValueFilters = Collections.emptyList();
+  private Collection<String> prefixesFilter = Collections.emptyList();
+  private Collection<String> tagNamesFilter = Collections.emptyList();
+  private Collection<String> tagValuesFilter = Collections.emptyList();
   private long cacheMaximumSize = 1;
 
   private AwsSecretsManagerParametersBuilder() {}
@@ -52,21 +52,21 @@ public final class AwsSecretsManagerParametersBuilder {
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withPrefixFilters(
-      final Collection<String> prefixFilters) {
-    this.prefixFilters = prefixFilters;
+  public AwsSecretsManagerParametersBuilder withPrefixesFilter(
+      final Collection<String> prefixesFilter) {
+    this.prefixesFilter = prefixesFilter;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withTagNameFilters(
+  public AwsSecretsManagerParametersBuilder withTagNamesFilter(
       final Collection<String> tagNameFilters) {
-    this.tagNameFilters = tagNameFilters;
+    this.tagNamesFilter = tagNameFilters;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withTagValueFilters(
-      final Collection<String> tagValueFilters) {
-    this.tagValueFilters = tagValueFilters;
+  public AwsSecretsManagerParametersBuilder withTagValuesFilter(
+      final Collection<String> tagValuesFilter) {
+    this.tagValuesFilter = tagValuesFilter;
     return this;
   }
 
@@ -95,9 +95,9 @@ public final class AwsSecretsManagerParametersBuilder {
         accessKeyId,
         secretAccessKey,
         region,
-        prefixFilters,
-        tagNameFilters,
-        tagValueFilters,
+        prefixesFilter,
+        tagNamesFilter,
+        tagValuesFilter,
         cacheMaximumSize);
   }
 
@@ -106,9 +106,9 @@ public final class AwsSecretsManagerParametersBuilder {
     private final String accessKeyId;
     private final String secretAccessKey;
     private final String region;
-    private final Collection<String> prefixFilters;
-    private final Collection<String> tagNameFilters;
-    private final Collection<String> tagValueFilters;
+    private final Collection<String> prefixesFilter;
+    private final Collection<String> tagNamesFilter;
+    private final Collection<String> tagValuesFilter;
     private long cacheMaximumSize;
 
     TestAwsSecretsManagerParameters(
@@ -116,17 +116,17 @@ public final class AwsSecretsManagerParametersBuilder {
         final String accessKeyId,
         final String secretAccessKey,
         final String region,
-        final Collection<String> prefixFilters,
-        final Collection<String> tagNameFilters,
-        final Collection<String> tagValueFilters,
+        final Collection<String> prefixesFilter,
+        final Collection<String> tagNamesFilter,
+        final Collection<String> tagValuesFilter,
         final long cacheMaximumSize) {
       this.authenticationMode = authenticationMode;
       this.accessKeyId = accessKeyId;
       this.secretAccessKey = secretAccessKey;
       this.region = region;
-      this.prefixFilters = prefixFilters;
-      this.tagNameFilters = tagNameFilters;
-      this.tagValueFilters = tagValueFilters;
+      this.prefixesFilter = prefixesFilter;
+      this.tagNamesFilter = tagNamesFilter;
+      this.tagValuesFilter = tagValuesFilter;
       this.cacheMaximumSize = cacheMaximumSize;
     }
 
@@ -161,18 +161,18 @@ public final class AwsSecretsManagerParametersBuilder {
     }
 
     @Override
-    public Collection<String> getPrefixFilters() {
-      return prefixFilters;
+    public Collection<String> getPrefixesFilter() {
+      return prefixesFilter;
     }
 
     @Override
-    public Collection<String> getTagNameFilters() {
-      return tagNameFilters;
+    public Collection<String> getTagNamesFilter() {
+      return tagNamesFilter;
     }
 
     @Override
-    public Collection<String> getTagValueFilters() {
-      return tagValueFilters;
+    public Collection<String> getTagValuesFilter() {
+      return tagValuesFilter;
     }
   }
 }

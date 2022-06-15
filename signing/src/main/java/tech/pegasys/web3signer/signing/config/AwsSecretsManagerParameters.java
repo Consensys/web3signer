@@ -30,15 +30,15 @@ public interface AwsSecretsManagerParameters {
     return 1;
   }
 
-  default Collection<String> getPrefixFilters() {
+  default Collection<String> getPrefixesFilter() {
     return Collections.emptyList();
   }
 
-  default Collection<String> getTagNameFilters() {
+  default Collection<String> getTagNamesFilter() {
     return Collections.emptyList();
   }
 
-  default Collection<String> getTagValueFilters() {
+  default Collection<String> getTagValuesFilter() {
     return Collections.emptyList();
   }
 }
