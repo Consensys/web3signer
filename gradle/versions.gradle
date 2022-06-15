@@ -31,7 +31,7 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.6.2'
 
-    dependencySet(group: 'io.vertx', version: '4.2.6') {
+    dependencySet(group: 'io.vertx', version: '4.3.1') {
       entry 'vertx-codegen'
       entry 'vertx-core'
       entry 'vertx-unit'
@@ -161,5 +161,12 @@ dependencyManagement {
       \--- org.web3j:core:4.9.2
      */
     dependency 'com.squareup.okhttp3:logging-interceptor:4.9.3'
+
+    // manual overriding of netty to 4.1.77 to avoid CVE-2022-24823
+    /*
+    \--- io.netty:netty-all:4.1.74.Final
+     \--- org.hyperledger.besu.internal:metrics-core:22.4.1
+     */
+    dependency 'io.netty:netty-all:4.1.77.Final'
   }
 }
