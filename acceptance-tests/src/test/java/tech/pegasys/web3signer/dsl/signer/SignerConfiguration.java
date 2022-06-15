@@ -64,8 +64,7 @@ public class SignerConfiguration {
   private final Optional<Long> bellatrixForkEpoch;
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
-
-  final Duration startupTimeout;
+  private final Duration startupTimeout;
 
   public SignerConfiguration(
       final String hostname,
