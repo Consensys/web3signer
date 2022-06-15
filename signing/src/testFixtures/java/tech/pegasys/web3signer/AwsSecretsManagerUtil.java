@@ -66,7 +66,10 @@ public class AwsSecretsManagerUtil {
 
   public void deleteSecret(final String secretName) {
     final DeleteSecretRequest secretRequest =
-        DeleteSecretRequest.builder().secretId(secretNamePrefix + secretName).build();
+        DeleteSecretRequest.builder()
+            .secretId(secretNamePrefix + secretName)
+            .forceDeleteWithoutRecovery(Boolean.TRUE)
+            .build();
     secretsManagerClient.deleteSecret(secretRequest);
   }
 
