@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,6 +65,8 @@ public class SignerConfiguration {
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
 
+  final Duration startupTimeout;
+
   public SignerConfiguration(
       final String hostname,
       final int httpRpcPort,
@@ -84,6 +87,7 @@ public class SignerConfiguration {
       final String slashingProtectionDbPassword,
       final String mode,
       final Optional<Map<String, String>> web3SignerEnvironment,
+      final Duration startupTimeout,
       final boolean enableSlashing,
       final Optional<Path> slashingExportPath,
       final Optional<Path> slashingImportPath,
@@ -117,6 +121,7 @@ public class SignerConfiguration {
     this.slashingProtectionDbPassword = slashingProtectionDbPassword;
     this.mode = mode;
     this.web3SignerEnvironment = web3SignerEnvironment;
+    this.startupTimeout = startupTimeout;
     this.enableSlashing = enableSlashing;
     this.slashingExportPath = slashingExportPath;
     this.slashingImportPath = slashingImportPath;
@@ -271,5 +276,9 @@ public class SignerConfiguration {
 
   public boolean isKeyManagerApiEnabled() {
     return keyManagerApiEnabled;
+  }
+
+  public Duration getStartupTimeout() {
+    return startupTimeout;
   }
 }

@@ -26,7 +26,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -110,9 +109,9 @@ public abstract class Web3SignerRunner {
   }
 
   private void awaitPortsFile(final Path dataDir) {
-    final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 30;
     final File file = new File(dataDir.toFile(), PORTS_FILENAME);
-    Awaitility.waitAtMost(secondsToWait, TimeUnit.SECONDS)
+
+    Awaitility.waitAtMost(signerConfig.getStartupTimeout())
         .until(
             () -> {
               if (file.exists()) {

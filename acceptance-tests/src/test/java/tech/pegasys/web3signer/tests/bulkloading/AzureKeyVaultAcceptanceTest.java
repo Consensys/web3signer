@@ -75,8 +75,8 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
     final Signer signer = new Signer(configBuilder.build(), null);
     signer.start();
-    waitFor(30, () -> assertThat(signer.isRunning()).isTrue());
-    waitFor(30, () -> assertThat(signer.isRunning()).isFalse());
+    waitFor(() -> assertThat(signer.isRunning()).isTrue());
+    waitFor(() -> assertThat(signer.isRunning()).isFalse());
   }
 
   @Test

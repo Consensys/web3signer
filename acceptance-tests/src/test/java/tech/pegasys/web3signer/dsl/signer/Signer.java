@@ -62,6 +62,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
       SigningObjectMapperFactory.createObjectMapper().setSerializationInclusion(Include.NON_NULL);
   private static final String METRICS_ENDPOINT = "/metrics";
 
+  private final SignerConfiguration signerConfig;
   private final Web3SignerRunner runner;
   private final String hostname;
   private final Vertx vertx;
@@ -70,6 +71,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
     super(JSON_RPC_PATH);
+    this.signerConfig = signerConfig;
     this.runner = Web3SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
     this.urlFormatting =
@@ -105,8 +107,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
 
   public void awaitStartupCompletion() {
     LOG.info("Waiting for Signer to become responsive...");
-    final int secondsToWait = Boolean.getBoolean("debugSubProcess") ? 3600 : 30;
-    waitFor(secondsToWait, () -> assertThat(getUpcheckStatus()).isEqualTo(200));
+    waitFor(signerConfig.getStartupTimeout(), () -> assertThat(getUpcheckStatus()).isEqualTo(200));
     LOG.info("Signer is now responsive");
   }
 
