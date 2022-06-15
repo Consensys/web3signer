@@ -150,9 +150,15 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
         blsKeyPairs.parallelStream()
             .forEach(
                 keyPair -> {
+                  final String secretName = keyPair.getPublicKey().toString();
                   try {
-                    awsSecretsManagerUtil.deleteSecret(keyPair.getPublicKey().toString());
-                  } catch (RuntimeException ignored) {
+                    awsSecretsManagerUtil.deleteSecret(secretName);
+                  } catch (final RuntimeException e) {
+                    LOG.warn(
+                        "Unexpected error while deleting key {}{}: {}",
+                        awsSecretsManagerUtil.getSecretsManagerPrefix(),
+                        secretName,
+                        e.getMessage());
                   }
                 });
         stopWatch.stop();

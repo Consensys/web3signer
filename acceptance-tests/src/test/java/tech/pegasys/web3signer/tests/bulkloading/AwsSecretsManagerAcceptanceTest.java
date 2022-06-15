@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.restassured.http.ContentType;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -60,6 +62,7 @@ import org.junit.jupiter.params.provider.ValueSource;
     disabledReason = "AWS_REGION env variable is required")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // same instance is shared across test methods
 public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
+  private static final Logger LOG = LogManager.getLogger();
   private static final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
   private static final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
   private static final String RO_AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
@@ -160,9 +163,15 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
     if (awsSecretsManagerUtil != null) {
       blsKeyPairs.forEach(
           keyPair -> {
+            final String secretName = keyPair.getPublicKey().toString();
             try {
-              awsSecretsManagerUtil.deleteSecret(keyPair.getPublicKey().toString());
-            } catch (RuntimeException ignored) {
+              awsSecretsManagerUtil.deleteSecret(secretName);
+            } catch (final RuntimeException e) {
+              LOG.warn(
+                  "Unexpected error while deleting key {}{}: {}",
+                  awsSecretsManagerUtil.getSecretsManagerPrefix(),
+                  secretName,
+                  e.getMessage());
             }
           });
       awsSecretsManagerUtil.close();
