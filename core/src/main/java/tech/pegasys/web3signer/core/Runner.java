@@ -55,6 +55,7 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
@@ -136,6 +137,11 @@ public abstract class Runner implements Runnable {
               .allowedMethod(HttpMethod.DELETE)
               .allowedMethod(HttpMethod.OPTIONS));
 
+      /*
+       Add our own instance of BodyHandler as the default BodyHandler doesn't seem to handle large json bodies.
+       BodyHandler must be first handler after platform and security handlers
+      */
+      routerBuilder.rootHandler(BodyHandler.create());
       registerUpcheckRoute(routerBuilder, errorHandler);
       registerHttpHostAllowListHandler(routerBuilder);
 
