@@ -45,7 +45,7 @@ public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySig
   public AwsKeySigningMetadata deserialize(
       final JsonParser parser, final DeserializationContext context) throws IOException {
 
-    AwsAuthenticationMode authMode = null;
+    AwsAuthenticationMode authMode = AwsAuthenticationMode.SPECIFIED;
     String region = null;
     String accessKeyId = null;
     String secretAccess_key = null;

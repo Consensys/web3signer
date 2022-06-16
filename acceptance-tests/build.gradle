@@ -22,6 +22,7 @@ dependencies {
   testImplementation project(":app")
   testImplementation project(":core")
   testImplementation project(":signing")
+  testImplementation project(":commandline")
 
   testImplementation 'org.apache.tuweni:tuweni-bytes'
   testImplementation 'org.apache.tuweni:tuweni-units'

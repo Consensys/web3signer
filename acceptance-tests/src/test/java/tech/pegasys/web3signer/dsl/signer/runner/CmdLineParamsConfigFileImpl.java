@@ -12,10 +12,20 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ENABLED_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_PREFIXES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
+
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -57,7 +67,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
           String.format(
               YAML_STRING_FMT,
               "http-host-allowlist",
-              createCommaSeparatedList(signerConfig.getHttpHostAllowList())));
+              String.join(",", signerConfig.getHttpHostAllowList())));
     }
     yamlConfig.append(
         String.format(
@@ -72,7 +82,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
             String.format(
                 YAML_STRING_FMT,
                 "metrics-host-allowlist",
-                createCommaSeparatedList(signerConfig.getMetricsHostAllowList())));
+                String.join(",", signerConfig.getMetricsHostAllowList())));
       }
       if (!signerConfig.getMetricsCategories().isEmpty()) {
         yamlConfig.append(
@@ -80,7 +90,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                 YAML_STRING_FMT,
                 "metrics-categories", // config-file can only use longest options if more than one
                 // option is specified.
-                createCommaSeparatedList(signerConfig.getMetricsCategories())));
+                String.join(",", signerConfig.getMetricsCategories())));
       }
     }
 
@@ -91,8 +101,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     yamlConfig.append(String.format(YAML_BOOLEAN_FMT, "access-logs-enabled", Boolean.TRUE));
 
     if (signerConfig.isHttpDynamicPortAllocation()) {
-      yamlConfig.append(
-          String.format(YAML_STRING_FMT, "data-path", dataPath.toAbsolutePath().toString()));
+      yamlConfig.append(String.format(YAML_STRING_FMT, "data-path", dataPath.toAbsolutePath()));
     }
 
     yamlConfig.append(createServerTlsArgs());
@@ -144,20 +153,24 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
         }
       }
 
+      signerConfig
+          .getAwsSecretsManagerParameters()
+          .ifPresent(awsParams -> yamlConfig.append(awsBulkLoadingOptions(awsParams)));
+
       if (signerConfig.getSlashingExportPath().isPresent()) {
         params.add("export"); // sub-sub command
         yamlConfig.append(
             String.format(
                 YAML_STRING_FMT,
                 "eth2.export.to",
-                signerConfig.getSlashingExportPath().get().toAbsolutePath().toString()));
+                signerConfig.getSlashingExportPath().get().toAbsolutePath()));
       } else if (signerConfig.getSlashingImportPath().isPresent()) {
         params.add("import"); // sub-sub command
         yamlConfig.append(
             String.format(
                 YAML_STRING_FMT,
                 "eth2.import.from",
-                signerConfig.getSlashingImportPath().get().toAbsolutePath().toString()));
+                signerConfig.getSlashingImportPath().get().toAbsolutePath()));
       }
     }
 
@@ -203,7 +216,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               String.format(
                   YAML_STRING_FMT,
                   "tls-known-clients-file",
-                  constraints.getKnownClientsFile().get().toString()));
+                  constraints.getKnownClientsFile().get()));
         }
         if (constraints.isCaAuthorizedClientAllowed()) {
           yamlConfig.append(String.format(YAML_BOOLEAN_FMT, "tls-allow-ca-clients", Boolean.TRUE));
@@ -295,7 +308,70 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     return yamlConfig.toString();
   }
 
-  private String createCommaSeparatedList(final List<String> values) {
-    return String.join(",", values);
+  private String awsBulkLoadingOptions(
+      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
+    final StringBuilder yamlConfig = new StringBuilder();
+
+    yamlConfig.append(
+        String.format(
+            YAML_BOOLEAN_FMT,
+            "eth2." + AWS_SECRETS_ENABLED_OPTION.substring(2),
+            awsSecretsManagerParameters.isEnabled()));
+
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth2." + AWS_SECRETS_AUTH_MODE_OPTION.substring(2),
+            awsSecretsManagerParameters.getAuthenticationMode().name()));
+
+    if (awsSecretsManagerParameters.getAccessKeyId() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_ACCESS_KEY_ID_OPTION.substring(2),
+              awsSecretsManagerParameters.getAccessKeyId()));
+    }
+
+    if (awsSecretsManagerParameters.getSecretAccessKey() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_SECRET_ACCESS_KEY_OPTION.substring(2),
+              awsSecretsManagerParameters.getSecretAccessKey()));
+    }
+
+    if (awsSecretsManagerParameters.getRegion() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_REGION_OPTION.substring(2),
+              awsSecretsManagerParameters.getRegion()));
+    }
+
+    if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_PREFIXES_FILTER_OPTION.substring(2),
+              String.join(",", awsSecretsManagerParameters.getPrefixesFilter())));
+    }
+
+    if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_TAG_NAMES_FILTER_OPTION.substring(2),
+              String.join(",", awsSecretsManagerParameters.getTagNamesFilter())));
+    }
+
+    if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + AWS_SECRETS_TAG_VALUES_FILTER_OPTION.substring(2),
+              String.join(",", awsSecretsManagerParameters.getTagValuesFilter())));
+    }
+
+    return yamlConfig.toString();
   }
 }

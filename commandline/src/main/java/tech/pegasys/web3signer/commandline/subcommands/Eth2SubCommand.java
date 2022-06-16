@@ -12,17 +12,23 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.CLIENT_SECRET;
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.teku.spec.networks.Eth2Network;
+import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
@@ -31,6 +37,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -96,16 +103,10 @@ public class Eth2SubCommand extends ModeSubCommand {
       arity = "1")
   private boolean isKeyManagerApiEnabled = false;
 
-  @CommandLine.Option(
-      names = {"--aws-connection-cache-size"},
-      paramLabel = "<LONG>",
-      description =
-          "Maximum number of connections to cache to the AWS Secrets Manager (default: ${DEFAULT-VALUE})")
-  private long awsCacheMaximumSize = 1;
-
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
   @Mixin private PicoKeystoresParameters keystoreParameters;
+  @Mixin private PicoCliAwsSecretsManagerParameters awsSecretsManagerParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
 
   public Eth2SubCommand() {
@@ -119,9 +120,9 @@ public class Eth2SubCommand extends ModeSubCommand {
         slashingProtectionParameters,
         azureKeyVaultParameters,
         keystoreParameters,
+        awsSecretsManagerParameters,
         eth2Spec,
-        isKeyManagerApiEnabled,
-        awsCacheMaximumSize);
+        isKeyManagerApiEnabled);
   }
 
   private Eth2NetworkConfiguration createEth2NetworkConfig() {
@@ -162,6 +163,7 @@ public class Eth2SubCommand extends ModeSubCommand {
 
     validateAzureParameters();
     validateKeystoreParameters(keystoreParameters);
+    validateAwsSecretsManageParameters();
   }
 
   private void validateAzureParameters() {
@@ -212,6 +214,41 @@ public class Eth2SubCommand extends ModeSubCommand {
     }
   }
 
+  private void validateAwsSecretsManageParameters() {
+    if (awsSecretsManagerParameters.isEnabled()) {
+      final List<String> specifiedAuthModeMissingFields =
+          missingAwsSecretsManagerParametersForSpecified();
+      if (!specifiedAuthModeMissingFields.isEmpty()) {
+        final String errorMsg =
+            String.format(
+                "%s=%s, but the following parameters were missing [%s].",
+                AWS_SECRETS_AUTH_MODE_OPTION,
+                AwsAuthenticationMode.SPECIFIED,
+                String.join(", ", specifiedAuthModeMissingFields));
+        throw new ParameterException(commandSpec.commandLine(), errorMsg);
+      }
+    }
+  }
+
+  private List<String> missingAwsSecretsManagerParametersForSpecified() {
+    final List<String> missingFields = Lists.newArrayList();
+    if (awsSecretsManagerParameters.getAuthenticationMode() == AwsAuthenticationMode.SPECIFIED) {
+      if (awsSecretsManagerParameters.getAccessKeyId() == null) {
+        missingFields.add(AWS_SECRETS_ACCESS_KEY_ID_OPTION);
+      }
+
+      if (awsSecretsManagerParameters.getSecretAccessKey() == null) {
+        missingFields.add(AWS_SECRETS_SECRET_ACCESS_KEY_OPTION);
+      }
+
+      if (awsSecretsManagerParameters.getRegion() == null) {
+        missingFields.add(AWS_SECRETS_REGION_OPTION);
+      }
+    }
+
+    return missingFields;
+  }
+
   private void validatePositiveValue(final long value, final String fieldName) {
     if (value < 1) {
       throw new ParameterException(
@@ -227,6 +264,11 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   public SlashingProtectionParameters getSlashingProtectionParameters() {
     return slashingProtectionParameters;
+  }
+
+  @VisibleForTesting
+  public PicoCliAwsSecretsManagerParameters getAwsSecretsManagerParameters() {
+    return awsSecretsManagerParameters;
   }
 
   static class UInt64Converter implements CommandLine.ITypeConverter<UInt64> {

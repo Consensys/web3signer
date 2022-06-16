@@ -27,15 +27,17 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
+import tech.pegasys.web3signer.AwsSecretsManagerUtil;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
-import tech.pegasys.web3signer.dsl.utils.AwsSecretsManagerUtil;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
@@ -150,32 +152,50 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @Test
   @EnabledIfEnvironmentVariables({
-    @EnabledIfEnvironmentVariable(named = "RW_AWS_ACCESS_KEY_ID", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "RW_AWS_SECRET_ACCESS_KEY", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "RO_AWS_ACCESS_KEY_ID", matches = ".*"),
-    @EnabledIfEnvironmentVariable(named = "RO_AWS_SECRET_ACCESS_KEY", matches = ".*")
+    @EnabledIfEnvironmentVariable(
+        named = "RW_AWS_ACCESS_KEY_ID",
+        matches = ".*",
+        disabledReason = "RW_AWS_ACCESS_KEY_ID env variable is required"),
+    @EnabledIfEnvironmentVariable(
+        named = "RW_AWS_SECRET_ACCESS_KEY",
+        matches = ".*",
+        disabledReason = "RW_AWS_SECRET_ACCESS_KEY env variable is required"),
+    @EnabledIfEnvironmentVariable(
+        named = "AWS_ACCESS_KEY_ID",
+        matches = ".*",
+        disabledReason = "AWS_ACCESS_KEY_ID env variable is required"),
+    @EnabledIfEnvironmentVariable(
+        named = "AWS_SECRET_ACCESS_KEY",
+        matches = ".*",
+        disabledReason = "AWS_SECRET_ACCESS_KEY env variable is required"),
+    @EnabledIfEnvironmentVariable(
+        named = "AWS_REGION",
+        matches = ".*",
+        disabledReason = "AWS_REGION env variable is required")
   })
   public void ableToSignUsingAws() throws JsonProcessingException {
     final String rwAwsAccessKeyId = System.getenv("RW_AWS_ACCESS_KEY_ID");
     final String rwAwsSecretAccessKey = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
-    final String roAwsAccessKeyId = System.getenv("RO_AWS_ACCESS_KEY_ID");
-    final String roAwsSecretAccessKey = System.getenv("RO_AWS_SECRET_ACCESS_KEY");
-    final String region = "us-east-2";
+    final String roAwsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
+    final String roAwsSecretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
+    final String region = Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
+    final String publicKey = keyPair.getPublicKey().toString();
 
-    AwsSecretsManagerUtil awsSecretsManagerUtil =
+    final AwsSecretsManagerUtil awsSecretsManagerUtil =
         new AwsSecretsManagerUtil(region, rwAwsAccessKeyId, rwAwsSecretAccessKey);
 
-    final String secretName = awsSecretsManagerUtil.createSecret(PRIVATE_KEY);
+    awsSecretsManagerUtil.createSecret(publicKey, PRIVATE_KEY, Collections.emptyMap());
+    final String fullyPrefixKeyName = awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey;
 
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final String configFilename = publicKey.substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     try {
       metadataFileHelpers.createAwsYamlFileAt(
-          keyConfigFile, region, roAwsAccessKeyId, roAwsSecretAccessKey, secretName);
+          keyConfigFile, region, roAwsAccessKeyId, roAwsSecretAccessKey, fullyPrefixKeyName);
 
       signAndVerifySignature(ArtifactType.BLOCK);
     } finally {
-      awsSecretsManagerUtil.deleteSecret();
+      awsSecretsManagerUtil.deleteSecret(publicKey);
       awsSecretsManagerUtil.close();
     }
   }

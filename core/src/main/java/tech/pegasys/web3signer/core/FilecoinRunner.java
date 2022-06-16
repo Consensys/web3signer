@@ -46,7 +46,6 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -100,7 +99,6 @@ public class FilecoinRunner extends Runner {
     router
         .post(FC_JSON_RPC_PATH)
         .handler(fcJsonRpcMetrics::incTotalFilecoinRequests)
-        .handler(BodyHandler.create())
         .blockingHandler(
             routingContext -> {
               final String body = routingContext.getBodyAsString();

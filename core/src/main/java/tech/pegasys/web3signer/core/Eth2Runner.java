@@ -36,6 +36,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKe
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.signing.AWSBulkLoadingArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
@@ -44,6 +45,7 @@ import tech.pegasys.web3signer.signing.BlsKeystoreBulkLoader;
 import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
@@ -85,21 +87,21 @@ public class Eth2Runner extends Runner {
 
   private final Optional<SlashingProtectionContext> slashingProtectionContext;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
+  private final AwsSecretsManagerParameters awsSecretsManagerParameters;
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
   private final KeystoresParameters keystoresParameters;
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
-  private final long awsCacheMaximumSize;
 
   public Eth2Runner(
       final Config config,
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters,
       final KeystoresParameters keystoresParameters,
+      final AwsSecretsManagerParameters awsSecretsManagerParameters,
       final Spec eth2Spec,
-      final boolean isKeyManagerApiEnabled,
-      final long awsCacheMaximumSize) {
+      final boolean isKeyManagerApiEnabled) {
     super(config);
     this.slashingProtectionContext = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
@@ -108,7 +110,7 @@ public class Eth2Runner extends Runner {
     this.keystoresParameters = keystoresParameters;
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
-    this.awsCacheMaximumSize = awsCacheMaximumSize;
+    this.awsSecretsManagerParameters = awsSecretsManagerParameters;
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -255,7 +257,8 @@ public class Eth2Runner extends Runner {
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
               final AwsSecretsManagerProvider awsSecretsManagerProvider =
-                  new AwsSecretsManagerProvider(awsCacheMaximumSize)) {
+                  new AwsSecretsManagerProvider(
+                      awsSecretsManagerParameters.getCacheMaximumSize())) {
             final AbstractArtifactSignerFactory artifactSignerFactory =
                 new BlsArtifactSignerFactory(
                     config.getKeyConfigPath(),
@@ -290,6 +293,16 @@ public class Eth2Runner extends Runner {
                         keystoresParameters.getKeystoresPath(),
                         keystoresParameters.getKeystoresPasswordFile());
             signers.addAll(keystoreSigners);
+          }
+
+          if (awsSecretsManagerParameters.isEnabled()) {
+            LOG.info("Bulk loading keys from AWS Secrets Manager ... ");
+            final AWSBulkLoadingArtifactSignerProvider awsBulkLoadingArtifactSignerProvider =
+                new AWSBulkLoadingArtifactSignerProvider();
+            final Collection<ArtifactSigner> awsSigners =
+                awsBulkLoadingArtifactSignerProvider.load(awsSecretsManagerParameters);
+            LOG.info("Keys loaded from AWS Secrets Manager: [{}]", awsSigners.size());
+            signers.addAll(awsSigners);
           }
 
           final List<Bytes> validators =

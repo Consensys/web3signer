@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 import org.awaitility.Awaitility;
 import org.awaitility.core.ThrowingRunnable;
@@ -20,13 +20,10 @@ import org.awaitility.core.ThrowingRunnable;
 public class WaitUtils {
 
   public static void waitFor(final ThrowingRunnable condition) {
-    waitFor(30, condition);
+    waitFor(Duration.ofSeconds(30), condition);
   }
 
-  public static void waitFor(final int timeoutSeconds, final ThrowingRunnable condition) {
-    Awaitility.await()
-        .ignoreExceptions()
-        .atMost(timeoutSeconds, TimeUnit.SECONDS)
-        .untilAsserted(condition);
+  public static void waitFor(final Duration timeout, final ThrowingRunnable condition) {
+    Awaitility.await().ignoreExceptions().atMost(timeout).untilAsserted(condition);
   }
 }

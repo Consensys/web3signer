@@ -21,6 +21,7 @@ import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +50,8 @@ public class SignerConfigurationBuilder {
   private AzureKeyVaultParameters azureKeyVaultParameters;
   private AwsSecretsManagerParameters awsSecretsManagerParameters;
   private Map<String, String> web3SignerEnvironment;
+  private Duration startupTimeout =
+      Boolean.getBoolean("debugSubProcess") ? Duration.ofHours(1) : Duration.ofSeconds(30);
   private boolean enableSlashing = false;
   private String slashingProtectionDbUrl;
   private Path slashingExportPath;
@@ -240,6 +243,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withStartupTimeout(final Duration startupTimeout) {
+    this.startupTimeout = startupTimeout;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -264,6 +272,7 @@ public class SignerConfigurationBuilder {
         slashingProtectionDbPassword,
         mode,
         Optional.ofNullable(web3SignerEnvironment),
+        startupTimeout,
         enableSlashing,
         Optional.ofNullable(slashingExportPath),
         Optional.ofNullable(slashingImportPath),

@@ -10,9 +10,12 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.dsl.utils;
+package tech.pegasys.web3signer;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -20,13 +23,16 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
 import software.amazon.awssdk.services.secretsmanager.model.CreateSecretRequest;
 import software.amazon.awssdk.services.secretsmanager.model.DeleteSecretRequest;
+import software.amazon.awssdk.services.secretsmanager.model.Tag;
 
 public class AwsSecretsManagerUtil {
 
   private final SecretsManagerClient secretsManagerClient;
-  private String secretName;
+  private static final String SECRETS_MANAGER_PREFIX = "signers-aws-integration/";
+  private final String secretNamePrefix;
 
-  public AwsSecretsManagerUtil(String region, String accessKeyId, String secretAccessKey) {
+  public AwsSecretsManagerUtil(
+      final String region, final String accessKeyId, final String secretAccessKey) {
     final AwsBasicCredentials awsBasicCredentials =
         AwsBasicCredentials.create(accessKeyId, secretAccessKey);
     final StaticCredentialsProvider credentialsProvider =
@@ -36,19 +42,34 @@ public class AwsSecretsManagerUtil {
             .credentialsProvider(credentialsProvider)
             .region(Region.of(region))
             .build();
+
+    secretNamePrefix = SECRETS_MANAGER_PREFIX + UUID.randomUUID() + "/";
   }
 
-  public String createSecret(String secretValue) {
-    secretName = "signers-aws-integration/" + UUID.randomUUID();
+  public String getSecretsManagerPrefix() {
+    return secretNamePrefix;
+  }
+
+  public void createSecret(String secretName, String secretValue, final Map<String, String> tags) {
+    Set<Tag> awsTags =
+        tags.keySet().stream()
+            .map(tagName -> Tag.builder().key(tagName).value(tags.get(tagName)).build())
+            .collect(Collectors.toSet());
     final CreateSecretRequest secretRequest =
-        CreateSecretRequest.builder().name(secretName).secretString(secretValue).build();
+        CreateSecretRequest.builder()
+            .name(secretNamePrefix + secretName)
+            .secretString(secretValue)
+            .tags(awsTags)
+            .build();
     secretsManagerClient.createSecret(secretRequest);
-    return secretName;
   }
 
-  public void deleteSecret() {
+  public void deleteSecret(final String secretName) {
     final DeleteSecretRequest secretRequest =
-        DeleteSecretRequest.builder().secretId(secretName).build();
+        DeleteSecretRequest.builder()
+            .secretId(secretNamePrefix + secretName)
+            .forceDeleteWithoutRecovery(Boolean.TRUE)
+            .build();
     secretsManagerClient.deleteSecret(secretRequest);
   }
 

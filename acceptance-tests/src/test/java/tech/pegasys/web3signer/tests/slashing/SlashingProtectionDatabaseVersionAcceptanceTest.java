@@ -54,7 +54,7 @@ public class SlashingProtectionDatabaseVersionAcceptanceTest {
     final Signer signer = new Signer(builder.build(), null);
 
     signer.start();
-    waitFor(30, () -> assertThat(signer.isRunning()).isTrue());
-    waitFor(30, () -> assertThat(signer.isRunning()).isFalse());
+    waitFor(() -> assertThat(signer.isRunning()).isTrue());
+    waitFor(() -> assertThat(signer.isRunning()).isFalse());
   }
 }

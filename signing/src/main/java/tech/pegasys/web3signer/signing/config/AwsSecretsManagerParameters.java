@@ -12,14 +12,33 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import java.util.Collection;
+import java.util.Collections;
+
 public interface AwsSecretsManagerParameters {
+  boolean isEnabled();
+
   AwsAuthenticationMode getAuthenticationMode();
 
   String getAccessKeyId();
 
   String getSecretAccessKey();
 
-  String getSecretName();
-
   String getRegion();
+
+  default long getCacheMaximumSize() {
+    return 1;
+  }
+
+  default Collection<String> getPrefixesFilter() {
+    return Collections.emptyList();
+  }
+
+  default Collection<String> getTagNamesFilter() {
+    return Collections.emptyList();
+  }
+
+  default Collection<String> getTagValuesFilter() {
+    return Collections.emptyList();
+  }
 }
