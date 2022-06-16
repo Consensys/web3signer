@@ -41,11 +41,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
-// Note:  This AT should be manually run in dev/test environment instead of via CI
+/*
+NOTE: This AT attempts to create and load large number of keys from AWS Secrets Manager which may take several minutes,
+hence it should only be manually run in dev/test environment instead of automatically via CI
+*/
 @EnabledIfEnvironmentVariable(
     named = "AWS_PERF_AT_ENABLED",
     matches = "true",
-    disabledReason = "AWS_PERF_AT_ENABLED env variable is required and must be set to TRUE")
+    disabledReason = "AWS_PERF_AT_ENABLED env variable is required and must be set to true")
 @EnabledIfEnvironmentVariable(
     named = "RW_AWS_ACCESS_KEY_ID",
     matches = ".*",
@@ -77,6 +80,7 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
   private static final Integer NUMBER_OF_KEYS =
       Integer.parseInt(Optional.ofNullable(System.getenv("AWS_PERF_AT_KEYS_NUM")).orElse("1000"));
+  private static final Duration STARTUP_TIMEOUT = Duration.ofMinutes(10);
   private AwsSecretsManagerUtil awsSecretsManagerUtil;
   private List<BLSKeyPair> blsKeyPairs;
 
@@ -120,7 +124,7 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
         new SignerConfigurationBuilder()
             .withMode("eth2")
             .withAwsSecretsManagerParameters(awsSecretsManagerParameters)
-            .withStartupTimeout(Duration.ofMinutes(10));
+            .withStartupTimeout(STARTUP_TIMEOUT);
 
     final StopWatch stopWatch = new StopWatch();
     stopWatch.start();
