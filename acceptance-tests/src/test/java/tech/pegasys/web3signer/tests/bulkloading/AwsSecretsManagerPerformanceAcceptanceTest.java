@@ -33,6 +33,7 @@ import java.util.stream.IntStream;
 
 import io.restassured.http.ContentType;
 import org.apache.commons.lang3.time.StopWatch;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
@@ -124,7 +125,8 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
         new SignerConfigurationBuilder()
             .withMode("eth2")
             .withAwsSecretsManagerParameters(awsSecretsManagerParameters)
-            .withStartupTimeout(STARTUP_TIMEOUT);
+            .withStartupTimeout(STARTUP_TIMEOUT)
+            .withLogLevel(Level.INFO);
 
     final StopWatch stopWatch = new StopWatch();
     stopWatch.start();
