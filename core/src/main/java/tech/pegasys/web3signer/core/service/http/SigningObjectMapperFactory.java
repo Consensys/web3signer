@@ -29,7 +29,6 @@ import tech.pegasys.teku.provider.BLSPubKeyDeserializer;
 import tech.pegasys.teku.provider.BLSPubKeySerializer;
 import tech.pegasys.teku.provider.BLSSignatureDeserializer;
 import tech.pegasys.teku.provider.BLSSignatureSerializer;
-import tech.pegasys.teku.provider.SszBitvectorDeserializer;
 import tech.pegasys.teku.provider.SszBitvectorSerializer;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
@@ -90,7 +89,6 @@ public class SigningObjectMapperFactory {
     module.addDeserializer(BLSSignature.class, new BLSSignatureDeserializer());
     module.addSerializer(BLSSignature.class, new BLSSignatureSerializer());
 
-    module.addDeserializer(SszBitvector.class, new SszBitvectorDeserializer());
     module.addSerializer(SszBitvector.class, new SszBitvectorSerializer());
 
     module.addDeserializer(BlockRequest.class, new BlockRequestDeserializer());
