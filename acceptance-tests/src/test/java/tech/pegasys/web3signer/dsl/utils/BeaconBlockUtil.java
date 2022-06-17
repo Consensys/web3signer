@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
+import tech.pegasys.teku.infrastructure.async.SafeFuture;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.config.SpecConfigBellatrix;
@@ -51,28 +52,34 @@ public class BeaconBlockUtil {
   private BeaconBlockBody randomBeaconBlockBody(final UInt64 slotNum) {
     final BeaconBlockBodySchema<?> schema =
         util.getSpec().atSlot(slotNum).getSchemaDefinitions().getBeaconBlockBodySchema();
-    return schema.createBlockBody(
-        (builder) ->
-            builder
-                .randaoReveal(util.randomSignature())
-                .eth1Data(util.randomEth1Data())
-                .graffiti(Bytes32.ZERO)
-                .proposerSlashings(
-                    util.randomSszList(
-                        schema.getProposerSlashingsSchema(), util::randomProposerSlashing, 1L))
-                .attesterSlashings(
-                    util.randomSszList(
-                        schema.getAttesterSlashingsSchema(), util::randomAttesterSlashing, 1L))
-                .attestations(
-                    util.randomSszList(schema.getAttestationsSchema(), util::randomAttestation, 3L))
-                .deposits(
-                    util.randomSszList(
-                        schema.getDepositsSchema(), util::randomDepositWithoutIndex, 1L))
-                .voluntaryExits(
-                    util.randomSszList(
-                        schema.getVoluntaryExitsSchema(), util::randomSignedVoluntaryExit, 1L))
-                .syncAggregate(() -> util.randomSyncAggregateIfRequiredBySchema(schema))
-                .executionPayload(() -> randomExecutionPayloadIfRequiredBySchema(schema, slotNum)));
+    return schema
+        .createBlockBody(
+            (builder) ->
+                builder
+                    .randaoReveal(util.randomSignature())
+                    .eth1Data(util.randomEth1Data())
+                    .graffiti(Bytes32.ZERO)
+                    .proposerSlashings(
+                        util.randomSszList(
+                            schema.getProposerSlashingsSchema(), util::randomProposerSlashing, 1L))
+                    .attesterSlashings(
+                        util.randomSszList(
+                            schema.getAttesterSlashingsSchema(), util::randomAttesterSlashing, 1L))
+                    .attestations(
+                        util.randomSszList(
+                            schema.getAttestationsSchema(), util::randomAttestation, 3L))
+                    .deposits(
+                        util.randomSszList(
+                            schema.getDepositsSchema(), util::randomDepositWithoutIndex, 1L))
+                    .voluntaryExits(
+                        util.randomSszList(
+                            schema.getVoluntaryExitsSchema(), util::randomSignedVoluntaryExit, 1L))
+                    .syncAggregate(() -> util.randomSyncAggregateIfRequiredBySchema(schema))
+                    .executionPayload(
+                        () ->
+                            SafeFuture.completedFuture(
+                                randomExecutionPayloadIfRequiredBySchema(schema, slotNum))))
+        .join();
   }
 
   private ExecutionPayload randomExecutionPayloadIfRequiredBySchema(
