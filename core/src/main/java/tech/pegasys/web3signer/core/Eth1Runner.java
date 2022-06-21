@@ -68,7 +68,8 @@ public class Eth1Runner extends Runner {
         .handler(
             new BlockingHandlerDecorator(
                 new Eth1SignForIdentifierHandler(
-                    secpSigner, new HttpApiMetrics(context.getMetricsSystem(), SECP256K1)),
+                    secpSigner,
+                    new HttpApiMetrics(context.getMetricsSystem(), SECP256K1, signerProvider)),
                 false))
         .failureHandler(errorHandler);
 
