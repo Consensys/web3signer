@@ -39,6 +39,8 @@ public class Eth2SigningRequestBody {
   private final SyncAggregatorSelectionData syncAggregatorSelectionData;
   private final ContributionAndProof contributionAndProof;
 
+  private final RegisterValidatorMessage registerValidatorMessage;
+
   @JsonCreator
   public Eth2SigningRequestBody(
       @JsonProperty(value = "type", required = true) final ArtifactType type,
@@ -55,7 +57,9 @@ public class Eth2SigningRequestBody {
       @JsonProperty("sync_committee_message") final SyncCommitteeMessage syncCommitteeMessage,
       @JsonProperty("sync_aggregator_selection_data")
           final SyncAggregatorSelectionData syncAggregatorSelectionData,
-      @JsonProperty("contribution_and_proof") final ContributionAndProof contributionAndProof) {
+      @JsonProperty("contribution_and_proof") final ContributionAndProof contributionAndProof,
+      @JsonProperty("register_validator_message")
+          final RegisterValidatorMessage registerValidatorMessage) {
     this.type = type;
     this.signingRoot = signingRoot;
     this.fork_info = fork_info;
@@ -70,6 +74,7 @@ public class Eth2SigningRequestBody {
     this.syncCommitteeMessage = syncCommitteeMessage;
     this.syncAggregatorSelectionData = syncAggregatorSelectionData;
     this.contributionAndProof = contributionAndProof;
+    this.registerValidatorMessage = registerValidatorMessage;
   }
 
   @JsonProperty("type")
@@ -140,5 +145,10 @@ public class Eth2SigningRequestBody {
   @JsonProperty("contribution_and_proof")
   public ContributionAndProof getContributionAndProof() {
     return contributionAndProof;
+  }
+
+  @JsonProperty("register_validator_message")
+  public RegisterValidatorMessage getRegisterValidatorMessage() {
+    return registerValidatorMessage;
   }
 }

@@ -318,6 +318,13 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                 utils.getContributionAndProofSigningRoot(
                     asInternalContributionAndProof(contributionAndProof),
                     body.getForkInfo().asInternalForkInfo()));
+      case REGISTER_VALIDATOR_MESSAGE:
+        final RegisterValidatorMessage registerValidatorMessage =
+            body.getRegisterValidatorMessage();
+        checkArgument(registerValidatorMessage != null, "RegisterValidatorMessage is required");
+        return signingRootUtil.signingRootForValidatorRegistration(
+            registerValidatorMessage.getValidatorRegistration().asInternalValidatorRegistration(),
+            registerValidatorMessage.getEpoch());
       default:
         throw new IllegalStateException("Signing root unimplemented for type " + body.getType());
     }
