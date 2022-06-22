@@ -6,6 +6,8 @@
 - Added new metric `eth2_slashingprotection_database_duration` to track time spent performing database queries during either block or attestation signing operations
 - Private keys bulk loading from AWS Secrets Manager via cli options in eth2 mode [#499](https://github.com/ConsenSys/web3signer/issues/499)
 
+### Bugs Fixed
+- Fix issue where signing_signers_loaded_count metric didn't update after refresh endpoint was used to update loaded keys
 ---
 
 ## 22.5.1
