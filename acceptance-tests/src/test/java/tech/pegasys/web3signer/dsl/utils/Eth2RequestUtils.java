@@ -153,6 +153,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
+        null,
         null);
   }
 
@@ -170,6 +171,7 @@ public class Eth2RequestUtils {
         null,
         null,
         aggregationSlot,
+        null,
         null,
         null,
         null,
@@ -203,6 +205,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
+        null,
         null);
   }
 
@@ -222,6 +225,7 @@ public class Eth2RequestUtils {
         null,
         null,
         voluntaryExit,
+        null,
         null,
         null,
         null,
@@ -256,6 +260,7 @@ public class Eth2RequestUtils {
         depositMessage,
         null,
         null,
+        null,
         null);
   }
 
@@ -283,6 +288,7 @@ public class Eth2RequestUtils {
         null,
         null,
         attestationData,
+        null,
         null,
         null,
         null,
@@ -332,6 +338,7 @@ public class Eth2RequestUtils {
         signingRoot,
         forkInfo,
         block,
+        null,
         null,
         null,
         null,
@@ -398,6 +405,7 @@ public class Eth2RequestUtils {
         null,
         syncCommitteeMessage,
         null,
+        null,
         null);
   }
 
@@ -434,6 +442,7 @@ public class Eth2RequestUtils {
         null,
         null,
         getSyncAggregatorSelectionData(slot, subcommitteeIndex),
+        null,
         null);
   }
 
@@ -473,7 +482,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        getContributionAndProof());
+        getContributionAndProof(),
+        null);
   }
 
   private static tech.pegasys.teku.api.schema.altair.ContributionAndProof

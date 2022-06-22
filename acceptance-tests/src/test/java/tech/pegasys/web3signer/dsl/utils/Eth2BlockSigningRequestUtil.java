@@ -96,6 +96,7 @@ public class Eth2BlockSigningRequestUtil {
         null,
         null,
         null,
+        null,
         null);
   }
 
@@ -110,6 +111,7 @@ public class Eth2BlockSigningRequestUtil {
         signingRoot,
         forkInfo,
         getBeaconBlock(),
+        null,
         null,
         null,
         null,
