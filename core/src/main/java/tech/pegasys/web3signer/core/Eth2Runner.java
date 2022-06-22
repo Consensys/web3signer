@@ -174,7 +174,7 @@ public class Eth2Runner extends Runner {
             new BlockingHandlerDecorator(
                 new Eth2SignForIdentifierHandler(
                     blsSigner,
-                    new HttpApiMetrics(metricsSystem, BLS),
+                    new HttpApiMetrics(metricsSystem, BLS, blsSignerProvider),
                     new SlashingProtectionMetrics(metricsSystem),
                     slashingProtectionContext.map(SlashingProtectionContext::getSlashingProtection),
                     objectMapper,

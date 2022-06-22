@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.service.http.metrics;
 
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -20,14 +21,14 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 public class HttpApiMetrics {
-  private static Counter signersLoadedCounter;
-
   private final Counter malformedRequestCounter;
   private final OperationTimer signingTimer;
   private final Counter missingSignerCounter;
 
-  public HttpApiMetrics(final MetricsSystem metricsSystem, final KeyType keyType) {
-
+  public HttpApiMetrics(
+      final MetricsSystem metricsSystem,
+      final KeyType keyType,
+      final ArtifactSignerProvider artifactSignerProvider) {
     malformedRequestCounter =
         metricsSystem.createCounter(
             Web3SignerMetricCategory.HTTP,
@@ -43,6 +44,11 @@ public class HttpApiMetrics {
             Web3SignerMetricCategory.SIGNING,
             keyType.name().toLowerCase() + "_missing_identifier_count",
             "Number of signing operations requested, for keys which are not available");
+    metricsSystem.createIntegerGauge(
+        Web3SignerMetricCategory.SIGNING,
+        "signers_loaded_count",
+        "Number of keys loaded (combining SECP256k1 and BLS12-381",
+        () -> artifactSignerProvider.availableIdentifiers().size());
   }
 
   public Counter getMalformedRequestCounter() {
@@ -55,16 +61,5 @@ public class HttpApiMetrics {
 
   public Counter getMissingSignerCounter() {
     return missingSignerCounter;
-  }
-
-  public static void incSignerLoadCount(final MetricsSystem metricsSystem, final long count) {
-    if (signersLoadedCounter == null) {
-      signersLoadedCounter =
-          metricsSystem.createCounter(
-              Web3SignerMetricCategory.SIGNING,
-              "signers_loaded_count",
-              "Number of keys loaded (combining SECP256k1 and BLS12-381");
-    }
-    signersLoadedCounter.inc(count);
   }
 }

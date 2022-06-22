@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
-import static tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics.incSignerLoadCount;
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
@@ -107,7 +106,6 @@ public abstract class Runner implements Runnable {
       } catch (final InterruptedException | ExecutionException e) {
         LOG.error("Error loading signers", e);
       }
-      incSignerLoadCount(metricsSystem, artifactSignerProvider.availableIdentifiers().size());
 
       final OpenApiSpecsExtractor openApiSpecsExtractor =
           new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
