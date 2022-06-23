@@ -45,7 +45,9 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMe
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RegisterValidatorMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistration;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 
 import java.util.Random;
@@ -107,6 +109,8 @@ public class Eth2RequestUtils {
         return createSyncCommitteeSelectionProofRequest();
       case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF:
         return createSyncCommitteeContributionAndProofRequest();
+      case REGISTER_VALIDATOR_MESSAGE:
+        return createRegisterValidatorRequest();
       default:
         throw new IllegalStateException("Unknown eth2 signing type");
     }
@@ -484,6 +488,36 @@ public class Eth2RequestUtils {
         null,
         getContributionAndProof(),
         null);
+  }
+
+  private static Eth2SigningRequestBody createRegisterValidatorRequest() {
+    UInt64 epoch = dataStructureUtil.randomEpoch();
+    ValidatorRegistration validatorRegistration =
+        new ValidatorRegistration(
+            dataStructureUtil.randomBytes20().toHexString(),
+            dataStructureUtil.randomUInt64(),
+            dataStructureUtil.randomUInt64(),
+            BLSPubKey.fromHexString(
+                "0x8f82597c919c056571a05dfe83e6a7d32acf9ad8931be04d11384e95468cd68b40129864ae12745f774654bbac09b057"));
+    final Bytes signingRoot =
+        signingRootUtil.signingRootForValidatorRegistration(
+            validatorRegistration.asInternalValidatorRegistration(), epoch);
+    return new Eth2SigningRequestBody(
+        ArtifactType.REGISTER_VALIDATOR_MESSAGE,
+        signingRoot,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        new RegisterValidatorMessage(validatorRegistration, epoch));
   }
 
   private static tech.pegasys.teku.api.schema.altair.ContributionAndProof

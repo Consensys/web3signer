@@ -139,13 +139,10 @@ components:
       allOf:
         - type: object
           properties:
-            validator_registration:
-              $ref: "#/components/schemas/ValidatorRegistration"
-            epoch:
-              type: string
-              format: "uint64"
+            register_validator_message:
+              $ref: "#/components/schemas/RegisterValidatorMessage"
           required:
-            - validator_registration
+            - register_validator_message
     RandaoReveal:
       type: "object"
       properties:
@@ -394,6 +391,14 @@ components:
         signature:
           type: string
           description: Bytes96 hexadecimal
+    RegisterValidatorMessage:
+      type: object
+      properties:
+        validator_registration:
+          "$ref": "#/components/schemas/ValidatorRegistration"
+        epoch:
+          type: string
+          format: "uint64"
     ValidatorRegistration:
       type: object
       properties:

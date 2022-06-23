@@ -19,7 +19,7 @@ import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ValidatorRegistration {
-  private final Bytes20 feeRecipient;
+  private final String feeRecipient;
 
   private final UInt64 gasLimit;
 
@@ -28,7 +28,7 @@ public class ValidatorRegistration {
   private final BLSPubKey pubkey;
 
   public ValidatorRegistration(
-      @JsonProperty(value = "fee_recipient", required = true) final Bytes20 feeRecipient,
+      @JsonProperty(value = "fee_recipient", required = true) final String feeRecipient,
       @JsonProperty(value = "gas_limit", required = true) final UInt64 gasLimit,
       @JsonProperty(value = "timestamp", required = true) final UInt64 timestamp,
       @JsonProperty(value = "pubkey", required = true) final BLSPubKey pubkey) {
@@ -39,7 +39,7 @@ public class ValidatorRegistration {
   }
 
   @JsonProperty("fee_recipient")
-  public Bytes20 getFeeRecipient() {
+  public String getFeeRecipient() {
     return feeRecipient;
   }
 
@@ -61,6 +61,6 @@ public class ValidatorRegistration {
   public tech.pegasys.teku.spec.datastructures.execution.ValidatorRegistration
       asInternalValidatorRegistration() {
     return new tech.pegasys.teku.spec.datastructures.execution.ValidatorRegistrationSchema()
-        .create(feeRecipient, gasLimit, timestamp, pubkey.asBLSPublicKey());
+        .create(Bytes20.fromHexString(feeRecipient), gasLimit, timestamp, pubkey.asBLSPublicKey());
   }
 }
