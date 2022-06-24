@@ -494,7 +494,7 @@ public class Eth2RequestUtils {
     final UInt64 epoch = dataStructureUtil.randomEpoch();
     final ValidatorRegistration validatorRegistration =
         new ValidatorRegistration(
-            dataStructureUtil.randomEth1Address(),
+            dataStructureUtil.randomBytes20(),
             dataStructureUtil.randomUInt64(),
             dataStructureUtil.randomUInt64(),
             BLSPubKey.fromHexString(

@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.service.http;
 
 import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.api.schema.BLSSignature;
+import tech.pegasys.teku.infrastructure.bytes.Bytes20;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.Bytes32Deserializer;
 import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.Bytes4Deserializer;
@@ -30,7 +31,6 @@ import tech.pegasys.teku.provider.BLSPubKeySerializer;
 import tech.pegasys.teku.provider.BLSSignatureDeserializer;
 import tech.pegasys.teku.provider.BLSSignatureSerializer;
 import tech.pegasys.teku.provider.SszBitvectorSerializer;
-import tech.pegasys.teku.spec.datastructures.eth1.Eth1Address;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Deserializer;
@@ -95,8 +95,8 @@ public class SigningObjectMapperFactory {
 
     module.addDeserializer(BlockRequest.class, new BlockRequestDeserializer());
 
-    module.addDeserializer(Eth1Address.class, new SigningMetadataModule.Eth1AddressDeserializer());
-    module.addSerializer(Eth1Address.class, new SigningMetadataModule.Eth1AddressSerializer());
+    module.addDeserializer(Bytes20.class, new SigningMetadataModule.Bytes20Deserializer());
+    module.addSerializer(Bytes20.class, new SigningMetadataModule.Bytes20Serializer());
 
     return module;
   }

@@ -139,9 +139,15 @@ components:
       allOf:
         - type: object
           properties:
+            type:
+              type: "string"
+            signingRoot:
+              description: 'signing root for optional verification if field present'
+              type: "string"
             register_validator_message:
               $ref: "#/components/schemas/RegisterValidatorMessage"
           required:
+            - type
             - register_validator_message
     RandaoReveal:
       type: "object"
