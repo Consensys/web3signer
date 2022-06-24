@@ -13,13 +13,13 @@
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
 import tech.pegasys.teku.api.schema.BLSPubKey;
-import tech.pegasys.teku.infrastructure.bytes.Bytes20;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.teku.spec.datastructures.eth1.Eth1Address;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ValidatorRegistration {
-  private final String feeRecipient;
+  private final Eth1Address feeRecipient;
 
   private final UInt64 gasLimit;
 
@@ -28,7 +28,7 @@ public class ValidatorRegistration {
   private final BLSPubKey pubkey;
 
   public ValidatorRegistration(
-      @JsonProperty(value = "fee_recipient", required = true) final String feeRecipient,
+      @JsonProperty(value = "fee_recipient", required = true) final Eth1Address feeRecipient,
       @JsonProperty(value = "gas_limit", required = true) final UInt64 gasLimit,
       @JsonProperty(value = "timestamp", required = true) final UInt64 timestamp,
       @JsonProperty(value = "pubkey", required = true) final BLSPubKey pubkey) {
@@ -39,7 +39,7 @@ public class ValidatorRegistration {
   }
 
   @JsonProperty("fee_recipient")
-  public String getFeeRecipient() {
+  public Eth1Address getFeeRecipient() {
     return feeRecipient;
   }
 
@@ -61,6 +61,6 @@ public class ValidatorRegistration {
   public tech.pegasys.teku.spec.datastructures.execution.ValidatorRegistration
       asInternalValidatorRegistration() {
     return new tech.pegasys.teku.spec.datastructures.execution.ValidatorRegistrationSchema()
-        .create(Bytes20.fromHexString(feeRecipient), gasLimit, timestamp, pubkey.asBLSPublicKey());
+        .create(feeRecipient, gasLimit, timestamp, pubkey.asBLSPublicKey());
   }
 }

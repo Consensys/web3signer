@@ -30,12 +30,14 @@ import tech.pegasys.teku.provider.BLSPubKeySerializer;
 import tech.pegasys.teku.provider.BLSSignatureDeserializer;
 import tech.pegasys.teku.provider.BLSSignatureSerializer;
 import tech.pegasys.teku.provider.SszBitvectorSerializer;
+import tech.pegasys.teku.spec.datastructures.eth1.Eth1Address;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Deserializer;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Serialiser;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.BlockRequestDeserializer;
+import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule.Bytes32Serializer;
 
 import com.fasterxml.jackson.core.Version;
@@ -92,6 +94,9 @@ public class SigningObjectMapperFactory {
     module.addSerializer(SszBitvector.class, new SszBitvectorSerializer());
 
     module.addDeserializer(BlockRequest.class, new BlockRequestDeserializer());
+
+    module.addDeserializer(Eth1Address.class, new SigningMetadataModule.Eth1AddressDeserializer());
+    module.addSerializer(Eth1Address.class, new SigningMetadataModule.Eth1AddressSerializer());
 
     return module;
   }

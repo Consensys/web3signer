@@ -491,10 +491,10 @@ public class Eth2RequestUtils {
   }
 
   private static Eth2SigningRequestBody createRegisterValidatorRequest() {
-    UInt64 epoch = dataStructureUtil.randomEpoch();
-    ValidatorRegistration validatorRegistration =
+    final UInt64 epoch = dataStructureUtil.randomEpoch();
+    final ValidatorRegistration validatorRegistration =
         new ValidatorRegistration(
-            dataStructureUtil.randomBytes20().toHexString(),
+            dataStructureUtil.randomEth1Address(),
             dataStructureUtil.randomUInt64(),
             dataStructureUtil.randomUInt64(),
             BLSPubKey.fromHexString(
