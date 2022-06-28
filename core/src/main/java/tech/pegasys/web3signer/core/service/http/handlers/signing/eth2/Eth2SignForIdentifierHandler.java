@@ -319,8 +319,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                     asInternalContributionAndProof(contributionAndProof),
                     body.getForkInfo().asInternalForkInfo()));
       case REGISTER_VALIDATOR:
-        final RegisterValidator registerValidator =
-            body.getRegisterValidator();
+        final RegisterValidator registerValidator = body.getRegisterValidator();
         checkArgument(registerValidator != null, "RegisterValidator is required");
         return signingRootUtil.signingRootForValidatorRegistration(
             registerValidator.getValidatorRegistration().asInternalValidatorRegistration(),

@@ -58,8 +58,7 @@ public class Eth2SigningRequestBody {
       @JsonProperty("sync_aggregator_selection_data")
           final SyncAggregatorSelectionData syncAggregatorSelectionData,
       @JsonProperty("contribution_and_proof") final ContributionAndProof contributionAndProof,
-      @JsonProperty("register_validator")
-          final RegisterValidator registerValidator) {
+      @JsonProperty("register_validator") final RegisterValidator registerValidator) {
     this.type = type;
     this.signingRoot = signingRoot;
     this.fork_info = fork_info;
