@@ -45,7 +45,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMe
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RegisterValidatorMessage;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RegisterValidator;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistration;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
@@ -109,7 +109,7 @@ public class Eth2RequestUtils {
         return createSyncCommitteeSelectionProofRequest();
       case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF:
         return createSyncCommitteeContributionAndProofRequest();
-      case REGISTER_VALIDATOR_MESSAGE:
+      case REGISTER_VALIDATOR:
         return createRegisterValidatorRequest();
       default:
         throw new IllegalStateException("Unknown eth2 signing type");
@@ -503,7 +503,7 @@ public class Eth2RequestUtils {
         signingRootUtil.signingRootForValidatorRegistration(
             validatorRegistration.asInternalValidatorRegistration(), epoch);
     return new Eth2SigningRequestBody(
-        ArtifactType.REGISTER_VALIDATOR_MESSAGE,
+        ArtifactType.REGISTER_VALIDATOR,
         signingRoot,
         null,
         null,
@@ -517,7 +517,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        new RegisterValidatorMessage(validatorRegistration, epoch));
+        new RegisterValidator(validatorRegistration, epoch));
   }
 
   private static tech.pegasys.teku.api.schema.altair.ContributionAndProof

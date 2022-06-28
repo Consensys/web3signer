@@ -39,7 +39,7 @@ public class Eth2SigningRequestBody {
   private final SyncAggregatorSelectionData syncAggregatorSelectionData;
   private final ContributionAndProof contributionAndProof;
 
-  private final RegisterValidatorMessage registerValidatorMessage;
+  private final RegisterValidator registerValidator;
 
   @JsonCreator
   public Eth2SigningRequestBody(
@@ -58,8 +58,8 @@ public class Eth2SigningRequestBody {
       @JsonProperty("sync_aggregator_selection_data")
           final SyncAggregatorSelectionData syncAggregatorSelectionData,
       @JsonProperty("contribution_and_proof") final ContributionAndProof contributionAndProof,
-      @JsonProperty("register_validator_message")
-          final RegisterValidatorMessage registerValidatorMessage) {
+      @JsonProperty("register_validator")
+          final RegisterValidator registerValidator) {
     this.type = type;
     this.signingRoot = signingRoot;
     this.fork_info = fork_info;
@@ -74,7 +74,7 @@ public class Eth2SigningRequestBody {
     this.syncCommitteeMessage = syncCommitteeMessage;
     this.syncAggregatorSelectionData = syncAggregatorSelectionData;
     this.contributionAndProof = contributionAndProof;
-    this.registerValidatorMessage = registerValidatorMessage;
+    this.registerValidator = registerValidator;
   }
 
   @JsonProperty("type")
@@ -147,8 +147,8 @@ public class Eth2SigningRequestBody {
     return contributionAndProof;
   }
 
-  @JsonProperty("register_validator_message")
-  public RegisterValidatorMessage getRegisterValidatorMessage() {
-    return registerValidatorMessage;
+  @JsonProperty("register_validator")
+  public RegisterValidator getRegisterValidator() {
+    return registerValidator;
   }
 }

@@ -144,11 +144,11 @@ components:
             signingRoot:
               description: 'signing root for optional verification if field present'
               type: "string"
-            register_validator_message:
-              $ref: "#/components/schemas/RegisterValidatorMessage"
+            register_validator:
+              $ref: "#/components/schemas/RegisterValidator"
           required:
             - type
-            - register_validator_message
+            - register_validator
     RandaoReveal:
       type: "object"
       properties:
@@ -397,7 +397,7 @@ components:
         signature:
           type: string
           description: Bytes96 hexadecimal
-    RegisterValidatorMessage:
+    RegisterValidator:
       type: object
       properties:
         validator_registration:
