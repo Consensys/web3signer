@@ -17,13 +17,13 @@ import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class RegisterValidator {
+public class ValidatorRegistrationRequest {
   private final ValidatorRegistration validatorRegistration;
 
   private final UInt64 epoch;
 
   @JsonCreator
-  public RegisterValidator(
+  public ValidatorRegistrationRequest(
       @JsonProperty(value = "validator_registration", required = true)
           final ValidatorRegistration validatorRegistration,
       @JsonProperty(value = "epoch", required = true) final UInt64 epoch) {

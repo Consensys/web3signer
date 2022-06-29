@@ -135,7 +135,7 @@ components:
               $ref: "#/components/schemas/ContributionAndProof"
           required:
             - contribution_and_proof
-    RegisterValidatorSigning:
+    ValidatorRegistrationSigning:
       allOf:
         - type: object
           properties:
@@ -144,11 +144,11 @@ components:
             signingRoot:
               description: 'signing root for optional verification if field present'
               type: "string"
-            register_validator:
-              $ref: "#/components/schemas/RegisterValidator"
+            validator_registration_request:
+              $ref: "#/components/schemas/ValidatorRegistrationRequest"
           required:
             - type
-            - register_validator
+            - validator_registration_request
     RandaoReveal:
       type: "object"
       properties:
@@ -397,7 +397,7 @@ components:
         signature:
           type: string
           description: Bytes96 hexadecimal
-    RegisterValidator:
+    ValidatorRegistrationRequest:
       type: object
       properties:
         validator_registration:

@@ -45,9 +45,9 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMe
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RegisterValidator;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistration;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistrationRequest;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 
 import java.util.Random;
@@ -112,8 +112,8 @@ public class Eth2RequestUtils {
         return createSyncCommitteeSelectionProofRequest();
       case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF:
         return createSyncCommitteeContributionAndProofRequest();
-      case REGISTER_VALIDATOR:
-        return createRegisterValidatorRequest();
+      case VALIDATOR_REGISTRATION:
+        return createValidatorRegistrationRequest();
       default:
         throw new IllegalStateException("Unknown eth2 signing type");
     }
@@ -492,7 +492,7 @@ public class Eth2RequestUtils {
         null);
   }
 
-  private static Eth2SigningRequestBody createRegisterValidatorRequest() {
+  private static Eth2SigningRequestBody createValidatorRegistrationRequest() {
     final UInt64 epoch = dataStructureUtil.randomEpoch();
     final ValidatorRegistration validatorRegistration =
         new ValidatorRegistration(
@@ -504,7 +504,7 @@ public class Eth2RequestUtils {
         signingRootUtil.signingRootForValidatorRegistration(
             validatorRegistration.asInternalValidatorRegistration(), epoch);
     return new Eth2SigningRequestBody(
-        ArtifactType.REGISTER_VALIDATOR,
+        ArtifactType.VALIDATOR_REGISTRATION,
         signingRoot,
         null,
         null,
@@ -518,7 +518,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        new RegisterValidator(validatorRegistration, epoch));
+        new ValidatorRegistrationRequest(validatorRegistration, epoch));
   }
 
   private static tech.pegasys.teku.api.schema.altair.ContributionAndProof
