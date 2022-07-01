@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
     <!-- See https://jeremylong.github.io/DependencyCheck/general/suppression.html for examples -->
+    <suppress until="2022-07-15">
+        <notes><![CDATA[
+          Suppress CVE-2022-33915 till log4j has a fix.
+        ]]></notes>
+        <cve>CVE-2022-33915</cve>
+    </suppress>
 </suppressions>
