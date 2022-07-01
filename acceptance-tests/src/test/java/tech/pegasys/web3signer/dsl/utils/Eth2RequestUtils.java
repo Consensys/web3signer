@@ -47,7 +47,6 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistration;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistrationRequest;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 
 import java.util.Random;
@@ -154,6 +153,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
+        null,
         aggregateAndProof,
         null,
         null,
@@ -174,6 +174,7 @@ public class Eth2RequestUtils {
         ArtifactType.AGGREGATION_SLOT,
         signingRoot,
         forkInfo,
+        null,
         null,
         null,
         null,
@@ -208,6 +209,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
+        null,
         randaoReveal,
         null,
         null,
@@ -226,6 +228,7 @@ public class Eth2RequestUtils {
         ArtifactType.VOLUNTARY_EXIT,
         signingRoot,
         forkInfo,
+        null,
         null,
         null,
         null,
@@ -263,6 +266,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
+        null,
         depositMessage,
         null,
         null,
@@ -291,6 +295,7 @@ public class Eth2RequestUtils {
         ArtifactType.ATTESTATION,
         signingRoot,
         forkInfo,
+        null,
         null,
         null,
         attestationData,
@@ -343,6 +348,7 @@ public class Eth2RequestUtils {
         ArtifactType.BLOCK,
         signingRoot,
         forkInfo,
+        null,
         block,
         null,
         null,
@@ -409,6 +415,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
+        null,
         syncCommitteeMessage,
         null,
         null,
@@ -438,6 +445,7 @@ public class Eth2RequestUtils {
         ArtifactType.SYNC_COMMITTEE_SELECTION_PROOF,
         signingRoot,
         forkInfo,
+        null,
         null,
         null,
         null,
@@ -488,6 +496,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
+        null,
         getContributionAndProof(),
         null);
   }
@@ -507,6 +516,7 @@ public class Eth2RequestUtils {
         ArtifactType.VALIDATOR_REGISTRATION,
         signingRoot,
         null,
+        epoch,
         null,
         null,
         null,
@@ -518,7 +528,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        new ValidatorRegistrationRequest(validatorRegistration, epoch));
+        validatorRegistration);
   }
 
   private static tech.pegasys.teku.api.schema.altair.ContributionAndProof

@@ -144,11 +144,15 @@ components:
             signingRoot:
               description: 'signing root for optional verification if field present'
               type: "string"
-            validator_registration_request:
-              $ref: "#/components/schemas/ValidatorRegistrationRequest"
+            validator_registration:
+              "$ref": "#/components/schemas/ValidatorRegistration"
+            epoch:
+              type: string
+              format: "uint64"
           required:
             - type
-            - validator_registration_request
+            - validator_registration
+            - epoch
     RandaoReveal:
       type: "object"
       properties:
@@ -397,14 +401,6 @@ components:
         signature:
           type: string
           description: Bytes96 hexadecimal
-    ValidatorRegistrationRequest:
-      type: object
-      properties:
-        validator_registration:
-          "$ref": "#/components/schemas/ValidatorRegistration"
-        epoch:
-          type: string
-          format: "uint64"
     ValidatorRegistration:
       type: object
       properties:
