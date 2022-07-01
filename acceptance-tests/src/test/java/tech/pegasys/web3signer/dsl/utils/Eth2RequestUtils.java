@@ -153,8 +153,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        null,
         aggregateAndProof,
+        null,
         null,
         null,
         null,
@@ -177,8 +177,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        null,
         aggregationSlot,
+        null,
         null,
         null,
         null,
@@ -209,8 +209,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        null,
         randaoReveal,
+        null,
         null,
         null,
         null,
@@ -233,8 +233,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        null,
         voluntaryExit,
+        null,
         null,
         null,
         null,
@@ -266,8 +266,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        null,
         depositMessage,
+        null,
         null,
         null,
         null,
@@ -297,8 +297,8 @@ public class Eth2RequestUtils {
         forkInfo,
         null,
         null,
-        null,
         attestationData,
+        null,
         null,
         null,
         null,
@@ -348,8 +348,8 @@ public class Eth2RequestUtils {
         ArtifactType.BLOCK,
         signingRoot,
         forkInfo,
-        null,
         block,
+        null,
         null,
         null,
         null,
@@ -415,8 +415,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        null,
         syncCommitteeMessage,
+        null,
         null,
         null,
         null);
@@ -454,8 +454,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        null,
         getSyncAggregatorSelectionData(slot, subcommitteeIndex),
+        null,
         null,
         null);
   }
@@ -496,8 +496,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        null,
         getContributionAndProof(),
+        null,
         null);
   }
 
@@ -516,7 +516,6 @@ public class Eth2RequestUtils {
         ArtifactType.VALIDATOR_REGISTRATION,
         signingRoot,
         null,
-        epoch,
         null,
         null,
         null,
@@ -528,7 +527,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        validatorRegistration);
+        validatorRegistration,
+        epoch);
   }
 
   private static tech.pegasys.teku.api.schema.altair.ContributionAndProof

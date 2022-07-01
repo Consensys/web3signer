@@ -28,8 +28,6 @@ public class Eth2SigningRequestBody {
   private final ArtifactType type;
   private final Bytes signingRoot;
   private final ForkInfo fork_info;
-
-  private final UInt64 epoch;
   private final BeaconBlock beaconBlock; // phase 0
   private final BlockRequest blockRequest; // altair and onward
   private final AttestationData attestation;
@@ -44,12 +42,13 @@ public class Eth2SigningRequestBody {
 
   private final ValidatorRegistration validatorRegistration;
 
+  private final UInt64 epoch;
+
   @JsonCreator
   public Eth2SigningRequestBody(
       @JsonProperty(value = "type", required = true) final ArtifactType type,
       @JsonProperty("signingRoot") final Bytes signingRoot,
       @JsonProperty("fork_info") final ForkInfo fork_info,
-      @JsonProperty("epoch") final UInt64 epoch,
       @JsonProperty("block") final BeaconBlock block,
       @JsonProperty("beacon_block") final BlockRequest blockRequest,
       @JsonProperty("attestation") final AttestationData attestation,
@@ -62,11 +61,11 @@ public class Eth2SigningRequestBody {
       @JsonProperty("sync_aggregator_selection_data")
           final SyncAggregatorSelectionData syncAggregatorSelectionData,
       @JsonProperty("contribution_and_proof") final ContributionAndProof contributionAndProof,
-      @JsonProperty("validator_registration") final ValidatorRegistration validatorRegistration) {
+      @JsonProperty("validator_registration") final ValidatorRegistration validatorRegistration,
+      @JsonProperty("epoch") final UInt64 epoch) {
     this.type = type;
     this.signingRoot = signingRoot;
     this.fork_info = fork_info;
-    this.epoch = epoch;
     this.beaconBlock = block;
     this.blockRequest = blockRequest;
     this.attestation = attestation;
@@ -79,6 +78,7 @@ public class Eth2SigningRequestBody {
     this.syncAggregatorSelectionData = syncAggregatorSelectionData;
     this.contributionAndProof = contributionAndProof;
     this.validatorRegistration = validatorRegistration;
+    this.epoch = epoch;
   }
 
   @JsonProperty("type")
@@ -89,11 +89,6 @@ public class Eth2SigningRequestBody {
   @JsonProperty("fork_info")
   public ForkInfo getForkInfo() {
     return fork_info;
-  }
-
-  @JsonProperty("epoch")
-  public UInt64 getEpoch() {
-    return epoch;
   }
 
   @JsonProperty("block")
@@ -159,5 +154,10 @@ public class Eth2SigningRequestBody {
   @JsonProperty("validator_registration")
   public ValidatorRegistration getValidatorRegistration() {
     return validatorRegistration;
+  }
+
+  @JsonProperty("epoch")
+  public UInt64 getEpoch() {
+    return epoch;
   }
 }
