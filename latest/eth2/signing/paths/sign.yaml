@@ -28,6 +28,7 @@ post:
             - $ref: '../schemas.yaml#/components/schemas/SyncCommitteeMessageSigning'
             - $ref: '../schemas.yaml#/components/schemas/SyncCommitteeSelectionProofSigning'
             - $ref: '../schemas.yaml#/components/schemas/SyncCommitteeContributionAndProofSigning'
+            - $ref: '../schemas.yaml#/components/schemas/ValidatorRegistrationSigning'
           discriminator:
             propertyName: type
             mapping:
@@ -42,6 +43,7 @@ post:
               SYNC_COMMITTEE_MESSAGE: '../schemas.yaml#/components/schemas/SyncCommitteeMessageSigning'
               SYNC_COMMITTEE_SELECTION_PROOF: '../schemas.yaml#/components/schemas/SyncCommitteeSelectionProofSigning'
               SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF: '../schemas.yaml#/components/schemas/SyncCommitteeContributionAndProofSigning'
+              VALIDATOR_REGISTRATION: '../schemas.yaml#/components/schemas/ValidatorRegistrationSigning'
   responses:
     '200':
       description: 'hex encoded string of signature'

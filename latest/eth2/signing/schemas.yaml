@@ -135,7 +135,24 @@ components:
               $ref: "#/components/schemas/ContributionAndProof"
           required:
             - contribution_and_proof
-
+    ValidatorRegistrationSigning:
+      allOf:
+        - type: object
+          properties:
+            type:
+              type: "string"
+            signingRoot:
+              description: 'signing root for optional verification if field present'
+              type: "string"
+            validator_registration:
+              "$ref": "#/components/schemas/ValidatorRegistration"
+            epoch:
+              type: string
+              format: "uint64"
+          required:
+            - type
+            - validator_registration
+            - epoch
     RandaoReveal:
       type: "object"
       properties:
@@ -384,6 +401,20 @@ components:
         signature:
           type: string
           description: Bytes96 hexadecimal
+    ValidatorRegistration:
+      type: object
+      properties:
+        fee_recipient:
+          type: string
+          description: Bytes20 hexadecimal
+        gas_limit:
+          type: string
+          format: uint64
+        timestamp:
+          type: string
+          format: uint64
+        pubkey:
+          type: string
     BeaconBlockSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
