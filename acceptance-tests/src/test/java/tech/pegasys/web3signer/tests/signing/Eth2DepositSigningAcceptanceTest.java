@@ -116,6 +116,8 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
             depositMessage,
             null,
             null,
+            null,
+            null,
             null);
 
     final Response response = signer.eth2Sign(publicKey, requestBody, TEXT);

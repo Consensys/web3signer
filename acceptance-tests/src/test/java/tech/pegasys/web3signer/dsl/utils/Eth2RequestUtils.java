@@ -46,6 +46,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2Signi
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistration;
 import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 
 import java.util.Random;
@@ -58,6 +59,9 @@ import org.apache.tuweni.bytes.Bytes32;
 public class Eth2RequestUtils {
   public static final String GENESIS_VALIDATORS_ROOT =
       "0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673";
+
+  private static final String PUBLIC_KEY =
+      "0x8f82597c919c056571a05dfe83e6a7d32acf9ad8931be04d11384e95468cd68b40129864ae12745f774654bbac09b057";
 
   private static final UInt64 slot = UInt64.ZERO;
   static final Spec spec = TestSpecFactory.createMinimalPhase0();
@@ -107,6 +111,8 @@ public class Eth2RequestUtils {
         return createSyncCommitteeSelectionProofRequest();
       case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF:
         return createSyncCommitteeContributionAndProofRequest();
+      case VALIDATOR_REGISTRATION:
+        return createValidatorRegistrationRequest();
       default:
         throw new IllegalStateException("Unknown eth2 signing type");
     }
@@ -153,6 +159,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
+        null,
+        null,
         null);
   }
 
@@ -170,6 +178,8 @@ public class Eth2RequestUtils {
         null,
         null,
         aggregationSlot,
+        null,
+        null,
         null,
         null,
         null,
@@ -203,6 +213,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
+        null,
+        null,
         null);
   }
 
@@ -226,6 +238,8 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
+        null,
+        null,
         null);
   }
 
@@ -233,8 +247,7 @@ public class Eth2RequestUtils {
     final Bytes4 genesisForkVersion = Bytes4.fromHexString("0x00000001");
     final DepositMessage depositMessage =
         new DepositMessage(
-            BLSPubKey.fromHexString(
-                "0x8f82597c919c056571a05dfe83e6a7d32acf9ad8931be04d11384e95468cd68b40129864ae12745f774654bbac09b057"),
+            BLSPubKey.fromHexString(PUBLIC_KEY),
             Bytes32.random(new Random(2)),
             UInt64.valueOf(32),
             genesisForkVersion);
@@ -254,6 +267,8 @@ public class Eth2RequestUtils {
         null,
         null,
         depositMessage,
+        null,
+        null,
         null,
         null,
         null);
@@ -283,6 +298,8 @@ public class Eth2RequestUtils {
         null,
         null,
         attestationData,
+        null,
+        null,
         null,
         null,
         null,
@@ -332,6 +349,8 @@ public class Eth2RequestUtils {
         signingRoot,
         forkInfo,
         block,
+        null,
+        null,
         null,
         null,
         null,
@@ -398,6 +417,8 @@ public class Eth2RequestUtils {
         null,
         syncCommitteeMessage,
         null,
+        null,
+        null,
         null);
   }
 
@@ -434,6 +455,8 @@ public class Eth2RequestUtils {
         null,
         null,
         getSyncAggregatorSelectionData(slot, subcommitteeIndex),
+        null,
+        null,
         null);
   }
 
@@ -473,7 +496,39 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        getContributionAndProof());
+        getContributionAndProof(),
+        null,
+        null);
+  }
+
+  private static Eth2SigningRequestBody createValidatorRegistrationRequest() {
+    final UInt64 epoch = dataStructureUtil.randomEpoch();
+    final ValidatorRegistration validatorRegistration =
+        new ValidatorRegistration(
+            dataStructureUtil.randomBytes20(),
+            dataStructureUtil.randomUInt64(),
+            dataStructureUtil.randomUInt64(),
+            BLSPubKey.fromHexString(PUBLIC_KEY));
+    final Bytes signingRoot =
+        signingRootUtil.signingRootForValidatorRegistration(
+            validatorRegistration.asInternalValidatorRegistration(), epoch);
+    return new Eth2SigningRequestBody(
+        ArtifactType.VALIDATOR_REGISTRATION,
+        signingRoot,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        validatorRegistration,
+        epoch);
   }
 
   private static tech.pegasys.teku.api.schema.altair.ContributionAndProof

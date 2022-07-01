@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata.parser;
 
+import tech.pegasys.teku.infrastructure.bytes.Bytes20;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 
 import java.io.IOException;
@@ -84,6 +85,28 @@ public class SigningMetadataModule extends SimpleModule {
         final Bytes32 value, final JsonGenerator gen, final SerializerProvider serializers)
         throws IOException {
       gen.writeString(value.toString());
+    }
+  }
+
+  public static class Bytes20Deserializer extends JsonDeserializer<Bytes20> {
+
+    @Override
+    public Bytes20 deserialize(final JsonParser p, final DeserializationContext ctxt) {
+      try {
+        return Bytes20.fromHexString(p.getValueAsString());
+      } catch (final Exception e) {
+        throw new SigningMetadataException("Invalid hex value for address", e);
+      }
+    }
+  }
+
+  public static class Bytes20Serializer extends JsonSerializer<Bytes20> {
+
+    @Override
+    public void serialize(
+        final Bytes20 value, final JsonGenerator gen, final SerializerProvider serializers)
+        throws IOException {
+      gen.writeString(value.toHexString());
     }
   }
 }
