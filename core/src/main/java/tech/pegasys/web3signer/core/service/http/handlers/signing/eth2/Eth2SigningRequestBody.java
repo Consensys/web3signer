@@ -39,9 +39,7 @@ public class Eth2SigningRequestBody {
   private final SyncCommitteeMessage syncCommitteeMessage;
   private final SyncAggregatorSelectionData syncAggregatorSelectionData;
   private final ContributionAndProof contributionAndProof;
-
   private final ValidatorRegistration validatorRegistration;
-
   private final UInt64 epoch;
 
   @JsonCreator
