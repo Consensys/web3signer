@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.core;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.web3signer.common.ApplicationInfo;
+import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -99,6 +101,7 @@ public abstract class Runner implements Runnable {
         createArtifactSignerProvider(vertx, metricsSystem);
 
     try {
+      createVersionMetric(metricsSystem);
       metricsEndpoint.start(vertx);
 
       try {
@@ -170,6 +173,13 @@ public abstract class Runner implements Runnable {
       metricsEndpoint.stop();
       LOG.error("Failed to initialise application", e);
     }
+  }
+
+  private void createVersionMetric(MetricsSystem metricsSystem) {
+    metricsSystem
+        .createLabelledGauge(
+            Web3SignerMetricCategory.WEB3SIGNER, "version ", "Release information", "version")
+        .labels(() -> 1, ApplicationInfo.version());
   }
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
