@@ -178,7 +178,7 @@ public abstract class Runner implements Runnable {
   private void createVersionMetric(MetricsSystem metricsSystem) {
     metricsSystem
         .createLabelledGauge(
-            Web3SignerMetricCategory.WEB3SIGNER, "version ", "Release information", "version")
+            Web3SignerMetricCategory.WEB3SIGNER, "version", "Release information", "version")
         .labels(() -> 1, ApplicationInfo.version());
   }
 
