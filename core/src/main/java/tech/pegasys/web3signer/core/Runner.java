@@ -14,10 +14,8 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 
-import org.hyperledger.besu.metrics.StandardMetricCategory;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.common.ApplicationInfo;
-import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -67,6 +65,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
+import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public abstract class Runner implements Runnable {
@@ -179,7 +178,7 @@ public abstract class Runner implements Runnable {
   private void createVersionMetric(MetricsSystem metricsSystem) {
     metricsSystem
         .createLabelledGauge(
-                StandardMetricCategory.PROCESS, "release", "Release information", "version")
+            StandardMetricCategory.PROCESS, "release", "Release information", "version")
         .labels(() -> 1, ApplicationInfo.version());
   }
 
