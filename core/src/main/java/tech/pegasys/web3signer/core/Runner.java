@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 
+import org.hyperledger.besu.metrics.StandardMetricCategory;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.common.ApplicationInfo;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
@@ -178,7 +179,7 @@ public abstract class Runner implements Runnable {
   private void createVersionMetric(MetricsSystem metricsSystem) {
     metricsSystem
         .createLabelledGauge(
-            Web3SignerMetricCategory.WEB3SIGNER, "version", "Release information", "version")
+                StandardMetricCategory.PROCESS, "release", "Release information", "version")
         .labels(() -> 1, ApplicationInfo.version());
   }
 
