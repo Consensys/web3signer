@@ -1,5 +1,9 @@
 # Changelog
 
+## Next Version
+### Features Added
+- Version information available in metrics through `process_release` [#480](https://github.com/ConsenSys/web3signer/issues/480)
+
 ## 22.6.0
 ### Features Added
 - Support for Sepolia network (updated Teku support libraries).
