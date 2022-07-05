@@ -24,8 +24,7 @@ public enum Web3SignerMetricCategory implements MetricCategory {
   ETH2_SLASHING_PROTECTION("eth2_slashingprotection"),
   FILECOIN("filecoin"),
   HTTP("http"),
-  SIGNING("signing"),
-  WEB3SIGNER("web3signer");
+  SIGNING("signing");
 
   private final String name;
 
