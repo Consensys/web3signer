@@ -1,5 +1,11 @@
 # Changelog
 
+## 22.7.0
+### Features Added
+- Support register validator API endpoint [#577](https://github.com/ConsenSys/web3signer/issues/577)
+
+---
+
 ## 22.6.0
 ### Features Added
 - Support for Sepolia network (updated Teku support libraries).
