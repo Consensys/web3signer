@@ -1,7 +1,8 @@
 # Changelog
 
-## Next Version
+## 22.7.0
 ### Features Added
+- Support register validator API endpoint [#577](https://github.com/ConsenSys/web3signer/issues/577)
 - Version information available in metrics through `process_release` [#480](https://github.com/ConsenSys/web3signer/issues/480)
 
 ## 22.6.0
