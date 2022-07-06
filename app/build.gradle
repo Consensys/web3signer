@@ -27,6 +27,7 @@ jar {
 
 dependencies {
   implementation project(':commandline')
+  implementation project(':common')
   implementation project(':core')
   implementation 'com.google.guava:guava'
   implementation 'org.apache.logging.log4j:log4j-api'

@@ -14,12 +14,12 @@ package tech.pegasys.web3signer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import tech.pegasys.web3signer.commandline.ApplicationInfo;
 import tech.pegasys.web3signer.commandline.CommandlineParser;
 import tech.pegasys.web3signer.commandline.Web3SignerBaseCommand;
 import tech.pegasys.web3signer.commandline.subcommands.Eth1SubCommand;
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.commandline.subcommands.FilecoinSubCommand;
+import tech.pegasys.web3signer.common.ApplicationInfo;
 
 import java.io.PrintWriter;
 import java.util.Map;

@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.commandline;
 
+import tech.pegasys.web3signer.common.ApplicationInfo;
+
 import picocli.CommandLine;
 
 public class VersionProvider implements CommandLine.IVersionProvider {
