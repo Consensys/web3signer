@@ -146,13 +146,9 @@ components:
               type: "string"
             validator_registration:
               "$ref": "#/components/schemas/ValidatorRegistration"
-            epoch:
-              type: string
-              format: "uint64"
           required:
             - type
             - validator_registration
-            - epoch
     RandaoReveal:
       type: "object"
       properties:
