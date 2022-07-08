@@ -26,6 +26,7 @@ import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggregatorSelectionDataSchema;
+import tech.pegasys.teku.spec.logic.common.helpers.MiscHelpers;
 import tech.pegasys.teku.spec.logic.common.util.SyncCommitteeUtil;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
@@ -320,11 +321,11 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
                     body.getForkInfo().asInternalForkInfo()));
       case VALIDATOR_REGISTRATION:
         final ValidatorRegistration validatorRegistration = body.getValidatorRegistration();
-        final tech.pegasys.teku.infrastructure.unsigned.UInt64 epoch = body.getEpoch();
         checkArgument(validatorRegistration != null, "ValidatorRegistration is required");
-        checkArgument(epoch != null, "Epoch is required");
-        return signingRootUtil.signingRootForValidatorRegistration(
-            validatorRegistration.asInternalValidatorRegistration(), epoch);
+        MiscHelpers miscHelpers = eth2Spec.getGenesisSpec().miscHelpers();
+        final Bytes32 domain = miscHelpers.computeDomain(Domain.APPLICATION_BUILDER);
+        return miscHelpers.computeSigningRoot(
+            validatorRegistration.asInternalValidatorRegistration(), domain);
       default:
         throw new IllegalStateException("Signing root unimplemented for type " + body.getType());
     }

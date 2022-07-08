@@ -17,7 +17,6 @@ import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
-import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,7 +39,6 @@ public class Eth2SigningRequestBody {
   private final SyncAggregatorSelectionData syncAggregatorSelectionData;
   private final ContributionAndProof contributionAndProof;
   private final ValidatorRegistration validatorRegistration;
-  private final UInt64 epoch;
 
   @JsonCreator
   public Eth2SigningRequestBody(
@@ -59,8 +57,7 @@ public class Eth2SigningRequestBody {
       @JsonProperty("sync_aggregator_selection_data")
           final SyncAggregatorSelectionData syncAggregatorSelectionData,
       @JsonProperty("contribution_and_proof") final ContributionAndProof contributionAndProof,
-      @JsonProperty("validator_registration") final ValidatorRegistration validatorRegistration,
-      @JsonProperty("epoch") final UInt64 epoch) {
+      @JsonProperty("validator_registration") final ValidatorRegistration validatorRegistration) {
     this.type = type;
     this.signingRoot = signingRoot;
     this.fork_info = fork_info;
@@ -76,7 +73,6 @@ public class Eth2SigningRequestBody {
     this.syncAggregatorSelectionData = syncAggregatorSelectionData;
     this.contributionAndProof = contributionAndProof;
     this.validatorRegistration = validatorRegistration;
-    this.epoch = epoch;
   }
 
   @JsonProperty("type")
@@ -152,10 +148,5 @@ public class Eth2SigningRequestBody {
   @JsonProperty("validator_registration")
   public ValidatorRegistration getValidatorRegistration() {
     return validatorRegistration;
-  }
-
-  @JsonProperty("epoch")
-  public UInt64 getEpoch() {
-    return epoch;
   }
 }
