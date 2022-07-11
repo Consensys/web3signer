@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Web3Signer ETH1 API'
   description: 'Sign ETH1 Artifacts'
-  version: '22.6.0+5-g0ca58a1'
+  version: '22.6.0+6-gd553e8d'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
