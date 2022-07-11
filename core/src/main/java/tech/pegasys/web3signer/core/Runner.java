@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.HEALTHCHECK;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
@@ -23,6 +24,7 @@ import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
+import tech.pegasys.web3signer.core.service.http.handlers.HealthcheckHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
@@ -263,6 +265,16 @@ public abstract class Runner implements Runnable {
     routerBuilder
         .operation(UPCHECK.name())
         .handler(new BlockingHandlerDecorator(new UpcheckHandler(), false))
+        .failureHandler(errorHandler);
+  }
+
+  protected void registerHealthCheck(
+      final RouterBuilder routerBuilder,
+      final LogErrorHandler errorHandler,
+      final HealthcheckHandler healthcheckHandler) {
+    routerBuilder
+        .operation(HEALTHCHECK.name())
+        .handler(new BlockingHandlerDecorator(healthcheckHandler, false))
         .failureHandler(errorHandler);
   }
 

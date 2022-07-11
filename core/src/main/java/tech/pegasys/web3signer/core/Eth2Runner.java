@@ -29,6 +29,7 @@ import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
+import tech.pegasys.web3signer.core.service.http.handlers.HealthcheckHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresHandler;
@@ -139,6 +140,10 @@ public class Eth2Runner extends Runner {
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtectionContext);
+    registerHealthCheck(
+        context.getRouterBuilder(),
+        context.getErrorHandler(),
+        new HealthcheckHandler(this.slashingProtectionContext));
 
     return context.getRouterBuilder().createRouter();
   }
