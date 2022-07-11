@@ -40,7 +40,7 @@ public class HealthcheckHandler implements Handler<RoutingContext> {
             .response()
             .setStatusCode(500)
             .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
-            .end("Lost connection to db");
+            .end("Lost connection to slashing protection db");
         return;
       }
     }
