@@ -277,7 +277,9 @@ public abstract class Runner implements Runnable {
   }
 
   private void registerUpcheckRoute(
-      final RouterBuilder routerBuilder, final LogErrorHandler errorHandler, final boolean failToLoad) {
+      final RouterBuilder routerBuilder,
+      final LogErrorHandler errorHandler,
+      final boolean failToLoad) {
     routerBuilder
         .operation(UPCHECK.name())
         .handler(new BlockingHandlerDecorator(new UpcheckHandler(failToLoad), false))

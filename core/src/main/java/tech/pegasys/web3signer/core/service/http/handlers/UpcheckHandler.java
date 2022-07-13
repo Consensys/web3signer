@@ -20,7 +20,7 @@ import io.vertx.ext.web.RoutingContext;
 
 public class UpcheckHandler implements Handler<RoutingContext> {
 
-  final private boolean failToLoad;
+  private final boolean failToLoad;
 
   public UpcheckHandler(final boolean failToLoad) {
     this.failToLoad = failToLoad;
@@ -29,7 +29,11 @@ public class UpcheckHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext routingContext) {
     if (failToLoad) {
-      routingContext.response().setStatusCode(500).putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end("FAILED");
+      routingContext
+          .response()
+          .setStatusCode(500)
+          .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
+          .end("FAILED");
     } else {
       routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end("OK");
     }
