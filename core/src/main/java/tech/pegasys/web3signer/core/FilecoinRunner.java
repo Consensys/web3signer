@@ -23,7 +23,6 @@ import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
-import tech.pegasys.web3signer.core.service.http.handlers.HealthcheckHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
@@ -41,7 +40,6 @@ import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueData
 import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -73,10 +71,6 @@ public class FilecoinRunner extends Runner {
         context.getArtifactSignerProvider(),
         RELOAD.name(),
         context.getErrorHandler());
-    registerHealthCheck(
-        context.getRouterBuilder(),
-        context.getErrorHandler(),
-        new HealthcheckHandler(Optional.empty()));
 
     return registerFilecoinJsonRpcRoute(
         context.getRouterBuilder(),

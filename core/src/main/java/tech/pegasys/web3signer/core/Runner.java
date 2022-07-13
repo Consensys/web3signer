@@ -24,7 +24,6 @@ import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
-import tech.pegasys.web3signer.core.service.http.handlers.HealthcheckHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
@@ -56,6 +55,8 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
+import io.vertx.ext.healthchecks.HealthCheckHandler;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -75,6 +76,8 @@ public abstract class Runner implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
   protected final Config config;
+
+  private HealthCheckHandler healthCheckHandler;
 
   protected Runner(final Config config) {
     this.config = config;
@@ -147,6 +150,18 @@ public abstract class Runner implements Runnable {
       routerBuilder.rootHandler(BodyHandler.create());
       registerUpcheckRoute(routerBuilder, errorHandler);
       registerHttpHostAllowListHandler(routerBuilder);
+
+      healthCheckHandler = HealthCheckHandler.create(vertx);
+      routerBuilder
+          .operation(HEALTHCHECK.name())
+          .handler(healthCheckHandler)
+          .failureHandler(errorHandler);
+
+      registerHealthCheckProcedure(
+          "default-check",
+          promise -> {
+            promise.complete(Status.OK());
+          });
 
       final Context context =
           new Context(routerBuilder, metricsSystem, errorHandler, vertx, artifactSignerProvider);
@@ -268,14 +283,10 @@ public abstract class Runner implements Runnable {
         .failureHandler(errorHandler);
   }
 
-  protected void registerHealthCheck(
-      final RouterBuilder routerBuilder,
-      final LogErrorHandler errorHandler,
-      final HealthcheckHandler healthcheckHandler) {
-    routerBuilder
-        .operation(HEALTHCHECK.name())
-        .handler(new BlockingHandlerDecorator(healthcheckHandler, false))
-        .failureHandler(errorHandler);
+  protected void registerHealthCheckProcedure(
+      final String name,
+      io.vertx.core.Handler<io.vertx.core.Promise<io.vertx.ext.healthchecks.Status>> procedure) {
+    healthCheckHandler.register(name, procedure);
   }
 
   private void registerHttpHostAllowListHandler(final RouterBuilder routerBuilder) {

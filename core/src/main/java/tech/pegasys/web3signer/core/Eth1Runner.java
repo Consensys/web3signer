@@ -20,7 +20,6 @@ import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
-import tech.pegasys.web3signer.core.service.http.handlers.HealthcheckHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
@@ -36,7 +35,6 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
 import java.util.List;
-import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
@@ -76,10 +74,6 @@ public class Eth1Runner extends Runner {
         .failureHandler(errorHandler);
 
     addReloadHandler(routerBuilder, signerProvider, RELOAD.name(), context.getErrorHandler());
-    registerHealthCheck(
-        context.getRouterBuilder(),
-        context.getErrorHandler(),
-        new HealthcheckHandler(Optional.empty()));
 
     return context.getRouterBuilder().createRouter();
   }

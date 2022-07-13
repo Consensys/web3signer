@@ -29,7 +29,6 @@ import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
-import tech.pegasys.web3signer.core.service.http.handlers.HealthcheckHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresHandler;
@@ -69,11 +68,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import io.vertx.ext.web.openapi.RouterBuilder;
@@ -95,6 +97,8 @@ public class Eth2Runner extends Runner {
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
 
+  private boolean isDbDown;
+
   public Eth2Runner(
       final Config config,
       final SlashingProtectionParameters slashingProtectionParameters,
@@ -112,6 +116,7 @@ public class Eth2Runner extends Runner {
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
     this.awsSecretsManagerParameters = awsSecretsManagerParameters;
+    this.isDbDown = false;
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -140,10 +145,45 @@ public class Eth2Runner extends Runner {
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtectionContext);
-    registerHealthCheck(
-        context.getRouterBuilder(),
-        context.getErrorHandler(),
-        new HealthcheckHandler(this.slashingProtectionContext));
+
+    if (slashingProtectionContext.isPresent()) {
+      Executors.newScheduledThreadPool(1)
+          .scheduleAtFixedRate(
+              () -> {
+                Future<Integer> future =
+                    Executors.newCachedThreadPool()
+                        .submit(
+                            () ->
+                                slashingProtectionContext
+                                    .get()
+                                    .getSlashingProtectionJdbi()
+                                    .withHandle(
+                                        h -> h.createQuery("SELECT 1").mapTo(Integer.class).one()));
+                try {
+                  // Check db health with timeout.
+                  future.get(3000, TimeUnit.MILLISECONDS);
+                  isDbDown = false;
+                } catch (Exception e) {
+                  // Have exception in database health check (timeout or error).
+                  isDbDown = true;
+                } finally {
+                  future.cancel(true);
+                }
+              },
+              3000,
+              3000,
+              TimeUnit.MILLISECONDS);
+
+      super.registerHealthCheckProcedure(
+          "slashing-protection-db-health-check",
+          promise -> {
+            if (isDbDown) {
+              promise.complete(Status.KO());
+            } else {
+              promise.complete(Status.OK());
+            }
+          });
+    }
 
     return context.getRouterBuilder().createRouter();
   }
