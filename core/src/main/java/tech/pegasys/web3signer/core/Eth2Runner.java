@@ -177,11 +177,7 @@ public class Eth2Runner extends Runner {
       super.registerHealthCheckProcedure(
           "slashing-protection-db-health-check",
           promise -> {
-            if (isDbDown) {
-              promise.complete(Status.KO());
-            } else {
-              promise.complete(Status.OK());
-            }
+            promise.complete(isDbDown ? Status.KO() : Status.OK());
           });
     }
 
