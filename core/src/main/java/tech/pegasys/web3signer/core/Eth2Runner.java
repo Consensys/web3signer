@@ -57,19 +57,13 @@ import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
-import tech.pegasys.web3signer.slashingprotection.DbPrunerRunner;
-import tech.pegasys.web3signer.slashingprotection.DbValidatorManager;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContext;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFactory;
-import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
+import tech.pegasys.web3signer.slashingprotection.*;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -96,8 +90,7 @@ public class Eth2Runner extends Runner {
   private final KeystoresParameters keystoresParameters;
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
-
-  private boolean isDbDown;
+  private final DbHealthCheck dbHealthCheck;
 
   public Eth2Runner(
       final Config config,
@@ -116,7 +109,7 @@ public class Eth2Runner extends Runner {
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
     this.awsSecretsManagerParameters = awsSecretsManagerParameters;
-    this.isDbDown = false;
+    this.dbHealthCheck = new DbHealthCheck(slashingProtectionContext);
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -147,37 +140,10 @@ public class Eth2Runner extends Runner {
         slashingProtectionContext);
 
     if (slashingProtectionContext.isPresent()) {
-      Executors.newScheduledThreadPool(1)
-          .scheduleAtFixedRate(
-              () -> {
-                Future<Integer> future =
-                    Executors.newCachedThreadPool()
-                        .submit(
-                            () ->
-                                slashingProtectionContext
-                                    .get()
-                                    .getSlashingProtectionJdbi()
-                                    .withHandle(
-                                        h -> h.createQuery("SELECT 1").mapTo(Integer.class).one()));
-                try {
-                  // Check db health with timeout.
-                  future.get(3000, TimeUnit.MILLISECONDS);
-                  isDbDown = false;
-                } catch (Exception e) {
-                  // Have exception in database health check (timeout or error).
-                  isDbDown = true;
-                } finally {
-                  future.cancel(true);
-                }
-              },
-              3000,
-              3000,
-              TimeUnit.MILLISECONDS);
-
       super.registerHealthCheckProcedure(
           "slashing-protection-db-health-check",
           promise -> {
-            promise.complete(isDbDown ? Status.KO() : Status.OK());
+            promise.complete(dbHealthCheck.isDbDown() ? Status.KO() : Status.OK());
           });
     }
 
@@ -367,6 +333,7 @@ public class Eth2Runner extends Runner {
     if (pruningEnabled && slashingProtectionContext.isPresent()) {
       scheduleAndExecuteInitialDbPruning();
     }
+    dbHealthCheck.run();
   }
 
   private void scheduleAndExecuteInitialDbPruning() {
