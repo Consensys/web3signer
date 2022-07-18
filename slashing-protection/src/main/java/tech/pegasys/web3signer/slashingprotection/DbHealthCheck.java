@@ -21,10 +21,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class DbHealthCheck implements Runnable {
 
   private final Optional<SlashingProtectionContext> slashingProtectionContext;
+  private final int dbHealthCheckTimeoutMilliseconds;
+  private final int dbHealthCheckIntervalMilliseconds;
   private final AtomicBoolean isDbDown;
 
-  public DbHealthCheck(final Optional<SlashingProtectionContext> slashingProtectionContext) {
+  public DbHealthCheck(
+      final Optional<SlashingProtectionContext> slashingProtectionContext,
+      final int dbHealthCheckTimeoutMilliseconds,
+      final int dbHealthCheckIntervalMilliseconds) {
     this.slashingProtectionContext = slashingProtectionContext;
+    this.dbHealthCheckTimeoutMilliseconds = dbHealthCheckTimeoutMilliseconds;
+    this.dbHealthCheckIntervalMilliseconds = dbHealthCheckIntervalMilliseconds;
     this.isDbDown = new AtomicBoolean(false);
   }
 
@@ -48,7 +55,7 @@ public class DbHealthCheck implements Runnable {
                                                       .one()));
                       try {
                         // Check db health with timeout.
-                        future.get(3000, TimeUnit.MILLISECONDS);
+                        future.get(this.dbHealthCheckTimeoutMilliseconds, TimeUnit.MILLISECONDS);
                         isDbDown.set(false);
                       } catch (Exception e) {
                         // Have exception in database health check (timeout or error).
@@ -57,8 +64,8 @@ public class DbHealthCheck implements Runnable {
                         future.cancel(true);
                       }
                     },
-                    3000,
-                    3000,
+                    this.dbHealthCheckIntervalMilliseconds,
+                    this.dbHealthCheckIntervalMilliseconds,
                     TimeUnit.MILLISECONDS));
   }
 

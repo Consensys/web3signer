@@ -38,4 +38,8 @@ public interface SlashingProtectionParameters {
   TimeUnit getPruningIntervalTimeUnit();
 
   boolean isPruningAtBootEnabled();
+
+  int getDbHealthCheckTimeoutMilliseconds();
+
+  int getDbHealthCheckIntervalMilliseconds();
 }

@@ -114,7 +114,11 @@ public class Eth2Runner extends Runner {
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
     this.awsSecretsManagerParameters = awsSecretsManagerParameters;
-    this.dbHealthCheck = new DbHealthCheck(slashingProtectionContext);
+    this.dbHealthCheck =
+        new DbHealthCheck(
+            slashingProtectionContext,
+            slashingProtectionParameters.getDbHealthCheckTimeoutMilliseconds(),
+            slashingProtectionParameters.getDbHealthCheckIntervalMilliseconds());
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
