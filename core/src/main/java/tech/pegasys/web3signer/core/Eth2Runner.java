@@ -57,7 +57,12 @@ import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
-import tech.pegasys.web3signer.slashingprotection.*;
+import tech.pegasys.web3signer.slashingprotection.DbHealthCheck;
+import tech.pegasys.web3signer.slashingprotection.DbPrunerRunner;
+import tech.pegasys.web3signer.slashingprotection.DbValidatorManager;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContext;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFactory;
+import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.util.Collection;
