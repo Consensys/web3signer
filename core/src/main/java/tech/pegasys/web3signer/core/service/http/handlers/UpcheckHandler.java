@@ -20,15 +20,15 @@ import io.vertx.ext.web.RoutingContext;
 
 public class UpcheckHandler implements Handler<RoutingContext> {
 
-  private final boolean failToLoad;
+  private final boolean failedToLoadSomeSigners;
 
-  public UpcheckHandler(final boolean failToLoad) {
-    this.failToLoad = failToLoad;
+  public UpcheckHandler(final boolean failedToLoadSomeSigners) {
+    this.failedToLoadSomeSigners = failedToLoadSomeSigners;
   }
 
   @Override
   public void handle(final RoutingContext routingContext) {
-    if (failToLoad) {
+    if (failedToLoadSomeSigners) {
       routingContext
           .response()
           .setStatusCode(500)
