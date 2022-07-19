@@ -1,5 +1,11 @@
 # Changelog
 
+## 22.8.0
+### Features Added
+- Added health check endpoint [#538](https://github.com/ConsenSys/web3signer/issues/538). 
+- Introduced `--slashing-protection-db-health-check-timeout-milliseconds` to specify the timeout of the slashing db health check procedure.
+- Introduced `--slashing-protection-db-health-check-interval-milliseconds` to specify the interval between slashing db health check procedures.
+
 ## 22.7.0
 ### Features Added
 - Support register validator API endpoint [#577](https://github.com/ConsenSys/web3signer/issues/577)
