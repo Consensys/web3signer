@@ -108,12 +108,10 @@ public abstract class Runner implements Runnable {
     try {
       createVersionMetric(metricsSystem);
       metricsEndpoint.start(vertx);
-      boolean failedToLoadSomeSigners = false;
       try {
         artifactSignerProvider.load().get(); // wait for signers to get loaded ...
       } catch (final InterruptedException | ExecutionException e) {
         LOG.error("Error loading signers", e);
-        failedToLoadSomeSigners = true;
       }
 
       final OpenApiSpecsExtractor openApiSpecsExtractor =
@@ -149,7 +147,7 @@ public abstract class Runner implements Runnable {
        BodyHandler must be first handler after platform and security handlers
       */
       routerBuilder.rootHandler(BodyHandler.create());
-      registerUpcheckRoute(routerBuilder, errorHandler, failedToLoadSomeSigners);
+      registerUpcheckRoute(routerBuilder, errorHandler);
       registerHttpHostAllowListHandler(routerBuilder);
 
       healthCheckHandler = HealthCheckHandler.create(vertx);
@@ -278,11 +276,10 @@ public abstract class Runner implements Runnable {
 
   private void registerUpcheckRoute(
       final RouterBuilder routerBuilder,
-      final LogErrorHandler errorHandler,
-      final boolean failedToLoadSomeSigners) {
+      final LogErrorHandler errorHandler) {
     routerBuilder
         .operation(UPCHECK.name())
-        .handler(new BlockingHandlerDecorator(new UpcheckHandler(failedToLoadSomeSigners), false))
+        .handler(new BlockingHandlerDecorator(new UpcheckHandler(), false))
         .failureHandler(errorHandler);
   }
 

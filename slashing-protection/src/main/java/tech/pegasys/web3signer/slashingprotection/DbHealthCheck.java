@@ -12,64 +12,43 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DbHealthCheck implements Runnable {
 
-  private final Optional<SlashingProtectionContext> slashingProtectionContext;
-  private final int dbHealthCheckTimeoutMilliseconds;
-  private final int dbHealthCheckIntervalMilliseconds;
-  private final AtomicBoolean isDbDown;
+  private final SlashingProtectionContext slashingProtectionContext;
+  private final long dbHealthCheckTimeoutMilliseconds;
+  private final AtomicBoolean isDbUp;
 
   public DbHealthCheck(
-      final Optional<SlashingProtectionContext> slashingProtectionContext,
-      final int dbHealthCheckTimeoutMilliseconds,
-      final int dbHealthCheckIntervalMilliseconds) {
+      final SlashingProtectionContext slashingProtectionContext,
+      final long dbHealthCheckTimeoutMilliseconds) {
     this.slashingProtectionContext = slashingProtectionContext;
     this.dbHealthCheckTimeoutMilliseconds = dbHealthCheckTimeoutMilliseconds;
-    this.dbHealthCheckIntervalMilliseconds = dbHealthCheckIntervalMilliseconds;
-    this.isDbDown = new AtomicBoolean(false);
+    this.isDbUp = new AtomicBoolean(true);
   }
 
   @Override
   public void run() {
-    slashingProtectionContext.ifPresent(
-        protectionContext ->
-            Executors.newScheduledThreadPool(1)
-                .scheduleAtFixedRate(
-                    () -> {
-                      Future<Integer> future =
-                          Executors.newCachedThreadPool()
-                              .submit(
-                                  () ->
-                                      protectionContext
-                                          .getSlashingProtectionJdbi()
-                                          .withHandle(
-                                              h ->
-                                                  h.createQuery("SELECT 1")
-                                                      .mapTo(Integer.class)
-                                                      .one()));
-                      try {
-                        // Check db health with timeout.
-                        future.get(this.dbHealthCheckTimeoutMilliseconds, TimeUnit.MILLISECONDS);
-                        isDbDown.set(false);
-                      } catch (Exception e) {
-                        // Have exception in database health check (timeout or error).
-                        isDbDown.set(true);
-                      } finally {
-                        future.cancel(true);
-                      }
-                    },
-                    this.dbHealthCheckIntervalMilliseconds,
-                    this.dbHealthCheckIntervalMilliseconds,
-                    TimeUnit.MILLISECONDS));
+    try {
+      CompletableFuture<Integer> future =
+          CompletableFuture.supplyAsync(
+              () ->
+                  slashingProtectionContext
+                      .getSlashingProtectionJdbi()
+                      .withHandle(h -> h.execute("SELECT 1")));
+      // Check db health with timeout.
+      future.get(this.dbHealthCheckTimeoutMilliseconds, TimeUnit.MILLISECONDS);
+      isDbUp.set(true);
+    } catch (Exception e) {
+      // Have exception in database health check (timeout or error).
+      isDbUp.set(false);
+    }
   }
 
-  public boolean isDbDown() {
-    return isDbDown.get();
+  public boolean isDbUp() {
+    return isDbUp.get();
   }
 }

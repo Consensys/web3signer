@@ -13,10 +13,3 @@ get:
           schema:
             type: string
           example: 'OK'
-    '500':
-      description: 'Fail to load keys during startup'
-      content:
-        text/plain; charset=utf-8:
-          schema:
-            type: string
-          example: 'FAILED'

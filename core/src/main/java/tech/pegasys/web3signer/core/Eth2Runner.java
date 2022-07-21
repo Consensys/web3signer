@@ -69,6 +69,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -95,7 +96,6 @@ public class Eth2Runner extends Runner {
   private final KeystoresParameters keystoresParameters;
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
-  private final DbHealthCheck dbHealthCheck;
 
   public Eth2Runner(
       final Config config,
@@ -114,11 +114,6 @@ public class Eth2Runner extends Runner {
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
     this.awsSecretsManagerParameters = awsSecretsManagerParameters;
-    this.dbHealthCheck =
-        new DbHealthCheck(
-            slashingProtectionContext,
-            slashingProtectionParameters.getDbHealthCheckTimeoutMilliseconds(),
-            slashingProtectionParameters.getDbHealthCheckIntervalMilliseconds());
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -147,15 +142,6 @@ public class Eth2Runner extends Runner {
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtectionContext);
-
-    if (slashingProtectionContext.isPresent()) {
-      super.registerHealthCheckProcedure(
-          "slashing-protection-db-health-check",
-          promise -> {
-            promise.complete(dbHealthCheck.isDbDown() ? Status.KO() : Status.OK());
-          });
-    }
-
     return context.getRouterBuilder().createRouter();
   }
 
@@ -342,7 +328,26 @@ public class Eth2Runner extends Runner {
     if (pruningEnabled && slashingProtectionContext.isPresent()) {
       scheduleAndExecuteInitialDbPruning();
     }
-    dbHealthCheck.run();
+    slashingProtectionContext.ifPresent(this::scheduleDbHealthCheck);
+  }
+
+  private void scheduleDbHealthCheck(final SlashingProtectionContext protectionContext) {
+    final DbHealthCheck dbHealthCheck =
+        new DbHealthCheck(
+            protectionContext, slashingProtectionParameters.getDbHealthCheckTimeoutMilliseconds());
+
+    Executors.newScheduledThreadPool(1)
+        .scheduleAtFixedRate(
+            dbHealthCheck,
+            0,
+            slashingProtectionParameters.getDbHealthCheckIntervalMilliseconds(),
+            TimeUnit.MILLISECONDS);
+
+    super.registerHealthCheckProcedure(
+        "slashing-protection-db-health-check",
+        promise -> {
+          promise.complete(dbHealthCheck.isDbUp() ? Status.OK() : Status.KO());
+        });
   }
 
   private void scheduleAndExecuteInitialDbPruning() {

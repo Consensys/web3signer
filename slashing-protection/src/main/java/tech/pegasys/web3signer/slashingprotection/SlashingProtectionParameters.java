@@ -39,7 +39,7 @@ public interface SlashingProtectionParameters {
 
   boolean isPruningAtBootEnabled();
 
-  int getDbHealthCheckTimeoutMilliseconds();
+  long getDbHealthCheckTimeoutMilliseconds();
 
-  int getDbHealthCheckIntervalMilliseconds();
+  long getDbHealthCheckIntervalMilliseconds();
 }

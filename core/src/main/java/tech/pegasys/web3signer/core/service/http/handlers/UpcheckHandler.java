@@ -19,23 +19,8 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
 public class UpcheckHandler implements Handler<RoutingContext> {
-
-  private final boolean failedToLoadSomeSigners;
-
-  public UpcheckHandler(final boolean failedToLoadSomeSigners) {
-    this.failedToLoadSomeSigners = failedToLoadSomeSigners;
-  }
-
   @Override
   public void handle(final RoutingContext routingContext) {
-    if (failedToLoadSomeSigners) {
-      routingContext
-          .response()
-          .setStatusCode(500)
-          .putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8)
-          .end("FAILED");
-    } else {
-      routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end("OK");
-    }
+    routingContext.response().putHeader(CONTENT_TYPE, TEXT_PLAIN_UTF_8).end("OK");
   }
 }

@@ -153,12 +153,12 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   }
 
   @Override
-  public int getDbHealthCheckTimeoutMilliseconds() {
+  public long getDbHealthCheckTimeoutMilliseconds() {
     return dbHealthCheckTimeoutMilliseconds;
   }
 
   @Override
-  public int getDbHealthCheckIntervalMilliseconds() {
+  public long getDbHealthCheckIntervalMilliseconds() {
     return dbHealthCheckIntervalMilliseconds;
   }
 }
