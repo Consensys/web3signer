@@ -26,7 +26,6 @@ import tech.pegasys.teku.api.schema.Checkpoint;
 import tech.pegasys.teku.api.schema.Eth1Data;
 import tech.pegasys.teku.api.schema.Fork;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
-import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.infrastructure.async.SafeFuture;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
@@ -38,6 +37,7 @@ import tech.pegasys.teku.spec.datastructures.operations.versions.altair.Contribu
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggregatorSelectionData;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncCommitteeContribution;
 import tech.pegasys.teku.spec.logic.common.util.SyncCommitteeUtil;
+import tech.pegasys.teku.spec.signatures.SigningRootUtil;
 import tech.pegasys.teku.spec.util.DataStructureUtil;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregationSlot;
@@ -492,7 +492,6 @@ public class Eth2RequestUtils {
   }
 
   private static Eth2SigningRequestBody createValidatorRegistrationRequest() {
-    final UInt64 epoch = dataStructureUtil.randomEpoch();
     final ValidatorRegistration validatorRegistration =
         new ValidatorRegistration(
             dataStructureUtil.randomBytes20(),
@@ -501,7 +500,7 @@ public class Eth2RequestUtils {
             BLSPubKey.fromHexString(PUBLIC_KEY));
     final Bytes signingRoot =
         signingRootUtil.signingRootForValidatorRegistration(
-            validatorRegistration.asInternalValidatorRegistration(), epoch);
+            validatorRegistration.asInternalValidatorRegistration());
     return new Eth2SigningRequestBody(
         ArtifactType.VALIDATOR_REGISTRATION,
         signingRoot,

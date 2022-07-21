@@ -22,12 +22,11 @@ import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIden
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
 import tech.pegasys.teku.api.schema.altair.SyncCommitteeContribution;
-import tech.pegasys.teku.core.signatures.SigningRootUtil;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.constants.Domain;
 import tech.pegasys.teku.spec.datastructures.operations.versions.altair.SyncAggregatorSelectionDataSchema;
-import tech.pegasys.teku.spec.logic.common.helpers.MiscHelpers;
 import tech.pegasys.teku.spec.logic.common.util.SyncCommitteeUtil;
+import tech.pegasys.teku.spec.signatures.SigningRootUtil;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
@@ -322,10 +321,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       case VALIDATOR_REGISTRATION:
         final ValidatorRegistration validatorRegistration = body.getValidatorRegistration();
         checkArgument(validatorRegistration != null, "ValidatorRegistration is required");
-        MiscHelpers miscHelpers = eth2Spec.getGenesisSpec().miscHelpers();
-        final Bytes32 domain = miscHelpers.computeDomain(Domain.APPLICATION_BUILDER);
-        return miscHelpers.computeSigningRoot(
-            validatorRegistration.asInternalValidatorRegistration(), domain);
+        return signingRootUtil.signingRootForValidatorRegistration(
+            validatorRegistration.asInternalValidatorRegistration());
       default:
         throw new IllegalStateException("Signing root unimplemented for type " + body.getType());
     }
