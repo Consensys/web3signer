@@ -85,9 +85,6 @@ dependencyManagement {
 
     dependencySet(group: 'tech.pegasys.teku.internal', version: '22.7.0') {
       entry 'bls'
-      entry ('core') {
-        exclude 'teku:data' // empty module which is incorrectly referenced in Teku's "core" pom
-      }
       entry 'spec'
       entry 'serializer'
       entry 'unsigned'
