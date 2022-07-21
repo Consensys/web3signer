@@ -42,7 +42,7 @@ public class DbHealthCheck implements Runnable {
       // Check db health with timeout.
       future.get(this.dbHealthCheckTimeoutMilliseconds, TimeUnit.MILLISECONDS);
       isDbUp.set(true);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       // Have exception in database health check (timeout or error).
       isDbUp.set(false);
     }
