@@ -106,6 +106,8 @@ paths:
               schema:
                 type: string
               example: 'OK'
+        '500':
+          description: 'Internal Web3Signer server error'
 
   /healthcheck:
     get:
