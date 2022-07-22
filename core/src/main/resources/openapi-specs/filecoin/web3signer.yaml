@@ -41,6 +41,49 @@ paths:
               example: 'OK'
         '500':
           description: 'Internal Web3Signer server error'
+  /healthcheck:
+    get:
+      tags:
+        - 'Server Health Status'
+      summary: 'Server Health Status'
+      description: 'Web3Signer server health status'
+      operationId: 'HEALTHCHECK'
+      responses:
+        '200':
+          description: 'System is healthy'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HealthCheck"
+        '503':
+          description: 'At least one procedure is unhealthy'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/HealthCheck"
+
+components:
+  schemas:
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          description: 'health status'
+        checks:
+          type: array
+          description: 'list of status checks'
+          items:
+            properties:
+              id:
+                type: string
+                description: 'status id'
+              status:
+                type: string
+                description: 'health status'
+        outcome:
+          type: string
+          description: 'the overall outcome of health check'
 
 externalDocs:
   description: 'Web3Signer User Documentation'

@@ -92,6 +92,22 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
       arity = "1")
   boolean pruningAtBootEnabled = true;
 
+  @Option(
+      names = {"--slashing-protection-db-health-check-timeout-milliseconds"},
+      paramLabel = "<timeout in milliseconds>",
+      description =
+          "Number of milliseconds after which the database health check will be failed (Default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private long dbHealthCheckTimeoutMilliseconds = 3000;
+
+  @Option(
+      names = {"--slashing-protection-db-health-check-interval-milliseconds"},
+      paramLabel = "<interval in milliseconds>",
+      description =
+          "Number of milliseconds between the database health check operation (Default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private long dbHealthCheckIntervalMilliseconds = 30000;
+
   @Override
   public boolean isEnabled() {
     return enabled;
@@ -145,5 +161,15 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   @Override
   public boolean isPruningAtBootEnabled() {
     return pruningAtBootEnabled;
+  }
+
+  @Override
+  public long getDbHealthCheckTimeoutMilliseconds() {
+    return dbHealthCheckTimeoutMilliseconds;
+  }
+
+  @Override
+  public long getDbHealthCheckIntervalMilliseconds() {
+    return dbHealthCheckIntervalMilliseconds;
   }
 }

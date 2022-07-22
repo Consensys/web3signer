@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.HEALTHCHECK;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
@@ -45,6 +46,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ClientAuth;
@@ -54,6 +56,8 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
+import io.vertx.ext.healthchecks.HealthCheckHandler;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -73,6 +77,8 @@ public abstract class Runner implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
   protected final Config config;
+
+  private HealthCheckHandler healthCheckHandler;
 
   protected Runner(final Config config) {
     this.config = config;
@@ -103,7 +109,6 @@ public abstract class Runner implements Runnable {
     try {
       createVersionMetric(metricsSystem);
       metricsEndpoint.start(vertx);
-
       try {
         artifactSignerProvider.load().get(); // wait for signers to get loaded ...
       } catch (final InterruptedException | ExecutionException e) {
@@ -145,6 +150,18 @@ public abstract class Runner implements Runnable {
       routerBuilder.rootHandler(BodyHandler.create());
       registerUpcheckRoute(routerBuilder, errorHandler);
       registerHttpHostAllowListHandler(routerBuilder);
+
+      healthCheckHandler = HealthCheckHandler.create(vertx);
+      routerBuilder
+          .operation(HEALTHCHECK.name())
+          .handler(healthCheckHandler)
+          .failureHandler(errorHandler);
+
+      registerHealthCheckProcedure(
+          "default-check",
+          promise -> {
+            promise.complete(Status.OK());
+          });
 
       final Context context =
           new Context(routerBuilder, metricsSystem, errorHandler, vertx, artifactSignerProvider);
@@ -264,6 +281,11 @@ public abstract class Runner implements Runnable {
         .operation(UPCHECK.name())
         .handler(new BlockingHandlerDecorator(new UpcheckHandler(), false))
         .failureHandler(errorHandler);
+  }
+
+  protected void registerHealthCheckProcedure(
+      final String name, final Handler<Promise<Status>> procedure) {
+    healthCheckHandler.register(name, procedure);
   }
 
   private void registerHttpHostAllowListHandler(final RouterBuilder routerBuilder) {

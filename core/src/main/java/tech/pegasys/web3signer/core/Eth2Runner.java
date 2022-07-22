@@ -57,6 +57,7 @@ import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
+import tech.pegasys.web3signer.slashingprotection.DbHealthCheck;
 import tech.pegasys.web3signer.slashingprotection.DbPrunerRunner;
 import tech.pegasys.web3signer.slashingprotection.DbValidatorManager;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContext;
@@ -68,11 +69,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import io.vertx.ext.web.openapi.RouterBuilder;
@@ -139,7 +142,6 @@ public class Eth2Runner extends Runner {
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtectionContext);
-
     return context.getRouterBuilder().createRouter();
   }
 
@@ -326,6 +328,26 @@ public class Eth2Runner extends Runner {
     if (pruningEnabled && slashingProtectionContext.isPresent()) {
       scheduleAndExecuteInitialDbPruning();
     }
+    slashingProtectionContext.ifPresent(this::scheduleDbHealthCheck);
+  }
+
+  private void scheduleDbHealthCheck(final SlashingProtectionContext protectionContext) {
+    final DbHealthCheck dbHealthCheck =
+        new DbHealthCheck(
+            protectionContext, slashingProtectionParameters.getDbHealthCheckTimeoutMilliseconds());
+
+    Executors.newScheduledThreadPool(1)
+        .scheduleAtFixedRate(
+            dbHealthCheck,
+            0,
+            slashingProtectionParameters.getDbHealthCheckIntervalMilliseconds(),
+            TimeUnit.MILLISECONDS);
+
+    super.registerHealthCheckProcedure(
+        "slashing-protection-db-health-check",
+        promise -> {
+          promise.complete(dbHealthCheck.isDbUp() ? Status.OK() : Status.KO());
+        });
   }
 
   private void scheduleAndExecuteInitialDbPruning() {

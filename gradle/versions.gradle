@@ -39,6 +39,7 @@ dependencyManagement {
       entry 'vertx-web'
       entry 'vertx-web-openapi'
       entry 'vertx-junit5'
+      entry 'vertx-health-check'
     }
 
     dependency 'javax.activation:activation:1.1.1'

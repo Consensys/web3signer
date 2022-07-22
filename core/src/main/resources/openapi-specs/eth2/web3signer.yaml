@@ -20,6 +20,8 @@ paths:
     $ref: './signing/paths/reload.yaml'
   /upcheck:
     $ref: './signing/paths/upcheck.yaml'
+  /healthcheck:
+    $ref: './signing/paths/healthcheck.yaml'
   /eth/v1/keystores:
     $ref: './keymanager/paths/keystores.yaml'
 
