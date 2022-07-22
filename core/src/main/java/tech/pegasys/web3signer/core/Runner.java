@@ -46,6 +46,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.ClientAuth;
@@ -283,8 +284,7 @@ public abstract class Runner implements Runnable {
   }
 
   protected void registerHealthCheckProcedure(
-      final String name,
-      io.vertx.core.Handler<io.vertx.core.Promise<io.vertx.ext.healthchecks.Status>> procedure) {
+      final String name, final Handler<Promise<Status>> procedure) {
     healthCheckHandler.register(name, procedure);
   }
 

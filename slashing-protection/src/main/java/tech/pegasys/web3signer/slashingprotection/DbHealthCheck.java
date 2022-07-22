@@ -20,14 +20,13 @@ public class DbHealthCheck implements Runnable {
 
   private final SlashingProtectionContext slashingProtectionContext;
   private final long dbHealthCheckTimeoutMilliseconds;
-  private final AtomicBoolean isDbUp;
+  private final AtomicBoolean isDbUp = new AtomicBoolean(true);
 
   public DbHealthCheck(
       final SlashingProtectionContext slashingProtectionContext,
       final long dbHealthCheckTimeoutMilliseconds) {
     this.slashingProtectionContext = slashingProtectionContext;
     this.dbHealthCheckTimeoutMilliseconds = dbHealthCheckTimeoutMilliseconds;
-    this.isDbUp = new AtomicBoolean(true);
   }
 
   @Override

@@ -106,7 +106,7 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
       description =
           "Number of milliseconds between the database health check operation (Default: ${DEFAULT-VALUE})",
       arity = "1")
-  private long dbHealthCheckIntervalMilliseconds = 3000;
+  private long dbHealthCheckIntervalMilliseconds = 30000;
 
   @Override
   public boolean isEnabled() {
