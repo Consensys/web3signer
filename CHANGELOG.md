@@ -5,6 +5,7 @@
 - Added health check endpoint [#538](https://github.com/ConsenSys/web3signer/issues/538). 
 - Introduced `--slashing-protection-db-health-check-timeout-milliseconds` to specify the timeout of the slashing db health check procedure.
 - Introduced `--slashing-protection-db-health-check-interval-milliseconds` to specify the interval between slashing db health check procedures.
+- Update Teku libraries version
 
 ## 22.7.0
 ### Features Added
