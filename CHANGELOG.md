@@ -7,6 +7,9 @@
 - Introduced `--slashing-protection-db-health-check-interval-milliseconds` to specify the interval between slashing db health check procedures.
 - Updated Teku libraries version (support for Prater/Görli merge).
 
+### Bugs Fixed
+- Updated to PostgreSQL JDBC driver to 42.4.1. Resolves a potential vulnerability CVE-2022-31197.
+
 ## 22.7.0
 ### Features Added
 - Support register validator API endpoint [#577](https://github.com/ConsenSys/web3signer/issues/577)
