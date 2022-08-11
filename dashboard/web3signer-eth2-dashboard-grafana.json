@@ -9,7 +9,7 @@
       "pluginName": "Prometheus"
     }
   ],
-  "__elements": [],
+  "__elements": {},
   "__requires": [
     {
       "type": "panel",
@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.4.3"
+      "version": "9.0.6"
     },
     {
       "type": "panel",
@@ -47,7 +47,10 @@
       {
         "$$hashKey": "object:961",
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -65,17 +68,16 @@
   "description": "Web3signer Eth2 Dashboard https://github.com/ConsenSys/web3signer",
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": 12729,
+  "gnetId": 13687,
   "graphTooltip": 1,
   "id": null,
-  "iteration": 1657865147060,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "PBFA97CFB590B2093"
       },
       "gridPos": {
         "h": 1,
@@ -84,10 +86,23 @@
         "y": 0
       },
       "id": 108,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Stats",
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "description": "Release version data",
       "fieldConfig": {
         "defaults": {
@@ -128,12 +143,12 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "/^v22\\.7.0$/",
-          "values": false
+          "fields": "",
+          "values": true
         },
         "textMode": "name"
       },
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "targets": [
         {
           "datasource": {
@@ -154,7 +169,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "regex": ".*web3signer/(v[0-9.]+).*",
+            "regex": ".*web3signer\\/(v[\\w.+-]*).*",
             "renamePattern": "$1"
           }
         }
@@ -162,6 +177,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -198,7 +217,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "targets": [
         {
           "datasource": {
@@ -217,6 +236,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "description": "The maximum heap setting of the node's JVM.",
       "fieldConfig": {
         "defaults": {
@@ -257,7 +280,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "targets": [
         {
           "datasource": {
@@ -277,6 +300,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -321,7 +348,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "targets": [
         {
           "datasource": {
@@ -340,6 +367,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -384,7 +415,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "targets": [
         {
           "datasource": {
@@ -404,6 +435,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -448,7 +483,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "targets": [
         {
           "datasource": {
@@ -470,7 +505,7 @@
       "collapsed": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "PBFA97CFB590B2093"
       },
       "gridPos": {
         "h": 1,
@@ -480,10 +515,23 @@
       },
       "id": 98,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Signing",
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -515,6 +563,8 @@
       "links": [],
       "options": {
         "displayMode": "basic",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "vertical",
         "reduceOptions": {
           "calcs": [
@@ -525,7 +575,7 @@
         },
         "showUnfilled": true
       },
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "targets": [
         {
           "datasource": {
@@ -587,7 +637,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -597,6 +647,10 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "expr": "sum(rate(signing_bls_signing_duration_count{instance=~\"$system\"}[1m]))",
           "instant": false,
           "interval": "",
@@ -638,7 +692,7 @@
       "collapsed": false,
       "datasource": {
         "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "uid": "PBFA97CFB590B2093"
       },
       "gridPos": {
         "h": 1,
@@ -648,6 +702,15 @@
       },
       "id": 14,
       "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "System",
       "type": "row"
     },
@@ -656,6 +719,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "decimals": 2,
       "description": "Number of CPU cores in use.",
       "fieldConfig": {
@@ -694,7 +761,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -752,6 +819,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "decimals": 2,
       "description": "Total amount of heap memory in use, and the amount allocated.",
       "fieldConfig": {
@@ -789,7 +860,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -870,6 +941,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "decimals": 3,
       "description": "The total system memory used by the process, otherwise known as the resident set size (RSS).",
       "fieldConfig": {
@@ -907,7 +982,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -968,6 +1043,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "description": "Percentage of time spent in garbage collection, young and old generation.",
       "fieldConfig": {
         "defaults": {
@@ -1008,7 +1087,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1071,6 +1150,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
       "decimals": 0,
       "description": "Threads allocated by the JVM.",
       "fieldConfig": {
@@ -1114,7 +1197,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.4.3",
+      "pluginVersion": "9.0.6",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1249,7 +1332,7 @@
     }
   ],
   "refresh": "5s",
-  "schemaVersion": 35,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [
     "ethereum",
@@ -1285,6 +1368,10 @@
       },
       {
         "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
         "definition": "signing_signers_loaded_count",
         "hide": 2,
         "includeAll": false,
@@ -1299,8 +1386,7 @@
         "regex": "/job=\"([^\"]*)\"/",
         "skipUrlSync": false,
         "sort": 0,
-        "type": "query",
-        "datasource": "${DS_PROMETHEUS}"
+        "type": "query"
       }
     ]
   },
@@ -1324,6 +1410,6 @@
   "timezone": "",
   "title": "Web3Signer Overview",
   "uid": "dkIJoOVMk",
-  "version": 11,
+  "version": 14,
   "weekStart": ""
 }
