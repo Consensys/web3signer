@@ -58,9 +58,9 @@ public class ValidatorRegistration {
     return pubkey;
   }
 
-  public tech.pegasys.teku.spec.datastructures.execution.ValidatorRegistration
+  public tech.pegasys.teku.spec.datastructures.builder.ValidatorRegistration
       asInternalValidatorRegistration() {
-    return new tech.pegasys.teku.spec.datastructures.execution.ValidatorRegistrationSchema()
+    return new tech.pegasys.teku.spec.datastructures.builder.ValidatorRegistrationSchema()
         .create(feeRecipient, gasLimit, timestamp, pubkey.asBLSPublicKey());
   }
 }

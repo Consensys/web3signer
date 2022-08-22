@@ -1,5 +1,9 @@
 # Changelog
 
+## 22.8.1
+### Features Added
+- Updated internal Teku libraries to 22.8.1. This update includes Bellatrix network upgrade and merge transition configuration for Mainnet.
+
 ## 22.8.0
 ### Features Added
 - Added health check endpoint [#538](https://github.com/ConsenSys/web3signer/issues/538). 
