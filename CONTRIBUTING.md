@@ -245,7 +245,7 @@ These are not strictly enforced during the build, but should be adhered to and c
 [private-quorum@consensys.net]: mailto:private-quorum@consensys.net
 [Discord]: https://discord.gg/KMh2Mjh
 [GitHub]: https://github.com/ConsenSys/web3signer
-[Web3Signer documentation]: https://doc.eth2signer.pegasys.tech/en/latest/
+[Web3Signer documentation]: https://docs.web3signer.consensys.net/en/latest/
 [CLA.md]: /CLA.md
 [Code Reviews]: /community/code-reviews.md
 [MkDocs]: https://www.mkdocs.org/
