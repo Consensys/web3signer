@@ -49,7 +49,7 @@ import picocli.CommandLine.Spec;
 @Command(
     description =
         "This command runs the Web3Signer.\n"
-            + "Documentation can be found at https://docs.web3signer.pegasys.tech.",
+            + "Documentation can be found at https://docs.web3signer.consensys.net .",
     abbreviateSynopsis = true,
     name = "web3signer",
     sortOptions = false,
