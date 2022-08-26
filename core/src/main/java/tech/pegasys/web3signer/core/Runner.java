@@ -157,11 +157,7 @@ public abstract class Runner implements Runnable {
           .handler(healthCheckHandler)
           .failureHandler(errorHandler);
 
-      registerHealthCheckProcedure(
-          "default-check",
-          promise -> {
-            promise.complete(Status.OK());
-          });
+      registerHealthCheckProcedure("default-check", promise -> promise.complete(Status.OK()));
 
       final Context context =
           new Context(routerBuilder, metricsSystem, errorHandler, vertx, artifactSignerProvider);

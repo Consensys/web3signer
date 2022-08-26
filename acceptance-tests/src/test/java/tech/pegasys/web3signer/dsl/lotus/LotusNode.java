@@ -52,7 +52,7 @@ public class LotusNode extends FilecoinJsonRpcEndpoint {
     }
 
     return addresses.parallelStream()
-        .collect(Collectors.toMap(Function.identity(), address -> walletExport(address)));
+        .collect(Collectors.toMap(Function.identity(), this::walletExport));
   }
 
   @Override

@@ -108,8 +108,7 @@ public class Web3SignerProcessRunner extends Web3SignerRunner {
       final TlsCertificateDefinition caTrustStore =
           getSignerConfig().getOverriddenCaTrustStore().get();
       final Path overriddenCaTrustStorePath = createJksCertFile(caTrustStore);
-      javaOpts.add(
-          "-Djavax.net.ssl.trustStore=" + overriddenCaTrustStorePath.toAbsolutePath().toString());
+      javaOpts.add("-Djavax.net.ssl.trustStore=" + overriddenCaTrustStorePath.toAbsolutePath());
       javaOpts.add("-Djavax.net.ssl.trustStorePassword=" + caTrustStore.getPassword());
     }
     return javaOpts.toString();

@@ -66,7 +66,7 @@ class DeleteKeystoresProcessorTest {
   }
 
   @Test
-  void testSuccess() throws Exception {
+  void testSuccess() {
     when(artifactSignerProvider.getSigner(any())).thenReturn(Optional.of(signer));
 
     final DeleteKeystoresRequestBody requestBody =

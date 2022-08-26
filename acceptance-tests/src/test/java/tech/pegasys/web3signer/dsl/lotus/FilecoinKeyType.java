@@ -18,5 +18,5 @@ public enum FilecoinKeyType {
   @JsonProperty("bls")
   BLS,
   @JsonProperty("secp256k1")
-  SECP256K1;
+  SECP256K1
 }

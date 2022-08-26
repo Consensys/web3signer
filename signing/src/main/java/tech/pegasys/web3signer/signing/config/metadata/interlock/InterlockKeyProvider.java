@@ -34,10 +34,12 @@ public class InterlockKeyProvider implements AutoCloseable {
   }
 
   public synchronized Bytes fetchKey(final InterlockSigningMetadata metadata) {
-    final InterlockSession interlockSession =
+    try (InterlockSession interlockSession =
         sessionMap.computeIfAbsent(
-            InterlockIdentifier.fromMetadata(metadata), identifier -> newSession(metadata, vertx));
-    return interlockSession.fetchKey(metadata.getKeyPath());
+            InterlockIdentifier.fromMetadata(metadata),
+            identifier -> newSession(metadata, vertx))) {
+      return interlockSession.fetchKey(metadata.getKeyPath());
+    }
   }
 
   private InterlockSession newSession(final InterlockSigningMetadata metadata, final Vertx vertx) {

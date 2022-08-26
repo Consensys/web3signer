@@ -17,8 +17,9 @@ import java.util.Locale;
 /**
  * Detects OS and VMs.
  *
- * <p>Derived from Detector.java https://github.com/trustin/os-maven-plugin/ version 59fd029 on 21
- * Apr 2018, Copyright 2014 Trustin Heuiseung Lee.
+ * <p>Derived from Detector.java <a
+ * href="https://github.com/trustin/os-maven-plugin/">os-maven-plugin</a> version 59fd029 on 21 Apr
+ * 2018, Copyright 2014 Trustin Heuiseung Lee.
  */
 public class PlatformDetector {
 

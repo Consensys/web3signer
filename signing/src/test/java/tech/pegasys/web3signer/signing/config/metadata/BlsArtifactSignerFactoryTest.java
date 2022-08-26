@@ -80,7 +80,7 @@ class BlsArtifactSignerFactoryTest {
   }
 
   @BeforeEach
-  void setup() throws IOException {
+  void setup() {
     vertx = Vertx.vertx();
     interlockKeyProvider = new InterlockKeyProvider(vertx);
     yubiHsmOpaqueDataProvider = new YubiHsmOpaqueDataProvider();
