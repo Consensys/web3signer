@@ -18,24 +18,24 @@ import org.apache.tuweni.units.bigints.UInt64;
 
 public class BlockTestModel {
 
-  private final Bytes publickKey;
+  private final Bytes publicKey;
   private final UInt64 slot;
   private final Bytes signingRoot;
   private final boolean shouldSucceed;
 
   public BlockTestModel(
-      @JsonProperty(value = "pubkey", required = true) final Bytes publickKey,
+      @JsonProperty(value = "pubkey", required = true) final Bytes publicKey,
       @JsonProperty(value = "slot", required = true) UInt64 slot,
       @JsonProperty(value = "should_succeed", required = true) boolean shouldSucceed,
       @JsonProperty(value = "signing_root") Bytes signingRoot) {
-    this.publickKey = publickKey;
+    this.publicKey = publicKey;
     this.slot = slot;
     this.shouldSucceed = shouldSucceed;
     this.signingRoot = signingRoot;
   }
 
-  public Bytes getPublickKey() {
-    return publickKey;
+  public Bytes getPublicKey() {
+    return publicKey;
   }
 
   public UInt64 getSlot() {
