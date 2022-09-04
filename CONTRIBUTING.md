@@ -148,29 +148,29 @@ This facilitates social contribution, easy testing, and peer review.
 To contribute changes, use the following workflow:
 
 1. [**Fork the repository**](https://github.com/ConsenSys/web3signer/fork).
-2. **Clone your fork** to your computer.
-3. **Create a topic branch** and name it appropriately.
+1. **Clone your fork** to your computer.
+1. **Create a topic branch** and name it appropriately.
 Starting the branch name with the issue number is a good practice and a reminder to fix only one issue in a 
 Pull-Request (PR)._
-4. **Make your changes** adhering to the coding conventions described below.
+1. **Make your changes** adhering to the coding conventions described below.
 _In general a commit serves a single purpose and diffs should be easily comprehensible.
 For this reason do not mix any formatting fixes or code moves with actual code changes._
-5. **Commit your changes** see [How to Write a Git Commit Message] article by [Chris Beams].
-6. **Test your changes** locally before pushing to ensure that what you are proposing is not breaking
+1. **Commit your changes** see [How to Write a Git Commit Message] article by [Chris Beams].
+1. **Test your changes** locally before pushing to ensure that what you are proposing is not breaking
 another part of the software. Running the `./gradlew clean check test` command locally will help you
 to be confident that your changes will pass CI tests once pushed as a Pull Request.
-7. **Push your changes** to your remote fork (usually labeled as `origin`).
-8. **Create a pull-request** (PR) on the Web3Signer repository. If the PR addresses an existing Jira issue,
+1. **Push your changes** to your remote fork (usually labeled as `origin`).
+1. **Create a pull-request** (PR) on the Web3Signer repository. If the PR addresses an existing Jira issue,
 include the issue number in the PR title in square brackets (for example, `[ES-2374]`). 
-9. **Add labels** to identify the type of your PR. _For example, if your PR is not ready to validate,
+1. **Add labels** to identify the type of your PR. _For example, if your PR is not ready to validate,
 add the "work-in-progress" label. If it fixes a bug, add the "bug" label._
-10. If the PR address an existing Jira issue, comment in the Jira issue with the PR number.
-11. **Ensure your changes are reviewed**.
+1. If the PR address an existing Jira issue, comment in the Jira issue with the PR number.
+1. **Ensure your changes are reviewed**.
 _Select the reviewers you would like to review your PR.
 If you don't know who to choose, simply select the reviewers proposed by GitHub or leave blank._
-12. **Make any required changes** on your contribution from the reviewers feedback.
+1. **Make any required changes** on your contribution from the reviewers feedback.
 _Make the changes, commit to your branch, and push to your remote fork._
-13. **When your PR is validated**, all tests passed and your branch has no conflicts with the target branch,
+1. **When your PR is validated**, all tests passed and your branch has no conflicts with the target branch,
 you can **"squash and merge"** your PR and you're done. You contributed to Web3Signer! Thanks !
 
 ### Architectural Best Practices
