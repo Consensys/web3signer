@@ -41,8 +41,8 @@ public class SignerConfiguration {
   private final Optional<AzureKeyVaultParameters> azureKeyVaultParameters;
   private final Optional<AwsSecretsManagerParameters> awsSecretsManagerParameters;
   private final Optional<KeystoresParameters> keystoresParameters;
-  private Optional<TlsOptions> serverTlsOptions;
-  private Optional<TlsCertificateDefinition> overriddenCaTrustStore;
+  private final Optional<TlsOptions> serverTlsOptions;
+  private final Optional<TlsCertificateDefinition> overriddenCaTrustStore;
   private final int metricsPort;
   private final String mode;
   private final Optional<String> slashingProtectionDbUrl;

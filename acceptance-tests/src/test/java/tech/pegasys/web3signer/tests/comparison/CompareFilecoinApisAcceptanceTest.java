@@ -39,13 +39,13 @@ public class CompareFilecoinApisAcceptanceTest extends CompareApisAcceptanceTest
 
   @Test
   void compareWalletHasResponses() {
-    addressMap.forEach(
+    ADDRESS_MAP.forEach(
         (address, key) -> {
           assertThat(LOTUS_NODE.walletHas(address)).isTrue();
           assertThat(signer.walletHas(address)).isTrue();
         });
 
-    nonExistentAddressMap.forEach(
+    NON_EXISTENT_ADDRESS_MAP.forEach(
         (address, key) -> {
           assertThat(LOTUS_NODE.walletHas(address)).isFalse();
           assertThat(signer.walletHas(address)).isFalse();
@@ -64,7 +64,7 @@ public class CompareFilecoinApisAcceptanceTest extends CompareApisAcceptanceTest
   @RepeatedTest(25)
   void compareWalletSignAndVerifyResponsesWithRandomDataToSign() {
 
-    addressMap.keySet().parallelStream()
+    ADDRESS_MAP.keySet().parallelStream()
         .forEach(
             address -> {
               final Bytes dataToSign = Bytes.random(32);

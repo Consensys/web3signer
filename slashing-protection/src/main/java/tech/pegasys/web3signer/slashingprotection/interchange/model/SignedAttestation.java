@@ -23,7 +23,7 @@ public class SignedAttestation {
 
   private final UInt64 sourceEpoch;
   private final UInt64 targetEpoch;
-  public Bytes signingRoot;
+  private final Bytes signingRoot;
 
   public SignedAttestation(
       @JsonProperty(value = "source_epoch", required = true) final UInt64 sourceEpoch,
