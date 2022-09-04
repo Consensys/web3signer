@@ -1,9 +1,12 @@
 # Changelog
 
-## 22.8.2
+## Next release
+
 ### Features Added
 - Updated internal Teku libraries to 22.8.2. 
 
+### Bugs Fixed
+- Upgrade jackson libraries to fix CVE-2022-25857
 
 ## 22.8.1
 ### Features Added
