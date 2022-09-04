@@ -1,5 +1,13 @@
 # Changelog
 
+## Next release
+
+### Features Added
+- Updated internal Teku libraries to 22.9.0 
+
+### Bugs Fixed
+- Upgrade jackson libraries to fix CVE-2022-25857
+
 ## 22.8.1
 ### Features Added
 - Updated internal Teku libraries to 22.8.1. This update includes Bellatrix network upgrade and merge transition configuration for Mainnet.
