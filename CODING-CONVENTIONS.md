@@ -122,7 +122,7 @@ Web3Signer follows the [Google code style](https://google.github.io/styleguide/j
 
 To automatically reformat the code before creating a pull request, run: 
 
-```json
+```
 ./gradlew spotlessApply
 ```
 

@@ -189,7 +189,7 @@ public class ReferenceTestRunner {
           slashingProtectionContext
               .getSlashingProtection()
               .maySignAttestation(
-                  attestation.getPublickKey(),
+                  attestation.getPublicKey(),
                   attestation.getSigningRoot(),
                   attestation.getSourceEpoch(),
                   attestation.getTargetEpoch(),
@@ -200,7 +200,7 @@ public class ReferenceTestRunner {
         LOG.warn(
             "Detected a valid signing condition which was rejected by slashing-protection (attestation {} for validator {})",
             i,
-            attestation.getPublickKey());
+            attestation.getPublicKey());
       }
     }
   }
@@ -212,7 +212,7 @@ public class ReferenceTestRunner {
       final boolean result =
           slashingProtectionContext
               .getSlashingProtection()
-              .maySignBlock(block.getPublickKey(), block.getSigningRoot(), block.getSlot(), gvr);
+              .maySignBlock(block.getPublicKey(), block.getSigningRoot(), block.getSlot(), gvr);
       // NOTE: Ref tests are only fail if you sign something which is flagged as "!should_Succeed".
       // (i.e. a "reject" response is always correct)
       if (!block.isShouldSucceed()) {
@@ -221,7 +221,7 @@ public class ReferenceTestRunner {
         LOG.warn(
             "Detected a valid signing condition which was rejected by slashing-protection (block {} for validator {})",
             i,
-            block.getPublickKey());
+            block.getPublicKey());
       }
     }
   }

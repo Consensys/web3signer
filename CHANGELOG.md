@@ -227,7 +227,7 @@ backward compatibility with PHASE0 blocks.
 ### Features Added
 - Separate application into eth2, eth and Filecoin commands that can be run independently
 - Eth2 slashing protection. Requires a PostgreSQL database to store eth2 signed blocks and attestations
-- Ethereuem secp256k1 signing of data
+- Ethereum secp256k1 signing of data
 - Use yaml configuration of signing keys
 - Support for Filecoin JSON RPCs
 - Azure secret vault support for eth2 keys to load all secrets from a given vault
