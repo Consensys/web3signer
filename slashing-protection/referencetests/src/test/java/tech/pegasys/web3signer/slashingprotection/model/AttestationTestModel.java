@@ -18,27 +18,27 @@ import org.apache.tuweni.units.bigints.UInt64;
 
 public class AttestationTestModel {
 
-  private final Bytes publickKey;
+  private final Bytes publicKey;
   private final UInt64 sourceEpoch;
   private final UInt64 targetEpoch;
   private final boolean shouldSucceed;
   private final Bytes signingRoot;
 
   public AttestationTestModel(
-      @JsonProperty(value = "pubkey", required = true) final Bytes publickKey,
+      @JsonProperty(value = "pubkey", required = true) final Bytes publicKey,
       @JsonProperty(value = "source_epoch", required = true) UInt64 sourceEpoch,
       @JsonProperty(value = "target_epoch", required = true) UInt64 targetEpoch,
       @JsonProperty(value = "should_succeed", required = true) boolean shouldSucceed,
       @JsonProperty(value = "signing_root") Bytes signingRoot) {
-    this.publickKey = publickKey;
+    this.publicKey = publicKey;
     this.sourceEpoch = sourceEpoch;
     this.targetEpoch = targetEpoch;
     this.shouldSucceed = shouldSucceed;
     this.signingRoot = signingRoot;
   }
 
-  public Bytes getPublickKey() {
-    return publickKey;
+  public Bytes getPublicKey() {
+    return publicKey;
   }
 
   public UInt64 getSourceEpoch() {

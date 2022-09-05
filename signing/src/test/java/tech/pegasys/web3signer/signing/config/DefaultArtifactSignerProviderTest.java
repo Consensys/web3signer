@@ -43,7 +43,7 @@ class DefaultArtifactSignerProviderTest {
   }
 
   @Test
-  void signerReturnedForMatchingIdentifer() {
+  void signerReturnedForMatchingIdentifier() {
     final ArtifactSigner mockSigner = mock(ArtifactSigner.class);
     when(mockSigner.getIdentifier()).thenReturn(PUBLIC_KEY1);
 

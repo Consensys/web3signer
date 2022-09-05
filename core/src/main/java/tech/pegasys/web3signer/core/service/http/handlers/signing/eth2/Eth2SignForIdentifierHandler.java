@@ -289,14 +289,14 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         return DepositSigningRootUtil.compute_signing_root(
             body.getDeposit().asInternalDepositMessage(), depositDomain);
       case SYNC_COMMITTEE_MESSAGE:
-        final SyncCommitteeMessage syncCommitteMessage = body.getSyncCommitteeMessage();
-        checkArgument(syncCommitteMessage != null, "SyncCommitteeMessage must be specified");
+        final SyncCommitteeMessage syncCommitteeMessage = body.getSyncCommitteeMessage();
+        checkArgument(syncCommitteeMessage != null, "SyncCommitteeMessage must be specified");
         return signingRootFromSyncCommitteeUtils(
-            syncCommitteMessage.getSlot(),
+            syncCommitteeMessage.getSlot(),
             utils ->
                 utils.getSyncCommitteeMessageSigningRoot(
-                    syncCommitteMessage.getBeaconBlockRoot(),
-                    eth2Spec.computeEpochAtSlot(syncCommitteMessage.getSlot()),
+                    syncCommitteeMessage.getBeaconBlockRoot(),
+                    eth2Spec.computeEpochAtSlot(syncCommitteeMessage.getSlot()),
                     body.getForkInfo().asInternalForkInfo()));
       case SYNC_COMMITTEE_SELECTION_PROOF:
         final SyncAggregatorSelectionData syncAggregatorSelectionData =

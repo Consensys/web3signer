@@ -34,9 +34,9 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
       new LotusNode(Integer.parseInt(System.getenv("LOTUS_PORT")));
   protected static final int NO_OF_BLS_KEYS = 2;
   protected static final int NO_OF_SECP_KEYS = 2;
-  protected static Map<String, FilecoinKey> addressMap =
+  protected static final Map<String, FilecoinKey> ADDRESS_MAP =
       LOTUS_NODE.createKeys(NO_OF_BLS_KEYS, NO_OF_SECP_KEYS);
-  protected static Map<String, FilecoinKey> nonExistentAddressMap =
+  protected static final Map<String, FilecoinKey> NON_EXISTENT_ADDRESS_MAP =
       Map.of(
           "f3q7sj7rgvvlfpc7gx7z7jeco5x3q3aa4g6s54w3rl5alzdb6xa422seznjmtp7agboegcvrakcv22eo5bjlna",
           new FilecoinKey(
@@ -66,7 +66,7 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   private void initSignerKeystoreDirectory() {
-    addressMap.forEach(
+    ADDRESS_MAP.forEach(
         (fcAddress, key) ->
             metadataFileHelpers.createUnencryptedYamlFileAt(
                 keyConfigFile(fcAddress),

@@ -95,7 +95,7 @@ public class JacksonSerializers {
       try {
         return UInt64.valueOf(p.getBigIntegerValue());
       } catch (final Exception e) {
-        throw new RuntimeException("Failed to parse integer as as UInt64", e);
+        throw new RuntimeException("Failed to parse integer as a UInt64", e);
       }
     }
   }
