@@ -15,12 +15,11 @@ and feel free to propose changes to this document in a pull request.
   * [Suggesting Enhancements](#suggesting-enhancements)
   * [Your First Contribution](#your-first-contribution)
   * [Pull Requests](#pull-requests)
-  * [Code Reviews](#code-review)
+  * [Code Reviews](#code-reviews)
 
 [Style Guides](#style-guides)
   * [Java Style Guide](#java-code-style-guide)
   * [Coding Conventions](#coding-conventions)
-  * [Git Commit Messages & Pull Request Messages](#git-commit-messages--pull-request-messages)
   
 [Pull Request Labels](#pull-request-labels)
 
@@ -161,11 +160,11 @@ For this reason do not mix any formatting fixes or code moves with actual code c
 another part of the software. Running the `./gradlew clean check test` command locally will help you
 to be confident that your changes will pass CI tests once pushed as a Pull Request.
 1. **Push your changes** to your remote fork (usually labeled as `origin`).
-1. **Create a pull-request** (PR) on the Web3Signer repository. If the PR addresses an existing Jira issue, 
+1. **Create a pull-request** (PR) on the Web3Signer repository. If the PR addresses an existing Jira issue,
 include the issue number in the PR title in square brackets (for example, `[ES-2374]`). 
 1. **Add labels** to identify the type of your PR. _For example, if your PR is not ready to validate,
 add the "work-in-progress" label. If it fixes a bug, add the "bug" label._
-1. If the PR address an existing Jira issue, comment in the Jira issue with the PR number. 
+1. If the PR address an existing Jira issue, comment in the Jira issue with the PR number.
 1. **Ensure your changes are reviewed**.
 _Select the reviewers you would like to review your PR.
 If you don't know who to choose, simply select the reviewers proposed by GitHub or leave blank._
@@ -211,10 +210,10 @@ explaining why you believe the failure is unrelated. A maintainer will re-run th
 If we conclude that the failure was a false positive, then we will open an issue to track that problem 
 with our status check suite.</details>
 
-## Code Review
+## Code Reviews
 While the prerequisites above must be satisfied prior to having your pull request reviewed, the reviewer(s) 
 may ask you to complete additional design work, tests, or other changes before your pull request 
-can be ultimately accepted.  Please refer to [Code Reviews].
+can be ultimately accepted.
 
 # Style Guides
 
@@ -234,8 +233,6 @@ These are not strictly enforced during the build, but should be adhered to and c
 
 # Pull Request Labels
 
-#### Pull Request Labels
-
 | Label name                                                              | Description                                                                                |
 |-------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
 | [`work-in-progress`][search-label-work-in-progress]                     | Pull requests which are still being worked on, more changes will follow.                   |
@@ -247,7 +244,6 @@ These are not strictly enforced during the build, but should be adhered to and c
 [GitHub]: https://github.com/ConsenSys/web3signer
 [Web3Signer documentation]: https://docs.web3signer.consensys.net/en/latest/
 [CLA.md]: /CLA.md
-[Code Reviews]: /community/code-reviews.md
 [MkDocs]: https://www.mkdocs.org/
 [How to Write a Git Commit Message]: https://chris.beams.io/posts/git-commit/
 [Chris Beams]: https://github.com/cbeams
