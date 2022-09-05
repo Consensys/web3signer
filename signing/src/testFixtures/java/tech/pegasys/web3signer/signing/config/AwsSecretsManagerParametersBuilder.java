@@ -109,7 +109,7 @@ public final class AwsSecretsManagerParametersBuilder {
     private final Collection<String> prefixesFilter;
     private final Collection<String> tagNamesFilter;
     private final Collection<String> tagValuesFilter;
-    private long cacheMaximumSize;
+    private final long cacheMaximumSize;
 
     TestAwsSecretsManagerParameters(
         final AwsAuthenticationMode authenticationMode,

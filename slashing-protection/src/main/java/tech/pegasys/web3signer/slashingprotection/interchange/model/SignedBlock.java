@@ -22,8 +22,8 @@ import org.apache.tuweni.units.bigints.UInt64;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SignedBlock {
 
-  public UInt64 slot;
-  public Bytes signingRoot;
+  private final UInt64 slot;
+  private final Bytes signingRoot;
 
   @JsonCreator
   public SignedBlock(

@@ -13,8 +13,8 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.2.2'
-    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.2'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.4'
+    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.4'
 
     dependencySet(group: 'com.google.errorprone', version: '2.10.0') {
       entry 'error_prone_annotation'
@@ -84,7 +84,7 @@ dependencyManagement {
     dependency 'org.hyperledger.besu:plugin-api:22.4.1'
     dependency 'org.hyperledger.besu.internal:metrics-core:22.4.4'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '22.8.1') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '22.9.0') {
       entry 'bls'
       entry 'spec'
       entry 'serializer'

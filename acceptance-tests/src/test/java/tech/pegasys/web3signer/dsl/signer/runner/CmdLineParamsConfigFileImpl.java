@@ -275,7 +275,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       yamlConfig.append(
           String.format(
               YAML_NUMERIC_FMT,
-              "eth2.sslashing-protection-pruning-slots-per-epoch",
+              "eth2.slashing-protection-pruning-slots-per-epoch",
               signerConfig.getSlashingProtectionPruningSlotsPerEpoch()));
       yamlConfig.append(
           String.format(

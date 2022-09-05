@@ -122,7 +122,7 @@ Provide the following information:
 * **Use a clear and descriptive title** for the issue to identify the suggestion.
 * **Provide a step-by-step description of the suggested enhancement** in as many details as possible.
 * **Provide specific examples to demonstrate the steps**. If you're providing code snippets in the issue, 
- use backticks (````) to format the code snippets..
+ use backticks (````) to format the code snippets.
 * **Describe the current behavior** and **explain which behavior you expected to see instead** and why.
 * **Include screenshots** which help you demonstrate the steps where possible.
 * **Explain why this enhancement would be useful** to most users.
