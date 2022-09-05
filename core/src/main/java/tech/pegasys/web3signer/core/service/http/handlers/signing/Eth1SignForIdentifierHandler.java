@@ -60,9 +60,7 @@ public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
       signerForIdentifier
           .sign(normaliseIdentifier(identifier), data)
           .ifPresentOrElse(
-              signature -> {
-                respondWithSignature(routingContext, signature);
-              },
+              signature -> respondWithSignature(routingContext, signature),
               () -> {
                 LOG.trace("Identifier not found {}", identifier);
                 metrics.getMissingSignerCounter().inc();

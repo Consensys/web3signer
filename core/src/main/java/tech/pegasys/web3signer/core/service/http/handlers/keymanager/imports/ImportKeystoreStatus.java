@@ -20,5 +20,5 @@ public enum ImportKeystoreStatus {
   @JsonProperty("duplicate")
   DUPLICATE,
   @JsonProperty("error")
-  ERROR;
+  ERROR
 }

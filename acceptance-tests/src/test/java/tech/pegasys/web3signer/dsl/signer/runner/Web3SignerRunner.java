@@ -116,7 +116,7 @@ public abstract class Web3SignerRunner {
             () -> {
               if (file.exists()) {
                 try (final Stream<String> s = Files.lines(file.toPath())) {
-                  return s.count() > 0;
+                  return s.findAny().isPresent();
                 }
               }
               return false;

@@ -110,13 +110,13 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     }
 
     // extract pubkeys to import first
-    final List<String> pubkeysToImport = new ArrayList<>();
+    final List<String> pubkeysToImport;
     try {
-      pubkeysToImport.addAll(
+      pubkeysToImport =
           parsedBody.getKeystores().stream()
               .map(json -> new JsonObject(json).getString("pubkey"))
               .map(IdentifierUtils::normaliseIdentifier)
-              .collect(Collectors.toList()));
+              .collect(Collectors.toList());
     } catch (Exception e) {
       context.fail(BAD_REQUEST, e);
       return;

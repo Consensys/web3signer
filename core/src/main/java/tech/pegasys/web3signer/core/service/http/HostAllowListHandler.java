@@ -64,8 +64,7 @@ public class HostAllowListHandler implements Handler<RoutingContext> {
 
   private boolean hostIsInAllowlist(final String hostHeader) {
     if (httpHostAllowList.stream()
-        .anyMatch(
-            allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+        .anyMatch(allowlistEntry -> allowlistEntry.equalsIgnoreCase(hostHeader))) {
       return true;
     } else {
       LOG.trace("Host not in allowlist: '{}'", hostHeader);
