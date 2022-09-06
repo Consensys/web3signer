@@ -134,12 +134,13 @@ public class Eth2SubCommand extends ModeSubCommand {
   }
 
   private void logNetworkSpecInformation() {
-    LOG.info("Network: {}", network);
     final ForkSchedule forkSchedule = eth2Spec.getForkSchedule();
     final Map<SpecMilestone, UInt64> milestoneSlotMap =
         forkSchedule
             .streamMilestoneBoundarySlots()
             .collect(Collectors.toMap(TekuPair::getLeft, TekuPair::getRight));
+
+    final StringBuilder logString = new StringBuilder(String.format("Network: %s%n", network));
     forkSchedule
         .getActiveMilestones()
         .forEach(
@@ -147,12 +148,12 @@ public class Eth2SubCommand extends ModeSubCommand {
               final String specName = m.getSpecMilestone().name();
               final UInt64 forkEpoch = m.getFork().getEpoch();
               final UInt64 boundarySlot = milestoneSlotMap.get(m.getSpecMilestone());
-              LOG.info(
-                  "Spec Name: {}, Fork Epoch: {}, Boundary Slot: {}",
-                  specName,
-                  forkEpoch,
-                  boundarySlot);
+              logString.append(
+                  String.format(
+                      "Spec Name: %s, Fork Epoch: %s, First Slot: %s%n",
+                      specName, forkEpoch, boundarySlot));
             });
+    LOG.info(logString);
   }
 
   private Eth2NetworkConfiguration createEth2NetworkConfig() {
