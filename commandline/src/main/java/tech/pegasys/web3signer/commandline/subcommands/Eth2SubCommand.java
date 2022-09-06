@@ -19,8 +19,11 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.CLIENT_SECRET;
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
+import tech.pegasys.teku.infrastructure.collections.TekuPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
+import tech.pegasys.teku.spec.ForkSchedule;
+import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
@@ -35,10 +38,13 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
@@ -53,7 +59,7 @@ import picocli.CommandLine.Spec;
     subcommands = {HelpCommand.class, Eth2ExportSubCommand.class, Eth2ImportSubCommand.class},
     mixinStandardHelpOptions = true)
 public class Eth2SubCommand extends ModeSubCommand {
-
+  private static final Logger LOG = LogManager.getLogger();
   public static final String COMMAND_NAME = "eth2";
 
   private static class NetworkCliCompletionCandidates extends ArrayList<String> {
@@ -115,6 +121,8 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Override
   public Runner createRunner() {
+    logNetworkSpecInformation();
+
     return new Eth2Runner(
         config,
         slashingProtectionParameters,
@@ -123,6 +131,28 @@ public class Eth2SubCommand extends ModeSubCommand {
         awsSecretsManagerParameters,
         eth2Spec,
         isKeyManagerApiEnabled);
+  }
+
+  private void logNetworkSpecInformation() {
+    LOG.info("Network: {}", network);
+    final ForkSchedule forkSchedule = eth2Spec.getForkSchedule();
+    final Map<SpecMilestone, UInt64> milestoneSlotMap =
+        forkSchedule
+            .streamMilestoneBoundarySlots()
+            .collect(Collectors.toMap(TekuPair::getLeft, TekuPair::getRight));
+    forkSchedule
+        .getActiveMilestones()
+        .forEach(
+            m -> {
+              final String specName = m.getSpecMilestone().name();
+              final UInt64 forkEpoch = m.getFork().getEpoch();
+              final UInt64 boundarySlot = milestoneSlotMap.get(m.getSpecMilestone());
+              LOG.info(
+                  "Spec Name: {}, Fork Epoch: {}, Boundary Slot: {}",
+                  specName,
+                  forkEpoch,
+                  boundarySlot);
+            });
   }
 
   private Eth2NetworkConfiguration createEth2NetworkConfig() {
