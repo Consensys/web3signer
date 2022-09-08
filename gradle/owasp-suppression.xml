@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
     <!-- See https://jeremylong.github.io/DependencyCheck/general/suppression.html for examples -->
-    <suppress until="2022-09-15">
+    <suppress until="2022-09-22">
         <notes><![CDATA[
           Temporarily suppress CVE-2022-38752 as no fix is available yet https://bitbucket.org/snakeyaml/snakeyaml/issues/531/stackoverflow-oss-fuzz-47081
         ]]></notes>
