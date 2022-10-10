@@ -13,7 +13,7 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.13.4'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.14.0-rc1'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.4'
 
     dependencySet(group: 'com.google.errorprone', version: '2.10.0') {
