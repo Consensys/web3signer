@@ -16,7 +16,7 @@ COPY --from=jre-build /javaruntime $JAVA_HOME
 
 RUN apt-get -y update && apt-get -y install curl iputils-ping net-tools && rm -rf /var/lib/api/lists/*
 RUN adduser --disabled-password --gecos "" --home /opt/web3signer web3signer && \
-    chown web3signer:web3signer /opt/web3signer
+    chown web3signer:web3signer /opt/web3signer && chmod 755 /opt/web3signer
 
 USER web3signer
 WORKDIR /opt/web3signer
