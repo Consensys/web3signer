@@ -6,7 +6,7 @@
 - Updated internal Teku libraries to 22.9.1
 
 ### Bugs Fixed
-- Upgrade jackson libraries to fix CVE-2022-25857 and CVE-2022-42003
+- Upgrade jackson libraries to fix CVE-2022-25857, CVE-2022-38751, CVE-2022-38752 and CVE-2022-42003
 - Upgrade protobufs to fix CVE-2022-3171
 
 ## 22.8.1
