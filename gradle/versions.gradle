@@ -121,7 +121,7 @@ dependencyManagement {
     dependency 'com.azure:azure-security-keyvault-secrets:4.3.6'
     dependency 'com.azure:azure-identity:1.4.3'
 
-    dependency 'com.zaxxer:HikariCP:3.4.5'
+    dependency 'com.zaxxer:HikariCP:5.0.1'
     dependency 'org.postgresql:postgresql:42.4.1'
 
     dependencySet(group: 'org.jdbi', version: '3.14.4') {
