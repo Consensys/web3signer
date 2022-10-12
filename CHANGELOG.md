@@ -1,9 +1,9 @@
 # Changelog
 
-## Next release
+## 22.10.0
 
 ### Features Added
-- Updated internal Teku libraries to 22.9.1
+- Updated internal Teku libraries to 22.10.1
 
 ### Bugs Fixed
 - Upgrade jackson libraries to fix CVE-2022-25857, CVE-2022-38751, CVE-2022-38752 and CVE-2022-42003
