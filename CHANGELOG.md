@@ -3,6 +3,7 @@
 ## 22.10.0
 
 ### Features Added
+- Log eth2 network configuration on startup [#640](https://github.com/ConsenSys/web3signer/issues/640)
 - Updated internal Teku libraries to 22.10.1
 - Updated HikariCP to 5.0.1
 
