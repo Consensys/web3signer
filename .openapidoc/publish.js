@@ -50,7 +50,7 @@ async function main() {
     cleanGhPagesCache();
     await publishToGHPages(distDir, ghPagesConfig);
     log(
-      `OpenAPI specs [${versionDetails.version}] published to [${ghPagesConfig.branch}] using user [${ghPagesConfig.user.name}]`
+      `OpenAPI specs [${versionDetails.version}] published to repo:[${ghPagesConfig.repo}], branch:[${ghPagesConfig.branch}] using user [${ghPagesConfig.user.name}]`
     );
   } catch (err) {
     log(`ERROR: OpenAPI spec failed to publish: ${err.message}`);
