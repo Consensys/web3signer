@@ -1,0 +1,65 @@
+post:
+  tags:
+    - 'Signing'
+  summary: 'Signs data for ETH2 BLS public key'
+  description: 'Signs data for the ETH2 BLS public key specified as part of the URL and returns the signature'
+  operationId: 'ETH2_SIGN'
+  parameters:
+    - name: 'identifier'
+      in: 'path'
+      required: true
+      description: 'Key for which data to sign'
+      schema:
+        type: 'string'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          oneOf:
+            - $ref: '../schemas.yaml#/components/schemas/AggregationSlotSigning'
+            - $ref: '../schemas.yaml#/components/schemas/AggregateAndProofSigning'
+            - $ref: '../schemas.yaml#/components/schemas/AttestationSigning'
+            - $ref: '../schemas.yaml#/components/schemas/BlockSigning'
+            - $ref: '../schemas.yaml#/components/schemas/BeaconBlockSigning'
+            - $ref: '../schemas.yaml#/components/schemas/DepositSigning'
+            - $ref: '../schemas.yaml#/components/schemas/RandaoRevealSigning'
+            - $ref: '../schemas.yaml#/components/schemas/VoluntaryExitSigning'
+            - $ref: '../schemas.yaml#/components/schemas/SyncCommitteeMessageSigning'
+            - $ref: '../schemas.yaml#/components/schemas/SyncCommitteeSelectionProofSigning'
+            - $ref: '../schemas.yaml#/components/schemas/SyncCommitteeContributionAndProofSigning'
+            - $ref: '../schemas.yaml#/components/schemas/ValidatorRegistrationSigning'
+          discriminator:
+            propertyName: type
+            mapping:
+              AGGREGATION_SLOT: '../schemas.yaml#/components/schemas/AggregationSlotSigning'
+              AGGREGATE_AND_PROOF: '../schemas.yaml#/components/schemas/AggregateAndProofSigning'
+              ATTESTATION: '../schemas.yaml#/components/schemas/AttestationSigning'
+              BLOCK: '../schemas.yaml#/components/schemas/BlockSigning'
+              BLOCK_V2: '../schemas.yaml#/components/schemas/BeaconBlockSigning'
+              DEPOSIT: '../schemas.yaml#/components/schemas/DepositSigning'
+              RANDAO_REVEAL: '../schemas.yaml#/components/schemas/RandaoRevealSigning'
+              VOLUNTARY_EXIT: '../schemas.yaml#/components/schemas/VoluntaryExitSigning'
+              SYNC_COMMITTEE_MESSAGE: '../schemas.yaml#/components/schemas/SyncCommitteeMessageSigning'
+              SYNC_COMMITTEE_SELECTION_PROOF: '../schemas.yaml#/components/schemas/SyncCommitteeSelectionProofSigning'
+              SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF: '../schemas.yaml#/components/schemas/SyncCommitteeContributionAndProofSigning'
+              VALIDATOR_REGISTRATION: '../schemas.yaml#/components/schemas/ValidatorRegistrationSigning'
+  responses:
+    '200':
+      description: 'hex encoded string of signature'
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas.yaml#/components/schemas/SigningResponse'
+        text/plain:
+          schema:
+            type: string
+          example: '0xb3baa751d0a9132cfe93e4e3d5ff9075111100e3789dca219ade5a24d27e19d16b3353149da1833e9b691bb38634e8dc04469be7032132906c927d7e1a49b414730612877bc6b2810c8f202daf793d1ab0d6b5cb21d52f9e52e883859887a5d9'
+    '412':
+      description: 'Signing operation failed due to slashing protection rules'
+    '404':
+      description: 'Public Key not found'
+    '400':
+      description: 'Bad request format'
+    '500':
+      description: 'Internal Web3Signer server error'
