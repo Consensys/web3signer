@@ -173,7 +173,7 @@ jobs:
       - run:
           name: Dependency vulnerability scan
           command: |
-            ./gradlew --no-daemon dependencyCheckAggregate
+            ./gradlew --no-daemon -Dorg.gradle.parallel=false dependencyCheckAggregate
       - run:
           name: Test
           no_output_timeout: 20m
