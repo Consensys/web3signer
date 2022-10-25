@@ -73,6 +73,10 @@
     },
     {
       "moduleName": "org.antlr:ST4"
+    },
+    {
+      "moduleName": "org.reactivestreams:reactive-streams",
+      "moduleLicense": "MIT-0"
     }
   ],
   "overrideLicenses": [
