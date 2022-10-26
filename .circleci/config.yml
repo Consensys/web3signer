@@ -8,9 +8,11 @@ executors:
   executor_med:  # 2cpu, 4G ram
     docker:
       - image: cimg/openjdk:11.0
-        auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO      
+        auth: &docker-auth
+          # Don't panic, throw away account to avoid Docker rate limits when downloading.
+          # Second reason we're doing this is so that forked PRs from external contributors works ie env vars aren't visible to forked PRs from within contexts
+          username: "cddockeruser"
+          password: "fa8651f2-88be-48b7-98ce-e711bd376252"  
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -21,8 +23,7 @@ executors:
     docker:
       - image: cimg/openjdk:11.0
         auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO    
+          <<: *docker-auth   
     resource_class: large
     working_directory: ~/project
     environment:
@@ -34,13 +35,11 @@ executors:
       # Primary container
       - image: cimg/openjdk:11.0
         auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO      
+          <<: *docker-auth     
       # Secondary container running lotus as devnet on port 7777
       - image: textile/lotus-devnet
         auth:
-          username: $DOCKER_USER_RO
-          password: $DOCKER_PASSWORD_RO        
+          <<: *docker-auth       
         environment:
           TEXLOTUSDEVNET_BIGSECTORS: false
     resource_class: large
@@ -320,24 +319,18 @@ workflows:
   default:
     jobs:
       - build:
-          context:
-            - dockerhub-quorumengineering-ro
           filters:
             tags: &filters-release-tags
               only: /^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?/
       - acceptanceTests:
           requires:
             - build
-          context:
-            - dockerhub-quorumengineering-ro
           filters:
             tags:
               <<: *filters-release-tags
       - performanceTests:
           requires:
             - build
-          context:
-            - dockerhub-quorumengineering-ro
           filters:
             tags:
               <<: *filters-release-tags
@@ -351,8 +344,6 @@ workflows:
               <<: *filters-release-tags
           requires:
             - acceptanceTests
-          context:
-            - dockerhub-quorumengineering-ro
       - publish:
           filters:
             branches:
@@ -364,13 +355,10 @@ workflows:
           requires:
             - acceptanceTests
           context:
-            - dockerhub-quorumengineering-ro
             - cloudsmith-protocols
       - buildDocker:
           requires:
             - build
-          context:
-            - dockerhub-quorumengineering-ro
           filters:
             tags:
               <<: *filters-release-tags
