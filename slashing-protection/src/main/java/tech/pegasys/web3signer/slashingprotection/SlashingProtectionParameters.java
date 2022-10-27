@@ -27,6 +27,8 @@ public interface SlashingProtectionParameters {
 
   Path getDbPoolConfigurationFile();
 
+  Path getPruningDbPoolConfigurationFile();
+
   boolean isPruningEnabled();
 
   long getPruningEpochsToKeep();
