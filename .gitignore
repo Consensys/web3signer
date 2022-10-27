@@ -28,3 +28,4 @@ out/
 docker/reports/*
 .vscode
 .lh/*
+.fleet/
