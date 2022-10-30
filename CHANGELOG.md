@@ -1,5 +1,10 @@
 # Changelog
 
+## Next Release
+
+### Features Added
+- Introduced cli option to specify Hikari configuration for pruning database connection [#661](https://github.com/ConsenSys/web3signer/issues/661)
+
 ## 22.10.0
 
 ### Features Added
