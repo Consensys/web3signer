@@ -41,7 +41,7 @@ public class SlashingProtectionContextFactory {
             slashingProtectionParameters.getDbUrl(),
             slashingProtectionParameters.getDbUsername(),
             slashingProtectionParameters.getDbPassword(),
-            slashingProtectionParameters.getDbPoolConfigurationFile());
+            slashingProtectionParameters.getPruningDbPoolConfigurationFile());
 
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final RegisteredValidators registeredValidators = new RegisteredValidators(jdbi, validatorsDao);

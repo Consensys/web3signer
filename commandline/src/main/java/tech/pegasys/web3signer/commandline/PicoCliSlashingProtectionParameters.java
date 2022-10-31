@@ -56,6 +56,13 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   private Path dbPoolConfigurationFile = null;
 
   @Option(
+      names = "--slashing-protection-pruning-db-pool-configuration-file",
+      description =
+          "Optional configuration file for Hikari database connection pool used by pruning process.",
+      paramLabel = "<hikari configuration properties file>")
+  private Path pruningDbPoolConfigurationFile = null;
+
+  @Option(
       names = {"--slashing-protection-pruning-enabled"},
       description =
           "Set to true if all Eth2 slashing protection database should be pruned "
@@ -131,6 +138,11 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   @Override
   public Path getDbPoolConfigurationFile() {
     return dbPoolConfigurationFile;
+  }
+
+  @Override
+  public Path getPruningDbPoolConfigurationFile() {
+    return pruningDbPoolConfigurationFile;
   }
 
   @Override

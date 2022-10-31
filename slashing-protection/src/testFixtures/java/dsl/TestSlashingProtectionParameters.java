@@ -29,6 +29,8 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   private final long pruningInterval;
   private final Path dbPoolConfigurationFile;
 
+  private final Path pruningDbPoolConfigurationFile;
+
   private final int dbHealthCheckTimeoutMilliseconds;
 
   private final int dbHealthCheckIntervalMilliseconds;
@@ -36,14 +38,6 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   public TestSlashingProtectionParameters(
       final String dbUrl, final String dbUser, final String dbPassword) {
     this(dbUrl, dbUser, dbPassword, 0, 0);
-  }
-
-  public TestSlashingProtectionParameters(
-      final String dbUrl,
-      final String dbUser,
-      final String dbPassword,
-      Path dbPoolConfigurationFile) {
-    this(dbUrl, dbUser, dbPassword, dbPoolConfigurationFile, 0, 0, Long.MAX_VALUE, 3000, 3000);
   }
 
   public TestSlashingProtectionParameters(
@@ -67,6 +61,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
         dbUser,
         dbPassword,
         null,
+        null,
         pruningEpochsToKeep,
         pruningSlotsPerEpoch,
         pruningInterval,
@@ -79,6 +74,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
       final String dbUser,
       final String dbPassword,
       final Path dbPoolConfigurationFile,
+      final Path pruningDbPoolConfigurationFile,
       final int pruningEpochsToKeep,
       final int pruningSlotsPerEpoch,
       final long pruningInterval,
@@ -88,6 +84,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
     this.dbUser = dbUser;
     this.dbPassword = dbPassword;
     this.dbPoolConfigurationFile = dbPoolConfigurationFile;
+    this.pruningDbPoolConfigurationFile = pruningDbPoolConfigurationFile;
     this.pruningEnabled = true;
     this.pruningAtBootEnabled = true;
     this.pruningEpochsToKeep = pruningEpochsToKeep;
@@ -145,6 +142,11 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   @Override
   public Path getDbPoolConfigurationFile() {
     return dbPoolConfigurationFile;
+  }
+
+  @Override
+  public Path getPruningDbPoolConfigurationFile() {
+    return pruningDbPoolConfigurationFile;
   }
 
   @Override
