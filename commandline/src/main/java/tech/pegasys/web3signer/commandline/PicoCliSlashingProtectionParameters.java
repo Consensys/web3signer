@@ -69,7 +69,7 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
               + "(default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>",
       arity = "1")
-  boolean pruningEnabled = false;
+  boolean pruningEnabled = true;
 
   @Option(
       names = {"--slashing-protection-pruning-epochs-to-keep"},
