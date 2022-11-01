@@ -88,7 +88,7 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   @Option(
       names = {"--slashing-protection-pruning-interval"},
       description = "Hours between pruning operations (default: ${DEFAULT-VALUE})")
-  long pruningInterval = 24;
+  long pruningInterval = 12;
 
   @Option(
       names = {"--slashing-protection-pruning-at-boot-enabled"},

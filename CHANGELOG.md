@@ -4,7 +4,7 @@
 
 ### Features Added
 - Introduced cli option to specify Hikari configuration for pruning database connection [#661](https://github.com/ConsenSys/web3signer/issues/661)
-- Better database pruning default values: Pruning enabled by default with `slashing-protection-pruning-epochs-to-keep = 250` and `slashing-protection-pruning-at-boot-enabled = false` 
+- Better database pruning default values: Pruning enabled by default with `slashing-protection-pruning-epochs-to-keep = 250`, `slashing-protection-pruning-at-boot-enabled = false` and `slashing-protection-pruning-interval = 12`
 
 ## 22.10.0
 
