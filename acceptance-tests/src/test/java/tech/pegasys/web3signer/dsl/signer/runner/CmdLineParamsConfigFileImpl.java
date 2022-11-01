@@ -269,6 +269,11 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               signerConfig.isSlashingProtectionPruningEnabled()));
       yamlConfig.append(
           String.format(
+              YAML_BOOLEAN_FMT,
+              "eth2.slashing-protection-pruning-at-boot-enabled",
+              signerConfig.isSlashingProtectionPruningAtBootEnabled()));
+      yamlConfig.append(
+          String.format(
               YAML_NUMERIC_FMT,
               "eth2.slashing-protection-pruning-epochs-to-keep",
               signerConfig.getSlashingProtectionPruningEpochsToKeep()));
@@ -280,7 +285,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       yamlConfig.append(
           String.format(
               YAML_NUMERIC_FMT,
-              "eth2.slashing-protection-pruning-schedule",
+              "eth2.slashing-protection-pruning-interval",
               signerConfig.getSlashingProtectionPruningInterval()));
     }
 

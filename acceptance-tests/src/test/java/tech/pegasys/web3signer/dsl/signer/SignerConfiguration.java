@@ -54,6 +54,7 @@ public class SignerConfiguration {
   private final Optional<Path> slashingExportPath;
   private final Optional<Path> slashingImportPath;
   private final boolean enableSlashingPruning;
+  private final boolean enableSlashingPruningAtBoot;
   private final boolean swaggerUIEnabled;
   private final boolean useConfigFile;
   private final long slashingPruningEpochsToKeep;
@@ -91,6 +92,7 @@ public class SignerConfiguration {
       final Optional<Path> slashingExportPath,
       final Optional<Path> slashingImportPath,
       final boolean enableSlashingPruning,
+      final boolean enableSlashingPruningAtBoot,
       final long slashingPruningEpochsToKeep,
       final long slashingPruningSlotsPerEpoch,
       final long slashingPruningSchedule,
@@ -125,6 +127,7 @@ public class SignerConfiguration {
     this.slashingExportPath = slashingExportPath;
     this.slashingImportPath = slashingImportPath;
     this.enableSlashingPruning = enableSlashingPruning;
+    this.enableSlashingPruningAtBoot = enableSlashingPruningAtBoot;
     this.slashingPruningEpochsToKeep = slashingPruningEpochsToKeep;
     this.slashingPruningSlotsPerEpoch = slashingPruningSlotsPerEpoch;
     this.slashingPruningInterval = slashingPruningSchedule;
@@ -235,6 +238,10 @@ public class SignerConfiguration {
 
   public boolean isSlashingProtectionPruningEnabled() {
     return enableSlashingPruning;
+  }
+
+  public boolean isSlashingProtectionPruningAtBootEnabled() {
+    return enableSlashingPruningAtBoot;
   }
 
   public long getSlashingProtectionPruningEpochsToKeep() {

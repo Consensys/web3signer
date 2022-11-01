@@ -87,9 +87,10 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
     assertThat(attestationsBeforePruning).hasSize(2);
     assertThat(blocksBeforePruning).hasSize(2);
 
-    // start signer with pruning enabled configured to only keep one block and attestation
+    // start signer with pruning enabled at boot configured to only keep one block and attestation
     signerBuilder
         .withSlashingPruningEnabled(true)
+        .withSlashingPruningEnabledAtBoot(true)
         .withSlashingPruningEpochsToKeep(1)
         .withSlashingPruningSlotsPerEpoch(1)
         .withSlashingPruningInterval(1);
