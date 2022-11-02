@@ -39,9 +39,10 @@ public class DatabaseUtil {
 
       final String databaseUrl =
           String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
+      final boolean useConnectionPool = true;
       final Jdbi jdbi =
           DbConnection.createConnection(
-              databaseUrl, DatabaseUtil.USERNAME, DatabaseUtil.PASSWORD, null);
+              databaseUrl, DatabaseUtil.USERNAME, DatabaseUtil.PASSWORD, null, useConnectionPool);
       return new TestDatabaseInfo(db, jdbi, flyway);
     } catch (IOException e) {
       throw new UncheckedIOException("Unable to create embedded postgres database", e);
