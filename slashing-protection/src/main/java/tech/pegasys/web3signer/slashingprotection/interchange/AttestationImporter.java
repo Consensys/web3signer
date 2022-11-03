@@ -137,11 +137,11 @@ public class AttestationImporter {
                 watermark -> Optional.ofNullable(watermark.getTargetEpoch())));
 
     if (newSourceWatermark.isPresent() && newTargetWatermark.isPresent()) {
-      LOG.info(
+      LOG.debug(
           "Updating validator {} source epoch to {}",
           validator.getPublicKey(),
           newSourceWatermark.get());
-      LOG.info(
+      LOG.debug(
           "Updating validator {} target epoch to {}",
           validator.getPublicKey(),
           newTargetWatermark.get());

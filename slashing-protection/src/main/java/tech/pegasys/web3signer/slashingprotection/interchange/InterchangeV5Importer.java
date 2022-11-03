@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -100,18 +101,26 @@ public class InterchangeV5Importer {
       }
 
       final ArrayNode dataNode = rootNode.withArray("data");
-      jdbi.useTransaction(
-          h -> {
-            for (int i = 0; i < dataNode.size(); i++) {
-              try {
-                final JsonNode validatorNode = dataNode.get(i);
-                parseValidator(h, validatorNode, pubkeys);
-              } catch (final IllegalArgumentException e) {
-                LOG.error("Failed to parse validator {}, due to {}", i, e.getMessage());
-                throw e;
-              }
-            }
-          });
+      //      final int target = Math.min(50, dataNode.size());
+      final int target = dataNode.size();
+
+      IntStream.range(0, target)
+          .parallel()
+          .forEach(
+              i -> {
+                jdbi.useTransaction(
+                    h -> {
+                      try {
+                        final JsonNode validatorNode = dataNode.get(i);
+                        parseValidator(h, validatorNode, pubkeys);
+                      } catch (final IllegalArgumentException e) {
+                        LOG.error("Failed to parse validator {}, due to {}", i, e.getMessage());
+                        throw e;
+                      } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                      }
+                    });
+              });
     }
   }
 
@@ -140,6 +149,7 @@ public class InterchangeV5Importer {
 
     final ArrayNode signedAttestationNode = parentNode.withArray("signed_attestations");
     importAttestations(handle, validator, signedAttestationNode);
+    LOG.info("Imported slashing protection data for validator {}", validator.getPublicKey());
   }
 
   private void importBlocks(
