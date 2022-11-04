@@ -101,30 +101,24 @@ public class InterchangeV5Importer {
       }
 
       final ArrayNode dataNode = rootNode.withArray("data");
-      //      final int target = Math.min(50, dataNode.size());
-      final int target = dataNode.size();
-
-      IntStream.range(0, target)
+      IntStream.range(0, dataNode.size())
           .parallel()
           .forEach(
               i -> {
-                jdbi.useTransaction(
-                    h -> {
-                      try {
+                try {
+                  jdbi.useTransaction(
+                      h -> {
                         final JsonNode validatorNode = dataNode.get(i);
-                        parseValidator(h, validatorNode, pubkeys);
-                      } catch (final IllegalArgumentException e) {
-                        LOG.error("Failed to parse validator {}, due to {}", i, e.getMessage());
-                        throw e;
-                      } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                      }
-                    });
+                        importValidator(h, validatorNode, pubkeys);
+                      });
+                } catch (Exception e) {
+                  LOG.error("Failed importing slashing protection data for validator {}", i);
+                }
               });
     }
   }
 
-  private void parseValidator(
+  private void importValidator(
       final Handle handle, final JsonNode node, final Optional<List<String>> pubkeys)
       throws JsonProcessingException {
     if (node.isArray()) {
