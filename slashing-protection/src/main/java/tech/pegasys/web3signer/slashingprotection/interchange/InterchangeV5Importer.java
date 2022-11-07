@@ -111,8 +111,11 @@ public class InterchangeV5Importer {
                         final JsonNode validatorNode = dataNode.get(i);
                         importValidator(h, validatorNode, pubkeys);
                       });
-                } catch (Exception e) {
-                  LOG.error("Failed importing slashing protection data for validator {}", i);
+                } catch (final Exception e) {
+                  LOG.error(
+                      "Failed importing slashing protection data for validator {} caused by:{}",
+                      i,
+                      e.getMessage());
                 }
               });
     }
