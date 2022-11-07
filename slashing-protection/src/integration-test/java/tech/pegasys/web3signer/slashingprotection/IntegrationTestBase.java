@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static db.DatabaseUtil.PASSWORD;
 import static db.DatabaseUtil.USERNAME;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
@@ -28,7 +29,7 @@ import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeJsonPro
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import db.DatabaseUtil;
@@ -95,12 +96,36 @@ public class IntegrationTestBase {
                 .list());
   }
 
+  protected Optional<SignedAttestation> findAttestationByPublicKey(final Bytes publicKey) {
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    "SELECT v.public_key, a.source_epoch, a.target_epoch, a.signing_root "
+                        + "FROM signed_attestations AS a, validators AS v where a.validator_id = v.id "
+                        + "AND v.public_key = ?")
+                .bind(0, publicKey)
+                .mapToBean(SignedAttestation.class)
+                .findFirst());
+  }
+
   protected List<SignedBlock> findAllBlocks() {
     return jdbi.withHandle(
         h ->
             h.createQuery("SELECT validator_id, slot, signing_root FROM signed_blocks")
                 .mapToBean(SignedBlock.class)
                 .list());
+  }
+
+  protected Optional<SignedBlock> findBlockByPublicKey(final Bytes publicKey) {
+    return jdbi.withHandle(
+        h ->
+            h.createQuery(
+                    "SELECT v.public_key, b.validator_id, b.slot, b.signing_root "
+                        + "FROM signed_blocks AS b, validators AS v WHERE b.validator_id = v.id "
+                        + "AND v.public_key = ?")
+                .bind(0, publicKey)
+                .mapToBean(SignedBlock.class)
+                .findFirst());
   }
 
   protected void insertValidator(final Bytes publicKey, final int validatorId) {
@@ -140,15 +165,12 @@ public class IntegrationTestBase {
 
   protected List<SignedBlock> fetchBlocks(final int validatorId) {
     return jdbi.withHandle(
-        h -> signedBlocksDao.findAllBlockSignedBy(h, validatorId).collect(Collectors.toList()));
+        h -> signedBlocksDao.findAllBlockSignedBy(h, validatorId).collect(toList()));
   }
 
   protected List<SignedAttestation> fetchAttestations(final int validatorId) {
     return jdbi.withHandle(
-        h ->
-            signedAttestationsDao
-                .findAllAttestationsSignedBy(h, validatorId)
-                .collect(Collectors.toList()));
+        h -> signedAttestationsDao.findAllAttestationsSignedBy(h, validatorId).collect(toList()));
   }
 
   protected void insertGvr(final Bytes genesisValidatorsRoot) {

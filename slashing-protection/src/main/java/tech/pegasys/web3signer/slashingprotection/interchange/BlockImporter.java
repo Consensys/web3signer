@@ -90,7 +90,7 @@ public class BlockImporter {
         lowWatermarkDao.findLowWatermarkForValidator(handle, validator.getId());
 
     if (minSlotTracker.compareTrackedValueTo(watermark.map(SigningWatermark::getSlot)) > 0) {
-      LOG.warn(
+      LOG.debug(
           "Updating Block slot low watermark to {}", minSlotTracker.getTrackedMinValue().get());
       lowWatermarkDao.updateSlotWatermarkFor(
           handle, validator.getId(), minSlotTracker.getTrackedMinValue().get());

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -100,22 +101,27 @@ public class InterchangeV5Importer {
       }
 
       final ArrayNode dataNode = rootNode.withArray("data");
-      jdbi.useTransaction(
-          h -> {
-            for (int i = 0; i < dataNode.size(); i++) {
-              try {
-                final JsonNode validatorNode = dataNode.get(i);
-                parseValidator(h, validatorNode, pubkeys);
-              } catch (final IllegalArgumentException e) {
-                LOG.error("Failed to parse validator {}, due to {}", i, e.getMessage());
-                throw e;
-              }
-            }
-          });
+      IntStream.range(0, dataNode.size())
+          .parallel()
+          .forEach(
+              i -> {
+                try {
+                  jdbi.useTransaction(
+                      h -> {
+                        final JsonNode validatorNode = dataNode.get(i);
+                        importValidator(h, validatorNode, pubkeys);
+                      });
+                } catch (final Exception e) {
+                  LOG.error(
+                      "Failed importing slashing protection data for validator {} caused by:{}",
+                      i,
+                      e.getMessage());
+                }
+              });
     }
   }
 
-  private void parseValidator(
+  private void importValidator(
       final Handle handle, final JsonNode node, final Optional<List<String>> pubkeys)
       throws JsonProcessingException {
     if (node.isArray()) {
@@ -140,6 +146,7 @@ public class InterchangeV5Importer {
 
     final ArrayNode signedAttestationNode = parentNode.withArray("signed_attestations");
     importAttestations(handle, validator, signedAttestationNode);
+    LOG.info("Imported slashing protection data for validator {}", validator.getPublicKey());
   }
 
   private void importBlocks(
