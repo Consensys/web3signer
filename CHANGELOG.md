@@ -1,10 +1,13 @@
 # Changelog
 
 ## Next Release
+### Breaking Changes
+- Slashing protection imports will now only fail for an individual validator instead for all validators allowing partial import if there is valid and invalid data.
 
 ### Features Added
 - Introduced cli option to specify Hikari configuration for pruning database connection [#661](https://github.com/ConsenSys/web3signer/issues/661)
 - Better database pruning default values: Pruning enabled by default with `slashing-protection-pruning-epochs-to-keep = 250`, `slashing-protection-pruning-at-boot-enabled = false` and `slashing-protection-pruning-interval = 12`
+- Improved performance for slashing protection import
 
 ## 22.10.0
 
