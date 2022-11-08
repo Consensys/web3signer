@@ -10,9 +10,9 @@
 - Improved performance for slashing protection import
 
 ### Experimental
-- Introduced cli option `--Xslashing-protection-db-connection-pool-enabled` to disable internal Hikari based connection 
- pool to allow using external connection pool such as pgBouncer. `--slashing-protection-db-pool-configuration-file` and 
- `--slashing-protection-db-pool-configuration-file` can be reused to specify PG Datasource properties. 
+- Introduced cli option `--Xslashing-protection-db-connection-pool-enabled` to disable internal database connection 
+ pool (Hikari) to allow using external database connection pool such as pgBouncer. `--slashing-protection-db-pool-configuration-file` and 
+ `--slashing-protection-pruning-db-pool-configuration-file` can be reused to specify PG Datasource properties. 
  [#662](https://github.com/ConsenSys/web3signer/issues/662)
 
 
