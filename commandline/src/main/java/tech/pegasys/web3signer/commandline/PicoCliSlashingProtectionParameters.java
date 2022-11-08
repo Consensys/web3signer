@@ -118,7 +118,7 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   @Option(
       names = "--Xslashing-protection-db-connection-pool-enabled",
       description =
-          "Set to false to disable internal database connection pooling. (Default: ${DEFAULT-VALUE}",
+          "Set to false to disable internal database connection pooling. (Default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>")
   private boolean connectionPoolEnabled = true;
 
