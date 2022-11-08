@@ -120,7 +120,7 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
       description =
           "Set to false to disable internal database connection pooling. (Default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>")
-  private boolean connectionPoolEnabled = true;
+  private boolean dbConnectionPoolEnabled = true;
 
   @Override
   public boolean isEnabled() {
@@ -193,7 +193,7 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   }
 
   @Override
-  public boolean isConnectionPoolEnabled() {
-    return connectionPoolEnabled;
+  public boolean isDbConnectionPoolEnabled() {
+    return dbConnectionPoolEnabled;
   }
 }

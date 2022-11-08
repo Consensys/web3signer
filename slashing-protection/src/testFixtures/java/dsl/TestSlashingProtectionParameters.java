@@ -35,7 +35,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
 
   private final int dbHealthCheckIntervalMilliseconds;
 
-  private final boolean connectionPoolEnabled;
+  private final boolean dbConnectionPoolEnabled;
 
   public TestSlashingProtectionParameters(
       final String dbUrl, final String dbUser, final String dbPassword) {
@@ -83,7 +83,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
       final long pruningInterval,
       final int dbHealthCheckTimeoutMilliseconds,
       final int dbHealthCheckIntervalMilliseconds,
-      final boolean connectionPoolEnabled) {
+      final boolean dbConnectionPoolEnabled) {
     this.dbUrl = dbUrl;
     this.dbUser = dbUser;
     this.dbPassword = dbPassword;
@@ -96,7 +96,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
     this.pruningInterval = pruningInterval;
     this.dbHealthCheckTimeoutMilliseconds = dbHealthCheckTimeoutMilliseconds;
     this.dbHealthCheckIntervalMilliseconds = dbHealthCheckIntervalMilliseconds;
-    this.connectionPoolEnabled = connectionPoolEnabled;
+    this.dbConnectionPoolEnabled = dbConnectionPoolEnabled;
   }
 
   @Override
@@ -170,7 +170,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   }
 
   @Override
-  public boolean isConnectionPoolEnabled() {
-    return connectionPoolEnabled;
+  public boolean isDbConnectionPoolEnabled() {
+    return dbConnectionPoolEnabled;
   }
 }

@@ -49,9 +49,9 @@ public class DbConnection {
       final String username,
       final String password,
       final Path configurationFile,
-      final boolean useCP) {
+      final boolean dbConnectionPoolEnabled) {
     final DataSource datasource;
-    if (useCP) {
+    if (dbConnectionPoolEnabled) {
       datasource = createHikariDataSource(jdbcUrl, username, password, configurationFile);
     } else {
       datasource = createPGDataSource(jdbcUrl, username, password, configurationFile);
@@ -66,9 +66,9 @@ public class DbConnection {
       final String username,
       final String password,
       final Path configurationFile,
-      final boolean useCP) {
+      final boolean dbConnectionPoolEnabled) {
     final DataSource datasource;
-    if (useCP) {
+    if (dbConnectionPoolEnabled) {
       final HikariDataSource hkDatasource =
           createHikariDataSource(jdbcUrl, username, password, configurationFile);
       hkDatasource.setMaximumPoolSize(1); // we only need 1 connection in pool for pruning
