@@ -48,6 +48,7 @@ public class SignerConfiguration {
   private final Optional<String> slashingProtectionDbUrl;
   private final String slashingProtectionDbUsername;
   private final String slashingProtectionDbPassword;
+  private final boolean slashingProtectionDbConnectionPoolEnabled;
   private final Optional<Path> slashingProtectionDbPoolConfigurationFile;
   private final Optional<Map<String, String>> web3SignerEnvironment;
   private final boolean enableSlashing;
@@ -85,6 +86,7 @@ public class SignerConfiguration {
       final Optional<String> slashingProtectionDbUrl,
       final String slashingProtectionDbUsername,
       final String slashingProtectionDbPassword,
+      final boolean slashingProtectionDbConnectionPoolEnabled,
       final String mode,
       final Optional<Map<String, String>> web3SignerEnvironment,
       final Duration startupTimeout,
@@ -120,6 +122,7 @@ public class SignerConfiguration {
     this.slashingProtectionDbUrl = slashingProtectionDbUrl;
     this.slashingProtectionDbUsername = slashingProtectionDbUsername;
     this.slashingProtectionDbPassword = slashingProtectionDbPassword;
+    this.slashingProtectionDbConnectionPoolEnabled = slashingProtectionDbConnectionPoolEnabled;
     this.mode = mode;
     this.web3SignerEnvironment = web3SignerEnvironment;
     this.startupTimeout = startupTimeout;
@@ -286,5 +289,9 @@ public class SignerConfiguration {
 
   public Duration getStartupTimeout() {
     return startupTimeout;
+  }
+
+  public boolean isSlashingProtectionDbConnectionPoolEnabled() {
+    return slashingProtectionDbConnectionPoolEnabled;
   }
 }

@@ -33,6 +33,8 @@ import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
 
@@ -52,7 +54,14 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
           "eth2_slashingprotection_permitted_signings",
           "eth2_slashingprotection_prevented_signings");
 
-  void setupSigner(final Path testDirectory, final boolean enableSlashing) {
+  void setupSigner(final Path testDirectory) {
+    setupSigner(testDirectory, true, true);
+  }
+
+  void setupSigner(
+      final Path testDirectory,
+      final boolean enableSlashing,
+      final boolean slashingProtectionDbConnectionPoolEnabled) {
     final SignerConfigurationBuilder builder =
         new SignerConfigurationBuilder()
             .withMetricsCategories("ETH2_SLASHING_PROTECTION")
@@ -60,6 +69,8 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
             .withSlashingEnabled(enableSlashing)
             .withSlashingProtectionDbUsername(DB_USERNAME)
             .withSlashingProtectionDbPassword(DB_PASSWORD)
+            .withSlashingProtectionDbConnectionPoolEnabled(
+                slashingProtectionDbConnectionPoolEnabled)
             .withMetricsEnabled(true)
             .withNetwork("minimal")
             .withKeyStoreDirectory(testDirectory);
@@ -71,11 +82,12 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  @Test
-  void canSignSameAttestationTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
-      throws JsonProcessingException {
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void canSignSameAttestationTwiceWhenSlashingIsEnabled(
+      boolean dbConnectionPoolEnabled, @TempDir Path testDirectory) throws JsonProcessingException {
 
-    setupSigner(testDirectory, true);
+    setupSigner(testDirectory, true, dbConnectionPoolEnabled);
 
     final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
 
@@ -97,7 +109,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   @Test
   void cannotSignASecondAttestationForSameSlotWithDifferentSigningRoot(@TempDir Path testDirectory)
       throws JsonProcessingException {
-    setupSigner(testDirectory, true);
+    setupSigner(testDirectory);
 
     final Eth2SigningRequestBody initialRequest = createAttestationRequest(5, 6, UInt64.ZERO);
 
@@ -123,7 +135,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   @Test
   void cannotSignSurroundedAttestationWhenSlashingEnabled(@TempDir Path testDirectory)
       throws JsonProcessingException {
-    setupSigner(testDirectory, true);
+    setupSigner(testDirectory);
 
     final Eth2SigningRequestBody initialRequest = createAttestationRequest(3, 6, UInt64.ONE);
     final Response initialResponse =
@@ -141,7 +153,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   @Test
   void cannotSignASurroundingAttestationWhenSlashingEnabled(@TempDir Path testDirectory)
       throws JsonProcessingException {
-    setupSigner(testDirectory, true);
+    setupSigner(testDirectory);
 
     final Eth2SigningRequestBody initialRequest = createAttestationRequest(3, 6, UInt64.ONE);
     final Response initialResponse =
@@ -160,7 +172,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   void canSignSameBlockTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
       throws JsonProcessingException {
 
-    setupSigner(testDirectory, true);
+    setupSigner(testDirectory);
 
     final Eth2SigningRequestBody request =
         createBlockRequest(
@@ -182,7 +194,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   @Test
   void signingBlockWithDifferentSigningRootForPreviousSlotFailsWith412(@TempDir Path testDirectory)
       throws JsonProcessingException {
-    setupSigner(testDirectory, true);
+    setupSigner(testDirectory);
 
     final Eth2SigningRequestBody initialRequest =
         createBlockRequest(
