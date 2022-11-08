@@ -9,6 +9,10 @@
 - Better database pruning default values: Pruning enabled by default with `slashing-protection-pruning-epochs-to-keep = 250`, `slashing-protection-pruning-at-boot-enabled = false` and `slashing-protection-pruning-interval = 12`
 - Improved performance for slashing protection import
 
+### Experimental
+- Introduced cli option to disable internal Hikari based connection pool to allow using external connection pool such as pgBouncer [662](https://github.com/ConsenSys/web3signer/issues/662)
+
+--
 ## 22.10.0
 
 ### Features Added
