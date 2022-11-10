@@ -35,6 +35,8 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
 
   private final int dbHealthCheckIntervalMilliseconds;
 
+  private final boolean dbConnectionPoolEnabled;
+
   public TestSlashingProtectionParameters(
       final String dbUrl, final String dbUser, final String dbPassword) {
     this(dbUrl, dbUser, dbPassword, 0, 0);
@@ -66,7 +68,8 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
         pruningSlotsPerEpoch,
         pruningInterval,
         3000,
-        3000);
+        3000,
+        true);
   }
 
   public TestSlashingProtectionParameters(
@@ -79,7 +82,8 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
       final int pruningSlotsPerEpoch,
       final long pruningInterval,
       final int dbHealthCheckTimeoutMilliseconds,
-      final int dbHealthCheckIntervalMilliseconds) {
+      final int dbHealthCheckIntervalMilliseconds,
+      final boolean dbConnectionPoolEnabled) {
     this.dbUrl = dbUrl;
     this.dbUser = dbUser;
     this.dbPassword = dbPassword;
@@ -92,6 +96,7 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
     this.pruningInterval = pruningInterval;
     this.dbHealthCheckTimeoutMilliseconds = dbHealthCheckTimeoutMilliseconds;
     this.dbHealthCheckIntervalMilliseconds = dbHealthCheckIntervalMilliseconds;
+    this.dbConnectionPoolEnabled = dbConnectionPoolEnabled;
   }
 
   @Override
@@ -162,5 +167,10 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
   @Override
   public long getDbHealthCheckIntervalMilliseconds() {
     return dbHealthCheckIntervalMilliseconds;
+  }
+
+  @Override
+  public boolean isDbConnectionPoolEnabled() {
+    return dbConnectionPoolEnabled;
   }
 }

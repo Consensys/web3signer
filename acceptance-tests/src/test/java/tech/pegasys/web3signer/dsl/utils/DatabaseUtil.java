@@ -26,6 +26,7 @@ import org.jdbi.v3.core.Jdbi;
 public class DatabaseUtil {
   public static final String USERNAME = "postgres";
   public static final String PASSWORD = "postgres";
+  public static final boolean DB_CONNECTION_POOL_ENABLED = true;
 
   public static TestDatabaseInfo create() {
     try {
@@ -41,7 +42,11 @@ public class DatabaseUtil {
           String.format("jdbc:postgresql://localhost:%d/postgres", db.getPort());
       final Jdbi jdbi =
           DbConnection.createConnection(
-              databaseUrl, DatabaseUtil.USERNAME, DatabaseUtil.PASSWORD, null);
+              databaseUrl,
+              DatabaseUtil.USERNAME,
+              DatabaseUtil.PASSWORD,
+              null,
+              DB_CONNECTION_POOL_ENABLED);
       return new TestDatabaseInfo(db, jdbi, flyway);
     } catch (IOException e) {
       throw new UncheckedIOException("Unable to create embedded postgres database", e);

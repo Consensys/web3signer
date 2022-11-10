@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.util.Properties;
 import javax.sql.DataSource;
@@ -36,6 +37,7 @@ import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.argument.Arguments;
 import org.jdbi.v3.core.mapper.ColumnMappers;
 import org.jdbi.v3.core.transaction.SerializableTransactionRunner;
+import org.postgresql.ds.PGSimpleDataSource;
 
 public class DbConnection {
   // https://jdbc.postgresql.org/documentation/head/connect.html#connection-parameters
@@ -46,8 +48,14 @@ public class DbConnection {
       final String jdbcUrl,
       final String username,
       final String password,
-      final Path configurationFile) {
-    final DataSource datasource = createDataSource(jdbcUrl, username, password, configurationFile);
+      final Path configurationFile,
+      final boolean dbConnectionPoolEnabled) {
+    final DataSource datasource;
+    if (dbConnectionPoolEnabled) {
+      datasource = createHikariDataSource(jdbcUrl, username, password, configurationFile);
+    } else {
+      datasource = createPGDataSource(jdbcUrl, username, password, configurationFile);
+    }
     final Jdbi jdbi = Jdbi.create(datasource);
     configureJdbi(jdbi);
     return jdbi;
@@ -57,10 +65,17 @@ public class DbConnection {
       final String jdbcUrl,
       final String username,
       final String password,
-      final Path configurationFile) {
-    final HikariDataSource datasource =
-        createDataSource(jdbcUrl, username, password, configurationFile);
-    datasource.setMaximumPoolSize(1); // we only need 1 connection in pool for pruning
+      final Path configurationFile,
+      final boolean dbConnectionPoolEnabled) {
+    final DataSource datasource;
+    if (dbConnectionPoolEnabled) {
+      final HikariDataSource hkDatasource =
+          createHikariDataSource(jdbcUrl, username, password, configurationFile);
+      hkDatasource.setMaximumPoolSize(1); // we only need 1 connection in pool for pruning
+      datasource = hkDatasource;
+    } else {
+      datasource = createPGDataSource(jdbcUrl, username, password, configurationFile);
+    }
     final Jdbi jdbi = Jdbi.create(datasource);
     configureJdbi(jdbi);
     return jdbi;
@@ -77,7 +92,7 @@ public class DbConnection {
     jdbi.setTransactionHandler(new SerializableTransactionRunner());
   }
 
-  private static HikariDataSource createDataSource(
+  private static HikariDataSource createHikariDataSource(
       final String jdbcUrl,
       final String username,
       final String password,
@@ -97,28 +112,74 @@ public class DbConnection {
     return new HikariDataSource(hikariConfig);
   }
 
+  private static DataSource createPGDataSource(
+      final String jdbcUrl,
+      final String username,
+      final String password,
+      final Path propertiesFile) {
+    final PGSimpleDataSource pgSimpleDataSource = new PGSimpleDataSource();
+    pgSimpleDataSource.setURL(jdbcUrl);
+
+    if (!isEmpty(username)) {
+      pgSimpleDataSource.setUser(username);
+    }
+    if (!isEmpty(password)) {
+      pgSimpleDataSource.setPassword(password);
+    }
+
+    final Properties properties = loadPGConfigurationProperties(propertiesFile);
+    properties.forEach(
+        (k, v) -> {
+          try {
+            pgSimpleDataSource.setProperty(k.toString(), v.toString());
+          } catch (final SQLException e) {
+            throw new RuntimeException("Error setting Datasource Property.", e);
+          }
+        });
+
+    return pgSimpleDataSource;
+  }
+
   @VisibleForTesting
-  static Properties loadHikariConfigurationProperties(final Path hikariConfigurationFile) {
-    final Properties hikariConfigurationProperties = new Properties();
-    if (hikariConfigurationFile != null) {
-      try (FileInputStream inputStream = new FileInputStream(hikariConfigurationFile.toFile())) {
-        hikariConfigurationProperties.load(inputStream);
+  static Properties loadHikariConfigurationProperties(final Path configurationFile) {
+    return addDefaultHikariDatasourceTimeoutProperty(
+        loadDatasourcePropertiesFile(configurationFile));
+  }
+
+  static Properties loadPGConfigurationProperties(final Path configurationFile) {
+    return addDefaultPGDatasourceTimeoutProperty(loadDatasourcePropertiesFile(configurationFile));
+  }
+
+  private static Properties loadDatasourcePropertiesFile(final Path configurationFile) {
+    final Properties datasourceConfigurationProperties = new Properties();
+    if (configurationFile != null) {
+      try (FileInputStream inputStream = new FileInputStream(configurationFile.toFile())) {
+        datasourceConfigurationProperties.load(inputStream);
       } catch (final FileNotFoundException e) {
         throw new UncheckedIOException(
-            "Hikari configuration file not found: " + hikariConfigurationFile, e);
+            "Datasource configuration file not found: " + configurationFile, e);
       } catch (final IOException e) {
         final String errorMessage =
             String.format(
-                "Unexpected IO error while reading Hikari configuration file [%s]",
-                hikariConfigurationFile);
+                "Unexpected IO error while reading Datasource configuration file [%s]",
+                configurationFile);
         throw new UncheckedIOException(errorMessage, e);
       }
     }
+    return datasourceConfigurationProperties;
+  }
 
-    if (!hikariConfigurationProperties.containsKey("dataSource." + PG_SOCKET_TIMEOUT_PARAM)) {
-      hikariConfigurationProperties.put(
-          "dataSource." + PG_SOCKET_TIMEOUT_PARAM, DEFAULT_PG_SOCKET_TIMEOUT_SECONDS);
+  private static Properties addDefaultHikariDatasourceTimeoutProperty(final Properties properties) {
+    if (!properties.containsKey("dataSource." + PG_SOCKET_TIMEOUT_PARAM)) {
+      properties.put("dataSource." + PG_SOCKET_TIMEOUT_PARAM, DEFAULT_PG_SOCKET_TIMEOUT_SECONDS);
     }
-    return hikariConfigurationProperties;
+    return properties;
+  }
+
+  private static Properties addDefaultPGDatasourceTimeoutProperty(final Properties properties) {
+    if (!properties.containsKey(PG_SOCKET_TIMEOUT_PARAM)) {
+      properties.put(PG_SOCKET_TIMEOUT_PARAM, DEFAULT_PG_SOCKET_TIMEOUT_SECONDS);
+    }
+    return properties;
   }
 }

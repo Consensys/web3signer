@@ -115,6 +115,15 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
       arity = "1")
   private long dbHealthCheckIntervalMilliseconds = 30000;
 
+  @Option(
+      names = "--Xslashing-protection-db-connection-pool-enabled",
+      description =
+          "Set to false to disable internal database connection pooling. Should only be disabled when using an external database connection pool. (Default: ${DEFAULT-VALUE})",
+      paramLabel = "<BOOL>",
+      arity = "1",
+      hidden = true)
+  private boolean dbConnectionPoolEnabled = true;
+
   @Override
   public boolean isEnabled() {
     return enabled;
@@ -183,5 +192,10 @@ public class PicoCliSlashingProtectionParameters implements SlashingProtectionPa
   @Override
   public long getDbHealthCheckIntervalMilliseconds() {
     return dbHealthCheckIntervalMilliseconds;
+  }
+
+  @Override
+  public boolean isDbConnectionPoolEnabled() {
+    return dbConnectionPoolEnabled;
   }
 }

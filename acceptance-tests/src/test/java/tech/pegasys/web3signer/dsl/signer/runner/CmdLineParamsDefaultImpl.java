@@ -180,6 +180,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
         params.add("--slashing-protection-db-pool-configuration-file");
         params.add(signerConfig.getSlashingProtectionDbPoolConfigurationFile().toString());
       }
+
+      // enabled by default, explicitly set when false
+      if (!signerConfig.isSlashingProtectionDbConnectionPoolEnabled()) {
+        params.add("--Xslashing-protection-db-connection-pool-enabled=false");
+      }
     }
 
     if (signerConfig.getSlashingExportPath().isPresent()) {

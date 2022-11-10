@@ -32,7 +32,8 @@ public class SlashingProtectionContextFactory {
             slashingProtectionParameters.getDbUrl(),
             slashingProtectionParameters.getDbUsername(),
             slashingProtectionParameters.getDbPassword(),
-            slashingProtectionParameters.getDbPoolConfigurationFile());
+            slashingProtectionParameters.getDbPoolConfigurationFile(),
+            slashingProtectionParameters.isDbConnectionPoolEnabled());
     verifyVersion(jdbi);
 
     // create separate Jdbi instance for pruning operations
@@ -41,7 +42,8 @@ public class SlashingProtectionContextFactory {
             slashingProtectionParameters.getDbUrl(),
             slashingProtectionParameters.getDbUsername(),
             slashingProtectionParameters.getDbPassword(),
-            slashingProtectionParameters.getPruningDbPoolConfigurationFile());
+            slashingProtectionParameters.getPruningDbPoolConfigurationFile(),
+            slashingProtectionParameters.isDbConnectionPoolEnabled());
 
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final RegisteredValidators registeredValidators = new RegisteredValidators(jdbi, validatorsDao);

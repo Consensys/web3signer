@@ -44,4 +44,6 @@ public interface SlashingProtectionParameters {
   long getDbHealthCheckTimeoutMilliseconds();
 
   long getDbHealthCheckIntervalMilliseconds();
+
+  boolean isDbConnectionPoolEnabled();
 }

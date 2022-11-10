@@ -259,6 +259,15 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                 "eth2.slashing-protection-db-pool-configuration-file",
                 signerConfig.getSlashingProtectionDbPoolConfigurationFile()));
       }
+
+      // enabled by default, explicitly set when false
+      if (!signerConfig.isSlashingProtectionDbConnectionPoolEnabled()) {
+        yamlConfig.append(
+            String.format(
+                YAML_BOOLEAN_FMT,
+                "eth2.Xslashing-protection-db-connection-pool-enabled",
+                signerConfig.isSlashingProtectionDbConnectionPoolEnabled()));
+      }
     }
 
     if (signerConfig.isSlashingProtectionPruningEnabled()) {

@@ -54,6 +54,7 @@ public class SignerConfigurationBuilder {
       Boolean.getBoolean("debugSubProcess") ? Duration.ofHours(1) : Duration.ofSeconds(30);
   private boolean enableSlashing = false;
   private String slashingProtectionDbUrl;
+  private boolean slashingProtectionDbConnectionPoolEnabled = true;
   private Path slashingExportPath;
   private Path slashingImportPath;
   private boolean enableSlashingPruning = false;
@@ -163,6 +164,12 @@ public class SignerConfigurationBuilder {
   public SignerConfigurationBuilder withSlashingProtectionDbPoolConfigurationFile(
       final Path slashingProtectionDbPoolConfigurationFile) {
     this.slashingProtectionDbPoolConfigurationFile = slashingProtectionDbPoolConfigurationFile;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withSlashingProtectionDbConnectionPoolEnabled(
+      final boolean dbConnectionPoolEnabled) {
+    this.slashingProtectionDbConnectionPoolEnabled = dbConnectionPoolEnabled;
     return this;
   }
 
@@ -277,6 +284,7 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(slashingProtectionDbUrl),
         slashingProtectionDbUsername,
         slashingProtectionDbPassword,
+        slashingProtectionDbConnectionPoolEnabled,
         mode,
         Optional.ofNullable(web3SignerEnvironment),
         startupTimeout,
