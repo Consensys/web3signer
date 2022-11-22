@@ -94,6 +94,7 @@ public class Eth2WatermarkSubCommand implements Runnable {
             validator ->
                 jdbi.useTransaction(
                     h -> {
+                      // TODO if it's not updated log message?
                       lowWatermarkDao.updateSlotWatermarkFor(
                           h, validator.getId(), UInt64.valueOf(slot));
                       lowWatermarkDao.updateEpochWatermarksFor(

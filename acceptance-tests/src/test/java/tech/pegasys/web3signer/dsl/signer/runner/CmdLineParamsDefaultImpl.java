@@ -195,6 +195,12 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add("import");
       params.add("--from");
       params.add(signerConfig.getSlashingImportPath().get().toAbsolutePath().toString());
+    } else if (signerConfig.getWatermarkRepairParameters().isPresent()) {
+      params.add("watermark-repair");
+      params.add("--epoch");
+      params.add(Long.toString(signerConfig.getWatermarkRepairParameters().get().getEpoch()));
+      params.add("--slot");
+      params.add(Long.toString(signerConfig.getWatermarkRepairParameters().get().getSlot()));
     }
 
     if (signerConfig.isSlashingProtectionPruningEnabled()) {

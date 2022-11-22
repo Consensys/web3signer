@@ -171,6 +171,18 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                 YAML_STRING_FMT,
                 "eth2.import.from",
                 signerConfig.getSlashingImportPath().get().toAbsolutePath()));
+      } else if (signerConfig.getWatermarkRepairParameters().isPresent()) {
+        params.add("watermark-repair"); // sub-sub command
+        yamlConfig.append(
+            String.format(
+                YAML_NUMERIC_FMT,
+                "eth2.watermark-repair.slot",
+                signerConfig.getWatermarkRepairParameters().get().getSlot()));
+        yamlConfig.append(
+            String.format(
+                YAML_NUMERIC_FMT,
+                "eth2.watermark-repair.epoch",
+                signerConfig.getWatermarkRepairParameters().get().getEpoch()));
       }
     }
 

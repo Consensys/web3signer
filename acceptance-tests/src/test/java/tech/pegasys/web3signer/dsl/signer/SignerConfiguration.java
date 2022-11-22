@@ -66,6 +66,7 @@ public class SignerConfiguration {
   private final Optional<Long> bellatrixForkEpoch;
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
+  private Optional<WatermarkRepairParameters> watermarkRepairParameters;
   private final Duration startupTimeout;
 
   public SignerConfiguration(
@@ -104,7 +105,8 @@ public class SignerConfiguration {
       final Optional<Long> altairForkEpoch,
       final Optional<Long> bellatrixForkEpoch,
       final Optional<String> network,
-      final boolean keyManagerApiEnabled) {
+      final boolean keyManagerApiEnabled,
+      final Optional<WatermarkRepairParameters> watermarkRepairParameters) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -141,6 +143,7 @@ public class SignerConfiguration {
     this.bellatrixForkEpoch = bellatrixForkEpoch;
     this.network = network;
     this.keyManagerApiEnabled = keyManagerApiEnabled;
+    this.watermarkRepairParameters = watermarkRepairParameters;
   }
 
   public String hostname() {
@@ -293,5 +296,9 @@ public class SignerConfiguration {
 
   public boolean isSlashingProtectionDbConnectionPoolEnabled() {
     return slashingProtectionDbConnectionPoolEnabled;
+  }
+
+  public Optional<WatermarkRepairParameters> getWatermarkRepairParameters() {
+    return watermarkRepairParameters;
   }
 }

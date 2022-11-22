@@ -69,6 +69,7 @@ public class SignerConfigurationBuilder {
   private String network = null;
   private boolean keyManagerApiEnabled = false;
   private KeystoresParameters keystoresParameters;
+  private WatermarkRepairParameters watermarkRepairParameters;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -262,6 +263,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public void withWatermarkRepairParameters(
+      final WatermarkRepairParameters watermarkRepairParameters) {
+    this.watermarkRepairParameters = watermarkRepairParameters;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -302,6 +308,7 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(altairForkEpoch),
         Optional.ofNullable(bellatrixForkEpoch),
         Optional.ofNullable(network),
-        keyManagerApiEnabled);
+        keyManagerApiEnabled,
+        Optional.ofNullable(watermarkRepairParameters));
   }
 }
