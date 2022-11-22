@@ -39,7 +39,7 @@ import picocli.CommandLine.Spec;
     description = "Updates the slashing protection low watermark for all validators",
     subcommands = {HelpCommand.class},
     mixinStandardHelpOptions = true)
-public class Eth2WatermarkSubCommand implements Runnable {
+public class Eth2WatermarkRepairSubCommand implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
 
   @Spec private CommandSpec spec;
@@ -103,9 +103,9 @@ public class Eth2WatermarkSubCommand implements Runnable {
     LOG.info("Updated low watermark for {} validators", validators.size());
   }
 
-  public static class BytesConvertor implements CommandLine.ITypeConverter<Bytes> {
+  static class BytesConvertor implements CommandLine.ITypeConverter<Bytes> {
     @Override
-    public Bytes convert(final String value) throws Exception {
+    public Bytes convert(final String value) {
       return Bytes.fromHexStringLenient(value);
     }
   }

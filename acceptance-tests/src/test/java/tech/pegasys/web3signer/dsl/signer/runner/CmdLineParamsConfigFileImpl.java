@@ -24,6 +24,7 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
+import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
@@ -36,6 +37,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import org.apache.commons.io.FileUtils;
 
@@ -46,6 +48,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
   private static final String YAML_STRING_FMT = "%s: \"%s\"%n";
   private static final String YAML_NUMERIC_FMT = "%s: %d%n";
   private static final String YAML_BOOLEAN_FMT = "%s: %b%n";
+  private static final String YAML_LIST_STRING_FMT = "%s: [\"%s\"]%n";
 
   public CmdLineParamsConfigFileImpl(final SignerConfiguration signerConfig, final Path dataPath) {
     this.signerConfig = signerConfig;
@@ -173,16 +176,21 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                 signerConfig.getSlashingImportPath().get().toAbsolutePath()));
       } else if (signerConfig.getWatermarkRepairParameters().isPresent()) {
         params.add("watermark-repair"); // sub-sub command
+        final WatermarkRepairParameters watermarkRepairParameters =
+            signerConfig.getWatermarkRepairParameters().get();
         yamlConfig.append(
             String.format(
                 YAML_NUMERIC_FMT,
                 "eth2.watermark-repair.slot",
-                signerConfig.getWatermarkRepairParameters().get().getSlot()));
+                watermarkRepairParameters.getSlot()));
         yamlConfig.append(
             String.format(
                 YAML_NUMERIC_FMT,
                 "eth2.watermark-repair.epoch",
-                signerConfig.getWatermarkRepairParameters().get().getEpoch()));
+                watermarkRepairParameters.getEpoch()));
+        yamlConfig.append(
+            formatStringList(
+                "eth2.watermark-repair.validator-ids", watermarkRepairParameters.getValidators()));
       }
     }
 
@@ -399,5 +407,11 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     }
 
     return yamlConfig.toString();
+  }
+
+  private String formatStringList(final String key, final List<String> stringList) {
+    final StringJoiner stringJoiner = new StringJoiner(",", "\"", "\"");
+    stringList.forEach(stringJoiner::add);
+    return String.format(YAML_LIST_STRING_FMT, key, stringJoiner);
   }
 }

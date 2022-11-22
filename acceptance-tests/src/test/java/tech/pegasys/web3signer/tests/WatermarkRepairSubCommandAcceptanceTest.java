@@ -30,8 +30,10 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.google.common.io.Resources;
+import org.apache.tuweni.bytes.Bytes;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -47,11 +49,11 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
 
   protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
 
-  void setupSigner(final Path testDirectory, final boolean enableSlashing) {
+  void setupSigner(final Path testDirectory) {
     final SignerConfigurationBuilder builder =
         new SignerConfigurationBuilder()
             .withMode("eth2")
-            .withSlashingEnabled(enableSlashing)
+            .withSlashingEnabled(true)
             .withSlashingProtectionDbUsername(DB_USERNAME)
             .withSlashingProtectionDbPassword(DB_PASSWORD)
             .withMetricsEnabled(true)
@@ -66,7 +68,7 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
 
   @Test
   void allLowWatermarksAreUpdated(@TempDir Path testDirectory) throws URISyntaxException {
-    setupSigner(testDirectory, true);
+    setupSigner(testDirectory);
 
     importSlashingProtectionData(testDirectory);
 
@@ -83,23 +85,90 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
     watermarkRepairSigner.start();
     waitFor(() -> assertThat(watermarkRepairSigner.isRunning()).isFalse());
 
-    final Jdbi jdbi = Jdbi.create(signer.getSlashingDbUrl(), DB_USERNAME, DB_PASSWORD);
-
-    final List<Map<String, Object>> watermarks =
-        jdbi.withHandle(
-            h ->
-                h.select("SELECT * FROM low_watermarks ORDER BY validator_id ASC")
-                    .mapToMap()
-                    .list());
+    final Map<Object, List<Map<String, Object>>> watermarks = getWatermarks();
     assertThat(watermarks).hasSize(2);
+
     final BigDecimal slot = BigDecimal.valueOf(20000);
     final BigDecimal epoch = BigDecimal.valueOf(30000);
-    assertThat(watermarks.get(0).get("slot")).isEqualTo(slot);
-    assertThat(watermarks.get(0).get("source_epoch")).isEqualTo(epoch);
-    assertThat(watermarks.get(0).get("target_epoch")).isEqualTo(epoch);
-    assertThat(watermarks.get(0).get("slot")).isEqualTo(slot);
-    assertThat(watermarks.get(0).get("source_epoch")).isEqualTo(epoch);
-    assertThat(watermarks.get(0).get("target_epoch")).isEqualTo(epoch);
+
+    final Map<String, Object> validator1 =
+        watermarks
+            .get(
+                "0x8f3f44b74d316c3293cced0c48c72e021ef8d145d136f2908931090e7181c3b777498128a348d07b0b9cd3921b5ca537")
+            .get(0);
+    assertThat(validator1.get("slot")).isEqualTo(slot);
+    assertThat(validator1.get("source_epoch")).isEqualTo(epoch);
+    assertThat(validator1.get("target_epoch")).isEqualTo(epoch);
+
+    final Map<String, Object> validator2 =
+        watermarks
+            .get(
+                "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884")
+            .get(0);
+    assertThat(validator2.get("slot")).isEqualTo(slot);
+    assertThat(validator2.get("source_epoch")).isEqualTo(epoch);
+    assertThat(validator2.get("target_epoch")).isEqualTo(epoch);
+  }
+
+  @Test
+  void onlySpecifiedWatermarksAreUpdated(@TempDir Path testDirectory) throws URISyntaxException {
+    setupSigner(testDirectory);
+
+    importSlashingProtectionData(testDirectory);
+
+    final SignerConfigurationBuilder repairBuilder = new SignerConfigurationBuilder();
+    repairBuilder.withMode("eth2");
+    repairBuilder.withSlashingEnabled(true);
+    repairBuilder.withSlashingProtectionDbUrl(signer.getSlashingDbUrl());
+    repairBuilder.withSlashingProtectionDbUsername("postgres");
+    repairBuilder.withSlashingProtectionDbPassword("postgres");
+    repairBuilder.withWatermarkRepairParameters(
+        new WatermarkRepairParameters(
+            20000,
+            30000,
+            List.of(
+                "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884")));
+    repairBuilder.withHttpPort(12345); // prevent wait for Ports file in AT
+
+    final Signer watermarkRepairSigner = new Signer(repairBuilder.build(), null);
+    watermarkRepairSigner.start();
+    waitFor(() -> assertThat(watermarkRepairSigner.isRunning()).isFalse());
+
+    final Map<Object, List<Map<String, Object>>> watermarks = getWatermarks();
+
+    assertThat(watermarks).hasSize(2);
+
+    final Map<String, Object> validator1 =
+        watermarks
+            .get(
+                "0x8f3f44b74d316c3293cced0c48c72e021ef8d145d136f2908931090e7181c3b777498128a348d07b0b9cd3921b5ca537")
+            .get(0);
+    assertThat(validator1.get("slot")).isEqualTo(BigDecimal.valueOf(12345));
+    assertThat(validator1.get("source_epoch")).isEqualTo(BigDecimal.valueOf(5));
+    assertThat(validator1.get("target_epoch")).isEqualTo(BigDecimal.valueOf(6));
+
+    final Map<String, Object> validator2 =
+        watermarks
+            .get(
+                "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884")
+            .get(0);
+    assertThat(validator2.get("slot")).isEqualTo(BigDecimal.valueOf(20000));
+    assertThat(validator2.get("source_epoch")).isEqualTo(BigDecimal.valueOf(30000));
+    assertThat(validator2.get("target_epoch")).isEqualTo(BigDecimal.valueOf(30000));
+  }
+
+  private Map<Object, List<Map<String, Object>>> getWatermarks() {
+    final Jdbi jdbi = Jdbi.create(signer.getSlashingDbUrl(), DB_USERNAME, DB_PASSWORD);
+    return jdbi.withHandle(
+        h ->
+            h
+                .select(
+                    "SELECT w.slot,w.source_epoch,w.target_epoch,w.validator_id, v.public_key FROM low_watermarks AS w,validators AS v WHERE w.validator_id=v.id")
+                .mapToMap()
+                .stream()
+                .collect(
+                    Collectors.groupingBy(
+                        m -> Bytes.wrap((byte[]) m.get("public_key")).toHexString())));
   }
 
   private void importSlashingProtectionData(final Path testDirectory) throws URISyntaxException {

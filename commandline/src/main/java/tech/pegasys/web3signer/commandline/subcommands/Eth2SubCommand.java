@@ -60,7 +60,7 @@ import picocli.CommandLine.Spec;
       HelpCommand.class,
       Eth2ExportSubCommand.class,
       Eth2ImportSubCommand.class,
-      Eth2WatermarkSubCommand.class
+      Eth2WatermarkRepairSubCommand.class
     },
     mixinStandardHelpOptions = true)
 public class Eth2SubCommand extends ModeSubCommand {

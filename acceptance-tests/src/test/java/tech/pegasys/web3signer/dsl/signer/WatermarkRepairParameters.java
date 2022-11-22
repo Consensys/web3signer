@@ -12,14 +12,24 @@
  */
 package tech.pegasys.web3signer.dsl.signer;
 
+import java.util.Collections;
+import java.util.List;
+
 public class WatermarkRepairParameters {
 
   private final long slot;
   private final long epoch;
+  private final List<String> validators;
 
   public WatermarkRepairParameters(final long slot, final long epoch) {
+    this(slot, epoch, Collections.emptyList());
+  }
+
+  public WatermarkRepairParameters(
+      final long slot, final long epoch, final List<String> validators) {
     this.slot = slot;
     this.epoch = epoch;
+    this.validators = validators;
   }
 
   public long getSlot() {
@@ -28,5 +38,9 @@ public class WatermarkRepairParameters {
 
   public long getEpoch() {
     return epoch;
+  }
+
+  public List<String> getValidators() {
+    return validators;
   }
 }
