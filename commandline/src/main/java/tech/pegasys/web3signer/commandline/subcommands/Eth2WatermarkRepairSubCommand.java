@@ -36,7 +36,9 @@ import picocli.CommandLine.Spec;
 
 @Command(
     name = "watermark-repair",
-    description = "Updates the slashing protection low watermark for all validators",
+    description =
+        "Updates the slashing protection low watermark for validators. "
+            + "This will not move the low watermark lower, the watermark can only be increased.",
     subcommands = {HelpCommand.class},
     mixinStandardHelpOptions = true)
 public class Eth2WatermarkRepairSubCommand implements Runnable {
@@ -94,7 +96,6 @@ public class Eth2WatermarkRepairSubCommand implements Runnable {
             validator ->
                 jdbi.useTransaction(
                     h -> {
-                      // TODO if it's not updated log message?
                       lowWatermarkDao.updateSlotWatermarkFor(
                           h, validator.getId(), UInt64.valueOf(slot));
                       lowWatermarkDao.updateEpochWatermarksFor(
