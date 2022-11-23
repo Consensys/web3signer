@@ -22,7 +22,6 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.slashingprotection.interchange.InterchangeJsonProvider;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -43,9 +42,6 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
   private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
-
-  private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper =
-      new InterchangeJsonProvider().getJsonMapper();
 
   protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
 

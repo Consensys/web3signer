@@ -48,7 +48,6 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
   private static final String YAML_STRING_FMT = "%s: \"%s\"%n";
   private static final String YAML_NUMERIC_FMT = "%s: %d%n";
   private static final String YAML_BOOLEAN_FMT = "%s: %b%n";
-  private static final String YAML_LIST_STRING_FMT = "%s: [\"%s\"]%n";
 
   public CmdLineParamsConfigFileImpl(final SignerConfiguration signerConfig, final Path dataPath) {
     this.signerConfig = signerConfig;
@@ -412,6 +411,6 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
   private String formatStringList(final String key, final List<String> stringList) {
     final StringJoiner stringJoiner = new StringJoiner(",", "\"", "\"");
     stringList.forEach(stringJoiner::add);
-    return String.format(YAML_LIST_STRING_FMT, key, stringJoiner);
+    return String.format("%s: [\"%s\"]%n", key, stringJoiner);
   }
 }

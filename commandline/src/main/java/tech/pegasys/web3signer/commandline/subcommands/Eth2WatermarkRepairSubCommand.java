@@ -30,9 +30,7 @@ import org.jdbi.v3.core.Jdbi;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Spec;
 
 @Command(
     name = "watermark-repair",
@@ -43,8 +41,6 @@ import picocli.CommandLine.Spec;
     mixinStandardHelpOptions = true)
 public class Eth2WatermarkRepairSubCommand implements Runnable {
   private static final Logger LOG = LogManager.getLogger();
-
-  @Spec private CommandSpec spec;
 
   @CommandLine.ParentCommand private Eth2SubCommand eth2Config;
 
