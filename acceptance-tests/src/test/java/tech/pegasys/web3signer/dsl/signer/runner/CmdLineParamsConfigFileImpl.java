@@ -37,7 +37,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 
@@ -159,38 +159,9 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
           .getAwsSecretsManagerParameters()
           .ifPresent(awsParams -> yamlConfig.append(awsBulkLoadingOptions(awsParams)));
 
-      if (signerConfig.getSlashingExportPath().isPresent()) {
-        params.add("export"); // sub-sub command
-        yamlConfig.append(
-            String.format(
-                YAML_STRING_FMT,
-                "eth2.export.to",
-                signerConfig.getSlashingExportPath().get().toAbsolutePath()));
-      } else if (signerConfig.getSlashingImportPath().isPresent()) {
-        params.add("import"); // sub-sub command
-        yamlConfig.append(
-            String.format(
-                YAML_STRING_FMT,
-                "eth2.import.from",
-                signerConfig.getSlashingImportPath().get().toAbsolutePath()));
-      } else if (signerConfig.getWatermarkRepairParameters().isPresent()) {
-        params.add("watermark-repair"); // sub-sub command
-        final WatermarkRepairParameters watermarkRepairParameters =
-            signerConfig.getWatermarkRepairParameters().get();
-        yamlConfig.append(
-            String.format(
-                YAML_NUMERIC_FMT,
-                "eth2.watermark-repair.slot",
-                watermarkRepairParameters.getSlot()));
-        yamlConfig.append(
-            String.format(
-                YAML_NUMERIC_FMT,
-                "eth2.watermark-repair.epoch",
-                watermarkRepairParameters.getEpoch()));
-        yamlConfig.append(
-            formatStringList(
-                "eth2.watermark-repair.validator-ids", watermarkRepairParameters.getValidators()));
-      }
+      final CommandArgs subCommandArgs = createSubCommandArgs();
+      params.addAll(subCommandArgs.params);
+      yamlConfig.append(subCommandArgs.yamlConfig);
     }
 
     // create temporary config file
@@ -206,6 +177,44 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     }
 
     return params;
+  }
+
+  private CommandArgs createSubCommandArgs() {
+    final List<String> params = new ArrayList<>();
+    final StringBuilder yamlConfig = new StringBuilder();
+
+    if (signerConfig.getSlashingExportPath().isPresent()) {
+      params.add("export"); // sub-sub command
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2.export.to",
+              signerConfig.getSlashingExportPath().get().toAbsolutePath()));
+    } else if (signerConfig.getSlashingImportPath().isPresent()) {
+      params.add("import"); // sub-sub command
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2.import.from",
+              signerConfig.getSlashingImportPath().get().toAbsolutePath()));
+    } else if (signerConfig.getWatermarkRepairParameters().isPresent()) {
+      params.add("watermark-repair"); // sub-sub command
+      final WatermarkRepairParameters watermarkRepairParameters =
+          signerConfig.getWatermarkRepairParameters().get();
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT, "eth2.watermark-repair.slot", watermarkRepairParameters.getSlot()));
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT,
+              "eth2.watermark-repair.epoch",
+              watermarkRepairParameters.getEpoch()));
+      yamlConfig.append(
+          formatStringList(
+              "eth2.watermark-repair.validator-ids", watermarkRepairParameters.getValidators()));
+    }
+
+    return new CommandArgs(params, yamlConfig.toString());
   }
 
   @Override
@@ -409,8 +418,20 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
   }
 
   private String formatStringList(final String key, final List<String> stringList) {
-    final StringJoiner stringJoiner = new StringJoiner(",", "\"", "\"");
-    stringList.forEach(stringJoiner::add);
-    return String.format("%s: [\"%s\"]%n", key, stringJoiner);
+    return stringList.isEmpty()
+        ? String.format("%s: []%n", key)
+        : String.format(
+            "%s: [\"%s\"]%n",
+            key, stringList.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")));
+  }
+
+  private static class CommandArgs {
+    private final List<String> params;
+    private final String yamlConfig;
+
+    public CommandArgs(List<String> params, String yamlConfig) {
+      this.params = params;
+      this.yamlConfig = yamlConfig;
+    }
   }
 }

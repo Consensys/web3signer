@@ -188,27 +188,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       }
     }
 
-    if (signerConfig.getSlashingExportPath().isPresent()) {
-      params.add("export");
-      params.add("--to");
-      params.add(signerConfig.getSlashingExportPath().get().toAbsolutePath().toString());
-    } else if (signerConfig.getSlashingImportPath().isPresent()) {
-      params.add("import");
-      params.add("--from");
-      params.add(signerConfig.getSlashingImportPath().get().toAbsolutePath().toString());
-    } else if (signerConfig.getWatermarkRepairParameters().isPresent()) {
-      final WatermarkRepairParameters watermarkRepairParameters =
-          signerConfig.getWatermarkRepairParameters().get();
-      params.add("watermark-repair");
-      params.add("--epoch");
-      params.add(Long.toString(watermarkRepairParameters.getEpoch()));
-      params.add("--slot");
-      params.add(Long.toString(watermarkRepairParameters.getSlot()));
-      if (!watermarkRepairParameters.getValidators().isEmpty()) {
-        params.add(
-            "--validator-ids" + "=" + String.join(",", watermarkRepairParameters.getValidators()));
-      }
-    }
+    params.addAll(createSubCommandArgs());
 
     if (signerConfig.isSlashingProtectionPruningEnabled()) {
       params.add("--slashing-protection-pruning-enabled");
@@ -283,6 +263,34 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
       params.add(AWS_SECRETS_TAG_VALUES_FILTER_OPTION);
       params.add(String.join(",", awsSecretsManagerParameters.getTagValuesFilter()));
+    }
+
+    return params;
+  }
+
+  private List<String> createSubCommandArgs() {
+    final List<String> params = new ArrayList<>();
+
+    if (signerConfig.getSlashingExportPath().isPresent()) {
+      params.add("export");
+      params.add("--to");
+      params.add(signerConfig.getSlashingExportPath().get().toAbsolutePath().toString());
+    } else if (signerConfig.getSlashingImportPath().isPresent()) {
+      params.add("import");
+      params.add("--from");
+      params.add(signerConfig.getSlashingImportPath().get().toAbsolutePath().toString());
+    } else if (signerConfig.getWatermarkRepairParameters().isPresent()) {
+      final WatermarkRepairParameters watermarkRepairParameters =
+          signerConfig.getWatermarkRepairParameters().get();
+      params.add("watermark-repair");
+      params.add("--epoch");
+      params.add(Long.toString(watermarkRepairParameters.getEpoch()));
+      params.add("--slot");
+      params.add(Long.toString(watermarkRepairParameters.getSlot()));
+      if (!watermarkRepairParameters.getValidators().isEmpty()) {
+        params.add(
+            "--validator-ids" + "=" + String.join(",", watermarkRepairParameters.getValidators()));
+      }
     }
 
     return params;

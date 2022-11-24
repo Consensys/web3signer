@@ -18,7 +18,7 @@ import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,14 +64,19 @@ public class Eth2WatermarkRepairSubCommand implements Runnable {
       description =
           "List of validators to apply low watermark update to. If none are specified"
               + " then all validators low watermarks will be updated (default: ${DEFAULT-VALUE}).",
-      converter = BytesConvertor.class,
-      arity = "0")
-  List<Bytes> validatorIds = Collections.emptyList();
+      split = ",",
+      arity = "0..*")
+  List<String> validatorIds = new ArrayList<>();
 
   @Override
   public void run() {
     final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
     final ValidatorsDao validatorsDao = new ValidatorsDao();
+    final List<Bytes> validatorIdPublicKeys =
+        validatorIds.stream()
+            .filter(s -> !s.isEmpty())
+            .map(Bytes::fromHexStringLenient)
+            .collect(Collectors.toList());
 
     final SlashingProtectionContext slashingProtectionContext =
         SlashingProtectionContextFactory.create(eth2Config.getSlashingProtectionParameters());
@@ -79,11 +84,12 @@ public class Eth2WatermarkRepairSubCommand implements Runnable {
 
     final List<Validator> allValidators =
         jdbi.inTransaction(h -> validatorsDao.findAllValidators(h).collect(Collectors.toList()));
+
     final List<Validator> validators =
-        validatorIds.isEmpty()
+        validatorIdPublicKeys.isEmpty()
             ? allValidators
             : allValidators.stream()
-                .filter(v -> validatorIds.contains(v.getPublicKey()))
+                .filter(v -> validatorIdPublicKeys.contains(v.getPublicKey()))
                 .collect(Collectors.toList());
 
     validators.stream()
@@ -98,12 +104,5 @@ public class Eth2WatermarkRepairSubCommand implements Runnable {
                           h, validator.getId(), UInt64.valueOf(epoch), UInt64.valueOf(epoch));
                     }));
     LOG.info("Updated low watermark for {} validators", validators.size());
-  }
-
-  static class BytesConvertor implements CommandLine.ITypeConverter<Bytes> {
-    @Override
-    public Bytes convert(final String value) {
-      return Bytes.fromHexStringLenient(value);
-    }
   }
 }
