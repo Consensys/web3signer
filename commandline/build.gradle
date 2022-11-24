@@ -26,6 +26,8 @@ dependencies {
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   implementation 'org.apache.commons:commons-lang3'
+  implementation 'org.jdbi:jdbi3-core'
+  implementation 'org.jdbi:jdbi3-sqlobject'
 
   implementation 'tech.pegasys.teku.internal:spec'
   implementation 'tech.pegasys.teku.internal:unsigned'

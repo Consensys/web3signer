@@ -56,7 +56,12 @@ import picocli.CommandLine.Spec;
 @Command(
     name = Eth2SubCommand.COMMAND_NAME,
     description = "Handle Ethereum-2 BLS signing operations and public key reporting",
-    subcommands = {HelpCommand.class, Eth2ExportSubCommand.class, Eth2ImportSubCommand.class},
+    subcommands = {
+      HelpCommand.class,
+      Eth2ExportSubCommand.class,
+      Eth2ImportSubCommand.class,
+      Eth2WatermarkRepairSubCommand.class
+    },
     mixinStandardHelpOptions = true)
 public class Eth2SubCommand extends ModeSubCommand {
   private static final Logger LOG = LogManager.getLogger();
@@ -302,7 +307,7 @@ public class Eth2SubCommand extends ModeSubCommand {
     return awsSecretsManagerParameters;
   }
 
-  static class UInt64Converter implements CommandLine.ITypeConverter<UInt64> {
+  public static class UInt64Converter implements CommandLine.ITypeConverter<UInt64> {
     @Override
     public UInt64 convert(final String value) throws Exception {
       return UInt64.valueOf(value);

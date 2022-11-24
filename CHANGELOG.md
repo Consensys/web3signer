@@ -12,6 +12,7 @@
   pool (Hikari) to allow using external database connection pool such as pgBouncer. `--slashing-protection-db-pool-configuration-file` and
   `--slashing-protection-pruning-db-pool-configuration-file` can be reused to specify PG Datasource properties.
   [#662](https://github.com/ConsenSys/web3signer/issues/662)
+- Added new subcommand watermark-repair to update low watermarks
 
 ---
 
