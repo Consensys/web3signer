@@ -115,7 +115,7 @@ public class Eth2WatermarkRepairSubCommand implements Runnable {
   private Bytes convertToBytes(final String value) {
     try {
       return Bytes.fromHexString(value);
-    } catch (IllegalArgumentException e) {
+    } catch (final IllegalArgumentException e) {
       throw new ParameterException(
           commandSpec.commandLine(),
           "Invalid value for validator public key " + value + ". Value must be in hexadecimal.");
