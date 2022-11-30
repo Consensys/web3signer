@@ -23,7 +23,7 @@ dependencyManagement {
       entry 'error_prone_test_helpers'
     }
 
-    dependency 'com.google.guava:guava:31.0.1-jre'
+    dependency 'com.google.guava:guava:31.1-jre'
 
     dependency 'commons-cli:commons-cli:1.5.0'
     dependency 'commons-io:commons-io:2.11.0'
