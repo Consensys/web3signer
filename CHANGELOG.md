@@ -1,17 +1,20 @@
 # Changelog
 
-## Next Release
+## 22.11.0
 ### Breaking Changes
-- Slashing protection imports will now only fail for an individual validator instead for all validators allowing partial import if there is valid and invalid data.
+- Slashing protection imports will now only fail for an individual validator instead for all validators allowing partial 
+import if there is valid and invalid data.
 
 ### Features Added
 - Introduced cli option to specify Hikari configuration for pruning database connection [#661](https://github.com/ConsenSys/web3signer/issues/661)
-- Better database pruning default values: Pruning enabled by default with `slashing-protection-pruning-epochs-to-keep = 250`, `slashing-protection-pruning-at-boot-enabled = false` and `slashing-protection-pruning-interval = 12`
+- Better database pruning default values: Pruning enabled by default with 
+`slashing-protection-pruning-epochs-to-keep = 250`, `slashing-protection-pruning-at-boot-enabled = false` and 
+`slashing-protection-pruning-interval = 12`.
 - Improved performance for slashing protection import
-- Introduced experimental cli option `--Xslashing-protection-db-connection-pool-enabled` to disable internal database connection
-  pool (Hikari) to allow using external database connection pool such as pgBouncer. `--slashing-protection-db-pool-configuration-file` and
-  `--slashing-protection-pruning-db-pool-configuration-file` can be reused to specify PG Datasource properties.
-  [#662](https://github.com/ConsenSys/web3signer/issues/662)
+- Introduced experimental cli option `--Xslashing-protection-db-connection-pool-enabled` to disable internal database 
+connection pool (Hikari) to allow using external database connection pool such as pgBouncer. 
+`--slashing-protection-db-pool-configuration-file` and `--slashing-protection-pruning-db-pool-configuration-file` can be
+reused to specify PG Datasource properties. [#662](https://github.com/ConsenSys/web3signer/issues/662)
 - Added new subcommand watermark-repair to update low watermarks
 
 ---
