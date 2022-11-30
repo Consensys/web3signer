@@ -51,7 +51,7 @@ dependencyManagement {
       entry 'log4j-slf4j-impl'
     }
 
-    dependencySet(group: 'org.apache.tuweni', version: '2.2.0') {
+    dependencySet(group: 'org.apache.tuweni', version: '2.3.1') {
       entry 'tuweni-net'
       entry 'tuweni-toml'
       entry 'tuweni-bytes'
