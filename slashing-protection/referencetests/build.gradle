@@ -29,6 +29,7 @@ dependencies {
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'org.apache.logging.log4j:log4j-api'
   testImplementation 'org.apache.logging.log4j:log4j-core'
+  testImplementation 'com.google.guava:guava'
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
