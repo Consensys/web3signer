@@ -13,7 +13,7 @@
 package tech.pegasys.web3signer.dsl.utils;
 
 import static java.util.Collections.emptyList;
-import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.compute_domain;
+import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.computeDomain;
 
 import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.Attestation;
@@ -247,9 +247,9 @@ public class Eth2RequestUtils {
             Bytes32.random(new Random(2)),
             UInt64.valueOf(32),
             genesisForkVersion);
-    final Bytes32 depositDomain = compute_domain(Domain.DEPOSIT, genesisForkVersion, Bytes32.ZERO);
+    final Bytes32 depositDomain = computeDomain(Domain.DEPOSIT, genesisForkVersion, Bytes32.ZERO);
     final Bytes signingRoot =
-        DepositSigningRootUtil.compute_signing_root(
+        DepositSigningRootUtil.computeSigningRoot(
             depositMessage.asInternalDepositMessage(), depositDomain);
     return new Eth2SigningRequestBody(
         ArtifactType.DEPOSIT,
