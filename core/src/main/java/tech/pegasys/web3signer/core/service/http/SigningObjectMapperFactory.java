@@ -54,7 +54,7 @@ import org.apache.tuweni.units.bigints.UInt64;
 public class SigningObjectMapperFactory {
   private final ObjectMapper objectMapper;
 
-  private static final SigningObjectMapperFactory factory = new SigningObjectMapperFactory();
+  private static final SigningObjectMapperFactory FACTORY = new SigningObjectMapperFactory();
 
   private SigningObjectMapperFactory() {
     this.objectMapper =
@@ -102,6 +102,6 @@ public class SigningObjectMapperFactory {
   }
 
   public static ObjectMapper createObjectMapper() {
-    return factory.objectMapper;
+    return FACTORY.objectMapper;
   }
 }

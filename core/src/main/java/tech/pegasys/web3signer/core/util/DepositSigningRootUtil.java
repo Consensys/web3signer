@@ -21,23 +21,22 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class DepositSigningRootUtil {
-  public static Bytes compute_signing_root(final Merkleizable object, final Bytes32 domain) {
+  public static Bytes computeSigningRoot(final Merkleizable object, final Bytes32 domain) {
     return new SigningData(object.hashTreeRoot(), domain).hashTreeRoot();
   }
 
-  public static Bytes32 compute_domain(
-      final Bytes4 domain_type, final Bytes4 fork_version, final Bytes32 genesis_validators_root) {
-    final Bytes32 fork_data_root = compute_fork_data_root(fork_version, genesis_validators_root);
-    return compute_domain(domain_type, fork_data_root);
+  public static Bytes32 computeDomain(
+      final Bytes4 domainType, final Bytes4 forkVersion, final Bytes32 genesisValidatorsRoot) {
+    final Bytes32 forkDataRoot = computeForkDataRoot(forkVersion, genesisValidatorsRoot);
+    return computeDomain(domainType, forkDataRoot);
   }
 
-  private static Bytes32 compute_domain(final Bytes4 domain_type, final Bytes32 fork_data_root) {
-    return Bytes32.wrap(
-        Bytes.concatenate(domain_type.getWrappedBytes(), fork_data_root.slice(0, 28)));
+  private static Bytes32 computeDomain(final Bytes4 domainType, final Bytes32 forkDataRoot) {
+    return Bytes32.wrap(Bytes.concatenate(domainType.getWrappedBytes(), forkDataRoot.slice(0, 28)));
   }
 
-  private static Bytes32 compute_fork_data_root(
-      final Bytes4 current_version, final Bytes32 genesis_validators_root) {
-    return new ForkData(current_version, genesis_validators_root).hashTreeRoot();
+  private static Bytes32 computeForkDataRoot(
+      final Bytes4 currentVersion, final Bytes32 genesisValidatorsRoot) {
+    return new ForkData(currentVersion, genesisValidatorsRoot).hashTreeRoot();
   }
 }

@@ -18,7 +18,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.jdbi.v3.core.Handle;
 
 public class MetadataDao {
-  final int METADATA_ROW_ID = 1;
+  private static final int METADATA_ROW_ID = 1;
 
   public Optional<Bytes32> findGenesisValidatorsRoot(final Handle handle) {
     return handle
