@@ -429,7 +429,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     private final List<String> params;
     private final String yamlConfig;
 
-    public CommandArgs(List<String> params, String yamlConfig) {
+    public CommandArgs(final List<String> params, final String yamlConfig) {
       this.params = params;
       this.yamlConfig = yamlConfig;
     }

@@ -111,7 +111,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     signAndVerifySignature(PUBLIC_KEY_HEX_STRING);
   }
 
-  private void signAndVerifySignature(String publicKeyHex) {
+  private void signAndVerifySignature(final String publicKeyHex) {
     setupEth1Signer();
 
     // openapi

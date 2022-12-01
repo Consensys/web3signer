@@ -85,7 +85,8 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
   void canSignSameAttestationTwiceWhenSlashingIsEnabled(
-      boolean dbConnectionPoolEnabled, @TempDir Path testDirectory) throws JsonProcessingException {
+      final boolean dbConnectionPoolEnabled, @TempDir final Path testDirectory)
+      throws JsonProcessingException {
 
     setupSigner(testDirectory, true, dbConnectionPoolEnabled);
 
@@ -107,8 +108,8 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void cannotSignASecondAttestationForSameSlotWithDifferentSigningRoot(@TempDir Path testDirectory)
-      throws JsonProcessingException {
+  void cannotSignASecondAttestationForSameSlotWithDifferentSigningRoot(
+      @TempDir final Path testDirectory) throws JsonProcessingException {
     setupSigner(testDirectory);
 
     final Eth2SigningRequestBody initialRequest = createAttestationRequest(5, 6, UInt64.ZERO);
@@ -133,7 +134,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void cannotSignSurroundedAttestationWhenSlashingEnabled(@TempDir Path testDirectory)
+  void cannotSignSurroundedAttestationWhenSlashingEnabled(@TempDir final Path testDirectory)
       throws JsonProcessingException {
     setupSigner(testDirectory);
 
@@ -151,7 +152,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void cannotSignASurroundingAttestationWhenSlashingEnabled(@TempDir Path testDirectory)
+  void cannotSignASurroundingAttestationWhenSlashingEnabled(@TempDir final Path testDirectory)
       throws JsonProcessingException {
     setupSigner(testDirectory);
 
@@ -169,7 +170,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void canSignSameBlockTwiceWhenSlashingIsEnabled(@TempDir Path testDirectory)
+  void canSignSameBlockTwiceWhenSlashingIsEnabled(@TempDir final Path testDirectory)
       throws JsonProcessingException {
 
     setupSigner(testDirectory);
@@ -192,8 +193,8 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void signingBlockWithDifferentSigningRootForPreviousSlotFailsWith412(@TempDir Path testDirectory)
-      throws JsonProcessingException {
+  void signingBlockWithDifferentSigningRootForPreviousSlotFailsWith412(
+      @TempDir final Path testDirectory) throws JsonProcessingException {
     setupSigner(testDirectory);
 
     final Eth2SigningRequestBody initialRequest =

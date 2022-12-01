@@ -31,7 +31,7 @@ public class SlashingProtectionDatabaseVersionAcceptanceTest {
   public static final String DB_PASSWORD = "postgres";
 
   @Test
-  void missingOrWrongVersionCauseAppToHaltOnStartup(@TempDir Path testDirectory) {
+  void missingOrWrongVersionCauseAppToHaltOnStartup(@TempDir final Path testDirectory) {
     // NB: This test fails when running with a ThreadRunner (i.e. in IDE) due to the
     // System.exit() call in the Web3signerApp (which exits the test, rather than terminating
     // the app (thus it work as expected with a ProcessRunner (i.e. when run from gradle)).

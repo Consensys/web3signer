@@ -119,7 +119,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void signMetricIncrementsWhenSecpSignRequestReceived(@TempDir Path testDirectory)
+  void signMetricIncrementsWhenSecpSignRequestReceived(@TempDir final Path testDirectory)
       throws InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchProviderException {
     final MetadataFileHelpers fileHelpers = new MetadataFileHelpers();
     final ECKeyPair keyPair = Keys.createEcKeyPair();
@@ -159,7 +159,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void signMetricIncrementsWhenBlsSignRequestReceived(@TempDir Path testDirectory)
+  void signMetricIncrementsWhenBlsSignRequestReceived(@TempDir final Path testDirectory)
       throws JsonProcessingException {
     final MetadataFileHelpers fileHelpers = new MetadataFileHelpers();
     final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(1);

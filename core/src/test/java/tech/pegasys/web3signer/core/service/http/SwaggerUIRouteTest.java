@@ -29,7 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(VertxExtension.class)
 class SwaggerUIRouteTest {
   @Test
-  void routesAreRegistered(Vertx vertx) throws IOException {
+  void routesAreRegistered(final Vertx vertx) throws IOException {
     final Router router = Router.router(vertx);
     final SwaggerUIRoute swaggerUIRoute = new SwaggerUIRoute(router);
     swaggerUIRoute.register();
@@ -37,7 +37,7 @@ class SwaggerUIRouteTest {
   }
 
   @Test
-  void contentsAreLoaded(Vertx vertx) throws IOException {
+  void contentsAreLoaded(final Vertx vertx) throws IOException {
     final Router router = Router.router(vertx);
     final SwaggerUIRoute swaggerUIRoute = new SwaggerUIRoute(router);
 

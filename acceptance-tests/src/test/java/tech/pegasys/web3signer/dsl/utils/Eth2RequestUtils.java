@@ -366,7 +366,7 @@ public class Eth2RequestUtils {
     return new ForkInfo(fork, genesisValidatorsRoot);
   }
 
-  public static ForkInfo forkInfo(long epoch) {
+  public static ForkInfo forkInfo(final long epoch) {
     final Fork fork =
         new Fork(
             Bytes4.fromHexString("0x00000001"),

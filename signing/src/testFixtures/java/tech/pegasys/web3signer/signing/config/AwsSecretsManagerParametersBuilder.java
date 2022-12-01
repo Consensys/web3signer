@@ -32,7 +32,7 @@ public final class AwsSecretsManagerParametersBuilder {
   }
 
   public AwsSecretsManagerParametersBuilder withAuthenticationMode(
-      AwsAuthenticationMode authenticationMode) {
+      final AwsAuthenticationMode authenticationMode) {
     this.authenticationMode = authenticationMode;
     return this;
   }
@@ -70,7 +70,7 @@ public final class AwsSecretsManagerParametersBuilder {
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withCacheMaximumSize(long cacheMaximumSize) {
+  public AwsSecretsManagerParametersBuilder withCacheMaximumSize(final long cacheMaximumSize) {
     this.cacheMaximumSize = cacheMaximumSize;
     return this;
   }

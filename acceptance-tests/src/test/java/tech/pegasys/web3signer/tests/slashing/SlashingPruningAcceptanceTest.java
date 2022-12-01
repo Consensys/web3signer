@@ -46,7 +46,7 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
   protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
 
   @Test
-  void slashingDataIsPruned(@TempDir Path testDirectory) throws IOException {
+  void slashingDataIsPruned(@TempDir final Path testDirectory) throws IOException {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
     final String dbUrl = testDatabaseInfo.databaseUrl();
     final Jdbi jdbi = testDatabaseInfo.getJdbi();

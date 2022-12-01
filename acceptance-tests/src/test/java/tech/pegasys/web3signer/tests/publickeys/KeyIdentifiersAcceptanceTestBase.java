@@ -73,7 +73,7 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
   }
 
   protected String[] createKeys(
-      final KeyType keyType, boolean isValid, final String... privateKeys) {
+      final KeyType keyType, final boolean isValid, final String... privateKeys) {
     return keyType == BLS
         ? createBlsKeys(isValid, privateKeys)
         : createSecpKeys(isValid, privateKeys);
@@ -85,7 +85,7 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
         : new String[] {SECP_FC_ADDRESS_1, SECP_FC_ADDRESS_2};
   }
 
-  protected String[] createBlsKeys(boolean isValid, final String... privateKeys) {
+  protected String[] createBlsKeys(final boolean isValid, final String... privateKeys) {
     return Stream.of(privateKeys)
         .map(
             privateKey -> {
@@ -103,7 +103,7 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
         .toArray(String[]::new);
   }
 
-  protected String[] createSecpKeys(boolean isValid, final String... privateKeys) {
+  protected String[] createSecpKeys(final boolean isValid, final String... privateKeys) {
     return Stream.of(privateKeys)
         .map(
             privateKey -> {

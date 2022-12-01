@@ -63,7 +63,7 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
   }
 
   @Test
-  void allLowWatermarksAreUpdated(@TempDir Path testDirectory) throws URISyntaxException {
+  void allLowWatermarksAreUpdated(@TempDir final Path testDirectory) throws URISyntaxException {
     setupSigner(testDirectory);
 
     importSlashingProtectionData(testDirectory);
@@ -107,7 +107,8 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
   }
 
   @Test
-  void onlySpecifiedWatermarksAreUpdated(@TempDir Path testDirectory) throws URISyntaxException {
+  void onlySpecifiedWatermarksAreUpdated(@TempDir final Path testDirectory)
+      throws URISyntaxException {
     setupSigner(testDirectory);
 
     importSlashingProtectionData(testDirectory);
