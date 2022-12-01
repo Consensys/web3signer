@@ -23,8 +23,8 @@ public class DeleteKeystoresResponse {
 
   @JsonCreator
   public DeleteKeystoresResponse(
-      @JsonProperty("data") List<DeleteKeystoreResult> data,
-      @JsonProperty("slashing_protection") String slashingProtection) {
+      @JsonProperty("data") final List<DeleteKeystoreResult> data,
+      @JsonProperty("slashing_protection") final String slashingProtection) {
     this.data = data;
     this.slashingProtection = slashingProtection;
   }

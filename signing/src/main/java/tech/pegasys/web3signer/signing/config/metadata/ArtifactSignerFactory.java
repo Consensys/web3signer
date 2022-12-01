@@ -16,42 +16,42 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 
 public interface ArtifactSignerFactory {
 
-  default ArtifactSigner create(FileRawSigningMetadata fileRawSigningMetadata) {
+  default ArtifactSigner create(final FileRawSigningMetadata fileRawSigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(FileKeyStoreMetadata fileKeyStoreMetadata) {
+  default ArtifactSigner create(final FileKeyStoreMetadata fileKeyStoreMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(HashicorpSigningMetadata hashicorpMetadata) {
+  default ArtifactSigner create(final HashicorpSigningMetadata hashicorpMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(AzureSecretSigningMetadata azureSecretSigningMetadata) {
+  default ArtifactSigner create(final AzureSecretSigningMetadata azureSecretSigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(AzureKeySigningMetadata azureSigningMetadata) {
+  default ArtifactSigner create(final AzureKeySigningMetadata azureSigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(InterlockSigningMetadata interlockSigningMetadata) {
+  default ArtifactSigner create(final InterlockSigningMetadata interlockSigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(YubiHsmSigningMetadata yubiHsmSigningMetadata) {
+  default ArtifactSigner create(final YubiHsmSigningMetadata yubiHsmSigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(AwsKeySigningMetadata awsKeySigningMetadata) {
+  default ArtifactSigner create(final AwsKeySigningMetadata awsKeySigningMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }

@@ -21,7 +21,7 @@ public class ListKeystoresResponse {
   private final List<KeystoreInfo> data;
 
   @JsonCreator
-  public ListKeystoresResponse(@JsonProperty("data") List<KeystoreInfo> data) {
+  public ListKeystoresResponse(@JsonProperty("data") final List<KeystoreInfo> data) {
     this.data = data;
   }
 

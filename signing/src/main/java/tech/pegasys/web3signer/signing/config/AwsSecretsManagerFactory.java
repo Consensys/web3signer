@@ -19,7 +19,7 @@ public class AwsSecretsManagerFactory {
 
   public static AwsSecretsManager createAwsSecretsManager(
       final AwsSecretsManagerProvider awsSecretsManagerProvider,
-      AwsSecretsManagerParameters awsSecretsManagerParameters) {
+      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
     switch (awsSecretsManagerParameters.getAuthenticationMode()) {
       case SPECIFIED:
         return awsSecretsManagerProvider.createAwsSecretsManager(

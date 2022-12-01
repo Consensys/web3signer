@@ -105,7 +105,7 @@ public class AzureSecretSigningMetadataDeserializer
   }
 
   private void validate(
-      final JsonParser parser, AzureSecretSigningMetadata azureSecretSigningMetadata)
+      final JsonParser parser, final AzureSecretSigningMetadata azureSecretSigningMetadata)
       throws JsonMappingException {
     final List<String> missingParameters = new ArrayList<>();
     // vaultName and secretName are REQUIRED.

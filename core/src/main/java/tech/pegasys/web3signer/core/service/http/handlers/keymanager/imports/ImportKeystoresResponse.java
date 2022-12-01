@@ -21,7 +21,7 @@ public class ImportKeystoresResponse {
   private final List<ImportKeystoreResult> data;
 
   @JsonCreator
-  public ImportKeystoresResponse(@JsonProperty("data") List<ImportKeystoreResult> data) {
+  public ImportKeystoresResponse(@JsonProperty("data") final List<ImportKeystoreResult> data) {
     this.data = data;
   }
 
