@@ -37,9 +37,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 public class ServerSideTlsCaClientAcceptanceTest {
 
-  private static final TlsCertificateDefinition serverCert =
+  private static final TlsCertificateDefinition SERVER_CERT =
       TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", "password");
-  private static final TlsCertificateDefinition clientCert =
+  private static final TlsCertificateDefinition CLIENT_CERT =
       TlsCertificateDefinition.loadFromResource("tls/cert2.pfx", "password2");
 
   private Signer signer = null;
@@ -57,11 +57,11 @@ public class ServerSideTlsCaClientAcceptanceTest {
       throws Exception {
 
     final Path passwordPath = testDir.resolve("keystore.passwd");
-    writeString(passwordPath, serverCert.getPassword());
+    writeString(passwordPath, SERVER_CERT.getPassword());
 
     final TlsOptions serverOptions =
         new BasicTlsOptions(
-            serverCert.getPkcs12File(),
+            SERVER_CERT.getPkcs12File(),
             passwordPath.toFile(),
             Optional.of(BasicClientAuthConstraints.caOnly()));
 
@@ -72,7 +72,7 @@ public class ServerSideTlsCaClientAcceptanceTest {
             .withUseConfigFile(useConfigFile)
             .withMode("eth2");
 
-    final ClientTlsConfig clientTlsConfig = new ClientTlsConfig(serverCert, clientCert);
+    final ClientTlsConfig clientTlsConfig = new ClientTlsConfig(SERVER_CERT, CLIENT_CERT);
 
     return new Signer(configBuilder.build(), clientTlsConfig);
   }
@@ -81,7 +81,7 @@ public class ServerSideTlsCaClientAcceptanceTest {
   @ValueSource(booleans = {true, false})
   void clientWithCertificateNotInCertificateAuthorityCanConnectAndQueryAccounts(
       final boolean useConfigFile, @TempDir final Path tempDir) throws Exception {
-    signer = createSigner(clientCert, tempDir, useConfigFile);
+    signer = createSigner(CLIENT_CERT, tempDir, useConfigFile);
     signer.start();
     signer.awaitStartupCompletion();
 
@@ -99,12 +99,12 @@ public class ServerSideTlsCaClientAcceptanceTest {
   @ValueSource(booleans = {true, false})
   void clientNotInCaFailedToConnectToWeb3Signer(
       final boolean useConfigFile, @TempDir final Path tempDir) throws Exception {
-    signer = createSigner(clientCert, tempDir, useConfigFile);
+    signer = createSigner(CLIENT_CERT, tempDir, useConfigFile);
     signer.start();
     signer.awaitStartupCompletion();
 
     // Create a client which presents the server cert (not in CA) - it should fail to connect.
-    final ClientTlsConfig clientTlsConfig = new ClientTlsConfig(serverCert, serverCert);
+    final ClientTlsConfig clientTlsConfig = new ClientTlsConfig(SERVER_CERT, SERVER_CERT);
 
     Runnable request =
         () ->

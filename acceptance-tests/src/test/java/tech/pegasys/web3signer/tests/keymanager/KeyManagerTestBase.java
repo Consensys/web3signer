@@ -49,7 +49,7 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
   protected static final Long MINIMAL_ALTAIR_FORK = 0L;
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
-  protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  protected static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
 
   @TempDir protected Path testDirectory;
 
@@ -134,7 +134,7 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
     final BLSPublicKey publicKey = keyPair.getPublicKey();
     final String configFilename = publicKey.toString();
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.PBKDF2);
+    METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.PBKDF2);
     return publicKey.toString();
   }
 
@@ -153,7 +153,7 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
     final BLSPublicKey publicKey = keyPair.getPublicKey();
     final String configFilename = publicKey.toString();
     final Path file = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(file, privateKey, BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(file, privateKey, BLS);
     return publicKey.toString();
   }
 }

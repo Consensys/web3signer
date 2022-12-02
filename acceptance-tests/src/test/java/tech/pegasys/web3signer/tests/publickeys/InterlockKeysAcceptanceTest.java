@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 
 @Disabled("Requires physical access to Interlock on USB Armory II")
 public class InterlockKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
 
   // following keys are expected to be pre-loaded in USB Armory/Interlock under path
   // /bls/key<1..n>.txt
@@ -55,7 +55,7 @@ public class InterlockKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBas
     for (int i = 1; i <= PRE_LOADED_PRIVATE_KEYS.size(); i++) {
       final Path configFile = testDirectory.resolve("interlock_" + i + ".yaml");
       final String keyPathOnInterlock = String.format("/bls/key%d.txt", i);
-      metadataFileHelpers.createInterlockYamlFileAt(
+      METADATA_FILE_HELPERS.createInterlockYamlFileAt(
           configFile, knownServersFile, keyPathOnInterlock, KeyType.BLS);
     }
 

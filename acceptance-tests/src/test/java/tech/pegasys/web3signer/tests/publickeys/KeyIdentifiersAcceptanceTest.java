@@ -145,18 +145,18 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
     final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
     final String tenantId = System.getenv("AZURE_TENANT_ID");
-    final String PUBLIC_KEY_HEX_STRING =
+    final String publicKeyHexString =
         "964f00253459f1f43c7a7720a0db09a328d4ee6f18838015023135d7fc921f1448de34d05de7a1f72a7b5c9f6c76931d7ab33d0f0846ccce5452063bd20f5809";
 
-    metadataFileHelpers.createAzureKeyYamlFileAt(
-        testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+    METADATA_FILE_HELPERS.createAzureKeyYamlFileAt(
+        testDirectory.resolve(publicKeyHexString + ".yaml"),
         clientId,
         clientSecret,
         keyVaultName,
         tenantId);
     initAndStartSigner("eth1");
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(SECP256K1);
-    validateApiResponse(response, containsInAnyOrder("0x" + PUBLIC_KEY_HEX_STRING));
+    validateApiResponse(response, containsInAnyOrder("0x" + publicKeyHexString));
   }
 
   @Test
@@ -171,7 +171,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
       final String configFilename = publicKey.toString().substring(2);
       publicKeys[i] = publicKey.toString();
       final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-      metadataFileHelpers.createUnencryptedYamlFileAt(
+      METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(
           keyConfigFile, bytes.toUnprefixedHexString(), BLS);
     }
 
@@ -184,7 +184,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
   public void keysWithArbitraryFilenamesAreLoaded(final KeyType keyType) {
     final String privateKey = privateKeys(keyType)[0];
     final String filename = "foo" + "_" + keyType + ".yaml";
-    metadataFileHelpers.createUnencryptedYamlFileAt(
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(
         testDirectory.resolve(filename), privateKey, keyType);
     initAndStartSigner(calculateMode(keyType));
 

@@ -40,10 +40,10 @@ import org.web3j.crypto.Sign.SignatureData;
 
 public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
-  private static final String clientId = System.getenv("AZURE_CLIENT_ID");
-  private static final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
-  private static final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
-  private static final String tenantId = System.getenv("AZURE_TENANT_ID");
+  private static final String CLIENT_ID = System.getenv("AZURE_CLIENT_ID");
+  private static final String CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
+  private static final String KEY_VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
+  private static final String TENANT_ID = System.getenv("AZURE_TENANT_ID");
 
   private static final Bytes DATA = Bytes.wrap("42".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
@@ -53,14 +53,14 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   public static final String AZURE_PUBLIC_KEY_HEX_STRING =
       "964f00253459f1f43c7a7720a0db09a328d4ee6f18838015023135d7fc921f1448de34d05de7a1f72a7b5c9f6c76931d7ab33d0f0846ccce5452063bd20f5809";
 
-  private final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
 
   @Test
   public void signDataWithFileBasedKey() throws URISyntaxException {
     final String keyPath =
         new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
 
-    metadataFileHelpers.createKeyStoreYamlFileAt(
+    METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(
         testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
         Path.of(keyPath),
         "pass",
@@ -80,7 +80,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
       final HashicorpSigningParams hashicorpSigningParams =
           new HashicorpSigningParams(hashicorpNode, secretPath, secretName, KeyType.SECP256K1);
 
-      metadataFileHelpers.createHashicorpYamlFileAt(
+      METADATA_FILE_HELPERS.createHashicorpYamlFileAt(
           testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"), hashicorpSigningParams);
 
       signAndVerifySignature();
@@ -97,12 +97,12 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     @EnabledIfEnvironmentVariable(named = "AZURE_TENANT_ID", matches = ".*")
   })
   public void signDataWithKeyInAzure() {
-    metadataFileHelpers.createAzureKeyYamlFileAt(
+    METADATA_FILE_HELPERS.createAzureKeyYamlFileAt(
         testDirectory.resolve(AZURE_PUBLIC_KEY_HEX_STRING + ".yaml"),
-        clientId,
-        clientSecret,
-        keyVaultName,
-        tenantId);
+        CLIENT_ID,
+        CLIENT_SECRET,
+        KEY_VAULT_NAME,
+        TENANT_ID);
 
     signAndVerifySignature(AZURE_PUBLIC_KEY_HEX_STRING);
   }

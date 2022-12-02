@@ -47,7 +47,7 @@ import picocli.CommandLine;
 
 class CommandlineParserTest {
 
-  private static final String defaultUsageText =
+  private static final String DEFAULT_USAGE_TEXT =
       new CommandLine(new Web3SignerBaseCommand()).getUsageMessage();
 
   private StringWriter commandOutput;
@@ -83,14 +83,14 @@ class CommandlineParserTest {
   void mainCommandHelpIsDisplayedWhenNoOptionsOtherThanHelp() {
     final int result = parser.parseCommandLine("--help");
     assertThat(result).isZero();
-    assertThat(commandOutput.toString()).isEqualTo(defaultUsageText);
+    assertThat(commandOutput.toString()).isEqualTo(DEFAULT_USAGE_TEXT);
   }
 
   @Test
   void mainCommandHelpIsDisplayedWhenNoOptionsOtherThanHelpWithoutDashes() {
     final int result = parser.parseCommandLine("help");
     assertThat(result).isZero();
-    assertThat(commandOutput.toString()).containsOnlyOnce(defaultUsageText);
+    assertThat(commandOutput.toString()).containsOnlyOnce(DEFAULT_USAGE_TEXT);
   }
 
   @Test
@@ -111,7 +111,7 @@ class CommandlineParserTest {
   void unknownCommandLineOptionDisplaysErrorMessage() {
     final int result = parser.parseCommandLine("--nonExistentOption=9");
     assertThat(result).isNotZero();
-    assertThat(commandOutput.toString()).containsOnlyOnce(defaultUsageText);
+    assertThat(commandOutput.toString()).containsOnlyOnce(DEFAULT_USAGE_TEXT);
   }
 
   @Test

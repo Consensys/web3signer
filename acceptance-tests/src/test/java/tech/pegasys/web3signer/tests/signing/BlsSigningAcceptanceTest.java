@@ -55,20 +55,19 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  private static final BLSSecretKey key =
+  private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
+  private static final BLSSecretKey KEY =
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
-  private static final BLSKeyPair keyPair = new BLSKeyPair(key);
-  private static final BLSPublicKey publicKey = keyPair.getPublicKey();
+  private static final BLSKeyPair KEY_PAIR = new BLSKeyPair(KEY);
+  private static final BLSPublicKey PUBLIC_KEY = KEY_PAIR.getPublicKey();
 
   @ParameterizedTest
   @EnumSource
   public void signDataWithKeyLoadedFromUnencryptedFile(final ArtifactType artifactType)
       throws JsonProcessingException {
-    final String configFilename = publicKey.toString().substring(2);
+    final String configFilename = PUBLIC_KEY.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     signAndVerifySignature(artifactType, TEXT);
   }
@@ -77,9 +76,9 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @EnumSource
   public void signDataWithJsonAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
-    final String configFilename = publicKey.toString().substring(2);
+    final String configFilename = PUBLIC_KEY.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     signAndVerifySignature(artifactType, JSON);
   }
@@ -88,9 +87,9 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @EnumSource
   public void signDataWithDefaultAcceptTypeWithKeyLoadedFromUnencryptedFile(
       final ArtifactType artifactType) throws JsonProcessingException {
-    final String configFilename = publicKey.toString().substring(2);
+    final String configFilename = PUBLIC_KEY.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
     // this is same as not setting accept type at all - the client defaults to */* aka ANY
     signAndVerifySignature(artifactType, ANY);
   }
@@ -99,17 +98,17 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @EnumSource(KdfFunction.class)
   public void signDataWithKeyLoadedFromKeyStoreFile(KdfFunction kdfFunction)
       throws JsonProcessingException {
-    final String configFilename = publicKey.toString().substring(2);
+    final String configFilename = PUBLIC_KEY.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, kdfFunction);
+    METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(keyConfigFile, KEY_PAIR, kdfFunction);
 
     signAndVerifySignature(ArtifactType.BLOCK);
   }
 
   @Test
   public void ableToSignUsingHashicorp() throws JsonProcessingException {
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final String configFilename = KEY_PAIR.getPublicKey().toString().substring(2);
     final HashicorpNode hashicorpNode = HashicorpNode.createAndStartHashicorp(true);
     try {
       final String secretPath = "acceptanceTestSecretPath";
@@ -118,7 +117,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       hashicorpNode.addSecretsToVault(singletonMap(secretName, PRIVATE_KEY), secretPath);
 
       final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-      metadataFileHelpers.createHashicorpYamlFileAt(
+      METADATA_FILE_HELPERS.createHashicorpYamlFileAt(
           keyConfigFile,
           new HashicorpSigningParams(hashicorpNode, secretPath, secretName, KeyType.BLS));
 
@@ -142,9 +141,9 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
     final String secretName = "TEST-KEY";
 
-    final String configFilename = keyPair.getPublicKey().toString().substring(2);
+    final String configFilename = KEY_PAIR.getPublicKey().toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createAzureYamlFileAt(
+    METADATA_FILE_HELPERS.createAzureYamlFileAt(
         keyConfigFile, clientId, clientSecret, tenantId, keyVaultName, secretName);
 
     signAndVerifySignature(ArtifactType.BLOCK);
@@ -179,7 +178,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String roAwsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
     final String roAwsSecretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
     final String region = Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
-    final String publicKey = keyPair.getPublicKey().toString();
+    final String publicKey = KEY_PAIR.getPublicKey().toString();
 
     final AwsSecretsManagerUtil awsSecretsManagerUtil =
         new AwsSecretsManagerUtil(region, rwAwsAccessKeyId, rwAwsSecretAccessKey);
@@ -190,7 +189,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String configFilename = publicKey.substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     try {
-      metadataFileHelpers.createAwsYamlFileAt(
+      METADATA_FILE_HELPERS.createAwsYamlFileAt(
           keyConfigFile, region, roAwsAccessKeyId, roAwsSecretAccessKey, fullyPrefixKeyName);
 
       signAndVerifySignature(ArtifactType.BLOCK);
@@ -204,10 +203,10 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @EnumSource
   public void failsIfSigningRootDoesNotMatchSigningData(final ArtifactType artifactType)
       throws JsonProcessingException {
-    final String configFilename = publicKey.toString().substring(2);
+    final String configFilename = PUBLIC_KEY.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.SCRYPT);
+    METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(keyConfigFile, KEY_PAIR, KdfFunction.SCRYPT);
 
     setupMinimalWeb3Signer(artifactType);
 
@@ -231,7 +230,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.getValidatorRegistration());
 
     final Response response =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), requestWithMismatchedSigningRoot);
+        signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), requestWithMismatchedSigningRoot);
     assertThat(response.getStatusCode()).isEqualTo(500);
   }
 
@@ -241,10 +240,10 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       names = {"TEXT", "JSON", "ANY"})
   public void ableToSignWithoutSigningRootField(final ContentType acceptableContentType)
       throws JsonProcessingException {
-    final String configFilename = publicKey.toString().substring(2);
+    final String configFilename = PUBLIC_KEY.toString().substring(2);
 
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.SCRYPT);
+    METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(keyConfigFile, KEY_PAIR, KdfFunction.SCRYPT);
 
     setupMinimalWeb3Signer(ArtifactType.BLOCK);
 
@@ -270,7 +269,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final Response response =
         signer.eth2Sign(
-            keyPair.getPublicKey().toString(),
+            KEY_PAIR.getPublicKey().toString(),
             requestWithMismatchedSigningRoot,
             acceptableContentType);
 
@@ -300,11 +299,11 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     // openapi
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
     final Response response =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), request, acceptMediaType);
+        signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, acceptMediaType);
     final Bytes signature =
         verifyAndGetSignatureResponse(response, expectedContentType(acceptMediaType));
     final BLSSignature expectedSignature =
-        BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
+        BLS.sign(KEY_PAIR.getSecretKey(), request.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 

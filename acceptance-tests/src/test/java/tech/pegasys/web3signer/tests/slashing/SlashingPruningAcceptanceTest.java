@@ -39,7 +39,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
 
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
 
@@ -52,7 +52,7 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
     final Jdbi jdbi = testDatabaseInfo.getJdbi();
 
     final Path keyConfigFile = testDirectory.resolve("keyfile.yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(
         keyConfigFile, keyPair.getSecretKey().toBytes().toHexString(), KeyType.BLS);
 
     final SignerConfigurationBuilder signerBuilder =

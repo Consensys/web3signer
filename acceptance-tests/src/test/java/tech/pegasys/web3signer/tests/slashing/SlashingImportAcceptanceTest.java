@@ -44,11 +44,11 @@ import org.junit.jupiter.api.io.TempDir;
 
 public class SlashingImportAcceptanceTest extends AcceptanceTestBase {
 
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
 
-  private static final com.fasterxml.jackson.databind.ObjectMapper objectMapper =
+  private static final com.fasterxml.jackson.databind.ObjectMapper OBJECT_MAPPER =
       new InterchangeJsonProvider().getJsonMapper();
 
   protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
@@ -64,7 +64,7 @@ public class SlashingImportAcceptanceTest extends AcceptanceTestBase {
             .withKeyStoreDirectory(testDirectory);
 
     final Path keyConfigFile = testDirectory.resolve("keyfile.yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(
         keyConfigFile, keyPair.getSecretKey().toBytes().toHexString(), KeyType.BLS);
 
     startSigner(builder.build());
@@ -92,7 +92,7 @@ public class SlashingImportAcceptanceTest extends AcceptanceTestBase {
     waitFor(() -> assertThat(importSigner.isRunning()).isFalse());
 
     final InterchangeV5Format interchangeData =
-        objectMapper.readValue(importFile.toFile(), InterchangeV5Format.class);
+        OBJECT_MAPPER.readValue(importFile.toFile(), InterchangeV5Format.class);
 
     final Jdbi jdbi = Jdbi.create(signer.getSlashingDbUrl(), DB_USERNAME, DB_PASSWORD);
     final int validatorId = 1;

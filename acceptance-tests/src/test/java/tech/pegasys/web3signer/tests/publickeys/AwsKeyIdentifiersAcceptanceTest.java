@@ -50,11 +50,11 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
     disabledReason = "AWS_REGION env variable is required")
 public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBase {
 
-  private final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
-  private final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
+  private static final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
+  private static final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
 
-  private final String RO_AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
-  private final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
+  private static final String RO_AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
+  private static final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
 
   private static final String AWS_REGION =
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
@@ -81,7 +81,7 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
 
   @Test
   public void specifiedAwsKeysReturnAppropriatePublicKey() {
-    metadataFileHelpers.createAwsYamlFileAt(
+    METADATA_FILE_HELPERS.createAwsYamlFileAt(
         testDirectory.resolve(publicKey + ".yaml"),
         AWS_REGION,
         RO_AWS_ACCESS_KEY_ID,
@@ -94,7 +94,7 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
 
   @Test
   public void environmentAwsKeysReturnAppropriatePublicKey() {
-    metadataFileHelpers.createAwsYamlFileAt(
+    METADATA_FILE_HELPERS.createAwsYamlFileAt(
         testDirectory.resolve(publicKey + ".yaml"),
         AWS_REGION,
         awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey);

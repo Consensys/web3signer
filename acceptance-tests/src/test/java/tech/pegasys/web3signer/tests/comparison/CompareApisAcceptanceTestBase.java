@@ -51,7 +51,7 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
           new FilecoinKey(
               SECP256K1, Bytes.fromBase64String("0oKQu6xyg0bOCaqNqpHULzxDa4VDQu1D19iArDL8+JU=")));
 
-  protected static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  protected static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
 
   @TempDir protected Path testDirectory;
 
@@ -68,7 +68,7 @@ public class CompareApisAcceptanceTestBase extends AcceptanceTestBase {
   private void initSignerKeystoreDirectory() {
     ADDRESS_MAP.forEach(
         (fcAddress, key) ->
-            metadataFileHelpers.createUnencryptedYamlFileAt(
+            METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(
                 keyConfigFile(fcAddress),
                 key.getPrivateKeyHex(),
                 key.getType() == BLS ? KeyType.BLS : KeyType.SECP256K1));
