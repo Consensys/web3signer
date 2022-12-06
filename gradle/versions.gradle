@@ -13,8 +13,8 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.14.0-rc2'
-    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.0-rc2'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.14.1'
+    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.1'
 
     dependencySet(group: 'com.google.errorprone', version: '2.10.0') {
       entry 'error_prone_annotation'
@@ -175,5 +175,11 @@ dependencyManagement {
      |    \--- tech.pegasys.signers.internal:keystorage-azure:2.2.3 (requested com.azure:azure-security-keyvault-secrets:4.4.2)
      */
     dependency 'io.projectreactor.netty:reactor-netty-http:1.0.24'
+
+    // manual overriding of commons-net to avoid CVE-2021-37533
+    /* commons-net:commons-net:3.8.0
+       \-- org.apache.tuweni:tuweni-net:2.3.1
+     */
+    dependency 'commons-net:commons-net:3.9.0'
   }
 }
