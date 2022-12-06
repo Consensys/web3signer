@@ -53,7 +53,7 @@ public class DbPruner {
     checkArgument(
         epochsToKeep > 0, "epochsToKeep must be a positive value, but was %s", epochsToKeep);
     checkArgument(
-        slotsPerEpoch > 0, "slotsPerEpoch must be a positive value, but was %", slotsPerEpoch);
+        slotsPerEpoch > 0, "slotsPerEpoch must be a positive value, but was %s", slotsPerEpoch);
     final long slotsToKeep = epochsToKeep * slotsPerEpoch;
     pruneBlocks(validatorId, slotsToKeep);
     pruneAttestations(validatorId, epochsToKeep);
