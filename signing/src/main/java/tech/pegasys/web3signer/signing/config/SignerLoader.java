@@ -19,7 +19,6 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -105,7 +104,7 @@ public class SignerLoader {
                   loadedConfigFiles.put(path, new SimpleEntry<>(fileContent, lastModifiedTime));
                   return new SimpleEntry<>(path, fileContent);
 
-                } catch (final IOException | UncheckedIOException e) {
+                } catch (final IOException e) {
                   LOG.error("Error reading config file: {}", path, e);
                   return null;
                 }
