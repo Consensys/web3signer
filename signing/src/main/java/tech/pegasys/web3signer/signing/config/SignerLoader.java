@@ -19,9 +19,11 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
@@ -30,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -46,7 +49,9 @@ public class SignerLoader {
   private static final Logger LOG = LogManager.getLogger();
   private static final long FILES_PROCESSED_TO_REPORT = 10;
   private static final int MAX_FORK_JOIN_THREADS = 5;
-  private final Set<Path> loadedConfigurationFiles = new HashSet<>();
+
+  private static final Map<Path, SimpleEntry<String, FileTime>> loadedConfigFiles =
+      new ConcurrentHashMap<>();
 
   public Collection<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
@@ -54,9 +59,9 @@ public class SignerLoader {
     LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
 
     final Map<Path, String> configFilesContent =
-        getConfigFilesContents(configsDirectory, fileExtension);
-    // TODO (Uzi): Cache files with their hash values instead of file name to pick any changes during reload
-    loadedConfigurationFiles.addAll(configFilesContent.keySet());
+        getNewOrModifiedConfigFilesContents(configsDirectory, fileExtension);
+
+    updateLoadedConfigFilesMap();
 
     final String timeTaken =
         DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
@@ -68,20 +73,39 @@ public class SignerLoader {
     return processMetadataFilesInParallel(configFilesContent, signerParser);
   }
 
-  private Map<Path, String> getConfigFilesContents(
+  private static void updateLoadedConfigFilesMap() {
+    // remove loaded config files which do not exist anymore
+    new HashSet<>(loadedConfigFiles.keySet())
+        .forEach(
+            path -> {
+              if (Files.notExists(path)) {
+                loadedConfigFiles.remove(path);
+              }
+            });
+  }
+
+  private Map<Path, String> getNewOrModifiedConfigFilesContents(
       final Path configsDirectory, final String fileExtension) {
     // read configuration files without converting them to signers first.
-    // Avoid reading files which are already loaded/processed
-    // TODO (Uzi): Cache files with their hash values instead of file name to pick any changes during reload
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
-          .filter(path -> !loadedConfigurationFiles.contains(path))
           .filter(path -> matchesFileExtension(fileExtension, path))
           .map(
               path -> {
                 try {
-                  return new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8));
-                } catch (final IOException e) {
+                  // only read file if its last modified time has been changed or not already loaded
+                  final FileTime lastModifiedTime = Files.getLastModifiedTime(path);
+                  if (loadedConfigFiles.containsKey(path)) {
+                    if (loadedConfigFiles.get(path).getValue().compareTo(lastModifiedTime) == 0) {
+                      return null;
+                    }
+                  }
+
+                  final String fileContent = Files.readString(path, StandardCharsets.UTF_8);
+                  loadedConfigFiles.put(path, new SimpleEntry<>(fileContent, lastModifiedTime));
+                  return new SimpleEntry<>(path, fileContent);
+
+                } catch (final IOException | UncheckedIOException e) {
                   LOG.error("Error reading config file: {}", path, e);
                   return null;
                 }
