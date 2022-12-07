@@ -55,6 +55,7 @@ public class SignerLoader {
 
     final Map<Path, String> configFilesContent =
         getConfigFilesContents(configsDirectory, fileExtension);
+    // TODO (Uzi): Cache files with their hash values instead of file name to pick any changes during reload
     loadedConfigurationFiles.addAll(configFilesContent.keySet());
 
     final String timeTaken =
@@ -71,6 +72,7 @@ public class SignerLoader {
       final Path configsDirectory, final String fileExtension) {
     // read configuration files without converting them to signers first.
     // Avoid reading files which are already loaded/processed
+    // TODO (Uzi): Cache files with their hash values instead of file name to pick any changes during reload
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
           .filter(path -> !loadedConfigurationFiles.contains(path))
