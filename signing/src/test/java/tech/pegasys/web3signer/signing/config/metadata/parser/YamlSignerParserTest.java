@@ -31,6 +31,7 @@ import tech.pegasys.web3signer.signing.config.metadata.AzureSecretSigningMetadat
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.FileRawSigningMetadata;
+import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 
@@ -64,17 +65,18 @@ class YamlSignerParserTest {
 
   @TempDir Path configDir;
   @Mock private BlsArtifactSignerFactory blsArtifactSignerFactory;
-  @Mock private BlsArtifactSignerFactory otherBlsArtifactSignerFactory;
+  @Mock private Secp256k1ArtifactSignerFactory secpArtifactSignerFactory;
 
   private YamlSignerParser signerParser;
 
   @BeforeEach
   public void setup() {
     Mockito.reset();
-    signerParser =
-        new YamlSignerParser(List.of(blsArtifactSignerFactory, otherBlsArtifactSignerFactory));
     lenient().when(blsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
-    lenient().when(otherBlsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.SECP256K1);
+    lenient().when(secpArtifactSignerFactory.getKeyType()).thenReturn(KeyType.SECP256K1);
+
+    signerParser =
+        new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory));
   }
 
   @Test
@@ -233,7 +235,7 @@ class YamlSignerParserTest {
 
   @Test
   void aSignerIsCreatedForEachMatchingFactory() throws IOException {
-    lenient().when(otherBlsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
+    lenient().when(secpArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
     unencryptedKeyMetadataFile.put("type", "file-raw");
     unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);

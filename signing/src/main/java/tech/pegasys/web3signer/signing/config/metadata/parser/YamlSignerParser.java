@@ -20,12 +20,15 @@ import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
@@ -48,12 +51,16 @@ public class YamlSignerParser implements SignerParser {
   @Override
   public List<ArtifactSigner> parse(final String fileContent) {
     try {
-      final SigningMetadata metaDataInfo =
-          YAML_MAPPER.readValue(fileContent, SigningMetadata.class);
+      final List<SigningMetadata> metadataInfoList = readSigningMetadata(fileContent);
 
-      return signerFactories.stream()
-          .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
-          .map(metaDataInfo::createSigner)
+      return metadataInfoList.stream()
+          .flatMap(
+              metadataInfo ->
+                  signerFactories.stream()
+                      .filter(
+                          factory ->
+                              Objects.equals(factory.getKeyType(), metadataInfo.getKeyType()))
+                      .map(metadataInfo::createSigner))
           .collect(Collectors.toList());
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file format", e);
@@ -65,5 +72,16 @@ public class YamlSignerParser implements SignerParser {
     } catch (final Exception e) {
       throw new SigningMetadataException("Unknown failure", e);
     }
+  }
+
+  private static List<SigningMetadata> readSigningMetadata(String fileContent) throws IOException {
+    final List<SigningMetadata> signingMetadataList = new ArrayList<>();
+    try (final MappingIterator<SigningMetadata> signingMetadataIterator =
+        YAML_MAPPER.readerFor(SigningMetadata.class).readValues(fileContent)) {
+      while (signingMetadataIterator.hasNextValue()) {
+        signingMetadataList.add(signingMetadataIterator.nextValue());
+      }
+    }
+    return signingMetadataList;
   }
 }
