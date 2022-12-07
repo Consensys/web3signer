@@ -49,8 +49,7 @@ public class SignerLoader {
   private static final long FILES_PROCESSED_TO_REPORT = 10;
   private static final int MAX_FORK_JOIN_THREADS = 5;
 
-  private static final Map<Path, SimpleEntry<String, FileTime>> loadedConfigFiles =
-      new ConcurrentHashMap<>();
+  private static final Map<Path, FileTime> loadedConfigFiles = new ConcurrentHashMap<>();
 
   public Collection<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
@@ -95,14 +94,13 @@ public class SignerLoader {
                   // only read file if its last modified time has been changed or not already loaded
                   final FileTime lastModifiedTime = Files.getLastModifiedTime(path);
                   if (loadedConfigFiles.containsKey(path)) {
-                    if (loadedConfigFiles.get(path).getValue().compareTo(lastModifiedTime) == 0) {
+                    if (loadedConfigFiles.get(path).compareTo(lastModifiedTime) == 0) {
                       return null;
                     }
                   }
 
-                  final String fileContent = Files.readString(path, StandardCharsets.UTF_8);
-                  loadedConfigFiles.put(path, new SimpleEntry<>(fileContent, lastModifiedTime));
-                  return new SimpleEntry<>(path, fileContent);
+                  loadedConfigFiles.put(path, lastModifiedTime);
+                  return new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8));
 
                 } catch (final IOException e) {
                   LOG.error("Error reading config file: {}", path, e);
