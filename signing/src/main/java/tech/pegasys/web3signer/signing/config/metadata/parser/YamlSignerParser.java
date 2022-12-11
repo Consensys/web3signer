@@ -20,13 +20,13 @@ import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -75,13 +75,9 @@ public class YamlSignerParser implements SignerParser {
   }
 
   private static List<SigningMetadata> readSigningMetadata(String fileContent) throws IOException {
-    final List<SigningMetadata> signingMetadataList = new ArrayList<>();
-    try (final MappingIterator<SigningMetadata> signingMetadataIterator =
-        YAML_MAPPER.readerFor(SigningMetadata.class).readValues(fileContent)) {
-      while (signingMetadataIterator.hasNextValue()) {
-        signingMetadataList.add(signingMetadataIterator.nextValue());
-      }
+    try (final MappingIterator<SigningMetadata> iterator =
+        YAML_MAPPER.readValues(YAML_MAPPER.createParser(fileContent), new TypeReference<>() {})) {
+      return iterator.readAll();
     }
-    return signingMetadataList;
   }
 }
