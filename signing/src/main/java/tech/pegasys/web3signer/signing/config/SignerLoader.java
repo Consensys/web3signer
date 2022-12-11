@@ -27,12 +27,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -50,7 +49,7 @@ public class SignerLoader {
   private static final long FILES_PROCESSED_TO_REPORT = 10;
   private static final int MAX_FORK_JOIN_THREADS = 5;
 
-  private static final Map<Path, FileTime> loadedConfigFiles = new ConcurrentHashMap<>();
+  private static final Map<Path, FileTime> metadataConfigFilesPathCache = new HashMap<>();
 
   public Collection<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
@@ -59,8 +58,6 @@ public class SignerLoader {
 
     final Map<Path, String> configFilesContent =
         getNewOrModifiedConfigFilesContents(configsDirectory, fileExtension);
-
-    updateLoadedConfigFilesMap();
 
     final String timeTaken =
         DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
@@ -78,41 +75,39 @@ public class SignerLoader {
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
           .filter(path -> matchesFileExtension(fileExtension, path))
-          .map(this::getFilePathContentPair)
+          .filter(this::isNewOrModifiedMetadataFile)
+          .map(this::getMetadataFileContent)
           .filter(Optional::isPresent)
           .map(Optional::get)
           .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
+      return emptyMap();
     }
-
-    return emptyMap();
   }
 
-  private void updateLoadedConfigFilesMap() {
-    // remove loaded config files which do not exist anymore
-    new HashSet<>(loadedConfigFiles.keySet())
-        .forEach(
-            path -> {
-              if (Files.notExists(path)) {
-                loadedConfigFiles.remove(path);
-              }
-            });
-  }
-
-  private Optional<SimpleEntry<Path, String>> getFilePathContentPair(Path path) {
+  private boolean isNewOrModifiedMetadataFile(final Path path) {
+    // only read file if is not previously read or has been since modified
     try {
-      // only read file if its last modified time has been changed or not already loaded
       final FileTime lastModifiedTime = Files.getLastModifiedTime(path);
-      if (loadedConfigFiles.containsKey(path)) {
-        if (loadedConfigFiles.get(path).compareTo(lastModifiedTime) == 0) {
-          return Optional.empty();
+      if (metadataConfigFilesPathCache.containsKey(path)) {
+        if (metadataConfigFilesPathCache.get(path).compareTo(lastModifiedTime) == 0) {
+          return false;
         }
       }
 
-      loadedConfigFiles.put(path, lastModifiedTime);
-      return Optional.of(new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8)));
+      // keep the path and last modified time in local cache
+      metadataConfigFilesPathCache.put(path, lastModifiedTime);
+      return true;
+    } catch (final IOException e) {
+      LOG.error("Error reading config file: {}", path, e);
+      return false;
+    }
+  }
 
+  private Optional<SimpleEntry<Path, String>> getMetadataFileContent(final Path path) {
+    try {
+      return Optional.of(new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8)));
     } catch (final IOException e) {
       LOG.error("Error reading config file: {}", path, e);
       return Optional.empty();
