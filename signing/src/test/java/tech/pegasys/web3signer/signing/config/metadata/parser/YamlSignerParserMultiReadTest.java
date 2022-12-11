@@ -14,46 +14,89 @@ package tech.pegasys.web3signer.signing.config.metadata.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
+import static tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParserTest.getFileKeystoreConfigMetadata;
+import static tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParserTest.getFileRawConfigYaml;
 
+import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
+import tech.pegasys.web3signer.KeystoreUtil;
+import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
-import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
+import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class YamlSignerParserMultiReadTest {
 
-  @Mock private BlsArtifactSignerFactory blsArtifactSignerFactory;
-  @Mock private Secp256k1ArtifactSignerFactory secp256k1ArtifactSignerFactory;
+  private final BLSKeyPair blsKeyPair1 = BLSTestUtil.randomKeyPair(1);
+  private final BLSKeyPair blsKeyPair2 = BLSTestUtil.randomKeyPair(2);
+  @Mock private MetricsSystem metricsSystem;
+  @Mock private HashicorpConnectionFactory hashicorpConnectionFactory;
+  @Mock private InterlockKeyProvider interlockKeyProvider;
+  @Mock private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
+  @Mock private AwsSecretsManagerProvider awsSecretsManagerProvider;
+  @Mock private LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
+  @Mock private OperationTimer operationTimer;
+
+  @TempDir Path configDir;
 
   private YamlSignerParser signerParser;
 
   @BeforeEach
   public void setup() {
-    Mockito.reset();
-    lenient().when(blsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
-    lenient().when(secp256k1ArtifactSignerFactory.getKeyType()).thenReturn(KeyType.SECP256K1);
+    // setup metrics system stubbing
+    lenient()
+        .when(
+            metricsSystem.createLabelledTimer(
+                Web3SignerMetricCategory.SIGNING,
+                "private_key_retrieval_time",
+                "Time taken to retrieve private key",
+                "signer"))
+        .thenReturn(privateKeyRetrievalTimer);
 
-    signerParser =
-        new YamlSignerParser(List.of(blsArtifactSignerFactory, secp256k1ArtifactSignerFactory));
+    lenient().when(privateKeyRetrievalTimer.labels(any())).thenReturn(operationTimer);
+
+    final BlsArtifactSignerFactory blsArtifactSignerFactory =
+        new BlsArtifactSignerFactory(
+            configDir,
+            metricsSystem,
+            hashicorpConnectionFactory,
+            interlockKeyProvider,
+            yubiHsmOpaqueDataProvider,
+            awsSecretsManagerProvider,
+            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
+
+    signerParser = new YamlSignerParser(List.of(blsArtifactSignerFactory));
   }
 
   @Test
   void readMultiDoc() {
-    final String prvKey1 = BLSTestUtil.randomKeyPair(1).getSecretKey().toBytes().toHexString();
-    final String prvKey2 = BLSTestUtil.randomKeyPair(2).getSecretKey().toBytes().toHexString();
+    final String prvKey1 = blsKeyPair1.getSecretKey().toBytes().toHexString();
+    final String prvKey2 = blsKeyPair2.getSecretKey().toBytes().toHexString();
 
     final String multiYaml =
         String.format(
@@ -71,9 +114,36 @@ class YamlSignerParserMultiReadTest {
   }
 
   @Test
+  void readMultiDocWithDifferentTypes() throws Exception {
+    // encrypted keystore type
+    final Map.Entry<Path, Path> keystoreFiles =
+        KeystoreUtil.createKeystore(blsKeyPair1, configDir, configDir, "password");
+    final String fileKeystoreMetadataYaml =
+        getFileKeystoreConfigMetadata(keystoreFiles.getKey(), keystoreFiles.getValue());
+
+    // raw file type
+    final String prvKey2 = blsKeyPair2.getSecretKey().toBytes().toHexString();
+    final String rawKeystoreMetadataYaml = getFileRawConfigYaml(prvKey2, KeyType.BLS);
+
+    // combine two different types in yaml multi-doc format
+    final String multiDocYaml =
+        String.format("%s%n%s", fileKeystoreMetadataYaml, rawKeystoreMetadataYaml);
+
+    // parse and assert results
+    final List<ArtifactSigner> result = signerParser.parse(multiDocYaml);
+    final Set<String> publicKeyIdentifiers =
+        result.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toSet());
+
+    assertThat(publicKeyIdentifiers).hasSize(2);
+    assertThat(publicKeyIdentifiers)
+        .containsExactlyInAnyOrder(
+            blsKeyPair1.getPublicKey().toHexString(), blsKeyPair2.getPublicKey().toHexString());
+  }
+
+  @Test
   void invalidMultiDocThrowsException() {
-    final String prvKey1 = BLSTestUtil.randomKeyPair(1).getSecretKey().toBytes().toHexString();
-    final String prvKey2 = BLSTestUtil.randomKeyPair(2).getSecretKey().toBytes().toHexString();
+    final String prvKey1 = blsKeyPair1.getSecretKey().toBytes().toHexString();
+    final String prvKey2 = blsKeyPair2.getSecretKey().toBytes().toHexString();
 
     // missing type:
     final String multiYaml =

@@ -224,18 +224,7 @@ class SignerLoaderTest {
 
   @Test
   void signerIdentifiersReturnedForAllValidMetadataFilesInDirectory() throws IOException {
-    final Path key1 =
-        createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
-    when(signerParser.parse(Files.readString(key1, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY1));
-    final Path key2 =
-        createFileInConfigsDirectory(PUBLIC_KEY2 + "." + FILE_EXTENSION, PRIVATE_KEY2);
-    when(signerParser.parse(Files.readString(key2, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY2));
-    final Path key3 =
-        createFileInConfigsDirectory(PUBLIC_KEY3 + "." + FILE_EXTENSION, PRIVATE_KEY3);
-    when(signerParser.parse(Files.readString(key3, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY3));
+    createSignerConfigFiles();
 
     final List<ArtifactSigner> signerList =
         Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
@@ -245,20 +234,26 @@ class SignerLoaderTest {
         .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
   }
 
-  @Test
-  void callingLoadTwiceDoesNotReloadUnmodifiedConfigFiles() throws IOException {
+  private void createSignerConfigFiles() throws IOException {
     final Path key1 =
         createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
     when(signerParser.parse(Files.readString(key1, StandardCharsets.UTF_8)))
         .thenReturn(createArtifactSigner(PRIVATE_KEY1));
+
     final Path key2 =
         createFileInConfigsDirectory(PUBLIC_KEY2 + "." + FILE_EXTENSION, PRIVATE_KEY2);
     when(signerParser.parse(Files.readString(key2, StandardCharsets.UTF_8)))
         .thenReturn(createArtifactSigner(PRIVATE_KEY2));
+
     final Path key3 =
         createFileInConfigsDirectory(PUBLIC_KEY3 + "." + FILE_EXTENSION, PRIVATE_KEY3);
     when(signerParser.parse(Files.readString(key3, StandardCharsets.UTF_8)))
         .thenReturn(createArtifactSigner(PRIVATE_KEY3));
+  }
+
+  @Test
+  void callingLoadTwiceDoesNotReloadUnmodifiedConfigFiles() throws IOException {
+    createSignerConfigFiles();
 
     final List<ArtifactSigner> signerList =
         Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
@@ -274,18 +269,7 @@ class SignerLoaderTest {
 
   @Test
   void callingLoadTwiceOnlyLoadSignersFromModifiedConfigFiles() throws IOException {
-    final Path key1 =
-        createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
-    when(signerParser.parse(Files.readString(key1, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY1));
-    final Path key2 =
-        createFileInConfigsDirectory(PUBLIC_KEY2 + "." + FILE_EXTENSION, PRIVATE_KEY2);
-    when(signerParser.parse(Files.readString(key2, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY2));
-    final Path key3 =
-        createFileInConfigsDirectory(PUBLIC_KEY3 + "." + FILE_EXTENSION, PRIVATE_KEY3);
-    when(signerParser.parse(Files.readString(key3, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY3));
+    createSignerConfigFiles();
 
     final List<ArtifactSigner> signerList =
         Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));

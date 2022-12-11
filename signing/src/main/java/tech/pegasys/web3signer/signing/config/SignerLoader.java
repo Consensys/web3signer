@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
@@ -71,7 +72,24 @@ public class SignerLoader {
     return processMetadataFilesInParallel(configFilesContent, signerParser);
   }
 
-  private static void updateLoadedConfigFilesMap() {
+  private Map<Path, String> getNewOrModifiedConfigFilesContents(
+      final Path configsDirectory, final String fileExtension) {
+    // read configuration files without converting them to signers first.
+    try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
+      return fileStream
+          .filter(path -> matchesFileExtension(fileExtension, path))
+          .map(this::getFilePathContentPair)
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
+    } catch (final IOException e) {
+      LOG.error("Unable to access the supplied key directory", e);
+    }
+
+    return emptyMap();
+  }
+
+  private void updateLoadedConfigFilesMap() {
     // remove loaded config files which do not exist anymore
     new HashSet<>(loadedConfigFiles.keySet())
         .forEach(
@@ -82,38 +100,23 @@ public class SignerLoader {
             });
   }
 
-  private Map<Path, String> getNewOrModifiedConfigFilesContents(
-      final Path configsDirectory, final String fileExtension) {
-    // read configuration files without converting them to signers first.
-    try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
-      return fileStream
-          .filter(path -> matchesFileExtension(fileExtension, path))
-          .map(
-              path -> {
-                try {
-                  // only read file if its last modified time has been changed or not already loaded
-                  final FileTime lastModifiedTime = Files.getLastModifiedTime(path);
-                  if (loadedConfigFiles.containsKey(path)) {
-                    if (loadedConfigFiles.get(path).compareTo(lastModifiedTime) == 0) {
-                      return null;
-                    }
-                  }
+  private Optional<SimpleEntry<Path, String>> getFilePathContentPair(Path path) {
+    try {
+      // only read file if its last modified time has been changed or not already loaded
+      final FileTime lastModifiedTime = Files.getLastModifiedTime(path);
+      if (loadedConfigFiles.containsKey(path)) {
+        if (loadedConfigFiles.get(path).compareTo(lastModifiedTime) == 0) {
+          return Optional.empty();
+        }
+      }
 
-                  loadedConfigFiles.put(path, lastModifiedTime);
-                  return new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8));
+      loadedConfigFiles.put(path, lastModifiedTime);
+      return Optional.of(new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8)));
 
-                } catch (final IOException e) {
-                  LOG.error("Error reading config file: {}", path, e);
-                  return null;
-                }
-              })
-          .filter(Objects::nonNull)
-          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     } catch (final IOException e) {
-      LOG.error("Unable to access the supplied key directory", e);
+      LOG.error("Error reading config file: {}", path, e);
+      return Optional.empty();
     }
-
-    return emptyMap();
   }
 
   private Collection<ArtifactSigner> processMetadataFilesInParallel(
