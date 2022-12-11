@@ -258,7 +258,7 @@ class YamlSignerParserTest {
     return yamlMetadata;
   }
 
-  private static FileKeyStoreMetadata hasKeystoreAndPasswordFile(
+  private FileKeyStoreMetadata hasKeystoreAndPasswordFile(
       final Path keystoreFile, final Path passwordFile) {
     return argThat(
         (FileKeyStoreMetadata m) ->
