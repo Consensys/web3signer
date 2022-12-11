@@ -22,7 +22,6 @@ import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -57,9 +56,7 @@ public class YamlSignerParser implements SignerParser {
           .flatMap(
               metadataInfo ->
                   signerFactories.stream()
-                      .filter(
-                          factory ->
-                              Objects.equals(factory.getKeyType(), metadataInfo.getKeyType()))
+                      .filter(factory -> factory.getKeyType() == metadataInfo.getKeyType())
                       .map(metadataInfo::createSigner))
           .collect(Collectors.toList());
     } catch (final JsonParseException | JsonMappingException e) {
