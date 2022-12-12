@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
     <!-- See https://jeremylong.github.io/DependencyCheck/general/suppression.html for examples -->
-    <suppress until="2022-11-15">
+    <suppress until="2023-01-15">
         <notes><![CDATA[
-          Temporarily suppress CVE-2022-38752. Fix is available since snakeyaml-1.32 but database still reporting as false positive https://github.com/jeremylong/DependencyCheck/issues/4919
+            Temporarily suppress CVE-2022-38752. Reporting as false positive https://github.com/OSSIndex/vulns/issues/328
           More info on the fix here https://bitbucket.org/snakeyaml/snakeyaml/issues/531/stackoverflow-oss-fuzz-47081
         ]]></notes>
-        <cve>CVE-2022-38752</cve>
+        <cve>CVE-2022-1471</cve>
+    </suppress>
+    <suppress until="2022-12-20">
+        <notes><![CDATA[
+            Temporarily suppress CVE-2021-37533. we are manually overriding commons-net:3.9.0 which does not contain
+            this vulnerability. The vulnerable jar is not part of final build. This needs more investigation.
+        ]]></notes>
+        <cve>CVE-2021-37533</cve>
     </suppress>
 </suppressions>

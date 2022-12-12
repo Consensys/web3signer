@@ -25,7 +25,7 @@ buildscript {
   }
   dependencies {
     classpath 'tech.pegasys.internal.license.reporter:license-reporter:1.0.1'
-    classpath 'org.owasp:dependency-check-gradle:7.2.1'
+    classpath 'org.owasp:dependency-check-gradle:7.4.0'
   }
 }
 
@@ -121,7 +121,10 @@ allprojects {
     maven { url "https://jitpack.io" }
   }
 
-  dependencies { errorprone("com.google.errorprone:error_prone_core") }
+  dependencies {
+    errorprone("com.google.errorprone:error_prone_core")
+    errorprone("tech.pegasys.tools.epchecks:errorprone-checks")
+  }
 
   apply plugin: 'com.diffplug.spotless'
   spotless {
@@ -195,6 +198,13 @@ allprojects {
 
       check('InsecureCryptoUsage', CheckSeverity.WARN)
       check('WildcardImport', CheckSeverity.WARN)
+
+      // TODO: Review/fix/enable checks from errorprone-checks.
+      check('DoNotCreateSecureRandomDirectly', CheckSeverity.OFF)
+      check('DoNotInvokeMessageDigestDirectly', CheckSeverity.OFF)
+      check('DoNotReturnNullOptionals', CheckSeverity.OFF)
+      check('JavaCase', CheckSeverity.OFF)
+      check('MethodInputParametersMustBeFinal', CheckSeverity.OFF)
     }
 
     options.encoding = 'UTF-8'

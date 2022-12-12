@@ -16,7 +16,6 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -36,7 +35,6 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
-  private Set<String> identifiers = Collections.emptySet();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   public DefaultArtifactSignerProvider(
@@ -62,8 +60,6 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                       }))
               .forEach(signers::putIfAbsent);
 
-          identifiers = Set.copyOf(signers.keySet());
-
           LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
           return null;
         });
@@ -81,7 +77,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
   @Override
   public Set<String> availableIdentifiers() {
-    return identifiers;
+    return Set.copyOf(signers.keySet());
   }
 
   @Override
@@ -89,7 +85,6 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
     return executorService.submit(
         () -> {
           signers.put(signer.getIdentifier(), signer);
-          identifiers = Set.copyOf(signers.keySet());
           LOG.info("Loaded new signer for identifier '{}'", signer.getIdentifier());
           return null;
         });
@@ -100,7 +95,6 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
     return executorService.submit(
         () -> {
           signers.remove(identifier);
-          identifiers = Set.copyOf(signers.keySet());
           LOG.info("Removed signer with identifier '{}'", identifier);
           return null;
         });

@@ -31,6 +31,7 @@ import tech.pegasys.web3signer.signing.config.metadata.AzureSecretSigningMetadat
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.FileRawSigningMetadata;
+import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 
@@ -41,6 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.tuweni.bytes.Bytes32;
@@ -58,23 +60,27 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class YamlSignerParserTest {
 
-  private static final ObjectMapper YAML_OBJECT_MAPPER = YAMLMapper.builder().build();
+  static final ObjectMapper YAML_OBJECT_MAPPER = YAMLMapper.builder().build();
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
+  private static final String SECP_PRIVATE_KEY =
+      "d392469474ec227b9ec4be232b402a0490045478ab621ca559d166965f0ffd32";
+
   @TempDir Path configDir;
   @Mock private BlsArtifactSignerFactory blsArtifactSignerFactory;
-  @Mock private BlsArtifactSignerFactory otherBlsArtifactSignerFactory;
+  @Mock private Secp256k1ArtifactSignerFactory secpArtifactSignerFactory;
 
   private YamlSignerParser signerParser;
 
   @BeforeEach
   public void setup() {
     Mockito.reset();
-    signerParser =
-        new YamlSignerParser(List.of(blsArtifactSignerFactory, otherBlsArtifactSignerFactory));
     lenient().when(blsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
-    lenient().when(otherBlsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.SECP256K1);
+    lenient().when(secpArtifactSignerFactory.getKeyType()).thenReturn(KeyType.SECP256K1);
+
+    signerParser =
+        new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory));
   }
 
   @Test
@@ -144,10 +150,7 @@ class YamlSignerParserTest {
     when(blsArtifactSignerFactory.create(any(FileRawSigningMetadata.class)))
         .thenReturn(artifactSigner);
 
-    final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
-    unencryptedKeyMetadataFile.put("type", "file-raw");
-    unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);
-    final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(unencryptedKeyMetadataFile);
+    final String yamlMetadata = getFileRawConfigYaml(PRIVATE_KEY, KeyType.BLS);
 
     final List<ArtifactSigner> result = signerParser.parse(yamlMetadata);
 
@@ -205,13 +208,8 @@ class YamlSignerParserTest {
     final Path keystoreFile = configDir.resolve("keystore.json");
     final Path passwordFile = configDir.resolve("keystore.password");
 
-    final Map<String, String> keystoreMetadataFile = new HashMap<>();
-    keystoreMetadataFile.put("type", "file-keystore");
-    keystoreMetadataFile.put("keystoreFile", keystoreFile.toString());
-    keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
-    final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(keystoreMetadataFile);
-
-    final List<ArtifactSigner> result = signerParser.parse(yamlMetadata);
+    final List<ArtifactSigner> result =
+        signerParser.parse(getFileKeystoreConfigMetadata(keystoreFile, passwordFile));
     assertThat(result).containsOnly(artifactSigner);
     verify(blsArtifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
   }
@@ -233,14 +231,31 @@ class YamlSignerParserTest {
 
   @Test
   void aSignerIsCreatedForEachMatchingFactory() throws IOException {
-    lenient().when(otherBlsArtifactSignerFactory.getKeyType()).thenReturn(KeyType.BLS);
+    final String yamlMetadata1 = getFileRawConfigYaml(PRIVATE_KEY, KeyType.BLS);
+    final String yamlMetadata2 = getFileRawConfigYaml(SECP_PRIVATE_KEY, KeyType.SECP256K1);
+
+    final List<ArtifactSigner> result =
+        signerParser.parse(String.format("%s%n%s", yamlMetadata1, yamlMetadata2));
+    assertThat(result).hasSize(2);
+  }
+
+  static String getFileRawConfigYaml(final String privateKey, final KeyType keyType)
+      throws JsonProcessingException {
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
     unencryptedKeyMetadataFile.put("type", "file-raw");
-    unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY);
-    final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(unencryptedKeyMetadataFile);
+    unencryptedKeyMetadataFile.put("privateKey", privateKey);
+    unencryptedKeyMetadataFile.put("keyType", keyType.name());
+    return YAML_OBJECT_MAPPER.writeValueAsString(unencryptedKeyMetadataFile);
+  }
 
-    final List<ArtifactSigner> result = signerParser.parse(yamlMetadata);
-    assertThat(result).hasSize(2);
+  static String getFileKeystoreConfigMetadata(Path keystoreFile, Path passwordFile)
+      throws JsonProcessingException {
+    final Map<String, String> keystoreMetadataFile = new HashMap<>();
+    keystoreMetadataFile.put("type", "file-keystore");
+    keystoreMetadataFile.put("keystoreFile", keystoreFile.toString());
+    keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
+    final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(keystoreMetadataFile);
+    return yamlMetadata;
   }
 
   private FileKeyStoreMetadata hasKeystoreAndPasswordFile(

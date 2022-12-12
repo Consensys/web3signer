@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
@@ -48,12 +50,14 @@ public class YamlSignerParser implements SignerParser {
   @Override
   public List<ArtifactSigner> parse(final String fileContent) {
     try {
-      final SigningMetadata metaDataInfo =
-          YAML_MAPPER.readValue(fileContent, SigningMetadata.class);
+      final List<SigningMetadata> metadataInfoList = readSigningMetadata(fileContent);
 
-      return signerFactories.stream()
-          .filter(factory -> factory.getKeyType() == metaDataInfo.getKeyType())
-          .map(metaDataInfo::createSigner)
+      return metadataInfoList.stream()
+          .flatMap(
+              metadataInfo ->
+                  signerFactories.stream()
+                      .filter(factory -> factory.getKeyType() == metadataInfo.getKeyType())
+                      .map(metadataInfo::createSigner))
           .collect(Collectors.toList());
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file format", e);
@@ -64,6 +68,13 @@ public class YamlSignerParser implements SignerParser {
       throw e;
     } catch (final Exception e) {
       throw new SigningMetadataException("Unknown failure", e);
+    }
+  }
+
+  private static List<SigningMetadata> readSigningMetadata(String fileContent) throws IOException {
+    try (final MappingIterator<SigningMetadata> iterator =
+        YAML_MAPPER.readValues(YAML_MAPPER.createParser(fileContent), new TypeReference<>() {})) {
+      return iterator.readAll();
     }
   }
 }
