@@ -26,6 +26,8 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.AbstractMap;
+import java.util.Map;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
@@ -35,25 +37,28 @@ public class KeystoreUtil {
       Bytes.fromHexString("0x9ac471d9d421bc06d9aefe2b46cf96d11829c51e36ed0b116132be57a9f8c22b");
   private static final Bytes IV = Bytes.fromHexString("0xcca2c67ec95a1dd13edd986fea372789");
 
-  public static void createKeystore(
+  public static Map.Entry<Path, Path> createKeystore(
       final BLSKeyPair keyPair,
       final Path keystoreDir,
       final Path passwordDir,
       final String password) {
-    createKeystoreFile(keyPair, keystoreDir, password);
-    createKeystorePasswordFile(keyPair, passwordDir, password);
+
+    final Path keystoreFile = createKeystoreFile(keyPair, keystoreDir, password);
+    final Path keystorePasswordFile = createKeystorePasswordFile(keyPair, passwordDir, password);
+    return new AbstractMap.SimpleEntry<>(keystoreFile, keystorePasswordFile);
   }
 
-  public static void createKeystorePasswordFile(
+  public static Path createKeystorePasswordFile(
       final BLSKeyPair keyPair, final Path passwordDir, final String password) {
     try {
-      Files.writeString(passwordDir.resolve(keyPair.getPublicKey().toString() + ".txt"), password);
+      return Files.writeString(
+          passwordDir.resolve(keyPair.getPublicKey().toString() + ".txt"), password);
     } catch (IOException e) {
       throw new IllegalStateException("Unable to write password file");
     }
   }
 
-  public static void createKeystoreFile(
+  public static Path createKeystoreFile(
       final BLSKeyPair keyPair, final Path keystoreDir, final String password) {
     final KdfParam kdfParam = new Pbkdf2Param(32, 2, HMAC_SHA256, SALT);
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, IV);
@@ -62,8 +67,9 @@ public class KeystoreUtil {
         KeyStore.encrypt(
             keyPair.getSecretKey().toBytes(), publicKey, password, "", kdfParam, cipher);
     try {
-      KeyStoreLoader.saveToFile(keystoreDir.resolve(publicKey + ".json"), keyStoreData);
-      publicKey.toHexString();
+      final Path keystoreFile = keystoreDir.resolve(publicKey + ".json");
+      KeyStoreLoader.saveToFile(keystoreFile, keyStoreData);
+      return keystoreFile;
     } catch (IOException e) {
       throw new IllegalStateException("Unable to create keystore file", e);
     }

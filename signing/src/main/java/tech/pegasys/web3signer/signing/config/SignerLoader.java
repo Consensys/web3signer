@@ -22,13 +22,15 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,7 +48,8 @@ public class SignerLoader {
   private static final Logger LOG = LogManager.getLogger();
   private static final long FILES_PROCESSED_TO_REPORT = 10;
   private static final int MAX_FORK_JOIN_THREADS = 5;
-  private final Set<Path> loadedConfigurationFiles = new HashSet<>();
+
+  private static final Map<Path, FileTime> metadataConfigFilesPathCache = new HashMap<>();
 
   public Collection<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
@@ -54,8 +57,7 @@ public class SignerLoader {
     LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
 
     final Map<Path, String> configFilesContent =
-        getConfigFilesContents(configsDirectory, fileExtension);
-    loadedConfigurationFiles.addAll(configFilesContent.keySet());
+        getNewOrModifiedConfigFilesContents(configsDirectory, fileExtension);
 
     final String timeTaken =
         DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
@@ -67,30 +69,48 @@ public class SignerLoader {
     return processMetadataFilesInParallel(configFilesContent, signerParser);
   }
 
-  private Map<Path, String> getConfigFilesContents(
+  private Map<Path, String> getNewOrModifiedConfigFilesContents(
       final Path configsDirectory, final String fileExtension) {
     // read configuration files without converting them to signers first.
-    // Avoid reading files which are already loaded/processed
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
       return fileStream
-          .filter(path -> !loadedConfigurationFiles.contains(path))
           .filter(path -> matchesFileExtension(fileExtension, path))
-          .map(
-              path -> {
-                try {
-                  return new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8));
-                } catch (final IOException e) {
-                  LOG.error("Error reading config file: {}", path, e);
-                  return null;
-                }
-              })
-          .filter(Objects::nonNull)
-          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+          .filter(this::isNewOrModifiedMetadataFile)
+          .map(this::getMetadataFileContent)
+          .flatMap(Optional::stream)
+          .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
+      return emptyMap();
     }
+  }
 
-    return emptyMap();
+  private boolean isNewOrModifiedMetadataFile(final Path path) {
+    // only read file if is not previously read or has been since modified
+    try {
+      final FileTime lastModifiedTime = Files.getLastModifiedTime(path);
+      if (metadataConfigFilesPathCache.containsKey(path)) {
+        if (metadataConfigFilesPathCache.get(path).compareTo(lastModifiedTime) == 0) {
+          return false;
+        }
+      }
+
+      // keep the path and last modified time in local cache
+      metadataConfigFilesPathCache.put(path, lastModifiedTime);
+      return true;
+    } catch (final IOException e) {
+      LOG.error("Error reading config file: {}", path, e);
+      return false;
+    }
+  }
+
+  private Optional<SimpleEntry<Path, String>> getMetadataFileContent(final Path path) {
+    try {
+      return Optional.of(new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8)));
+    } catch (final IOException e) {
+      LOG.error("Error reading config file: {}", path, e);
+      return Optional.empty();
+    }
   }
 
   private Collection<ArtifactSigner> processMetadataFilesInParallel(
