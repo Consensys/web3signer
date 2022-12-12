@@ -16,7 +16,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
-import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.compute_domain;
+import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.computeDomain;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.api.schema.AttestationData;
@@ -285,8 +285,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
       case DEPOSIT:
         checkArgument(body.getDeposit() != null, "deposit must be specified");
         final Bytes32 depositDomain =
-            compute_domain(Domain.DEPOSIT, body.getDeposit().getGenesisForkVersion(), Bytes32.ZERO);
-        return DepositSigningRootUtil.compute_signing_root(
+            computeDomain(Domain.DEPOSIT, body.getDeposit().getGenesisForkVersion(), Bytes32.ZERO);
+        return DepositSigningRootUtil.computeSigningRoot(
             body.getDeposit().asInternalDepositMessage(), depositDomain);
       case SYNC_COMMITTEE_MESSAGE:
         final SyncCommitteeMessage syncCommitteeMessage = body.getSyncCommitteeMessage();

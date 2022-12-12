@@ -48,7 +48,7 @@ public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySig
     AwsAuthenticationMode authMode = AwsAuthenticationMode.SPECIFIED;
     String region = null;
     String accessKeyId = null;
-    String secretAccess_key = null;
+    String secretAccessKey = null;
     String secretName = null;
 
     final JsonNode node = parser.getCodec().readTree(parser);
@@ -71,7 +71,7 @@ public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySig
     }
 
     if (node.get(SECRET_ACCESS_KEY) != null) {
-      secretAccess_key = node.get(SECRET_ACCESS_KEY).asText();
+      secretAccessKey = node.get(SECRET_ACCESS_KEY).asText();
     }
 
     if (node.get(SECRET_NAME) != null) {
@@ -79,7 +79,7 @@ public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySig
     }
 
     final AwsKeySigningMetadata awsKeySigningMetadata =
-        new AwsKeySigningMetadata(authMode, region, accessKeyId, secretAccess_key, secretName);
+        new AwsKeySigningMetadata(authMode, region, accessKeyId, secretAccessKey, secretName);
 
     validate(parser, awsKeySigningMetadata);
 

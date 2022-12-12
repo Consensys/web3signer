@@ -23,29 +23,29 @@ import java.util.Locale;
  */
 public class PlatformDetector {
 
-  private static String _os;
-  private static String _osType;
-  private static String _vm;
+  private static String os;
+  private static String osType;
+  private static String vm;
 
   public static String getOSType() {
-    if (_osType == null) {
+    if (osType == null) {
       detect();
     }
-    return _osType;
+    return osType;
   }
 
   public static String getOS() {
-    if (_os == null) {
+    if (os == null) {
       detect();
     }
-    return _os;
+    return os;
   }
 
   public static String getVM() {
-    if (_vm == null) {
+    if (vm == null) {
       detect();
     }
-    return _vm;
+    return vm;
   }
 
   private static final String UNKNOWN = "unknown";
@@ -56,9 +56,9 @@ public class PlatformDetector {
     final String detectedVM = normalizeVM(normalize("java.vendor"), normalize("java.vm.name"));
     final String detectedJavaVersion = normalizeJavaVersion("java.specification.version");
 
-    _os = detectedOS + '-' + detectedArch;
-    _osType = detectedOS;
-    _vm = detectedVM + "-java-" + detectedJavaVersion;
+    os = detectedOS + '-' + detectedArch;
+    osType = detectedOS;
+    vm = detectedVM + "-java-" + detectedJavaVersion;
   }
 
   private static String normalizeOS(final String osName) {
