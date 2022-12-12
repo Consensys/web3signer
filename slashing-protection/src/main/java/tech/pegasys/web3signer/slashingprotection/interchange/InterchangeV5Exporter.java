@@ -73,7 +73,8 @@ public class InterchangeV5Exporter {
     return new IncrementalInterchangeV5Exporter(out);
   }
 
-  public void exportDataWithFilter(OutputStream out, List<String> pubkeys) throws IOException {
+  public void exportDataWithFilter(final OutputStream out, final List<String> pubkeys)
+      throws IOException {
     exportInternal(out, Optional.of(pubkeys));
   }
 

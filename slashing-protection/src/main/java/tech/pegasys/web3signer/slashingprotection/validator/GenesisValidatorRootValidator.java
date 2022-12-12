@@ -42,7 +42,7 @@ public class GenesisValidatorRootValidator {
         Failsafe.with(new RetryPolicy<>().handle(StatementException.class).withMaxRetries(1));
   }
 
-  public boolean checkGenesisValidatorsRootAndInsertIfEmpty(Bytes32 genesisValidatorsRoot) {
+  public boolean checkGenesisValidatorsRootAndInsertIfEmpty(final Bytes32 genesisValidatorsRoot) {
     return failsafeExecutor.get(
         () ->
             jdbi.inTransaction(

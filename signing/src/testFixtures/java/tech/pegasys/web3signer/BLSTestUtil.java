@@ -36,13 +36,13 @@ public class BLSTestUtil {
    * @param seed The seed
    * @return BLSKeyPair
    */
-  public static BLSKeyPair randomKeyPair(int seed) {
+  public static BLSKeyPair randomKeyPair(final int seed) {
     BLSSecretKey pseudoRandomSecretBytes = fromBytesModR(Bytes32.random(new Random(seed)));
     return new BLSKeyPair(pseudoRandomSecretBytes);
   }
 
   // adapted from tech.pegasys.teku.bls.BLSTestUtil
-  static BLSSecretKey fromBytesModR(Bytes32 secretKeyBytes) {
+  static BLSSecretKey fromBytesModR(final Bytes32 secretKeyBytes) {
     final Bytes32 keyBytes;
     if (secretKeyBytes.compareTo(CURVE_ORDER_BYTES) >= 0) {
       BigInteger validSK =

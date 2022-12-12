@@ -26,7 +26,8 @@ public class FileKeyStoreMetadata extends SigningMetadata {
 
   public FileKeyStoreMetadata(
       @JsonProperty(value = "keystoreFile", required = true) final Path keystoreFile,
-      @JsonProperty(value = "keystorePasswordFile", required = true) Path keystorePasswordFile,
+      @JsonProperty(value = "keystorePasswordFile", required = true)
+          final Path keystorePasswordFile,
       @JsonProperty(value = "keyType") final KeyType keyType) {
     super(keyType != null ? keyType : KeyType.BLS);
     this.keystoreFile = keystoreFile;

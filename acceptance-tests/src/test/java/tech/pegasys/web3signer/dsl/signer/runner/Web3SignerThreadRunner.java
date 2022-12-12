@@ -32,7 +32,7 @@ public class Web3SignerThreadRunner extends Web3SignerRunner {
   }
 
   @Override
-  protected void startExecutor(List<String> params) {
+  protected void startExecutor(final List<String> params) {
     if (getSignerConfig().getOverriddenCaTrustStore().isPresent()) {
       final TlsCertificateDefinition caTrustStore =
           getSignerConfig().getOverriddenCaTrustStore().get();

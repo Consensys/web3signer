@@ -21,8 +21,8 @@ public class DeleteKeystoreResult {
 
   @JsonCreator
   public DeleteKeystoreResult(
-      @JsonProperty("status") DeleteKeystoreStatus status,
-      @JsonProperty("message") String message) {
+      @JsonProperty("status") final DeleteKeystoreStatus status,
+      @JsonProperty("message") final String message) {
     this.status = status;
     this.message = message;
   }

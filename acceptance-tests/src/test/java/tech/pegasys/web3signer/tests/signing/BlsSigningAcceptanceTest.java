@@ -97,7 +97,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   @ParameterizedTest
   @EnumSource(KdfFunction.class)
-  public void signDataWithKeyLoadedFromKeyStoreFile(KdfFunction kdfFunction)
+  public void signDataWithKeyLoadedFromKeyStoreFile(final KdfFunction kdfFunction)
       throws JsonProcessingException {
     final String configFilename = publicKey.toString().substring(2);
 
@@ -308,7 +308,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
-  private void setupMinimalWeb3Signer(ArtifactType artifactType) {
+  private void setupMinimalWeb3Signer(final ArtifactType artifactType) {
     switch (artifactType) {
       case BLOCK_V2:
       case SYNC_COMMITTEE_MESSAGE:

@@ -28,7 +28,7 @@ import org.junit.jupiter.api.io.TempDir;
 class KeystoreFileManagerTest {
 
   @Test
-  void configurationFilesAreCreated(@TempDir Path parentDir) throws Exception {
+  void configurationFilesAreCreated(@TempDir final Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir)
         .createKeystoreFiles("filename", "{\"test\":true}", "password");
 
@@ -42,7 +42,7 @@ class KeystoreFileManagerTest {
   }
 
   @Test
-  void yamlContentIsValidFileKeyStoreMetadata(@TempDir Path parentDir) throws Exception {
+  void yamlContentIsValidFileKeyStoreMetadata(@TempDir final Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir)
         .createKeystoreFiles("filename", "{\"test\":true}", "password");
 
@@ -56,7 +56,7 @@ class KeystoreFileManagerTest {
   }
 
   @Test
-  void yamlContentIsNotConverted(@TempDir Path parentDir) throws Exception {
+  void yamlContentIsNotConverted(@TempDir final Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir)
         .createKeystoreFiles("filename", "{\"test\":true}", "password");
 
@@ -76,7 +76,7 @@ class KeystoreFileManagerTest {
   }
 
   @Test
-  void passwordContentsAreWritten(@TempDir Path parentDir) throws Exception {
+  void passwordContentsAreWritten(@TempDir final Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir)
         .createKeystoreFiles("filename", "{\"test\":true}", "password");
 
@@ -86,7 +86,7 @@ class KeystoreFileManagerTest {
   }
 
   @Test
-  void jsonDataIsWritten(@TempDir Path parentDir) throws Exception {
+  void jsonDataIsWritten(@TempDir final Path parentDir) throws Exception {
     new KeystoreFileManager(parentDir)
         .createKeystoreFiles("filename", "{\"test\":true}", "password");
 

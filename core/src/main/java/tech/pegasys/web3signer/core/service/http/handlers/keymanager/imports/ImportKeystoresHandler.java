@@ -76,7 +76,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   }
 
   @Override
-  public void handle(RoutingContext context) {
+  public void handle(final RoutingContext context) {
     // API spec - https://github.com/ethereum/keymanager-APIs/tree/master/flows#import
     final RequestParameters params = context.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     final ImportKeystoresRequestBody parsedBody;

@@ -30,7 +30,8 @@ public class DepositMessage {
       @JsonProperty(value = "withdrawal_credentials", required = true)
           final Bytes32 withdrawalCredentials,
       @JsonProperty(value = "amount", required = true) final UInt64 amount,
-      @JsonProperty(value = "genesis_fork_version", required = true) Bytes4 genesisForkVersion) {
+      @JsonProperty(value = "genesis_fork_version", required = true)
+          final Bytes4 genesisForkVersion) {
     this.pubkey = pubkey;
     this.withdrawalCredentials = withdrawalCredentials;
     this.amount = amount;

@@ -86,7 +86,7 @@ public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySig
     return awsKeySigningMetadata;
   }
 
-  private void validate(final JsonParser parser, AwsKeySigningMetadata awsKeySigningMetadata)
+  private void validate(final JsonParser parser, final AwsKeySigningMetadata awsKeySigningMetadata)
       throws JsonMappingException {
     final List<String> missingParameters = new ArrayList<>();
 

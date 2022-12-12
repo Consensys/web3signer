@@ -60,7 +60,8 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  private void setForkEpochs(SpecMilestone specMilestone, SignerConfigurationBuilder builder) {
+  private void setForkEpochs(
+      final SpecMilestone specMilestone, final SignerConfigurationBuilder builder) {
     switch (specMilestone) {
       case PHASE0:
         break;

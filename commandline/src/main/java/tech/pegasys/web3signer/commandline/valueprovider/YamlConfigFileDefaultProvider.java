@@ -94,7 +94,7 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
 
   @SuppressWarnings("AnnotateFormatMethod")
   private void throwParameterException(
-      final Throwable cause, final String message, Object... messageArgs) {
+      final Throwable cause, final String message, final Object... messageArgs) {
     throw new ParameterException(
         commandLine,
         ArrayUtils.isEmpty(messageArgs) ? message : String.format(message, messageArgs),
@@ -134,7 +134,7 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
     }
   }
 
-  private void checkConfigurationValidity(boolean isEmpty) {
+  private void checkConfigurationValidity(final boolean isEmpty) {
     if (isEmpty) {
       throw new ParameterException(
           commandLine, String.format("Empty yaml configuration file: %s", configFile));

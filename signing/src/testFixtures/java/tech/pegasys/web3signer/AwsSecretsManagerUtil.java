@@ -50,7 +50,8 @@ public class AwsSecretsManagerUtil {
     return secretNamePrefix;
   }
 
-  public void createSecret(String secretName, String secretValue, final Map<String, String> tags) {
+  public void createSecret(
+      final String secretName, final String secretValue, final Map<String, String> tags) {
     Set<Tag> awsTags =
         tags.keySet().stream()
             .map(tagName -> Tag.builder().key(tagName).value(tags.get(tagName)).build())

@@ -50,19 +50,19 @@ public class SigningWatermark {
     return targetEpoch;
   }
 
-  public void setValidatorId(int validatorId) {
+  public void setValidatorId(final int validatorId) {
     this.validatorId = validatorId;
   }
 
-  public void setSlot(UInt64 slot) {
+  public void setSlot(final UInt64 slot) {
     this.slot = slot;
   }
 
-  public void setSourceEpoch(UInt64 sourceEpoch) {
+  public void setSourceEpoch(final UInt64 sourceEpoch) {
     this.sourceEpoch = sourceEpoch;
   }
 
-  public void setTargetEpoch(UInt64 targetEpoch) {
+  public void setTargetEpoch(final UInt64 targetEpoch) {
     this.targetEpoch = targetEpoch;
   }
 }

@@ -71,7 +71,7 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void slashingDataIsExported(@TempDir Path testDirectory) throws IOException {
+  void slashingDataIsExported(@TempDir final Path testDirectory) throws IOException {
     setupSigner(testDirectory, true);
 
     final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
