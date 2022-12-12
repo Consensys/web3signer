@@ -61,7 +61,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class YamlSignerParserTest {
 
   static final ObjectMapper YAML_OBJECT_MAPPER = YAMLMapper.builder().build();
-  static final String PRIVATE_KEY =
+  private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   private static final String SECP_PRIVATE_KEY =
