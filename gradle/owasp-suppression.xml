@@ -8,11 +8,4 @@
         ]]></notes>
         <cve>CVE-2022-1471</cve>
     </suppress>
-    <suppress until="2022-12-20">
-        <notes><![CDATA[
-            Temporarily suppress CVE-2021-37533. we are manually overriding commons-net:3.9.0 which does not contain
-            this vulnerability. The vulnerable jar is not part of final build. This needs more investigation.
-        ]]></notes>
-        <cve>CVE-2021-37533</cve>
-    </suppress>
 </suppressions>
