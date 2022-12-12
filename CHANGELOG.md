@@ -1,5 +1,12 @@
 # Changelog
 
+## Next Release
+### Features Added
+- Multiple Signing Key configurations can be specified in single YAML file using triple-dash `---` separator. 
+[#689](https://github.com/ConsenSys/web3signer/issues/689)
+- Reloading of signing key configuration file (via `/reload` endpoint) will process new or modified configuration files.
+
+---
 ## 22.11.0
 ### Breaking Changes
 - Slashing protection imports will now only fail for an individual validator instead for all validators allowing partial 
