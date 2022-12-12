@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -223,18 +224,7 @@ class SignerLoaderTest {
 
   @Test
   void signerIdentifiersReturnedForAllValidMetadataFilesInDirectory() throws IOException {
-    final Path key1 =
-        createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
-    when(signerParser.parse(Files.readString(key1, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY1));
-    final Path key2 =
-        createFileInConfigsDirectory(PUBLIC_KEY2 + "." + FILE_EXTENSION, PRIVATE_KEY2);
-    when(signerParser.parse(Files.readString(key2, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY2));
-    final Path key3 =
-        createFileInConfigsDirectory(PUBLIC_KEY3 + "." + FILE_EXTENSION, PRIVATE_KEY3);
-    when(signerParser.parse(Files.readString(key3, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY3));
+    createSignerConfigFiles();
 
     final List<ArtifactSigner> signerList =
         Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
@@ -242,6 +232,60 @@ class SignerLoaderTest {
     assertThat(signerList).hasSize(3);
     assertThat(signerList.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList()))
         .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
+  }
+
+  private void createSignerConfigFiles() throws IOException {
+    final Path key1 =
+        createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
+    when(signerParser.parse(Files.readString(key1, StandardCharsets.UTF_8)))
+        .thenReturn(createArtifactSigner(PRIVATE_KEY1));
+
+    final Path key2 =
+        createFileInConfigsDirectory(PUBLIC_KEY2 + "." + FILE_EXTENSION, PRIVATE_KEY2);
+    when(signerParser.parse(Files.readString(key2, StandardCharsets.UTF_8)))
+        .thenReturn(createArtifactSigner(PRIVATE_KEY2));
+
+    final Path key3 =
+        createFileInConfigsDirectory(PUBLIC_KEY3 + "." + FILE_EXTENSION, PRIVATE_KEY3);
+    when(signerParser.parse(Files.readString(key3, StandardCharsets.UTF_8)))
+        .thenReturn(createArtifactSigner(PRIVATE_KEY3));
+  }
+
+  @Test
+  void callingLoadTwiceDoesNotReloadUnmodifiedConfigFiles() throws IOException {
+    createSignerConfigFiles();
+
+    final List<ArtifactSigner> signerList =
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+
+    assertThat(signerList).hasSize(3);
+    assertThat(signerList.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList()))
+        .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
+
+    final Collection<ArtifactSigner> reloadedArtifactSigner =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+    assertThat(reloadedArtifactSigner).isEmpty();
+  }
+
+  @Test
+  void callingLoadTwiceOnlyLoadSignersFromModifiedConfigFiles() throws IOException {
+    createSignerConfigFiles();
+
+    final List<ArtifactSigner> signerList =
+        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+
+    assertThat(signerList).hasSize(3);
+    assertThat(signerList.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList()))
+        .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
+
+    // recreate file - which would change the last modified time
+    createFileInConfigsDirectory(PUBLIC_KEY3 + "." + FILE_EXTENSION, PRIVATE_KEY3);
+
+    final Collection<ArtifactSigner> reloadedArtifactSigner =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+    assertThat(reloadedArtifactSigner).hasSize(1);
+    assertThat(reloadedArtifactSigner.stream().findFirst().get().getIdentifier())
+        .isEqualTo("0x" + PUBLIC_KEY3);
   }
 
   @Test
