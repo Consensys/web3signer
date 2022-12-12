@@ -77,8 +77,7 @@ public class SignerLoader {
           .filter(path -> matchesFileExtension(fileExtension, path))
           .filter(this::isNewOrModifiedMetadataFile)
           .map(this::getMetadataFileContent)
-          .filter(Optional::isPresent)
-          .map(Optional::get)
+          .flatMap(Optional::stream)
           .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
