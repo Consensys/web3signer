@@ -26,14 +26,14 @@ import org.apache.tuweni.bytes.Bytes;
 public class Eth2SigningRequestBody {
   private final ArtifactType type;
   private final Bytes signingRoot;
-  private final ForkInfo fork_info;
+  private final ForkInfo forkInfo;
   private final BeaconBlock beaconBlock; // phase 0
   private final BlockRequest blockRequest; // altair and onward
   private final AttestationData attestation;
-  private final AggregationSlot aggregation_slot;
-  private final AggregateAndProof aggregate_and_proof;
-  private final VoluntaryExit voluntary_exit;
-  private final RandaoReveal randao_reveal;
+  private final AggregationSlot aggregationSlot;
+  private final AggregateAndProof aggregateAndProof;
+  private final VoluntaryExit voluntaryExit;
+  private final RandaoReveal randaoReveal;
   private final DepositMessage deposit;
   private final SyncCommitteeMessage syncCommitteeMessage;
   private final SyncAggregatorSelectionData syncAggregatorSelectionData;
@@ -44,14 +44,14 @@ public class Eth2SigningRequestBody {
   public Eth2SigningRequestBody(
       @JsonProperty(value = "type", required = true) final ArtifactType type,
       @JsonProperty("signingRoot") final Bytes signingRoot,
-      @JsonProperty("fork_info") final ForkInfo fork_info,
+      @JsonProperty("fork_info") final ForkInfo forkInfo,
       @JsonProperty("block") final BeaconBlock block,
       @JsonProperty("beacon_block") final BlockRequest blockRequest,
       @JsonProperty("attestation") final AttestationData attestation,
-      @JsonProperty("aggregation_slot") final AggregationSlot aggregation_slot,
-      @JsonProperty("aggregate_and_proof") final AggregateAndProof aggregate_and_proof,
-      @JsonProperty("voluntary_exit") final VoluntaryExit voluntary_exit,
-      @JsonProperty("randao_reveal") final RandaoReveal randao_reveal,
+      @JsonProperty("aggregation_slot") final AggregationSlot aggregationSlot,
+      @JsonProperty("aggregate_and_proof") final AggregateAndProof aggregateAndProof,
+      @JsonProperty("voluntary_exit") final VoluntaryExit voluntaryExit,
+      @JsonProperty("randao_reveal") final RandaoReveal randaoReveal,
       @JsonProperty("deposit") final DepositMessage deposit,
       @JsonProperty("sync_committee_message") final SyncCommitteeMessage syncCommitteeMessage,
       @JsonProperty("sync_aggregator_selection_data")
@@ -60,14 +60,14 @@ public class Eth2SigningRequestBody {
       @JsonProperty("validator_registration") final ValidatorRegistration validatorRegistration) {
     this.type = type;
     this.signingRoot = signingRoot;
-    this.fork_info = fork_info;
+    this.forkInfo = forkInfo;
     this.beaconBlock = block;
     this.blockRequest = blockRequest;
     this.attestation = attestation;
-    this.aggregation_slot = aggregation_slot;
-    this.aggregate_and_proof = aggregate_and_proof;
-    this.voluntary_exit = voluntary_exit;
-    this.randao_reveal = randao_reveal;
+    this.aggregationSlot = aggregationSlot;
+    this.aggregateAndProof = aggregateAndProof;
+    this.voluntaryExit = voluntaryExit;
+    this.randaoReveal = randaoReveal;
     this.deposit = deposit;
     this.syncCommitteeMessage = syncCommitteeMessage;
     this.syncAggregatorSelectionData = syncAggregatorSelectionData;
@@ -82,7 +82,7 @@ public class Eth2SigningRequestBody {
 
   @JsonProperty("fork_info")
   public ForkInfo getForkInfo() {
-    return fork_info;
+    return forkInfo;
   }
 
   @JsonProperty("block")
@@ -107,22 +107,22 @@ public class Eth2SigningRequestBody {
 
   @JsonProperty("aggregation_slot")
   public AggregationSlot getAggregationSlot() {
-    return aggregation_slot;
+    return aggregationSlot;
   }
 
   @JsonProperty("aggregate_and_proof")
   public AggregateAndProof getAggregateAndProof() {
-    return aggregate_and_proof;
+    return aggregateAndProof;
   }
 
   @JsonProperty("voluntary_exit")
   public VoluntaryExit getVoluntaryExit() {
-    return voluntary_exit;
+    return voluntaryExit;
   }
 
   @JsonProperty("randao_reveal")
   public RandaoReveal getRandaoReveal() {
-    return randao_reveal;
+    return randaoReveal;
   }
 
   @JsonProperty("deposit")

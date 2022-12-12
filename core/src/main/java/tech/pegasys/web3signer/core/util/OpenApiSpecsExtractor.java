@@ -42,7 +42,7 @@ import org.apache.tuweni.io.Resources;
  */
 public class OpenApiSpecsExtractor {
   private static final String OPENAPI_RESOURCES_ROOT = "openapi-specs";
-  private static final ObjectMapper yamlMapper =
+  private static final ObjectMapper YAML_MAPPER =
       YAMLMapper.builder().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER).build();
 
   private final Path destinationDirectory;
@@ -85,11 +85,11 @@ public class OpenApiSpecsExtractor {
               try {
                 // load openapi yaml in a map
                 final Map<String, Object> yamlMap =
-                    yamlMapper.readValue(
+                    YAML_MAPPER.readValue(
                         path.toFile(), new TypeReference<HashMap<String, Object>>() {});
                 fixRelativePathInOpenApiMap(path, yamlMap);
                 // write map back as yaml
-                yamlMapper.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), yamlMap);
+                YAML_MAPPER.writerWithDefaultPrettyPrinter().writeValue(path.toFile(), yamlMap);
 
               } catch (final IOException e) {
                 throw new UncheckedIOException(e);

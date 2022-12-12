@@ -95,9 +95,9 @@ public class SwaggerUIRoute {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
     // map /swagger-ui to index.html content
-    final String index_html =
+    final String indexHtml =
         swaggerUIContentMap.get(Path.of(SWAGGER_ENDPOINT).resolve("index.html"));
-    swaggerUIContentMap.put(Path.of(SWAGGER_ENDPOINT), index_html);
+    swaggerUIContentMap.put(Path.of(SWAGGER_ENDPOINT), indexHtml);
     return swaggerUIContentMap;
   }
 }
