@@ -63,26 +63,26 @@ public class Eth2RequestUtils {
   private static final String PUBLIC_KEY =
       "0x8f82597c919c056571a05dfe83e6a7d32acf9ad8931be04d11384e95468cd68b40129864ae12745f774654bbac09b057";
 
-  private static final UInt64 slot = UInt64.ZERO;
-  static final Spec spec = TestSpecFactory.createMinimalPhase0();
+  private static final UInt64 SLOT = UInt64.ZERO;
+  private static final Spec SPEC = TestSpecFactory.createMinimalPhase0();
 
-  static final SigningRootUtil signingRootUtil = new SigningRootUtil(spec);
+  private static final SigningRootUtil SIGNING_ROOT_UTIL = new SigningRootUtil(SPEC);
 
   // Altair Spec
-  static final Spec altairSpec = TestSpecFactory.createMinimalAltair();
-  private static final DataStructureUtil dataStructureUtil = new DataStructureUtil(altairSpec);
-  private static final Bytes32 beaconBlockRoot = dataStructureUtil.randomBytes32();
-  private static final tech.pegasys.teku.bls.BLSSignature aggregatorSignature =
+  private static final Spec ALTAIR_SPEC = TestSpecFactory.createMinimalAltair();
+  private static final DataStructureUtil DATA_STRUCTURE_UTIL = new DataStructureUtil(ALTAIR_SPEC);
+  private static final Bytes32 BEACON_BLOCK_ROOT = DATA_STRUCTURE_UTIL.randomBytes32();
+  private static final tech.pegasys.teku.bls.BLSSignature AGGREGATOR_SIGNATURE =
       tech.pegasys.teku.bls.BLSSignature.fromBytesCompressed(
           Bytes.fromHexString(
               "0x8f5c34de9e22ceaa7e8d165fc0553b32f02188539e89e2cc91e2eb9077645986550d872ee3403204ae5d554eae3cac12124e18d2324bccc814775316aaef352abc0450812b3ca9fde96ecafa911b3b8bfddca8db4027f08e29c22a9c370ad933"));
-  private static final SyncCommitteeUtil syncCommitteeUtil =
-      altairSpec.getSyncCommitteeUtilRequired(slot);
-  static final SyncCommitteeContribution contribution =
-      dataStructureUtil.randomSyncCommitteeContribution(slot, beaconBlockRoot);
-  static final ContributionAndProof contributionAndProof =
-      syncCommitteeUtil.createContributionAndProof(
-          UInt64.valueOf(11), contribution, aggregatorSignature);
+  private static final SyncCommitteeUtil SYNC_COMMITTEE_UTIL =
+      ALTAIR_SPEC.getSyncCommitteeUtilRequired(SLOT);
+  private static final SyncCommitteeContribution CONTRIBUTION =
+      DATA_STRUCTURE_UTIL.randomSyncCommitteeContribution(SLOT, BEACON_BLOCK_ROOT);
+  private static final ContributionAndProof CONTRIBUTION_AND_PROOF =
+      SYNC_COMMITTEE_UTIL.createContributionAndProof(
+          UInt64.valueOf(11), CONTRIBUTION, AGGREGATOR_SIGNATURE);
 
   private static final Eth2BlockSigningRequestUtil ALTAIR_BLOCK_UTIL =
       new Eth2BlockSigningRequestUtil(SpecMilestone.ALTAIR);
@@ -142,8 +142,8 @@ public class Eth2RequestUtils {
     final AggregateAndProof aggregateAndProof =
         new AggregateAndProof(UInt64.ONE, attestation, selectionProof);
     final Bytes signingRoot =
-        signingRootUtil.signingRootForSignAggregateAndProof(
-            aggregateAndProof.asInternalAggregateAndProof(spec), forkInfo.asInternalForkInfo());
+        SIGNING_ROOT_UTIL.signingRootForSignAggregateAndProof(
+            aggregateAndProof.asInternalAggregateAndProof(SPEC), forkInfo.asInternalForkInfo());
 
     return new Eth2SigningRequestBody(
         ArtifactType.AGGREGATE_AND_PROOF,
@@ -167,7 +167,7 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final AggregationSlot aggregationSlot = new AggregationSlot(UInt64.valueOf(119));
     final Bytes signingRoot =
-        signingRootUtil.signingRootForSignAggregationSlot(
+        SIGNING_ROOT_UTIL.signingRootForSignAggregationSlot(
             aggregationSlot.getSlot(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.AGGREGATION_SLOT,
@@ -195,7 +195,7 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final RandaoReveal randaoReveal = new RandaoReveal(UInt64.valueOf(3));
     final Bytes signingRoot =
-        signingRootUtil.signingRootForRandaoReveal(
+        SIGNING_ROOT_UTIL.signingRootForRandaoReveal(
             randaoReveal.getEpoch(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.RANDAO_REVEAL,
@@ -219,7 +219,7 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final VoluntaryExit voluntaryExit = new VoluntaryExit(UInt64.valueOf(119), UInt64.ZERO);
     final Bytes signingRoot =
-        signingRootUtil.signingRootForSignVoluntaryExit(
+        SIGNING_ROOT_UTIL.signingRootForSignVoluntaryExit(
             voluntaryExit.asInternalVoluntaryExit(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.VOLUNTARY_EXIT,
@@ -284,7 +284,7 @@ public class Eth2RequestUtils {
                 Bytes32.fromHexString(
                     "0xb2eedb01adbd02c828d5eec09b4c70cbba12ffffba525ebf48aca33028e8ad89")));
     final Bytes signingRoot =
-        signingRootUtil.signingRootForSignAttestationData(
+        SIGNING_ROOT_UTIL.signingRootForSignAttestationData(
             attestationData.asInternalAttestationData(), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.ATTESTATION,
@@ -336,8 +336,8 @@ public class Eth2RequestUtils {
                 emptyList(),
                 emptyList()));
     final Bytes signingRoot =
-        signingRootUtil.signingRootForSignBlock(
-            block.asInternalBeaconBlock(spec), forkInfo.asInternalForkInfo());
+        SIGNING_ROOT_UTIL.signingRootForSignBlock(
+            block.asInternalBeaconBlock(SPEC), forkInfo.asInternalForkInfo());
     return new Eth2SigningRequestBody(
         ArtifactType.BLOCK,
         signingRoot,
@@ -382,11 +382,11 @@ public class Eth2RequestUtils {
     try {
       signingRoot =
           signingRootFromSyncCommitteeUtils(
-                  slot,
+                  SLOT,
                   utils ->
                       utils.getSyncCommitteeMessageSigningRoot(
-                          beaconBlockRoot,
-                          altairSpec.computeEpochAtSlot(slot),
+                          BEACON_BLOCK_ROOT,
+                          ALTAIR_SPEC.computeEpochAtSlot(SLOT),
                           forkInfo.asInternalForkInfo()))
               .get();
     } catch (final InterruptedException | ExecutionException e) {
@@ -394,7 +394,7 @@ public class Eth2RequestUtils {
     }
 
     final SyncCommitteeMessage syncCommitteeMessage =
-        new SyncCommitteeMessage(beaconBlockRoot, slot);
+        new SyncCommitteeMessage(BEACON_BLOCK_ROOT, SLOT);
 
     return new Eth2SigningRequestBody(
         ArtifactType.SYNC_COMMITTEE_MESSAGE,
@@ -418,13 +418,13 @@ public class Eth2RequestUtils {
     final ForkInfo forkInfo = forkInfo();
     final UInt64 subcommitteeIndex = UInt64.ZERO;
     final SyncAggregatorSelectionData selectionData =
-        syncCommitteeUtil.createSyncAggregatorSelectionData(slot, subcommitteeIndex);
+        SYNC_COMMITTEE_UTIL.createSyncAggregatorSelectionData(SLOT, subcommitteeIndex);
 
     final Bytes signingRoot;
     try {
       signingRoot =
           signingRootFromSyncCommitteeUtils(
-                  slot,
+                  SLOT,
                   utils ->
                       utils.getSyncAggregatorSelectionDataSigningRoot(
                           selectionData, forkInfo.asInternalForkInfo()))
@@ -446,7 +446,7 @@ public class Eth2RequestUtils {
         null,
         null,
         null,
-        getSyncAggregatorSelectionData(slot, subcommitteeIndex),
+        getSyncAggregatorSelectionData(SLOT, subcommitteeIndex),
         null,
         null);
   }
@@ -464,10 +464,10 @@ public class Eth2RequestUtils {
     try {
       signingRoot =
           signingRootFromSyncCommitteeUtils(
-                  slot,
+                  SLOT,
                   utils ->
                       utils.getContributionAndProofSigningRoot(
-                          contributionAndProof, forkInfo.asInternalForkInfo()))
+                          CONTRIBUTION_AND_PROOF, forkInfo.asInternalForkInfo()))
               .get();
     } catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
@@ -494,12 +494,12 @@ public class Eth2RequestUtils {
   private static Eth2SigningRequestBody createValidatorRegistrationRequest() {
     final ValidatorRegistration validatorRegistration =
         new ValidatorRegistration(
-            dataStructureUtil.randomBytes20(),
-            dataStructureUtil.randomUInt64(),
-            dataStructureUtil.randomUInt64(),
+            DATA_STRUCTURE_UTIL.randomBytes20(),
+            DATA_STRUCTURE_UTIL.randomUInt64(),
+            DATA_STRUCTURE_UTIL.randomUInt64(),
             BLSPubKey.fromHexString(PUBLIC_KEY));
     final Bytes signingRoot =
-        signingRootUtil.signingRootForValidatorRegistration(
+        SIGNING_ROOT_UTIL.signingRootForValidatorRegistration(
             validatorRegistration.asInternalValidatorRegistration());
     return new Eth2SigningRequestBody(
         ArtifactType.VALIDATOR_REGISTRATION,
@@ -522,15 +522,15 @@ public class Eth2RequestUtils {
   private static tech.pegasys.teku.api.schema.altair.ContributionAndProof
       getContributionAndProof() {
     return new tech.pegasys.teku.api.schema.altair.ContributionAndProof(
-        contributionAndProof.getAggregatorIndex(),
-        new BLSSignature(contributionAndProof.getSelectionProof()),
+        CONTRIBUTION_AND_PROOF.getAggregatorIndex(),
+        new BLSSignature(CONTRIBUTION_AND_PROOF.getSelectionProof()),
         new tech.pegasys.teku.api.schema.altair.SyncCommitteeContribution(
-            contributionAndProof.getContribution()));
+            CONTRIBUTION_AND_PROOF.getContribution()));
   }
 
   private static SafeFuture<Bytes> signingRootFromSyncCommitteeUtils(
       final UInt64 slot, final Function<SyncCommitteeUtil, Bytes> createSigningRoot) {
     return SafeFuture.of(
-        () -> createSigningRoot.apply(altairSpec.getSyncCommitteeUtilRequired(slot)));
+        () -> createSigningRoot.apply(ALTAIR_SPEC.getSyncCommitteeUtilRequired(slot)));
   }
 }

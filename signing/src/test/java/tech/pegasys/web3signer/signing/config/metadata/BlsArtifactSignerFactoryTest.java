@@ -54,7 +54,7 @@ class BlsArtifactSignerFactoryTest {
       Bytes.fromHexString("1f2b6d2bac495b05ec65f49e8d9def356b29b65a0b80260a884d6d393073ff7b");
   private static final String KEYSTORE_FILE_NAME = "keystore.json";
   private static final String PASSWORD_FILE_NAME = "keystore.password";
-  private static final BLSKeyPair blsKeyPair = BLSTestUtil.randomKeyPair(48);
+  private static final BLSKeyPair BLS_KEY_PAIR = BLSTestUtil.randomKeyPair(48);
 
   @TempDir static Path configDir;
   private static Path keystoreFile;
@@ -74,8 +74,8 @@ class BlsArtifactSignerFactoryTest {
     createKeyStoreFile(
         keystoreFile,
         PASSWORD,
-        blsKeyPair.getSecretKey().toBytes(),
-        blsKeyPair.getPublicKey().toBytesCompressed());
+        BLS_KEY_PAIR.getSecretKey().toBytes(),
+        BLS_KEY_PAIR.getPublicKey().toBytesCompressed());
     Files.writeString(passwordFile, "testpassword");
   }
 
@@ -115,7 +115,8 @@ class BlsArtifactSignerFactoryTest {
     assertThat(relativeKeystorePath).isRelative();
     assertThat(relativePasswordPath).isRelative();
     assertThat(artifactSigner.getIdentifier()).startsWith("0x");
-    assertThat(fromIdentifier(artifactSigner.getIdentifier())).isEqualTo(blsKeyPair.getPublicKey());
+    assertThat(fromIdentifier(artifactSigner.getIdentifier()))
+        .isEqualTo(BLS_KEY_PAIR.getPublicKey());
   }
 
   @Test
@@ -127,7 +128,8 @@ class BlsArtifactSignerFactoryTest {
     assertThat(keystoreFile).isAbsolute();
     assertThat(passwordFile).isAbsolute();
     assertThat(artifactSigner.getIdentifier()).startsWith("0x");
-    assertThat(fromIdentifier(artifactSigner.getIdentifier())).isEqualTo(blsKeyPair.getPublicKey());
+    assertThat(fromIdentifier(artifactSigner.getIdentifier()))
+        .isEqualTo(BLS_KEY_PAIR.getPublicKey());
   }
 
   private BLSPublicKey fromIdentifier(final String identifier) {

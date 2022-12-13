@@ -38,7 +38,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
 
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
+  private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
   protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
@@ -76,7 +76,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
             .withKeyStoreDirectory(testDirectory);
 
     final Path keyConfigFile = testDirectory.resolve("keyfile.yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(
         keyConfigFile, keyPair.getSecretKey().toBytes().toHexString(), KeyType.BLS);
 
     startSigner(builder.build());

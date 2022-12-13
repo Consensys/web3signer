@@ -43,17 +43,17 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  private static final BLSSecretKey key =
+  private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
+  private static final BLSSecretKey KEY =
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
-  private static final BLSKeyPair keyPair = new BLSKeyPair(key);
-  private static final BLSPublicKey publicKey = keyPair.getPublicKey();
+  private static final BLSKeyPair KEY_PAIR = new BLSKeyPair(KEY);
+  private static final BLSPublicKey PUBLIC_KEY = KEY_PAIR.getPublicKey();
 
   @BeforeEach
   void setup() {
-    final String configFilename = publicKey.toString().substring(2);
+    final String configFilename = PUBLIC_KEY.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
   }
 
   @ParameterizedTest
@@ -67,10 +67,10 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final Eth2SigningRequestBody request = util.createBlockV2Request();
     final Response response =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
+        signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
     final BLSSignature expectedSignature =
-        BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
+        BLS.sign(KEY_PAIR.getSecretKey(), request.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
@@ -81,10 +81,10 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final Eth2SigningRequestBody request = util.createLegacyBlockRequest();
     final Response response =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
+        signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
     final BLSSignature expectedSignature =
-        BLS.sign(keyPair.getSecretKey(), request.getSigningRoot());
+        BLS.sign(KEY_PAIR.getSecretKey(), request.getSigningRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
@@ -97,7 +97,7 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Eth2SigningRequestBody request =
         util.createBlockV2Request(new BlockRequest(SpecMilestone.BELLATRIX));
     final Response response =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
+        signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, ContentType.JSON);
 
     response.then().statusCode(400);
   }

@@ -28,9 +28,9 @@ import org.junit.jupiter.api.Test;
 
 class AwsKeySigningMetadataDeserializerTest {
 
-  private final String AWS_VALID_CONFIG_ENVIRONMENT_AUTH_MODE_PATH =
+  private static final String AWS_VALID_CONFIG_ENVIRONMENT_AUTH_MODE_PATH =
       "src/test/resources/aws/aws_valid_config_environment.yaml";
-  private final String AWS_VALID_CONFIG_SPECIFIED_AUTH_MODE_PATH =
+  private static final String AWS_VALID_CONFIG_SPECIFIED_AUTH_MODE_PATH =
       "src/test/resources/aws/aws_valid_config_specified.yaml";
 
   @Test

@@ -39,7 +39,7 @@ public abstract class FilecoinJsonRpcEndpoint {
   public static final String SECP_SIGTYPE = "secp256k1";
 
   // This is required to be set if operating against a full Lotus node (as opposed to dev-lotus).
-  private static final Optional<String> authToken =
+  private static final Optional<String> AUTH_TOKEN =
       Optional.ofNullable(System.getenv("WEB3SIGNER_BEARER_TOKEN"));
 
   private static final ObjectMapper OBJECT_MAPPER =
@@ -118,7 +118,7 @@ public abstract class FilecoinJsonRpcEndpoint {
     final HttpPost post = new HttpPost(url);
     post.setEntity(new StringEntity(request, Charsets.UTF_8));
     post.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
-    authToken.ifPresent(token -> post.setHeader("Authorization", "Bearer " + token));
+    AUTH_TOKEN.ifPresent(token -> post.setHeader("Authorization", "Bearer " + token));
     try (final CloseableHttpClient httpClient = HttpClients.createDefault();
         final CloseableHttpResponse httpResponse = httpClient.execute(post)) {
       return EntityUtils.toString(httpResponse.getEntity(), Charsets.UTF_8);

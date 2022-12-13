@@ -45,22 +45,22 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 
 public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
-  private static final String dataString =
+  private static final String DATA_STRING =
       Base64.getEncoder().encodeToString("Hello World".getBytes(UTF_8));
   private static final String PRIVATE_KEY =
       "5abc1334d98d1432150df310f9d2fd51780a2b8a7489891f5d4ab9e77e6fb169";
 
-  private static final BLSSecretKey key =
+  private static final BLSSecretKey KEY =
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
-  private static final BLSKeyPair keyPair = new BLSKeyPair(key);
-  private static final BLSPublicKey publicKey = keyPair.getPublicKey();
-  private static final FilecoinNetwork network = FilecoinNetwork.TESTNET;
-  private static final FcBlsArtifactSigner signatureGenerator =
-      new FcBlsArtifactSigner(keyPair, network);
-  private static final BlsArtifactSignature expectedSignature =
-      signatureGenerator.sign(Bytes.fromBase64String(dataString));
+  private static final BLSKeyPair KEY_PAIR = new BLSKeyPair(KEY);
+  private static final BLSPublicKey PUBLIC_KEY = KEY_PAIR.getPublicKey();
+  private static final FilecoinNetwork NETWORK = FilecoinNetwork.TESTNET;
+  private static final FcBlsArtifactSigner SIGNATURE_GENERATOR =
+      new FcBlsArtifactSigner(KEY_PAIR, NETWORK);
+  private static final BlsArtifactSignature EXPECTED_SIGNATURE =
+      SIGNATURE_GENERATOR.sign(Bytes.fromBase64String(DATA_STRING));
 
-  final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
+  final FilecoinAddress identifier = FilecoinAddress.blsAddress(PUBLIC_KEY.toBytesCompressed());
 
   @Test
   void receiveTrueResponseWhenSubmitValidVerifyRequestToFilecoinEndpoint() {
@@ -72,10 +72,10 @@ public class FcBlsVerifyAcceptanceTest extends AcceptanceTestBase {
     final FilecoinSignature filecoinSignature =
         new FilecoinSignature(
             FcJsonRpc.BLS_VALUE,
-            expectedSignature.getSignatureData().toBytesCompressed().toBase64String());
+            EXPECTED_SIGNATURE.getSignatureData().toBytesCompressed().toBase64String());
     final JsonNode params =
         mapper.convertValue(
-            List.of(identifier.encode(network), dataString, filecoinSignature), JsonNode.class);
+            List.of(identifier.encode(NETWORK), DATA_STRING, filecoinSignature), JsonNode.class);
 
     final Request request = new Request("2.0", "Filecoin.WalletVerify", params, id);
     final Response response = given().baseUri(signer.getUrl()).body(request).post(JSON_RPC_PATH);

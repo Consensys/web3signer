@@ -37,7 +37,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class DbValidatorManagerTest {
   @Mock private FileValidatorManager fileValidatorManager;
   @Mock private RegisteredValidators registeredValidators;
-  private final Bytes PUBLIC_KEY = BLSTestUtil.randomKeyPair(1).getPublicKey().toBytesCompressed();
+  private static final Bytes PUBLIC_KEY =
+      BLSTestUtil.randomKeyPair(1).getPublicKey().toBytesCompressed();
 
   @Test
   public void disablesValidatorWhenDeleting(final Jdbi jdbi, final Handle handle) {

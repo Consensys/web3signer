@@ -59,7 +59,7 @@ public class ReferenceTestRunner {
   private static final List<String> TESTS_TO_IGNORE =
       List.of("multiple_interchanges_single_validator_multiple_blocks_out_of_order");
 
-  private static final ObjectMapper objectMapper = new InterchangeJsonProvider().getJsonMapper();
+  private static final ObjectMapper OBJECT_MAPPER = new InterchangeJsonProvider().getJsonMapper();
   private final ValidatorsDao validators = new ValidatorsDao();
 
   private EmbeddedPostgres slashingDatabase;
@@ -106,7 +106,7 @@ public class ReferenceTestRunner {
 
   private TestFileModel readTestModel(final Path tf) {
     try {
-      return objectMapper.readValue(tf.toFile(), TestFileModel.class);
+      return OBJECT_MAPPER.readValue(tf.toFile(), TestFileModel.class);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -117,9 +117,9 @@ public class ReferenceTestRunner {
     try {
       for (final Step step : model.getSteps()) {
         final String interchangeContent =
-            objectMapper.writeValueAsString(step.getInterchangeContent());
+            OBJECT_MAPPER.writeValueAsString(step.getInterchangeContent());
 
-        final Bytes32 gvr = Bytes32.fromHexString(model.getGenesis_validators_root());
+        final Bytes32 gvr = Bytes32.fromHexString(model.getGenesisValidatorsRoot());
 
         jdbi.useHandle(
             h -> {

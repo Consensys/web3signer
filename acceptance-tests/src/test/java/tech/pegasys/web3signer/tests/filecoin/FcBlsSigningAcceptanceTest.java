@@ -53,22 +53,22 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  private static final BLSSecretKey key =
+  private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
+  private static final BLSSecretKey KEY =
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
-  private static final BLSKeyPair keyPair = new BLSKeyPair(key);
-  private static final BLSPublicKey publicKey = keyPair.getPublicKey();
-  private static final FilecoinNetwork network = FilecoinNetwork.MAINNET;
-  private static final FcBlsArtifactSigner signatureGenerator =
-      new FcBlsArtifactSigner(keyPair, network);
+  private static final BLSKeyPair KEY_PAIR = new BLSKeyPair(KEY);
+  private static final BLSPublicKey PUBLIC_KEY = KEY_PAIR.getPublicKey();
+  private static final FilecoinNetwork NETWORK = FilecoinNetwork.MAINNET;
+  private static final FcBlsArtifactSigner SIGNATURE_GENERATOR =
+      new FcBlsArtifactSigner(KEY_PAIR, NETWORK);
 
-  final FilecoinAddress identifier = FilecoinAddress.blsAddress(publicKey.toBytesCompressed());
+  final FilecoinAddress identifier = FilecoinAddress.blsAddress(PUBLIC_KEY.toBytesCompressed());
 
   @Test
   void receiveASignatureWhenSubmitSigningRequestToFilecoinEndpoint() {
-    final String configFilename = publicKey.toString().substring(2);
+    final String configFilename = PUBLIC_KEY.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
     setupFilecoinSigner();
 
     final ValueNode id = JsonNodeFactory.instance.numberNode(1);
@@ -88,7 +88,7 @@ public class FcBlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("jsonrpc", equalTo("2.0"), "id", equalTo(id.asInt()));
 
-    final BlsArtifactSignature expectedSignature = signatureGenerator.sign(CID);
+    final BlsArtifactSignature expectedSignature = SIGNATURE_GENERATOR.sign(CID);
     final Map<String, Object> result = response.body().jsonPath().get("result");
     assertThat(result.get("Type")).isEqualTo(2);
     assertThat(result.get("Data"))

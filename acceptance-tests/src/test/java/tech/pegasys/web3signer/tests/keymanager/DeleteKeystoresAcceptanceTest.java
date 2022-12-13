@@ -40,7 +40,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   private static final String BLS_PRIVATE_KEY_1 =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
-  private static final String singleEntrySlashingData =
+  private static final String SINGLE_ENTRY_SLASHING_DATA =
       "{\"metadata\" : {\n"
           + "  \"interchange_format_version\" : \"5\",\n"
           + "  \"genesis_validators_root\" : \"0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673\"\n"
@@ -59,7 +59,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
           + "} ]\n"
           + "}";
 
-  private static final String emptySlashingData =
+  private static final String EMPTY_SLASHING_DATA =
       "{\"metadata\" : {\n"
           + "  \"interchange_format_version\" : \"5\",\n"
           + "  \"genesis_validators_root\" : \"0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673\"\n"
@@ -91,7 +91,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .statusCode(200)
         .body("data[0].status", is("deleted"))
         .and()
-        .body("slashing_protection", is(emptySlashingData));
+        .body("slashing_protection", is(EMPTY_SLASHING_DATA));
 
     // call API again with same key should return not_found
     callDeleteKeystores(composeRequestBody(pubKey))
@@ -101,7 +101,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .statusCode(200)
         .body("data[0].status", is("not_found"))
         .and()
-        .body("slashing_protection", is(emptySlashingData));
+        .body("slashing_protection", is(EMPTY_SLASHING_DATA));
   }
 
   @Test
@@ -115,7 +115,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .statusCode(200)
         .body("data[0].status", is("deleted"))
         .and()
-        .body("slashing_protection", is(singleEntrySlashingData));
+        .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
   }
 
   @Test
@@ -129,7 +129,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .statusCode(200)
         .body("data[0].status", is("deleted"))
         .and()
-        .body("slashing_protection", is(singleEntrySlashingData));
+        .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
 
     // call API again with same key should return not_active with the same exported slashing
     // protection data
@@ -140,7 +140,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .statusCode(200)
         .body("data[0].status", is("not_active"))
         .and()
-        .body("slashing_protection", is(singleEntrySlashingData));
+        .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
   }
 
   @Test
@@ -166,7 +166,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .statusCode(200)
         .body("data[0].status", is("deleted"))
         .and()
-        .body("slashing_protection", is(singleEntrySlashingData));
+        .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
 
     callListKeys()
         .then()
@@ -188,7 +188,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .statusCode(200)
         .body("data[0].status", is("error"))
         .and()
-        .body("slashing_protection", is(emptySlashingData));
+        .body("slashing_protection", is(EMPTY_SLASHING_DATA));
   }
 
   @Test
@@ -221,7 +221,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .statusCode(200)
         .body("data[0].status", is("deleted"))
         .and()
-        .body("slashing_protection", is(singleEntrySlashingData));
+        .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
 
     callListKeys()
         .then()

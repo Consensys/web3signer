@@ -45,17 +45,17 @@ public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBa
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
-  private static final MetadataFileHelpers metadataFileHelpers = new MetadataFileHelpers();
-  private static final BLSSecretKey key =
+  private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
+  private static final BLSSecretKey KEY =
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
-  private static final BLSKeyPair keyPair = new BLSKeyPair(key);
-  private static final BLSPublicKey publicKey = keyPair.getPublicKey();
+  private static final BLSKeyPair KEY_PAIR = new BLSKeyPair(KEY);
+  private static final BLSPublicKey PUBLIC_KEY = KEY_PAIR.getPublicKey();
 
   @BeforeEach
   void setup() {
-    final String configFilename = publicKey.toString().substring(2);
+    final String configFilename = PUBLIC_KEY.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
-    metadataFileHelpers.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
     setupEth2SignerWithCustomNetworkConfig(NETWORK_CONFIG_PATH);
   }
@@ -90,11 +90,11 @@ public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBa
   private Bytes sendSignRequestAndReceiveSignature(final Eth2SigningRequestBody request)
       throws JsonProcessingException {
     final Response response =
-        signer.eth2Sign(keyPair.getPublicKey().toString(), request, ContentType.JSON);
+        signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, ContentType.JSON);
     return verifyAndGetSignatureResponse(response, ContentType.JSON);
   }
 
   private Bytes calculateSigningRootSignature(final Bytes signingRoot) {
-    return BLS.sign(keyPair.getSecretKey(), signingRoot).toBytesCompressed();
+    return BLS.sign(KEY_PAIR.getSecretKey(), signingRoot).toBytesCompressed();
   }
 }

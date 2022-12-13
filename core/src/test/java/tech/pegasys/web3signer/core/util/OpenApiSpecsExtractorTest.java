@@ -53,14 +53,14 @@ class OpenApiSpecsExtractorTest {
 
     // assert that relative ref has been converted to absolute ref
     if (spec.equals("eth2/web3signer.yaml")) {
-      final String sign_yaml =
+      final String signYaml =
           openApiSpecsExtractor.getDestinationSpecPaths().stream()
               .filter(path -> path.endsWith("sign.yaml"))
               .findFirst()
               .map(this::readString)
               .orElseThrow();
 
-      assertThat(sign_yaml)
+      assertThat(signYaml)
           .contains(
               openApiSpecsExtractor
                   .getDestinationDirectory()

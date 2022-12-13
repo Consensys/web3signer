@@ -20,17 +20,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class TestFileModel {
 
   final String name;
-  final String genesis_validators_root;
+  final String genesisValidatorsRoot;
   final List<Step> steps;
 
   @JsonCreator
   public TestFileModel(
       @JsonProperty(value = "name", required = true) final String name,
       @JsonProperty(value = "genesis_validators_root", required = true)
-          final String genesis_validators_root,
+          final String genesisValidatorsRoot,
       @JsonProperty(value = "steps") final List<Step> steps) {
     this.name = name;
-    this.genesis_validators_root = genesis_validators_root;
+    this.genesisValidatorsRoot = genesisValidatorsRoot;
     this.steps = steps;
   }
 
@@ -38,8 +38,8 @@ public class TestFileModel {
     return name;
   }
 
-  public String getGenesis_validators_root() {
-    return genesis_validators_root;
+  public String getGenesisValidatorsRoot() {
+    return genesisValidatorsRoot;
   }
 
   public List<Step> getSteps() {
