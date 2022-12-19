@@ -157,7 +157,7 @@ allprojects {
   }
 
   dependencyCheck {
-    failBuildOnCVSS = 4 // Fail on medium CVSS severity
+    failBuildOnCVSS = 7 // Fail on high CVSS severity
     suppressionFile = "${rootDir}/gradle/owasp-suppression.xml"
     skipConfigurations = [
       'integrationTestCompileClasspath',
