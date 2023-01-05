@@ -324,6 +324,11 @@ workflows:
             branches:
               only:
                 - master
+    jobs:
+      - build:
+      - acceptanceTests:
+          requires:
+            - build
   default:
     jobs:
       - build:
