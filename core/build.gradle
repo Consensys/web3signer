@@ -20,6 +20,7 @@ dependencies {
   implementation project(':slashing-protection')
   implementation project(':common')
 
+  implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
   implementation 'com.github.arteam:simple-json-rpc-server'
   implementation 'com.github.ipld:java-cid'
   implementation 'com.google.guava:guava'

@@ -33,7 +33,7 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.6.2'
 
-    dependencySet(group: 'io.vertx', version: '4.3.1') {
+    dependencySet(group: 'io.vertx', version: '4.3.7') {
       entry 'vertx-codegen'
       entry 'vertx-core'
       entry 'vertx-unit'
@@ -140,7 +140,7 @@ dependencyManagement {
     dependency 'com.github.ipld:java-cid:1.3.1'
     dependency 'net.jodah:failsafe:2.4.0'
 
-    dependencySet(group: 'software.amazon.awssdk', version: '2.17.158') {
+    dependencySet(group: 'software.amazon.awssdk', version: '2.19.8') {
       entry 'bom'
       entry 'auth'
       entry 'secretsmanager'
@@ -162,12 +162,8 @@ dependencyManagement {
      */
     dependency 'com.squareup.okhttp3:logging-interceptor:4.9.3'
 
-    // manual overriding of netty to 4.1.77 to avoid CVE-2022-24823
-    /*
-    \--- io.netty:netty-all:4.1.74.Final
-     \--- org.hyperledger.besu.internal:metrics-core:22.4.1
-     */
-    dependency 'io.netty:netty-all:4.1.77.Final'
+    // addressing CVE-2022-41881 and CVE-2022-41915
+    dependency 'io.netty:netty-all:4.1.86.Final'
 
     /* io.projectreactor.netty:reactor-netty-http:1.0.18 // CVE-2022-31684
        \--- com.azure:azure-core-http-netty:1.12.0
