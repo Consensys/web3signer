@@ -355,7 +355,7 @@ workflows:
           requires:
             - acceptanceTests
           context:
-            - cloudsmith-protocols
+            - protocols-cloudsmith
       - buildDocker:
           requires:
             - build
@@ -374,8 +374,7 @@ workflows:
             - acceptanceTests
             - buildDocker
           context:
-            - dockerhub-quorumengineering-rw
-            - dockerhub-opsquorum-dct            
+            - protocols-dockerhub
       - publishDockerArm64:
           filters:
             branches:
@@ -388,8 +387,7 @@ workflows:
             - acceptanceTests
             - buildDocker
           context:
-            - dockerhub-quorumengineering-rw
-            - dockerhub-opsquorum-dct        
+            - protocols-dockerhub
       - manifestDocker:
           filters:
             branches:
@@ -402,5 +400,4 @@ workflows:
             - publishDockerArm64
             - publishDockerAmd64
           context:
-            - dockerhub-quorumengineering-rw
-            - dockerhub-opsquorum-dct         
+            - protocols-dockerhub
