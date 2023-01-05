@@ -328,6 +328,8 @@ workflows:
           filters:
             tags:
               <<: *filters-release-tags
+          context:
+            - protocols-signers
       - performanceTests:
           requires:
             - build
