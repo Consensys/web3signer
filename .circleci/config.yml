@@ -402,5 +402,5 @@ workflows:
             - publishDockerArm64
             - publishDockerAmd64
           context:
-            - dockerhub-quorumengineering-rw
+            - protocols-dockerhub
             - dockerhub-opsquorum-dct         
