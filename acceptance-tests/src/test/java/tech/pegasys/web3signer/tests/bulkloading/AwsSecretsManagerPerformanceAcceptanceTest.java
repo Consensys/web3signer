@@ -59,13 +59,13 @@ hence it should only be manually run in dev/test environment instead of automati
     matches = ".*",
     disabledReason = "RW_AWS_SECRET_ACCESS_KEY env variable is required")
 @EnabledIfEnvironmentVariable(
-    named = "AWS_ACCESS_KEY_ID",
+    named = "RO_AWS_ACCESS_KEY_ID",
     matches = ".*",
-    disabledReason = "AWS_ACCESS_KEY_ID env variable is required")
+    disabledReason = "RO_AWS_ACCESS_KEY_ID env variable is required")
 @EnabledIfEnvironmentVariable(
-    named = "AWS_SECRET_ACCESS_KEY",
+    named = "RO_AWS_SECRET_ACCESS_KEY",
     matches = ".*",
-    disabledReason = "AWS_SECRET_ACCESS_KEY env variable is required")
+    disabledReason = "RO_AWS_SECRET_ACCESS_KEY env variable is required")
 @EnabledIfEnvironmentVariable(
     named = "AWS_REGION",
     matches = ".*",
@@ -75,8 +75,8 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
   private static final Logger LOG = LogManager.getLogger();
   private static final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
   private static final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
-  private static final String RO_AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
-  private static final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
+  private static final String RO_AWS_ACCESS_KEY_ID = System.getenv("RO_AWS_ACCESS_KEY_ID");
+  private static final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("RO_AWS_SECRET_ACCESS_KEY");
   private static final String AWS_REGION =
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
   private static final Integer NUMBER_OF_KEYS =
