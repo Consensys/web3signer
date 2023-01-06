@@ -329,6 +329,8 @@ workflows:
       - acceptanceTests:
           requires:
             - build
+          context:
+            - protocols-signers
   default:
     jobs:
       - build:
@@ -341,6 +343,8 @@ workflows:
           filters:
             tags:
               <<: *filters-release-tags
+          context:
+            - protocols-signers
       - performanceTests:
           requires:
             - build
