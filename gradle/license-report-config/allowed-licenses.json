@@ -77,6 +77,9 @@
     {
       "moduleName": "org.reactivestreams:reactive-streams",
       "moduleLicense": "MIT-0"
+    },
+    {
+      "moduleName": "com.squareup.okio:okio"
     }
   ],
   "overrideLicenses": [
@@ -126,6 +129,10 @@
     },
     {
       "moduleName": "io.netty:netty-tcnative-classes",
+      "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
+      "moduleName": "com.squareup.okio:okio",
       "moduleLicense": "Apache License, Version 2.0"
     },
     {
