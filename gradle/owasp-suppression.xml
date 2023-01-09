@@ -14,5 +14,12 @@
        ]]></notes>
        <cve>CVE-2021-4277</cve>
     </suppress>
+    <suppress until="2023-02-15">
+       <notes><![CDATA[
+         FP per issue https://github.com/jeremylong/DependencyCheck/issues/5233
+       ]]></notes>
+       <cve>CVE-2021-4235</cve>
+       <cve>CVE-2022-3064</cve>
+    </suppress>
 
 </suppressions>
