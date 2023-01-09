@@ -8,7 +8,7 @@
 - Updated Teku libraries version to 22.12.0
 
 ### Bugs Fixed
-- Upgrade netty libraries to address CVE-2022-41881 and CVE-2022-41915
+- Upgrade various dependencies including netty libraries to address CVE-2022-41881 and CVE-2022-41915
 
 ---
 ## 22.11.0
