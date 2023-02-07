@@ -1,5 +1,11 @@
 # Changelog
 
+## 23.2.0
+### Features Added
+- AWS Secrets Manager bulkload mode can now load multiple keys from same secret where keys are separated by line terminating 
+character (such as `\n`). [#706](https://github.com/ConsenSys/web3signer/issues/706)
+
+
 ## 23.1.0
 ### Features Added
 - Multiple Signing Key configurations can be specified in single YAML file using triple-dash `---` separator. 
