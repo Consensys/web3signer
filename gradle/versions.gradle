@@ -99,11 +99,12 @@ dependencyManagement {
 
     dependency 'tech.pegasys:jblst:0.3.8'
 
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '2.2.4') {
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '2.2.5') {
       entry 'bls-keystore'
       entry 'keystorage-hashicorp'
       entry 'keystorage-azure'
       entry 'keystorage-aws'
+      entry 'keystorage-common'
       entry 'keystorage-interlock'
       entry 'keystorage-yubihsm2'
       entry 'signing-secp256k1-api'
