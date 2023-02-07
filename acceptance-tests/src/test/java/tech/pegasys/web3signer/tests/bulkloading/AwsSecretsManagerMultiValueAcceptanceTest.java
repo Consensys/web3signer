@@ -124,7 +124,7 @@ public class AwsSecretsManagerMultiValueAcceptanceTest extends AcceptanceTestBas
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("", containsInAnyOrder(publicKeys), "");
+        .body("", containsInAnyOrder(publicKeys.toArray(String[]::new)));
   }
 
   @AfterAll
