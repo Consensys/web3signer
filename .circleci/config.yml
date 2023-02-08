@@ -316,6 +316,21 @@ jobs:
 
 workflows:
   version: 2
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 11 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - build
+      - acceptanceTests:
+          requires:
+            - build
+          context:
+            - protocols-signers
   default:
     jobs:
       - build:
@@ -328,6 +343,8 @@ workflows:
           filters:
             tags:
               <<: *filters-release-tags
+          context:
+            - protocols-signers
       - performanceTests:
           requires:
             - build
