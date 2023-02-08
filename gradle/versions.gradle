@@ -83,10 +83,10 @@ dependencyManagement {
       entry 'mockito-junit-jupiter'
     }
 
-    dependency 'org.hyperledger.besu:plugin-api:22.10.0'
-    dependency 'org.hyperledger.besu.internal:metrics-core:22.10.0'
+    dependency 'org.hyperledger.besu:plugin-api:22.10.3'
+    dependency 'org.hyperledger.besu.internal:metrics-core:22.10.3'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '22.12.0') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.1.1') {
       entry 'bls'
       entry 'spec'
       entry 'serializer'
