@@ -12,11 +12,9 @@
  */
 package tech.pegasys.web3signer.tests.bulkloading;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
+import static org.hamcrest.Matchers.hasSize;
 
-import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.KeyType;
@@ -63,20 +61,17 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void invalidVaultParametersFailsToStartSigner() {
+  void invalidVaultParametersFailsToLoadKeys() {
     final AzureKeyVaultParameters azureParams =
         new DefaultAzureKeyVaultParameters("nonExistentVault", CLIENT_ID, TENANT_ID, CLIENT_SECRET);
 
     final SignerConfigurationBuilder configBuilder =
-        new SignerConfigurationBuilder()
-            .withMode("eth2")
-            .withAzureKeyVaultParameters(azureParams)
-            .withHttpPort(9000); // required to prevent waiting for ports file.
+        new SignerConfigurationBuilder().withMode("eth2").withAzureKeyVaultParameters(azureParams);
 
-    final Signer signer = new Signer(configBuilder.build(), null);
-    signer.start();
-    waitFor(() -> assertThat(signer.isRunning()).isTrue());
-    waitFor(() -> assertThat(signer.isRunning()).isFalse());
+    startSigner(configBuilder.build());
+
+    final Response response = signer.callApiPublicKeys(KeyType.BLS);
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasSize(0));
   }
 
   @Test
