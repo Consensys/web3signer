@@ -5,6 +5,13 @@ get:
   description: |
     Checks the Web3Signer server health status. Confirms if Web3Signer is healthy. Not used by validator clients.
   operationId: 'HEALTHCHECK'
+  parameters:
+    - name: 'loadedKeyCount'
+      in: 'path'
+      required: false
+      description: 'Optional check for expected loaded bls key count'
+      schema:
+        type: 'integer'
   responses:
     '200':
       description: 'System is healthy'

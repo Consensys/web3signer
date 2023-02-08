@@ -26,6 +26,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class AWSBulkLoadingArtifactSignerProvider {
+  private static Integer loadedKeyCount = 0;
 
   public Collection<ArtifactSigner> load(final AwsSecretsManagerParameters parameters) {
     try (final AwsSecretsManagerProvider awsSecretsManagerProvider =
@@ -37,11 +38,16 @@ public class AWSBulkLoadingArtifactSignerProvider {
           parameters.getTagNamesFilter(),
           parameters.getTagValuesFilter(),
           (key, value) -> {
+            loadedKeyCount++;
             final Bytes privateKeyBytes = Bytes.fromHexString(value);
             final BLSKeyPair keyPair =
                 new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
             return new BlsArtifactSigner(keyPair, SignerOrigin.AWS);
           });
     }
+  }
+
+  public boolean loadedKeys() {
+      return loadedKeyCount > 0;
   }
 }

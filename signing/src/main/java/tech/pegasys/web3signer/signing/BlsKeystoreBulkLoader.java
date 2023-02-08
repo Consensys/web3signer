@@ -38,10 +38,12 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class BlsKeystoreBulkLoader {
   private static final Logger LOG = LogManager.getLogger();
+  private static Integer loadedKeyCount = 0;
 
   public Collection<ArtifactSigner> loadKeystoresUsingPasswordDir(
       final Path keystoresDirectory, final Path passwordsDirectory) {
     final List<Path> keystoreFiles = keystoreFiles(keystoresDirectory);
+    loadedKeyCount = keystoreFiles.size();
     return keystoreFiles.parallelStream()
         .map(
             keystoreFile ->
@@ -62,10 +64,15 @@ public class BlsKeystoreBulkLoader {
       throw new UncheckedIOException("Unable to read the password file", e);
     }
 
+    loadedKeyCount = keystoreFiles.size();
     return keystoreFiles.parallelStream()
         .map(keystoreFile -> createSignerForKeystore(keystoreFile, key -> password))
         .flatMap(Optional::stream)
         .collect(Collectors.toList());
+  }
+
+  public boolean loadedKeys() {
+    return loadedKeyCount > 0;
   }
 
   private Optional<? extends ArtifactSigner> createSignerForKeystore(

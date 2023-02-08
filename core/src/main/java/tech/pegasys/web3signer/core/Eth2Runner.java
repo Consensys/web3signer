@@ -295,6 +295,8 @@ public class Eth2Runner extends Runner {
                         keystoresParameters.getKeystoresPath(),
                         keystoresParameters.getKeystoresPasswordFile());
             signers.addAll(keystoreSigners);
+
+            super.registerHealthCheckProcedure("loaded-keys", promise -> promise.complete(blsKeystoreBulkLoader.loadedKeys() ? Status.OK() : Status.KO()));
           }
 
           if (awsSecretsManagerParameters.isEnabled()) {
@@ -305,6 +307,8 @@ public class Eth2Runner extends Runner {
                 awsBulkLoadingArtifactSignerProvider.load(awsSecretsManagerParameters);
             LOG.info("Keys loaded from AWS Secrets Manager: [{}]", awsSigners.size());
             signers.addAll(awsSigners);
+
+            super.registerHealthCheckProcedure("loaded-keys", promise -> promise.complete(awsBulkLoadingArtifactSignerProvider.loadedKeys() ? Status.OK() : Status.KO()));
           }
 
           final List<Bytes> validators =
