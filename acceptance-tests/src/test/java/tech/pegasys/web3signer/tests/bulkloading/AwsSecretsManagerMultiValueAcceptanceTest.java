@@ -92,7 +92,7 @@ public class AwsSecretsManagerMultiValueAcceptanceTest extends AcceptanceTestBas
     }
   }
 
-  @ParameterizedTest
+  @ParameterizedTest(name = "{index} -> use config file: {0}")
   @ValueSource(booleans = {true, false})
   void secretsAreLoadedFromAWSSecretsManagerAndReportedByPublicApi(final boolean useConfigFile) {
     final AwsSecretsManagerParameters awsSecretsManagerParameters =
