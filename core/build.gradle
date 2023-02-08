@@ -42,6 +42,7 @@ dependencies {
   implementation 'org.jdbi:jdbi3-core'
   implementation 'tech.pegasys.signers.internal:bls-keystore'
   implementation 'tech.pegasys.signers.internal:keystorage-aws'
+  implementation 'tech.pegasys.signers.internal:keystorage-common'
   implementation 'tech.pegasys.signers.internal:keystorage-azure'
   implementation 'tech.pegasys.signers.internal:keystorage-hashicorp'
   implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
