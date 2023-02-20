@@ -33,7 +33,7 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.6.2'
 
-    dependencySet(group: 'io.vertx', version: '4.3.7') {
+    dependencySet(group: 'io.vertx', version: '4.3.8') {
       entry 'vertx-codegen'
       entry 'vertx-core'
       entry 'vertx-unit'
