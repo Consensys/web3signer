@@ -4,6 +4,7 @@
     <suppress until="2023-03-15">
         <notes><![CDATA[
             Temporarily suppress CVE-2022-1471 till the fix is released. Web3Signer only parses specified yaml files.
+            https://bitbucket.org/snakeyaml/snakeyaml/issues/561/cve-2022-1471-vulnerability-in
         ]]></notes>
         <cve>CVE-2022-1471</cve>
     </suppress>
