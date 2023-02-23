@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
@@ -59,13 +58,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class YamlSignerParserTest {
-
-  static final ObjectMapper YAML_OBJECT_MAPPER = YAMLMapper.builder().build();
+  private static final YAMLMapper YAML_OBJECT_MAPPER = new YamlMapperProvider().getYamlMapper();
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
 
   private static final String SECP_PRIVATE_KEY =
       "d392469474ec227b9ec4be232b402a0490045478ab621ca559d166965f0ffd32";
+  private static final int YAML_FILE_SIZE_IN_BYTES = 104_857_600;
 
   @TempDir Path configDir;
   @Mock private BlsArtifactSignerFactory blsArtifactSignerFactory;
@@ -80,7 +79,8 @@ class YamlSignerParserTest {
     lenient().when(secpArtifactSignerFactory.getKeyType()).thenReturn(KeyType.SECP256K1);
 
     signerParser =
-        new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory));
+        new YamlSignerParser(
+            List.of(blsArtifactSignerFactory, secpArtifactSignerFactory), YAML_FILE_SIZE_IN_BYTES);
   }
 
   @Test
@@ -254,8 +254,7 @@ class YamlSignerParserTest {
     keystoreMetadataFile.put("type", "file-keystore");
     keystoreMetadataFile.put("keystoreFile", keystoreFile.toString());
     keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
-    final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(keystoreMetadataFile);
-    return yamlMetadata;
+    return YAML_OBJECT_MAPPER.writeValueAsString(keystoreMetadataFile);
   }
 
   private FileKeyStoreMetadata hasKeystoreAndPasswordFile(

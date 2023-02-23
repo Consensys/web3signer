@@ -51,7 +51,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class YamlSignerParserMultiReadTest {
-
+  private static final int YAML_FILE_SIZE_IN_BYTES = 104_857_600;
   private final BLSKeyPair blsKeyPair1 = BLSTestUtil.randomKeyPair(1);
   private final BLSKeyPair blsKeyPair2 = BLSTestUtil.randomKeyPair(2);
   @Mock private MetricsSystem metricsSystem;
@@ -90,7 +90,7 @@ class YamlSignerParserMultiReadTest {
             awsSecretsManagerProvider,
             (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 
-    signerParser = new YamlSignerParser(List.of(blsArtifactSignerFactory));
+    signerParser = new YamlSignerParser(List.of(blsArtifactSignerFactory), YAML_FILE_SIZE_IN_BYTES);
   }
 
   @Test
