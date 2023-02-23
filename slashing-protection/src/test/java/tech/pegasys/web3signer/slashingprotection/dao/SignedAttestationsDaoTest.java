@@ -287,10 +287,10 @@ public class SignedAttestationsDaoTest {
     signedAttestationsDao.insertAttestation(handle, attestation(1, 1, 1, 100));
 
     final List<Map<String, Object>> signedAttestations =
-            handle
-                    .createQuery("SELECT * FROM signed_attestations ORDER BY validator_id")
-                    .mapToMap()
-                    .list();
+        handle
+            .createQuery("SELECT * FROM signed_attestations ORDER BY validator_id")
+            .mapToMap()
+            .list();
     assertThat(signedAttestations).hasSize(1);
     assertThat(signedAttestations.get(0).get("id")).isEqualTo(2147483648L);
   }

@@ -213,10 +213,7 @@ public class SignedBlocksDaoTest {
     signedBlocksDao.insertBlockProposal(handle, block(1, 100));
 
     final List<Map<String, Object>> signedBlocks =
-            handle
-                    .createQuery("SELECT * FROM signed_blocks ORDER BY validator_id")
-                    .mapToMap()
-                    .list();
+        handle.createQuery("SELECT * FROM signed_blocks ORDER BY validator_id").mapToMap().list();
     assertThat(signedBlocks).hasSize(1);
     assertThat(signedBlocks.get(0).get("id")).isEqualTo(2147483648L);
   }
