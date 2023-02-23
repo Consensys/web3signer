@@ -39,8 +39,9 @@ import java.util.stream.IntStream;
 import org.apache.tuweni.bytes.Bytes32;
 
 /**
- * This class provide different implementation of randomBeaconBlock than Teku's DataStructureUtil. Instead of using
- * genesis schema definition, our implementation uses spec at slot number to derive the schema definition.
+ * This class provide different implementation of randomBeaconBlock than Teku's DataStructureUtil.
+ * Instead of using genesis schema definition, our implementation uses spec at slot number to derive
+ * the schema definition.
  */
 public class DataStructureUtilAdapter {
   private static final int MAX_EP_RANDOM_WITHDRAWALS = 4;
