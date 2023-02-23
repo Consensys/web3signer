@@ -1,11 +1,12 @@
 # Changelog
 
 ## Next release
+
 ### Features Added
 -
 ### Bugs fixed
 - Upgrade to Vertx 4.3.8 to address CVE-2023-24815
-- 
+- Fix issue with slashing protection database failing once reaching max integer index value [#705](https://github.com/ConsenSys/web3signer/issues/705)
 ---
 
 ## 23.2.0
