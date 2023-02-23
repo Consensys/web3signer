@@ -150,7 +150,8 @@ public class FilecoinRunner extends Runner {
                     config.getKeyConfigPath(),
                     "yaml",
                     new YamlSignerParser(
-                        List.of(blsArtifactSignerFactory, secpArtifactSignerFactory)));
+                        List.of(blsArtifactSignerFactory, secpArtifactSignerFactory),
+                        config.getKeystoreConfigFileSize()));
           }
         });
   }

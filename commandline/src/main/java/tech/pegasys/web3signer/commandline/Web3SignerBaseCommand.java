@@ -82,10 +82,19 @@ public class Web3SignerBaseCommand implements Config, Runnable {
 
   @Option(
       names = {"--key-store-path"},
-      description = "The path to a directory storing toml files defining available keys",
+      description = "The path to a directory storing yaml files defining available keys",
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
       arity = "1")
   private Path keyStorePath = Path.of("./");
+
+  @Option(
+      names = {"--key-store-config-files-size"},
+      description =
+          "The key store configuration file size in bytes. Useful when loading large number of "
+              + "configurations from same yaml file. Defaults to 100MB (104857600) ",
+      paramLabel = "<NUMBER>",
+      arity = "1")
+  private final Integer keystoreConfigFileSize = 104_857_600;
 
   @Option(
       names = {"--logging", "-l"},
@@ -264,6 +273,11 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   @Override
   public Boolean isAccessLogsEnabled() {
     return accessLogsEnabled;
+  }
+
+  @Override
+  public Integer getKeystoreConfigFileSize() {
+    return keystoreConfigFileSize;
   }
 
   @Override

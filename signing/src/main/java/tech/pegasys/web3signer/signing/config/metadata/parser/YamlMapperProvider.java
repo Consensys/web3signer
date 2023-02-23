@@ -14,38 +14,22 @@ package tech.pegasys.web3signer.signing.config.metadata.parser;
 
 import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
 
-import java.util.Optional;
-
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.yaml.snakeyaml.LoaderOptions;
 
 public class YamlMapperProvider {
-  private static final int YAML_DEFAULT_CODE_POINT_LIMIT = 104_857_600; // 100 * 1024 * 1024 = 100MB
-  private static final String SYSTEM_PROPERTY = "web3signer.yamlCodePointLimit";
   private final YAMLMapper yamlMapper;
 
   public YamlMapperProvider() {
-    final LoaderOptions loaderOptions = new LoaderOptions();
-    final Optional<String> systemProperty =
-        Optional.ofNullable(System.getProperty(SYSTEM_PROPERTY));
+    this(104_857_600); // 100 MB
+  }
 
-    if (systemProperty.isPresent()) {
-      try {
-        long parsedValue = Long.parseLong(systemProperty.get());
-        if (parsedValue <= 0) {
-          loaderOptions.setCodePointLimit(YAML_DEFAULT_CODE_POINT_LIMIT);
-        } else if (parsedValue > Integer.MAX_VALUE) {
-          loaderOptions.setCodePointLimit(Integer.MAX_VALUE);
-        } else {
-          loaderOptions.setCodePointLimit((int) parsedValue);
-        }
-      } catch (final NumberFormatException e) {
-        loaderOptions.setCodePointLimit(YAML_DEFAULT_CODE_POINT_LIMIT);
-      }
-    } else {
-      loaderOptions.setCodePointLimit(YAML_DEFAULT_CODE_POINT_LIMIT);
+  public YamlMapperProvider(final int yamlFileSizeInBytes) {
+    final LoaderOptions loaderOptions = new LoaderOptions();
+    if (yamlFileSizeInBytes > 0) {
+      loaderOptions.setCodePointLimit(yamlFileSizeInBytes);
     }
 
     final YAMLFactory yamlFactory = YAMLFactory.builder().loaderOptions(loaderOptions).build();
