@@ -22,8 +22,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.yaml.snakeyaml.LoaderOptions;
 
 public class YamlMapperProvider {
-  private static final int YAML_DEFAULT_CODE_POINT_LIMIT =
-      1_073_741_824; // 1024 * 1024 * 1024 = 1GB
+  private static final int YAML_DEFAULT_CODE_POINT_LIMIT = 104_857_600; // 100 * 1024 * 1024 = 100MB
   private static final String SYSTEM_PROPERTY = "web3signer.yamlCodePointLimit";
   private final YAMLMapper yamlMapper;
 
