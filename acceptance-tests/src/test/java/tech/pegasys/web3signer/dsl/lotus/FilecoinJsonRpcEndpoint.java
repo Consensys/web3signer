@@ -16,6 +16,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinSignature;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -116,7 +117,7 @@ public abstract class FilecoinJsonRpcEndpoint {
   public String executeRawJsonRpcRequest(final String request) throws IOException {
     final String url = getUrl() + rpcPath;
     final HttpPost post = new HttpPost(url);
-    post.setEntity(new StringEntity(request, Charsets.UTF_8));
+    post.setEntity(new StringEntity(request, StandardCharsets.UTF_8));
     post.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString());
     AUTH_TOKEN.ifPresent(token -> post.setHeader("Authorization", "Bearer " + token));
     try (final CloseableHttpClient httpClient = HttpClients.createDefault();
