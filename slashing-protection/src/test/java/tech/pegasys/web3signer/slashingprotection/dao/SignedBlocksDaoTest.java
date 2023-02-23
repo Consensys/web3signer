@@ -207,7 +207,7 @@ public class SignedBlocksDaoTest {
   }
 
   @Test
-  public void insertsBlockWithIdGreaterThanIntBoundary(final Handle handle) {
+  public void insertsBlockWithIdGreaterThanIntegerMaxValue(final Handle handle) {
     insertValidator(handle, Bytes.of(1), 1);
     handle.execute("SELECT setval('signed_blocks_id_seq', ?)", Integer.MAX_VALUE);
     signedBlocksDao.insertBlockProposal(handle, block(1, 100));
