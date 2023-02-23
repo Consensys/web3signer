@@ -2,7 +2,8 @@
 
 ## Next release
 ### Features Added
--
+- Add Block signing support for Capella milestone
+
 ### Bugs fixed
 - Upgrade to Vertx 4.3.8 to address CVE-2023-24815
 - 
