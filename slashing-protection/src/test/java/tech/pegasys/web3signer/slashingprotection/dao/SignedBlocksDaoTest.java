@@ -206,6 +206,18 @@ public class SignedBlocksDaoTest {
         .isEqualToComparingFieldByField(block(7, 1));
   }
 
+  @Test
+  public void insertsBlockWithIdGreaterThanIntegerMaxValue(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), 1);
+    handle.execute("SELECT setval('signed_blocks_id_seq', ?)", Integer.MAX_VALUE);
+    signedBlocksDao.insertBlockProposal(handle, block(1, 100));
+
+    final List<Map<String, Object>> signedBlocks =
+        handle.createQuery("SELECT * FROM signed_blocks ORDER BY validator_id").mapToMap().list();
+    assertThat(signedBlocks).hasSize(1);
+    assertThat(signedBlocks.get(0).get("id")).isEqualTo(2147483648L);
+  }
+
   private void insertBlock(
       final Handle handle, final int validatorId, final int slot, final Bytes signingRoot) {
     handle.execute(

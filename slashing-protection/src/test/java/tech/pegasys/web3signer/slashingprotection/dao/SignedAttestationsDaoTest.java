@@ -280,6 +280,21 @@ public class SignedAttestationsDaoTest {
         .isEqualToComparingFieldByField(attestation(1, 7, 8, 1));
   }
 
+  @Test
+  public void insertsAttestationWithIdGreaterThanIntegerMaxValue(final Handle handle) {
+    insertValidator(handle, Bytes.of(1), 1);
+    handle.execute("SELECT setval('signed_attestations_id_seq', ?)", Integer.MAX_VALUE);
+    signedAttestationsDao.insertAttestation(handle, attestation(1, 1, 1, 100));
+
+    final List<Map<String, Object>> signedAttestations =
+        handle
+            .createQuery("SELECT * FROM signed_attestations ORDER BY validator_id")
+            .mapToMap()
+            .list();
+    assertThat(signedAttestations).hasSize(1);
+    assertThat(signedAttestations.get(0).get("id")).isEqualTo(2147483648L);
+  }
+
   private void insertValidator(final Handle handle, final Bytes publicKey, final int validatorId) {
     handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
   }

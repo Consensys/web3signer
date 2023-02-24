@@ -1,5 +1,15 @@
 # Changelog
 
+## Next release
+### Breaking Changes
+- Slashing protection database schema has been updated to support indexes with bigint type and after the upgrade will no longer work with older versions of Web3Signer.
+
+### Features Added
+
+### Bugs fixed
+- Fix issue with slashing protection database failing once reaching max integer index value [#705](https://github.com/ConsenSys/web3signer/issues/705)
+
+---
 ## 23.2.1
 ### Features Added
 - Add support for Capella milestone in Sepolia
