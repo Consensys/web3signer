@@ -1,12 +1,12 @@
 # Changelog
 
-## Next release
+## 23.2.1
 ### Features Added
-- Add Block signing support for Capella milestone
+- Add support for Capella milestone in Sepolia
+- Add Block signing support for Capella
 
 ### Bugs fixed
 - Upgrade to Vertx 4.3.8 to address CVE-2023-24815
-- 
 ---
 
 ## 23.2.0
