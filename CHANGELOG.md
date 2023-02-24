@@ -7,6 +7,7 @@
 ### Features Added
 
 ### Bugs fixed
+- Fix issue with slashing protection database failing once reaching max integer index value [#705](https://github.com/ConsenSys/web3signer/issues/705)
 
 ---
 =======
