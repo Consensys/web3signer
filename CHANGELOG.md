@@ -10,7 +10,6 @@
 - Fix issue with slashing protection database failing once reaching max integer index value [#705](https://github.com/ConsenSys/web3signer/issues/705)
 
 ---
-=======
 ## 23.2.1
 ### Features Added
 - Add support for Capella milestone in Sepolia
