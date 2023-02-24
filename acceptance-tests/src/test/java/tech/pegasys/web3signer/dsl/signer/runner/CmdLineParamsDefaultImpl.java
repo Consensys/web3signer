@@ -213,6 +213,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Long.toString(signerConfig.getBellatrixForkEpoch().get()));
     }
 
+    if (signerConfig.getCapellaForkEpoch().isPresent()) {
+      params.add("--Xnetwork-capella-fork-epoch");
+      params.add(Long.toString(signerConfig.getCapellaForkEpoch().get()));
+    }
+
     if (signerConfig.getNetwork().isPresent()) {
       params.add("--network");
       params.add(signerConfig.getNetwork().get());

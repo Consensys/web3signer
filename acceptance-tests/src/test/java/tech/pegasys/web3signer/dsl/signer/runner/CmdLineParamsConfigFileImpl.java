@@ -342,6 +342,14 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               signerConfig.getBellatrixForkEpoch().get()));
     }
 
+    if (signerConfig.getCapellaForkEpoch().isPresent()) {
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT,
+              "eth2.Xnetwork-capella-fork-epoch",
+              signerConfig.getCapellaForkEpoch().get()));
+    }
+
     if (signerConfig.getNetwork().isPresent()) {
       yamlConfig.append(
           String.format(YAML_STRING_FMT, "eth2.network", signerConfig.getNetwork().get()));

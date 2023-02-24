@@ -56,10 +56,10 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
   }
 
-  @ParameterizedTest
+  @ParameterizedTest(name = "#{index} - Sign and verify BlockV2 Signature for spec {0}")
   @EnumSource(
       value = SpecMilestone.class,
-      names = {"PHASE0", "ALTAIR", "BELLATRIX"})
+      names = {"PHASE0", "ALTAIR", "BELLATRIX", "CAPELLA"})
   void signAndVerifyBlockV2Signature(final SpecMilestone specMilestone) throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
 
@@ -88,14 +88,18 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
-  @Test
-  void emptyBlockRequestReturnsBadRequestStatus() throws JsonProcessingException {
-    final Eth2BlockSigningRequestUtil util =
-        new Eth2BlockSigningRequestUtil(SpecMilestone.BELLATRIX);
-    setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.BELLATRIX);
+  @ParameterizedTest(
+      name = "#{index} - Empty block request for spec {0} should return bad request status")
+  @EnumSource(
+      value = SpecMilestone.class,
+      names = {"PHASE0", "ALTAIR", "BELLATRIX", "CAPELLA"})
+  void emptyBlockRequestReturnsBadRequestStatus(final SpecMilestone specMilestone)
+      throws JsonProcessingException {
+    final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
+    setupEth2Signer(Eth2Network.MINIMAL, specMilestone);
 
     final Eth2SigningRequestBody request =
-        util.createBlockV2Request(new BlockRequest(SpecMilestone.BELLATRIX));
+        util.createBlockV2Request(new BlockRequest(specMilestone));
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, ContentType.JSON);
 

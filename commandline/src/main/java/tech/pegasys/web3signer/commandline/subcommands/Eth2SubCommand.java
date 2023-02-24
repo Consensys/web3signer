@@ -108,6 +108,15 @@ public class Eth2SubCommand extends ModeSubCommand {
   private UInt64 bellatrixForkEpoch;
 
   @CommandLine.Option(
+      names = {"--Xnetwork-capella-fork-epoch"},
+      hidden = true,
+      paramLabel = "<epoch>",
+      description = "Override the Capella fork activation epoch.",
+      arity = "1",
+      converter = UInt64Converter.class)
+  private UInt64 capellaForkEpoch;
+
+  @CommandLine.Option(
       names = {"--key-manager-api-enabled", "--enable-key-manager-api"},
       paramLabel = "<BOOL>",
       description = "Enable the key manager API to manage key stores (default: ${DEFAULT-VALUE}).",
@@ -169,6 +178,9 @@ public class Eth2SubCommand extends ModeSubCommand {
     }
     if (bellatrixForkEpoch != null) {
       builder.bellatrixForkEpoch(bellatrixForkEpoch);
+    }
+    if (capellaForkEpoch != null) {
+      builder.capellaForkEpoch(capellaForkEpoch);
     }
     return builder.build();
   }

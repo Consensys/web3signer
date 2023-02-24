@@ -423,6 +423,7 @@ components:
             - $ref: '#/components/schemas/BlockRequestPhase0'
             - $ref: '#/components/schemas/BlockRequestAltair'
             - $ref: '#/components/schemas/BlockRequestBellatrix'
+            - $ref: '#/components/schemas/BlockRequestCapella'
       required:
         - beacon_block
     BlockRequestPhase0:
@@ -458,6 +459,19 @@ components:
           type: string
           enum:
             - BELLATRIX
+          description: 'version to identify block request type.'
+        block_header:
+          $ref: "#/components/schemas/BeaconBlockHeader"
+      required:
+        - version
+        - block_header
+    BlockRequestCapella:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - CAPELLA
           description: 'version to identify block request type.'
         block_header:
           $ref: "#/components/schemas/BeaconBlockHeader"

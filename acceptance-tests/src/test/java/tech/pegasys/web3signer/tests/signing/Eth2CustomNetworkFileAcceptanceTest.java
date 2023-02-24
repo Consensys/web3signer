@@ -64,7 +64,7 @@ public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBa
   void signAndVerifyBlockV2SignatureForAllEnabledMilestones() throws Exception {
     final Spec spec = SpecFactory.create(NETWORK_CONFIG_PATH.toString());
     final List<ForkAndSpecMilestone> enabledMilestones = spec.getEnabledMilestones();
-    assertThat(enabledMilestones.size()).isEqualTo(3);
+    assertThat(enabledMilestones.size()).isEqualTo(4);
 
     for (final ForkAndSpecMilestone forkAndSpecMilestone : enabledMilestones) {
       final Eth2SigningRequestBody request =

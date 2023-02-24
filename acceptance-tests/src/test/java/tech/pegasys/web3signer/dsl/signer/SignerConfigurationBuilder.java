@@ -66,6 +66,7 @@ public class SignerConfigurationBuilder {
   private long slashingPruningInterval = 1;
   private Long altairForkEpoch = null;
   private Long bellatrixForkEpoch = null;
+  private Long capellaForkEpoch = null;
   private String network = null;
   private boolean keyManagerApiEnabled = false;
   private KeystoresParameters keystoresParameters;
@@ -243,6 +244,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withCapellaForkEpoch(final long capellaForkEpoch) {
+    this.capellaForkEpoch = capellaForkEpoch;
+    return this;
+  }
+
   public SignerConfigurationBuilder withNetwork(final String network) {
     this.network = network;
     return this;
@@ -307,6 +313,7 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(slashingProtectionDbPoolConfigurationFile),
         Optional.ofNullable(altairForkEpoch),
         Optional.ofNullable(bellatrixForkEpoch),
+        Optional.ofNullable(capellaForkEpoch),
         Optional.ofNullable(network),
         keyManagerApiEnabled,
         Optional.ofNullable(watermarkRepairParameters));

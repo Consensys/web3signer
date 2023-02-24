@@ -64,6 +64,7 @@ public class SignerConfiguration {
   private final Optional<Long> altairForkEpoch;
 
   private final Optional<Long> bellatrixForkEpoch;
+  private final Optional<Long> capellaForkEpoch;
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
   private Optional<WatermarkRepairParameters> watermarkRepairParameters;
@@ -104,6 +105,7 @@ public class SignerConfiguration {
       final Optional<Path> slashingDbPoolConfigurationFile,
       final Optional<Long> altairForkEpoch,
       final Optional<Long> bellatrixForkEpoch,
+      final Optional<Long> capellaForkEpoch,
       final Optional<String> network,
       final boolean keyManagerApiEnabled,
       final Optional<WatermarkRepairParameters> watermarkRepairParameters) {
@@ -141,6 +143,7 @@ public class SignerConfiguration {
     this.slashingProtectionDbPoolConfigurationFile = slashingDbPoolConfigurationFile;
     this.altairForkEpoch = altairForkEpoch;
     this.bellatrixForkEpoch = bellatrixForkEpoch;
+    this.capellaForkEpoch = capellaForkEpoch;
     this.network = network;
     this.keyManagerApiEnabled = keyManagerApiEnabled;
     this.watermarkRepairParameters = watermarkRepairParameters;
@@ -280,6 +283,10 @@ public class SignerConfiguration {
 
   public Optional<Long> getBellatrixForkEpoch() {
     return bellatrixForkEpoch;
+  }
+
+  public Optional<Long> getCapellaForkEpoch() {
+    return capellaForkEpoch;
   }
 
   public Optional<String> getNetwork() {
