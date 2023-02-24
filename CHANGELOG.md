@@ -7,8 +7,9 @@
 
 ### Bugs fixed
 - Upgrade to Vertx 4.3.8 to address CVE-2023-24815
----
+- Updated docker image with latest libssl3
 
+---
 ## 23.2.0
 ### Features Added
 - AWS Secrets Manager bulkload mode can now load multiple keys from same secret where keys are separated by line terminating 
