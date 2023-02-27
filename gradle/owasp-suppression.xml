@@ -8,4 +8,11 @@
         ]]></notes>
         <cve>CVE-2022-1471</cve>
     </suppress>
+    <suppress until="2023-03-15">
+        <notes><![CDATA[
+        suppress various improper matches to the CPE that belongs only to pkg:maven/org.json/json
+        ]]></notes>
+        <packageUrl regex="true">^(?!pkg:maven/org\.json/json@).+$</packageUrl>
+        <cpe>cpe:/a:json-java_project:json-java</cpe>
+    </suppress>
 </suppressions>
