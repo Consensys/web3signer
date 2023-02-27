@@ -13,19 +13,26 @@
 package tech.pegasys.web3signer.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser.YAML_MAPPER;
 
 import tech.pegasys.web3signer.signing.config.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class KeystoreFileManagerTest {
+
+  @BeforeAll
+  static void init() {
+    YamlMapperProvider.INSTANCE.init(Optional.empty());
+  }
 
   @Test
   void configurationFilesAreCreated(@TempDir final Path parentDir) throws Exception {
@@ -51,7 +58,9 @@ class KeystoreFileManagerTest {
     assertThat(metadataYamlFile).exists();
 
     SigningMetadata signingMetadata =
-        YAML_MAPPER.readValue(metadataYamlFile.toFile(), SigningMetadata.class);
+        YamlMapperProvider.INSTANCE
+            .getYamlMapper()
+            .readValue(metadataYamlFile.toFile(), SigningMetadata.class);
     assertThat(signingMetadata).isExactlyInstanceOf(FileKeyStoreMetadata.class);
   }
 
@@ -66,7 +75,9 @@ class KeystoreFileManagerTest {
 
     // read raw values from Yaml
     Map<String, String> deserializedYamlMap =
-        YAML_MAPPER.readValue(metadataYamlFile.toFile(), new TypeReference<>() {});
+        YamlMapperProvider.INSTANCE
+            .getYamlMapper()
+            .readValue(metadataYamlFile.toFile(), new TypeReference<>() {});
 
     assertThat(deserializedYamlMap.get("type")).isEqualTo("file-keystore");
     assertThat(deserializedYamlMap.get("keystoreFile")).isEqualTo(keystoreJsonFile.toString());

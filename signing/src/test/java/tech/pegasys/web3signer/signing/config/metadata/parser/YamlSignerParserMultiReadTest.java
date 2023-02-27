@@ -36,12 +36,14 @@ import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueData
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,6 +67,11 @@ class YamlSignerParserMultiReadTest {
   @TempDir Path configDir;
 
   private YamlSignerParser signerParser;
+
+  @BeforeAll
+  static void init() {
+    YamlMapperProvider.INSTANCE.init(Optional.empty());
+  }
 
   @BeforeEach
   public void setup() {

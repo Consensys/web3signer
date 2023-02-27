@@ -12,12 +12,11 @@
  */
 package tech.pegasys.web3signer.signing;
 
-import static tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser.YAML_MAPPER;
-
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.signing.config.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 
 import java.io.IOException;
@@ -109,7 +108,9 @@ public class KeystoreFileManager {
                     try {
                       final String fileContent = Files.readString(path, StandardCharsets.UTF_8);
                       final SigningMetadata metaDataInfo =
-                          YAML_MAPPER.readValue(fileContent, SigningMetadata.class);
+                          YamlMapperProvider.INSTANCE
+                              .getYamlMapper()
+                              .readValue(fileContent, SigningMetadata.class);
                       if (metaDataInfo.getKeyType() == KeyType.BLS
                           && metaDataInfo instanceof FileKeyStoreMetadata) {
                         final FileKeyStoreMetadata info = ((FileKeyStoreMetadata) metaDataInfo);
@@ -141,7 +142,8 @@ public class KeystoreFileManager {
 
   private static void createYamlFile(
       final Path filePath, final FileKeyStoreMetadata signingMetadata) throws IOException {
-    final String yamlContent = YAML_MAPPER.writeValueAsString(signingMetadata);
+    final String yamlContent =
+        YamlMapperProvider.INSTANCE.getYamlMapper().writeValueAsString(signingMetadata);
     Files.writeString(filePath, yamlContent);
   }
 
