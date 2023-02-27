@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -91,8 +92,9 @@ public class Web3SignerBaseCommand implements Config, Runnable {
       names = {"--key-store-config-file-size"},
       description =
           "The key store configuration file size in bytes. Useful when loading large number of "
-              + "configurations from same yaml file. Defaults to 100MB (104857600) ",
+              + "configurations from same yaml file. Defaults to (${DEFAULT-VALUE}) 100MB",
       paramLabel = "<NUMBER>",
+      defaultValue = "104857600",
       arity = "1")
   private final Integer keystoreConfigFileSize = 104_857_600;
 
@@ -276,11 +278,6 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   }
 
   @Override
-  public Integer getKeystoreConfigFileSize() {
-    return keystoreConfigFileSize;
-  }
-
-  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -313,6 +310,18 @@ public class Web3SignerBaseCommand implements Config, Runnable {
     final PicoCliTlsServerOptionsValidator picoCliTlsServerOptionsValidator =
         new PicoCliTlsServerOptionsValidator(spec, picoCliTlsServerOptions);
     picoCliTlsServerOptionsValidator.validate();
+
+    // validate keystore config file size and initialize the YamlMapperProvider singelton
+    if (keystoreConfigFileSize <= 0) {
+      throw new ParameterException(
+          spec.commandLine(),
+          String.format(
+              "Invalid value '%s' for option '--key-store-config-file-size': "
+                  + "value must be greater than 0",
+              keystoreConfigFileSize));
+    }
+
+    YamlMapperProvider.INSTANCE.init(Optional.of(keystoreConfigFileSize));
   }
 
   public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {

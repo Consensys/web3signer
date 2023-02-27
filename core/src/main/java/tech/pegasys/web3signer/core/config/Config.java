@@ -56,6 +56,4 @@ public interface Config {
   Boolean isSwaggerUIEnabled();
 
   Boolean isAccessLogsEnabled();
-
-  Integer getKeystoreConfigFileSize();
 }
