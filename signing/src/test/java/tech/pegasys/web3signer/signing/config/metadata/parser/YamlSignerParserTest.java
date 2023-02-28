@@ -41,14 +41,12 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,11 +72,6 @@ class YamlSignerParserTest {
   @Mock private Secp256k1ArtifactSignerFactory secpArtifactSignerFactory;
 
   private YamlSignerParser signerParser;
-
-  @BeforeAll
-  static void init() {
-    YamlMapperProvider.INSTANCE.init(Optional.empty());
-  }
 
   @BeforeEach
   public void setup() {

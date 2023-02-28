@@ -20,19 +20,12 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider
 
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 class KeystoreFileManagerTest {
-
-  @BeforeAll
-  static void init() {
-    YamlMapperProvider.INSTANCE.init(Optional.empty());
-  }
 
   @Test
   void configurationFilesAreCreated(@TempDir final Path parentDir) throws Exception {

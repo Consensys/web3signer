@@ -29,7 +29,6 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataMod
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -61,7 +60,6 @@ class FileValidatorManagerTest {
 
   @BeforeAll
   static void init() {
-    YamlMapperProvider.INSTANCE.init(Optional.empty());
     YAML_MAPPER = YamlMapperProvider.INSTANCE.getYamlMapper();
   }
 

@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.signing.config.metadata.parser;
 
 import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Optional;
 
@@ -25,7 +24,6 @@ import org.yaml.snakeyaml.LoaderOptions;
 public enum YamlMapperProvider {
   INSTANCE;
   private YAMLMapper yamlMapper;
-  private static final int yamlCodePointLimit = 100 * 1024 * 1024; // 100 MB default
 
   public synchronized void init(Optional<Integer> yamlFileSizeInBytes) {
     if (yamlMapper != null) {
@@ -34,9 +32,8 @@ public enum YamlMapperProvider {
     final LoaderOptions loaderOptions = new LoaderOptions();
     if (yamlFileSizeInBytes.isPresent() && yamlFileSizeInBytes.get() > 0) {
       loaderOptions.setCodePointLimit(yamlFileSizeInBytes.get());
-    } else {
-      loaderOptions.setCodePointLimit(yamlCodePointLimit);
     }
+
     final YAMLMapper.Builder builder =
         YAMLMapper.builder(YAMLFactory.builder().loaderOptions(loaderOptions).build());
 
@@ -50,7 +47,9 @@ public enum YamlMapperProvider {
   }
 
   public YAMLMapper getYamlMapper() {
-    checkNotNull(yamlMapper, "YamlMapperProvider must be initialized");
+    if (yamlMapper == null) {
+      init(Optional.empty());
+    }
     return yamlMapper;
   }
 }

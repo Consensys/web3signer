@@ -22,22 +22,15 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.io.Resources;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class InterlockSigningMetadataFileParsingTest {
-  private static YAMLMapper YAML_MAPPER;
-
-  @BeforeAll
-  static void init() {
-    YamlMapperProvider.INSTANCE.init(Optional.empty());
-    YAML_MAPPER = YamlMapperProvider.INSTANCE.getYamlMapper();
-  }
+  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.INSTANCE.getYamlMapper();
+  ;
 
   @Test
   void yamlFileIsSuccessfullyParsed() throws IOException {

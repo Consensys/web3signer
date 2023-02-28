@@ -21,12 +21,10 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class AwsKeySigningMetadataDeserializerTest {
@@ -35,13 +33,7 @@ class AwsKeySigningMetadataDeserializerTest {
       "src/test/resources/aws/aws_valid_config_environment.yaml";
   private static final String AWS_VALID_CONFIG_SPECIFIED_AUTH_MODE_PATH =
       "src/test/resources/aws/aws_valid_config_specified.yaml";
-  private static YAMLMapper YAML_MAPPER;
-
-  @BeforeAll
-  static void init() {
-    YamlMapperProvider.INSTANCE.init(Optional.empty());
-    YAML_MAPPER = YamlMapperProvider.INSTANCE.getYamlMapper();
-  }
+  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.INSTANCE.getYamlMapper();
 
   @Test
   public void deserializeValidAwsConfigWithEnvironmentAuthMode() throws IOException {
