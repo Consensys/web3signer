@@ -66,6 +66,8 @@ import picocli.CommandLine.Spec;
 public class Web3SignerBaseCommand implements Config, Runnable {
 
   @Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
+  private static final String KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME =
+      "--key-store-config-file-max-size";
 
   @SuppressWarnings("UnusedVariable")
   @CommandLine.Option(
@@ -89,12 +91,10 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   private Path keyStorePath = Path.of("./");
 
   @Option(
-      names = {"--key-store-config-file-size"},
+      names = {KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME},
       description =
-          "The key store configuration file size in bytes. Useful when loading large number of "
-              + "configurations from same yaml file. Defaults to (${DEFAULT-VALUE}) 100MB",
+          "The key store configuration file size in bytes. Useful when loading a large number of configurations from the same yaml file. Defaults to (${DEFAULT-VALUE}) 100MB",
       paramLabel = "<NUMBER>",
-      defaultValue = "104857600",
       arity = "1")
   private final Integer keystoreConfigFileSize = 104_857_600;
 
@@ -316,9 +316,8 @@ public class Web3SignerBaseCommand implements Config, Runnable {
       throw new ParameterException(
           spec.commandLine(),
           String.format(
-              "Invalid value '%s' for option '--key-store-config-file-size': "
-                  + "value must be greater than 0",
-              keystoreConfigFileSize));
+              "Invalid value '%s' for option '%s': value must be greater than 0",
+              keystoreConfigFileSize, KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME));
     }
 
     YamlMapperProvider.INSTANCE.init(Optional.of(keystoreConfigFileSize));
