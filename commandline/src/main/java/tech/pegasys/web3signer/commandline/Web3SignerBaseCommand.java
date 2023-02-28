@@ -311,7 +311,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
         new PicoCliTlsServerOptionsValidator(spec, picoCliTlsServerOptions);
     picoCliTlsServerOptionsValidator.validate();
 
-    // validate keystore config file size and initialize the YamlMapperProvider singelton
+    // validate keystore config file size and initialize the YamlMapperProvider singleton
     if (keystoreConfigFileSize <= 0) {
       throw new ParameterException(
           spec.commandLine(),
