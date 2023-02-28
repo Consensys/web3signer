@@ -36,9 +36,7 @@ public class YamlMapperProvider {
       return;
     }
     final LoaderOptions loaderOptions = new LoaderOptions();
-    if (yamlFileSizeInBytes.isPresent() && yamlFileSizeInBytes.get() > 0) {
-      loaderOptions.setCodePointLimit(yamlFileSizeInBytes.get());
-    }
+    yamlFileSizeInBytes.ifPresent(loaderOptions::setCodePointLimit);
 
     final YAMLMapper.Builder builder =
         YAMLMapper.builder(YAMLFactory.builder().loaderOptions(loaderOptions).build());
