@@ -51,7 +51,7 @@ class KeystoreFileManagerTest {
     assertThat(metadataYamlFile).exists();
 
     SigningMetadata signingMetadata =
-        YamlMapperProvider.INSTANCE
+        YamlMapperProvider.getInstance()
             .getYamlMapper()
             .readValue(metadataYamlFile.toFile(), SigningMetadata.class);
     assertThat(signingMetadata).isExactlyInstanceOf(FileKeyStoreMetadata.class);
@@ -68,7 +68,7 @@ class KeystoreFileManagerTest {
 
     // read raw values from Yaml
     Map<String, String> deserializedYamlMap =
-        YamlMapperProvider.INSTANCE
+        YamlMapperProvider.getInstance()
             .getYamlMapper()
             .readValue(metadataYamlFile.toFile(), new TypeReference<>() {});
 

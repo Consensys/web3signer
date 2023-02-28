@@ -320,7 +320,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
               keystoreConfigFileSize, KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME));
     }
 
-    YamlMapperProvider.INSTANCE.init(Optional.of(keystoreConfigFileSize));
+    YamlMapperProvider.getInstance().init(Optional.of(keystoreConfigFileSize));
   }
 
   public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {

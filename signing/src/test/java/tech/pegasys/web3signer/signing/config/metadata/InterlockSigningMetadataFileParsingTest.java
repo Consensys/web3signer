@@ -29,8 +29,7 @@ import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 
 class InterlockSigningMetadataFileParsingTest {
-  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.INSTANCE.getYamlMapper();
-  ;
+  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.getInstance().getYamlMapper();
 
   @Test
   void yamlFileIsSuccessfullyParsed() throws IOException {

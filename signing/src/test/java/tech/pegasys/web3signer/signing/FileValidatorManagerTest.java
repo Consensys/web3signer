@@ -37,7 +37,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -56,12 +55,7 @@ class FileValidatorManagerTest {
   @Mock private ArtifactSignerProvider artifactSignerProvider;
   @Mock private KeystoreFileManager keystoreFileManager;
 
-  private static YAMLMapper YAML_MAPPER;
-
-  @BeforeAll
-  static void init() {
-    YAML_MAPPER = YamlMapperProvider.INSTANCE.getYamlMapper();
-  }
+  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.getInstance().getYamlMapper();
 
   @Test
   @SuppressWarnings("unchecked")

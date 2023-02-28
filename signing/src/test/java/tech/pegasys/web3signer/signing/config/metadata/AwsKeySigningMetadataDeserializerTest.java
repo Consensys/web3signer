@@ -33,7 +33,7 @@ class AwsKeySigningMetadataDeserializerTest {
       "src/test/resources/aws/aws_valid_config_environment.yaml";
   private static final String AWS_VALID_CONFIG_SPECIFIED_AUTH_MODE_PATH =
       "src/test/resources/aws/aws_valid_config_specified.yaml";
-  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.INSTANCE.getYamlMapper();
+  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.getInstance().getYamlMapper();
 
   @Test
   public void deserializeValidAwsConfigWithEnvironmentAuthMode() throws IOException {

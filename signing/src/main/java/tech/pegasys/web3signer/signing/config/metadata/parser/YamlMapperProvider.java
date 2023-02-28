@@ -21,9 +21,15 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.yaml.snakeyaml.LoaderOptions;
 
-public enum YamlMapperProvider {
-  INSTANCE;
+public class YamlMapperProvider {
   private YAMLMapper yamlMapper;
+  private static final YamlMapperProvider INSTANCE = new YamlMapperProvider();
+
+  private YamlMapperProvider() {}
+
+  public static YamlMapperProvider getInstance() {
+    return INSTANCE;
+  }
 
   public synchronized void init(Optional<Integer> yamlFileSizeInBytes) {
     if (yamlMapper != null) {

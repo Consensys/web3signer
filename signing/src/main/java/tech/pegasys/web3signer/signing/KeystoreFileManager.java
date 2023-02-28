@@ -108,7 +108,7 @@ public class KeystoreFileManager {
                     try {
                       final String fileContent = Files.readString(path, StandardCharsets.UTF_8);
                       final SigningMetadata metaDataInfo =
-                          YamlMapperProvider.INSTANCE
+                          YamlMapperProvider.getInstance()
                               .getYamlMapper()
                               .readValue(fileContent, SigningMetadata.class);
                       if (metaDataInfo.getKeyType() == KeyType.BLS
@@ -143,7 +143,7 @@ public class KeystoreFileManager {
   private static void createYamlFile(
       final Path filePath, final FileKeyStoreMetadata signingMetadata) throws IOException {
     final String yamlContent =
-        YamlMapperProvider.INSTANCE.getYamlMapper().writeValueAsString(signingMetadata);
+        YamlMapperProvider.getInstance().getYamlMapper().writeValueAsString(signingMetadata);
     Files.writeString(filePath, yamlContent);
   }
 

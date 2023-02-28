@@ -30,7 +30,7 @@ class YubiHsmSigningMetadataFileParsingTest {
   private static final short EXPECTED_AUTH_ID = (short) 1;
   private static final short EXPECTED_OPAQUE_ID = (short) 1;
 
-  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.INSTANCE.getYamlMapper();
+  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.getInstance().getYamlMapper();
 
   @Test
   void yamlFileWithRequiredValuesIsSuccessfullyParsed() throws IOException {

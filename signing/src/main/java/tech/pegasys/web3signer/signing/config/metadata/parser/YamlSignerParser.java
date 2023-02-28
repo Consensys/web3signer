@@ -30,7 +30,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 public class YamlSignerParser implements SignerParser {
 
-  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.INSTANCE.getYamlMapper();
+  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.getInstance().getYamlMapper();
 
   private final Collection<AbstractArtifactSignerFactory> signerFactories;
 
