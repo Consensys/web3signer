@@ -30,12 +30,14 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 public class YamlSignerParser implements SignerParser {
 
-  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.getInstance().getYamlMapper();
-
+  private final YAMLMapper yamlMapper;
   private final Collection<AbstractArtifactSignerFactory> signerFactories;
 
-  public YamlSignerParser(final Collection<AbstractArtifactSignerFactory> signerFactories) {
+  public YamlSignerParser(
+      final Collection<AbstractArtifactSignerFactory> signerFactories,
+      final YAMLMapper yamlMapper) {
     this.signerFactories = signerFactories;
+    this.yamlMapper = yamlMapper;
   }
 
   @Override
@@ -62,9 +64,9 @@ public class YamlSignerParser implements SignerParser {
     }
   }
 
-  private static List<SigningMetadata> readSigningMetadata(String fileContent) throws IOException {
+  private List<SigningMetadata> readSigningMetadata(String fileContent) throws IOException {
     try (final MappingIterator<SigningMetadata> iterator =
-        YAML_MAPPER.readValues(YAML_MAPPER.createParser(fileContent), new TypeReference<>() {})) {
+        yamlMapper.readValues(yamlMapper.createParser(fileContent), new TypeReference<>() {})) {
       return iterator.readAll();
     }
   }

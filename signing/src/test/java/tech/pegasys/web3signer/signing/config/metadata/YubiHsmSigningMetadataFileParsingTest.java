@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
 import java.io.IOException;
 import java.net.URL;
@@ -30,7 +30,7 @@ class YubiHsmSigningMetadataFileParsingTest {
   private static final short EXPECTED_AUTH_ID = (short) 1;
   private static final short EXPECTED_OPAQUE_ID = (short) 1;
 
-  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.getInstance().getYamlMapper();
+  private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
 
   @Test
   void yamlFileWithRequiredValuesIsSuccessfullyParsed() throws IOException {

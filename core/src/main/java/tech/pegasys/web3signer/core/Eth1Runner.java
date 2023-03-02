@@ -103,7 +103,8 @@ public class Eth1Runner extends Runner {
                 .load(
                     config.getKeyConfigPath(),
                     "yaml",
-                    new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
+                    new YamlSignerParser(
+                        List.of(ethSecpArtifactSignerFactory), config.getKeyConfigYamlMapper()));
           }
         });
   }

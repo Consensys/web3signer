@@ -26,7 +26,7 @@ import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule;
-import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -55,7 +55,7 @@ class FileValidatorManagerTest {
   @Mock private ArtifactSignerProvider artifactSignerProvider;
   @Mock private KeystoreFileManager keystoreFileManager;
 
-  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.getInstance().getYamlMapper();
+  private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
 
   @Test
   @SuppressWarnings("unchecked")

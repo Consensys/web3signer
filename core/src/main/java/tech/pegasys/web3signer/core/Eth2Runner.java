@@ -231,7 +231,7 @@ public class Eth2Runner extends Runner {
     final FileValidatorManager fileValidatorManager =
         new FileValidatorManager(
             artifactSignerProvider,
-            new KeystoreFileManager(config.getKeyConfigPath()),
+            new KeystoreFileManager(config.getKeyConfigPath(), config.getKeyConfigYamlMapper()),
             objectMapper);
     if (slashingProtectionContext.isPresent()) {
       final SlashingProtectionContext slashingProtectionContext =
@@ -277,7 +277,8 @@ public class Eth2Runner extends Runner {
                     .load(
                         config.getKeyConfigPath(),
                         "yaml",
-                        new YamlSignerParser(List.of(artifactSignerFactory))));
+                        new YamlSignerParser(
+                            List.of(artifactSignerFactory), config.getKeyConfigYamlMapper())));
           }
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {

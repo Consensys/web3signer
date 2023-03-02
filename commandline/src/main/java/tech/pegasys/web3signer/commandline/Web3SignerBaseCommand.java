@@ -16,16 +16,17 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FI
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.convertor.YamlMapperCliConverter.KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME;
 import static tech.pegasys.web3signer.common.Web3SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
 import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptionsValidator;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
+import tech.pegasys.web3signer.commandline.convertor.YamlMapperCliConverter;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
-import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Level;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
@@ -66,8 +68,6 @@ import picocli.CommandLine.Spec;
 public class Web3SignerBaseCommand implements Config, Runnable {
 
   @Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
-  private static final String KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME =
-      "--key-store-config-file-max-size";
 
   @SuppressWarnings("UnusedVariable")
   @CommandLine.Option(
@@ -93,10 +93,13 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   @Option(
       names = {KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME},
       description =
-          "The key store configuration file size in bytes. Useful when loading a large number of configurations from the same yaml file. Defaults to (${DEFAULT-VALUE}) 100MB",
+          "The key store configuration file size in bytes. Useful when loading a large number of configurations from "
+              + "the same yaml file. Defaults to (${DEFAULT-VALUE}) 100MB",
       paramLabel = "<NUMBER>",
+      defaultValue = "104857600",
+      converter = YamlMapperCliConverter.class,
       arity = "1")
-  private final Integer keystoreConfigFileSize = 104_857_600;
+  private YAMLMapper keystoreYamlMapper;
 
   @Option(
       names = {"--logging", "-l"},
@@ -229,6 +232,11 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   }
 
   @Override
+  public YAMLMapper getKeyConfigYamlMapper() {
+    return keystoreYamlMapper;
+  }
+
+  @Override
   public Boolean isMetricsEnabled() {
     return metricsEnabled;
   }
@@ -310,17 +318,6 @@ public class Web3SignerBaseCommand implements Config, Runnable {
     final PicoCliTlsServerOptionsValidator picoCliTlsServerOptionsValidator =
         new PicoCliTlsServerOptionsValidator(spec, picoCliTlsServerOptions);
     picoCliTlsServerOptionsValidator.validate();
-
-    // validate keystore config file size and initialize the YamlMapperProvider singleton
-    if (keystoreConfigFileSize <= 0) {
-      throw new ParameterException(
-          spec.commandLine(),
-          String.format(
-              "Invalid value '%s' for option '%s': value must be greater than 0",
-              keystoreConfigFileSize, KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME));
-    }
-
-    YamlMapperProvider.getInstance().init(Optional.of(keystoreConfigFileSize));
   }
 
   public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {

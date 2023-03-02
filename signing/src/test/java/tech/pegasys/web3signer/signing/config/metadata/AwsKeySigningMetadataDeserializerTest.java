@@ -17,7 +17,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
-import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +33,7 @@ class AwsKeySigningMetadataDeserializerTest {
       "src/test/resources/aws/aws_valid_config_environment.yaml";
   private static final String AWS_VALID_CONFIG_SPECIFIED_AUTH_MODE_PATH =
       "src/test/resources/aws/aws_valid_config_specified.yaml";
-  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.getInstance().getYamlMapper();
+  private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
 
   @Test
   public void deserializeValidAwsConfigWithEnvironmentAuthMode() throws IOException {

@@ -14,46 +14,34 @@ package tech.pegasys.web3signer.signing.config.metadata.parser;
 
 import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
 
-import java.util.Optional;
-
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.google.common.annotations.VisibleForTesting;
 import org.yaml.snakeyaml.LoaderOptions;
 
-public class YamlMapperProvider {
-  private YAMLMapper yamlMapper;
-  private static final YamlMapperProvider INSTANCE = new YamlMapperProvider();
+/** Central location to construct YamlMapper instances. */
+public class YamlMapperFactory {
 
-  private YamlMapperProvider() {}
-
-  public static YamlMapperProvider getInstance() {
-    return INSTANCE;
-  }
-
-  public synchronized void init(Optional<Integer> yamlFileSizeInBytes) {
-    if (yamlMapper != null) {
-      return;
-    }
+  public static YAMLMapper createYamlMapper(int yamlFileSizeInBytes) {
     final LoaderOptions loaderOptions = new LoaderOptions();
-    yamlFileSizeInBytes.ifPresent(loaderOptions::setCodePointLimit);
+    loaderOptions.setCodePointLimit(yamlFileSizeInBytes);
 
-    final YAMLMapper.Builder builder =
-        YAMLMapper.builder(YAMLFactory.builder().loaderOptions(loaderOptions).build());
-
-    yamlMapper =
-        builder
-            .addModule(new SigningMetadataModule())
-            .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
-            .disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID)
-            .enable(ACCEPT_CASE_INSENSITIVE_ENUMS)
-            .build();
+    return buildYamlMapper(
+        YAMLMapper.builder(YAMLFactory.builder().loaderOptions(loaderOptions).build()));
   }
 
-  public YAMLMapper getYamlMapper() {
-    if (yamlMapper == null) {
-      init(Optional.empty());
-    }
-    return yamlMapper;
+  @VisibleForTesting
+  public static YAMLMapper createYamlMapper() {
+    return buildYamlMapper(YAMLMapper.builder());
+  }
+
+  private static YAMLMapper buildYamlMapper(YAMLMapper.Builder builder) {
+    return builder
+        .addModule(new SigningMetadataModule())
+        .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
+        .disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID)
+        .enable(ACCEPT_CASE_INSENSITIVE_ENUMS)
+        .build();
   }
 }

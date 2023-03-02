@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperProvider;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -29,7 +29,7 @@ import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 
 class InterlockSigningMetadataFileParsingTest {
-  private static final YAMLMapper YAML_MAPPER = YamlMapperProvider.getInstance().getYamlMapper();
+  private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
 
   @Test
   void yamlFileIsSuccessfullyParsed() throws IOException {
