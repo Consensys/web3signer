@@ -95,7 +95,7 @@ public class Web3SignerBaseCommand implements Config, Runnable {
       names = {KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME},
       description =
           "The key store configuration file size in bytes. Useful when loading a large number of configurations from "
-              + "the same yaml file. Defaults to (${DEFAULT-VALUE}) 100MB",
+              + "the same yaml file. Defaults to ${DEFAULT-VALUE} bytes.",
       paramLabel = "<NUMBER>",
       defaultValue = "104857600",
       converter = YamlMapperCliConverter.class,
