@@ -12,28 +12,28 @@
  */
 package tech.pegasys.web3signer.commandline.convertor;
 
+import static tech.pegasys.web3signer.commandline.Web3SignerBaseCommand.KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME;
+
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import picocli.CommandLine;
+import picocli.CommandLine.TypeConversionException;
 
 public class YamlMapperCliConverter implements CommandLine.ITypeConverter<YAMLMapper> {
-  public static final String KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME =
-      "--key-store-config-file-max-size";
-
   @Override
-  public YAMLMapper convert(String value) throws Exception {
+  public YAMLMapper convert(String value) throws TypeConversionException {
     final int yamlConfigFileSize;
     try {
       yamlConfigFileSize = Integer.parseInt(value);
     } catch (final NumberFormatException e) {
-      throw new CommandLine.TypeConversionException(
+      throw new TypeConversionException(
           String.format(
               "Invalid value for option '%s': %s",
               KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME, e.getMessage()));
     }
     if (yamlConfigFileSize <= 0) {
-      throw new CommandLine.TypeConversionException(
+      throw new TypeConversionException(
           String.format(
               "Invalid value for option '%s': Expecting positive value.",
               KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME));

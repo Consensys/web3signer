@@ -16,7 +16,6 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FI
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
-import static tech.pegasys.web3signer.commandline.convertor.YamlMapperCliConverter.KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME;
 import static tech.pegasys.web3signer.common.Web3SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
 import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
@@ -68,6 +67,8 @@ import picocli.CommandLine.Spec;
 public class Web3SignerBaseCommand implements Config, Runnable {
 
   @Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
+  public static final String KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME =
+      "--key-store-config-file-max-size";
 
   @SuppressWarnings("UnusedVariable")
   @CommandLine.Option(
