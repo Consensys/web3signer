@@ -22,7 +22,6 @@ import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptionsValidator;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
-import tech.pegasys.web3signer.commandline.convertor.YamlMapperCliConverter;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -35,7 +34,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Level;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
@@ -97,10 +95,8 @@ public class Web3SignerBaseCommand implements Config, Runnable {
           "The key store configuration file size in bytes. Useful when loading a large number of configurations from "
               + "the same yaml file. Defaults to ${DEFAULT-VALUE} bytes.",
       paramLabel = "<NUMBER>",
-      defaultValue = "104857600",
-      converter = YamlMapperCliConverter.class,
       arity = "1")
-  private YAMLMapper keystoreYamlMapper;
+  private int keystoreConfigFileMaxSize = 104_857_600;
 
   @Option(
       names = {"--logging", "-l"},
@@ -233,8 +229,8 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   }
 
   @Override
-  public YAMLMapper getKeyConfigYamlMapper() {
-    return keystoreYamlMapper;
+  public int getKeyStoreConfigFileMaxSize() {
+    return keystoreConfigFileMaxSize;
   }
 
   @Override
@@ -314,6 +310,12 @@ public class Web3SignerBaseCommand implements Config, Runnable {
 
   @Override
   public void validateArgs() {
+    if (keystoreConfigFileMaxSize <= 0) {
+      throw new CommandLine.TypeConversionException(
+          String.format(
+              "Invalid value for option '%s': Expecting positive value.",
+              KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME));
+    }
     // custom validation for TLS options as we removed ArgGroups since they don't work with config
     // files
     final PicoCliTlsServerOptionsValidator picoCliTlsServerOptionsValidator =

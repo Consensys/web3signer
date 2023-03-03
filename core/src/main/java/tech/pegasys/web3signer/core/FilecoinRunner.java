@@ -35,6 +35,7 @@ import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFac
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
@@ -151,7 +152,7 @@ public class FilecoinRunner extends Runner {
                     "yaml",
                     new YamlSignerParser(
                         List.of(blsArtifactSignerFactory, secpArtifactSignerFactory),
-                        config.getKeyConfigYamlMapper()));
+                        YamlMapperFactory.createYamlMapper(config.getKeyStoreConfigFileMaxSize())));
           }
         });
   }
