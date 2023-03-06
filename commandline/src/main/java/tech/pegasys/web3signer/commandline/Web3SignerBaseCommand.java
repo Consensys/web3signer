@@ -65,6 +65,8 @@ import picocli.CommandLine.Spec;
 public class Web3SignerBaseCommand implements Config, Runnable {
 
   @Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
+  public static final String KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME =
+      "--key-store-config-file-max-size";
 
   @SuppressWarnings("UnusedVariable")
   @CommandLine.Option(
@@ -82,10 +84,19 @@ public class Web3SignerBaseCommand implements Config, Runnable {
 
   @Option(
       names = {"--key-store-path"},
-      description = "The path to a directory storing toml files defining available keys",
+      description = "The path to a directory storing yaml files defining available keys",
       paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
       arity = "1")
   private Path keyStorePath = Path.of("./");
+
+  @Option(
+      names = {KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME},
+      description =
+          "The key store configuration file size in bytes. Useful when loading a large number of configurations from "
+              + "the same yaml file. Defaults to ${DEFAULT-VALUE} bytes.",
+      paramLabel = "<NUMBER>",
+      arity = "1")
+  private int keystoreConfigFileMaxSize = 104_857_600;
 
   @Option(
       names = {"--logging", "-l"},
@@ -218,6 +229,11 @@ public class Web3SignerBaseCommand implements Config, Runnable {
   }
 
   @Override
+  public int getKeyStoreConfigFileMaxSize() {
+    return keystoreConfigFileMaxSize;
+  }
+
+  @Override
   public Boolean isMetricsEnabled() {
     return metricsEnabled;
   }
@@ -294,6 +310,12 @@ public class Web3SignerBaseCommand implements Config, Runnable {
 
   @Override
   public void validateArgs() {
+    if (keystoreConfigFileMaxSize <= 0) {
+      throw new CommandLine.TypeConversionException(
+          String.format(
+              "Invalid value for option '%s': Expecting positive value.",
+              KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME));
+    }
     // custom validation for TLS options as we removed ArgGroups since they don't work with config
     // files
     final PicoCliTlsServerOptionsValidator picoCliTlsServerOptionsValidator =

@@ -5,9 +5,11 @@
 - Slashing protection database schema has been updated to support indexes with bigint type and after the upgrade will no longer work with older versions of Web3Signer.
 
 ### Features Added
-
+- Introduced cli option `--key-store-config-file-max-size` to change the default value of configuration file size. [#719](https://github.com/ConsenSys/web3signer/issues/719)
+- 
 ### Bugs fixed
 - Fix issue with slashing protection database failing once reaching max integer index value [#705](https://github.com/ConsenSys/web3signer/issues/705)
+- Fix issue with Web3Signer startup when configuration file size is greater than 3 MB [#719](https://github.com/ConsenSys/web3signer/issues/719)
 
 ---
 ## 23.2.1

@@ -90,7 +90,9 @@ class YamlSignerParserMultiReadTest {
             awsSecretsManagerProvider,
             (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 
-    signerParser = new YamlSignerParser(List.of(blsArtifactSignerFactory));
+    signerParser =
+        new YamlSignerParser(
+            List.of(blsArtifactSignerFactory), YamlMapperFactory.createYamlMapper());
   }
 
   @Test

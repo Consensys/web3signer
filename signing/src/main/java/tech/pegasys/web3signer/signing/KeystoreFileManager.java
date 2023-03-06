@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.signing;
 
-import static tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser.YAML_MAPPER;
-
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.signing.config.metadata.FileKeyStoreMetadata;
@@ -32,6 +30,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,9 +43,11 @@ public class KeystoreFileManager {
   public static final String KEYSTORE_PASSWORD_EXTENSION = ".password";
 
   private final Path keystorePath;
+  private final YAMLMapper yamlMapper;
 
-  public KeystoreFileManager(final Path keystorePath) {
+  public KeystoreFileManager(final Path keystorePath, final YAMLMapper yamlMapper) {
     this.keystorePath = keystorePath;
+    this.yamlMapper = yamlMapper;
   }
 
   public void deleteKeystoreFiles(final String pubkey) throws IOException {
@@ -109,7 +110,7 @@ public class KeystoreFileManager {
                     try {
                       final String fileContent = Files.readString(path, StandardCharsets.UTF_8);
                       final SigningMetadata metaDataInfo =
-                          YAML_MAPPER.readValue(fileContent, SigningMetadata.class);
+                          yamlMapper.readValue(fileContent, SigningMetadata.class);
                       if (metaDataInfo.getKeyType() == KeyType.BLS
                           && metaDataInfo instanceof FileKeyStoreMetadata) {
                         final FileKeyStoreMetadata info = ((FileKeyStoreMetadata) metaDataInfo);
@@ -139,9 +140,9 @@ public class KeystoreFileManager {
     }
   }
 
-  private static void createYamlFile(
-      final Path filePath, final FileKeyStoreMetadata signingMetadata) throws IOException {
-    final String yamlContent = YAML_MAPPER.writeValueAsString(signingMetadata);
+  private void createYamlFile(final Path filePath, final FileKeyStoreMetadata signingMetadata)
+      throws IOException {
+    final String yamlContent = yamlMapper.writeValueAsString(signingMetadata);
     Files.writeString(filePath, yamlContent);
   }
 

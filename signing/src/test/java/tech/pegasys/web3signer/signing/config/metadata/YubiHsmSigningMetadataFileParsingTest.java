@@ -14,20 +14,23 @@ package tech.pegasys.web3signer.signing.config.metadata;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser.YAML_MAPPER;
 
 import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
 import java.io.IOException;
 import java.net.URL;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 
 class YubiHsmSigningMetadataFileParsingTest {
   private static final short EXPECTED_AUTH_ID = (short) 1;
   private static final short EXPECTED_OPAQUE_ID = (short) 1;
+
+  private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
 
   @Test
   void yamlFileWithRequiredValuesIsSuccessfullyParsed() throws IOException {

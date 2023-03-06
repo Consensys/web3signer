@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata.parser;
 
-import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
-
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
@@ -28,23 +26,18 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 public class YamlSignerParser implements SignerParser {
 
-  public static final YAMLMapper YAML_MAPPER =
-      YAMLMapper.builder()
-          .addModule(new SigningMetadataModule())
-          .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
-          .disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID)
-          .enable(ACCEPT_CASE_INSENSITIVE_ENUMS)
-          .build();
-
+  private final YAMLMapper yamlMapper;
   private final Collection<AbstractArtifactSignerFactory> signerFactories;
 
-  public YamlSignerParser(final Collection<AbstractArtifactSignerFactory> signerFactories) {
+  public YamlSignerParser(
+      final Collection<AbstractArtifactSignerFactory> signerFactories,
+      final YAMLMapper yamlMapper) {
     this.signerFactories = signerFactories;
+    this.yamlMapper = yamlMapper;
   }
 
   @Override
@@ -71,9 +64,9 @@ public class YamlSignerParser implements SignerParser {
     }
   }
 
-  private static List<SigningMetadata> readSigningMetadata(String fileContent) throws IOException {
+  private List<SigningMetadata> readSigningMetadata(String fileContent) throws IOException {
     try (final MappingIterator<SigningMetadata> iterator =
-        YAML_MAPPER.readValues(YAML_MAPPER.createParser(fileContent), new TypeReference<>() {})) {
+        yamlMapper.readValues(yamlMapper.createParser(fileContent), new TypeReference<>() {})) {
       return iterator.readAll();
     }
   }

@@ -37,6 +37,8 @@ public interface Config {
 
   Path getKeyConfigPath();
 
+  int getKeyStoreConfigFileMaxSize();
+
   Boolean isMetricsEnabled();
 
   Integer getMetricsPort();

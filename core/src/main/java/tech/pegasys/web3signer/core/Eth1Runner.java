@@ -31,6 +31,7 @@ import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
@@ -103,7 +104,9 @@ public class Eth1Runner extends Runner {
                 .load(
                     config.getKeyConfigPath(),
                     "yaml",
-                    new YamlSignerParser(List.of(ethSecpArtifactSignerFactory)));
+                    new YamlSignerParser(
+                        List.of(ethSecpArtifactSignerFactory),
+                        YamlMapperFactory.createYamlMapper(config.getKeyStoreConfigFileMaxSize())));
           }
         });
   }

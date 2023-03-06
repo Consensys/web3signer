@@ -72,6 +72,7 @@ class YamlSignerParserTest {
   @Mock private Secp256k1ArtifactSignerFactory secpArtifactSignerFactory;
 
   private YamlSignerParser signerParser;
+  private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
 
   @BeforeEach
   public void setup() {
@@ -80,7 +81,8 @@ class YamlSignerParserTest {
     lenient().when(secpArtifactSignerFactory.getKeyType()).thenReturn(KeyType.SECP256K1);
 
     signerParser =
-        new YamlSignerParser(List.of(blsArtifactSignerFactory, secpArtifactSignerFactory));
+        new YamlSignerParser(
+            List.of(blsArtifactSignerFactory, secpArtifactSignerFactory), YAML_MAPPER);
   }
 
   @Test

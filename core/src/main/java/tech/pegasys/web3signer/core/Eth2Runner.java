@@ -55,6 +55,7 @@ import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFac
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.slashingprotection.DbHealthCheck;
@@ -231,7 +232,9 @@ public class Eth2Runner extends Runner {
     final FileValidatorManager fileValidatorManager =
         new FileValidatorManager(
             artifactSignerProvider,
-            new KeystoreFileManager(config.getKeyConfigPath()),
+            new KeystoreFileManager(
+                config.getKeyConfigPath(),
+                YamlMapperFactory.createYamlMapper(config.getKeyStoreConfigFileMaxSize())),
             objectMapper);
     if (slashingProtectionContext.isPresent()) {
       final SlashingProtectionContext slashingProtectionContext =
@@ -277,7 +280,10 @@ public class Eth2Runner extends Runner {
                     .load(
                         config.getKeyConfigPath(),
                         "yaml",
-                        new YamlSignerParser(List.of(artifactSignerFactory))));
+                        new YamlSignerParser(
+                            List.of(artifactSignerFactory),
+                            YamlMapperFactory.createYamlMapper(
+                                config.getKeyStoreConfigFileMaxSize()))));
           }
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
