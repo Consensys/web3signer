@@ -34,8 +34,10 @@ dependencies {
   implementation 'org.jdbi:jdbi3-sqlobject'
   implementation 'org.postgresql:postgresql'
 
-  runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
+  runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
 
+  testImplementation 'org.apache.logging.log4j:log4j-api'
+  testImplementation 'org.apache.logging.log4j:log4j-core'
   testImplementation 'io.zonky.test:embedded-postgres'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.flywaydb:flyway-core'

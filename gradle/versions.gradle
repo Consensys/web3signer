@@ -46,11 +46,11 @@ dependencyManagement {
 
     dependency 'javax.activation:activation:1.1.1'
 
-    dependencySet(group: 'org.apache.logging.log4j', version: '2.19.0') {
+    dependencySet(group: 'org.apache.logging.log4j', version: '2.20.0') {
       entry 'log4j-api'
       entry 'log4j'
       entry 'log4j-core'
-      entry 'log4j-slf4j-impl'
+      entry 'log4j-slf4j2-impl'
     }
 
     dependencySet(group: 'org.apache.tuweni', version: '2.3.1') {

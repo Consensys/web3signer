@@ -41,7 +41,7 @@ dependencies {
   implementation 'tech.pegasys.teku.internal:jackson'
   implementation 'tech.pegasys.teku.internal:spec'
   implementation 'tech.pegasys.teku.internal:unsigned'
-  runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
+  runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
   runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
   runtimeOnly 'tech.pegasys:jblst'
 
