@@ -15,9 +15,11 @@ package tech.pegasys.web3signer.commandline;
 import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -29,6 +31,7 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   public static final String AWS_SECRETS_SECRET_ACCESS_KEY_OPTION =
       "--aws-secrets-secret-access-key";
   public static final String AWS_SECRETS_REGION_OPTION = "--aws-secrets-region";
+  public static final String AWS_ENDPOINT_OVERRIDE_OPTION = "--aws-endpoint-override";
   public static final String AWS_SECRETS_PREFIXES_FILTER_OPTION = "--aws-secrets-prefixes-filter";
   public static final String AWS_SECRETS_TAG_NAMES_FILTER_OPTION = "--aws-secrets-tag-names-filter";
   public static final String AWS_SECRETS_TAG_VALUES_FILTER_OPTION =
@@ -71,6 +74,12 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
           "AWS region where Secrets Manager service is available. Required for SPECIFIED authentication mode.",
       paramLabel = "<Region>")
   private String region;
+
+  @Option(
+      names = {AWS_ENDPOINT_OVERRIDE_OPTION},
+      description = "Override AWS endpoint.",
+      paramLabel = "<URI>")
+  private Optional<URI> endpointOverride;
 
   @Option(
       names = AWS_SECRETS_PREFIXES_FILTER_OPTION,
@@ -146,5 +155,10 @@ public class PicoCliAwsSecretsManagerParameters implements AwsSecretsManagerPara
   @Override
   public Collection<String> getTagValuesFilter() {
     return tagValuesFilter;
+  }
+
+  @Override
+  public Optional<URI> getEndpointOverride() {
+    return endpointOverride;
   }
 }

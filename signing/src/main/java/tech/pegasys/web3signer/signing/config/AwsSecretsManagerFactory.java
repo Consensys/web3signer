@@ -25,9 +25,11 @@ public class AwsSecretsManagerFactory {
         return awsSecretsManagerProvider.createAwsSecretsManager(
             awsSecretsManagerParameters.getAccessKeyId(),
             awsSecretsManagerParameters.getSecretAccessKey(),
-            awsSecretsManagerParameters.getRegion());
+            awsSecretsManagerParameters.getRegion(),
+            awsSecretsManagerParameters.getEndpointOverride());
       default:
-        return awsSecretsManagerProvider.createAwsSecretsManager();
+        return awsSecretsManagerProvider.createAwsSecretsManager(
+            awsSecretsManagerParameters.getEndpointOverride());
     }
   }
 }

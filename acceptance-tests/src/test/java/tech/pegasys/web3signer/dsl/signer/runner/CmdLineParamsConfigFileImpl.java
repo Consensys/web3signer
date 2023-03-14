@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ENABLED_OPTION;
@@ -421,6 +422,16 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               "eth2." + AWS_SECRETS_TAG_VALUES_FILTER_OPTION.substring(2),
               String.join(",", awsSecretsManagerParameters.getTagValuesFilter())));
     }
+
+    awsSecretsManagerParameters
+        .getEndpointOverride()
+        .ifPresent(
+            uri ->
+                yamlConfig.append(
+                    String.format(
+                        YAML_STRING_FMT,
+                        "eth2." + AWS_ENDPOINT_OVERRIDE_OPTION.substring(2),
+                        uri)));
 
     return yamlConfig.toString();
   }

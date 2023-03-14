@@ -24,6 +24,7 @@ import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParametersBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.net.URI;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,13 +70,20 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   private static final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
   private static final String AWS_REGION =
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
+
+  // can be pointed to localstack
+  private final Optional<URI> awsEndpointOverride =
+      System.getenv("AWS_ENDPOINT_OVERRIDE") != null
+          ? Optional.of(URI.create(System.getenv("AWS_ENDPOINT_OVERRIDE")))
+          : Optional.empty();
   private AwsSecretsManagerUtil awsSecretsManagerUtil;
   private final List<BLSKeyPair> blsKeyPairs = new ArrayList<>();
 
   @BeforeAll
   void setupAwsResources() {
     awsSecretsManagerUtil =
-        new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
+        new AwsSecretsManagerUtil(
+            AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY, awsEndpointOverride);
     final SecureRandom secureRandom = new SecureRandom();
 
     for (int i = 0; i < 4; i++) {
@@ -100,6 +108,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
             .withTagNamesFilter(List.of("TagName0", "TagName1"))
             .withTagValuesFilter(List.of("TagValue0", "TagValue1", "TagValue2"))
+            .withEndpointOverride(awsEndpointOverride)
             .build();
 
     final SignerConfigurationBuilder configBuilder =

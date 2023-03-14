@@ -23,6 +23,7 @@ import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParametersBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.net.URI;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Collections;
@@ -79,6 +80,12 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
   private static final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
   private static final String AWS_REGION =
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
+
+  // can be pointed to localstack
+  private final Optional<URI> awsEndpointOverride =
+      System.getenv("AWS_ENDPOINT_OVERRIDE") != null
+          ? Optional.of(URI.create(System.getenv("AWS_ENDPOINT_OVERRIDE")))
+          : Optional.empty();
   private static final Integer NUMBER_OF_KEYS =
       Integer.parseInt(Optional.ofNullable(System.getenv("AWS_PERF_AT_KEYS_NUM")).orElse("1000"));
   private static final Duration STARTUP_TIMEOUT = Duration.ofMinutes(10);
@@ -90,7 +97,8 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
     final StopWatch stopWatch = new StopWatch();
     stopWatch.start();
     awsSecretsManagerUtil =
-        new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
+        new AwsSecretsManagerUtil(
+            AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY, awsEndpointOverride);
     final SecureRandom secureRandom = new SecureRandom();
     LOG.info("Creating {} AWS keys in Secrets Manager in {}", NUMBER_OF_KEYS, AWS_REGION);
     blsKeyPairs =
@@ -119,6 +127,7 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
             .withSecretAccessKey(RO_AWS_SECRET_ACCESS_KEY)
             .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
+            .withEndpointOverride(awsEndpointOverride)
             .build();
 
     final SignerConfigurationBuilder configBuilder =

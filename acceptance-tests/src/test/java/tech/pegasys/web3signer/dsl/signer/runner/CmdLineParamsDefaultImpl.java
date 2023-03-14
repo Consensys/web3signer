@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ENABLED_OPTION;
@@ -254,6 +255,14 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(AWS_SECRETS_REGION_OPTION);
       params.add(awsSecretsManagerParameters.getRegion());
     }
+
+    awsSecretsManagerParameters
+        .getEndpointOverride()
+        .ifPresent(
+            uri -> {
+              params.add(AWS_ENDPOINT_OVERRIDE_OPTION);
+              params.add(uri.toString());
+            });
 
     if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
       params.add(AWS_SECRETS_PREFIXES_FILTER_OPTION);

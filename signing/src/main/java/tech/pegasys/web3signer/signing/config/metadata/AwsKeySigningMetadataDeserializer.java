@@ -15,8 +15,10 @@ package tech.pegasys.web3signer.signing.config.metadata;
 import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -31,6 +33,7 @@ public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySig
   public static final String ACCESS_KEY_ID = "accessKeyId";
   public static final String SECRET_ACCESS_KEY = "secretAccessKey";
   public static final String SECRET_NAME = "secretName";
+  public static final String ENDPOINT_OVERRIDE = "endpointOverride";
 
   @SuppressWarnings("Unused")
   public AwsKeySigningMetadataDeserializer() {
@@ -50,6 +53,7 @@ public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySig
     String accessKeyId = null;
     String secretAccessKey = null;
     String secretName = null;
+    Optional<URI> endpointOverride = Optional.empty();
 
     final JsonNode node = parser.getCodec().readTree(parser);
 
@@ -78,8 +82,13 @@ public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySig
       secretName = node.get(SECRET_NAME).asText();
     }
 
+    if (node.get(ENDPOINT_OVERRIDE) != null) {
+      endpointOverride = Optional.of(URI.create(node.get(ENDPOINT_OVERRIDE).asText()));
+    }
+
     final AwsKeySigningMetadata awsKeySigningMetadata =
-        new AwsKeySigningMetadata(authMode, region, accessKeyId, secretAccessKey, secretName);
+        new AwsKeySigningMetadata(
+            authMode, region, accessKeyId, secretAccessKey, secretName, endpointOverride);
 
     validate(parser, awsKeySigningMetadata);
 

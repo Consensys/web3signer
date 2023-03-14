@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.DEFAULT_CHECK;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.HEALTHCHECK;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 
@@ -157,7 +158,7 @@ public abstract class Runner implements Runnable {
           .handler(healthCheckHandler)
           .failureHandler(errorHandler);
 
-      registerHealthCheckProcedure("default-check", promise -> promise.complete(Status.OK()));
+      registerHealthCheckProcedure(DEFAULT_CHECK, promise -> promise.complete(Status.OK()));
 
       final Context context =
           new Context(routerBuilder, metricsSystem, errorHandler, vertx, artifactSignerProvider);
