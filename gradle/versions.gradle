@@ -46,11 +46,11 @@ dependencyManagement {
 
     dependency 'javax.activation:activation:1.1.1'
 
-    dependencySet(group: 'org.apache.logging.log4j', version: '2.19.0') {
+    dependencySet(group: 'org.apache.logging.log4j', version: '2.20.0') {
       entry 'log4j-api'
       entry 'log4j'
       entry 'log4j-core'
-      entry 'log4j-slf4j-impl'
+      entry 'log4j-slf4j2-impl'
     }
 
     dependencySet(group: 'org.apache.tuweni', version: '2.3.1') {
@@ -86,7 +86,7 @@ dependencyManagement {
     dependency 'org.hyperledger.besu:plugin-api:22.10.3'
     dependency 'org.hyperledger.besu.internal:metrics-core:22.10.3'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.2.0') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.3.0') {
       entry 'bls'
       entry 'spec'
       entry 'serializer'
