@@ -104,6 +104,8 @@ public abstract class Runner implements Runnable {
 
     final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
     final LogErrorHandler errorHandler = new LogErrorHandler();
+    healthCheckHandler = HealthCheckHandler.create(vertx);
+
     final ArtifactSignerProvider artifactSignerProvider =
         createArtifactSignerProvider(vertx, metricsSystem);
 
@@ -152,7 +154,6 @@ public abstract class Runner implements Runnable {
       registerUpcheckRoute(routerBuilder, errorHandler);
       registerHttpHostAllowListHandler(routerBuilder);
 
-      healthCheckHandler = HealthCheckHandler.create(vertx);
       routerBuilder
           .operation(HEALTHCHECK.name())
           .handler(healthCheckHandler)

@@ -96,7 +96,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
     }
   }
 
-  @ParameterizedTest
+  @ParameterizedTest(name = "{index} - Using config file: {0}")
   @ValueSource(booleans = {true, false})
   void secretsAreLoadedFromAWSSecretsManagerAndReportedByPublicApi(final boolean useConfigFile) {
     final AwsSecretsManagerParameters awsSecretsManagerParameters =
@@ -133,7 +133,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             hasSize(2));
   }
 
-  @ParameterizedTest
+  @ParameterizedTest(name = "{index} - Using config file: {0}")
   @ValueSource(booleans = {true, false})
   void secretsAreLoadedFromAWSSecretsManagerWithEnvironmentAuthModeAndReportedByPublicApi(
       final boolean useConfigFile) {
@@ -143,6 +143,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
             .withTagNamesFilter(List.of("TagName2", "TagName3"))
             .withTagValuesFilter(List.of("TagValue0", "TagValue2", "TagValue3"))
+            .withEndpointOverride(awsEndpointOverride)
             .build();
 
     final SignerConfigurationBuilder configBuilder =
