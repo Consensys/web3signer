@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.tests.bulkloading;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
@@ -72,6 +73,13 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
     final Response response = signer.callApiPublicKeys(KeyType.BLS);
     response.then().statusCode(200).contentType(ContentType.JSON).body("", hasSize(0));
+
+    signer
+        .healthcheck()
+        .then()
+        .statusCode(503)
+        .contentType(ContentType.JSON)
+        .body("status", equalTo("DOWN"));
   }
 
   @Test
