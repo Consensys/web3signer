@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AWS_BULK_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.SLASHING_PROTECTION_DB;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
@@ -292,8 +293,27 @@ public class Eth2Runner extends Runner {
           }
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-            // TODO: key loading health check (Azure bulk loading)
-            signers.addAll(loadAzureSigners());
+            LOG.info("Bulk loading keys from Azure key vault ... ");
+            final SecretValueResult<ArtifactSigner> azureResult = loadAzureSigners();
+            LOG.info(
+                "Keys loaded from Azure: [{}], with error count: [{}]",
+                azureResult.getValues().size(),
+                azureResult.getErrorCount());
+
+            super.registerHealthCheckProcedure(
+                KEYS_CHECK_AZURE_BULK_LOADING,
+                promise -> {
+                  final JsonObject statusJson =
+                      new JsonObject()
+                          .put("keys-loaded", azureResult.getValues().size())
+                          .put("error-count", azureResult.getErrorCount());
+                  promise.complete(
+                      azureResult.getErrorCount() > 0
+                          ? Status.KO(statusJson)
+                          : Status.OK(statusJson));
+                });
+
+            signers.addAll(azureResult.getValues());
           }
 
           if (keystoresParameters.isEnabled()) {
@@ -388,7 +408,7 @@ public class Eth2Runner extends Runner {
     dbPrunerRunner.schedule();
   }
 
-  final Collection<ArtifactSigner> loadAzureSigners() {
+  final SecretValueResult<ArtifactSigner> loadAzureSigners() {
     final AzureKeyVault keyVault =
         AzureKeyVaultFactory.createAzureKeyVault(azureKeyVaultParameters);
 
