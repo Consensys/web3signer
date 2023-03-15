@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.tests.bulkloading;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -118,6 +119,13 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             .withAwsSecretsManagerParameters(awsSecretsManagerParameters);
 
     startSigner(configBuilder.build());
+
+    signer
+        .healthcheck()
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("status", equalTo("UP"));
 
     signer
         .callApiPublicKeys(KeyType.BLS)
