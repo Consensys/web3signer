@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AWS_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_CONFIG_FILE_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_KEYSTORE_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.SLASHING_PROTECTION_DB;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
@@ -280,8 +281,7 @@ public class Eth2Runner extends Runner {
                     (args) ->
                         new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 
-            signers.addAll(
-                // TODO: Key loading health check (loading via config files)
+            final SecretValueResult<ArtifactSigner> results =
                 new SignerLoader()
                     .load(
                         config.getKeyConfigPath(),
@@ -289,7 +289,19 @@ public class Eth2Runner extends Runner {
                         new YamlSignerParser(
                             List.of(artifactSignerFactory),
                             YamlMapperFactory.createYamlMapper(
-                                config.getKeyStoreConfigFileMaxSize()))));
+                                config.getKeyStoreConfigFileMaxSize())));
+            super.registerHealthCheckProcedure(
+                KEYS_CHECK_CONFIG_FILE_LOADING,
+                promise -> {
+                  final JsonObject statusJson =
+                      new JsonObject()
+                          .put("keys-loaded", results.getValues().size())
+                          .put("error-count", results.getErrorCount());
+                  promise.complete(
+                      results.getErrorCount() > 0 ? Status.KO(statusJson) : Status.OK(statusJson));
+                });
+
+            signers.addAll(results.getValues());
           }
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {

@@ -18,4 +18,5 @@ public interface HealthCheckNames {
   String KEYS_CHECK_AWS_BULK_LOADING = "keys-check/aws-bulk-loading";
   String KEYS_CHECK_AZURE_BULK_LOADING = "keys-check/azure-bulk-loading";
   String KEYS_CHECK_KEYSTORE_BULK_LOADING = "keys-check/keystores-bulk-loading";
+  String KEYS_CHECK_CONFIG_FILE_LOADING = "keys-check/config-files-loading";
 }

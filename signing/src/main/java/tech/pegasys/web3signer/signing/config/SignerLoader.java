@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.signing.config;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 
+import tech.pegasys.signers.common.SecretValueResult;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 
@@ -26,13 +27,12 @@ import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,6 +40,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -51,37 +52,54 @@ public class SignerLoader {
 
   private static final Map<Path, FileTime> metadataConfigFilesPathCache = new HashMap<>();
 
-  public Collection<ArtifactSigner> load(
+  public SecretValueResult<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
     final Instant start = Instant.now();
     LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
 
-    final Map<Path, String> configFilesContent =
+    final Pair<Map<Path, String>, Integer> configFilesMapPair =
         getNewOrModifiedConfigFilesContents(configsDirectory, fileExtension);
+    final Map<Path, String> configFilesContentMap = configFilesMapPair.getLeft();
 
     final String timeTaken =
         DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
     LOG.info(
         "Signer configuration metadata files read in memory {} in {}",
-        configFilesContent.size(),
+        configFilesContentMap.size(),
         timeTaken);
 
-    return processMetadataFilesInParallel(configFilesContent, signerParser);
+    final SecretValueResult<ArtifactSigner> metadataResult =
+        processMetadataFilesInParallel(configFilesContentMap, signerParser);
+    return new SecretValueResult<>(
+        metadataResult.getValues(), metadataResult.getErrorCount() + configFilesMapPair.getRight());
   }
 
-  private Map<Path, String> getNewOrModifiedConfigFilesContents(
+  private Pair<Map<Path, String>, Integer> getNewOrModifiedConfigFilesContents(
       final Path configsDirectory, final String fileExtension) {
+    final AtomicInteger errorCount = new AtomicInteger(0);
+
     // read configuration files without converting them to signers first.
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
-      return fileStream
-          .filter(path -> matchesFileExtension(fileExtension, path))
-          .filter(this::isNewOrModifiedMetadataFile)
-          .map(this::getMetadataFileContent)
-          .flatMap(Optional::stream)
-          .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
+      final Map<Path, String> mapOfConfigFiles =
+          fileStream
+              .filter(path -> matchesFileExtension(fileExtension, path))
+              .filter(this::isNewOrModifiedMetadataFile)
+              .map(
+                  path -> {
+                    try {
+                      return getMetadataFileContent(path);
+                    } catch (final IOException e) {
+                      errorCount.incrementAndGet();
+                      LOG.error("Error reading config file: {}", path, e);
+                      return null;
+                    }
+                  })
+              .filter(Objects::nonNull)
+              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      return Pair.of(mapOfConfigFiles, errorCount.get());
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
-      return emptyMap();
+      return Pair.of(emptyMap(), errorCount.get());
     }
   }
 
@@ -104,16 +122,11 @@ public class SignerLoader {
     }
   }
 
-  private Optional<SimpleEntry<Path, String>> getMetadataFileContent(final Path path) {
-    try {
-      return Optional.of(new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8)));
-    } catch (final IOException e) {
-      LOG.error("Error reading config file: {}", path, e);
-      return Optional.empty();
-    }
+  private SimpleEntry<Path, String> getMetadataFileContent(final Path path) throws IOException {
+    return new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8));
   }
 
-  private Collection<ArtifactSigner> processMetadataFilesInParallel(
+  private SecretValueResult<ArtifactSigner> processMetadataFilesInParallel(
       final Map<Path, String> configFilesContent, final SignerParser signerParser) {
     // use custom fork-join pool instead of common. Limit number of threads to avoid Azure bug
     ForkJoinPool forkJoinPool = null;
@@ -123,21 +136,21 @@ public class SignerLoader {
     } catch (final Exception e) {
       LOG.error(
           "Unexpected error in processing configuration files in parallel: {}", e.getMessage(), e);
+      return new SecretValueResult<>(emptySet(), 1);
     } finally {
       if (forkJoinPool != null) {
         forkJoinPool.shutdown();
       }
     }
-
-    return emptySet();
   }
 
-  private Set<ArtifactSigner> parseMetadataFiles(
+  private SecretValueResult<ArtifactSigner> parseMetadataFiles(
       final Map<Path, String> configFilesContents, final SignerParser signerParser) {
     LOG.info("Parsing configuration metadata files");
 
     final Instant start = Instant.now();
     final AtomicLong configFilesHandled = new AtomicLong();
+    final AtomicInteger errorCount = new AtomicInteger(0);
 
     final Set<ArtifactSigner> artifactSigners =
         configFilesContents.entrySet().parallelStream()
@@ -151,6 +164,7 @@ public class SignerLoader {
                     return signerParser.parse(metadataContent.getValue()).stream();
                   } catch (final Exception e) {
                     renderException(e, metadataContent.getKey().toString());
+                    errorCount.incrementAndGet();
                     return null;
                   }
                 })
@@ -163,7 +177,7 @@ public class SignerLoader {
         "Total signers loaded from configuration files: {} in {}",
         artifactSigners.size(),
         timeTaken);
-    return artifactSigners;
+    return new SecretValueResult<>(artifactSigners, errorCount.get());
   }
 
   private boolean matchesFileExtension(final String validFileExtension, final Path filename) {
