@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AWS_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_KEYSTORE_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.SLASHING_PROTECTION_DB;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
@@ -70,7 +71,6 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFacto
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -317,8 +317,9 @@ public class Eth2Runner extends Runner {
           }
 
           if (keystoresParameters.isEnabled()) {
+            LOG.info("Bulk loading keys from local keystores ... ");
             final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
-            final Collection<ArtifactSigner> keystoreSigners =
+            final SecretValueResult<ArtifactSigner> keystoreSignersResult =
                 keystoresParameters.hasKeystoresPasswordsPath()
                     ? blsKeystoreBulkLoader.loadKeystoresUsingPasswordDir(
                         keystoresParameters.getKeystoresPath(),
@@ -326,7 +327,25 @@ public class Eth2Runner extends Runner {
                     : blsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
                         keystoresParameters.getKeystoresPath(),
                         keystoresParameters.getKeystoresPasswordFile());
-            signers.addAll(keystoreSigners);
+            LOG.info(
+                "Keys loaded from local keystores: [{}], with error count: [{}]",
+                keystoreSignersResult.getValues().size(),
+                keystoreSignersResult.getErrorCount());
+
+            super.registerHealthCheckProcedure(
+                KEYS_CHECK_KEYSTORE_BULK_LOADING,
+                promise -> {
+                  final JsonObject statusJson =
+                      new JsonObject()
+                          .put("keys-loaded", keystoreSignersResult.getValues().size())
+                          .put("error-count", keystoreSignersResult.getErrorCount());
+                  promise.complete(
+                      keystoreSignersResult.getErrorCount() > 0
+                          ? Status.KO(statusJson)
+                          : Status.OK(statusJson));
+                });
+
+            signers.addAll(keystoreSignersResult.getValues());
           }
 
           if (awsSecretsManagerParameters.isEnabled()) {
