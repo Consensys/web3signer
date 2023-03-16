@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.core.config;
 public interface HealthCheckNames {
   String DEFAULT_CHECK = "default-check";
   String SLASHING_PROTECTION_DB = "slashing-protection-db-health-check";
+  String KEYS_CHECK_UNEXPECTED = "keys-check/unexpected";
   String KEYS_CHECK_AWS_BULK_LOADING = "keys-check/aws-bulk-loading";
   String KEYS_CHECK_AZURE_BULK_LOADING = "keys-check/azure-bulk-loading";
   String KEYS_CHECK_KEYSTORE_BULK_LOADING = "keys-check/keystores-bulk-loading";

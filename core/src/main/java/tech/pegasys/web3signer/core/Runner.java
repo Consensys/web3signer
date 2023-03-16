@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.DEFAULT_CHECK;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_UNEXPECTED;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.HEALTHCHECK;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 
@@ -116,6 +117,8 @@ public abstract class Runner implements Runnable {
         artifactSignerProvider.load().get(); // wait for signers to get loaded ...
       } catch (final InterruptedException | ExecutionException e) {
         LOG.error("Error loading signers", e);
+        registerHealthCheckProcedure(
+            KEYS_CHECK_UNEXPECTED, promise -> promise.complete(Status.KO()));
       }
 
       final OpenApiSpecsExtractor openApiSpecsExtractor =
