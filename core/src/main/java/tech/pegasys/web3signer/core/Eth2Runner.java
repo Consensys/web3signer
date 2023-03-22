@@ -290,17 +290,7 @@ public class Eth2Runner extends Runner {
                             List.of(artifactSignerFactory),
                             YamlMapperFactory.createYamlMapper(
                                 config.getKeyStoreConfigFileMaxSize())));
-            super.registerHealthCheckProcedure(
-                KEYS_CHECK_CONFIG_FILE_LOADING,
-                promise -> {
-                  final JsonObject statusJson =
-                      new JsonObject()
-                          .put("keys-loaded", results.getValues().size())
-                          .put("error-count", results.getErrorCount());
-                  promise.complete(
-                      results.getErrorCount() > 0 ? Status.KO(statusJson) : Status.OK(statusJson));
-                });
-
+            registerSignerLoadingHealthCheck(KEYS_CHECK_CONFIG_FILE_LOADING, results);
             signers.addAll(results.getValues());
           }
 
@@ -311,20 +301,7 @@ public class Eth2Runner extends Runner {
                 "Keys loaded from Azure: [{}], with error count: [{}]",
                 azureResult.getValues().size(),
                 azureResult.getErrorCount());
-
-            super.registerHealthCheckProcedure(
-                KEYS_CHECK_AZURE_BULK_LOADING,
-                promise -> {
-                  final JsonObject statusJson =
-                      new JsonObject()
-                          .put("keys-loaded", azureResult.getValues().size())
-                          .put("error-count", azureResult.getErrorCount());
-                  promise.complete(
-                      azureResult.getErrorCount() > 0
-                          ? Status.KO(statusJson)
-                          : Status.OK(statusJson));
-                });
-
+            registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
             signers.addAll(azureResult.getValues());
           }
 
@@ -344,19 +321,8 @@ public class Eth2Runner extends Runner {
                 keystoreSignersResult.getValues().size(),
                 keystoreSignersResult.getErrorCount());
 
-            super.registerHealthCheckProcedure(
-                KEYS_CHECK_KEYSTORE_BULK_LOADING,
-                promise -> {
-                  final JsonObject statusJson =
-                      new JsonObject()
-                          .put("keys-loaded", keystoreSignersResult.getValues().size())
-                          .put("error-count", keystoreSignersResult.getErrorCount());
-                  promise.complete(
-                      keystoreSignersResult.getErrorCount() > 0
-                          ? Status.KO(statusJson)
-                          : Status.OK(statusJson));
-                });
-
+            registerSignerLoadingHealthCheck(
+                KEYS_CHECK_KEYSTORE_BULK_LOADING, keystoreSignersResult);
             signers.addAll(keystoreSignersResult.getValues());
           }
 
@@ -371,18 +337,7 @@ public class Eth2Runner extends Runner {
                 "Keys loaded from AWS Secrets Manager: [{}], with error count: [{}]",
                 awsResult.getValues().size(),
                 awsResult.getErrorCount());
-            super.registerHealthCheckProcedure(
-                KEYS_CHECK_AWS_BULK_LOADING,
-                promise -> {
-                  final JsonObject statusJson =
-                      new JsonObject()
-                          .put("keys-loaded", awsResult.getValues().size())
-                          .put("error-count", awsResult.getErrorCount());
-                  promise.complete(
-                      awsResult.getErrorCount() > 0
-                          ? Status.KO(statusJson)
-                          : Status.OK(statusJson));
-                });
+            registerSignerLoadingHealthCheck(KEYS_CHECK_AWS_BULK_LOADING, awsResult);
             signers.addAll(awsResult.getValues());
           }
 
@@ -398,6 +353,20 @@ public class Eth2Runner extends Runner {
                 context -> context.getRegisteredValidators().registerValidators(validators));
           }
           return signers;
+        });
+  }
+
+  private void registerSignerLoadingHealthCheck(
+      final String name, final SecretValueResult<ArtifactSigner> result) {
+    super.registerHealthCheckProcedure(
+        name,
+        promise -> {
+          final JsonObject statusJson =
+              new JsonObject()
+                  .put("keys-loaded", result.getValues().size())
+                  .put("error-count", result.getErrorCount());
+          promise.complete(
+              result.getErrorCount() > 0 ? Status.KO(statusJson) : Status.OK(statusJson));
         });
   }
 
