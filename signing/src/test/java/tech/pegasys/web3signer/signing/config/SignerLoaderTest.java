@@ -153,9 +153,7 @@ class SignerLoaderTest {
         new SignerLoader().load(missingDir, FILE_EXTENSION, signerParser);
 
     assertThat(result.getValues()).isEmpty();
-    // TODO: Should we return result with errorCount 1 if config directory is missing? Currently it
-    // is being treated as no error encountered
-    assertThat(result.getErrorCount()).isZero();
+    assertThat(result.getErrorCount()).isOne();
   }
 
   @Test

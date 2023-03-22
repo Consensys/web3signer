@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
-import static java.util.Collections.emptyMap;
-
 import tech.pegasys.signers.common.SecretValueResult;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
@@ -77,10 +75,10 @@ public class SignerLoader {
   private Pair<Map<Path, String>, Integer> getNewOrModifiedConfigFilesContents(
       final Path configsDirectory, final String fileExtension) {
     final AtomicInteger errorCount = new AtomicInteger(0);
-
+    final Map<Path, String> configFileMap = new HashMap<>();
     // read configuration files without converting them to signers first.
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
-      final Map<Path, String> mapOfConfigFiles =
+      final Map<Path, String> _map =
           fileStream
               .filter(path -> matchesFileExtension(fileExtension, path))
               .filter(this::isNewOrModifiedMetadataFile)
@@ -96,11 +94,12 @@ public class SignerLoader {
                   })
               .filter(Objects::nonNull)
               .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-      return Pair.of(mapOfConfigFiles, errorCount.get());
+      configFileMap.putAll(_map);
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
-      return Pair.of(emptyMap(), errorCount.get());
+      errorCount.incrementAndGet();
     }
+    return Pair.of(configFileMap, errorCount.get());
   }
 
   private boolean isNewOrModifiedMetadataFile(final Path path) {
