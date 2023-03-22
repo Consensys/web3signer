@@ -1,5 +1,10 @@
 # Changelog
 
+## Upcoming version
+### Bugs Fixed
+- Update of Azure libraries (transitive via signers library) and manual override to fix CVE-2023-1370
+
+---
 ## 23.3.0
 ### Breaking Changes
 - Slashing protection database schema has been updated to support indexes with bigint type and after the upgrade will no longer work with older versions of Web3Signer.
