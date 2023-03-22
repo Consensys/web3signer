@@ -24,8 +24,7 @@ import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,19 +45,21 @@ public class BlsKeystoreBulkLoader {
       keystoreFiles = keystoreFiles(keystoresDirectory);
     } catch (final IOException e) {
       LOG.error("Error reading keystore files", e);
-      return new SecretValueResult<>(Collections.emptyList(), 1);
+      return SecretValueResult.errorResult();
     }
 
-    final List<SecretValueResult<ArtifactSigner>> resultList =
-        keystoreFiles.parallelStream()
-            .map(
-                keystoreFile ->
-                    createSignerForKeystore(
-                        keystoreFile,
-                        key -> Files.readString(passwordsDirectory.resolve(key + ".txt"))))
-            .collect(Collectors.toList());
-
-    return combineResults(resultList);
+    return keystoreFiles.parallelStream()
+        .map(
+            keystoreFile ->
+                createSignerForKeystore(
+                    keystoreFile,
+                    key -> Files.readString(passwordsDirectory.resolve(key + ".txt"))))
+        .reduce(
+            SecretValueResult.newInstance(new ArrayList<>(), 0),
+            (r1, r2) -> {
+              r1.merge(r2);
+              return r1;
+            });
   }
 
   public SecretValueResult<ArtifactSigner> loadKeystoresUsingPasswordFile(
@@ -68,7 +69,7 @@ public class BlsKeystoreBulkLoader {
       keystoreFiles = keystoreFiles(keystoresDirectory);
     } catch (final IOException e) {
       LOG.error("Error reading keystore files", e);
-      return new SecretValueResult<>(Collections.emptyList(), 1);
+      return SecretValueResult.errorResult();
     }
 
     final String password;
@@ -76,26 +77,17 @@ public class BlsKeystoreBulkLoader {
       password = Files.readString(passwordFile);
     } catch (final IOException e) {
       LOG.error("Unable to read password file", e);
-      return new SecretValueResult<>(Collections.emptyList(), 1);
+      return SecretValueResult.errorResult();
     }
 
-    final List<SecretValueResult<ArtifactSigner>> resultList =
-        keystoreFiles.parallelStream()
-            .map(keystoreFile -> createSignerForKeystore(keystoreFile, key -> password))
-            .collect(Collectors.toList());
-
-    return combineResults(resultList);
-  }
-
-  private static SecretValueResult<ArtifactSigner> combineResults(
-      List<SecretValueResult<ArtifactSigner>> resultList) {
-    final Collection<ArtifactSigner> combinedValues =
-        resultList.stream()
-            .flatMap(result -> result.getValues().stream())
-            .collect(Collectors.toList());
-    final int totalErrorCount =
-        resultList.stream().mapToInt(SecretValueResult::getErrorCount).sum();
-    return new SecretValueResult<>(combinedValues, totalErrorCount);
+    return keystoreFiles.parallelStream()
+        .map(keystoreFile -> createSignerForKeystore(keystoreFile, key -> password))
+        .reduce(
+            SecretValueResult.newInstance(new ArrayList<>(), 0),
+            (r1, r2) -> {
+              r1.merge(r2);
+              return r1;
+            });
   }
 
   private SecretValueResult<ArtifactSigner> createSignerForKeystore(
@@ -109,10 +101,10 @@ public class BlsKeystoreBulkLoader {
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
       final BlsArtifactSigner artifactSigner =
           new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE);
-      return new SecretValueResult<>(List.of(artifactSigner), 0);
+      return SecretValueResult.newInstance(List.of(artifactSigner), 0);
     } catch (final KeyStoreValidationException | IOException e) {
       LOG.error("Keystore could not be loaded {}", keystoreFile, e);
-      return new SecretValueResult<>(Collections.emptyList(), 1);
+      return SecretValueResult.errorResult();
     }
   }
 

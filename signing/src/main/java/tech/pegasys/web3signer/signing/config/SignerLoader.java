@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.signing.config;
 
 import static java.util.Collections.emptyMap;
-import static java.util.Collections.emptySet;
 
 import tech.pegasys.signers.common.SecretValueResult;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
@@ -60,6 +59,7 @@ public class SignerLoader {
     final Pair<Map<Path, String>, Integer> configFilesMapPair =
         getNewOrModifiedConfigFilesContents(configsDirectory, fileExtension);
     final Map<Path, String> configFilesContentMap = configFilesMapPair.getLeft();
+    final int configFileErrorCount = configFilesMapPair.getRight();
 
     final String timeTaken =
         DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
@@ -70,8 +70,8 @@ public class SignerLoader {
 
     final SecretValueResult<ArtifactSigner> metadataResult =
         processMetadataFilesInParallel(configFilesContentMap, signerParser);
-    return new SecretValueResult<>(
-        metadataResult.getValues(), metadataResult.getErrorCount() + configFilesMapPair.getRight());
+    metadataResult.mergeErrorCount(configFileErrorCount);
+    return metadataResult;
   }
 
   private Pair<Map<Path, String>, Integer> getNewOrModifiedConfigFilesContents(
@@ -136,7 +136,7 @@ public class SignerLoader {
     } catch (final Exception e) {
       LOG.error(
           "Unexpected error in processing configuration files in parallel: {}", e.getMessage(), e);
-      return new SecretValueResult<>(emptySet(), 1);
+      return SecretValueResult.errorResult();
     } finally {
       if (forkJoinPool != null) {
         forkJoinPool.shutdown();
@@ -177,7 +177,7 @@ public class SignerLoader {
         "Total signers loaded from configuration files: {} in {}",
         artifactSigners.size(),
         timeTaken);
-    return new SecretValueResult<>(artifactSigners, errorCount.get());
+    return SecretValueResult.newInstance(artifactSigners, errorCount.get());
   }
 
   private boolean matchesFileExtension(final String validFileExtension, final Path filename) {
