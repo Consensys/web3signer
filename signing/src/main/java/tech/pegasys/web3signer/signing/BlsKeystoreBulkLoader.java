@@ -24,8 +24,9 @@ import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,7 +56,7 @@ public class BlsKeystoreBulkLoader {
                     keystoreFile,
                     key -> Files.readString(passwordsDirectory.resolve(key + ".txt"))))
         .reduce(
-            SecretValueResult.newInstance(new ArrayList<>(), 0),
+            SecretValueResult.newInstance(new HashSet<>(), 0),
             (r1, r2) -> {
               r1.merge(r2);
               return r1;
@@ -83,7 +84,7 @@ public class BlsKeystoreBulkLoader {
     return keystoreFiles.parallelStream()
         .map(keystoreFile -> createSignerForKeystore(keystoreFile, key -> password))
         .reduce(
-            SecretValueResult.newInstance(new ArrayList<>(), 0),
+            SecretValueResult.newInstance(new HashSet<>(), 0),
             (r1, r2) -> {
               r1.merge(r2);
               return r1;
@@ -101,7 +102,7 @@ public class BlsKeystoreBulkLoader {
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
       final BlsArtifactSigner artifactSigner =
           new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE);
-      return SecretValueResult.newInstance(List.of(artifactSigner), 0);
+      return SecretValueResult.newInstance(Set.of(artifactSigner), 0);
     } catch (final KeyStoreValidationException | IOException e) {
       LOG.error("Keystore could not be loaded {}", keystoreFile, e);
       return SecretValueResult.errorResult();

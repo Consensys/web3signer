@@ -18,6 +18,8 @@ import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.web3signer.signing.filecoin.FilecoinAddress;
 import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
 
+import java.util.Objects;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class FcBlsArtifactSigner implements ArtifactSigner {
@@ -41,5 +43,18 @@ public class FcBlsArtifactSigner implements ArtifactSigner {
   public BlsArtifactSignature sign(final Bytes message) {
     final BLSSignature blsSignature = BLS.sign(keyPair.getSecretKey(), message, FC_DST);
     return new BlsArtifactSignature(blsSignature);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    FcBlsArtifactSigner that = (FcBlsArtifactSigner) o;
+    return keyPair.equals(that.keyPair);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(keyPair);
   }
 }

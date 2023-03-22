@@ -111,7 +111,7 @@ class BlsKeystoreBulkLoaderTest {
     assertThat(signers).hasSize(1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
 
-    assertThat(result.getErrorCount()).isEqualTo(1);
+    assertThat(result.getErrorCount()).isEqualTo(2);
   }
 
   @Test
@@ -127,7 +127,7 @@ class BlsKeystoreBulkLoaderTest {
     assertThat(signers).hasSize(1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
 
-    assertThat(result.getErrorCount()).isEqualTo(1);
+    assertThat(result.getErrorCount()).isEqualTo(2);
   }
 
   @Test

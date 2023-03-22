@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.signing.util.Blake2b;
 
 import java.math.BigInteger;
 import java.security.interfaces.ECPublicKey;
+import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -57,5 +58,18 @@ public class FcSecpArtifactSigner implements ArtifactSigner {
             ethSignature.getS());
 
     return new SecpArtifactSignature(fcSignature);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    EthSecpArtifactSigner that = (EthSecpArtifactSigner) o;
+    return getIdentifier().equals(that.getIdentifier());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getIdentifier());
   }
 }
