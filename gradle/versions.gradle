@@ -99,9 +99,7 @@ dependencyManagement {
 
     dependency 'tech.pegasys:jblst:0.3.8'
 
-    // TODO: Fix the version once Signers is reviewed and released
-    // Version is build for local dev testing, will not work in CI
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '2.2.7.1') {
+    dependencySet(group: 'tech.pegasys.signers.internal', version: '2.2.8') {
       entry 'bls-keystore'
       entry 'keystorage-hashicorp'
       entry 'keystorage-azure'

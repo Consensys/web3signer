@@ -113,7 +113,6 @@ allprojects {
   targetCompatibility = 11
 
   repositories {
-    mavenLocal() //TODO: Remove me
     mavenCentral()
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
     maven { url "https://artifacts.consensys.net/public/teku/maven/" }
