@@ -16,7 +16,7 @@ import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
-import tech.pegasys.signers.common.SecretValueResult;
+import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
@@ -24,7 +24,6 @@ import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,14 +38,14 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BlsKeystoreBulkLoader {
   private static final Logger LOG = LogManager.getLogger();
 
-  public SecretValueResult<ArtifactSigner> loadKeystoresUsingPasswordDir(
+  public MappedResults<ArtifactSigner> loadKeystoresUsingPasswordDir(
       final Path keystoresDirectory, final Path passwordsDirectory) {
     final List<Path> keystoreFiles;
     try {
       keystoreFiles = keystoreFiles(keystoresDirectory);
     } catch (final IOException e) {
       LOG.error("Error reading keystore files", e);
-      return SecretValueResult.errorResult();
+      return MappedResults.errorResult();
     }
 
     return keystoreFiles.parallelStream()
@@ -55,22 +54,17 @@ public class BlsKeystoreBulkLoader {
                 createSignerForKeystore(
                     keystoreFile,
                     key -> Files.readString(passwordsDirectory.resolve(key + ".txt"))))
-        .reduce(
-            SecretValueResult.newInstance(new HashSet<>(), 0),
-            (r1, r2) -> {
-              r1.merge(r2);
-              return r1;
-            });
+        .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
-  public SecretValueResult<ArtifactSigner> loadKeystoresUsingPasswordFile(
+  public MappedResults<ArtifactSigner> loadKeystoresUsingPasswordFile(
       final Path keystoresDirectory, final Path passwordFile) {
     final List<Path> keystoreFiles;
     try {
       keystoreFiles = keystoreFiles(keystoresDirectory);
     } catch (final IOException e) {
       LOG.error("Error reading keystore files", e);
-      return SecretValueResult.errorResult();
+      return MappedResults.errorResult();
     }
 
     final String password;
@@ -78,20 +72,15 @@ public class BlsKeystoreBulkLoader {
       password = Files.readString(passwordFile);
     } catch (final IOException e) {
       LOG.error("Unable to read password file", e);
-      return SecretValueResult.errorResult();
+      return MappedResults.errorResult();
     }
 
     return keystoreFiles.parallelStream()
         .map(keystoreFile -> createSignerForKeystore(keystoreFile, key -> password))
-        .reduce(
-            SecretValueResult.newInstance(new HashSet<>(), 0),
-            (r1, r2) -> {
-              r1.merge(r2);
-              return r1;
-            });
+        .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
-  private SecretValueResult<ArtifactSigner> createSignerForKeystore(
+  private MappedResults<ArtifactSigner> createSignerForKeystore(
       final Path keystoreFile, final PasswordRetriever passwordRetriever) {
     try {
       LOG.debug("Loading keystore {}", keystoreFile);
@@ -102,10 +91,10 @@ public class BlsKeystoreBulkLoader {
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
       final BlsArtifactSigner artifactSigner =
           new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE);
-      return SecretValueResult.newInstance(Set.of(artifactSigner), 0);
+      return MappedResults.newInstance(Set.of(artifactSigner), 0);
     } catch (final KeyStoreValidationException | IOException e) {
       LOG.error("Keystore could not be loaded {}", keystoreFile, e);
-      return SecretValueResult.errorResult();
+      return MappedResults.errorResult();
     }
   }
 

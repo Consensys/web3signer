@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.signing;
 
 import tech.pegasys.signers.aws.AwsSecretsManager;
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
-import tech.pegasys.signers.common.SecretValueResult;
+import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
@@ -26,7 +26,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class AWSBulkLoadingArtifactSignerProvider {
 
-  public SecretValueResult<ArtifactSigner> load(final AwsSecretsManagerParameters parameters) {
+  public MappedResults<ArtifactSigner> load(final AwsSecretsManagerParameters parameters) {
     try (final AwsSecretsManagerProvider awsSecretsManagerProvider =
         new AwsSecretsManagerProvider(parameters.getCacheMaximumSize())) {
       final AwsSecretsManager awsSecretsManager =

@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
-import tech.pegasys.signers.common.SecretValueResult;
+import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 
@@ -49,7 +49,7 @@ public class SignerLoader {
 
   private static final Map<Path, FileTime> metadataConfigFilesPathCache = new HashMap<>();
 
-  public SecretValueResult<ArtifactSigner> load(
+  public MappedResults<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
     final Instant start = Instant.now();
     LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
@@ -66,7 +66,7 @@ public class SignerLoader {
         configFilesContentMap.size(),
         timeTaken);
 
-    final SecretValueResult<ArtifactSigner> metadataResult =
+    final MappedResults<ArtifactSigner> metadataResult =
         processMetadataFilesInParallel(configFilesContentMap, signerParser);
     metadataResult.mergeErrorCount(configFileErrorCount);
     return metadataResult;
@@ -125,7 +125,7 @@ public class SignerLoader {
     return new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8));
   }
 
-  private SecretValueResult<ArtifactSigner> processMetadataFilesInParallel(
+  private MappedResults<ArtifactSigner> processMetadataFilesInParallel(
       final Map<Path, String> configFilesContent, final SignerParser signerParser) {
     // use custom fork-join pool instead of common. Limit number of threads to avoid Azure bug
     ForkJoinPool forkJoinPool = null;
@@ -135,7 +135,7 @@ public class SignerLoader {
     } catch (final Exception e) {
       LOG.error(
           "Unexpected error in processing configuration files in parallel: {}", e.getMessage(), e);
-      return SecretValueResult.errorResult();
+      return MappedResults.errorResult();
     } finally {
       if (forkJoinPool != null) {
         forkJoinPool.shutdown();
@@ -143,7 +143,7 @@ public class SignerLoader {
     }
   }
 
-  private SecretValueResult<ArtifactSigner> parseMetadataFiles(
+  private MappedResults<ArtifactSigner> parseMetadataFiles(
       final Map<Path, String> configFilesContents, final SignerParser signerParser) {
     LOG.info("Parsing configuration metadata files");
 
@@ -176,7 +176,7 @@ public class SignerLoader {
         "Total signers loaded from configuration files: {} in {}",
         artifactSigners.size(),
         timeTaken);
-    return SecretValueResult.newInstance(artifactSigners, errorCount.get());
+    return MappedResults.newInstance(artifactSigners, errorCount.get());
   }
 
   private boolean matchesFileExtension(final String validFileExtension, final Path filename) {

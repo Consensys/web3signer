@@ -27,7 +27,7 @@ import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.azure.AzureKeyVault;
-import tech.pegasys.signers.common.SecretValueResult;
+import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
@@ -281,7 +281,7 @@ public class Eth2Runner extends Runner {
                     (args) ->
                         new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 
-            final SecretValueResult<ArtifactSigner> results =
+            final MappedResults<ArtifactSigner> results =
                 new SignerLoader()
                     .load(
                         config.getKeyConfigPath(),
@@ -296,7 +296,7 @@ public class Eth2Runner extends Runner {
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
             LOG.info("Bulk loading keys from Azure key vault ... ");
-            final SecretValueResult<ArtifactSigner> azureResult = loadAzureSigners();
+            final MappedResults<ArtifactSigner> azureResult = loadAzureSigners();
             LOG.info(
                 "Keys loaded from Azure: [{}], with error count: [{}]",
                 azureResult.getValues().size(),
@@ -308,7 +308,7 @@ public class Eth2Runner extends Runner {
           if (keystoresParameters.isEnabled()) {
             LOG.info("Bulk loading keys from local keystores ... ");
             final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
-            final SecretValueResult<ArtifactSigner> keystoreSignersResult =
+            final MappedResults<ArtifactSigner> keystoreSignersResult =
                 keystoresParameters.hasKeystoresPasswordsPath()
                     ? blsKeystoreBulkLoader.loadKeystoresUsingPasswordDir(
                         keystoresParameters.getKeystoresPath(),
@@ -331,7 +331,7 @@ public class Eth2Runner extends Runner {
             final AWSBulkLoadingArtifactSignerProvider awsBulkLoadingArtifactSignerProvider =
                 new AWSBulkLoadingArtifactSignerProvider();
 
-            final SecretValueResult<ArtifactSigner> awsResult =
+            final MappedResults<ArtifactSigner> awsResult =
                 awsBulkLoadingArtifactSignerProvider.load(awsSecretsManagerParameters);
             LOG.info(
                 "Keys loaded from AWS Secrets Manager: [{}], with error count: [{}]",
@@ -357,7 +357,7 @@ public class Eth2Runner extends Runner {
   }
 
   private void registerSignerLoadingHealthCheck(
-      final String name, final SecretValueResult<ArtifactSigner> result) {
+      final String name, final MappedResults<ArtifactSigner> result) {
     super.registerHealthCheckProcedure(
         name,
         promise -> {
@@ -408,7 +408,7 @@ public class Eth2Runner extends Runner {
     dbPrunerRunner.schedule();
   }
 
-  final SecretValueResult<ArtifactSigner> loadAzureSigners() {
+  final MappedResults<ArtifactSigner> loadAzureSigners() {
     final AzureKeyVault keyVault =
         AzureKeyVaultFactory.createAzureKeyVault(azureKeyVaultParameters);
 
