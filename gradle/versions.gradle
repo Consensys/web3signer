@@ -86,7 +86,7 @@ dependencyManagement {
     dependency 'org.hyperledger.besu:plugin-api:22.10.3'
     dependency 'org.hyperledger.besu.internal:metrics-core:22.10.3'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.3.0') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.3.1') {
       entry 'bls'
       entry 'spec'
       entry 'serializer'
