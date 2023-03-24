@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.tests.bulkloading;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -26,6 +27,7 @@ import java.util.Map;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -60,12 +62,31 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     final Response response = signer.callApiPublicKeys(KeyType.BLS);
     response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
 
-    signer
-        .healthcheck()
+    // Since our Azure vault contains some invalid keys, the healthcheck would return 503.
+    final Response healthcheckResponse = signer.healthcheck();
+    healthcheckResponse
         .then()
-        .statusCode(200)
+        .statusCode(503)
         .contentType(ContentType.JSON)
-        .body("status", equalTo("UP"));
+        .body("status", equalTo("DOWN"));
+
+    // keys loaded would still be 1 though
+    final String jsonBody = healthcheckResponse.body().asString();
+    int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
+    assertThat(keysLoaded).isEqualTo(1);
+  }
+
+  private static int getAzureBulkLoadingData(String healthCheckJsonBody, String dataKey) {
+    JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
+    int keysLoaded =
+        jsonObject.getJsonArray("checks").stream()
+            .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
+            .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
+            .filter(o -> "azure-bulk-loading".equals(((JsonObject) o).getString("id")))
+            .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
+            .findFirst()
+            .orElse(-1);
+    return keysLoaded;
   }
 
   @Test
