@@ -173,9 +173,10 @@ public class SignerLoader {
         DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
     LOG.info("Total configuration metadata files processed: {}", configFilesHandled.get());
     LOG.info(
-        "Total signers loaded from configuration files: {} in {}",
+        "Total signers loaded from configuration files: {} in {} with error count {}",
         artifactSigners.size(),
-        timeTaken);
+        timeTaken,
+        errorCount.get());
     return MappedResults.newInstance(artifactSigners, errorCount.get());
   }
 

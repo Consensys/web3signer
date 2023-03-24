@@ -44,7 +44,9 @@ public class YamlSignerParser implements SignerParser {
   public List<ArtifactSigner> parse(final String fileContent) {
     try {
       final List<SigningMetadata> metadataInfoList = readSigningMetadata(fileContent);
-
+      if (metadataInfoList == null || metadataInfoList.isEmpty()) {
+        throw new SigningMetadataException("Invalid signing metadata file format");
+      }
       return metadataInfoList.stream()
           .flatMap(
               metadataInfo ->
