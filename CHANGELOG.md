@@ -1,6 +1,6 @@
 # Changelog
 
-## Upcoming version
+## 23.3.1
 ### Features Added
 - Add support for Capella milestone in Mainnet
 - Enhanced Healthcheck endpoint reporting status of loading of signers keys [#738](https://github.com/ConsenSys/web3signer/pull/738)
@@ -8,6 +8,7 @@
 
 ### Bugs Fixed
 - Update of Azure libraries (transitive via signers library) and manual override to fix CVE-2023-1370
+- Fix issue with some third party libraries not including logs in the web3signer logs due missing slf4j2 library
 
 ---
 ## 23.3.0
