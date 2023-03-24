@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.tests.bulkloading;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
@@ -33,10 +33,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.restassured.http.ContentType;
+import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -120,12 +122,10 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
 
     startSigner(configBuilder.build());
 
-    signer
-        .healthcheck()
-        .then()
-        .statusCode(200)
-        .contentType(ContentType.JSON)
-        .body("status", equalTo("UP"));
+    final String healthCheckJsonBody = signer.healthcheck().body().asString();
+    int keysLoaded = getAwsBulkLoadingData(healthCheckJsonBody, "keys-loaded");
+
+    assertThat(keysLoaded).isEqualTo(2);
 
     signer
         .callApiPublicKeys(KeyType.BLS)
@@ -139,6 +139,50 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
                 blsKeyPairs.get(1).getPublicKey().toString()),
             "",
             hasSize(2));
+  }
+
+  @Test
+  void healthCheckErrorCountWhenInvalidCredentialsAreUsed() {
+    final boolean useConfigFile = false;
+    final AwsSecretsManagerParameters invalidCredsParams =
+        AwsSecretsManagerParametersBuilder.anAwsSecretsManagerParameters()
+            .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
+            .withRegion("us-east-2")
+            .withAccessKeyId("invalid")
+            .withSecretAccessKey("invalid")
+            .withPrefixesFilter(List.of("shouldNotExist/"))
+            .withEndpointOverride(Optional.empty())
+            .build();
+
+    final SignerConfigurationBuilder configBuilder =
+        new SignerConfigurationBuilder()
+            .withUseConfigFile(useConfigFile)
+            .withMode("eth2")
+            .withAwsSecretsManagerParameters(invalidCredsParams);
+
+    startSigner(configBuilder.build());
+
+    final String healthCheckJsonBody = signer.healthcheck().body().asString();
+
+    int keysLoaded = getAwsBulkLoadingData(healthCheckJsonBody, "keys-loaded");
+    int errorCount = getAwsBulkLoadingData(healthCheckJsonBody, "error-count");
+
+    assertThat(keysLoaded).isEqualTo(0);
+    assertThat(errorCount).isEqualTo(1);
+    assertThat(new JsonObject(healthCheckJsonBody).getString("status")).isEqualTo("DOWN");
+  }
+
+  private static int getAwsBulkLoadingData(String healthCheckJsonBody, String dataKey) {
+    JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
+    int keysLoaded =
+        jsonObject.getJsonArray("checks").stream()
+            .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
+            .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
+            .filter(o -> "aws-bulk-loading".equals(((JsonObject) o).getString("id")))
+            .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
+            .findFirst()
+            .orElse(-1);
+    return keysLoaded;
   }
 
   @ParameterizedTest(name = "{index} - Using config file: {0}")
