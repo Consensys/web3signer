@@ -13,14 +13,13 @@
 package tech.pegasys.web3signer.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.KeystoreUtil;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -39,20 +38,25 @@ class BlsKeystoreBulkLoaderTest {
   @Test
   void loadingEmptyKeystoreDirReturnsNoSigners(
       final @TempDir Path keystoreDir, final @TempDir Path passwordDir) {
-    final Collection<ArtifactSigner> signers =
+    MappedResults<ArtifactSigner> result =
         loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
-    assertThat(signers).isEmpty();
+    assertThat(result.getValues()).isEmpty();
+    assertThat(result.getErrorCount()).isEqualTo(0);
   }
 
   @Test
   void loadsMultipleKeystores(final @TempDir Path keystoreDir, final @TempDir Path passwordDir) {
     KeystoreUtil.createKeystore(KEY_PAIR_1, keystoreDir, passwordDir, "password1");
     KeystoreUtil.createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
-    final Collection<ArtifactSigner> signers =
+    final MappedResults<ArtifactSigner> result =
         loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
+    final Collection<ArtifactSigner> signers = result.getValues();
+
     assertThat(signers).hasSize(2);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
+
+    assertThat(result.getErrorCount()).isEqualTo(0);
   }
 
   @Test
@@ -65,11 +69,14 @@ class BlsKeystoreBulkLoaderTest {
     final Path passwordFile = tempDir.resolve("password.txt");
     Files.writeString(passwordFile, KEYSTORE_PASSWORD_1);
 
-    final Collection<ArtifactSigner> signers =
+    final MappedResults<ArtifactSigner> result =
         loader.loadKeystoresUsingPasswordFile(keystoreDir, passwordFile);
+    final Collection<ArtifactSigner> signers = result.getValues();
     assertThat(signers).hasSize(2);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
+
+    assertThat(result.getErrorCount()).isEqualTo(0);
   }
 
   @Test
@@ -83,22 +90,28 @@ class BlsKeystoreBulkLoaderTest {
     final Path targetPath = keystoreDir.resolve(KEY_PAIR_1.getPublicKey() + ".ignored");
     Files.move(sourcePath, targetPath);
 
-    final Collection<ArtifactSigner> signers =
+    final MappedResults<ArtifactSigner> result =
         loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
+    final Collection<ArtifactSigner> signers = result.getValues();
     assertThat(signers).hasSize(1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
+
+    assertThat(result.getErrorCount()).isEqualTo(0);
   }
 
   @Test
-  void keystoreWithoutPasswordIsIgnoredAndRemainingKeystoresAreLoaded(
+  void keystoreWithoutPasswordCausesErrorCountAndRemainingKeystoresAreLoaded(
       final @TempDir Path keystoreDir, final @TempDir Path passwordDir) {
     KeystoreUtil.createKeystoreFile(KEY_PAIR_1, keystoreDir, KEYSTORE_PASSWORD_1);
     KeystoreUtil.createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
 
-    final Collection<ArtifactSigner> signers =
+    final MappedResults<ArtifactSigner> result =
         loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
+    final Collection<ArtifactSigner> signers = result.getValues();
     assertThat(signers).hasSize(1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
+
+    assertThat(result.getErrorCount()).isEqualTo(1);
   }
 
   @Test
@@ -108,33 +121,36 @@ class BlsKeystoreBulkLoaderTest {
     KeystoreUtil.createKeystorePasswordFile(KEY_PAIR_1, passwordDir, KEYSTORE_PASSWORD_1);
     KeystoreUtil.createKeystore(KEY_PAIR_2, keystoreDir, passwordDir, KEYSTORE_PASSWORD_2);
 
-    final Collection<ArtifactSigner> signers =
+    final MappedResults<ArtifactSigner> result =
         loader.loadKeystoresUsingPasswordDir(keystoreDir, passwordDir);
+    final Collection<ArtifactSigner> signers = result.getValues();
     assertThat(signers).hasSize(1);
     assertThatSignerHasPublicKey(signers, KEY_PAIR_2);
+
+    assertThat(result.getErrorCount()).isEqualTo(1);
   }
 
   @Test
-  void invalidKeystoreDirectoryThrowsError(
+  void invalidKeystoreDirectoryReturnsErrorCount(
       final @TempDir Path keystoreDir, final @TempDir Path passwordDir) {
-    assertThatThrownBy(
-            () ->
-                loader.loadKeystoresUsingPasswordDir(
-                    keystoreDir.resolve("invalidKeystorePath"), passwordDir))
-        .isInstanceOf(UncheckedIOException.class)
-        .hasMessage("Unable to access the supplied keystore directory");
+    final MappedResults<ArtifactSigner> result =
+        loader.loadKeystoresUsingPasswordDir(
+            keystoreDir.resolve("invalidKeystorePath"), passwordDir);
+    assertThat(result.getValues()).isEmpty();
+    assertThat(result.getErrorCount()).isEqualTo(1);
   }
 
   @Test
-  void invalidKeystorePasswordFileThrowsError(final @TempDir Path tempDir) throws IOException {
+  void invalidKeystorePasswordFileReturnsErrorCount(final @TempDir Path tempDir)
+      throws IOException {
     final Path keystoreDir = tempDir.resolve("keystores");
     Files.createDirectory(keystoreDir);
-    assertThatThrownBy(
-            () ->
-                loader.loadKeystoresUsingPasswordFile(
-                    keystoreDir, tempDir.resolve("invalidPasswordFilePath")))
-        .isInstanceOf(UncheckedIOException.class)
-        .hasMessage("Unable to read the password file");
+
+    final MappedResults<ArtifactSigner> result =
+        loader.loadKeystoresUsingPasswordFile(
+            keystoreDir, tempDir.resolve("invalidPasswordFilePath"));
+    assertThat(result.getValues()).isEmpty();
+    assertThat(result.getErrorCount()).isEqualTo(1);
   }
 
   private void assertThatSignerHasPublicKey(

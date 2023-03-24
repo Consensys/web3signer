@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.tests.bulkloading;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 
@@ -24,6 +25,7 @@ import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParametersBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.net.URI;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +33,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.restassured.http.ContentType;
+import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -69,13 +73,20 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   private static final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
   private static final String AWS_REGION =
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
+
+  // can be pointed to localstack
+  private final Optional<URI> awsEndpointOverride =
+      System.getenv("AWS_ENDPOINT_OVERRIDE") != null
+          ? Optional.of(URI.create(System.getenv("AWS_ENDPOINT_OVERRIDE")))
+          : Optional.empty();
   private AwsSecretsManagerUtil awsSecretsManagerUtil;
   private final List<BLSKeyPair> blsKeyPairs = new ArrayList<>();
 
   @BeforeAll
   void setupAwsResources() {
     awsSecretsManagerUtil =
-        new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
+        new AwsSecretsManagerUtil(
+            AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY, awsEndpointOverride);
     final SecureRandom secureRandom = new SecureRandom();
 
     for (int i = 0; i < 4; i++) {
@@ -88,7 +99,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
     }
   }
 
-  @ParameterizedTest
+  @ParameterizedTest(name = "{index} - Using config file: {0}")
   @ValueSource(booleans = {true, false})
   void secretsAreLoadedFromAWSSecretsManagerAndReportedByPublicApi(final boolean useConfigFile) {
     final AwsSecretsManagerParameters awsSecretsManagerParameters =
@@ -100,6 +111,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
             .withTagNamesFilter(List.of("TagName0", "TagName1"))
             .withTagValuesFilter(List.of("TagValue0", "TagValue1", "TagValue2"))
+            .withEndpointOverride(awsEndpointOverride)
             .build();
 
     final SignerConfigurationBuilder configBuilder =
@@ -109,6 +121,11 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             .withAwsSecretsManagerParameters(awsSecretsManagerParameters);
 
     startSigner(configBuilder.build());
+
+    final String healthCheckJsonBody = signer.healthcheck().body().asString();
+    int keysLoaded = getAwsBulkLoadingData(healthCheckJsonBody, "keys-loaded");
+
+    assertThat(keysLoaded).isEqualTo(2);
 
     signer
         .callApiPublicKeys(KeyType.BLS)
@@ -124,7 +141,51 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             hasSize(2));
   }
 
-  @ParameterizedTest
+  @Test
+  void healthCheckErrorCountWhenInvalidCredentialsAreUsed() {
+    final boolean useConfigFile = false;
+    final AwsSecretsManagerParameters invalidCredsParams =
+        AwsSecretsManagerParametersBuilder.anAwsSecretsManagerParameters()
+            .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
+            .withRegion("us-east-2")
+            .withAccessKeyId("invalid")
+            .withSecretAccessKey("invalid")
+            .withPrefixesFilter(List.of("shouldNotExist/"))
+            .withEndpointOverride(Optional.empty())
+            .build();
+
+    final SignerConfigurationBuilder configBuilder =
+        new SignerConfigurationBuilder()
+            .withUseConfigFile(useConfigFile)
+            .withMode("eth2")
+            .withAwsSecretsManagerParameters(invalidCredsParams);
+
+    startSigner(configBuilder.build());
+
+    final String healthCheckJsonBody = signer.healthcheck().body().asString();
+
+    int keysLoaded = getAwsBulkLoadingData(healthCheckJsonBody, "keys-loaded");
+    int errorCount = getAwsBulkLoadingData(healthCheckJsonBody, "error-count");
+
+    assertThat(keysLoaded).isEqualTo(0);
+    assertThat(errorCount).isEqualTo(1);
+    assertThat(new JsonObject(healthCheckJsonBody).getString("status")).isEqualTo("DOWN");
+  }
+
+  private static int getAwsBulkLoadingData(String healthCheckJsonBody, String dataKey) {
+    JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
+    int keysLoaded =
+        jsonObject.getJsonArray("checks").stream()
+            .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
+            .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
+            .filter(o -> "aws-bulk-loading".equals(((JsonObject) o).getString("id")))
+            .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
+            .findFirst()
+            .orElse(-1);
+    return keysLoaded;
+  }
+
+  @ParameterizedTest(name = "{index} - Using config file: {0}")
   @ValueSource(booleans = {true, false})
   void secretsAreLoadedFromAWSSecretsManagerWithEnvironmentAuthModeAndReportedByPublicApi(
       final boolean useConfigFile) {
@@ -134,6 +195,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
             .withTagNamesFilter(List.of("TagName2", "TagName3"))
             .withTagValuesFilter(List.of("TagValue0", "TagValue2", "TagValue3"))
+            .withEndpointOverride(awsEndpointOverride)
             .build();
 
     final SignerConfigurationBuilder configBuilder =

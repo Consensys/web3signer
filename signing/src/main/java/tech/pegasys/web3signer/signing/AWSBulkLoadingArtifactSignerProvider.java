@@ -14,20 +14,19 @@ package tech.pegasys.web3signer.signing;
 
 import tech.pegasys.signers.aws.AwsSecretsManager;
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
+import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
-import java.util.Collection;
-
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class AWSBulkLoadingArtifactSignerProvider {
 
-  public Collection<ArtifactSigner> load(final AwsSecretsManagerParameters parameters) {
+  public MappedResults<ArtifactSigner> load(final AwsSecretsManagerParameters parameters) {
     try (final AwsSecretsManagerProvider awsSecretsManagerProvider =
         new AwsSecretsManagerProvider(parameters.getCacheMaximumSize())) {
       final AwsSecretsManager awsSecretsManager =

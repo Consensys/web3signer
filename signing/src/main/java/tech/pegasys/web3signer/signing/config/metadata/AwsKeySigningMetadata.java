@@ -17,6 +17,9 @@ import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 
+import java.net.URI;
+import java.util.Optional;
+
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = AwsKeySigningMetadataDeserializer.class)
@@ -27,19 +30,22 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
   private final String accessKeyId;
   private final String secretAccessKey;
   private final String secretName;
+  private final Optional<URI> endpointOverride;
 
   public AwsKeySigningMetadata(
       final AwsAuthenticationMode authenticationMode,
       final String region,
       final String accessKeyId,
       final String secretAccessKey,
-      final String secretName) {
+      final String secretName,
+      final Optional<URI> endpointOverride) {
     super(KeyType.BLS);
     this.authenticationMode = authenticationMode;
     this.region = region;
     this.accessKeyId = accessKeyId;
     this.secretAccessKey = secretAccessKey;
     this.secretName = secretName;
+    this.endpointOverride = endpointOverride;
   }
 
   @Override
@@ -74,5 +80,10 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
   @Override
   public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
     return factory.create(this);
+  }
+
+  @Override
+  public Optional<URI> getEndpointOverride() {
+    return endpointOverride;
   }
 }

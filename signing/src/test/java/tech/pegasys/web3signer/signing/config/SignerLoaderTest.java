@@ -18,6 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.FileHiddenUtil;
@@ -84,7 +85,8 @@ class SignerLoaderTest {
     when(signerParser.parse(Files.readString(metadataFile, StandardCharsets.UTF_8)))
         .thenReturn(artifactSigner);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(
+            new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser).getValues());
 
     verify(signerParser).parse(Files.readString(metadataFile, StandardCharsets.UTF_8));
     assertThat(signerList.size()).isOne();
@@ -97,7 +99,8 @@ class SignerLoaderTest {
     final Path metadataFile = createFileInConfigsDirectory(filename, PRIVATE_KEY1);
     when(signerParser.parse(ArgumentMatchers.any())).thenReturn(artifactSigner);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(
+            new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser).getValues());
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
@@ -110,7 +113,8 @@ class SignerLoaderTest {
     final Path metadataFile = createFileInConfigsDirectory(filename, PRIVATE_KEY1);
     when(signerParser.parse(ArgumentMatchers.any())).thenReturn(artifactSigner);
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(
+            new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser).getValues());
 
     assertThat(signerList.size()).isOne();
     assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
@@ -123,10 +127,11 @@ class SignerLoaderTest {
     final String filename = PUBLIC_KEY1 + ".nothing";
     createFileInConfigsDirectory(filename, PRIVATE_KEY1);
 
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+    final MappedResults<ArtifactSigner> result =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
 
-    assertThat(signerList).isEmpty();
+    assertThat(result.getValues()).isEmpty();
+    assertThat(result.getErrorCount()).isZero();
     verifyNoMoreInteractions(signerParser);
   }
 
@@ -134,20 +139,21 @@ class SignerLoaderTest {
   void failedParserReturnsEmptySigner() throws IOException {
     createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, "NOT_A_VALID_KEY");
 
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+    final MappedResults<ArtifactSigner> result =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
 
-    assertThat(signerList).isEmpty();
+    assertThat(result.getValues()).isEmpty();
   }
 
   @Test
   void failedWithDirectoryErrorReturnEmptySigner() throws IOException {
     final Path missingDir = configsDirectory.resolve("idontexist");
     createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(missingDir, FILE_EXTENSION, signerParser));
+    final MappedResults<ArtifactSigner> result =
+        new SignerLoader().load(missingDir, FILE_EXTENSION, signerParser);
 
-    assertThat(signerList).isEmpty();
+    assertThat(result.getValues()).isEmpty();
+    assertThat(result.getErrorCount()).isOne();
   }
 
   @Test
@@ -162,10 +168,10 @@ class SignerLoaderTest {
     when(signerParser.parse(Files.readString(metadataFile2, StandardCharsets.UTF_8)))
         .thenReturn(createArtifactSigner(PRIVATE_KEY1));
 
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+    MappedResults<ArtifactSigner> result =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
 
-    assertThat(signerList.size()).isEqualTo(1);
+    assertThat(result.getValues()).hasSize(1);
   }
 
   @Test
@@ -174,11 +180,12 @@ class SignerLoaderTest {
     final Path metadataFile = createFileInConfigsDirectory(filename, PRIVATE_KEY1);
     when(signerParser.parse(ArgumentMatchers.any())).thenReturn(artifactSigner);
 
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+    final MappedResults<ArtifactSigner> result =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
 
-    assertThat(signerList.size()).isOne();
-    assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
+    assertThat(result.getValues()).hasSize(1);
+    assertThat(result.getValues().stream().findFirst().orElseThrow().getIdentifier())
+        .isEqualTo("0x" + PUBLIC_KEY1);
     verify(signerParser).parse(Files.readString(metadataFile, StandardCharsets.UTF_8));
   }
 
@@ -186,9 +193,10 @@ class SignerLoaderTest {
   void signerIdentifiersNotReturnedInvalidMetadataFile() throws IOException {
     createEmptyFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION);
     createEmptyFileInConfigsDirectory(PUBLIC_KEY2 + "." + FILE_EXTENSION);
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
-    assertThat(signerList).isEmpty();
+    final MappedResults<ArtifactSigner> result =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+
+    assertThat(result.getValues()).isEmpty();
   }
 
   @Test
@@ -212,11 +220,12 @@ class SignerLoaderTest {
     when(signerParser.parse(Files.readString(key2, StandardCharsets.UTF_8)))
         .thenReturn(createArtifactSigner(PRIVATE_KEY2));
 
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+    final MappedResults<ArtifactSigner> result =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
 
-    assertThat(signerList.size()).isOne();
-    assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY2);
+    assertThat(result.getValues()).hasSize(1);
+    assertThat(result.getValues().stream().findFirst().orElseThrow().getIdentifier())
+        .isEqualTo("0x" + PUBLIC_KEY2);
 
     verify(signerParser, Mockito.never()).parse(yamlContentKey1);
     verify(signerParser).parse(Files.readString(key2, StandardCharsets.UTF_8));
@@ -226,11 +235,14 @@ class SignerLoaderTest {
   void signerIdentifiersReturnedForAllValidMetadataFilesInDirectory() throws IOException {
     createSignerConfigFiles();
 
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+    MappedResults<ArtifactSigner> result =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
 
-    assertThat(signerList).hasSize(3);
-    assertThat(signerList.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList()))
+    assertThat(result.getValues()).hasSize(3);
+    assertThat(
+            result.getValues().stream()
+                .map(ArtifactSigner::getIdentifier)
+                .collect(Collectors.toList()))
         .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
   }
 
@@ -255,16 +267,19 @@ class SignerLoaderTest {
   void callingLoadTwiceDoesNotReloadUnmodifiedConfigFiles() throws IOException {
     createSignerConfigFiles();
 
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+    final MappedResults<ArtifactSigner> result =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
 
-    assertThat(signerList).hasSize(3);
-    assertThat(signerList.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList()))
+    assertThat(result.getValues()).hasSize(3);
+    assertThat(
+            result.getValues().stream()
+                .map(ArtifactSigner::getIdentifier)
+                .collect(Collectors.toList()))
         .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
 
-    final Collection<ArtifactSigner> reloadedArtifactSigner =
+    final MappedResults<ArtifactSigner> reloadedResult =
         new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
-    assertThat(reloadedArtifactSigner).isEmpty();
+    assertThat(reloadedResult.getValues()).isEmpty();
   }
 
   @Test
@@ -272,7 +287,8 @@ class SignerLoaderTest {
     createSignerConfigFiles();
 
     final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+        Lists.newArrayList(
+            new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser).getValues());
 
     assertThat(signerList).hasSize(3);
     assertThat(signerList.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList()))
@@ -282,7 +298,7 @@ class SignerLoaderTest {
     createFileInConfigsDirectory(PUBLIC_KEY3 + "." + FILE_EXTENSION, PRIVATE_KEY3);
 
     final Collection<ArtifactSigner> reloadedArtifactSigner =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser).getValues();
     assertThat(reloadedArtifactSigner).hasSize(1);
     assertThat(reloadedArtifactSigner.stream().findFirst().get().getIdentifier())
         .isEqualTo("0x" + PUBLIC_KEY3);
@@ -326,10 +342,10 @@ class SignerLoaderTest {
     createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
     when(signerParser.parse(ArgumentMatchers.any())).thenThrow(SigningMetadataException.class);
 
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser));
+    final MappedResults<ArtifactSigner> result =
+        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
 
-    assertThat(signerList).isEmpty();
+    assertThat(result.getValues()).isEmpty();
   }
 
   private Path createFileInConfigsDirectory(final String filename, final String privateKey)

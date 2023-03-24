@@ -17,6 +17,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -57,5 +58,18 @@ public class BlsArtifactSigner implements ArtifactSigner {
   // only signers loaded from key store files are editable, everything else is read only
   public boolean isReadOnlyKey() {
     return origin != SignerOrigin.FILE_KEYSTORE;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    BlsArtifactSigner that = (BlsArtifactSigner) o;
+    return keyPair.equals(that.keyPair);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(keyPair);
   }
 }

@@ -12,8 +12,10 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 public interface AwsSecretsManagerParameters {
   boolean isEnabled();
@@ -41,4 +43,11 @@ public interface AwsSecretsManagerParameters {
   default Collection<String> getTagValuesFilter() {
     return Collections.emptyList();
   }
+
+  /**
+   * Can be used to override AWS endpoint to localstack
+   *
+   * @return optional URI
+   */
+  Optional<URI> getEndpointOverride();
 }

@@ -12,8 +12,10 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 
 public final class AwsSecretsManagerParametersBuilder {
   private AwsAuthenticationMode authenticationMode = AwsAuthenticationMode.SPECIFIED;
@@ -24,6 +26,8 @@ public final class AwsSecretsManagerParametersBuilder {
   private Collection<String> tagNamesFilter = Collections.emptyList();
   private Collection<String> tagValuesFilter = Collections.emptyList();
   private long cacheMaximumSize = 1;
+
+  private Optional<URI> endpointURI = Optional.empty();
 
   private AwsSecretsManagerParametersBuilder() {}
 
@@ -75,6 +79,12 @@ public final class AwsSecretsManagerParametersBuilder {
     return this;
   }
 
+  public AwsSecretsManagerParametersBuilder withEndpointOverride(
+      final Optional<URI> endpointOverride) {
+    this.endpointURI = endpointOverride;
+    return this;
+  }
+
   public AwsSecretsManagerParameters build() {
     if (authenticationMode == AwsAuthenticationMode.SPECIFIED) {
       if (accessKeyId == null) {
@@ -98,7 +108,8 @@ public final class AwsSecretsManagerParametersBuilder {
         prefixesFilter,
         tagNamesFilter,
         tagValuesFilter,
-        cacheMaximumSize);
+        cacheMaximumSize,
+        endpointURI);
   }
 
   private static class TestAwsSecretsManagerParameters implements AwsSecretsManagerParameters {
@@ -110,6 +121,7 @@ public final class AwsSecretsManagerParametersBuilder {
     private final Collection<String> tagNamesFilter;
     private final Collection<String> tagValuesFilter;
     private final long cacheMaximumSize;
+    private final Optional<URI> endpointOverride;
 
     TestAwsSecretsManagerParameters(
         final AwsAuthenticationMode authenticationMode,
@@ -119,7 +131,8 @@ public final class AwsSecretsManagerParametersBuilder {
         final Collection<String> prefixesFilter,
         final Collection<String> tagNamesFilter,
         final Collection<String> tagValuesFilter,
-        final long cacheMaximumSize) {
+        final long cacheMaximumSize,
+        final Optional<URI> endpointOverride) {
       this.authenticationMode = authenticationMode;
       this.accessKeyId = accessKeyId;
       this.secretAccessKey = secretAccessKey;
@@ -128,6 +141,7 @@ public final class AwsSecretsManagerParametersBuilder {
       this.tagNamesFilter = tagNamesFilter;
       this.tagValuesFilter = tagValuesFilter;
       this.cacheMaximumSize = cacheMaximumSize;
+      this.endpointOverride = endpointOverride;
     }
 
     @Override
@@ -173,6 +187,11 @@ public final class AwsSecretsManagerParametersBuilder {
     @Override
     public Collection<String> getTagValuesFilter() {
       return tagValuesFilter;
+    }
+
+    @Override
+    public Optional<URI> getEndpointOverride() {
+      return endpointOverride;
     }
   }
 }

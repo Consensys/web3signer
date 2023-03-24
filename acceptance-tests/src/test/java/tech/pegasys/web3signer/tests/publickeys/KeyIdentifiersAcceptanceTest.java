@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import io.restassured.response.Response;
+import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
@@ -73,6 +74,23 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     validateApiResponse(response, everyItem(not(in(invalidKeys))));
   }
 
+  @Test
+  public void healthCheckShowsErrorCountForInvalidKeysinEth2Mode() {
+    final KeyType keyType = BLS;
+    final String[] prvKeys = privateKeys(keyType);
+    final String[] keys = createKeys(keyType, true, prvKeys[0]);
+    final String[] invalidKeys = createKeys(keyType, false, prvKeys[1]);
+
+    initAndStartSigner(calculateMode(keyType));
+
+    final String jsonBody = signer.healthcheck().body().asString();
+    int keysLoaded = getConfigFilesLoadingHealthCheckData(jsonBody, "keys-loaded");
+    int errorCount = getConfigFilesLoadingHealthCheckData(jsonBody, "error-count");
+    assertThat(new JsonObject(jsonBody).getString("status")).isEqualTo("DOWN");
+    assertThat(keysLoaded).isEqualTo(keys.length);
+    assertThat(errorCount).isEqualTo(invalidKeys.length);
+  }
+
   @ParameterizedTest
   @EnumSource(value = KeyType.class)
   public void additionalPublicKeyAreReportedAfterReload(final KeyType keyType) {
@@ -93,6 +111,35 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
         .until(
             () -> signer.callApiPublicKeys(keyType).jsonPath().<List<String>>get("."),
             containsInAnyOrder(ArrayUtils.addAll(keys, additionalKeys)));
+  }
+
+  @Test
+  public void healthCheckReportsKeysLoadedAfterReloadInEth2Mode() {
+    final KeyType keyType = BLS;
+    final String[] prvKeys = privateKeys(keyType);
+    final String[] keys = createKeys(keyType, true, prvKeys[0]);
+
+    initAndStartSigner(calculateMode(keyType));
+
+    final String jsonBody = signer.healthcheck().body().asString();
+    int keysLoaded = getConfigFilesLoadingHealthCheckData(jsonBody, "keys-loaded");
+    assertThat(keysLoaded).isEqualTo(keys.length);
+    assertThat(new JsonObject(jsonBody).getString("status")).isEqualTo("UP");
+
+    final String[] additionalKeys = createKeys(keyType, true, prvKeys[1]);
+    signer.callReload().then().statusCode(200);
+
+    // reload is async ...
+    Awaitility.await()
+        .atMost(5, SECONDS)
+        .until(
+            () -> signer.callApiPublicKeys(keyType).jsonPath().<List<String>>get("."),
+            containsInAnyOrder(ArrayUtils.addAll(keys, additionalKeys)));
+
+    // only new keys loaded (from config-files-loading) should show up in healthcheck.
+    keysLoaded = getConfigFilesLoadingHealthCheckData(jsonBody, "keys-loaded");
+    assertThat(keysLoaded).isEqualTo(1);
+    assertThat(new JsonObject(jsonBody).getString("status")).isEqualTo("UP");
   }
 
   @ParameterizedTest
@@ -121,6 +168,32 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     initAndStartSigner(calculateMode(keyType));
 
     validateApiResponse(signer.callApiPublicKeys(keyType), containsInAnyOrder(keys));
+  }
+
+  @Test
+  public void allLoadedKeysAreReportedInHealthCheckInEth2Mode() {
+    final KeyType keyType = BLS;
+    final String[] keys = createKeys(keyType, true, privateKeys(keyType));
+    initAndStartSigner(calculateMode(keyType));
+
+    final String jsonBody = signer.healthcheck().body().asString();
+    int keysLoaded = getConfigFilesLoadingHealthCheckData(jsonBody, "keys-loaded");
+    assertThat(keysLoaded).isEqualTo(keys.length);
+    assertThat(new JsonObject(jsonBody).getString("status")).isEqualTo("UP");
+  }
+
+  private static int getConfigFilesLoadingHealthCheckData(
+      String healthCheckJsonBody, String dataKey) {
+    JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
+    int keysLoaded =
+        jsonObject.getJsonArray("checks").stream()
+            .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
+            .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
+            .filter(o -> "config-files-loading".equals(((JsonObject) o).getString("id")))
+            .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
+            .findFirst()
+            .orElse(-1);
+    return keysLoaded;
   }
 
   @ParameterizedTest

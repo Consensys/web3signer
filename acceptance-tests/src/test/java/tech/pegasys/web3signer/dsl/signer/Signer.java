@@ -61,6 +61,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   public static final ObjectMapper ETH_2_INTERFACE_OBJECT_MAPPER =
       SigningObjectMapperFactory.createObjectMapper().setSerializationInclusion(Include.NON_NULL);
   private static final String METRICS_ENDPOINT = "/metrics";
+  private static final String HEALTHCHECK_ENDPOINT = "/healthcheck";
 
   private final SignerConfiguration signerConfig;
   private final Web3SignerRunner runner;
@@ -184,5 +185,9 @@ public class Signer extends FilecoinJsonRpcEndpoint {
 
   public Response callReload() {
     return given().baseUri(getUrl()).post(RELOAD_ENDPOINT);
+  }
+
+  public Response healthcheck() {
+    return given().baseUri(getUrl()).get(HEALTHCHECK_ENDPOINT);
   }
 }

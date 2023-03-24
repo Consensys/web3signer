@@ -35,6 +35,7 @@ import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
@@ -178,10 +179,16 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String roAwsAccessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
     final String roAwsSecretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
     final String region = Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
+    // can be pointed to localstack
+    final Optional<URI> awsEndpointOverride =
+        System.getenv("AWS_ENDPOINT_OVERRIDE") != null
+            ? Optional.of(URI.create(System.getenv("AWS_ENDPOINT_OVERRIDE")))
+            : Optional.empty();
     final String publicKey = KEY_PAIR.getPublicKey().toString();
 
     final AwsSecretsManagerUtil awsSecretsManagerUtil =
-        new AwsSecretsManagerUtil(region, rwAwsAccessKeyId, rwAwsSecretAccessKey);
+        new AwsSecretsManagerUtil(
+            region, rwAwsAccessKeyId, rwAwsSecretAccessKey, awsEndpointOverride);
 
     awsSecretsManagerUtil.createSecret(publicKey, PRIVATE_KEY, Collections.emptyMap());
     final String fullyPrefixKeyName = awsSecretsManagerUtil.getSecretsManagerPrefix() + publicKey;

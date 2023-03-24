@@ -16,17 +16,16 @@ import tech.pegasys.signers.bls.keystore.KeyStore;
 import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
 import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
+import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,36 +38,49 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BlsKeystoreBulkLoader {
   private static final Logger LOG = LogManager.getLogger();
 
-  public Collection<ArtifactSigner> loadKeystoresUsingPasswordDir(
+  public MappedResults<ArtifactSigner> loadKeystoresUsingPasswordDir(
       final Path keystoresDirectory, final Path passwordsDirectory) {
-    final List<Path> keystoreFiles = keystoreFiles(keystoresDirectory);
+    final List<Path> keystoreFiles;
+    try {
+      keystoreFiles = keystoreFiles(keystoresDirectory);
+    } catch (final IOException e) {
+      LOG.error("Error reading keystore files", e);
+      return MappedResults.errorResult();
+    }
+
     return keystoreFiles.parallelStream()
         .map(
             keystoreFile ->
                 createSignerForKeystore(
                     keystoreFile,
                     key -> Files.readString(passwordsDirectory.resolve(key + ".txt"))))
-        .flatMap(Optional::stream)
-        .collect(Collectors.toList());
+        .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
-  public Collection<ArtifactSigner> loadKeystoresUsingPasswordFile(
+  public MappedResults<ArtifactSigner> loadKeystoresUsingPasswordFile(
       final Path keystoresDirectory, final Path passwordFile) {
-    final List<Path> keystoreFiles = keystoreFiles(keystoresDirectory);
+    final List<Path> keystoreFiles;
+    try {
+      keystoreFiles = keystoreFiles(keystoresDirectory);
+    } catch (final IOException e) {
+      LOG.error("Error reading keystore files", e);
+      return MappedResults.errorResult();
+    }
+
     final String password;
     try {
       password = Files.readString(passwordFile);
     } catch (final IOException e) {
-      throw new UncheckedIOException("Unable to read the password file", e);
+      LOG.error("Unable to read password file", e);
+      return MappedResults.errorResult();
     }
 
     return keystoreFiles.parallelStream()
         .map(keystoreFile -> createSignerForKeystore(keystoreFile, key -> password))
-        .flatMap(Optional::stream)
-        .collect(Collectors.toList());
+        .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
-  private Optional<? extends ArtifactSigner> createSignerForKeystore(
+  private MappedResults<ArtifactSigner> createSignerForKeystore(
       final Path keystoreFile, final PasswordRetriever passwordRetriever) {
     try {
       LOG.debug("Loading keystore {}", keystoreFile);
@@ -79,10 +91,10 @@ public class BlsKeystoreBulkLoader {
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
       final BlsArtifactSigner artifactSigner =
           new BlsArtifactSigner(keyPair, SignerOrigin.FILE_KEYSTORE);
-      return Optional.of(artifactSigner);
+      return MappedResults.newInstance(Set.of(artifactSigner), 0);
     } catch (final KeyStoreValidationException | IOException e) {
       LOG.error("Keystore could not be loaded {}", keystoreFile, e);
-      return Optional.empty();
+      return MappedResults.errorResult();
     }
   }
 
@@ -91,13 +103,11 @@ public class BlsKeystoreBulkLoader {
     String retrievePassword(final String key) throws IOException;
   }
 
-  private List<Path> keystoreFiles(final Path keystoresPath) {
+  private List<Path> keystoreFiles(final Path keystoresPath) throws IOException {
     try (final Stream<Path> fileStream = Files.list(keystoresPath)) {
       return fileStream
           .filter(path -> FilenameUtils.getExtension(path.toString()).equalsIgnoreCase("json"))
           .collect(Collectors.toList());
-    } catch (final IOException e) {
-      throw new UncheckedIOException("Unable to access the supplied keystore directory", e);
     }
   }
 }

@@ -12,7 +12,9 @@
  */
 package tech.pegasys.web3signer;
 
+import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,6 +23,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
+import software.amazon.awssdk.services.secretsmanager.SecretsManagerClientBuilder;
 import software.amazon.awssdk.services.secretsmanager.model.CreateSecretRequest;
 import software.amazon.awssdk.services.secretsmanager.model.DeleteSecretRequest;
 import software.amazon.awssdk.services.secretsmanager.model.Tag;
@@ -32,16 +35,21 @@ public class AwsSecretsManagerUtil {
   private final String secretNamePrefix;
 
   public AwsSecretsManagerUtil(
-      final String region, final String accessKeyId, final String secretAccessKey) {
+      final String region,
+      final String accessKeyId,
+      final String secretAccessKey,
+      Optional<URI> awsEndpointOverride) {
     final AwsBasicCredentials awsBasicCredentials =
         AwsBasicCredentials.create(accessKeyId, secretAccessKey);
     final StaticCredentialsProvider credentialsProvider =
         StaticCredentialsProvider.create(awsBasicCredentials);
-    secretsManagerClient =
+    SecretsManagerClientBuilder builder =
         SecretsManagerClient.builder()
             .credentialsProvider(credentialsProvider)
-            .region(Region.of(region))
-            .build();
+            .region(Region.of(region));
+    // useful for testing against localstack
+    awsEndpointOverride.ifPresent(builder::endpointOverride);
+    secretsManagerClient = builder.build();
 
     secretNamePrefix = SECRETS_MANAGER_PREFIX + UUID.randomUUID() + "/";
   }

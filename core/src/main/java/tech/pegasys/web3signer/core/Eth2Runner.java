@@ -12,6 +12,11 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AWS_BULK_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_CONFIG_FILE_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_KEYSTORE_BULK_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.SLASHING_PROTECTION_DB;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
 import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYMANAGER_DELETE;
@@ -22,6 +27,7 @@ import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.azure.AzureKeyVault;
+import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
@@ -66,7 +72,6 @@ import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFacto
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -76,6 +81,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
@@ -275,7 +281,7 @@ public class Eth2Runner extends Runner {
                     (args) ->
                         new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 
-            signers.addAll(
+            final MappedResults<ArtifactSigner> results =
                 new SignerLoader()
                     .load(
                         config.getKeyConfigPath(),
@@ -283,16 +289,26 @@ public class Eth2Runner extends Runner {
                         new YamlSignerParser(
                             List.of(artifactSignerFactory),
                             YamlMapperFactory.createYamlMapper(
-                                config.getKeyStoreConfigFileMaxSize()))));
+                                config.getKeyStoreConfigFileMaxSize())));
+            registerSignerLoadingHealthCheck(KEYS_CHECK_CONFIG_FILE_LOADING, results);
+            signers.addAll(results.getValues());
           }
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-            signers.addAll(loadAzureSigners());
+            LOG.info("Bulk loading keys from Azure key vault ... ");
+            final MappedResults<ArtifactSigner> azureResult = loadAzureSigners();
+            LOG.info(
+                "Keys loaded from Azure: [{}], with error count: [{}]",
+                azureResult.getValues().size(),
+                azureResult.getErrorCount());
+            registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
+            signers.addAll(azureResult.getValues());
           }
 
           if (keystoresParameters.isEnabled()) {
+            LOG.info("Bulk loading keys from local keystores ... ");
             final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
-            final Collection<ArtifactSigner> keystoreSigners =
+            final MappedResults<ArtifactSigner> keystoreSignersResult =
                 keystoresParameters.hasKeystoresPasswordsPath()
                     ? blsKeystoreBulkLoader.loadKeystoresUsingPasswordDir(
                         keystoresParameters.getKeystoresPath(),
@@ -300,17 +316,29 @@ public class Eth2Runner extends Runner {
                     : blsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
                         keystoresParameters.getKeystoresPath(),
                         keystoresParameters.getKeystoresPasswordFile());
-            signers.addAll(keystoreSigners);
+            LOG.info(
+                "Keys loaded from local keystores: [{}], with error count: [{}]",
+                keystoreSignersResult.getValues().size(),
+                keystoreSignersResult.getErrorCount());
+
+            registerSignerLoadingHealthCheck(
+                KEYS_CHECK_KEYSTORE_BULK_LOADING, keystoreSignersResult);
+            signers.addAll(keystoreSignersResult.getValues());
           }
 
           if (awsSecretsManagerParameters.isEnabled()) {
             LOG.info("Bulk loading keys from AWS Secrets Manager ... ");
             final AWSBulkLoadingArtifactSignerProvider awsBulkLoadingArtifactSignerProvider =
                 new AWSBulkLoadingArtifactSignerProvider();
-            final Collection<ArtifactSigner> awsSigners =
+
+            final MappedResults<ArtifactSigner> awsResult =
                 awsBulkLoadingArtifactSignerProvider.load(awsSecretsManagerParameters);
-            LOG.info("Keys loaded from AWS Secrets Manager: [{}]", awsSigners.size());
-            signers.addAll(awsSigners);
+            LOG.info(
+                "Keys loaded from AWS Secrets Manager: [{}], with error count: [{}]",
+                awsResult.getValues().size(),
+                awsResult.getErrorCount());
+            registerSignerLoadingHealthCheck(KEYS_CHECK_AWS_BULK_LOADING, awsResult);
+            signers.addAll(awsResult.getValues());
           }
 
           final List<Bytes> validators =
@@ -325,6 +353,20 @@ public class Eth2Runner extends Runner {
                 context -> context.getRegisteredValidators().registerValidators(validators));
           }
           return signers;
+        });
+  }
+
+  private void registerSignerLoadingHealthCheck(
+      final String name, final MappedResults<ArtifactSigner> result) {
+    super.registerHealthCheckProcedure(
+        name,
+        promise -> {
+          final JsonObject statusJson =
+              new JsonObject()
+                  .put("keys-loaded", result.getValues().size())
+                  .put("error-count", result.getErrorCount());
+          promise.complete(
+              result.getErrorCount() > 0 ? Status.KO(statusJson) : Status.OK(statusJson));
         });
   }
 
@@ -350,7 +392,7 @@ public class Eth2Runner extends Runner {
             TimeUnit.MILLISECONDS);
 
     super.registerHealthCheckProcedure(
-        "slashing-protection-db-health-check",
+        SLASHING_PROTECTION_DB,
         promise -> promise.complete(dbHealthCheck.isDbUp() ? Status.OK() : Status.KO()));
   }
 
@@ -366,7 +408,7 @@ public class Eth2Runner extends Runner {
     dbPrunerRunner.schedule();
   }
 
-  final Collection<ArtifactSigner> loadAzureSigners() {
+  final MappedResults<ArtifactSigner> loadAzureSigners() {
     final AzureKeyVault keyVault =
         AzureKeyVaultFactory.createAzureKeyVault(azureKeyVaultParameters);
 

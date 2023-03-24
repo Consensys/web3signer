@@ -40,7 +40,6 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext;
 
 public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
-
   private final LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
   private final Function<BlsArtifactSignerArgs, ArtifactSigner> signerFactory;
   private final AwsSecretsManagerProvider awsSecretsManagerProvider;

@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParametersBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,12 @@ public class AwsSecretsManagerMultiValueAcceptanceTest extends AcceptanceTestBas
   private static final String RO_AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
   private static final String AWS_REGION =
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
+
+  // can be pointed to localstack
+  private final Optional<URI> awsEndpointOverride =
+      System.getenv("AWS_ENDPOINT_OVERRIDE") != null
+          ? Optional.of(URI.create(System.getenv("AWS_ENDPOINT_OVERRIDE")))
+          : Optional.empty();
   private AwsSecretsManagerUtil awsSecretsManagerUtil;
   private final List<BLSKeyPair> blsKeyPairList = new ArrayList<>(400);
 
@@ -80,7 +87,8 @@ public class AwsSecretsManagerMultiValueAcceptanceTest extends AcceptanceTestBas
     }
 
     awsSecretsManagerUtil =
-        new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
+        new AwsSecretsManagerUtil(
+            AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY, awsEndpointOverride);
 
     for (int i = 0; i < 4; i++) {
       String multilinePrivKeys =
@@ -103,6 +111,7 @@ public class AwsSecretsManagerMultiValueAcceptanceTest extends AcceptanceTestBas
             .withSecretAccessKey(RO_AWS_SECRET_ACCESS_KEY)
             .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
             .withTagNamesFilter(List.of("multivalue"))
+            .withEndpointOverride(awsEndpointOverride)
             .build();
 
     final SignerConfigurationBuilder configBuilder =

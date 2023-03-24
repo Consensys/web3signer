@@ -16,6 +16,8 @@ import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.signers.secp256k1.api.Signer;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 
+import java.util.Objects;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public class EthSecpArtifactSigner implements ArtifactSigner {
@@ -34,5 +36,18 @@ public class EthSecpArtifactSigner implements ArtifactSigner {
   @Override
   public SecpArtifactSignature sign(final Bytes message) {
     return new SecpArtifactSignature(signer.sign(message.toArray()));
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    EthSecpArtifactSigner that = (EthSecpArtifactSigner) o;
+    return getIdentifier().equals(that.getIdentifier());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getIdentifier());
   }
 }

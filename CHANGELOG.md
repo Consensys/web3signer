@@ -3,6 +3,8 @@
 ## Upcoming version
 ### Features Added
 - Add support for Capella milestone in Mainnet
+- Enhanced Healthcheck endpoint reporting status of loading of signers keys [#738](https://github.com/ConsenSys/web3signer/pull/738)
+- Optional AWS endpoint overriding for bulk loading `--aws-endpoint-override`. Useful for local testing against localstack. [#730](https://github.com/ConsenSys/web3signer/issues/730)
 
 ### Bugs Fixed
 - Update of Azure libraries (transitive via signers library) and manual override to fix CVE-2023-1370

@@ -17,6 +17,7 @@ import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
 import tech.pegasys.web3signer.AwsSecretsManagerUtil;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -59,6 +60,12 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
   private static final String AWS_REGION =
       Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
 
+  // can be pointed to localstack
+  private final Optional<URI> awsEndpointOverride =
+      System.getenv("AWS_ENDPOINT_OVERRIDE") != null
+          ? Optional.of(URI.create(System.getenv("AWS_ENDPOINT_OVERRIDE")))
+          : Optional.empty();
+
   private final String privateKey = privateKeys(BLS)[0]; // secret value
   private final String publicKey = BLS_PUBLIC_KEY_1;
 
@@ -67,7 +74,8 @@ public class AwsKeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTes
   @BeforeAll
   void setup() {
     awsSecretsManagerUtil =
-        new AwsSecretsManagerUtil(AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY);
+        new AwsSecretsManagerUtil(
+            AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY, awsEndpointOverride);
     awsSecretsManagerUtil.createSecret(publicKey, privateKey, Collections.emptyMap());
   }
 
