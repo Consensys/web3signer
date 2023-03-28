@@ -1,5 +1,9 @@
 # Changelog
+## Upcoming release
+### Features Added
+- Optional Azure bulk loading tags support using cli option `--azure-secrets-tags`.
 
+---
 ## 23.3.1
 ### Features Added
 - Add support for Capella milestone in Mainnet
