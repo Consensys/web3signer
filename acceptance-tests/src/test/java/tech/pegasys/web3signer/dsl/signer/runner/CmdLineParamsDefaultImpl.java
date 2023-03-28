@@ -109,6 +109,14 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
         params.add(azureParams.getClientSecret());
         params.add("--azure-tenant-id");
         params.add(azureParams.getTenantId());
+
+        azureParams
+            .getTags()
+            .forEach(
+                (tagName, tagValue) -> {
+                  params.add("--azure-secrets-tags");
+                  params.add(tagName + "=" + tagValue);
+                });
       }
       if (signerConfig.getKeystoresParameters().isPresent()) {
         final KeystoresParameters keystoresParameters = signerConfig.getKeystoresParameters().get();
