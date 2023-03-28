@@ -113,6 +113,7 @@ allprojects {
   targetCompatibility = 11
 
   repositories {
+    mavenLocal() // TODO: Remove me once signers library is published
     mavenCentral()
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
     maven { url "https://artifacts.consensys.net/public/teku/maven/" }
