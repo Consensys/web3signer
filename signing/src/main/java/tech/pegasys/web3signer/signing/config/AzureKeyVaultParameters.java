@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
-import java.util.Collections;
 import java.util.Map;
 
 public interface AzureKeyVaultParameters {
@@ -29,7 +28,5 @@ public interface AzureKeyVaultParameters {
 
   String getClientSecret();
 
-  default Map<String, String> getTags() {
-    return Collections.emptyMap();
-  }
+  Map<String, String> getTags();
 }

@@ -17,6 +17,9 @@ import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
+import java.util.Collections;
+import java.util.Map;
+
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = AzureSecretSigningMetadataDeserializer.class)
@@ -86,5 +89,12 @@ public class AzureSecretSigningMetadata extends SigningMetadata implements Azure
   @Override
   public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
     return factory.create(this);
+  }
+
+  @Override
+  public Map<String, String> getTags() {
+    // tags support is not applicable for config file mode as
+    // user is already providing the secret name to load the secret from.
+    return Collections.emptyMap();
   }
 }
