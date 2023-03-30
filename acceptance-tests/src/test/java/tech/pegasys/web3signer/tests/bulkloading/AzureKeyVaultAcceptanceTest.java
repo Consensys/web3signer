@@ -31,6 +31,8 @@ import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
@@ -74,6 +76,40 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     final String jsonBody = healthcheckResponse.body().asString();
     int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
     assertThat(keysLoaded).isEqualTo(1);
+  }
+
+  @ParameterizedTest(name = "{index} - Using config file: {0}")
+  @ValueSource(booleans = {true, false})
+  void azureSecretsViaTag(boolean useConfigFile) {
+    final AzureKeyVaultParameters azureParams =
+        new DefaultAzureKeyVaultParameters(
+            VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET, Map.of("ENV", "TEST"));
+
+    final SignerConfigurationBuilder configBuilder =
+        new SignerConfigurationBuilder()
+            .withMode("eth2")
+            .withUseConfigFile(useConfigFile)
+            .withAzureKeyVaultParameters(azureParams);
+
+    startSigner(configBuilder.build());
+
+    final Response response = signer.callApiPublicKeys(KeyType.BLS);
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
+
+    // the tag filter will return only valid keys. The healtcheck should be UP
+    final Response healthcheckResponse = signer.healthcheck();
+    healthcheckResponse
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("status", equalTo("UP"));
+
+    // keys loaded should be 1 as well.
+    final String jsonBody = healthcheckResponse.body().asString();
+    int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
+    int errorCount = getAzureBulkLoadingData(jsonBody, "error-count");
+    assertThat(keysLoaded).isOne();
+    assertThat(errorCount).isZero();
   }
 
   private static int getAzureBulkLoadingData(String healthCheckJsonBody, String dataKey) {

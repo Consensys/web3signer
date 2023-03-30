@@ -423,7 +423,8 @@ public class Eth2Runner extends Runner {
             LOG.error("Failed to load secret named {} from azure key vault.", name);
             return null;
           }
-        });
+        },
+        azureKeyVaultParameters.getTags());
   }
 
   private String formatBlsSignature(final BlsArtifactSignature signature) {

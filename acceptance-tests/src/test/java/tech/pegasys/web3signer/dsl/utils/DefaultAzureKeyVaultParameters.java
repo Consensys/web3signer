@@ -15,6 +15,10 @@ package tech.pegasys.web3signer.dsl.utils;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
   private final String keyVaultName;
@@ -22,17 +26,28 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   private final String clientId;
   private final String tenantId;
   private final String clientSecret;
+  private final Map<String, String> tags = new HashMap<>();
 
   public DefaultAzureKeyVaultParameters(
       final String keyVaultName,
       final String clientId,
       final String tenantId,
       final String clientSecret) {
+    this(keyVaultName, clientId, tenantId, clientSecret, Collections.emptyMap());
+  }
+
+  public DefaultAzureKeyVaultParameters(
+      final String keyVaultName,
+      final String clientId,
+      final String tenantId,
+      final String clientSecret,
+      final Map<String, String> tags) {
     this.keyVaultName = keyVaultName;
     this.clientId = clientId;
     this.tenantId = tenantId;
     this.clientSecret = clientSecret;
     this.authenticationMode = AzureAuthenticationMode.CLIENT_SECRET;
+    this.tags.putAll(tags);
   }
 
   @Override
@@ -63,5 +78,10 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   @Override
   public AzureAuthenticationMode getAuthenticationMode() {
     return authenticationMode;
+  }
+
+  @Override
+  public Map<String, String> getTags() {
+    return tags;
   }
 }

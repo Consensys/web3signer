@@ -132,6 +132,14 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                 YAML_STRING_FMT, "eth2.azure-client-secret", azureParams.getClientSecret()));
         yamlConfig.append(
             String.format(YAML_STRING_FMT, "eth2.azure-tenant-id", azureParams.getTenantId()));
+
+        azureParams
+            .getTags()
+            .forEach(
+                (tagName, tagValue) ->
+                    yamlConfig.append(
+                        String.format(
+                            YAML_STRING_FMT, "eth2.azure-secrets-tags", tagName + "=" + tagValue)));
       }
       if (signerConfig.getKeystoresParameters().isPresent()) {
         final KeystoresParameters keystoresParameters = signerConfig.getKeystoresParameters().get();
