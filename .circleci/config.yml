@@ -87,6 +87,7 @@ commands:
       - run:
           name: Java 17
           command: |
+            sudo apt update
             sudo apt install -q --assume-yes openjdk-17-jre-headless openjdk-17-jdk-headless
             sudo update-java-alternatives -a
   capture_test_results:
