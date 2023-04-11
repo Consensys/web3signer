@@ -7,6 +7,7 @@
   ],
   "transformationRules" : [
     { "bundleName" : "MIT", "licenseNamePattern" : "\"MIT\\sLicense\"" },
+    { "bundleName" : "MIT", "licenseNamePattern" : "(.*)SPDX-License-Identifier: MIT(.*)" },
     { "bundleName" : "BSD", "licenseNamePattern" : "BSD licence" },
     { "bundleName" : "CDDL-1.1", "licenseNamePattern" : "(.*)Dual license consisting of the CDDL v1.1 and GPL v2(.*)" },
     { "bundleName" : "Apache-2.0", "licenseNamePattern" : "(.*)Apache-2.0(.*)" }
