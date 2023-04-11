@@ -81,7 +81,14 @@ commands:
             - deps-{{ checksum "build.gradle" }}-{{ .Branch }}-{{ .Revision }}
             - deps-{{ checksum "build.gradle" }}
             - deps-
-
+  machine_java_17:
+    description: "Install Java 17 on machine executors"
+    steps:
+      - run:
+          name: Java 17
+          command: |
+            sudo apt install -q --assume-yes openjdk-17-jre-headless openjdk-17-jdk-headless
+            sudo update-java-alternatives -a
   capture_test_results:
     description: "Capture test results"
     steps:
@@ -253,6 +260,7 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
+      - machine_java_17
       - run:
           name: build and test Docker image
           command: |
@@ -265,6 +273,7 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
+      - machine_java_17
       - docker_trust_sign
       - docker_publish_images
       - notify
@@ -275,6 +284,7 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
+      - machine_java_17
       - docker_trust_sign
       - docker_publish_images
       - notify
