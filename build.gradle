@@ -461,7 +461,7 @@ tasks.register("dockerDistUntar") {
 }
 
 def dockerImage = "consensys/web3signer"
-def dockerJdkVariants = ["jdk17", "jdk11",]
+def dockerJdkVariants = ["jdk17",]
 def dockerBuildDir = "build/docker-web3signer/"
 
 task distDocker  {
