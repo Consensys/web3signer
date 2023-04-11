@@ -7,7 +7,7 @@ orbs:
 executors:
   executor_med:  # 2cpu, 4G ram
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
         auth: &docker-auth
           # Don't panic, throw away account to avoid Docker rate limits when downloading.
           # Second reason we're doing this is so that forked PRs from external contributors works ie env vars aren't visible to forked PRs from within contexts
@@ -21,7 +21,7 @@ executors:
 
   executor_large: # 4cpu, 8G ram
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
         auth:
           <<: *docker-auth   
     resource_class: large
@@ -33,7 +33,7 @@ executors:
   executor_large_with_fc_devnet: # 4cpu, 8G ram
     docker:
       # Primary container
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
         auth:
           <<: *docker-auth     
       # Secondary container running lotus as devnet on port 7777
@@ -55,7 +55,7 @@ executors:
 
   machine_executor_arm64:
     machine:
-      image: ubuntu-2004:202201-02 # Ubuntu 20.04, Docker v20.10.12, Docker Compose v1.29.2
+      image: ubuntu-2004:current # https://circleci.com/developer/machine/image/ubuntu-2004
     resource_class: arm.medium
     environment:
       architecture: "arm64"
@@ -63,7 +63,7 @@ executors:
 
   machine_executor_amd64:
     machine:
-      image: ubuntu-2004:202201-02 # Ubuntu 20.04, Docker v20.10.12, Docker Compose v1.29.2
+      image: ubuntu-2004:current # https://circleci.com/developer/machine/image/ubuntu-2004
       docker_layer_caching: true
     working_directory: ~/project
     environment:
