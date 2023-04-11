@@ -40,8 +40,8 @@ plugins {
   id 'org.ajoberstar.grgit' version '4.1.1'
 }
 
-if (!JavaVersion.current().java11Compatible) {
-  throw new GradleException("Java 11 or later is required to build Web3Signer.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+  throw new GradleException("Java 17 or later is required to build Web3Signer.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -109,8 +109,8 @@ allprojects {
     from javadoc.destinationDir
   }
 
-  sourceCompatibility = 11
-  targetCompatibility = 11
+  sourceCompatibility = 17
+  targetCompatibility = 17
 
   repositories {
     mavenCentral()
@@ -461,7 +461,7 @@ tasks.register("dockerDistUntar") {
 }
 
 def dockerImage = "consensys/web3signer"
-def dockerJdkVariants = ["jdk17", "jdk11",]
+def dockerJdkVariants = ["jdk17",]
 def dockerBuildDir = "build/docker-web3signer/"
 
 task distDocker  {
