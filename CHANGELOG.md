@@ -1,13 +1,7 @@
 # Changelog
-
 ## Upcoming release
-### Breaking Changes
-- Using Java 17 for build and runtime. Removing Java 11 variant of docker image. zip/tar.gz distributions will require 
-Java 17 or above to run Web3Signer.
-
 ### Features Added
 - Optional Azure bulk loading tags support using cli option `--azure-secrets-tags`.
-- Java 17 for build and runtime.
 
 ---
 ## 23.3.1
