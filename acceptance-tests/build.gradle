@@ -13,7 +13,7 @@
 
 plugins {
   id "de.undercouch.download" version "4.1.0"
-  id "com.google.osdetector" version "1.6.2"
+  id "com.google.osdetector" version "1.7.3"
   id "io.gatling.gradle" version "3.7.0-M1"
 }
 
@@ -89,6 +89,15 @@ def vaultBinary () {
   }
 }
 
+def getOsArchForVault() {
+  switch(osdetector.arch) {
+    case "aarch_64":
+      "arm64"
+       break
+    default: osdetector.arch
+  }
+}
+
 def vaultDownloadUrl() {
   // see gradle.properties for Hashicorp Vault URL
   switch (osdetector.os) {
@@ -99,7 +108,7 @@ def vaultDownloadUrl() {
       return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_linux_amd64.zip"
       break
     case "osx":
-      return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_darwin_amd64.zip"
+      return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_darwin_${getOsArchForVault()}.zip"
       break
   }
 }

@@ -261,10 +261,9 @@ public class Eth2Runner extends Runner {
     return new DefaultArtifactSignerProvider(
         () -> {
           final List<ArtifactSigner> signers = Lists.newArrayList();
-          final HashicorpConnectionFactory hashicorpConnectionFactory =
-              new HashicorpConnectionFactory(vertx);
-
-          try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+          try (final HashicorpConnectionFactory hashicorpConnectionFactory =
+                  new HashicorpConnectionFactory(vertx);
+              final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
               final AwsSecretsManagerProvider awsSecretsManagerProvider =
