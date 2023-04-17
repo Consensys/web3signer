@@ -13,6 +13,7 @@
 ### Bugs Fixed
 - Update of Azure libraries (transitive via signers library) and manual override to fix CVE-2023-1370
 - Fix issue with some third party libraries not including logs in the web3signer logs due missing slf4j2 library
+- Upgrade jackson and vertx to upgrade snakeyaml to 2.0 to fix CVE-2022-1471
 
 ---
 ## 23.3.0
