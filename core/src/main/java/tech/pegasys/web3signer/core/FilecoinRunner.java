@@ -117,10 +117,10 @@ public class FilecoinRunner extends Runner {
     return new DefaultArtifactSignerProvider(
         () -> {
           final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
-          final HashicorpConnectionFactory hashicorpConnectionFactory =
-              new HashicorpConnectionFactory(vertx);
 
-          try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+          try (final HashicorpConnectionFactory hashicorpConnectionFactory =
+                  new HashicorpConnectionFactory();
+              final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
               final AwsSecretsManagerProvider awsSecretsManagerProvider =

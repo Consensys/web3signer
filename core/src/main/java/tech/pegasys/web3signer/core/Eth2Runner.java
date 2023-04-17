@@ -262,7 +262,7 @@ public class Eth2Runner extends Runner {
         () -> {
           final List<ArtifactSigner> signers = Lists.newArrayList();
           try (final HashicorpConnectionFactory hashicorpConnectionFactory =
-                  new HashicorpConnectionFactory(vertx);
+                  new HashicorpConnectionFactory();
               final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
