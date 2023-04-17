@@ -90,7 +90,7 @@ class BlsArtifactSignerFactoryTest {
         new BlsArtifactSignerFactory(
             configDir,
             new NoOpMetricsSystem(),
-            new HashicorpConnectionFactory(vertx),
+            new HashicorpConnectionFactory(),
             interlockKeyProvider,
             yubiHsmOpaqueDataProvider,
             awsSecretsManagerProvider,

@@ -66,8 +66,10 @@ public class SignerLoader {
         configFilesContentMap.size(),
         timeTaken);
 
+    //    final MappedResults<ArtifactSigner> metadataResult =
+    //        processMetadataFilesInParallel(configFilesContentMap, signerParser);
     final MappedResults<ArtifactSigner> metadataResult =
-        processMetadataFilesInParallel(configFilesContentMap, signerParser);
+        processMetadataFilesSequentially(configFilesContentMap, signerParser);
     metadataResult.mergeErrorCount(configFileErrorCount);
     return metadataResult;
   }
@@ -125,13 +127,16 @@ public class SignerLoader {
     return new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8));
   }
 
+  @SuppressWarnings("UnusedMethod")
   private MappedResults<ArtifactSigner> processMetadataFilesInParallel(
       final Map<Path, String> configFilesContent, final SignerParser signerParser) {
     // use custom fork-join pool instead of common. Limit number of threads to avoid Azure bug
     ForkJoinPool forkJoinPool = null;
     try {
       forkJoinPool = new ForkJoinPool(numberOfThreads());
-      return forkJoinPool.submit(() -> parseMetadataFiles(configFilesContent, signerParser)).get();
+      return forkJoinPool
+          .submit(() -> parseMetadataFiles(configFilesContent, signerParser, true))
+          .get();
     } catch (final Exception e) {
       LOG.error(
           "Unexpected error in processing configuration files in parallel: {}", e.getMessage(), e);
@@ -143,16 +148,32 @@ public class SignerLoader {
     }
   }
 
+  private MappedResults<ArtifactSigner> processMetadataFilesSequentially(
+      final Map<Path, String> configFilesContent, final SignerParser signerParser) {
+    try {
+      return parseMetadataFiles(configFilesContent, signerParser, false);
+    } catch (final Exception e) {
+      return MappedResults.errorResult();
+    }
+  }
+
   private MappedResults<ArtifactSigner> parseMetadataFiles(
-      final Map<Path, String> configFilesContents, final SignerParser signerParser) {
-    LOG.info("Parsing configuration metadata files");
+      final Map<Path, String> configFilesContents,
+      final SignerParser signerParser,
+      boolean useParallelStream) {
+    LOG.info("Parsing configuration metadata files: Parallel {}", useParallelStream);
 
     final Instant start = Instant.now();
     final AtomicLong configFilesHandled = new AtomicLong();
     final AtomicInteger errorCount = new AtomicInteger(0);
 
+    final Stream<Map.Entry<Path, String>> entryStream =
+        useParallelStream
+            ? configFilesContents.entrySet().parallelStream()
+            : configFilesContents.entrySet().stream();
+
     final Set<ArtifactSigner> artifactSigners =
-        configFilesContents.entrySet().parallelStream()
+        entryStream
             .flatMap(
                 metadataContent -> {
                   final long filesProcessed = configFilesHandled.incrementAndGet();

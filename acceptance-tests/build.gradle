@@ -93,7 +93,7 @@ def getOsArchForVault() {
   switch(osdetector.arch) {
     case "aarch_64":
       "arm64"
-       break
+      break
     default: osdetector.arch
   }
 }
