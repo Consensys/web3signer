@@ -92,7 +92,7 @@ public class SignerLoader {
     metadataResult.mergeErrorCount(configFileContent.getErrorCount());
 
     LOG.info(
-        "Total Artifact Signer loaded via configuration files: {}\n, Error count {}\nTime Taken: {}.",
+        "Total Artifact Signer loaded via configuration files: {}\nError count {}\nTime Taken: {}.",
         metadataResult.getValues().size(),
         metadataResult.getErrorCount(),
         calculateTimeTaken(conversionStartInstant));
