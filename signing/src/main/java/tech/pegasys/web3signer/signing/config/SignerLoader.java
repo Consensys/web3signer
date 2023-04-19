@@ -103,7 +103,7 @@ public class SignerLoader {
   private MappedResults<SigningMetadata> convertConfigFileContent(
       final Map<Path, String> contentMap, final SignerParser signerParser) {
     final AtomicInteger errorCount = new AtomicInteger(0);
-    List<SigningMetadata> signingMetadataList =
+    final List<SigningMetadata> signingMetadataList =
         contentMap.entrySet().stream()
             .flatMap(
                 entry -> {
