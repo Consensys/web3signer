@@ -62,7 +62,7 @@ public class SignerLoader {
     LOG.info(
         "Signer configuration metadata files read in memory {} in {}",
         configFileContent.getContentMap().size(),
-            calculateTimeTaken(start));
+        calculateTimeTaken(start));
 
     final Instant conversionStartInstant = Instant.now();
     // convert yaml file content to list of SigningMetadata
