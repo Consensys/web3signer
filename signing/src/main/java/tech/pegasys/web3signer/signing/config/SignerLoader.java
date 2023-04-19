@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.signing.config;
 
 import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -181,7 +183,9 @@ public class SignerLoader {
                     LOG.info("{} metadata configuration files processed", filesProcessed);
                   }
                   try {
-                    return signerParser.parse(metadataContent.getValue()).stream();
+                    final List<SigningMetadata> signingMetadata =
+                        signerParser.readSigningMetadata(metadataContent.getValue());
+                    return signerParser.parse(signingMetadata).stream();
                   } catch (final Exception e) {
                     renderException(e, metadataContent.getKey().toString());
                     errorCount.incrementAndGet();

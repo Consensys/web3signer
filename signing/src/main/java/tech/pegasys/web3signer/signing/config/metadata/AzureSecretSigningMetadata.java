@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = AzureSecretSigningMetadataDeserializer.class)
 public class AzureSecretSigningMetadata extends SigningMetadata implements AzureKeyVaultParameters {
-
+  public static final String TYPE = "azure-secret";
   private final String clientId;
   private final String clientSecret;
   private final String tenantId;
@@ -40,7 +40,7 @@ public class AzureSecretSigningMetadata extends SigningMetadata implements Azure
       final String secretName,
       final AzureAuthenticationMode azureAuthenticationMode,
       final KeyType keyType) {
-    super(keyType != null ? keyType : KeyType.BLS);
+    super(TYPE, keyType != null ? keyType : KeyType.BLS);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.tenantId = tenantId;

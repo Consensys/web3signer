@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
 public class HashicorpSigningMetadata extends SigningMetadata {
-
+  public static final String TYPE = "hashicorp";
   private final String serverHost;
   private final String token;
   private final String keyPath;
@@ -41,7 +41,7 @@ public class HashicorpSigningMetadata extends SigningMetadata {
       @JsonProperty(value = "keyPath", required = true) final String keyPath,
       @JsonProperty(value = "token", required = true) final String token,
       @JsonProperty(value = "keyType") final KeyType keyType) {
-    super(keyType != null ? keyType : KeyType.BLS);
+    super(TYPE, keyType != null ? keyType : KeyType.BLS);
     this.serverHost = serverHost;
     this.token = token;
     this.keyPath = keyPath;

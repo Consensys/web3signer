@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class YubiHsmSigningMetadata extends SigningMetadata {
+  public static final String TYPE = "yubihsm";
   private final String pkcs11ModulePath;
   private final String connectorUrl;
   private final String additionalInitConfig;
@@ -37,7 +38,7 @@ public class YubiHsmSigningMetadata extends SigningMetadata {
       @JsonProperty(value = "password", required = true) final String password,
       @JsonProperty(value = "opaqueDataId", required = true) final short opaqueDataId,
       @JsonProperty(value = "keyType") final KeyType keyType) {
-    super(keyType != null ? keyType : KeyType.BLS);
+    super(TYPE, keyType != null ? keyType : KeyType.BLS);
 
     this.pkcs11ModulePath = pkcs11ModulePath;
     this.connectorUrl = connectorUrl;

@@ -19,13 +19,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class FileRawSigningMetadata extends SigningMetadata {
-
+  public static final String TYPE = "file-raw";
   private final Bytes32 privateKey;
 
   public FileRawSigningMetadata(
       @JsonProperty(value = "privateKey", required = true) final Bytes32 privateKey,
       @JsonProperty(value = "keyType") final KeyType keyType) {
-    super(keyType != null ? keyType : KeyType.BLS);
+    super(TYPE, keyType != null ? keyType : KeyType.BLS);
     this.privateKey = privateKey;
   }
 

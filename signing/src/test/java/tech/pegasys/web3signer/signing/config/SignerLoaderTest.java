@@ -13,144 +13,150 @@
 package tech.pegasys.web3signer.signing.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
+import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.common.MappedResults;
+import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.FileHiddenUtil;
-import tech.pegasys.web3signer.TrackingLogAppender;
+import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
-import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
+import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;
+import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
+import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
+import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.google.common.collect.Lists;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.Logger;
-import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.ArgumentMatchers;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class SignerLoaderTest {
-  private static final ObjectMapper YAML_OBJECT_MAPPER = YAMLMapper.builder().build();
-  @TempDir Path configsDirectory;
-  @Mock private SignerParser signerParser;
-
+  private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
   private static final String FILE_EXTENSION = "yaml";
-  private static final String PUBLIC_KEY1 =
-      "989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
-  private static final String PRIVATE_KEY1 =
-      "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-  private static final String PUBLIC_KEY2 =
-      "a99a76ed7796f7be22d5b7e85deeb7c5677e88e511e0b337618f8c4eb61349b4bf2d153f649f7b53359fe8b94a38e44c";
-  private static final String PRIVATE_KEY2 =
-      "25295f0d1d592a90b333e26e85149708208e9f8e8bc18f6c77bd62f8ad7a6866";
-  private static final String PUBLIC_KEY3 =
-      "a3a32b0f8b4ddb83f1a0a853d81dd725dfe577d4f4c3db8ece52ce2b026eca84815c1a7e8e92a4de3d755733bf7e4a9b";
-  private static final String PRIVATE_KEY3 =
-      "315ed405fafe339603932eebe8dbfd650ce5dafa561f6928664c75db85f97857";
+  @TempDir Path configsDirectory;
+  @Mock private MetricsSystem metricsSystem;
+  @Mock private HashicorpConnectionFactory hashicorpConnectionFactory;
+  @Mock private InterlockKeyProvider interlockKeyProvider;
+  @Mock private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
+  @Mock private AwsSecretsManagerProvider awsSecretsManagerProvider;
+  @Mock private LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
+  @Mock private OperationTimer operationTimer;
 
-  private final List<ArtifactSigner> artifactSigner = createArtifactSigner(PRIVATE_KEY1);
+  private static final BLSKeyPair blsKeyPair1 = BLSTestUtil.randomKeyPair(1);
+  private static final BLSKeyPair blsKeyPair2 = BLSTestUtil.randomKeyPair(2);
+  private static final BLSKeyPair blsKeyPair3 = BLSTestUtil.randomKeyPair(3);
 
-  @Test
-  void signerReturnedForValidMetadataFile() throws IOException {
-    final String filename = PUBLIC_KEY1 + "." + FILE_EXTENSION;
-    final Path metadataFile = createFileInConfigsDirectory(filename, PRIVATE_KEY1);
-    when(signerParser.parse(Files.readString(metadataFile, StandardCharsets.UTF_8)))
-        .thenReturn(artifactSigner);
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser).getValues());
+  private SignerLoader signerLoader;
+  private SignerParser signerParser;
 
-    verify(signerParser).parse(Files.readString(metadataFile, StandardCharsets.UTF_8));
+  @BeforeEach
+  public void setup() {
+    // setup metrics system stubbing
+    lenient()
+        .when(
+            metricsSystem.createLabelledTimer(
+                Web3SignerMetricCategory.SIGNING,
+                "private_key_retrieval_time",
+                "Time taken to retrieve private key",
+                "signer"))
+        .thenReturn(privateKeyRetrievalTimer);
+
+    lenient().when(privateKeyRetrievalTimer.labels(any())).thenReturn(operationTimer);
+
+    final BlsArtifactSignerFactory blsArtifactSignerFactory =
+        new BlsArtifactSignerFactory(
+            configsDirectory,
+            metricsSystem,
+            hashicorpConnectionFactory,
+            interlockKeyProvider,
+            yubiHsmOpaqueDataProvider,
+            awsSecretsManagerProvider,
+            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
+
+    signerParser =
+        new YamlSignerParser(
+            List.of(blsArtifactSignerFactory), YamlMapperFactory.createYamlMapper());
+    signerLoader = new SignerLoader();
+  }
+
+  @ParameterizedTest(name = "{index} - Signer created for file name {0}")
+  @MethodSource("validMetadataFileNameProvider")
+  void signerReturnedForValidMetadataFile(final String fileName) throws IOException {
+    final String privateKeyHex = blsKeyPair1.getSecretKey().toBytes().toHexString();
+    createFileInConfigsDirectory(fileName, privateKeyHex);
+
+    final Collection<ArtifactSigner> signerList =
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser).getValues();
+
     assertThat(signerList.size()).isOne();
-    assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
+    assertThat(signerList.stream().findFirst().orElseThrow().getIdentifier())
+        .isEqualTo(blsKeyPair1.getPublicKey().toHexString());
+  }
+
+  static Stream<String> validMetadataFileNameProvider() {
+    return Stream.of(
+        configFileName(blsKeyPair1),
+        "prefix_" + configFileName(blsKeyPair1),
+        "test.yaml",
+        "test.YAML");
   }
 
   @Test
-  void signerReturnedWhenIdentifierHasCaseMismatchToFilename() throws IOException {
-    final String filename = "arbitraryFilename." + FILE_EXTENSION;
-    final Path metadataFile = createFileInConfigsDirectory(filename, PRIVATE_KEY1);
-    when(signerParser.parse(ArgumentMatchers.any())).thenReturn(artifactSigner);
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser).getValues());
-
-    assertThat(signerList.size()).isOne();
-    assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
-    verify(signerParser).parse(Files.readString(metadataFile, StandardCharsets.UTF_8));
-  }
-
-  @Test
-  void signerReturnedWhenFileExtensionIsUpperCase() throws IOException {
-    final String filename = PUBLIC_KEY1 + ".YAML";
-    final Path metadataFile = createFileInConfigsDirectory(filename, PRIVATE_KEY1);
-    when(signerParser.parse(ArgumentMatchers.any())).thenReturn(artifactSigner);
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser).getValues());
-
-    assertThat(signerList.size()).isOne();
-    assertThat(signerList.get(0).getIdentifier()).isEqualTo("0x" + PUBLIC_KEY1);
-    verify(signerParser).parse(Files.readString(metadataFile, StandardCharsets.UTF_8));
-  }
-
-  @Test
-  @SuppressWarnings("ResultOfMethodCallIgnored")
   void wrongFileExtensionReturnsEmptySigner() throws IOException {
-    final String filename = PUBLIC_KEY1 + ".nothing";
-    createFileInConfigsDirectory(filename, PRIVATE_KEY1);
+    final String filename = blsKeyPair1.getPublicKey().toHexString() + ".nothing";
+    final String privateKeyHex = blsKeyPair1.getSecretKey().toBytes().toHexString();
+    createFileInConfigsDirectory(filename, privateKeyHex);
 
     final MappedResults<ArtifactSigner> result =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
     assertThat(result.getValues()).isEmpty();
     assertThat(result.getErrorCount()).isZero();
-    verifyNoMoreInteractions(signerParser);
   }
 
   @Test
   void failedParserReturnsEmptySigner() throws IOException {
-    createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, "NOT_A_VALID_KEY");
+    createFileInConfigsDirectory(configFileName(blsKeyPair1), "NOT_A_VALID_KEY");
 
     final MappedResults<ArtifactSigner> result =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
     assertThat(result.getValues()).isEmpty();
+    assertThat(result.getErrorCount()).isOne();
   }
 
   @Test
   void failedWithDirectoryErrorReturnEmptySigner() throws IOException {
-    final Path missingDir = configsDirectory.resolve("idontexist");
-    createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
+    final Path missingConfigDir = configsDirectory.resolve("idontexist");
     final MappedResults<ArtifactSigner> result =
-        new SignerLoader().load(missingDir, FILE_EXTENSION, signerParser);
+        signerLoader.load(missingConfigDir, FILE_EXTENSION, signerParser);
 
     assertThat(result.getValues()).isEmpty();
     assertThat(result.getErrorCount()).isOne();
@@ -158,220 +164,153 @@ class SignerLoaderTest {
 
   @Test
   void multipleMatchesForSameIdentifierReturnsSameSigners() throws IOException {
-    final String filename1 = "1_" + PUBLIC_KEY1 + "." + FILE_EXTENSION;
-    final String filename2 = "2_" + PUBLIC_KEY1 + "." + FILE_EXTENSION;
-    final Path metadataFile1 = createFileInConfigsDirectory(filename1, PRIVATE_KEY1);
-    final Path metadataFile2 = createFileInConfigsDirectory(filename2, PRIVATE_KEY1);
-
-    when(signerParser.parse(Files.readString(metadataFile1, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY1));
-    when(signerParser.parse(Files.readString(metadataFile2, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY1));
-
-    MappedResults<ArtifactSigner> result =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
-
-    assertThat(result.getValues()).hasSize(1);
-  }
-
-  @Test
-  void signerReturnedForMetadataFileWithPrefix() throws IOException {
-    final String filename = "someprefix" + PUBLIC_KEY1 + "." + FILE_EXTENSION;
-    final Path metadataFile = createFileInConfigsDirectory(filename, PRIVATE_KEY1);
-    when(signerParser.parse(ArgumentMatchers.any())).thenReturn(artifactSigner);
+    final String filename1 = "1_" + configFileName(blsKeyPair1);
+    final String filename2 = "2_" + configFileName(blsKeyPair1);
+    final String privateKeyHex = blsKeyPair1.getSecretKey().toBytes().toHexString();
+    createFileInConfigsDirectory(filename1, privateKeyHex);
+    createFileInConfigsDirectory(filename2, privateKeyHex);
 
     final MappedResults<ArtifactSigner> result =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
     assertThat(result.getValues()).hasSize(1);
-    assertThat(result.getValues().stream().findFirst().orElseThrow().getIdentifier())
-        .isEqualTo("0x" + PUBLIC_KEY1);
-    verify(signerParser).parse(Files.readString(metadataFile, StandardCharsets.UTF_8));
+    assertThat(result.getErrorCount()).isZero();
   }
 
   @Test
   void signerIdentifiersNotReturnedInvalidMetadataFile() throws IOException {
-    createEmptyFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION);
-    createEmptyFileInConfigsDirectory(PUBLIC_KEY2 + "." + FILE_EXTENSION);
+    createEmptyFileInConfigsDirectory(configFileName(blsKeyPair1));
+    createEmptyFileInConfigsDirectory(configFileName(blsKeyPair2));
     final MappedResults<ArtifactSigner> result =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
     assertThat(result.getValues()).isEmpty();
+    assertThat(result.getErrorCount()).isEqualTo(2);
   }
 
   @Test
   void signerIdentifiersNotReturnedForHiddenFiles() throws IOException {
-    final Path key1 =
-        createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
-    FileHiddenUtil.makeFileHidden(key1);
-    final Path key2 =
-        createFileInConfigsDirectory(PUBLIC_KEY2 + "." + FILE_EXTENSION, PRIVATE_KEY2);
-
-    // Using lenient so it's clear key is not returned due file being hidden instead no stub
-    final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
-    unencryptedKeyMetadataFile.put("type", "file-raw");
-    unencryptedKeyMetadataFile.put("privateKey", "0x" + PRIVATE_KEY1);
-    final String yamlContentKey1 =
-        YAML_OBJECT_MAPPER.writeValueAsString(unencryptedKeyMetadataFile);
-    lenient()
-        .when(signerParser.parse(yamlContentKey1))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY1));
-
-    when(signerParser.parse(Files.readString(key2, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY2));
+    final String privateKeyHex1 = blsKeyPair1.getSecretKey().toBytes().toHexString();
+    final String privateKeyHex2 = blsKeyPair2.getSecretKey().toBytes().toHexString();
+    final Path hiddenFile =
+        createFileInConfigsDirectory(configFileName(blsKeyPair1), privateKeyHex1);
+    FileHiddenUtil.makeFileHidden(hiddenFile);
+    createFileInConfigsDirectory(configFileName(blsKeyPair2), privateKeyHex2);
 
     final MappedResults<ArtifactSigner> result =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
     assertThat(result.getValues()).hasSize(1);
     assertThat(result.getValues().stream().findFirst().orElseThrow().getIdentifier())
-        .isEqualTo("0x" + PUBLIC_KEY2);
-
-    verify(signerParser, Mockito.never()).parse(yamlContentKey1);
-    verify(signerParser).parse(Files.readString(key2, StandardCharsets.UTF_8));
+        .isEqualTo(blsKeyPair2.getPublicKey().toHexString());
+    assertThat(result.getErrorCount()).isZero();
   }
 
   @Test
   void signerIdentifiersReturnedForAllValidMetadataFilesInDirectory() throws IOException {
-    createSignerConfigFiles();
+    final String privateKeyHex1 = blsKeyPair1.getSecretKey().toBytes().toHexString();
+    final String privateKeyHex2 = blsKeyPair2.getSecretKey().toBytes().toHexString();
+    final String privateKeyHex3 = blsKeyPair3.getSecretKey().toBytes().toHexString();
+
+    createFileInConfigsDirectory(configFileName(blsKeyPair1), privateKeyHex1);
+    createFileInConfigsDirectory(configFileName(blsKeyPair2), privateKeyHex2);
+    createFileInConfigsDirectory(configFileName(blsKeyPair3), privateKeyHex3);
 
     MappedResults<ArtifactSigner> result =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
     assertThat(result.getValues()).hasSize(3);
     assertThat(
             result.getValues().stream()
                 .map(ArtifactSigner::getIdentifier)
                 .collect(Collectors.toList()))
-        .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
-  }
-
-  private void createSignerConfigFiles() throws IOException {
-    final Path key1 =
-        createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
-    when(signerParser.parse(Files.readString(key1, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY1));
-
-    final Path key2 =
-        createFileInConfigsDirectory(PUBLIC_KEY2 + "." + FILE_EXTENSION, PRIVATE_KEY2);
-    when(signerParser.parse(Files.readString(key2, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY2));
-
-    final Path key3 =
-        createFileInConfigsDirectory(PUBLIC_KEY3 + "." + FILE_EXTENSION, PRIVATE_KEY3);
-    when(signerParser.parse(Files.readString(key3, StandardCharsets.UTF_8)))
-        .thenReturn(createArtifactSigner(PRIVATE_KEY3));
+        .containsOnly(
+            blsKeyPair1.getPublicKey().toHexString(),
+            blsKeyPair2.getPublicKey().toHexString(),
+            blsKeyPair3.getPublicKey().toHexString());
   }
 
   @Test
   void callingLoadTwiceDoesNotReloadUnmodifiedConfigFiles() throws IOException {
-    createSignerConfigFiles();
+    final String privateKeyHex1 = blsKeyPair1.getSecretKey().toBytes().toHexString();
+    final String privateKeyHex2 = blsKeyPair2.getSecretKey().toBytes().toHexString();
+    final String privateKeyHex3 = blsKeyPair3.getSecretKey().toBytes().toHexString();
+
+    createFileInConfigsDirectory(configFileName(blsKeyPair1), privateKeyHex1);
+    createFileInConfigsDirectory(configFileName(blsKeyPair2), privateKeyHex2);
+    createFileInConfigsDirectory(configFileName(blsKeyPair3), privateKeyHex3);
 
     final MappedResults<ArtifactSigner> result =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
     assertThat(result.getValues()).hasSize(3);
     assertThat(
             result.getValues().stream()
                 .map(ArtifactSigner::getIdentifier)
                 .collect(Collectors.toList()))
-        .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
+        .containsOnly(
+            blsKeyPair1.getPublicKey().toHexString(),
+            blsKeyPair2.getPublicKey().toHexString(),
+            blsKeyPair3.getPublicKey().toHexString());
 
     final MappedResults<ArtifactSigner> reloadedResult =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
     assertThat(reloadedResult.getValues()).isEmpty();
   }
 
   @Test
   void callingLoadTwiceOnlyLoadSignersFromModifiedConfigFiles() throws IOException {
-    createSignerConfigFiles();
+    final String privateKeyHex1 = blsKeyPair1.getSecretKey().toBytes().toHexString();
+    final String privateKeyHex2 = blsKeyPair2.getSecretKey().toBytes().toHexString();
+    final String privateKeyHex3 = blsKeyPair3.getSecretKey().toBytes().toHexString();
 
-    final List<ArtifactSigner> signerList =
-        Lists.newArrayList(
-            new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser).getValues());
-
-    assertThat(signerList).hasSize(3);
-    assertThat(signerList.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toList()))
-        .containsOnly("0x" + PUBLIC_KEY1, "0x" + PUBLIC_KEY2, "0x" + PUBLIC_KEY3);
-
-    // recreate file - which would change the last modified time
-    createFileInConfigsDirectory(PUBLIC_KEY3 + "." + FILE_EXTENSION, PRIVATE_KEY3);
-
-    final Collection<ArtifactSigner> reloadedArtifactSigner =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser).getValues();
-    assertThat(reloadedArtifactSigner).hasSize(1);
-    assertThat(reloadedArtifactSigner.stream().findFirst().get().getIdentifier())
-        .isEqualTo("0x" + PUBLIC_KEY3);
-  }
-
-  @Test
-  void errorMessageFromExceptionStackShowsRootCause() throws IOException {
-    final RuntimeException rootCause = new RuntimeException("Root cause failure.");
-    final RuntimeException intermediateException =
-        new RuntimeException("Intermediate wrapped rethrow", rootCause);
-    final RuntimeException topMostException =
-        new RuntimeException("Abstract Failure", intermediateException);
-
-    when(signerParser.parse(ArgumentMatchers.any())).thenThrow(topMostException);
-
-    final TrackingLogAppender logAppender = new TrackingLogAppender();
-    final Logger logger = (Logger) LogManager.getLogger(SignerLoader.class);
-    logAppender.start();
-    logger.addAppender(logAppender);
-
-    try {
-      createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
-      new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
-
-      final Optional<LogEvent> event =
-          logAppender.getLogMessagesReceived().stream()
-              .filter(
-                  logEvent ->
-                      logEvent.getMessage().getFormattedMessage().contains(rootCause.getMessage()))
-              .findFirst();
-      assertThat(event).isPresent().as("Log should contain message {}", rootCause.getMessage());
-
-    } finally {
-      logger.removeAppender(logAppender);
-      logAppender.stop();
-    }
-  }
-
-  @Test
-  void signerIsNotLoadedWhenParserFails() throws IOException {
-    createFileInConfigsDirectory(PUBLIC_KEY1 + "." + FILE_EXTENSION, PRIVATE_KEY1);
-    when(signerParser.parse(ArgumentMatchers.any())).thenThrow(SigningMetadataException.class);
+    createFileInConfigsDirectory(configFileName(blsKeyPair1), privateKeyHex1);
+    createFileInConfigsDirectory(configFileName(blsKeyPair2), privateKeyHex2);
+    createFileInConfigsDirectory(configFileName(blsKeyPair3), privateKeyHex3);
 
     final MappedResults<ArtifactSigner> result =
-        new SignerLoader().load(configsDirectory, FILE_EXTENSION, signerParser);
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser);
 
-    assertThat(result.getValues()).isEmpty();
+    assertThat(result.getValues()).hasSize(3);
+    assertThat(
+            result.getValues().stream()
+                .map(ArtifactSigner::getIdentifier)
+                .collect(Collectors.toList()))
+        .containsOnly(
+            blsKeyPair1.getPublicKey().toHexString(),
+            blsKeyPair2.getPublicKey().toHexString(),
+            blsKeyPair3.getPublicKey().toHexString());
+
+    // recreate file - which would change the last modified time
+    createFileInConfigsDirectory(configFileName(blsKeyPair3), privateKeyHex3);
+
+    final Collection<ArtifactSigner> reloadedArtifactSigner =
+        signerLoader.load(configsDirectory, FILE_EXTENSION, signerParser).getValues();
+    assertThat(reloadedArtifactSigner).hasSize(1);
+    assertThat(reloadedArtifactSigner.stream().findFirst().get().getIdentifier())
+        .isEqualTo(blsKeyPair3.getPublicKey().toHexString());
   }
 
-  private Path createFileInConfigsDirectory(final String filename, final String privateKey)
+  private Path createFileInConfigsDirectory(final String fileName, final String privateKeyHex)
       throws IOException {
-    final Path file = configsDirectory.resolve(filename);
+    final Path file = configsDirectory.resolve(fileName);
 
     final Map<String, String> unencryptedKeyMetadataFile = new HashMap<>();
     unencryptedKeyMetadataFile.put("type", "file-raw");
-    unencryptedKeyMetadataFile.put("privateKey", "0x" + privateKey);
-    final String yamlContent = YAML_OBJECT_MAPPER.writeValueAsString(unencryptedKeyMetadataFile);
+    unencryptedKeyMetadataFile.put("privateKey", privateKeyHex);
+    final String yamlContent = YAML_MAPPER.writeValueAsString(unencryptedKeyMetadataFile);
 
     Files.writeString(file, yamlContent);
     assertThat(file).exists();
     return file;
   }
 
-  private Path createEmptyFileInConfigsDirectory(final String filename) throws IOException {
-    final File file = configsDirectory.resolve(filename).toFile();
-    assertThat(file.createNewFile()).isTrue();
-    return file.toPath();
+  private static String configFileName(final BLSKeyPair blsKeyPair) {
+    return String.format("%s.%s", blsKeyPair.getPublicKey().toHexString(), FILE_EXTENSION);
   }
 
-  private List<ArtifactSigner> createArtifactSigner(final String privateKey) {
-    return List.of(
-        new BlsArtifactSigner(
-            new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(privateKey))),
-            SignerOrigin.FILE_RAW));
+  private void createEmptyFileInConfigsDirectory(final String filename) throws IOException {
+    final File file = configsDirectory.resolve(filename).toFile();
+    assertThat(file.createNewFile()).isTrue();
   }
 }

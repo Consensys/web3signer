@@ -110,7 +110,8 @@ class YamlSignerParserMultiReadTest {
                 + "type: \"file-raw\"",
             prvKey1, prvKey2);
 
-    final List<ArtifactSigner> signingMetadataList = signerParser.parse(multiYaml);
+    final List<ArtifactSigner> signingMetadataList =
+        signerParser.parse(signerParser.readSigningMetadata(multiYaml));
 
     assertThat(signingMetadataList).hasSize(2);
   }
@@ -132,7 +133,8 @@ class YamlSignerParserMultiReadTest {
         String.format("%s%n%s", fileKeystoreMetadataYaml, rawKeystoreMetadataYaml);
 
     // parse and assert results
-    final List<ArtifactSigner> result = signerParser.parse(multiDocYaml);
+    final List<ArtifactSigner> result =
+        signerParser.parse(signerParser.readSigningMetadata(multiDocYaml));
     final Set<String> publicKeyIdentifiers =
         result.stream().map(ArtifactSigner::getIdentifier).collect(Collectors.toSet());
 
@@ -158,7 +160,7 @@ class YamlSignerParserMultiReadTest {
             prvKey1, prvKey2);
 
     assertThatExceptionOfType(SigningMetadataException.class)
-        .isThrownBy(() -> signerParser.parse(multiYaml))
+        .isThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(multiYaml)))
         .withMessage("Invalid signing metadata file format");
   }
 }
