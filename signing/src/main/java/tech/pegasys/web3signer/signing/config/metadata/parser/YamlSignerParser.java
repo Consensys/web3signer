@@ -75,7 +75,8 @@ public class YamlSignerParser implements SignerParser {
     } catch (final SigningMetadataException e) {
       throw e;
     } catch (final Exception e) {
-      throw new SigningMetadataException("Unknown failure", e);
+      throw new SigningMetadataException(
+          "Unexpected error while converting SigningMetadata to ArtifactSigner", e);
     }
   }
 

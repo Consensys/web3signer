@@ -25,6 +25,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,6 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,27 +56,74 @@ public class SignerLoader {
     final Instant start = Instant.now();
     LOG.info("Loading signer configuration metadata files from {}", configsDirectory);
 
-    final Pair<Map<Path, String>, Integer> configFilesMapPair =
+    final ConfigFileContent configFileContent =
         getNewOrModifiedConfigFilesContents(configsDirectory, fileExtension);
-    final Map<Path, String> configFilesContentMap = configFilesMapPair.getLeft();
-    final int configFileErrorCount = configFilesMapPair.getRight();
 
-    final String timeTaken =
-        DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
     LOG.info(
         "Signer configuration metadata files read in memory {} in {}",
-        configFilesContentMap.size(),
-        timeTaken);
+        configFileContent.getContentMap().size(),
+            calculateTimeTaken(start));
 
-    //    final MappedResults<ArtifactSigner> metadataResult =
-    //        processMetadataFilesInParallel(configFilesContentMap, signerParser);
+    final Instant conversionStartInstant = Instant.now();
+    // convert yaml file content to list of SigningMetadata
+    final MappedResults<SigningMetadata> signingMetadataResults =
+        convertConfigFileContent(configFileContent.getContentMap(), signerParser);
+
+    LOG.debug(
+        "Signing configuration metadata files converted to signing metadata {}",
+        signingMetadataResults.getValues().size());
+
+    final Collection<SigningMetadata> signingMetadata = signingMetadataResults.getValues();
+    // filter hashicorp signing metadata, we want them to be processed sequentially.
+    final Map<Boolean, List<SigningMetadata>> partitionedMetadata =
+        signingMetadata.stream()
+            .collect(
+                Collectors.partitioningBy(metadata -> !metadata.getType().equals("hashicorp")));
+    final MappedResults<ArtifactSigner> metadataResultParallel =
+        mapToArtifactSignerInParallel(partitionedMetadata.get(true), signerParser);
+    final MappedResults<ArtifactSigner> metadataResultSequential =
+        mapToArtifactSignerSequentially(partitionedMetadata.get(false), signerParser);
+
     final MappedResults<ArtifactSigner> metadataResult =
-        processMetadataFilesSequentially(configFilesContentMap, signerParser);
-    metadataResult.mergeErrorCount(configFileErrorCount);
+        MappedResults.merge(metadataResultParallel, metadataResultSequential);
+
+    // merge error counts of config file parsing errors ...
+    metadataResult.mergeErrorCount(signingMetadataResults.getErrorCount());
+    metadataResult.mergeErrorCount(configFileContent.getErrorCount());
+
+    LOG.info(
+        "Total Artifact Signer loaded via configuration files: {}\n, Error count {}\nTime Taken: {}.",
+        metadataResult.getValues().size(),
+        metadataResult.getErrorCount(),
+        calculateTimeTaken(conversionStartInstant));
+
     return metadataResult;
   }
 
-  private Pair<Map<Path, String>, Integer> getNewOrModifiedConfigFilesContents(
+  private MappedResults<SigningMetadata> convertConfigFileContent(
+      final Map<Path, String> contentMap, final SignerParser signerParser) {
+    final AtomicInteger errorCount = new AtomicInteger(0);
+    List<SigningMetadata> signingMetadataList =
+        contentMap.entrySet().stream()
+            .flatMap(
+                entry -> {
+                  try {
+                    return signerParser.readSigningMetadata(entry.getValue()).stream();
+                  } catch (final Exception e) {
+                    renderException(e, entry.getKey().toString());
+                    errorCount.incrementAndGet();
+                    return Stream.empty();
+                  }
+                })
+            .collect(Collectors.toList());
+    return MappedResults.newInstance(signingMetadataList, errorCount.get());
+  }
+
+  private static String calculateTimeTaken(final Instant start) {
+    return DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
+  }
+
+  private ConfigFileContent getNewOrModifiedConfigFilesContents(
       final Path configsDirectory, final String fileExtension) {
     final AtomicInteger errorCount = new AtomicInteger(0);
     final Map<Path, String> configFileMap = new HashMap<>();
@@ -103,7 +150,7 @@ public class SignerLoader {
       LOG.error("Unable to access the supplied key directory", e);
       errorCount.incrementAndGet();
     }
-    return Pair.of(configFileMap, errorCount.get());
+    return new ConfigFileContent(configFileMap, errorCount.get());
   }
 
   private boolean isNewOrModifiedMetadataFile(final Path path) {
@@ -129,15 +176,20 @@ public class SignerLoader {
     return new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8));
   }
 
-  @SuppressWarnings("UnusedMethod")
-  private MappedResults<ArtifactSigner> processMetadataFilesInParallel(
-      final Map<Path, String> configFilesContent, final SignerParser signerParser) {
+  private MappedResults<ArtifactSigner> mapToArtifactSignerInParallel(
+      final Collection<SigningMetadata> signingMetadataCollection,
+      final SignerParser signerParser) {
+
+    if (signingMetadataCollection.isEmpty()) {
+      return MappedResults.newSetInstance();
+    }
+
     // use custom fork-join pool instead of common. Limit number of threads to avoid Azure bug
     ForkJoinPool forkJoinPool = null;
     try {
       forkJoinPool = new ForkJoinPool(numberOfThreads());
       return forkJoinPool
-          .submit(() -> parseMetadataFiles(configFilesContent, signerParser, true))
+          .submit(() -> mapToArtifactSigner(signingMetadataCollection, signerParser, true))
           .get();
     } catch (final Exception e) {
       LOG.error(
@@ -150,29 +202,33 @@ public class SignerLoader {
     }
   }
 
-  private MappedResults<ArtifactSigner> processMetadataFilesSequentially(
-      final Map<Path, String> configFilesContent, final SignerParser signerParser) {
+  private MappedResults<ArtifactSigner> mapToArtifactSignerSequentially(
+      final Collection<SigningMetadata> signingMetadataCollection,
+      final SignerParser signerParser) {
+    if (signingMetadataCollection.isEmpty()) {
+      return MappedResults.newSetInstance();
+    }
+
     try {
-      return parseMetadataFiles(configFilesContent, signerParser, false);
+      return mapToArtifactSigner(signingMetadataCollection, signerParser, false);
     } catch (final Exception e) {
       return MappedResults.errorResult();
     }
   }
 
-  private MappedResults<ArtifactSigner> parseMetadataFiles(
-      final Map<Path, String> configFilesContents,
+  private MappedResults<ArtifactSigner> mapToArtifactSigner(
+      final Collection<SigningMetadata> signingMetadataCollection,
       final SignerParser signerParser,
       boolean useParallelStream) {
-    LOG.info("Parsing configuration metadata files: Parallel {}", useParallelStream);
+    LOG.info("Converting signing metadata to Artifact Signer with parallel: {}", useParallelStream);
 
-    final Instant start = Instant.now();
     final AtomicLong configFilesHandled = new AtomicLong();
     final AtomicInteger errorCount = new AtomicInteger(0);
 
-    final Stream<Map.Entry<Path, String>> entryStream =
+    final Stream<SigningMetadata> entryStream =
         useParallelStream
-            ? configFilesContents.entrySet().parallelStream()
-            : configFilesContents.entrySet().stream();
+            ? signingMetadataCollection.parallelStream()
+            : signingMetadataCollection.stream();
 
     final Set<ArtifactSigner> artifactSigners =
         entryStream
@@ -180,28 +236,23 @@ public class SignerLoader {
                 metadataContent -> {
                   final long filesProcessed = configFilesHandled.incrementAndGet();
                   if (filesProcessed % FILES_PROCESSED_TO_REPORT == 0) {
-                    LOG.info("{} metadata configuration files processed", filesProcessed);
+                    LOG.info("{} signing metadata processed", filesProcessed);
                   }
                   try {
-                    final List<SigningMetadata> signingMetadata =
-                        signerParser.readSigningMetadata(metadataContent.getValue());
-                    return signerParser.parse(signingMetadata).stream();
+                    return signerParser.parse(List.of(metadataContent)).stream();
                   } catch (final Exception e) {
-                    renderException(e, metadataContent.getKey().toString());
+                    LOG.error(
+                        "Error converting signing metadata to Artifact Signer: {}", e.getMessage());
+                    LOG.debug(ExceptionUtils.getStackTrace(e));
                     errorCount.incrementAndGet();
-                    return null;
+                    return Stream.empty();
                   }
                 })
-            .filter(Objects::nonNull)
             .collect(Collectors.toSet());
-    final String timeTaken =
-        DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
-    LOG.info("Total configuration metadata files processed: {}", configFilesHandled.get());
     LOG.info(
-        "Total signers loaded from configuration files: {} in {} with error count {}",
-        artifactSigners.size(),
-        timeTaken,
-        errorCount.get());
+        "Total signing metadata converted to Artifact Signer (parallel={}): {}",
+        useParallelStream,
+        artifactSigners.size());
     return MappedResults.newInstance(artifactSigners, errorCount.get());
   }
 
