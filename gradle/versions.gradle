@@ -13,8 +13,8 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.14.2'
-    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.2'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.15.0-rc3'
+    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.0-rc3'
 
     dependencySet(group: 'com.google.errorprone', version: '2.17.0') {
       entry 'error_prone_annotation'
@@ -33,7 +33,7 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.6.2'
 
-    dependencySet(group: 'io.vertx', version: '4.3.8') {
+    dependencySet(group: 'io.vertx', version: '4.4.1') {
       entry 'vertx-codegen'
       entry 'vertx-core'
       entry 'vertx-unit'
