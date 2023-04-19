@@ -89,12 +89,12 @@ def vaultBinary () {
   }
 }
 
-def getOsArchForVault() {
+def getOsXArchForVault() {
   switch(osdetector.arch) {
     case "aarch_64":
       "arm64"
       break
-    default: osdetector.arch
+    default: "amd64"
   }
 }
 
@@ -108,7 +108,7 @@ def vaultDownloadUrl() {
       return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_linux_amd64.zip"
       break
     case "osx":
-      return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_darwin_${getOsArchForVault()}.zip"
+      return "${hashicorpVaultUrl}/${hashicorpVaultVersion}/vault_${hashicorpVaultVersion}_darwin_${getOsXArchForVault()}.zip"
       break
   }
 }
