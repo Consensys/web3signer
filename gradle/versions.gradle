@@ -114,8 +114,13 @@ dependencyManagement {
 
     dependency 'io.rest-assured:rest-assured:4.4.0'
     dependency 'org.zeroturnaround:zt-exec:1.12'
-    dependency('org.web3j:core:4.9.5') {
-      exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
+
+    dependencySet(group: 'org.web3j', version: '4.9.4') {
+      entry 'besu'
+      entry ('core') {
+        exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
+      }
+      entry 'crypto'
     }
 
     dependency 'com.github.arteam:simple-json-rpc-server:1.3'

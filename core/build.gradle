@@ -51,6 +51,8 @@ dependencies {
   implementation 'tech.pegasys.teku.internal:spec'
   implementation 'tech.pegasys.teku.internal:unsigned'
   implementation 'tech.pegasys.teku.internal:jackson'
+  implementation 'org.web3j:crypto'
+  implementation 'org.web3j:besu'
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl'
 
   testImplementation (testFixtures(project(":signing")))
