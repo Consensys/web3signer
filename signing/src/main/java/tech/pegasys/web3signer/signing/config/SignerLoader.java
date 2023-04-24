@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.signing.config;
 
 import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.config.metadata.HashicorpSigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 
@@ -78,7 +79,8 @@ public class SignerLoader {
     final Map<Boolean, List<SigningMetadata>> partitionedMetadata =
         signingMetadata.stream()
             .collect(
-                Collectors.partitioningBy(metadata -> !metadata.getType().equals("hashicorp")));
+                Collectors.partitioningBy(
+                    metadata -> !metadata.getType().equals(HashicorpSigningMetadata.TYPE)));
     final MappedResults<ArtifactSigner> metadataResultParallel =
         mapToArtifactSignerInParallel(partitionedMetadata.get(true), signerParser);
     final MappedResults<ArtifactSigner> metadataResultSequential =
@@ -184,12 +186,15 @@ public class SignerLoader {
       return MappedResults.newSetInstance();
     }
 
+    LOG.info("Converting signing metadata to Artifact Signer using parallel streams ...");
+
     // use custom fork-join pool instead of common. Limit number of threads to avoid Azure bug
     ForkJoinPool forkJoinPool = null;
     try {
       forkJoinPool = new ForkJoinPool(numberOfThreads());
       return forkJoinPool
-          .submit(() -> mapToArtifactSigner(signingMetadataCollection, signerParser, true))
+          .submit(
+              () -> mapToArtifactSigner(signingMetadataCollection.parallelStream(), signerParser))
           .get();
     } catch (final Exception e) {
       LOG.error(
@@ -209,29 +214,22 @@ public class SignerLoader {
       return MappedResults.newSetInstance();
     }
 
+    LOG.info("Converting signing metadata to Artifact Signer using sequential streams ...");
+
     try {
-      return mapToArtifactSigner(signingMetadataCollection, signerParser, false);
+      return mapToArtifactSigner(signingMetadataCollection.stream(), signerParser);
     } catch (final Exception e) {
       return MappedResults.errorResult();
     }
   }
 
   private MappedResults<ArtifactSigner> mapToArtifactSigner(
-      final Collection<SigningMetadata> signingMetadataCollection,
-      final SignerParser signerParser,
-      boolean useParallelStream) {
-    LOG.info("Converting signing metadata to Artifact Signer with parallel: {}", useParallelStream);
-
+      final Stream<SigningMetadata> signingMetadataStream, final SignerParser signerParser) {
     final AtomicLong configFilesHandled = new AtomicLong();
     final AtomicInteger errorCount = new AtomicInteger(0);
 
-    final Stream<SigningMetadata> entryStream =
-        useParallelStream
-            ? signingMetadataCollection.parallelStream()
-            : signingMetadataCollection.stream();
-
     final Set<ArtifactSigner> artifactSigners =
-        entryStream
+        signingMetadataStream
             .flatMap(
                 metadataContent -> {
                   final long filesProcessed = configFilesHandled.incrementAndGet();
@@ -249,10 +247,7 @@ public class SignerLoader {
                   }
                 })
             .collect(Collectors.toSet());
-    LOG.info(
-        "Total signing metadata converted to Artifact Signer (parallel={}): {}",
-        useParallelStream,
-        artifactSigners.size());
+    LOG.debug("Signing metadata mapped to Artifact Signer: {}", artifactSigners.size());
     return MappedResults.newInstance(artifactSigners, errorCount.get());
   }
 
