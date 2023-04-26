@@ -5,6 +5,7 @@
 
 ### Bugs Fixed
 - Upgrade jackson and vertx to upgrade snakeyaml to 2.0 to fix CVE-2022-1471
+- Fixed handling of very large number of signing metadata files with Hashicorp connection (30000+). [#736](https://github.com/ConsenSys/web3signer/issues/736)
 
 ---
 ## 23.3.1
