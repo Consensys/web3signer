@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.signing.config;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Map;
 
 class ConfigFileContent {
@@ -22,6 +23,10 @@ class ConfigFileContent {
   public ConfigFileContent(final Map<Path, String> contentMap, final int errorCount) {
     this.contentMap = contentMap;
     this.errorCount = errorCount;
+  }
+
+  static ConfigFileContent withSingleErrorCount() {
+    return new ConfigFileContent(Collections.emptyMap(), 1);
   }
 
   public Map<Path, String> getContentMap() {

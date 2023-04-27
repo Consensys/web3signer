@@ -127,31 +127,37 @@ public class SignerLoader {
 
   private ConfigFileContent getNewOrModifiedConfigFilesContents(
       final Path configsDirectory, final String fileExtension) {
-    final AtomicInteger errorCount = new AtomicInteger(0);
-    final Map<Path, String> configFileMap = new HashMap<>();
-    // read configuration files without converting them to signers first.
+    // Step 1, read Paths in config directory without reading the file content since Files.list does
+    // not use parallel stream
+    final List<Path> filteredPaths;
     try (final Stream<Path> fileStream = Files.list(configsDirectory)) {
-      final Map<Path, String> _map =
+      filteredPaths =
           fileStream
               .filter(path -> matchesFileExtension(fileExtension, path))
               .filter(this::isNewOrModifiedMetadataFile)
-              .map(
-                  path -> {
-                    try {
-                      return getMetadataFileContent(path);
-                    } catch (final IOException e) {
-                      errorCount.incrementAndGet();
-                      LOG.error("Error reading config file: {}", path, e);
-                      return null;
-                    }
-                  })
-              .filter(Objects::nonNull)
-              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-      configFileMap.putAll(_map);
+              .collect(Collectors.toList());
     } catch (final IOException e) {
       LOG.error("Unable to access the supplied key directory", e);
-      errorCount.incrementAndGet();
+      return ConfigFileContent.withSingleErrorCount();
     }
+
+    final AtomicInteger errorCount = new AtomicInteger(0);
+    // step 2, read file contents in parallel stream
+    final Map<Path, String> configFileMap =
+        filteredPaths.parallelStream()
+            .map(
+                path -> {
+                  try {
+                    return getMetadataFileContent(path);
+                  } catch (final IOException e) {
+                    errorCount.incrementAndGet();
+                    LOG.error("Error reading config file: {}", path, e);
+                    return null;
+                  }
+                })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
     return new ConfigFileContent(configFileMap, errorCount.get());
   }
 
