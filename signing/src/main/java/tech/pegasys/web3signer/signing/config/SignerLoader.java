@@ -106,7 +106,7 @@ public class SignerLoader {
       final Map<Path, String> contentMap, final SignerParser signerParser) {
     final AtomicInteger errorCount = new AtomicInteger(0);
     final List<SigningMetadata> signingMetadataList =
-        contentMap.entrySet().stream()
+        contentMap.entrySet().parallelStream()
             .flatMap(
                 entry -> {
                   try {
