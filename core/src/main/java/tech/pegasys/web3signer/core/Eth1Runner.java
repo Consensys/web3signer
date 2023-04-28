@@ -20,6 +20,10 @@ import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.service.DownstreamPathCalculator;
+import tech.pegasys.web3signer.core.service.PassThroughHandler;
+import tech.pegasys.web3signer.core.service.VertxRequestTransmitter;
+import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
@@ -35,10 +39,13 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
+import java.time.Duration;
 import java.util.List;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -75,6 +82,30 @@ public class Eth1Runner extends Runner {
         .failureHandler(errorHandler);
 
     addReloadHandler(routerBuilder, signerProvider, RELOAD.name(), context.getErrorHandler());
+
+    final Duration httpRequestTimeout = Duration.ofSeconds(1); // TODO Use value from config
+    final String downstreamHttpPath = "/"; // TODO use value from config
+
+    final DownstreamPathCalculator downstreamPathCalculator =
+        new DownstreamPathCalculator(downstreamHttpPath);
+    // TODO use values from config
+    final WebClientOptions clientOptions =
+        new WebClientOptions()
+            .setDefaultPort(8545)
+            .setDefaultHost("127.0.0.1")
+            .setTryUseCompression(true);
+    final HttpClient downStreamConnection = context.getVertx().createHttpClient(clientOptions);
+
+    final VertxRequestTransmitterFactory transmitterFactory =
+        responseBodyHandler ->
+            new VertxRequestTransmitter(
+                context.getVertx(),
+                downStreamConnection,
+                httpRequestTimeout,
+                downstreamPathCalculator,
+                responseBodyHandler);
+
+    routerBuilder.rootHandler(new PassThroughHandler(transmitterFactory));
 
     return context.getRouterBuilder().createRouter();
   }
