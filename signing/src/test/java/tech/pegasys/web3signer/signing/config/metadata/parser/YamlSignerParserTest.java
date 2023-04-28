@@ -33,6 +33,7 @@ import tech.pegasys.web3signer.signing.config.metadata.FileKeyStoreMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.FileRawSigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
+import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 
 import java.io.IOException;
@@ -88,7 +89,7 @@ class YamlSignerParserTest {
   @Test
   void metaDataInfoWithUnknownTypeFails() throws IOException {
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(Map.of("type", "unknown"));
-    assertThatThrownBy(() -> signerParser.parse(yamlMetadata))
+    assertThatThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(yamlMetadata)))
         .isInstanceOf(SigningMetadataException.class)
         .hasMessageStartingWith("Invalid signing metadata file");
   }
@@ -97,7 +98,7 @@ class YamlSignerParserTest {
   void metaDataInfoWithMissingTypeFails() throws IOException {
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(Map.of());
 
-    assertThatThrownBy(() -> signerParser.parse(yamlMetadata))
+    assertThatThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(yamlMetadata)))
         .isInstanceOf(SigningMetadataException.class)
         .hasMessageStartingWith("Invalid signing metadata file");
   }
@@ -106,7 +107,7 @@ class YamlSignerParserTest {
   void unencryptedMetaDataInfoWithMissingPrivateKeyFails() throws IOException {
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(Map.of("type", "file-raw"));
 
-    assertThatThrownBy(() -> signerParser.parse(yamlMetadata))
+    assertThatThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(yamlMetadata)))
         .isInstanceOf(SigningMetadataException.class)
         .hasMessageStartingWith("Invalid signing metadata file format");
   }
@@ -118,7 +119,7 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", "NO_HEX_VALUE");
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(unencryptedKeyMetadataFile);
 
-    assertThatThrownBy(() -> signerParser.parse(yamlMetadata))
+    assertThatThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(yamlMetadata)))
         .isInstanceOf(SigningMetadataException.class)
         .hasMessageStartingWith("Invalid signing metadata file format");
   }
@@ -137,7 +138,8 @@ class YamlSignerParserTest {
     unencryptedKeyMetadataFile.put("privateKey", PRIVATE_KEY);
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(unencryptedKeyMetadataFile);
 
-    final List<ArtifactSigner> result = signerParser.parse(yamlMetadata);
+    final List<ArtifactSigner> result =
+        signerParser.parse(signerParser.readSigningMetadata(yamlMetadata));
 
     assertThat(result).containsOnly(artifactSigner);
     verify(blsArtifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
@@ -154,7 +156,8 @@ class YamlSignerParserTest {
 
     final String yamlMetadata = getFileRawConfigYaml(PRIVATE_KEY, KeyType.BLS);
 
-    final List<ArtifactSigner> result = signerParser.parse(yamlMetadata);
+    final List<ArtifactSigner> result =
+        signerParser.parse(signerParser.readSigningMetadata(yamlMetadata));
 
     assertThat(result).containsOnly(artifactSigner);
     verify(blsArtifactSignerFactory).create(hasPrivateKey(PRIVATE_KEY));
@@ -165,7 +168,7 @@ class YamlSignerParserTest {
     final String yamlMetadata =
         YAML_OBJECT_MAPPER.writeValueAsString(Map.of("type", "file-keystore"));
 
-    assertThatThrownBy(() -> signerParser.parse(yamlMetadata))
+    assertThatThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(yamlMetadata)))
         .isInstanceOf(SigningMetadataException.class)
         .hasMessageStartingWith("Invalid signing metadata file format");
   }
@@ -179,7 +182,7 @@ class YamlSignerParserTest {
     keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(keystoreMetadataFile);
 
-    assertThatThrownBy(() -> signerParser.parse(yamlMetadata))
+    assertThatThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(yamlMetadata)))
         .isInstanceOf(SigningMetadataException.class)
         .hasMessageStartingWith("Invalid signing metadata file format");
   }
@@ -193,7 +196,7 @@ class YamlSignerParserTest {
     keystoreMetadataFile.put("keystoreFile", keystoreFile.toString());
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(keystoreMetadataFile);
 
-    assertThatThrownBy(() -> signerParser.parse(yamlMetadata))
+    assertThatThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(yamlMetadata)))
         .isInstanceOf(SigningMetadataException.class)
         .hasMessageStartingWith("Invalid signing metadata file format");
   }
@@ -209,11 +212,21 @@ class YamlSignerParserTest {
 
     final Path keystoreFile = configDir.resolve("keystore.json");
     final Path passwordFile = configDir.resolve("keystore.password");
-
-    final List<ArtifactSigner> result =
-        signerParser.parse(getFileKeystoreConfigMetadata(keystoreFile, passwordFile));
+    final List<SigningMetadata> signingMetadata =
+        signerParser.readSigningMetadata(getFileKeystoreConfigMetadata(keystoreFile, passwordFile));
+    final List<ArtifactSigner> result = signerParser.parse(signingMetadata);
     assertThat(result).containsOnly(artifactSigner);
     verify(blsArtifactSignerFactory).create(hasKeystoreAndPasswordFile(keystoreFile, passwordFile));
+  }
+
+  @Test
+  void metadataTypeIsCorrect() throws IOException {
+    final Path keystoreFile = configDir.resolve("keystore.json");
+    final Path passwordFile = configDir.resolve("keystore.password");
+    final List<SigningMetadata> signingMetadata =
+        signerParser.readSigningMetadata(getFileKeystoreConfigMetadata(keystoreFile, passwordFile));
+    assertThat(signingMetadata).hasSize(1);
+    assertThat(signingMetadata.get(0).getType()).isEqualTo("file-keystore");
   }
 
   @Test
@@ -227,7 +240,8 @@ class YamlSignerParserTest {
     keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(keystoreMetadataFile);
 
-    Assertions.assertThatThrownBy(() -> signerParser.parse(yamlMetadata))
+    Assertions.assertThatThrownBy(
+            () -> signerParser.parse(signerParser.readSigningMetadata(yamlMetadata)))
         .hasRootCauseMessage("Provider \"https\" not installed");
   }
 
@@ -235,9 +249,9 @@ class YamlSignerParserTest {
   void aSignerIsCreatedForEachMatchingFactory() throws IOException {
     final String yamlMetadata1 = getFileRawConfigYaml(PRIVATE_KEY, KeyType.BLS);
     final String yamlMetadata2 = getFileRawConfigYaml(SECP_PRIVATE_KEY, KeyType.SECP256K1);
-
-    final List<ArtifactSigner> result =
-        signerParser.parse(String.format("%s%n%s", yamlMetadata1, yamlMetadata2));
+    final List<SigningMetadata> signingMetadata =
+        signerParser.readSigningMetadata(String.format("%s%n%s", yamlMetadata1, yamlMetadata2));
+    final List<ArtifactSigner> result = signerParser.parse(signingMetadata);
     assertThat(result).hasSize(2);
   }
 
@@ -256,8 +270,7 @@ class YamlSignerParserTest {
     keystoreMetadataFile.put("type", "file-keystore");
     keystoreMetadataFile.put("keystoreFile", keystoreFile.toString());
     keystoreMetadataFile.put("keystorePasswordFile", passwordFile.toString());
-    final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(keystoreMetadataFile);
-    return yamlMetadata;
+    return YAML_OBJECT_MAPPER.writeValueAsString(keystoreMetadataFile);
   }
 
   private FileKeyStoreMetadata hasKeystoreAndPasswordFile(
@@ -292,8 +305,8 @@ class YamlSignerParserTest {
     azureMetaDataMap.put("secretName", "TEST-KEY");
     azureMetaDataMap.put("keyType", "BLS");
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(azureMetaDataMap);
-
-    final List<ArtifactSigner> result = signerParser.parse(yamlMetadata);
+    final List<ArtifactSigner> result =
+        signerParser.parse(signerParser.readSigningMetadata(yamlMetadata));
     assertThat(result).containsOnly(artifactSigner);
     verify(blsArtifactSignerFactory)
         .create(hasCorrectAzureMetadataArguments(AzureAuthenticationMode.CLIENT_SECRET));
@@ -321,7 +334,8 @@ class YamlSignerParserTest {
     azureMetaDataMap.put("keyType", "BLS");
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(azureMetaDataMap);
 
-    final List<ArtifactSigner> result = signerParser.parse(yamlMetadata);
+    final List<ArtifactSigner> result =
+        signerParser.parse(signerParser.readSigningMetadata(yamlMetadata));
     assertThat(result).containsOnly(artifactSigner);
     verify(blsArtifactSignerFactory).create(hasCorrectAzureMetadataArguments(authenticationMode));
   }
@@ -343,7 +357,8 @@ class YamlSignerParserTest {
         "authenticationMode", AzureAuthenticationMode.SYSTEM_ASSIGNED_MANAGED_IDENTITY.name());
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(azureMetaDataMap);
 
-    final List<ArtifactSigner> result = signerParser.parse(yamlMetadata);
+    final List<ArtifactSigner> result =
+        signerParser.parse(signerParser.readSigningMetadata(yamlMetadata));
     assertThat(result).containsOnly(artifactSigner);
     verify(blsArtifactSignerFactory)
         .create(hasCorrectAzureManagedIdentityMinimalMetadataArguments());
@@ -363,7 +378,7 @@ class YamlSignerParserTest {
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(azureMetaDataMap);
 
     assertThatExceptionOfType(SigningMetadataException.class)
-        .isThrownBy(() -> signerParser.parse(yamlMetadata))
+        .isThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(yamlMetadata)))
         .withMessage("Invalid signing metadata file format");
   }
 
@@ -377,7 +392,7 @@ class YamlSignerParserTest {
     final String yamlMetadata = YAML_OBJECT_MAPPER.writeValueAsString(azureMetaDataMap);
 
     assertThatExceptionOfType(SigningMetadataException.class)
-        .isThrownBy(() -> signerParser.parse(yamlMetadata))
+        .isThrownBy(() -> signerParser.parse(signerParser.readSigningMetadata(yamlMetadata)))
         .withMessage("Invalid signing metadata file format");
   }
 

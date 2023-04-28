@@ -86,7 +86,7 @@ public class Eth1Runner extends Runner {
         () -> {
           final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
           final HashicorpConnectionFactory hashicorpConnectionFactory =
-              new HashicorpConnectionFactory(vertx);
+              new HashicorpConnectionFactory();
           try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider()) {

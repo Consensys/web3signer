@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class FileKeyStoreMetadata extends SigningMetadata {
-
+  public static final String TYPE = "file-keystore";
   private final Path keystoreFile;
   private final Path keystorePasswordFile;
 
@@ -29,7 +29,7 @@ public class FileKeyStoreMetadata extends SigningMetadata {
       @JsonProperty(value = "keystorePasswordFile", required = true)
           final Path keystorePasswordFile,
       @JsonProperty(value = "keyType") final KeyType keyType) {
-    super(keyType != null ? keyType : KeyType.BLS);
+    super(TYPE, keyType != null ? keyType : KeyType.BLS);
     this.keystoreFile = keystoreFile;
     this.keystorePasswordFile = keystorePasswordFile;
   }

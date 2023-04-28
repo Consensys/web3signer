@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class InterlockSigningMetadata extends SigningMetadata {
+  public static final String TYPE = "interlock";
   private final URI interlockUrl;
   private final Path knownServersFile;
 
@@ -37,7 +38,7 @@ public class InterlockSigningMetadata extends SigningMetadata {
       @JsonProperty(value = "password", required = true) final String password,
       @JsonProperty(value = "keyPath", required = true) final String keyPath,
       @JsonProperty(value = "keyType") final KeyType keyType) {
-    super(keyType != null ? keyType : KeyType.BLS);
+    super(TYPE, keyType != null ? keyType : KeyType.BLS);
 
     this.interlockUrl = URI.create(interlockUrl);
     this.knownServersFile = Path.of(knownServersFile);

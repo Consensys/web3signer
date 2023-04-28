@@ -13,11 +13,16 @@
 package tech.pegasys.web3signer.signing.config.metadata.parser;
 
 import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadataException;
 
 import java.util.List;
 
 public interface SignerParser {
 
-  List<ArtifactSigner> parse(String fileContent) throws SigningMetadataException;
+  List<SigningMetadata> readSigningMetadata(final String fileContent)
+      throws SigningMetadataException;
+
+  List<ArtifactSigner> parse(List<SigningMetadata> signingMetadataList)
+      throws SigningMetadataException;
 }

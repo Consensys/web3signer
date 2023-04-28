@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class AzureKeySigningMetadata extends SigningMetadata {
-
+  public static final String TYPE = "azure-key";
   private final String clientId;
   private final String clientSecret;
   private final String tenantId;
@@ -34,7 +34,7 @@ public class AzureKeySigningMetadata extends SigningMetadata {
       @JsonProperty("vaultName") final String vaultName,
       @JsonProperty("keyName") final String keyName,
       @JsonProperty(value = "keyType") final KeyType keyType) {
-    super(keyType != null ? keyType : KeyType.SECP256K1);
+    super(TYPE, keyType != null ? keyType : KeyType.SECP256K1);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.tenantId = tenantId;

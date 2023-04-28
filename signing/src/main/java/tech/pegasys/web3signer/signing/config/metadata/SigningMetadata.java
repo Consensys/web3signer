@@ -15,25 +15,34 @@ package tech.pegasys.web3signer.signing.config.metadata;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-  @JsonSubTypes.Type(value = FileRawSigningMetadata.class, name = "file-raw"),
-  @JsonSubTypes.Type(value = FileKeyStoreMetadata.class, name = "file-keystore"),
-  @JsonSubTypes.Type(value = HashicorpSigningMetadata.class, name = "hashicorp"),
-  @JsonSubTypes.Type(value = AzureSecretSigningMetadata.class, name = "azure-secret"),
-  @JsonSubTypes.Type(value = AzureKeySigningMetadata.class, name = "azure-key"),
-  @JsonSubTypes.Type(value = InterlockSigningMetadata.class, name = "interlock"),
-  @JsonSubTypes.Type(value = YubiHsmSigningMetadata.class, name = "yubihsm"),
-  @JsonSubTypes.Type(value = AwsKeySigningMetadata.class, name = "aws-secret")
+  @JsonSubTypes.Type(value = FileRawSigningMetadata.class, name = FileRawSigningMetadata.TYPE),
+  @JsonSubTypes.Type(value = FileKeyStoreMetadata.class, name = FileKeyStoreMetadata.TYPE),
+  @JsonSubTypes.Type(value = HashicorpSigningMetadata.class, name = HashicorpSigningMetadata.TYPE),
+  @JsonSubTypes.Type(
+      value = AzureSecretSigningMetadata.class,
+      name = AzureSecretSigningMetadata.TYPE),
+  @JsonSubTypes.Type(value = AzureKeySigningMetadata.class, name = AzureKeySigningMetadata.TYPE),
+  @JsonSubTypes.Type(value = InterlockSigningMetadata.class, name = InterlockSigningMetadata.TYPE),
+  @JsonSubTypes.Type(value = YubiHsmSigningMetadata.class, name = YubiHsmSigningMetadata.TYPE),
+  @JsonSubTypes.Type(value = AwsKeySigningMetadata.class, name = AwsKeySigningMetadata.TYPE)
 })
 public abstract class SigningMetadata {
 
   private final KeyType keyType;
 
-  protected SigningMetadata(final KeyType keyType) {
+  @JsonProperty("type")
+  @JsonInclude
+  private final String type;
+
+  protected SigningMetadata(final String type, final KeyType keyType) {
+    this.type = type;
     this.keyType = keyType;
   }
 
@@ -41,5 +50,9 @@ public abstract class SigningMetadata {
 
   public KeyType getKeyType() {
     return keyType;
+  }
+
+  public String getType() {
+    return type;
   }
 }

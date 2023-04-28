@@ -41,19 +41,13 @@ public class YamlSignerParser implements SignerParser {
   }
 
   @Override
-  public List<ArtifactSigner> parse(final String fileContent) {
+  public List<SigningMetadata> readSigningMetadata(final String fileContent) {
+    final List<SigningMetadata> metadataInfoList;
     try {
-      final List<SigningMetadata> metadataInfoList = readSigningMetadata(fileContent);
+      metadataInfoList = readYaml(fileContent);
       if (metadataInfoList == null || metadataInfoList.isEmpty()) {
         throw new SigningMetadataException("Invalid signing metadata file format");
       }
-      return metadataInfoList.stream()
-          .flatMap(
-              metadataInfo ->
-                  signerFactories.stream()
-                      .filter(factory -> factory.getKeyType() == metadataInfo.getKeyType())
-                      .map(metadataInfo::createSigner))
-          .collect(Collectors.toList());
     } catch (final JsonParseException | JsonMappingException e) {
       throw new SigningMetadataException("Invalid signing metadata file format", e);
     } catch (final IOException e) {
@@ -64,9 +58,29 @@ public class YamlSignerParser implements SignerParser {
     } catch (final Exception e) {
       throw new SigningMetadataException("Unknown failure", e);
     }
+
+    return metadataInfoList;
   }
 
-  private List<SigningMetadata> readSigningMetadata(String fileContent) throws IOException {
+  @Override
+  public List<ArtifactSigner> parse(final List<SigningMetadata> metadataInfoList) {
+    try {
+      return metadataInfoList.stream()
+          .flatMap(
+              metadataInfo ->
+                  signerFactories.stream()
+                      .filter(factory -> factory.getKeyType() == metadataInfo.getKeyType())
+                      .map(metadataInfo::createSigner))
+          .collect(Collectors.toList());
+    } catch (final SigningMetadataException e) {
+      throw e;
+    } catch (final Exception e) {
+      throw new SigningMetadataException(
+          "Unexpected error while converting SigningMetadata to ArtifactSigner", e);
+    }
+  }
+
+  private List<SigningMetadata> readYaml(String fileContent) throws IOException {
     try (final MappingIterator<SigningMetadata> iterator =
         yamlMapper.readValues(yamlMapper.createParser(fileContent), new TypeReference<>() {})) {
       return iterator.readAll();
