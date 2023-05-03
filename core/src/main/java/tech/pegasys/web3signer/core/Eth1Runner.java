@@ -46,6 +46,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -105,9 +106,11 @@ public class Eth1Runner extends Runner {
                 downstreamPathCalculator,
                 responseBodyHandler);
 
-    routerBuilder.rootHandler(new PassThroughHandler(transmitterFactory));
+    final Router router = context.getRouterBuilder().createRouter();
+    final PassThroughHandler passThroughHandler = new PassThroughHandler(transmitterFactory);
+    router.route().handler(BodyHandler.create()).handler(passThroughHandler);
 
-    return context.getRouterBuilder().createRouter();
+    return router;
   }
 
   @Override
