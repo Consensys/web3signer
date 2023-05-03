@@ -22,7 +22,7 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JS
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
-import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpc;
 import tech.pegasys.web3signer.core.service.jsonrpc.FcJsonRpcMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.FilecoinJsonRpcModule;
@@ -55,8 +55,8 @@ public class FilecoinRunner extends Runner {
   private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
 
-  public FilecoinRunner(final Config config, final FilecoinNetwork network) {
-    super(config);
+  public FilecoinRunner(final BaseConfig baseConfig, final FilecoinNetwork network) {
+    super(baseConfig);
     this.network = network;
   }
 
@@ -128,7 +128,7 @@ public class FilecoinRunner extends Runner {
 
             final AbstractArtifactSignerFactory blsArtifactSignerFactory =
                 new BlsArtifactSignerFactory(
-                    config.getKeyConfigPath(),
+                    baseConfig.getKeyConfigPath(),
                     metricsSystem,
                     hashicorpConnectionFactory,
                     interlockKeyProvider,
@@ -139,7 +139,7 @@ public class FilecoinRunner extends Runner {
             final AbstractArtifactSignerFactory secpArtifactSignerFactory =
                 new Secp256k1ArtifactSignerFactory(
                     hashicorpConnectionFactory,
-                    config.getKeyConfigPath(),
+                    baseConfig.getKeyConfigPath(),
                     azureFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
@@ -148,11 +148,11 @@ public class FilecoinRunner extends Runner {
 
             return new SignerLoader()
                 .load(
-                    config.getKeyConfigPath(),
+                    baseConfig.getKeyConfigPath(),
                     "yaml",
                     new YamlSignerParser(
                         List.of(blsArtifactSignerFactory, secpArtifactSignerFactory),
-                        YamlMapperFactory.createYamlMapper(config.getKeyStoreConfigFileMaxSize())))
+                        YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())))
                 .getValues();
           }
         });

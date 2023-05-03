@@ -19,7 +19,7 @@ import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
-import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.service.DownstreamPathCalculator;
 import tech.pegasys.web3signer.core.service.PassThroughHandler;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitter;
@@ -52,8 +52,8 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
-  public Eth1Runner(final Config config) {
-    super(config);
+  public Eth1Runner(final BaseConfig baseConfig) {
+    super(baseConfig);
   }
 
   @Override
@@ -127,7 +127,7 @@ public class Eth1Runner extends Runner {
             final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
                 new Secp256k1ArtifactSignerFactory(
                     hashicorpConnectionFactory,
-                    config.getKeyConfigPath(),
+                    baseConfig.getKeyConfigPath(),
                     azureFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
@@ -136,11 +136,11 @@ public class Eth1Runner extends Runner {
 
             return new SignerLoader()
                 .load(
-                    config.getKeyConfigPath(),
+                    baseConfig.getKeyConfigPath(),
                     "yaml",
                     new YamlSignerParser(
                         List.of(ethSecpArtifactSignerFactory),
-                        YamlMapperFactory.createYamlMapper(config.getKeyStoreConfigFileMaxSize())))
+                        YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())))
                 .getValues();
           }
         });

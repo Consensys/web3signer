@@ -32,7 +32,7 @@ import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.spec.Spec;
-import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
@@ -105,14 +105,14 @@ public class Eth2Runner extends Runner {
   private final boolean isKeyManagerApiEnabled;
 
   public Eth2Runner(
-      final Config config,
+      final BaseConfig baseConfig,
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters,
       final KeystoresParameters keystoresParameters,
       final AwsSecretsManagerParameters awsSecretsManagerParameters,
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled) {
-    super(config);
+    super(baseConfig);
     this.slashingProtectionContext = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.slashingProtectionParameters = slashingProtectionParameters;
@@ -210,7 +210,7 @@ public class Eth2Runner extends Runner {
               new BlockingHandlerDecorator(
                   new ImportKeystoresHandler(
                       objectMapper,
-                      config.getKeyConfigPath(),
+                      baseConfig.getKeyConfigPath(),
                       slashingProtectionContext.map(
                           SlashingProtectionContext::getSlashingProtection),
                       blsSignerProvider,
@@ -239,8 +239,8 @@ public class Eth2Runner extends Runner {
         new FileValidatorManager(
             artifactSignerProvider,
             new KeystoreFileManager(
-                config.getKeyConfigPath(),
-                YamlMapperFactory.createYamlMapper(config.getKeyStoreConfigFileMaxSize())),
+                baseConfig.getKeyConfigPath(),
+                YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
             objectMapper);
     if (slashingProtectionContext.isPresent()) {
       final SlashingProtectionContext slashingProtectionContext =
@@ -271,7 +271,7 @@ public class Eth2Runner extends Runner {
                       awsSecretsManagerParameters.getCacheMaximumSize())) {
             final AbstractArtifactSignerFactory artifactSignerFactory =
                 new BlsArtifactSignerFactory(
-                    config.getKeyConfigPath(),
+                    baseConfig.getKeyConfigPath(),
                     metricsSystem,
                     hashicorpConnectionFactory,
                     interlockKeyProvider,
@@ -283,12 +283,12 @@ public class Eth2Runner extends Runner {
             final MappedResults<ArtifactSigner> results =
                 new SignerLoader()
                     .load(
-                        config.getKeyConfigPath(),
+                        baseConfig.getKeyConfigPath(),
                         "yaml",
                         new YamlSignerParser(
                             List.of(artifactSignerFactory),
                             YamlMapperFactory.createYamlMapper(
-                                config.getKeyStoreConfigFileMaxSize())));
+                                baseConfig.getKeyStoreConfigFileMaxSize())));
             registerSignerLoadingHealthCheck(KEYS_CHECK_CONFIG_FILE_LOADING, results);
             signers.addAll(results.getValues());
           }

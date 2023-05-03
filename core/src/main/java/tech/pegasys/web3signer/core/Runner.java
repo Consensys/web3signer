@@ -19,8 +19,8 @@ import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCH
 
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.common.ApplicationInfo;
+import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
-import tech.pegasys.web3signer.core.config.Config;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
@@ -78,28 +78,28 @@ public abstract class Runner implements Runnable {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  protected final Config config;
+  protected final BaseConfig baseConfig;
 
   private HealthCheckHandler healthCheckHandler;
 
-  protected Runner(final Config config) {
-    this.config = config;
+  protected Runner(final BaseConfig baseConfig) {
+    this.baseConfig = baseConfig;
   }
 
   @Override
   public void run() {
-    if (config.getLogLevel() != null) {
-      System.out.println("Setting logging level to " + config.getLogLevel().name());
-      Configurator.setRootLevel(config.getLogLevel());
+    if (baseConfig.getLogLevel() != null) {
+      System.out.println("Setting logging level to " + baseConfig.getLogLevel().name());
+      Configurator.setRootLevel(baseConfig.getLogLevel());
     }
 
     final MetricsEndpoint metricsEndpoint =
         new MetricsEndpoint(
-            config.isMetricsEnabled(),
-            config.getMetricsPort(),
-            config.getMetricsNetworkInterface(),
-            config.getMetricCategories(),
-            config.getMetricsHostAllowList());
+            baseConfig.isMetricsEnabled(),
+            baseConfig.getMetricsPort(),
+            baseConfig.getMetricsNetworkInterface(),
+            baseConfig.getMetricCategories(),
+            baseConfig.getMetricsHostAllowList());
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
 
@@ -137,7 +137,7 @@ public abstract class Runner implements Runnable {
       final URI openApiSpecUri = openApiSpec.toUri();
       final RouterBuilder routerBuilder = getRouterBuilder(vertx, openApiSpecUri.toString());
       // register access log handler first
-      if (config.isAccessLogsEnabled()) {
+      if (baseConfig.isAccessLogsEnabled()) {
         routerBuilder.rootHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
       }
 
@@ -168,16 +168,16 @@ public abstract class Runner implements Runnable {
           new Context(routerBuilder, metricsSystem, errorHandler, vertx, artifactSignerProvider);
 
       final Router router = populateRouter(context);
-      if (config.isSwaggerUIEnabled()) {
+      if (baseConfig.isSwaggerUIEnabled()) {
         new SwaggerUIRoute(router).register();
       }
 
       final HttpServer httpServer = createServerAndWait(vertx, router);
-      final String tlsStatus = config.getTlsOptions().isPresent() ? "enabled" : "disabled";
+      final String tlsStatus = baseConfig.getTlsOptions().isPresent() ? "enabled" : "disabled";
       LOG.info(
           "Web3Signer has started with TLS {}, and ready to handle signing requests on {}:{}",
           tlsStatus,
-          config.getHttpListenHost(),
+          baseConfig.getHttpListenHost(),
           httpServer.actualPort());
 
       persistPortInformation(httpServer.actualPort(), metricsEndpoint.getPort());
@@ -290,7 +290,7 @@ public abstract class Runner implements Runnable {
   }
 
   private void registerHttpHostAllowListHandler(final RouterBuilder routerBuilder) {
-    routerBuilder.rootHandler(new HostAllowListHandler(config.getHttpHostAllowList()));
+    routerBuilder.rootHandler(new HostAllowListHandler(baseConfig.getHttpHostAllowList()));
   }
 
   private HttpServer createServerAndWait(
@@ -298,9 +298,9 @@ public abstract class Runner implements Runnable {
       throws ExecutionException, InterruptedException {
     final HttpServerOptions serverOptions =
         new HttpServerOptions()
-            .setPort(config.getHttpListenPort())
-            .setHost(config.getHttpListenHost())
-            .setIdleTimeout(config.getIdleConnectionTimeoutSeconds())
+            .setPort(baseConfig.getHttpListenPort())
+            .setHost(baseConfig.getHttpListenHost())
+            .setIdleTimeout(baseConfig.getIdleConnectionTimeoutSeconds())
             .setIdleTimeoutUnit(TimeUnit.SECONDS)
             .setReuseAddress(true)
             .setReusePort(true);
@@ -324,13 +324,13 @@ public abstract class Runner implements Runnable {
 
   private HttpServerOptions applyConfigTlsSettingsTo(final HttpServerOptions input) {
 
-    if (config.getTlsOptions().isEmpty()) {
+    if (baseConfig.getTlsOptions().isEmpty()) {
       return input;
     }
 
     HttpServerOptions result = new HttpServerOptions(input);
     result.setSsl(true);
-    final TlsOptions tlsConfig = config.getTlsOptions().get();
+    final TlsOptions tlsConfig = baseConfig.getTlsOptions().get();
 
     result = applyTlsKeyStore(result, tlsConfig);
 
@@ -384,11 +384,11 @@ public abstract class Runner implements Runnable {
   }
 
   private void persistPortInformation(final int httpPort, final Optional<Integer> metricsPort) {
-    if (config.getDataPath() == null) {
+    if (baseConfig.getDataPath() == null) {
       return;
     }
 
-    final File portsFile = new File(config.getDataPath().toFile(), "web3signer.ports");
+    final File portsFile = new File(baseConfig.getDataPath().toFile(), "web3signer.ports");
     portsFile.deleteOnExit();
 
     final Properties properties = new Properties();
@@ -410,14 +410,14 @@ public abstract class Runner implements Runnable {
   }
 
   private String buildCorsRegexFromConfig() {
-    if (config.getCorsAllowedOrigins().isEmpty()) {
+    if (baseConfig.getCorsAllowedOrigins().isEmpty()) {
       return "";
     }
-    if (config.getCorsAllowedOrigins().contains("*")) {
+    if (baseConfig.getCorsAllowedOrigins().contains("*")) {
       return ".*";
     } else {
       final StringJoiner stringJoiner = new StringJoiner("|");
-      config.getCorsAllowedOrigins().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);
+      baseConfig.getCorsAllowedOrigins().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);
       return stringJoiner.toString();
     }
   }

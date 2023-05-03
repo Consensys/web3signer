@@ -23,7 +23,7 @@ import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptionsValidator;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
-import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 
 import java.io.File;
@@ -62,7 +62,7 @@ import picocli.CommandLine.Spec;
     footerHeading = "%n",
     subcommands = {HelpCommand.class},
     footer = "Web3Signer is licensed under the Apache License 2.0")
-public class Web3SignerBaseCommand implements Config, Runnable {
+public class Web3SignerBaseCommand implements BaseConfig, Runnable {
 
   @Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
   public static final String KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME =
