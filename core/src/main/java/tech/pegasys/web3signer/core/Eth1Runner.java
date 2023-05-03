@@ -20,6 +20,7 @@ import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.BaseConfig;
+import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.service.DownstreamPathCalculator;
 import tech.pegasys.web3signer.core.service.PassThroughHandler;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitter;
@@ -39,7 +40,6 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
-import java.time.Duration;
 import java.util.List;
 
 import io.vertx.core.Vertx;
@@ -52,8 +52,11 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
-  public Eth1Runner(final BaseConfig baseConfig) {
+  private Eth1Config eth1Config;
+
+  public Eth1Runner(final BaseConfig baseConfig, final Eth1Config eth1Config) {
     super(baseConfig);
+    this.eth1Config = eth1Config;
   }
 
   @Override
@@ -84,25 +87,19 @@ public class Eth1Runner extends Runner {
 
     addReloadHandler(routerBuilder, signerProvider, RELOAD.name(), context.getErrorHandler());
 
-    final Duration httpRequestTimeout = Duration.ofSeconds(1); // TODO Use value from config
-    final String downstreamHttpPath = "/"; // TODO use value from config
-
     final DownstreamPathCalculator downstreamPathCalculator =
-        new DownstreamPathCalculator(downstreamHttpPath);
-    // TODO use values from config
-    final WebClientOptions clientOptions =
-        new WebClientOptions()
-            .setDefaultPort(8545)
-            .setDefaultHost("127.0.0.1")
-            .setTryUseCompression(true);
-    final HttpClient downStreamConnection = context.getVertx().createHttpClient(clientOptions);
+        new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
+
+    final WebClientOptions webClientOptions =
+        new WebClientOptionsFactory().createWebClientOptions(eth1Config);
+    final HttpClient downStreamConnection = context.getVertx().createHttpClient(webClientOptions);
 
     final VertxRequestTransmitterFactory transmitterFactory =
         responseBodyHandler ->
             new VertxRequestTransmitter(
                 context.getVertx(),
                 downStreamConnection,
-                httpRequestTimeout,
+                eth1Config.getDownstreamHttpRequestTimeout(),
                 downstreamPathCalculator,
                 responseBodyHandler);
 

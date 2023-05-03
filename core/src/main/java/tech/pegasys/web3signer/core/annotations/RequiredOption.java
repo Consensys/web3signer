@@ -10,17 +10,13 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.commandline;
+package tech.pegasys.web3signer.core.annotations;
 
-public interface DefaultCommandValues {
-  String CONFIG_FILE_OPTION_NAME = "--config-file";
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-  // TODO JF these are used for optional values as well?
-  String MANDATORY_FILE_FORMAT_HELP = "<FILE>";
-  String MANDATORY_PATH_FORMAT_HELP = "<PATH>";
-  String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
-  String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
-  String MANDATORY_BOOL_FORMAT_HELP = "<BOOL>";
-
-  String MANDATORY_LONG_FORMAT_HELP = "<LONG>";
-}
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface RequiredOption {}
