@@ -59,9 +59,9 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
   public void receiveA404IfRequestedKeyDoesNotExist(final KeyType keyType)
       throws JsonProcessingException {
     if (keyType == KeyType.BLS) {
-      setupEth1Signer();
+      setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.PHASE0);
     } else {
-      setupEth2Signer(Eth2Network.MAINNET, SpecMilestone.ALTAIR);
+      setupEth1Signer();
     }
     final String body = createBody(keyType);
     given()
