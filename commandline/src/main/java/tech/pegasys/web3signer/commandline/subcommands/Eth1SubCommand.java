@@ -16,12 +16,12 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
-import static tech.pegasys.web3signer.core.util.RequiredOptionsUtil.checkIfRequiredOptionsAreInitialized;
+import static tech.pegasys.web3signer.commandline.util.RequiredOptionsUtil.checkIfRequiredOptionsAreInitialized;
 
+import tech.pegasys.web3signer.commandline.annotations.RequiredOption;
 import tech.pegasys.web3signer.commandline.config.client.PicoCliClientTlsOptions;
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.Runner;
-import tech.pegasys.web3signer.core.annotations.RequiredOption;
 import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 
