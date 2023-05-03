@@ -417,7 +417,9 @@ public abstract class Runner implements Runnable {
       return ".*";
     } else {
       final StringJoiner stringJoiner = new StringJoiner("|");
-      baseConfig.getCorsAllowedOrigins().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);
+      baseConfig.getCorsAllowedOrigins().stream()
+          .filter(s -> !s.isEmpty())
+          .forEach(stringJoiner::add);
       return stringJoiner.toString();
     }
   }

@@ -140,7 +140,8 @@ public class Eth1Runner extends Runner {
                     "yaml",
                     new YamlSignerParser(
                         List.of(ethSecpArtifactSignerFactory),
-                        YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())))
+                        YamlMapperFactory.createYamlMapper(
+                            baseConfig.getKeyStoreConfigFileMaxSize())))
                 .getValues();
           }
         });

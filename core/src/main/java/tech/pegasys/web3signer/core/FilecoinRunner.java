@@ -152,7 +152,8 @@ public class FilecoinRunner extends Runner {
                     "yaml",
                     new YamlSignerParser(
                         List.of(blsArtifactSignerFactory, secpArtifactSignerFactory),
-                        YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())))
+                        YamlMapperFactory.createYamlMapper(
+                            baseConfig.getKeyStoreConfigFileMaxSize())))
                 .getValues();
           }
         });
