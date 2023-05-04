@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.commandline.util;
 
+import tech.pegasys.web3signer.commandline.annotations.RequiredOption;
 import tech.pegasys.web3signer.core.InitializationException;
-import tech.pegasys.web3signer.core.annotations.RequiredOption;
 import tech.pegasys.web3signer.core.config.InvalidCommandLineOptionsException;
 
 import java.lang.reflect.Field;
