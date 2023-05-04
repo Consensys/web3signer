@@ -26,4 +26,7 @@ eth2 \
 
 docker image rm ${DOCKER_TEST_IMAGE}
 
+# also check for security vulns with trivy
+docker run aquasec/trivy image $DOCKER_IMAGE
+
 exit $i
