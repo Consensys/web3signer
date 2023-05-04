@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.commandline.config.client;
 
-import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_BOOL_FORMAT_HELP;
-import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.BOOL_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.FILE_FORMAT_HELP;
 
 import tech.pegasys.web3signer.core.config.KeyStoreOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
@@ -29,7 +29,7 @@ public class PicoCliClientTlsOptions implements ClientTlsOptions {
   @Option(
       names = "--downstream-http-tls-enabled",
       description = "Flag to enable TLS connection to web3 provider. Defaults to disabled.",
-      paramLabel = MANDATORY_BOOL_FORMAT_HELP,
+      paramLabel = BOOL_FORMAT_HELP,
       arity = "0..1")
   private boolean tlsEnabled = false;
 
@@ -39,7 +39,7 @@ public class PicoCliClientTlsOptions implements ClientTlsOptions {
       names = "--downstream-http-tls-known-servers-file",
       description =
           "Path to a file containing the hostname, port and certificate fingerprints of web3 providers to trust. Must be specified if CA auth is disabled.",
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      paramLabel = FILE_FORMAT_HELP,
       arity = "1")
   private Path knownServersFile;
 

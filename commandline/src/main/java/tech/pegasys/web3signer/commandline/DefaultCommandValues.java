@@ -15,10 +15,10 @@ package tech.pegasys.web3signer.commandline;
 public interface DefaultCommandValues {
   String CONFIG_FILE_OPTION_NAME = "--config-file";
 
-  String MANDATORY_FILE_FORMAT_HELP = "<FILE>";
-  String MANDATORY_PATH_FORMAT_HELP = "<PATH>";
-  String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
-  String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
-  String MANDATORY_BOOL_FORMAT_HELP = "<BOOL>";
-  String MANDATORY_LONG_FORMAT_HELP = "<LONG>";
+  String FILE_FORMAT_HELP = "<FILE>";
+  String PATH_FORMAT_HELP = "<PATH>";
+  String HOST_FORMAT_HELP = "<HOST>";
+  String PORT_FORMAT_HELP = "<PORT>";
+  String BOOL_FORMAT_HELP = "<BOOL>";
+  String LONG_FORMAT_HELP = "<LONG>";
 }

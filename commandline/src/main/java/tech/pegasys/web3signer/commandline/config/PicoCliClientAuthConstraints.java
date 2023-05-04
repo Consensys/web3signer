@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.commandline.config;
 
-import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_BOOL_FORMAT_HELP;
-import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.BOOL_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.FILE_FORMAT_HELP;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 
@@ -27,7 +27,7 @@ public class PicoCliClientAuthConstraints implements ClientAuthConstraints {
   @Option(
       names = "--tls-known-clients-file",
       description = "Path to a file containing the fingerprints of authorized clients.",
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      paramLabel = FILE_FORMAT_HELP,
       arity = "1")
   private File tlsKnownClientsFile = null;
 
@@ -35,7 +35,7 @@ public class PicoCliClientAuthConstraints implements ClientAuthConstraints {
       names = "--tls-allow-ca-clients",
       description =
           "If set to true, allows clients authorized by the CA to connect to Web3Signer. (Default: false)",
-      paramLabel = MANDATORY_BOOL_FORMAT_HELP,
+      paramLabel = BOOL_FORMAT_HELP,
       arity = "1")
   private Boolean tlsAllowCaClients = false;
 

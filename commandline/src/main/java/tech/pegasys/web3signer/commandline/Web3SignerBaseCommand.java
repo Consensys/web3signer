@@ -13,9 +13,9 @@
 package tech.pegasys.web3signer.commandline;
 
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
-import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
-import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_HOST_FORMAT_HELP;
-import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_PORT_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.FILE_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.HOST_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PORT_FORMAT_HELP;
 import static tech.pegasys.web3signer.common.Web3SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
 import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
@@ -71,21 +71,21 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   @SuppressWarnings("UnusedVariable")
   @CommandLine.Option(
       names = {CONFIG_FILE_OPTION_NAME},
-      paramLabel = MANDATORY_FILE_FORMAT_HELP,
+      paramLabel = FILE_FORMAT_HELP,
       description = "Config file in yaml format (default: none)")
   private final File configFile = null;
 
   @Option(
       names = {"--data-path"},
       description = "The path to a directory to store temporary files",
-      paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
+      paramLabel = DefaultCommandValues.PATH_FORMAT_HELP,
       arity = "1")
   private Path dataPath;
 
   @Option(
       names = {"--key-store-path"},
       description = "The path to a directory storing yaml files defining available keys",
-      paramLabel = DefaultCommandValues.MANDATORY_PATH_FORMAT_HELP,
+      paramLabel = DefaultCommandValues.PATH_FORMAT_HELP,
       arity = "1")
   private Path keyStorePath = Path.of("./");
 
@@ -109,14 +109,14 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   @Option(
       names = {"--http-listen-host"},
       description = "Host for HTTP to listen on (default: ${DEFAULT-VALUE})",
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      paramLabel = HOST_FORMAT_HELP,
       arity = "1")
   private String httpListenHost = InetAddress.getLoopbackAddress().getHostAddress();
 
   @Option(
       names = {"--http-listen-port"},
       description = "Port for HTTP to listen on (default: ${DEFAULT-VALUE})",
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      paramLabel = PORT_FORMAT_HELP,
       arity = "1")
   private final Integer httpListenPort = 9000;
 
@@ -143,14 +143,14 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
   @Option(
       names = {"--metrics-host"},
-      paramLabel = MANDATORY_HOST_FORMAT_HELP,
+      paramLabel = HOST_FORMAT_HELP,
       description = "Host for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
   private String metricsHost = InetAddress.getLoopbackAddress().getHostAddress();
 
   @Option(
       names = {"--metrics-port"},
-      paramLabel = MANDATORY_PORT_FORMAT_HELP,
+      paramLabel = PORT_FORMAT_HELP,
       description = "Port for the metrics exporter to listen on (default: ${DEFAULT-VALUE})",
       arity = "1")
   private final Integer metricsPort = 9001;

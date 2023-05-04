@@ -87,25 +87,28 @@ public class Eth1Runner extends Runner {
 
     addReloadHandler(routerBuilder, signerProvider, RELOAD.name(), context.getErrorHandler());
 
-    final DownstreamPathCalculator downstreamPathCalculator =
-        new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
-
-    final WebClientOptions webClientOptions =
-        new WebClientOptionsFactory().createWebClientOptions(eth1Config);
-    final HttpClient downStreamConnection = context.getVertx().createHttpClient(webClientOptions);
-
-    final VertxRequestTransmitterFactory transmitterFactory =
-        responseBodyHandler ->
-            new VertxRequestTransmitter(
-                context.getVertx(),
-                downStreamConnection,
-                eth1Config.getDownstreamHttpRequestTimeout(),
-                downstreamPathCalculator,
-                responseBodyHandler);
-
     final Router router = context.getRouterBuilder().createRouter();
-    final PassThroughHandler passThroughHandler = new PassThroughHandler(transmitterFactory);
-    router.route().handler(BodyHandler.create()).handler(passThroughHandler);
+
+    if (eth1Config.getDownstreamHttpProxyEnabled()) {
+      final DownstreamPathCalculator downstreamPathCalculator =
+          new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
+
+      final WebClientOptions webClientOptions =
+          new WebClientOptionsFactory().createWebClientOptions(eth1Config);
+      final HttpClient downStreamConnection = context.getVertx().createHttpClient(webClientOptions);
+
+      final VertxRequestTransmitterFactory transmitterFactory =
+          responseBodyHandler ->
+              new VertxRequestTransmitter(
+                  context.getVertx(),
+                  downStreamConnection,
+                  eth1Config.getDownstreamHttpRequestTimeout(),
+                  downstreamPathCalculator,
+                  responseBodyHandler);
+
+      final PassThroughHandler passThroughHandler = new PassThroughHandler(transmitterFactory);
+      router.route().handler(BodyHandler.create()).handler(passThroughHandler);
+    }
 
     return router;
   }
