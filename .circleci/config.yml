@@ -70,6 +70,14 @@ executors:
       architecture: "amd64"
       platform: "linux/amd64"
 
+  trivy_executor:
+    docker:
+      - image: docker:stable-git
+        auth:
+          <<: *docker-auth
+    resource_class: small
+    working_directory: ~/project
+
 commands:
   prepare:
     description: "Prepare"
@@ -290,6 +298,28 @@ jobs:
             ./gradlew --no-daemon --parallel manifestDocker
       - notify
 
+  dockerScan:
+    executor: trivy_executor
+    steps:
+      - prepare
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - run:
+          name: Install trivy
+          command: |
+            apk add --update-cache --upgrade curl bash
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+      - run:
+          name: Scan with trivy
+          shell: /bin/sh
+          command: |
+            for FILE in $(ls docker)
+            do
+              docker pull -q "consensys/web3signer:develop-$FILE"
+              trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m "consensys/web3signer:develop-$FILE" 
+            done
+      - notify
+ 
   publishOpenApiSpec:
     executor: executor_node
     steps:
@@ -326,11 +356,13 @@ workflows:
                 - master
     jobs:
       - build
+      - dockerScan
       - acceptanceTests:
           requires:
             - build
           context:
             - protocols-signers
+            
   default:
     jobs:
       - build:
