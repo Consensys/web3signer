@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.commandline.config;
 
-import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_BOOL_FORMAT_HELP;
-import static tech.pegasys.web3signer.commandline.DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.BOOL_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.FILE_FORMAT_HELP;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -31,14 +31,14 @@ public class PicoCliTlsServerOptions implements TlsOptions {
       description =
           "Path to a PKCS#12 formatted keystore; used to enable TLS on inbound connections.",
       arity = "1",
-      paramLabel = MANDATORY_FILE_FORMAT_HELP)
+      paramLabel = FILE_FORMAT_HELP)
   private File keyStoreFile = null;
 
   @Option(
       names = "--tls-keystore-password-file",
       description = "Path to a file containing the password used to decrypt the keystore.",
       arity = "1",
-      paramLabel = MANDATORY_FILE_FORMAT_HELP)
+      paramLabel = FILE_FORMAT_HELP)
   private File keyStorePasswordFile = null;
 
   @Option(
@@ -46,7 +46,7 @@ public class PicoCliTlsServerOptions implements TlsOptions {
       description =
           "If set to true, any client may connect, regardless of presented certificate. This cannot "
               + "be set to true if either a known clients file is specified or CA clients have been enabled. (Default: false)",
-      paramLabel = MANDATORY_BOOL_FORMAT_HELP,
+      paramLabel = BOOL_FORMAT_HELP,
       arity = "1")
   Boolean tlsAllowAnyClient = false; // package level access for validator
 

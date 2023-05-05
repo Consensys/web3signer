@@ -27,7 +27,7 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.Runner;
-import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 
@@ -533,8 +533,8 @@ class CommandlineParserTest {
 
   public static class NoOpRunner extends Runner {
 
-    protected NoOpRunner(final Config config) {
-      super(config);
+    protected NoOpRunner(final BaseConfig baseConfig) {
+      super(baseConfig);
     }
 
     @Override

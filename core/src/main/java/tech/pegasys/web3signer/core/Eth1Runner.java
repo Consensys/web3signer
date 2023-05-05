@@ -19,7 +19,12 @@ import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
-import tech.pegasys.web3signer.core.config.Config;
+import tech.pegasys.web3signer.core.config.BaseConfig;
+import tech.pegasys.web3signer.core.config.Eth1Config;
+import tech.pegasys.web3signer.core.service.DownstreamPathCalculator;
+import tech.pegasys.web3signer.core.service.PassThroughHandler;
+import tech.pegasys.web3signer.core.service.VertxRequestTransmitter;
+import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
@@ -38,14 +43,20 @@ import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueData
 import java.util.List;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
-  public Eth1Runner(final Config config) {
-    super(config);
+  private Eth1Config eth1Config;
+
+  public Eth1Runner(final BaseConfig baseConfig, final Eth1Config eth1Config) {
+    super(baseConfig);
+    this.eth1Config = eth1Config;
   }
 
   @Override
@@ -76,7 +87,30 @@ public class Eth1Runner extends Runner {
 
     addReloadHandler(routerBuilder, signerProvider, RELOAD.name(), context.getErrorHandler());
 
-    return context.getRouterBuilder().createRouter();
+    final Router router = context.getRouterBuilder().createRouter();
+
+    if (eth1Config.getDownstreamHttpProxyEnabled()) {
+      final DownstreamPathCalculator downstreamPathCalculator =
+          new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
+
+      final WebClientOptions webClientOptions =
+          new WebClientOptionsFactory().createWebClientOptions(eth1Config);
+      final HttpClient downStreamConnection = context.getVertx().createHttpClient(webClientOptions);
+
+      final VertxRequestTransmitterFactory transmitterFactory =
+          responseBodyHandler ->
+              new VertxRequestTransmitter(
+                  context.getVertx(),
+                  downStreamConnection,
+                  eth1Config.getDownstreamHttpRequestTimeout(),
+                  downstreamPathCalculator,
+                  responseBodyHandler);
+
+      final PassThroughHandler passThroughHandler = new PassThroughHandler(transmitterFactory);
+      router.route().handler(BodyHandler.create()).handler(passThroughHandler);
+    }
+
+    return router;
   }
 
   @Override
@@ -93,7 +127,7 @@ public class Eth1Runner extends Runner {
             final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
                 new Secp256k1ArtifactSignerFactory(
                     hashicorpConnectionFactory,
-                    config.getKeyConfigPath(),
+                    baseConfig.getKeyConfigPath(),
                     azureFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
@@ -102,11 +136,12 @@ public class Eth1Runner extends Runner {
 
             return new SignerLoader()
                 .load(
-                    config.getKeyConfigPath(),
+                    baseConfig.getKeyConfigPath(),
                     "yaml",
                     new YamlSignerParser(
                         List.of(ethSecpArtifactSignerFactory),
-                        YamlMapperFactory.createYamlMapper(config.getKeyStoreConfigFileMaxSize())))
+                        YamlMapperFactory.createYamlMapper(
+                            baseConfig.getKeyStoreConfigFileMaxSize())))
                 .getValues();
           }
         });

@@ -12,9 +12,25 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.BOOL_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.HOST_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.LONG_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PATH_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PORT_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.util.RequiredOptionsUtil.checkIfRequiredOptionsAreInitialized;
+
+import tech.pegasys.web3signer.commandline.config.client.PicoCliClientTlsOptions;
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.Runner;
+import tech.pegasys.web3signer.core.config.Eth1Config;
+import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.Duration;
+import java.util.Optional;
+
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 
@@ -23,13 +39,108 @@ import picocli.CommandLine.HelpCommand;
     description = "Handle Ethereum-1 SECP256k1 signing operations and public key reporting",
     subcommands = {HelpCommand.class},
     mixinStandardHelpOptions = true)
-public class Eth1SubCommand extends ModeSubCommand {
+public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
 
   public static final String COMMAND_NAME = "eth1";
 
+  @CommandLine.Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
+
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @CommandLine.Option(
+      names = "--downstream-http-proxy-enabled",
+      description =
+          "Enable http downstream proxying of requests to the web3provider (default: ${DEFAULT-VALUE})",
+      paramLabel = BOOL_FORMAT_HELP,
+      arity = "1")
+  private Boolean downstreamHttpProxyEnabled = false;
+
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @CommandLine.Option(
+      names = "--downstream-http-host",
+      description =
+          "The endpoint to which received requests are forwarded (default: ${DEFAULT-VALUE})",
+      paramLabel = HOST_FORMAT_HELP,
+      arity = "1")
+  private String downstreamHttpHost = "127.0.0.1";
+
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @CommandLine.Option(
+      names = "--downstream-http-port",
+      description =
+          "The endpoint to which received requests are forwarded (default: ${DEFAULT-VALUE})",
+      paramLabel = PORT_FORMAT_HELP,
+      arity = "1")
+  private Integer downstreamHttpPort = 8545;
+
+  private String downstreamHttpPath = "/";
+
+  @CommandLine.Option(
+      names = {"--downstream-http-path"},
+      description = "The path to which received requests are forwarded (default: ${DEFAULT-VALUE})",
+      defaultValue = "/",
+      paramLabel = PATH_FORMAT_HELP,
+      arity = "1")
+  public void setDownstreamHttpPath(final String path) {
+    try {
+      final URI uri = new URI(path);
+      if (!uri.getPath().equals(path)) {
+        throw new CommandLine.ParameterException(
+            spec.commandLine(), "Illegal characters detected in --downstream-http-path");
+      }
+    } catch (final URISyntaxException e) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(), "Illegal characters detected in --downstream-http-path");
+    }
+    this.downstreamHttpPath = path;
+  }
+
+  @SuppressWarnings("FieldMayBeFinal")
+  @CommandLine.Option(
+      names = {"--downstream-http-request-timeout"},
+      description =
+          "Timeout in milliseconds to wait for downstream request (default: ${DEFAULT-VALUE})",
+      paramLabel = LONG_FORMAT_HELP,
+      arity = "1")
+  private long downstreamHttpRequestTimeout = Duration.ofSeconds(5).toMillis();
+
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @CommandLine.Option(
+      names = {"--downstream-http-proxy-host"},
+      description = "Hostname for proxy connect, no proxy if null (default: null)",
+      paramLabel = HOST_FORMAT_HELP,
+      arity = "1")
+  private String httpProxyHost = null;
+
+  @CommandLine.Option(
+      names = {"--downstream-http-proxy-port"},
+      paramLabel = PORT_FORMAT_HELP,
+      description = "Port for proxy connect (default: 80)",
+      arity = "1")
+  private final Integer httpProxyPort = 80;
+
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @CommandLine.Option(
+      names = {"--downstream-http-proxy-username"},
+      paramLabel = "<username>",
+      description =
+          "Username for proxy connect, no authentication if null (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String httpProxyUsername = null;
+
+  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
+  @CommandLine.Option(
+      names = {"--downstream-http-proxy-password"},
+      paramLabel = "<password>",
+      description =
+          "Password for proxy connect, no authentication if null (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String httpProxyPassword = null;
+
+  @CommandLine.Mixin private PicoCliClientTlsOptions clientTlsOptions;
+
   @Override
   public Runner createRunner() {
-    return new Eth1Runner(config);
+    return new Eth1Runner(config, this);
   }
 
   @Override
@@ -39,6 +150,56 @@ public class Eth1SubCommand extends ModeSubCommand {
 
   @Override
   protected void validateArgs() {
-    // no special validation required
+    checkIfRequiredOptionsAreInitialized(this);
+  }
+
+  @Override
+  public Boolean getDownstreamHttpProxyEnabled() {
+    return downstreamHttpProxyEnabled;
+  }
+
+  @Override
+  public String getDownstreamHttpHost() {
+    return downstreamHttpHost;
+  }
+
+  @Override
+  public Integer getDownstreamHttpPort() {
+    return downstreamHttpPort;
+  }
+
+  @Override
+  public String getDownstreamHttpPath() {
+    return downstreamHttpPath;
+  }
+
+  @Override
+  public Duration getDownstreamHttpRequestTimeout() {
+    return Duration.ofMillis(downstreamHttpRequestTimeout);
+  }
+
+  @Override
+  public String getHttpProxyHost() {
+    return httpProxyHost;
+  }
+
+  @Override
+  public Integer getHttpProxyPort() {
+    return httpProxyPort;
+  }
+
+  @Override
+  public String getHttpProxyUsername() {
+    return httpProxyUsername;
+  }
+
+  @Override
+  public String getHttpProxyPassword() {
+    return httpProxyPassword;
+  }
+
+  @Override
+  public Optional<ClientTlsOptions> getClientTlsOptions() {
+    return clientTlsOptions.isTlsEnabled() ? Optional.of(clientTlsOptions) : Optional.empty();
   }
 }
