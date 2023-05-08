@@ -29,6 +29,11 @@ import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.core.service.jsonrpc.HttpResponseFactory;
+import tech.pegasys.web3signer.core.service.jsonrpc.JsonDecoder;
+import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcErrorHandler;
+import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcHandler;
+import tech.pegasys.web3signer.core.service.jsonrpc.RequestMapper;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
@@ -42,17 +47,24 @@ import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueData
 
 import java.util.List;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
   private Eth1Config eth1Config;
+  private static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
+  private final HttpResponseFactory responseFactory = new HttpResponseFactory();
 
   public Eth1Runner(final BaseConfig baseConfig, final Eth1Config eth1Config) {
     super(baseConfig);
@@ -106,7 +118,18 @@ public class Eth1Runner extends Runner {
                   downstreamPathCalculator,
                   responseBodyHandler);
 
+      final JsonDecoder jsonDecoder = createJsonDecoder();
       final PassThroughHandler passThroughHandler = new PassThroughHandler(transmitterFactory);
+      final RequestMapper requestMapper = new RequestMapper(passThroughHandler);
+
+      router
+          .route(HttpMethod.POST, "/")
+          .produces(JSON)
+          .handler(ResponseContentTypeHandler.create())
+          .handler(BodyHandler.create())
+          .failureHandler(new JsonRpcErrorHandler(new HttpResponseFactory()))
+          .blockingHandler(new JsonRpcHandler(responseFactory, requestMapper, jsonDecoder), false);
+
       router.route().handler(BodyHandler.create()).handler(passThroughHandler);
     }
 
@@ -149,5 +172,14 @@ public class Eth1Runner extends Runner {
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {
     return SecpArtifactSignature.toBytes(signature).toHexString();
+  }
+
+  private static JsonDecoder createJsonDecoder() {
+    // Force Transaction Deserialization to fail if missing expected properties
+    final ObjectMapper jsonObjectMapper = new ObjectMapper();
+    jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES, true);
+    jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, true);
+
+    return new JsonDecoder(jsonObjectMapper);
   }
 }

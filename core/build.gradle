@@ -40,6 +40,8 @@ dependencies {
   implementation 'org.hyperledger.besu.internal:metrics-core'
   implementation 'org.hyperledger.besu:plugin-api'
   implementation 'org.jdbi:jdbi3-core'
+  implementation 'org.web3j:crypto'
+  implementation 'org.web3j:besu'
   implementation 'tech.pegasys.signers.internal:bls-keystore'
   implementation 'tech.pegasys.signers.internal:keystorage-aws'
   implementation 'tech.pegasys.signers.internal:keystorage-common'
@@ -67,6 +69,12 @@ dependencies {
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'
   integrationTestImplementation sourceSets.testFixtures.output
+  integrationTestImplementation 'io.rest-assured:rest-assured'
+  integrationTestImplementation('org.mock-server:mockserver-netty') {
+    // mock-server includes a dependency on junit 4 for a junit rule which we aren't using
+    exclude group: 'junit', module: 'junit'
+  }
+  integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 }
 
