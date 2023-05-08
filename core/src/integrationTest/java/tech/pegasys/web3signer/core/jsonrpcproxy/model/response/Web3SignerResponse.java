@@ -20,7 +20,7 @@ import java.util.Optional;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.json.Json;
 
-public class EthSignerResponse {
+public class Web3SignerResponse {
 
   private final String body;
   private final Iterable<Entry<String, String>> headers;
@@ -28,21 +28,21 @@ public class EthSignerResponse {
 
   private final Optional<String> statusLine;
 
-  public EthSignerResponse(
+  public Web3SignerResponse(
       final Iterable<Entry<String, String>> headers,
       final JsonRpcResponse body,
       final HttpResponseStatus status) {
     this(headers, Json.encode(body), status, null);
   }
 
-  public EthSignerResponse(
+  public Web3SignerResponse(
       final Iterable<Entry<String, String>> headers,
       final String body,
       final HttpResponseStatus status) {
     this(headers, body, status, null);
   }
 
-  public EthSignerResponse(
+  public Web3SignerResponse(
       final Iterable<Entry<String, String>> headers,
       final String body,
       final HttpResponseStatus status,

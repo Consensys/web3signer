@@ -14,12 +14,12 @@ package tech.pegasys.web3signer.core.jsonrpcproxy.model.request;
 
 import java.util.Map.Entry;
 
-public class EthSignerRequest {
+public class Web3SignerRequest {
 
   private final String body;
   private final Iterable<Entry<String, String>> headers;
 
-  public EthSignerRequest(final Iterable<Entry<String, String>> headers, final String body) {
+  public Web3SignerRequest(final Iterable<Entry<String, String>> headers, final String body) {
     this.body = body;
     this.headers = headers;
   }

@@ -27,35 +27,35 @@ public class EthResponseFactory {
   private static final Iterable<Entry<String, String>> NO_HEADERS = emptyList();
   private static final int DEFAULT_ID = 77;
 
-  public EthSignerResponse ethSigner(final Object id, final JsonRpcError error) {
-    return new EthSignerResponse(
+  public Web3SignerResponse web3Signer(final Object id, final JsonRpcError error) {
+    return new Web3SignerResponse(
         NO_HEADERS, new JsonRpcErrorResponse(id, error), HttpResponseStatus.BAD_REQUEST);
   }
 
-  public EthSignerResponse ethSigner(final JsonRpcError error) {
-    return new EthSignerResponse(
+  public Web3SignerResponse web3Signer(final JsonRpcError error) {
+    return new Web3SignerResponse(
         NO_HEADERS, new JsonRpcErrorResponse(DEFAULT_ID, error), HttpResponseStatus.BAD_REQUEST);
   }
 
-  public EthSignerResponse ethSigner(final JsonRpcError error, final HttpResponseStatus code) {
-    return new EthSignerResponse(NO_HEADERS, new JsonRpcErrorResponse(DEFAULT_ID, error), code);
+  public Web3SignerResponse web3Signer(final JsonRpcError error, final HttpResponseStatus code) {
+    return new Web3SignerResponse(NO_HEADERS, new JsonRpcErrorResponse(DEFAULT_ID, error), code);
   }
 
-  public EthSignerResponse ethSigner(
+  public Web3SignerResponse web3Signer(
       final Iterable<Entry<String, String>> headers, final String body) {
-    return new EthSignerResponse(headers, body, HttpResponseStatus.OK);
+    return new Web3SignerResponse(headers, body, HttpResponseStatus.OK);
   }
 
-  public EthSignerResponse ethSigner(final String body) {
-    return new EthSignerResponse(NO_HEADERS, body, HttpResponseStatus.OK);
+  public Web3SignerResponse web3Signer(final String body) {
+    return new Web3SignerResponse(NO_HEADERS, body, HttpResponseStatus.OK);
   }
 
-  public EthSignerResponse ethSigner(final String body, final HttpResponseStatus statusCode) {
-    return new EthSignerResponse(NO_HEADERS, body, statusCode);
+  public Web3SignerResponse web3Signer(final String body, final HttpResponseStatus statusCode) {
+    return new Web3SignerResponse(NO_HEADERS, body, statusCode);
   }
 
-  public EthSignerResponse ethSigner(final HttpResponseStatus statusCode, String statusLine) {
-    return new EthSignerResponse(NO_HEADERS, "", statusCode, statusLine);
+  public Web3SignerResponse web3Signer(final HttpResponseStatus statusCode, String statusLine) {
+    return new Web3SignerResponse(NO_HEADERS, "", statusCode, statusLine);
   }
 
   public EthNodeResponse ethNode(final Iterable<Entry<String, String>> headers, final String body) {

@@ -23,17 +23,17 @@ public class EthRequestFactory {
 
   private static final Iterable<Entry<String, String>> NO_HEADERS = emptyList();
 
-  public EthSignerRequest ethSigner(
+  public Web3SignerRequest web3signer(
       final Iterable<Entry<String, String>> headers, final String body) {
-    return new EthSignerRequest(headers, body);
+    return new Web3SignerRequest(headers, body);
   }
 
-  public EthSignerRequest ethSigner(final String body) {
-    return new EthSignerRequest(NO_HEADERS, body);
+  public Web3SignerRequest web3signer(final String body) {
+    return new Web3SignerRequest(NO_HEADERS, body);
   }
 
-  public EthSignerRequest ethSigner(final Request<?, ?> request) {
-    return new EthSignerRequest(NO_HEADERS, Json.encode(request));
+  public Web3SignerRequest web3signer(final Request<?, ?> request) {
+    return new Web3SignerRequest(NO_HEADERS, Json.encode(request));
   }
 
   public EthNodeRequest ethNode(final String body) {

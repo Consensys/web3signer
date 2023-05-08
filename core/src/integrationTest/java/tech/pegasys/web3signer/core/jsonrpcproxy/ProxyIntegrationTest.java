@@ -44,7 +44,7 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
   @BeforeAll
   public static void localSetup() {
     try {
-      setupEthSigner(DEFAULT_CHAIN_ID, ROOT_PATH);
+      setupWeb3Signer(DEFAULT_CHAIN_ID, ROOT_PATH);
     } catch (final Exception e) {
       throw new RuntimeException("Failed to setup web3signer", e);
     }
@@ -62,8 +62,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
         request.ethNode(netVersionRequest), response.ethNode(RESPONSE_HEADERS, netVersionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.ethSigner(REQUEST_HEADERS, netVersionRequest),
-        response.ethSigner(RESPONSE_HEADERS, netVersionResponse));
+        request.web3signer(REQUEST_HEADERS, netVersionRequest),
+        response.web3Signer(RESPONSE_HEADERS, netVersionResponse));
 
     verifyEthNodeReceived(REQUEST_HEADERS, netVersionRequest);
   }
@@ -83,8 +83,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
         List.of(ImmutablePair.of("Accept", "*.*"), ImmutablePair.of("Host", "localhost"));
 
     sendPostRequestAndVerifyResponse(
-        request.ethSigner(requestHeaders, netVersionRequest),
-        response.ethSigner(RESPONSE_HEADERS, netVersionResponse));
+        request.web3signer(requestHeaders, netVersionRequest),
+        response.web3Signer(RESPONSE_HEADERS, netVersionResponse));
 
     final Iterable<Entry<String, String>> expectedForwardedHeaders =
         List.of(
@@ -111,8 +111,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
             ImmutablePair.of("X-Forwarded-Host", "nowhere"));
 
     sendPostRequestAndVerifyResponse(
-        request.ethSigner(requestHeaders, netVersionRequest),
-        response.ethSigner(RESPONSE_HEADERS, netVersionResponse));
+        request.web3signer(requestHeaders, netVersionRequest),
+        response.web3Signer(RESPONSE_HEADERS, netVersionResponse));
 
     final Iterable<Entry<String, String>> expectedForwardedHeaders =
         List.of(
@@ -130,8 +130,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
         response.ethNode("Not Found", HttpResponseStatus.NOT_FOUND));
 
     sendPostRequestAndVerifyResponse(
-        request.ethSigner(ethProtocolVersionRequest),
-        response.ethSigner("Not Found", HttpResponseStatus.NOT_FOUND));
+        request.web3signer(ethProtocolVersionRequest),
+        response.web3Signer("Not Found", HttpResponseStatus.NOT_FOUND));
 
     verifyEthNodeReceived(ethProtocolVersionRequest);
   }
@@ -143,8 +143,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
         response.ethNode(RESPONSE_HEADERS, LOGIN_RESPONSE, HttpResponseStatus.OK));
 
     sendPostRequestAndVerifyResponse(
-        request.ethSigner(REQUEST_HEADERS, LOGIN_BODY),
-        response.ethSigner(RESPONSE_HEADERS, LOGIN_RESPONSE),
+        request.web3signer(REQUEST_HEADERS, LOGIN_BODY),
+        response.web3Signer(RESPONSE_HEADERS, LOGIN_RESPONSE),
         "/login");
 
     verifyEthNodeReceived(REQUEST_HEADERS, LOGIN_BODY, ROOT_PATH + "/login");
@@ -159,8 +159,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
     // Whilst a get request doesn't normally have a body, it can and we want to ensure the request
     // is proxied as is
     sendGetRequestAndVerifyResponse(
-        request.ethSigner(REQUEST_HEADERS, LOGIN_BODY),
-        response.ethSigner(RESPONSE_HEADERS, LOGIN_RESPONSE),
+        request.web3signer(REQUEST_HEADERS, LOGIN_BODY),
+        response.web3Signer(RESPONSE_HEADERS, LOGIN_RESPONSE),
         "/login");
 
     verifyEthNodeReceived(REQUEST_HEADERS, LOGIN_BODY, ROOT_PATH + "/login");
@@ -173,8 +173,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
         response.ethNode(RESPONSE_HEADERS, LOGIN_RESPONSE, HttpResponseStatus.OK));
 
     sendPutRequestAndVerifyResponse(
-        request.ethSigner(REQUEST_HEADERS, LOGIN_BODY),
-        response.ethSigner(RESPONSE_HEADERS, LOGIN_RESPONSE),
+        request.web3signer(REQUEST_HEADERS, LOGIN_BODY),
+        response.web3Signer(RESPONSE_HEADERS, LOGIN_RESPONSE),
         "/login");
 
     verifyEthNodeReceived(REQUEST_HEADERS, LOGIN_BODY, ROOT_PATH + "/login");
@@ -187,8 +187,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
         response.ethNode(RESPONSE_HEADERS, LOGIN_RESPONSE, HttpResponseStatus.OK));
 
     sendDeleteRequestAndVerifyResponse(
-        request.ethSigner(REQUEST_HEADERS, LOGIN_BODY),
-        response.ethSigner(RESPONSE_HEADERS, LOGIN_RESPONSE),
+        request.web3signer(REQUEST_HEADERS, LOGIN_BODY),
+        response.web3Signer(RESPONSE_HEADERS, LOGIN_RESPONSE),
         "/login");
 
     verifyEthNodeReceived(REQUEST_HEADERS, LOGIN_BODY, ROOT_PATH + "/login");
@@ -218,11 +218,11 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
             ImmutablePair.of("Origin", originDomain));
 
     sendPostRequestAndVerifyResponse(
-        request.ethSigner(requestHeaders, netVersionRequest),
-        response.ethSigner(expectedResponseHeaders, netVersionResponse));
+        request.web3signer(requestHeaders, netVersionRequest),
+        response.web3Signer(expectedResponseHeaders, netVersionResponse));
 
     // Cors headers should not be forwarded to the downstream web3 provider (CORS is handled
-    // entirely within Ethsigner.
+    // entirely within Web3Signer.
     assertThat(clientAndServer.retrieveRecordedRequests(request().withHeader(new Header("origin"))))
         .isEmpty();
   }
@@ -240,8 +240,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
             ImmutablePair.of("Origin", originDomain));
 
     sendPostRequestAndVerifyResponse(
-        request.ethSigner(requestHeaders, netVersionRequest),
-        response.ethSigner("", HttpResponseStatus.FORBIDDEN));
+        request.web3signer(requestHeaders, netVersionRequest),
+        response.web3Signer("", HttpResponseStatus.FORBIDDEN));
   }
 
   @Test
@@ -260,8 +260,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
         response.ethNode(multiValueResponseHeader, LOGIN_RESPONSE, HttpResponseStatus.OK));
 
     sendPostRequestAndVerifyResponse(
-        request.ethSigner(requestHeaders, LOGIN_BODY),
-        response.ethSigner(multiValueResponseHeader, LOGIN_RESPONSE),
+        request.web3signer(requestHeaders, LOGIN_BODY),
+        response.web3Signer(multiValueResponseHeader, LOGIN_RESPONSE),
         "/login");
   }
 }

@@ -33,10 +33,10 @@ import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.EthNodeRequest;
 import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.EthRequestFactory;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.EthSignerRequest;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.Web3SignerRequest;
 import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.EthNodeResponse;
 import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.EthResponseFactory;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.EthSignerResponse;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.Web3SignerResponse;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.MockServer;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.RestAssuredConverter;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestBaseConfig;
@@ -110,16 +110,16 @@ public class IntegrationTestBase {
   @TempDir static Path dataPath;
   @TempDir static Path keyConfigPath;
 
-  static void setupEthSigner(final long chainId) throws Exception {
-    setupEthSigner(chainId, "");
+  static void setupWeb3Signer(final long chainId) throws Exception {
+    setupWeb3Signer(chainId, "");
   }
 
-  static void setupEthSigner(final long chainId, final String downstreamHttpRequestPath)
+  static void setupWeb3Signer(final long chainId, final String downstreamHttpRequestPath)
       throws Exception {
-    setupEthSigner(chainId, downstreamHttpRequestPath, List.of("sample.com"));
+    setupWeb3Signer(chainId, downstreamHttpRequestPath, List.of("sample.com"));
   }
 
-  static void setupEthSigner(
+  static void setupWeb3Signer(
       final long chainId,
       final String downstreamHttpRequestPath,
       final List<String> allowedCorsOrigin)
@@ -232,18 +232,18 @@ public class IntegrationTestBase {
   }
 
   void sendPostRequestAndVerifyResponse(
-      final EthSignerRequest request, final EthSignerResponse expectResponse) {
+      final Web3SignerRequest request, final Web3SignerResponse expectResponse) {
     sendPostRequestAndVerifyResponse(request, expectResponse, "/");
   }
 
   void sendPostRequestAndVerifyResponse(
-      final EthSignerRequest request, final EthSignerResponse expectResponse, final String path) {
+      final Web3SignerRequest request, final Web3SignerResponse expectResponse, final String path) {
     sendPostRequestAndVerifyResponse(request, expectResponse, path, Optional.empty());
   }
 
   void sendPostRequestAndVerifyResponse(
-      final EthSignerRequest request,
-      final EthSignerResponse expectResponse,
+      final Web3SignerRequest request,
+      final Web3SignerResponse expectResponse,
       final String path,
       final Optional<Integer> maybeTimeoutInMilliSec) {
 
@@ -268,7 +268,7 @@ public class IntegrationTestBase {
   }
 
   void sendPutRequestAndVerifyResponse(
-      final EthSignerRequest request, final EthSignerResponse expectResponse, final String path) {
+      final Web3SignerRequest request, final Web3SignerResponse expectResponse, final String path) {
     final Response response =
         given()
             .when()
@@ -280,7 +280,7 @@ public class IntegrationTestBase {
   }
 
   void sendGetRequestAndVerifyResponse(
-      final EthSignerRequest request, final EthSignerResponse expectResponse, final String path) {
+      final Web3SignerRequest request, final Web3SignerResponse expectResponse, final String path) {
     final Response response =
         given()
             .when()
@@ -292,7 +292,7 @@ public class IntegrationTestBase {
   }
 
   void sendDeleteRequestAndVerifyResponse(
-      final EthSignerRequest request, final EthSignerResponse expectResponse, final String path) {
+      final Web3SignerRequest request, final Web3SignerResponse expectResponse, final String path) {
     final Response response =
         given()
             .when()
@@ -303,7 +303,7 @@ public class IntegrationTestBase {
   }
 
   private void verifyResponseMatchesExpected(
-      final Response response, final EthSignerResponse expectResponse) {
+      final Response response, final Web3SignerResponse expectResponse) {
     assertThat(response.statusCode()).isEqualTo(expectResponse.getStatusCode());
     if (expectResponse.getStatusLine().isPresent()) {
       assertThat(response.getStatusLine()).contains(expectResponse.getStatusLine().get());

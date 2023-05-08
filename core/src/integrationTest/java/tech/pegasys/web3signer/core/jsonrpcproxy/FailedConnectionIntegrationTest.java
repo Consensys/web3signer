@@ -33,7 +33,7 @@ class FailedConnectionIntegrationTest extends DefaultTestBase {
                 request.getId(), JsonRpcError.FAILED_TO_CONNECT_TO_DOWNSTREAM_NODE));
 
     sendPostRequestAndVerifyResponse(
-        this.request.ethSigner(request.getEncodedRequestBody()),
-        response.ethSigner(expectedResponse, HttpResponseStatus.GATEWAY_TIMEOUT));
+        this.request.web3signer(request.getEncodedRequestBody()),
+        response.web3Signer(expectedResponse, HttpResponseStatus.GATEWAY_TIMEOUT));
   }
 }

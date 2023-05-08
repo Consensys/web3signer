@@ -34,7 +34,7 @@ class TimeoutTest extends DefaultTestBase {
                 request.getId(), JsonRpcError.CONNECTION_TO_DOWNSTREAM_NODE_TIMED_OUT));
 
     sendPostRequestAndVerifyResponse(
-        this.request.ethSigner(request.getEncodedRequestBody()),
-        response.ethSigner(expectedResponse, HttpResponseStatus.GATEWAY_TIMEOUT));
+        this.request.web3signer(request.getEncodedRequestBody()),
+        response.web3Signer(expectedResponse, HttpResponseStatus.GATEWAY_TIMEOUT));
   }
 }

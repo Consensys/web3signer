@@ -17,7 +17,7 @@ import org.junit.jupiter.api.BeforeAll;
 public class DefaultTestBase extends IntegrationTestBase {
   @SuppressWarnings("unused")
   @BeforeAll
-  private static void setupEthSigner() throws Exception {
-    setupEthSigner(DEFAULT_CHAIN_ID);
+  private static void setupWeb3Signer() throws Exception {
+    setupWeb3Signer(DEFAULT_CHAIN_ID);
   }
 }
