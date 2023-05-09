@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.core.jsonrpcproxy;
 
 import static io.restassured.RestAssured.given;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
@@ -23,11 +22,6 @@ import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.model.JsonBody.json;
 import static org.web3j.utils.Async.defaultExecutorService;
 
-import tech.pegasys.signers.secp256k1.api.Signer;
-import tech.pegasys.signers.secp256k1.api.SingleSignerProvider;
-import tech.pegasys.signers.secp256k1.filebased.FileBasedSignerFactory;
-import tech.pegasys.web3signer.core.Eth1AddressSignerIdentifier;
-import tech.pegasys.web3signer.core.Eth1AddressSignerProvider;
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.Eth1Config;
@@ -45,7 +39,6 @@ import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestEth1Config;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -56,9 +49,6 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.Resources;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.response.Response;
@@ -75,8 +65,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.JsonBody;
 import org.mockserver.model.RegexBody;
-import org.web3j.crypto.Credentials;
-import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
 
@@ -86,20 +74,15 @@ public class IntegrationTestBase {
   private static final String PORTS_FILENAME = "web3signer.ports";
   private static final String HTTP_PORT_KEY = "http-port";
   private static final String LOCALHOST = "127.0.0.1";
-  public static final long DEFAULT_CHAIN_ID = 9;
-  public static final int DEFAULT_ID = 77;
 
   private static Vertx vertx;
   private static Eth1Runner runner;
   static ClientAndServer clientAndServer;
-  static Credentials credentials;
 
   private JsonRpc2_0Web3j jsonRpc;
 
   protected final EthRequestFactory request = new EthRequestFactory();
   protected final EthResponseFactory response = new EthResponseFactory();
-
-  static String unlockedAccount;
 
   private static final Duration downstreamTimeout = Duration.ofSeconds(1);
 
@@ -107,30 +90,17 @@ public class IntegrationTestBase {
   @TempDir static Path keyConfigPath;
 
   @BeforeAll
-  static void setupWeb3Signer() throws Exception {
+  static void setupWeb3Signer() {
     setupWeb3Signer("");
   }
 
-  static void setupWeb3Signer(final String downstreamHttpRequestPath) throws Exception {
+  static void setupWeb3Signer(final String downstreamHttpRequestPath) {
     setupWeb3Signer(downstreamHttpRequestPath, List.of("sample.com"));
   }
 
   static void setupWeb3Signer(
-      final String downstreamHttpRequestPath, final List<String> allowedCorsOrigin)
-      throws Exception {
+      final String downstreamHttpRequestPath, final List<String> allowedCorsOrigin) {
     clientAndServer = startClientAndServer();
-
-    final File keyFile = createKeyFile();
-    final File passwordFile = createFile("password");
-    credentials = WalletUtils.loadCredentials("password", keyFile);
-
-    final Eth1AddressSignerProvider transactionSignerProvider =
-        new Eth1AddressSignerProvider(new SingleSignerProvider(signer(keyFile, passwordFile)));
-
-    // Force TransactionDeserialisation to fail
-    final ObjectMapper jsonObjectMapper = new ObjectMapper();
-    jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES, true);
-    jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, true);
 
     final BaseConfig baseConfig = new TestBaseConfig(dataPath, keyConfigPath, allowedCorsOrigin);
     final Eth1Config eth1Config =
@@ -152,13 +122,6 @@ public class IntegrationTestBase {
         "Started web3signer on port {}, eth stub node on port {}",
         web3signerPort,
         clientAndServer.getLocalPort());
-
-    unlockedAccount =
-        transactionSignerProvider.availablePublicKeys().stream()
-            .map(Eth1AddressSignerIdentifier::fromPublicKey)
-            .map(signerIdentifier -> "0x" + signerIdentifier.toStringIdentifier())
-            .findAny()
-            .orElseThrow();
   }
 
   Web3j jsonRpc() {
@@ -317,28 +280,6 @@ public class IntegrationTestBase {
             .withHeaders(MockServer.headers(headers)));
   }
 
-  private static Signer signer(final File keyFile, final File passwordFile) {
-    return FileBasedSignerFactory.createSigner(keyFile.toPath(), passwordFile.toPath());
-  }
-
-  @SuppressWarnings("UnstableApiUsage")
-  private static File createKeyFile() throws IOException {
-    final URL walletResource = Resources.getResource("keyfile.json");
-    final Path wallet = Files.createTempFile("web3signer_intg_keyfile", ".json");
-    Files.write(wallet, Resources.toString(walletResource, UTF_8).getBytes(UTF_8));
-    final File keyFile = wallet.toFile();
-    keyFile.deleteOnExit();
-    return keyFile;
-  }
-
-  private static File createFile(final String s) throws IOException {
-    final Path path = Files.createTempFile("file", ".file");
-    Files.write(path, s.getBytes(UTF_8));
-    final File file = path.toFile();
-    file.deleteOnExit();
-    return file;
-  }
-
   private static int httpJsonRpcPort(final Path portsFile) {
     try (final FileInputStream fis = new FileInputStream(portsFile.toString())) {
       final Properties portProperties = new Properties();
@@ -357,7 +298,7 @@ public class IntegrationTestBase {
             () -> {
               if (file.exists()) {
                 try (final Stream<String> s = Files.lines(file.toPath())) {
-                  return s.count() > 0;
+                  return s.findAny().isPresent();
                 }
               }
               return false;
