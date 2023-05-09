@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.service.jsonrpc;
 
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.InvalidJsonRpcRequestException;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -75,17 +76,43 @@ public class JsonRpcRequest {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     final JsonRpcRequest that = (JsonRpcRequest) o;
-    return Objects.equals(method, that.method)
-        && Objects.equals(version, that.version)
+
+    return isParamsEqual(that.params)
         && Objects.equals(id, that.id)
-        && Objects.equals(params, that.params);
+        && Objects.equals(method, that.method)
+        && Objects.equals(version, that.version);
+  }
+
+  private boolean isParamsEqual(final Object otherParams) {
+    if (params.getClass().isArray()) {
+      if (!otherParams.getClass().isArray()) {
+        return false;
+      }
+      final Object[] paramsArray = (Object[]) params;
+      final Object[] thatParamsArray = (Object[]) otherParams;
+      return Arrays.equals(paramsArray, thatParamsArray);
+    } else if (otherParams.getClass().isArray()) {
+      return false;
+    }
+
+    return params.equals(otherParams);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(method, version, id, params);
+    final int paramsHashCode;
+    if (params.getClass().isArray()) {
+      paramsHashCode = Arrays.hashCode((Object[]) params);
+    } else {
+      paramsHashCode = params.hashCode();
+    }
+    return Objects.hash(id, method, paramsHashCode, version);
   }
 }
