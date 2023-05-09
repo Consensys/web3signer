@@ -22,7 +22,7 @@ public class TestEth1Config implements Eth1Config {
   private final String downstreamHttpRequestPath;
   private final String downstreamHttpHost;
   private final int downstreamHttpPort;
-  private Duration downstreamHttpRequestTimeout;
+  private final Duration downstreamHttpRequestTimeout;
 
   public TestEth1Config(
       final String downstreamHttpRequestPath,

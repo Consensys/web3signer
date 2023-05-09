@@ -69,6 +69,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockserver.integration.ClientAndServer;
@@ -78,8 +79,6 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
-import org.web3j.protocol.eea.Eea;
-import org.web3j.protocol.eea.JsonRpc2_0Eea;
 
 public class IntegrationTestBase {
 
@@ -90,15 +89,12 @@ public class IntegrationTestBase {
   public static final long DEFAULT_CHAIN_ID = 9;
   public static final int DEFAULT_ID = 77;
 
-  static final String MALFORMED_JSON = "{Bad Json: {{{}";
-
   private static Vertx vertx;
   private static Eth1Runner runner;
   static ClientAndServer clientAndServer;
   static Credentials credentials;
 
   private JsonRpc2_0Web3j jsonRpc;
-  private JsonRpc2_0Eea eeaJsonRpc;
 
   protected final EthRequestFactory request = new EthRequestFactory();
   protected final EthResponseFactory response = new EthResponseFactory();
@@ -110,19 +106,17 @@ public class IntegrationTestBase {
   @TempDir static Path dataPath;
   @TempDir static Path keyConfigPath;
 
-  static void setupWeb3Signer(final long chainId) throws Exception {
-    setupWeb3Signer(chainId, "");
+  @BeforeAll
+  static void setupWeb3Signer() throws Exception {
+    setupWeb3Signer("");
   }
 
-  static void setupWeb3Signer(final long chainId, final String downstreamHttpRequestPath)
-      throws Exception {
-    setupWeb3Signer(chainId, downstreamHttpRequestPath, List.of("sample.com"));
+  static void setupWeb3Signer(final String downstreamHttpRequestPath) throws Exception {
+    setupWeb3Signer(downstreamHttpRequestPath, List.of("sample.com"));
   }
 
   static void setupWeb3Signer(
-      final long chainId,
-      final String downstreamHttpRequestPath,
-      final List<String> allowedCorsOrigin)
+      final String downstreamHttpRequestPath, final List<String> allowedCorsOrigin)
       throws Exception {
     clientAndServer = startClientAndServer();
 
@@ -171,14 +165,9 @@ public class IntegrationTestBase {
     return jsonRpc;
   }
 
-  Eea eeaJsonRpc() {
-    return eeaJsonRpc;
-  }
-
   @BeforeEach
   public void setup() {
     jsonRpc = new JsonRpc2_0Web3j(null, 2000, defaultExecutorService());
-    eeaJsonRpc = new JsonRpc2_0Eea(null);
     if (clientAndServer.isRunning()) {
       clientAndServer.reset();
     }
@@ -211,15 +200,6 @@ public class IntegrationTestBase {
                 .withBody(response.getBody())
                 .withHeaders(MockServer.headers(response.getHeaders()))
                 .withStatusCode(response.getStatusCode()));
-  }
-
-  void timeoutRequest(final String bodyRegex) {
-    final int ENSURE_TIMEOUT = 5;
-    clientAndServer
-        .when(request().withBody(new RegexBody(bodyRegex)))
-        .respond(
-            response()
-                .withDelay(TimeUnit.MILLISECONDS, downstreamTimeout.toMillis() + ENSURE_TIMEOUT));
   }
 
   void timeoutRequest(final EthNodeRequest request) {

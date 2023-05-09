@@ -44,7 +44,7 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
   @BeforeAll
   public static void localSetup() {
     try {
-      setupWeb3Signer(DEFAULT_CHAIN_ID, ROOT_PATH);
+      setupWeb3Signer(ROOT_PATH);
     } catch (final Exception e) {
       throw new RuntimeException("Failed to setup web3signer", e);
     }

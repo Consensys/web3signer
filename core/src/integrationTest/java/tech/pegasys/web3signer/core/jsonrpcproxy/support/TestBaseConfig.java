@@ -28,8 +28,8 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 public class TestBaseConfig implements BaseConfig {
 
   private final Path dataPath;
-  private Path keyConfigPath;
-  private List<String> allowedCorsOrigin;
+  private final Path keyConfigPath;
+  private final List<String> allowedCorsOrigin;
 
   public TestBaseConfig(
       final Path dataPath, final Path keyConfigPath, final List<String> allowedCorsOrigin) {
