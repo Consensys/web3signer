@@ -12,10 +12,12 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc;
 
-import com.google.common.collect.Sets;
-import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Test;
-import org.web3j.crypto.Keys;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
+
 import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.core.service.http.handlers.internalresponse.EthAccountsResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
@@ -26,11 +28,10 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
-import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
+import com.google.common.collect.Sets;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
+import org.web3j.crypto.Keys;
 
 @SuppressWarnings("unchecked")
 public class EthAccountsResultProviderTest {

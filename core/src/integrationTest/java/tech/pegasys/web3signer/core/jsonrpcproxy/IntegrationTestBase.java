@@ -12,25 +12,16 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy;
 
-import com.google.common.io.Resources;
-import io.restassured.RestAssured;
-import io.restassured.config.HttpClientConfig;
-import io.restassured.response.Response;
-import io.restassured.specification.RequestSpecification;
-import io.vertx.core.Vertx;
-import org.apache.http.params.CoreConnectionPNames;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.awaitility.Awaitility;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockserver.integration.ClientAndServer;
-import org.mockserver.model.JsonBody;
-import org.mockserver.model.RegexBody;
-import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.JsonRpc2_0Web3j;
+import static io.restassured.RestAssured.given;
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+import static org.mockserver.matchers.Times.exactly;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+import static org.mockserver.model.JsonBody.json;
+import static org.web3j.utils.Async.defaultExecutorService;
+
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.Eth1Config;
@@ -61,15 +52,25 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static io.restassured.RestAssured.given;
-import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import static org.mockserver.matchers.Times.exactly;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-import static org.mockserver.model.JsonBody.json;
-import static org.web3j.utils.Async.defaultExecutorService;
+import com.google.common.io.Resources;
+import io.restassured.RestAssured;
+import io.restassured.config.HttpClientConfig;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import io.vertx.core.Vertx;
+import org.apache.http.params.CoreConnectionPNames;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockserver.integration.ClientAndServer;
+import org.mockserver.model.JsonBody;
+import org.mockserver.model.RegexBody;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.JsonRpc2_0Web3j;
 
 public class IntegrationTestBase {
 
@@ -92,8 +93,7 @@ public class IntegrationTestBase {
   @TempDir static Path dataPath;
   @TempDir static Path keyConfigPath;
   public static final String PUBLIC_KEY_HEX_STRING =
-          "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
-
+      "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
 
   @BeforeAll
   static void setupWeb3Signer() throws Exception {
@@ -105,7 +105,8 @@ public class IntegrationTestBase {
   }
 
   static void setupWeb3Signer(
-      final String downstreamHttpRequestPath, final List<String> allowedCorsOrigin) throws Exception {
+      final String downstreamHttpRequestPath, final List<String> allowedCorsOrigin)
+      throws Exception {
     clientAndServer = startClientAndServer();
 
     createKeyStoreYamlFile();
@@ -130,8 +131,6 @@ public class IntegrationTestBase {
         "Started web3signer on port {}, eth stub node on port {}",
         web3signerPort,
         clientAndServer.getLocalPort());
-
-
   }
 
   Web3j jsonRpc() {
@@ -318,13 +317,12 @@ public class IntegrationTestBase {
   private static void createKeyStoreYamlFile() throws IOException, URISyntaxException {
     final MetadataFileHelper METADATA_FILE_HELPERS = new MetadataFileHelper();
     final String keyPath =
-            new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
+        new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
 
     METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(
-            keyConfigPath.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
-            Path.of(keyPath),
-            "pass",
-            KeyType.SECP256K1);
+        keyConfigPath.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+        Path.of(keyPath),
+        "pass",
+        KeyType.SECP256K1);
   }
-
 }

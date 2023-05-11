@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers;
 
-
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 
 @FunctionalInterface

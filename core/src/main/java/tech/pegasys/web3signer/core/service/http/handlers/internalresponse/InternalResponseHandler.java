@@ -12,18 +12,19 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.internalresponse;
 
-import io.vertx.ext.web.RoutingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.HttpResponseFactory;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
+import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
+import static tech.pegasys.web3signer.core.util.ResponseCodeSelector.jsonRPCErrorCode;
+
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.HttpResponseFactory;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
-import static tech.pegasys.web3signer.core.util.ResponseCodeSelector.jsonRPCErrorCode;
+import io.vertx.ext.web.RoutingContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class InternalResponseHandler<T> implements JsonRpcRequestHandler {
 

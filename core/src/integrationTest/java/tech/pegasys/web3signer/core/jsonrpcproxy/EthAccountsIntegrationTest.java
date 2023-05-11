@@ -12,18 +12,19 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy;
 
+import static java.util.Collections.singletonList;
+
+import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcSuccessResponse;
+import tech.pegasys.web3signer.core.util.Eth1AddressSignerIdentifier;
+
+import java.util.Map.Entry;
+
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.json.Json;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.jupiter.api.Test;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.EthAccounts;
-import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcSuccessResponse;
-import tech.pegasys.web3signer.core.util.Eth1AddressSignerIdentifier;
-
-import java.util.Map.Entry;
-
-import static java.util.Collections.singletonList;
 
 class EthAccountsIntegrationTest extends IntegrationTestBase {
 
@@ -34,8 +35,9 @@ class EthAccountsIntegrationTest extends IntegrationTestBase {
     final Iterable<Entry<String, String>> expectedHeaders =
         singletonList(ImmutablePair.of("Content", HttpHeaderValues.APPLICATION_JSON.toString()));
 
-    //needs the hex prefix
-    final String expectedAccount = "0x" + Eth1AddressSignerIdentifier.fromPublicKey(PUBLIC_KEY_HEX_STRING);
+    // needs the hex prefix
+    final String expectedAccount =
+        "0x" + Eth1AddressSignerIdentifier.fromPublicKey(PUBLIC_KEY_HEX_STRING);
 
     final JsonRpcSuccessResponse responseBody =
         new JsonRpcSuccessResponse(requestBody.getId(), singletonList(expectedAccount));

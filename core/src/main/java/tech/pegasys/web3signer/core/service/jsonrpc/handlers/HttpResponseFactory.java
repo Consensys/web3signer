@@ -16,11 +16,11 @@ import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestId;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcErrorResponse;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcResponse;
+import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcSuccessResponse;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
-import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcSuccessResponse;
 
 public class HttpResponseFactory {
 
@@ -35,7 +35,7 @@ public class HttpResponseFactory {
   }
 
   public void successResponse(
-          final HttpServerResponse response, final JsonRpcRequestId id, final Object result) {
+      final HttpServerResponse response, final JsonRpcRequestId id, final Object result) {
     response(response, 200, new JsonRpcSuccessResponse(id, result));
   }
 
