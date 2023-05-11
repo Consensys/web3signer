@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.support;
 
+import org.apache.logging.log4j.Level;
+import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 
@@ -21,9 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import org.apache.logging.log4j.Level;
-import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 
 public class TestBaseConfig implements BaseConfig {
 
@@ -75,7 +74,7 @@ public class TestBaseConfig implements BaseConfig {
 
   @Override
   public int getKeyStoreConfigFileMaxSize() {
-    return 0;
+    return 104_857_600;
   }
 
   @Override
