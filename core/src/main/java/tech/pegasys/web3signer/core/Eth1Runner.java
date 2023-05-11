@@ -12,11 +12,19 @@
  */
 package tech.pegasys.web3signer.core;
 
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_LIST;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
-import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
-
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.ResponseContentTypeHandler;
+import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import io.vertx.ext.web.openapi.RouterBuilder;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.BaseConfig;
@@ -24,7 +32,9 @@ import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.service.DownstreamPathCalculator;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitter;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.Eth1AccountsHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.internalresponse.InternalResponseHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
@@ -47,19 +57,11 @@ import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueData
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.handler.codec.http.HttpHeaderValues;
-import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.ResponseContentTypeHandler;
-import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import io.vertx.ext.web.openapi.RouterBuilder;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_LIST;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
+import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
+import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 public class Eth1Runner extends Runner {
   private Eth1Config eth1Config;
@@ -120,7 +122,8 @@ public class Eth1Runner extends Runner {
 
       final JsonDecoder jsonDecoder = createJsonDecoder();
       final PassThroughHandler passThroughHandler = new PassThroughHandler(transmitterFactory);
-      final RequestMapper requestMapper = new RequestMapper(passThroughHandler);
+
+      final RequestMapper requestMapper = createRequestMapper(transmitterFactory, signerProvider);
 
       router
           .route(HttpMethod.POST, "/")
@@ -181,5 +184,18 @@ public class Eth1Runner extends Runner {
     jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, true);
 
     return new JsonDecoder(jsonObjectMapper);
+  }
+
+  private RequestMapper createRequestMapper(
+          final VertxRequestTransmitterFactory transmitterFactory,ArtifactSignerProvider signerProvider) {
+    final PassThroughHandler defaultHandler = new PassThroughHandler(transmitterFactory);
+
+    final RequestMapper requestMapper = new RequestMapper(defaultHandler);
+    requestMapper.addHandler(
+            "eth_accounts",
+            new InternalResponseHandler<>(
+                    responseFactory, new Eth1AccountsHandler(signerProvider::availableIdentifiers)));
+
+    return requestMapper;
   }
 }
