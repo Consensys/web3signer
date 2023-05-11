@@ -12,43 +12,7 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy;
 
-import static io.restassured.RestAssured.given;
-import static java.util.Collections.emptyList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import static org.mockserver.matchers.Times.exactly;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
-import static org.mockserver.model.JsonBody.json;
-import static org.web3j.utils.Async.defaultExecutorService;
-
-import tech.pegasys.web3signer.core.Eth1Runner;
-import tech.pegasys.web3signer.core.config.BaseConfig;
-import tech.pegasys.web3signer.core.config.Eth1Config;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.EthNodeRequest;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.EthRequestFactory;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.Web3SignerRequest;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.EthNodeResponse;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.EthResponseFactory;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.Web3SignerResponse;
-import tech.pegasys.web3signer.core.jsonrpcproxy.support.MockServer;
-import tech.pegasys.web3signer.core.jsonrpcproxy.support.RestAssuredConverter;
-import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestBaseConfig;
-import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestEth1Config;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
-
+import com.google.common.io.Resources;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.response.Response;
@@ -67,6 +31,45 @@ import org.mockserver.model.JsonBody;
 import org.mockserver.model.RegexBody;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
+import tech.pegasys.web3signer.core.Eth1Runner;
+import tech.pegasys.web3signer.core.config.BaseConfig;
+import tech.pegasys.web3signer.core.config.Eth1Config;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.EthNodeRequest;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.EthRequestFactory;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.Web3SignerRequest;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.EthNodeResponse;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.EthResponseFactory;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.Web3SignerResponse;
+import tech.pegasys.web3signer.core.jsonrpcproxy.support.MetadataFileHelper;
+import tech.pegasys.web3signer.core.jsonrpcproxy.support.MockServer;
+import tech.pegasys.web3signer.core.jsonrpcproxy.support.RestAssuredConverter;
+import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestBaseConfig;
+import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestEth1Config;
+import tech.pegasys.web3signer.signing.KeyType;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+
+import static io.restassured.RestAssured.given;
+import static java.util.Collections.emptyList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockserver.integration.ClientAndServer.startClientAndServer;
+import static org.mockserver.matchers.Times.exactly;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
+import static org.mockserver.model.JsonBody.json;
+import static org.web3j.utils.Async.defaultExecutorService;
 
 public class IntegrationTestBase {
 
@@ -88,19 +91,24 @@ public class IntegrationTestBase {
 
   @TempDir static Path dataPath;
   @TempDir static Path keyConfigPath;
+  public static final String PUBLIC_KEY_HEX_STRING =
+          "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
+
 
   @BeforeAll
-  static void setupWeb3Signer() {
+  static void setupWeb3Signer() throws Exception {
     setupWeb3Signer("");
   }
 
-  static void setupWeb3Signer(final String downstreamHttpRequestPath) {
+  static void setupWeb3Signer(final String downstreamHttpRequestPath) throws Exception {
     setupWeb3Signer(downstreamHttpRequestPath, List.of("sample.com"));
   }
 
   static void setupWeb3Signer(
-      final String downstreamHttpRequestPath, final List<String> allowedCorsOrigin) {
+      final String downstreamHttpRequestPath, final List<String> allowedCorsOrigin) throws Exception {
     clientAndServer = startClientAndServer();
+
+    createKeyStoreYamlFile();
 
     final BaseConfig baseConfig = new TestBaseConfig(dataPath, keyConfigPath, allowedCorsOrigin);
     final Eth1Config eth1Config =
@@ -122,6 +130,8 @@ public class IntegrationTestBase {
         "Started web3signer on port {}, eth stub node on port {}",
         web3signerPort,
         clientAndServer.getLocalPort());
+
+
   }
 
   Web3j jsonRpc() {
@@ -304,4 +314,17 @@ public class IntegrationTestBase {
               return false;
             });
   }
+
+  private static void createKeyStoreYamlFile() throws IOException, URISyntaxException {
+    final MetadataFileHelper METADATA_FILE_HELPERS = new MetadataFileHelper();
+    final String keyPath =
+            new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
+
+    METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(
+            keyConfigPath.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+            Path.of(keyPath),
+            "pass",
+            KeyType.SECP256K1);
+  }
+
 }
