@@ -309,10 +309,12 @@ jobs:
           command: |
             apk add --update-cache --upgrade curl bash
             curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+      # remove the test files and only use the folder names
       - run:
           name: Scan with trivy
           shell: /bin/sh
           command: |
+            rm -rf docker/test*
             for FILE in $(ls docker)
             do
               docker pull -q "consensys/web3signer:develop-$FILE"
