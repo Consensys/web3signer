@@ -68,6 +68,8 @@ public class SignerConfiguration {
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
   private Optional<WatermarkRepairParameters> watermarkRepairParameters;
+  private boolean ethRpcEnabled;
+  private int downstreamHttpPort;
   private final Duration startupTimeout;
 
   public SignerConfiguration(
@@ -108,7 +110,9 @@ public class SignerConfiguration {
       final Optional<Long> capellaForkEpoch,
       final Optional<String> network,
       final boolean keyManagerApiEnabled,
-      final Optional<WatermarkRepairParameters> watermarkRepairParameters) {
+      final Optional<WatermarkRepairParameters> watermarkRepairParameters,
+      final boolean ethRpcEnabled,
+      final int downstreamHttpPort) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -147,6 +151,8 @@ public class SignerConfiguration {
     this.network = network;
     this.keyManagerApiEnabled = keyManagerApiEnabled;
     this.watermarkRepairParameters = watermarkRepairParameters;
+    this.ethRpcEnabled = ethRpcEnabled;
+    this.downstreamHttpPort = downstreamHttpPort;
   }
 
   public String hostname() {
@@ -307,5 +313,13 @@ public class SignerConfiguration {
 
   public Optional<WatermarkRepairParameters> getWatermarkRepairParameters() {
     return watermarkRepairParameters;
+  }
+
+  public boolean isEthRpcEnabled() {
+    return ethRpcEnabled;
+  }
+
+  public int getDownstreamHttpPort() {
+    return downstreamHttpPort;
   }
 }

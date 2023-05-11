@@ -71,6 +71,8 @@ public class SignerConfigurationBuilder {
   private boolean keyManagerApiEnabled = false;
   private KeystoresParameters keystoresParameters;
   private WatermarkRepairParameters watermarkRepairParameters;
+  private boolean ethRpcEnabled;
+  private int downstreamHttpPort;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -269,9 +271,20 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public void withWatermarkRepairParameters(
+  public SignerConfigurationBuilder withWatermarkRepairParameters(
       final WatermarkRepairParameters watermarkRepairParameters) {
     this.watermarkRepairParameters = watermarkRepairParameters;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withEthRpcEnabled(final boolean ethRpcEnabled) {
+    this.ethRpcEnabled = ethRpcEnabled;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withDownstreamHttpPort(final int downstreamHttpPort) {
+    this.downstreamHttpPort = downstreamHttpPort;
+    return this;
   }
 
   public SignerConfiguration build() {
@@ -316,6 +329,8 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(capellaForkEpoch),
         Optional.ofNullable(network),
         keyManagerApiEnabled,
-        Optional.ofNullable(watermarkRepairParameters));
+        Optional.ofNullable(watermarkRepairParameters),
+        ethRpcEnabled,
+        downstreamHttpPort);
   }
 }

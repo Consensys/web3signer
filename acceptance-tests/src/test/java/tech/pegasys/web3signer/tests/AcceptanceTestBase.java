@@ -19,16 +19,21 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import org.junit.jupiter.api.AfterEach;
+import org.web3j.protocol.core.JsonRpc2_0Web3j;
+import org.web3j.protocol.http.HttpService;
 
 public class AcceptanceTestBase {
 
   protected Signer signer;
+  protected JsonRpc2_0Web3j signerJsonRpc;
+
   public static final String JSON_RPC_PATH = "/rpc/v0";
 
   protected void startSigner(final SignerConfiguration config) {
     signer = new Signer(config, null);
     signer.start();
     signer.awaitStartupCompletion();
+    signerJsonRpc = new JsonRpc2_0Web3j(new HttpService(signer.getUrl()));
   }
 
   @AfterEach

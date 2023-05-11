@@ -1,3 +1,5 @@
+import groovy.text.SimpleTemplateEngine
+
 /*
  * Copyright 2019 ConsenSys AG.
  *
@@ -64,6 +66,9 @@ dependencies {
   testImplementation 'org.flywaydb:flyway-core'
   testImplementation 'io.rest-assured:rest-assured'
   testImplementation 'org.jdbi:jdbi3-core'
+  testImplementation 'org.zeroturnaround:zt-exec'
+  testImplementation 'org.web3j:crypto'
+  testImplementation 'org.web3j:besu'
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'keystorage-hashicorp', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'acceptance-tests', classifier: 'test-fixtures')
   testImplementation (group: 'tech.pegasys.signers.internal', name: 'signing-secp256k1-impl', classifier: 'test-fixtures')
@@ -79,6 +84,34 @@ dependencies {
 }
 
 test.enabled = false
+
+task cleanBesuInstall(type: Delete) {
+  delete "$buildDir/besu"
+}
+
+task downloadBesu(type: Download) {
+  src {
+    // see gradle.properties for Besu URL
+    return new SimpleTemplateEngine().createTemplate(besuDistroUrl).make(["besuVersion":"$besuVersion"]).toString()
+  }
+  dest new File(buildDir, "besu-${besuVersion}.tar.gz")
+  onlyIfModified true
+  retries 3
+}
+
+task extractBesu(dependsOn: [
+  'cleanBesuInstall',
+  'downloadBesu'
+], type: Copy) {
+  from(tarTree(downloadBesu.dest)) {
+    include "besu-${besuVersion}/**"
+    eachFile { fcd ->
+      fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
+    }
+    includeEmptyDirs = false
+  }
+  into "$buildDir/besu"
+}
 
 def vaultBinary () {
   switch (osdetector.os) {
@@ -128,6 +161,7 @@ task extractVault(dependsOn: downloadVault, type: Copy) {
 
 task acceptanceTest(dependsOn: [
   rootProject.installDist,
+  extractBesu,
   extractVault
 ], type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
@@ -138,6 +172,7 @@ task acceptanceTest(dependsOn: [
 
   //systemProperty 'debugSubProcess', 'true'
   systemProperty 'acctests.runWeb3SignerAsProcess', 'true'
+  systemProperty 'besuInstallDir', "${buildDir}/besu"
   systemProperty 'vaultBinary', vaultBinary()
   // embedded pg initdb needs following
   environment "LC_CTYPE", "en_US.UTF-8"

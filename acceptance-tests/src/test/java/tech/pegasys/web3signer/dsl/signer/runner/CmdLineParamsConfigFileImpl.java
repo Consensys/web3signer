@@ -171,6 +171,15 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       final CommandArgs subCommandArgs = createSubCommandArgs();
       params.addAll(subCommandArgs.params);
       yamlConfig.append(subCommandArgs.yamlConfig);
+    } else if (signerConfig.getMode().equals("eth1")) {
+      yamlConfig.append(
+          String.format(
+              YAML_BOOLEAN_FMT,
+              "eth1.downstream-http-proxy-enabled",
+              signerConfig.isEthRpcEnabled()));
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT, "eth1.downstream-http-port", signerConfig.getDownstreamHttpPort()));
     }
 
     // create temporary config file
