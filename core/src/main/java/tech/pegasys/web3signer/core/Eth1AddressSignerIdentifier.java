@@ -34,6 +34,10 @@ public class Eth1AddressSignerIdentifier implements SignerIdentifier {
     return new Eth1AddressSignerIdentifier(getAddress(toHexString(publicKey)));
   }
 
+  public static SignerIdentifier fromPublicKey(final String publicKey) {
+    return new Eth1AddressSignerIdentifier(getAddress(publicKey));
+  }
+
   @Override
   public String toStringIdentifier() {
     return address;
