@@ -174,7 +174,7 @@ public class Eth1Runner extends Runner {
     return SecpArtifactSignature.toBytes(signature).toHexString();
   }
 
-  private static JsonDecoder createJsonDecoder() {
+  public static JsonDecoder createJsonDecoder() {
     // Force Transaction Deserialization to fail if missing expected properties
     final ObjectMapper jsonObjectMapper = new ObjectMapper();
     jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_NULL_CREATOR_PROPERTIES, true);

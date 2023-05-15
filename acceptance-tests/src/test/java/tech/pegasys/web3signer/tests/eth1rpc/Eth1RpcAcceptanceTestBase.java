@@ -18,12 +18,18 @@ import tech.pegasys.web3signer.dsl.besu.BesuNodeConfigBuilder;
 import tech.pegasys.web3signer.dsl.besu.BesuNodeFactory;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
+import org.web3j.utils.Convert;
 
 public class Eth1RpcAcceptanceTestBase extends AcceptanceTestBase {
-  public static final String ACCOUNT = "fe3b557e8fb62b89f4916b721be55ceb828dbd73";
+  public static final String RICH_BENEFACTOR = "fe3b557e8fb62b89f4916b721be55ceb828dbd73";
+  public static final BigInteger INTRINSIC_GAS = BigInteger.valueOf(21000);
+  public static final BigInteger GAS_PRICE =
+      Convert.toWei("5", Convert.Unit.SZABO).toBigIntegerExact();
+
   protected BesuNode besu;
 
   protected void startBesu() {

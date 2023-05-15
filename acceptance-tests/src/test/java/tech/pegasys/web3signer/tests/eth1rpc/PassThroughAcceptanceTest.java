@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.tests.eth1rpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.protocol.core.DefaultBlockParameterName.LATEST;
 
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
@@ -22,7 +23,6 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 
 public class PassThroughAcceptanceTest extends Eth1RpcAcceptanceTestBase {
@@ -41,9 +41,9 @@ public class PassThroughAcceptanceTest extends Eth1RpcAcceptanceTestBase {
     startSigner(web3SignerConfiguration);
 
     final EthGetBalance besuBalanceResponse =
-        besu.jsonRpc().ethGetBalance(ACCOUNT, DefaultBlockParameterName.LATEST).send();
+        besu.jsonRpc().ethGetBalance(RICH_BENEFACTOR, LATEST).send();
     final EthGetBalance proxyBalanceResponse =
-        signerJsonRpc.ethGetBalance(ACCOUNT, DefaultBlockParameterName.LATEST).send();
+        signer.jsonRpc().ethGetBalance(RICH_BENEFACTOR, LATEST).send();
     assertThat(proxyBalanceResponse.getBalance()).isEqualTo(besuBalanceResponse.getBalance());
   }
 }

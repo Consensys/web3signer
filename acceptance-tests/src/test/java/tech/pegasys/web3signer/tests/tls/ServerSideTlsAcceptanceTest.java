@@ -19,8 +19,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpecification;
+import static tech.pegasys.web3signer.dsl.tls.support.CertificateHelpers.populateFingerprintFile;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
-import static tech.pegasys.web3signer.tests.tls.support.CertificateHelpers.populateFingerprintFile;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -29,7 +29,7 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.tls.BasicTlsOptions;
 import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
-import tech.pegasys.web3signer.tests.tls.support.BasicClientAuthConstraints;
+import tech.pegasys.web3signer.dsl.tls.support.BasicClientAuthConstraints;
 
 import java.io.IOException;
 import java.nio.file.Files;

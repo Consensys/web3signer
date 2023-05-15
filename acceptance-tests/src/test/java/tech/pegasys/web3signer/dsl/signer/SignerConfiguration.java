@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.dsl.signer;
 
 import tech.pegasys.web3signer.core.config.TlsOptions;
+import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
@@ -70,6 +71,7 @@ public class SignerConfiguration {
   private Optional<WatermarkRepairParameters> watermarkRepairParameters;
   private boolean ethRpcEnabled;
   private int downstreamHttpPort;
+  private Optional<ClientTlsOptions> downstreamTlsOptions;
   private final Duration startupTimeout;
 
   public SignerConfiguration(
@@ -112,7 +114,8 @@ public class SignerConfiguration {
       final boolean keyManagerApiEnabled,
       final Optional<WatermarkRepairParameters> watermarkRepairParameters,
       final boolean ethRpcEnabled,
-      final int downstreamHttpPort) {
+      final int downstreamHttpPort,
+      final Optional<ClientTlsOptions> downstreamTlsOptions) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -153,6 +156,7 @@ public class SignerConfiguration {
     this.watermarkRepairParameters = watermarkRepairParameters;
     this.ethRpcEnabled = ethRpcEnabled;
     this.downstreamHttpPort = downstreamHttpPort;
+    this.downstreamTlsOptions = downstreamTlsOptions;
   }
 
   public String hostname() {
@@ -321,5 +325,9 @@ public class SignerConfiguration {
 
   public int getDownstreamHttpPort() {
     return downstreamHttpPort;
+  }
+
+  public Optional<ClientTlsOptions> getDownstreamTlsOptions() {
+    return downstreamTlsOptions;
   }
 }

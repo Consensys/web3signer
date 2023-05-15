@@ -24,6 +24,7 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
+import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
@@ -34,6 +35,7 @@ import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -140,6 +142,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Boolean.toString(signerConfig.isEthRpcEnabled()));
       params.add("--downstream-http-port");
       params.add(Integer.toString(signerConfig.getDownstreamHttpPort()));
+      params.addAll(createDownstreamTlsArgs());
     }
 
     return params;
@@ -173,6 +176,39 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       }
     }
     return params;
+  }
+
+  private Collection<String> createDownstreamTlsArgs() {
+    final Optional<ClientTlsOptions> optionalClientTlsOptions =
+        signerConfig.getDownstreamTlsOptions();
+    if (optionalClientTlsOptions.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    final List<String> params = new ArrayList<>();
+    params.add("--downstream-http-tls-enabled");
+
+    final ClientTlsOptions clientTlsOptions = optionalClientTlsOptions.get();
+    clientTlsOptions
+        .getKeyStoreOptions()
+        .ifPresent(
+            pkcsStoreConfig -> {
+              params.add("--downstream-http-tls-keystore-file");
+              params.add(pkcsStoreConfig.getKeyStoreFile().toString());
+              params.add("--downstream-http-tls-keystore-password-file");
+              params.add(pkcsStoreConfig.getPasswordFile().toString());
+            });
+
+    if (clientTlsOptions.getKnownServersFile().isPresent()) {
+      params.add("--downstream-http-tls-known-servers-file");
+      params.add(clientTlsOptions.getKnownServersFile().get().toAbsolutePath().toString());
+    }
+    if (!clientTlsOptions.isCaAuthEnabled()) {
+      params.add("--downstream-http-tls-ca-auth-enabled");
+      params.add("false");
+    }
+
+    return Collections.unmodifiableCollection(params);
   }
 
   private Collection<String> createEth2Args() {

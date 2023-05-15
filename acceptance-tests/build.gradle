@@ -61,6 +61,7 @@ dependencies {
   testImplementation 'io.rest-assured:rest-assured'
   testImplementation 'org.web3j:core'
   testImplementation 'org.apache.tuweni:tuweni-bytes'
+  testImplementation 'org.apache.tuweni:tuweni-net'
   testImplementation 'com.github.arteam:simple-json-rpc-server'
   testImplementation 'com.github.arteam:simple-json-rpc-client'
   testImplementation 'org.flywaydb:flyway-core'

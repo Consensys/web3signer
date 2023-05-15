@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.dsl.signer;
 import static java.util.Collections.emptyList;
 
 import tech.pegasys.web3signer.core.config.TlsOptions;
+import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
@@ -73,6 +74,7 @@ public class SignerConfigurationBuilder {
   private WatermarkRepairParameters watermarkRepairParameters;
   private boolean ethRpcEnabled;
   private int downstreamHttpPort;
+  private ClientTlsOptions downstreamTlsOptions;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -287,6 +289,12 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withDownstreamTlsOptions(
+      final ClientTlsOptions clientTlsOptions) {
+    this.downstreamTlsOptions = clientTlsOptions;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -331,6 +339,7 @@ public class SignerConfigurationBuilder {
         keyManagerApiEnabled,
         Optional.ofNullable(watermarkRepairParameters),
         ethRpcEnabled,
-        downstreamHttpPort);
+        downstreamHttpPort,
+        Optional.ofNullable(downstreamTlsOptions));
   }
 }
