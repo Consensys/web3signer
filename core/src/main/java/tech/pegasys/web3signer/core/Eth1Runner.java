@@ -25,7 +25,6 @@ import tech.pegasys.web3signer.core.service.DownstreamPathCalculator;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitter;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.internalresponse.InternalResponseHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
@@ -36,6 +35,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcErrorHandler
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.PassThroughHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.RequestMapper;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.InternalResponseHandler;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
