@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers;
 
+import tech.pegasys.web3signer.core.Eth1AddressSignerIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError;
-import tech.pegasys.web3signer.core.util.Eth1AddressSignerIdentifier;
 
 import java.util.Collection;
 import java.util.List;
