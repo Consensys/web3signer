@@ -75,7 +75,7 @@ public class TestBaseConfig implements BaseConfig {
 
   @Override
   public int getKeyStoreConfigFileMaxSize() {
-    return 0;
+    return 104_857_600;
   }
 
   @Override

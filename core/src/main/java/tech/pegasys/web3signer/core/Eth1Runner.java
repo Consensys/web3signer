@@ -29,11 +29,13 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIde
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonDecoder;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.Eth1AccountsHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.HttpResponseFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcErrorHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.PassThroughHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.RequestMapper;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.InternalResponseHandler;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
@@ -120,7 +122,8 @@ public class Eth1Runner extends Runner {
 
       final JsonDecoder jsonDecoder = createJsonDecoder();
       final PassThroughHandler passThroughHandler = new PassThroughHandler(transmitterFactory);
-      final RequestMapper requestMapper = new RequestMapper(passThroughHandler);
+
+      final RequestMapper requestMapper = createRequestMapper(transmitterFactory, signerProvider);
 
       router
           .route(HttpMethod.POST, "/")
@@ -181,5 +184,19 @@ public class Eth1Runner extends Runner {
     jsonObjectMapper.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, true);
 
     return new JsonDecoder(jsonObjectMapper);
+  }
+
+  private RequestMapper createRequestMapper(
+      final VertxRequestTransmitterFactory transmitterFactory,
+      ArtifactSignerProvider signerProvider) {
+    final PassThroughHandler defaultHandler = new PassThroughHandler(transmitterFactory);
+
+    final RequestMapper requestMapper = new RequestMapper(defaultHandler);
+    requestMapper.addHandler(
+        "eth_accounts",
+        new InternalResponseHandler<>(
+            responseFactory, new Eth1AccountsHandler(signerProvider::availableIdentifiers)));
+
+    return requestMapper;
   }
 }
