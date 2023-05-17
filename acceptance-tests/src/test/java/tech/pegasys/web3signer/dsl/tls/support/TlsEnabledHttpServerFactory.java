@@ -21,6 +21,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcErrorHandler
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.RequestMapper;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
+import tech.pegasys.web3signer.dsl.utils.MockBalanceReporter;
 
 import java.io.IOException;
 import java.nio.file.Path;

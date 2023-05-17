@@ -25,8 +25,8 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.dsl.tls.client.BasicClientTlsOptions;
 import tech.pegasys.web3signer.dsl.tls.client.BasicKeyStoreOptions;
-import tech.pegasys.web3signer.dsl.tls.support.MockBalanceReporter;
 import tech.pegasys.web3signer.dsl.tls.support.TlsEnabledHttpServerFactory;
+import tech.pegasys.web3signer.dsl.utils.MockBalanceReporter;
 
 import java.io.IOException;
 import java.math.BigInteger;
