@@ -24,6 +24,7 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
+import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
@@ -171,6 +172,16 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       final CommandArgs subCommandArgs = createSubCommandArgs();
       params.addAll(subCommandArgs.params);
       yamlConfig.append(subCommandArgs.yamlConfig);
+    } else if (signerConfig.getMode().equals("eth1")) {
+      yamlConfig.append(
+          String.format(
+              YAML_BOOLEAN_FMT,
+              "eth1.downstream-http-proxy-enabled",
+              signerConfig.isDownstreamHttpProxyEnabled()));
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT, "eth1.downstream-http-port", signerConfig.getDownstreamHttpPort()));
+      yamlConfig.append(createDownstreamTlsArgs());
     }
 
     // create temporary config file
@@ -260,6 +271,50 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
         }
       }
     }
+    return yamlConfig.toString();
+  }
+
+  private String createDownstreamTlsArgs() {
+    final Optional<ClientTlsOptions> optionalClientTlsOptions =
+        signerConfig.getDownstreamTlsOptions();
+    final StringBuilder yamlConfig = new StringBuilder();
+    if (optionalClientTlsOptions.isEmpty()) {
+      return yamlConfig.toString();
+    }
+
+    final ClientTlsOptions clientTlsOptions = optionalClientTlsOptions.get();
+    yamlConfig.append(
+        String.format(YAML_BOOLEAN_FMT, "eth1.downstream-http-tls-enabled", Boolean.TRUE));
+
+    clientTlsOptions
+        .getKeyStoreOptions()
+        .ifPresent(
+            pkcsStoreConfig -> {
+              yamlConfig.append(
+                  String.format(
+                      YAML_STRING_FMT,
+                      "eth1.downstream-http-tls-keystore-file",
+                      pkcsStoreConfig.getKeyStoreFile().toString()));
+              yamlConfig.append(
+                  String.format(
+                      YAML_STRING_FMT,
+                      "eth1.downstream-http-tls-keystore-password-file",
+                      pkcsStoreConfig.getPasswordFile().toString()));
+            });
+
+    if (clientTlsOptions.getKnownServersFile().isPresent()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1.downstream-http-tls-known-servers-file",
+              clientTlsOptions.getKnownServersFile().get().toAbsolutePath()));
+    }
+    if (!clientTlsOptions.isCaAuthEnabled()) {
+      yamlConfig.append(
+          String.format(
+              YAML_BOOLEAN_FMT, "eth1.downstream-http-tls-ca-auth-enabled", Boolean.FALSE));
+    }
+
     return yamlConfig.toString();
   }
 

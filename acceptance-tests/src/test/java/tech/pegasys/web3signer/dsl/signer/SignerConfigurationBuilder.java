@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.dsl.signer;
 import static java.util.Collections.emptyList;
 
 import tech.pegasys.web3signer.core.config.TlsOptions;
+import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
@@ -71,6 +72,9 @@ public class SignerConfigurationBuilder {
   private boolean keyManagerApiEnabled = false;
   private KeystoresParameters keystoresParameters;
   private WatermarkRepairParameters watermarkRepairParameters;
+  private boolean downstreamHttpProxyEnabled;
+  private int downstreamHttpPort;
+  private ClientTlsOptions downstreamTlsOptions;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -269,9 +273,27 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public void withWatermarkRepairParameters(
+  public SignerConfigurationBuilder withWatermarkRepairParameters(
       final WatermarkRepairParameters watermarkRepairParameters) {
     this.watermarkRepairParameters = watermarkRepairParameters;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withDownstreamHttpProxyEnabled(
+      final boolean downstreamHttpProxyEnabled) {
+    this.downstreamHttpProxyEnabled = downstreamHttpProxyEnabled;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withDownstreamHttpPort(final int downstreamHttpPort) {
+    this.downstreamHttpPort = downstreamHttpPort;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withDownstreamTlsOptions(
+      final ClientTlsOptions clientTlsOptions) {
+    this.downstreamTlsOptions = clientTlsOptions;
+    return this;
   }
 
   public SignerConfiguration build() {
@@ -316,6 +338,9 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(capellaForkEpoch),
         Optional.ofNullable(network),
         keyManagerApiEnabled,
-        Optional.ofNullable(watermarkRepairParameters));
+        Optional.ofNullable(watermarkRepairParameters),
+        downstreamHttpProxyEnabled,
+        downstreamHttpPort,
+        Optional.ofNullable(downstreamTlsOptions));
   }
 }

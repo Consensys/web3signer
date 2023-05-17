@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.dsl.tls;
 
-import static tech.pegasys.web3signer.tests.tls.support.CertificateHelpers.loadP12KeyStore;
+import static tech.pegasys.web3signer.dsl.tls.support.CertificateHelpers.loadP12KeyStore;
 
 import java.io.File;
 import java.net.URL;

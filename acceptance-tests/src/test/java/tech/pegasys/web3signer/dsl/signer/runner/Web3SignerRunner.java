@@ -13,7 +13,7 @@
 package tech.pegasys.web3signer.dsl.signer.runner;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.tests.tls.support.CertificateHelpers.createJksTrustStore;
+import static tech.pegasys.web3signer.dsl.tls.support.CertificateHelpers.createJksTrustStore;
 
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;

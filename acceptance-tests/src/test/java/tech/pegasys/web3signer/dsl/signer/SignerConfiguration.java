@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.dsl.signer;
 
 import tech.pegasys.web3signer.core.config.TlsOptions;
+import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
@@ -68,6 +69,9 @@ public class SignerConfiguration {
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
   private Optional<WatermarkRepairParameters> watermarkRepairParameters;
+  private boolean downstreamHttpProxyEnabled;
+  private int downstreamHttpPort;
+  private Optional<ClientTlsOptions> downstreamTlsOptions;
   private final Duration startupTimeout;
 
   public SignerConfiguration(
@@ -108,7 +112,10 @@ public class SignerConfiguration {
       final Optional<Long> capellaForkEpoch,
       final Optional<String> network,
       final boolean keyManagerApiEnabled,
-      final Optional<WatermarkRepairParameters> watermarkRepairParameters) {
+      final Optional<WatermarkRepairParameters> watermarkRepairParameters,
+      final boolean downstreamHttpProxyEnabled,
+      final int downstreamHttpPort,
+      final Optional<ClientTlsOptions> downstreamTlsOptions) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -147,6 +154,9 @@ public class SignerConfiguration {
     this.network = network;
     this.keyManagerApiEnabled = keyManagerApiEnabled;
     this.watermarkRepairParameters = watermarkRepairParameters;
+    this.downstreamHttpProxyEnabled = downstreamHttpProxyEnabled;
+    this.downstreamHttpPort = downstreamHttpPort;
+    this.downstreamTlsOptions = downstreamTlsOptions;
   }
 
   public String hostname() {
@@ -307,5 +317,17 @@ public class SignerConfiguration {
 
   public Optional<WatermarkRepairParameters> getWatermarkRepairParameters() {
     return watermarkRepairParameters;
+  }
+
+  public boolean isDownstreamHttpProxyEnabled() {
+    return downstreamHttpProxyEnabled;
+  }
+
+  public int getDownstreamHttpPort() {
+    return downstreamHttpPort;
+  }
+
+  public Optional<ClientTlsOptions> getDownstreamTlsOptions() {
+    return downstreamTlsOptions;
   }
 }

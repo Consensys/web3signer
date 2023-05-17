@@ -24,7 +24,7 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.tls.BasicTlsOptions;
 import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
-import tech.pegasys.web3signer.tests.tls.support.BasicClientAuthConstraints;
+import tech.pegasys.web3signer.dsl.tls.support.BasicClientAuthConstraints;
 
 import java.nio.file.Path;
 import java.util.Optional;

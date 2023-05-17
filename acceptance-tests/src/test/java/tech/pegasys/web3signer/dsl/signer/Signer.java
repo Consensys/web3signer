@@ -46,6 +46,10 @@ import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.Ethereum;
+import org.web3j.protocol.core.JsonRpc2_0Web3j;
+import org.web3j.protocol.http.HttpService;
 
 public class Signer extends FilecoinJsonRpcEndpoint {
 
@@ -69,6 +73,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   private final Vertx vertx;
   private final String urlFormatting;
   private final Optional<ClientTlsConfig> clientTlsConfig;
+  private Web3j jsonRpc;
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
     super(JSON_RPC_PATH);
@@ -85,6 +90,7 @@ public class Signer extends FilecoinJsonRpcEndpoint {
     LOG.info("Starting Web3Signer");
     runner.start();
     final String httpUrl = getUrl();
+    jsonRpc = new JsonRpc2_0Web3j(new HttpService(httpUrl));
     LOG.info("Http requests being submitted to : {} ", httpUrl);
   }
 
@@ -189,5 +195,9 @@ public class Signer extends FilecoinJsonRpcEndpoint {
 
   public Response healthcheck() {
     return given().baseUri(getUrl()).get(HEALTHCHECK_ENDPOINT);
+  }
+
+  public Ethereum jsonRpc() {
+    return jsonRpc;
   }
 }
