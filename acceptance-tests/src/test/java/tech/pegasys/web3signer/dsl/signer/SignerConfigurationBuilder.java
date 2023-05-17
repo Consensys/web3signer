@@ -72,7 +72,7 @@ public class SignerConfigurationBuilder {
   private boolean keyManagerApiEnabled = false;
   private KeystoresParameters keystoresParameters;
   private WatermarkRepairParameters watermarkRepairParameters;
-  private boolean ethRpcEnabled;
+  private boolean downstreamHttpProxyEnabled;
   private int downstreamHttpPort;
   private ClientTlsOptions downstreamTlsOptions;
 
@@ -279,8 +279,9 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withEthRpcEnabled(final boolean ethRpcEnabled) {
-    this.ethRpcEnabled = ethRpcEnabled;
+  public SignerConfigurationBuilder withDownstreamHttpProxyEnabled(
+      final boolean downstreamHttpProxyEnabled) {
+    this.downstreamHttpProxyEnabled = downstreamHttpProxyEnabled;
     return this;
   }
 
@@ -338,7 +339,7 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(network),
         keyManagerApiEnabled,
         Optional.ofNullable(watermarkRepairParameters),
-        ethRpcEnabled,
+        downstreamHttpProxyEnabled,
         downstreamHttpPort,
         Optional.ofNullable(downstreamTlsOptions));
   }

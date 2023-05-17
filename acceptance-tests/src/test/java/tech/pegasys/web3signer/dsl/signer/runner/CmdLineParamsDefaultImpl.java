@@ -139,7 +139,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
           .ifPresent(awsParams -> params.addAll(awsBulkLoadingOptions(awsParams)));
     } else if (signerConfig.getMode().equals("eth1")) {
       params.add("--downstream-http-proxy-enabled");
-      params.add(Boolean.toString(signerConfig.isEthRpcEnabled()));
+      params.add(Boolean.toString(signerConfig.isDownstreamHttpProxyEnabled()));
       params.add("--downstream-http-port");
       params.add(Integer.toString(signerConfig.getDownstreamHttpPort()));
       params.addAll(createDownstreamTlsArgs());

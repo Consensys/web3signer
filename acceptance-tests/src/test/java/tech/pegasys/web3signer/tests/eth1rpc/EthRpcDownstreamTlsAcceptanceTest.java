@@ -67,7 +67,7 @@ class EthRpcDownstreamTlsAcceptanceTest extends Eth1RpcAcceptanceTestBase {
 
     final Path fingerPrintFilePath = workDir.resolve("known_servers");
     final SignerConfigurationBuilder builder =
-        new SignerConfigurationBuilder().withMode("eth1").withEthRpcEnabled(true);
+        new SignerConfigurationBuilder().withMode("eth1").withDownstreamHttpProxyEnabled(true);
     final Optional<Integer> downstreamWeb3ServerPort =
         Optional.of(Integers.valueOf(downstreamWeb3Port));
 

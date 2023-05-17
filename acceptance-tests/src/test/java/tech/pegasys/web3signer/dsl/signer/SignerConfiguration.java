@@ -69,7 +69,7 @@ public class SignerConfiguration {
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
   private Optional<WatermarkRepairParameters> watermarkRepairParameters;
-  private boolean ethRpcEnabled;
+  private boolean downstreamHttpProxyEnabled;
   private int downstreamHttpPort;
   private Optional<ClientTlsOptions> downstreamTlsOptions;
   private final Duration startupTimeout;
@@ -113,7 +113,7 @@ public class SignerConfiguration {
       final Optional<String> network,
       final boolean keyManagerApiEnabled,
       final Optional<WatermarkRepairParameters> watermarkRepairParameters,
-      final boolean ethRpcEnabled,
+      final boolean downstreamHttpProxyEnabled,
       final int downstreamHttpPort,
       final Optional<ClientTlsOptions> downstreamTlsOptions) {
     this.hostname = hostname;
@@ -154,7 +154,7 @@ public class SignerConfiguration {
     this.network = network;
     this.keyManagerApiEnabled = keyManagerApiEnabled;
     this.watermarkRepairParameters = watermarkRepairParameters;
-    this.ethRpcEnabled = ethRpcEnabled;
+    this.downstreamHttpProxyEnabled = downstreamHttpProxyEnabled;
     this.downstreamHttpPort = downstreamHttpPort;
     this.downstreamTlsOptions = downstreamTlsOptions;
   }
@@ -319,8 +319,8 @@ public class SignerConfiguration {
     return watermarkRepairParameters;
   }
 
-  public boolean isEthRpcEnabled() {
-    return ethRpcEnabled;
+  public boolean isDownstreamHttpProxyEnabled() {
+    return downstreamHttpProxyEnabled;
   }
 
   public int getDownstreamHttpPort() {

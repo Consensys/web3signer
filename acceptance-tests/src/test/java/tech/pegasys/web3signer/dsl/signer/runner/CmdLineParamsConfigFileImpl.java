@@ -177,7 +177,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
           String.format(
               YAML_BOOLEAN_FMT,
               "eth1.downstream-http-proxy-enabled",
-              signerConfig.isEthRpcEnabled()));
+              signerConfig.isDownstreamHttpProxyEnabled()));
       yamlConfig.append(
           String.format(
               YAML_NUMERIC_FMT, "eth1.downstream-http-port", signerConfig.getDownstreamHttpPort()));
