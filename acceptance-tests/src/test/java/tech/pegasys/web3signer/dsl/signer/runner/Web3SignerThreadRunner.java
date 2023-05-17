@@ -25,7 +25,7 @@ import java.util.concurrent.Executors;
 public class Web3SignerThreadRunner extends Web3SignerRunner {
 
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
-  private CompletableFuture<?> ethsignerFuture;
+  private CompletableFuture<?> web3signerFuture;
 
   public Web3SignerThreadRunner(final SignerConfiguration signerConfig) {
     super(signerConfig);
@@ -44,7 +44,7 @@ public class Web3SignerThreadRunner extends Web3SignerRunner {
 
     final String[] paramsAsArray = params.toArray(new String[0]);
 
-    ethsignerFuture =
+    web3signerFuture =
         CompletableFuture.runAsync(
             () ->
                 Web3SignerApp.executeWithEnvironment(
@@ -60,6 +60,6 @@ public class Web3SignerThreadRunner extends Web3SignerRunner {
 
   @Override
   public boolean isRunning() {
-    return !ethsignerFuture.isDone();
+    return !web3signerFuture.isDone();
   }
 }

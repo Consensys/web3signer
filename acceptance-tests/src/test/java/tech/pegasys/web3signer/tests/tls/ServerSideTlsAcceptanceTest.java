@@ -137,7 +137,7 @@ class ServerSideTlsAcceptanceTest {
 
       return new Signer(configBuilder.build(), clientTlsConfig);
     } catch (final Exception e) {
-      fail("Failed to create EthSigner.", e);
+      fail("Failed to create Web3Signer.", e);
       return null;
     }
   }
@@ -161,8 +161,8 @@ class ServerSideTlsAcceptanceTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void nonTlsClientsCannotConnectToTlsEnabledEthSigner(final boolean useConfigFile) {
-    // The ethSigner object (and in-built requester are already TLS enabled, so need to make a new
+  void nonTlsClientsCannotConnectToTlsEnabledWeb3Signer(final boolean useConfigFile) {
+    // The web3signer object (and in-built requester are already TLS enabled, so need to make a new
     // http client which does not have TLS enabled
     signer = createTlsSigner(cert1, cert1, null, null, 0, useConfigFile);
     signer.start();
@@ -184,7 +184,7 @@ class ServerSideTlsAcceptanceTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void missingPasswordFileResultsInEthSignerExiting(final boolean useConfigFile) {
+  void missingPasswordFileResultsInWeb3SignerExiting(final boolean useConfigFile) {
     // arbitrary listen-port to prevent waiting for portfile (during Start) to be created.
     final TlsCertificateDefinition missingPasswordCert =
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", null);
@@ -195,7 +195,7 @@ class ServerSideTlsAcceptanceTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void ethSignerExitsIfPasswordDoesntMatchKeyStoreFile(final boolean useConfigFile) {
+  void exitsIfPasswordDoesntMatchKeyStoreFile(final boolean useConfigFile) {
     // arbitrary listen-port to prevent waiting for portfile (during Start) to be created.
     final TlsCertificateDefinition wrongPasswordCert =
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", "wrongPassword");
@@ -231,7 +231,7 @@ class ServerSideTlsAcceptanceTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void missingKeyStoreFileResultsInEthSignerExiting(final boolean useConfigFile)
+  void missingKeyStoreFileResultsInWeb3SignerExiting(final boolean useConfigFile)
       throws IOException {
     final TlsOptions serverOptions =
         new BasicTlsOptions(
@@ -253,7 +253,7 @@ class ServerSideTlsAcceptanceTest {
 
   @ParameterizedTest
   @ValueSource(booleans = {true, false})
-  void clientMissingFromAllowedListCannotConnectToEthSigner(final boolean useConfigFile) {
+  void clientMissingFromAllowedListCannotConnectToWeb3Signer(final boolean useConfigFile) {
     signer = createTlsSigner(cert1, cert1, cert1, cert1, 0, useConfigFile);
     signer.start();
     signer.awaitStartupCompletion();

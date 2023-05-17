@@ -84,39 +84,38 @@ class EthRpcDownstreamTlsAcceptanceTest extends Eth1RpcAcceptanceTestBase {
   }
 
   @Test
-  void ethSignerProvidesSpecifiedClientCertificateToDownStreamServer(@TempDir Path workDir)
+  void providesSpecifiedClientCertificateToDownStreamServer(@TempDir Path workDir)
       throws Exception {
 
     final TlsCertificateDefinition serverCert =
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", "password");
-    final TlsCertificateDefinition ethSignerCert =
+    final TlsCertificateDefinition web3SignerCert =
         TlsCertificateDefinition.loadFromResource("tls/cert2.pfx", "password2");
 
     // Note: the HttpServer always responds with a JsonRpcSuccess, result=300.
     final HttpServer web3ProviderHttpServer =
-        serverFactory.create(serverCert, ethSignerCert, workDir);
+        serverFactory.create(serverCert, web3SignerCert, workDir);
 
-    startSigner(ethSignerCert, serverCert, web3ProviderHttpServer.actualPort(), workDir);
+    startSigner(web3SignerCert, serverCert, web3ProviderHttpServer.actualPort(), workDir);
 
     assertThat(signer.jsonRpc().ethGetBalance("0x123456", LATEST).send().getBalance())
         .isEqualTo(BigInteger.valueOf(MockBalanceReporter.REPORTED_BALANCE));
   }
 
   @Test
-  void ethSignerDoesNotConnectToServerNotSpecifiedInTrustStore(@TempDir Path workDir)
-      throws Exception {
+  void doesNotConnectToServerNotSpecifiedInTrustStore(@TempDir Path workDir) throws Exception {
     final TlsCertificateDefinition serverPresentedCert =
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", "password");
-    final TlsCertificateDefinition ethSignerCert =
+    final TlsCertificateDefinition web3SignerCert =
         TlsCertificateDefinition.loadFromResource("tls/cert2.pfx", "password2");
-    final TlsCertificateDefinition ethSignerExpectedServerCert =
+    final TlsCertificateDefinition web3SignerExpectedServerCert =
         TlsCertificateDefinition.loadFromResource("tls/cert2.pfx", "password2");
 
     final HttpServer web3ProviderHttpServer =
-        serverFactory.create(serverPresentedCert, ethSignerCert, workDir);
+        serverFactory.create(serverPresentedCert, web3SignerCert, workDir);
 
     startSigner(
-        ethSignerCert, ethSignerExpectedServerCert, web3ProviderHttpServer.actualPort(), workDir);
+        web3SignerCert, web3SignerExpectedServerCert, web3ProviderHttpServer.actualPort(), workDir);
 
     assertThatThrownBy(() -> signer.jsonRpc().ethGetBalance("0x123456", LATEST).send())
         .isInstanceOf(ClientConnectionException.class)
@@ -138,20 +137,20 @@ class EthRpcDownstreamTlsAcceptanceTest extends Eth1RpcAcceptanceTestBase {
   }
 
   @Test
-  void missingKeyStoreForEthSignerResultsInInternalServerError500Return(@TempDir Path workDir)
+  void missingKeyStoreForWeb3SignerResultsInInternalServerError500Return(@TempDir Path workDir)
       throws Exception {
     final TlsCertificateDefinition missingServerCert =
         new TlsCertificateDefinition(
             workDir.resolve("Missing_keyStore").toFile(), "arbitraryPassword");
     final TlsCertificateDefinition serverCert =
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", "password");
-    final TlsCertificateDefinition ethSignerCert =
+    final TlsCertificateDefinition web3SignerCert =
         TlsCertificateDefinition.loadFromResource("tls/cert2.pfx", "password2");
 
     final HttpServer web3ProviderHttpServer =
-        serverFactory.create(serverCert, ethSignerCert, workDir);
+        serverFactory.create(serverCert, web3SignerCert, workDir);
 
-    startSigner(missingServerCert, ethSignerCert, web3ProviderHttpServer.actualPort(), workDir);
+    startSigner(missingServerCert, web3SignerCert, web3ProviderHttpServer.actualPort(), workDir);
 
     // the actual connection to downstream server should fail as an internal error (500) since the
     // keystore is invalid ...
@@ -167,15 +166,15 @@ class EthRpcDownstreamTlsAcceptanceTest extends Eth1RpcAcceptanceTestBase {
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", "wrong_password");
     final TlsCertificateDefinition serverCert =
         TlsCertificateDefinition.loadFromResource("tls/cert1.pfx", "password");
-    final TlsCertificateDefinition ethSignerCert =
+    final TlsCertificateDefinition web3signerCert =
         TlsCertificateDefinition.loadFromResource("tls/cert2.pfx", "password2");
 
     final HttpServer web3ProviderHttpServer =
-        serverFactory.create(serverCert, ethSignerCert, workDir);
+        serverFactory.create(serverCert, web3signerCert, workDir);
 
     startSigner(
         serverPresentedCertWithInvalidPassword,
-        ethSignerCert,
+        web3signerCert,
         web3ProviderHttpServer.actualPort(),
         workDir);
 
