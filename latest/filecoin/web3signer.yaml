@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: 'Web3Signer Filecoin'
   description: 'Upcheck'
-  version: '23.3.1+13-g4ac1c4a'
+  version: '23.3.1+14-g19c1aff'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
