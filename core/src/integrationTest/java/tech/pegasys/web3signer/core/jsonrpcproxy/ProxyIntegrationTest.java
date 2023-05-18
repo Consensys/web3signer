@@ -16,6 +16,8 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.model.HttpRequest.request;
 
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.HttpMethod;
+
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -26,20 +28,27 @@ import io.vertx.core.json.Json;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockserver.model.Header;
-import org.web3j.protocol.core.Response;
-import org.web3j.protocol.core.methods.response.NetVersion;
 
 public class ProxyIntegrationTest extends IntegrationTestBase {
 
-  private static final String LOGIN_BODY = "{\"username\":\"username1\",\"password\":\"pegasys\"}";
-  private static final String LOGIN_RESPONSE = "{\"token\":\"eyJ0\"}";
+  private static final String NON_RPC_REQUEST =
+      "{\"username\":\"username1\",\"password\":\"pegasys\"}";
+  private static final String NON_RPC_RESPONSE = "{\"token\":\"eyJ0\"}";
+  private static final String RPC_REQUEST =
+      "{\"jsonrpc\":\"2.0\",\"method\":\"net_version\",\"params\":[],\"id\":0}";
+  private static final String RPC_RESPONSE =
+      "{\"id\":0,\"jsonrpc\":2.0,\"result\":\"4\",\"error\":null,\"rawResponse\":null,\"netVersion\":\"4\"}";
   private static final Iterable<Entry<String, String>> REQUEST_HEADERS =
       singletonList(ImmutablePair.of("Accept", "*/*"));
   private static final Iterable<Entry<String, String>> RESPONSE_HEADERS =
       singletonList(ImmutablePair.of("Content-Type", "Application/Json"));
 
   private static final String ROOT_PATH = "/arbitraryRootPath";
+  private static final String NOT_FOUND_BODY =
+      "<html><body><h1>Resource not found</h1></body></html>";
 
   @BeforeAll
   public static void localSetup() {
@@ -51,58 +60,40 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
   }
 
   @Test
-  void requestWithHeadersIsProxied() {
-    final String netVersionRequest = Json.encode(jsonRpc().netVersion());
-
-    final Response<String> netVersion = new NetVersion();
-    netVersion.setResult("4");
-    final String netVersionResponse = Json.encode(netVersion);
-
+  void rpcRequestWithHeadersIsProxied() {
     setUpEthNodeResponse(
-        request.ethNode(netVersionRequest), response.ethNode(RESPONSE_HEADERS, netVersionResponse));
+        request.ethNode(RPC_REQUEST), response.ethNode(RESPONSE_HEADERS, RPC_RESPONSE));
 
     sendPostRequestAndVerifyResponse(
-        request.web3signer(REQUEST_HEADERS, netVersionRequest),
-        response.web3Signer(RESPONSE_HEADERS, netVersionResponse));
+        request.web3signer(REQUEST_HEADERS, RPC_REQUEST),
+        response.web3Signer(RESPONSE_HEADERS, RPC_RESPONSE));
 
-    verifyEthNodeReceived(REQUEST_HEADERS, netVersionRequest);
+    verifyEthNodeReceived(REQUEST_HEADERS, RPC_REQUEST);
   }
 
   @Test
   void requestWithHostHeaderIsRenamedToXForwardedHost() {
-    final String netVersionRequest = Json.encode(jsonRpc().netVersion());
-
-    final Response<String> netVersion = new NetVersion();
-    netVersion.setResult("4");
-    final String netVersionResponse = Json.encode(netVersion);
-
     setUpEthNodeResponse(
-        request.ethNode(netVersionRequest), response.ethNode(RESPONSE_HEADERS, netVersionResponse));
+        request.ethNode(RPC_REQUEST), response.ethNode(RESPONSE_HEADERS, RPC_RESPONSE));
 
     final Iterable<Entry<String, String>> requestHeaders =
         List.of(ImmutablePair.of("Accept", "*.*"), ImmutablePair.of("Host", "localhost"));
 
     sendPostRequestAndVerifyResponse(
-        request.web3signer(requestHeaders, netVersionRequest),
-        response.web3Signer(RESPONSE_HEADERS, netVersionResponse));
+        request.web3signer(requestHeaders, RPC_REQUEST),
+        response.web3Signer(RESPONSE_HEADERS, RPC_RESPONSE));
 
     final Iterable<Entry<String, String>> expectedForwardedHeaders =
         List.of(
             ImmutablePair.of("Accept", "*.*"), ImmutablePair.of("X-Forwarded-Host", "localhost"));
 
-    verifyEthNodeReceived(expectedForwardedHeaders, netVersionRequest);
+    verifyEthNodeReceived(expectedForwardedHeaders, RPC_REQUEST);
   }
 
   @Test
   void requestWithHostHeaderOverwritesExistingXForwardedHost() {
-    final String netVersionRequest = Json.encode(jsonRpc().netVersion());
-
-    final Response<String> netVersion = new NetVersion();
-    netVersion.setResult("4");
-    final String netVersionResponse = Json.encode(netVersion);
-
     setUpEthNodeResponse(
-        request.ethNode(netVersionRequest), response.ethNode(RESPONSE_HEADERS, netVersionResponse));
+        request.ethNode(RPC_REQUEST), response.ethNode(RESPONSE_HEADERS, RPC_RESPONSE));
 
     final Iterable<Entry<String, String>> requestHeaders =
         List.of(
@@ -111,14 +102,14 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
             ImmutablePair.of("X-Forwarded-Host", "nowhere"));
 
     sendPostRequestAndVerifyResponse(
-        request.web3signer(requestHeaders, netVersionRequest),
-        response.web3Signer(RESPONSE_HEADERS, netVersionResponse));
+        request.web3signer(requestHeaders, RPC_REQUEST),
+        response.web3Signer(RESPONSE_HEADERS, RPC_RESPONSE));
 
     final Iterable<Entry<String, String>> expectedForwardedHeaders =
         List.of(
             ImmutablePair.of("Accept", "*.*"), ImmutablePair.of("X-Forwarded-Host", "localhost"));
 
-    verifyEthNodeReceived(expectedForwardedHeaders, netVersionRequest);
+    verifyEthNodeReceived(expectedForwardedHeaders, RPC_REQUEST);
   }
 
   @Test
@@ -139,72 +130,55 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
   @Test
   void postRequestToNonRootPathIsProxied() {
     setUpEthNodeResponse(
-        request.ethNode(LOGIN_BODY),
-        response.ethNode(RESPONSE_HEADERS, LOGIN_RESPONSE, HttpResponseStatus.OK));
+        request.ethNode(RPC_REQUEST),
+        response.ethNode(RESPONSE_HEADERS, RPC_RESPONSE, HttpResponseStatus.OK));
 
     sendPostRequestAndVerifyResponse(
-        request.web3signer(REQUEST_HEADERS, LOGIN_BODY),
-        response.web3Signer(RESPONSE_HEADERS, LOGIN_RESPONSE),
+        request.web3signer(REQUEST_HEADERS, RPC_REQUEST),
+        response.web3Signer(RESPONSE_HEADERS, RPC_RESPONSE),
         "/login");
 
-    verifyEthNodeReceived(REQUEST_HEADERS, LOGIN_BODY, ROOT_PATH + "/login");
+    verifyEthNodeReceived(REQUEST_HEADERS, RPC_REQUEST, ROOT_PATH + "/login");
   }
 
-  @Test
-  void getRequestToNonRootPathIsProxied() {
+  @ParameterizedTest
+  @EnumSource(value = HttpMethod.class, names = "POST", mode = EnumSource.Mode.EXCLUDE)
+  void rpcNonPostRequestsAreNotProxied(final HttpMethod httpMethod) {
     setUpEthNodeResponse(
-        request.ethNode(LOGIN_BODY),
-        response.ethNode(RESPONSE_HEADERS, LOGIN_RESPONSE, HttpResponseStatus.OK));
+        request.ethNode(RPC_REQUEST),
+        response.ethNode(RESPONSE_HEADERS, RPC_RESPONSE, HttpResponseStatus.OK));
 
-    // Whilst a get request doesn't normally have a body, it can and we want to ensure the request
-    // is proxied as is
-    sendGetRequestAndVerifyResponse(
-        request.web3signer(REQUEST_HEADERS, LOGIN_BODY),
-        response.web3Signer(RESPONSE_HEADERS, LOGIN_RESPONSE),
+    sendRequestAndVerifyResponse(
+        httpMethod,
+        request.web3signer(REQUEST_HEADERS, RPC_REQUEST),
+        response.web3Signer(NOT_FOUND_BODY, HttpResponseStatus.NOT_FOUND),
         "/login");
 
-    verifyEthNodeReceived(REQUEST_HEADERS, LOGIN_BODY, ROOT_PATH + "/login");
+    clientAndServer.verifyZeroInteractions();
   }
 
-  @Test
-  void putRequestToNonRootPathIsProxied() {
+  @ParameterizedTest
+  @EnumSource(HttpMethod.class)
+  void nonRpcRequestsAreNotProxied(final HttpMethod httpMethod) {
     setUpEthNodeResponse(
-        request.ethNode(LOGIN_BODY),
-        response.ethNode(RESPONSE_HEADERS, LOGIN_RESPONSE, HttpResponseStatus.OK));
+        request.ethNode(NON_RPC_REQUEST),
+        response.ethNode(RESPONSE_HEADERS, NON_RPC_RESPONSE, HttpResponseStatus.OK));
 
-    sendPutRequestAndVerifyResponse(
-        request.web3signer(REQUEST_HEADERS, LOGIN_BODY),
-        response.web3Signer(RESPONSE_HEADERS, LOGIN_RESPONSE),
+    sendRequestAndVerifyResponse(
+        httpMethod,
+        request.web3signer(REQUEST_HEADERS, NON_RPC_REQUEST),
+        response.web3Signer(NOT_FOUND_BODY, HttpResponseStatus.NOT_FOUND),
         "/login");
 
-    verifyEthNodeReceived(REQUEST_HEADERS, LOGIN_BODY, ROOT_PATH + "/login");
-  }
-
-  @Test
-  void deleteRequestToNonRootPathIsProxied() {
-    setUpEthNodeResponse(
-        request.ethNode(LOGIN_BODY),
-        response.ethNode(RESPONSE_HEADERS, LOGIN_RESPONSE, HttpResponseStatus.OK));
-
-    sendDeleteRequestAndVerifyResponse(
-        request.web3signer(REQUEST_HEADERS, LOGIN_BODY),
-        response.web3Signer(RESPONSE_HEADERS, LOGIN_RESPONSE),
-        "/login");
-
-    verifyEthNodeReceived(REQUEST_HEADERS, LOGIN_BODY, ROOT_PATH + "/login");
+    clientAndServer.verifyZeroInteractions();
   }
 
   @Test
   void requestWithOriginHeaderProducesResponseWithCorsHeader() {
-    final String netVersionRequest = Json.encode(jsonRpc().netVersion());
-    final Response<String> netVersion = new NetVersion();
-    netVersion.setResult("4");
-    final String netVersionResponse = Json.encode(netVersion);
-
     final String originDomain = "sample.com";
 
     setUpEthNodeResponse(
-        request.ethNode(netVersionRequest), response.ethNode(RESPONSE_HEADERS, netVersionResponse));
+        request.ethNode(RPC_REQUEST), response.ethNode(RESPONSE_HEADERS, RPC_RESPONSE));
 
     final List<Entry<String, String>> expectedResponseHeaders =
         Lists.newArrayList(RESPONSE_HEADERS);
@@ -218,8 +192,8 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
             ImmutablePair.of("Origin", originDomain));
 
     sendPostRequestAndVerifyResponse(
-        request.web3signer(requestHeaders, netVersionRequest),
-        response.web3Signer(expectedResponseHeaders, netVersionResponse));
+        request.web3signer(requestHeaders, RPC_REQUEST),
+        response.web3Signer(expectedResponseHeaders, RPC_RESPONSE));
 
     // Cors headers should not be forwarded to the downstream web3 provider (CORS is handled
     // entirely within Web3Signer.
@@ -229,9 +203,6 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
 
   @Test
   void requestWithMisMatchedDomainReceives403() {
-    final String netVersionRequest = Json.encode(jsonRpc().netVersion());
-    final Response<String> netVersion = new NetVersion();
-    netVersion.setResult("4");
     final String originDomain = "notSample.com";
     final Iterable<Entry<String, String>> requestHeaders =
         List.of(
@@ -240,7 +211,7 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
             ImmutablePair.of("Origin", originDomain));
 
     sendPostRequestAndVerifyResponse(
-        request.web3signer(requestHeaders, netVersionRequest),
+        request.web3signer(requestHeaders, RPC_REQUEST),
         response.web3Signer("", HttpResponseStatus.FORBIDDEN));
   }
 
@@ -256,12 +227,12 @@ public class ProxyIntegrationTest extends IntegrationTestBase {
         List.of(ImmutablePair.of("Accept", "*/*"), ImmutablePair.of("Host", "localhost"));
 
     setUpEthNodeResponse(
-        request.ethNode(LOGIN_BODY),
-        response.ethNode(multiValueResponseHeader, LOGIN_RESPONSE, HttpResponseStatus.OK));
+        request.ethNode(RPC_REQUEST),
+        response.ethNode(multiValueResponseHeader, RPC_RESPONSE, HttpResponseStatus.OK));
 
     sendPostRequestAndVerifyResponse(
-        request.web3signer(requestHeaders, LOGIN_BODY),
-        response.web3Signer(multiValueResponseHeader, LOGIN_RESPONSE),
+        request.web3signer(requestHeaders, RPC_REQUEST),
+        response.web3Signer(multiValueResponseHeader, RPC_RESPONSE),
         "/login");
   }
 }

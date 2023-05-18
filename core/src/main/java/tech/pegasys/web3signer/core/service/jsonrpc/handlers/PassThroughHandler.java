@@ -20,7 +20,9 @@ import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestHandler;
 
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,6 +44,11 @@ public class PassThroughHandler implements JsonRpcRequestHandler, Handler<Routin
 
   @Override
   public void handle(final RoutingContext context) {
+    if (!isRpc(context)) {
+      context.next();
+      return;
+    }
+
     logRequest(context.request(), context.getBodyAsString());
     final VertxRequestTransmitter transmitter =
         transmitterFactory.create(new ForwardedMessageResponder(context));
@@ -50,6 +57,13 @@ public class PassThroughHandler implements JsonRpcRequestHandler, Handler<Routin
     final MultiMap headersToSend = HeaderHelpers.createHeaders(request.headers());
     transmitter.sendRequest(
         request.method(), headersToSend, request.path(), context.getBodyAsString());
+  }
+
+  private static boolean isRpc(final RoutingContext context) {
+    final RequestBody body = context.body();
+    final String jsonRpcVersion = body.asJsonObject().getString("jsonrpc");
+    final HttpMethod method = context.request().method();
+    return method.equals(HttpMethod.POST) && jsonRpcVersion != null && jsonRpcVersion.equals("2.0");
   }
 
   private void logRequest(final HttpServerRequest httpRequest, final String body) {
