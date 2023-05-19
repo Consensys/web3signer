@@ -64,7 +64,7 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
-  private Eth1Config eth1Config;
+  private final Eth1Config eth1Config;
   private static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
   private final HttpResponseFactory responseFactory = new HttpResponseFactory();
 
@@ -121,9 +121,11 @@ public class Eth1Runner extends Runner {
                   responseBodyHandler);
 
       final JsonDecoder jsonDecoder = createJsonDecoder();
-      final PassThroughHandler passThroughHandler = new PassThroughHandler(transmitterFactory);
+      final PassThroughHandler passThroughHandler =
+          new PassThroughHandler(transmitterFactory, jsonDecoder);
 
-      final RequestMapper requestMapper = createRequestMapper(transmitterFactory, signerProvider);
+      final RequestMapper requestMapper =
+          createRequestMapper(transmitterFactory, signerProvider, jsonDecoder);
 
       router
           .route(HttpMethod.POST, "/")
@@ -188,8 +190,10 @@ public class Eth1Runner extends Runner {
 
   private RequestMapper createRequestMapper(
       final VertxRequestTransmitterFactory transmitterFactory,
-      ArtifactSignerProvider signerProvider) {
-    final PassThroughHandler defaultHandler = new PassThroughHandler(transmitterFactory);
+      final ArtifactSignerProvider signerProvider,
+      final JsonDecoder jsonDecoder) {
+    final PassThroughHandler defaultHandler =
+        new PassThroughHandler(transmitterFactory, jsonDecoder);
 
     final RequestMapper requestMapper = new RequestMapper(defaultHandler);
     requestMapper.addHandler(

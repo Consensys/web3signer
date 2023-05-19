@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.core.service.jsonrpc.handlers;
 import tech.pegasys.web3signer.core.service.ForwardedMessageResponder;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitter;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
+import tech.pegasys.web3signer.core.service.jsonrpc.JsonDecoder;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestHandler;
 
@@ -22,7 +23,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,9 +32,12 @@ public class PassThroughHandler implements JsonRpcRequestHandler, Handler<Routin
   private static final Logger LOG = LogManager.getLogger();
 
   private final VertxRequestTransmitterFactory transmitterFactory;
+  private final JsonDecoder jsonDecoder;
 
-  public PassThroughHandler(final VertxRequestTransmitterFactory vertxTransmitterFactory) {
+  public PassThroughHandler(
+      final VertxRequestTransmitterFactory vertxTransmitterFactory, final JsonDecoder jsonDecoder) {
     this.transmitterFactory = vertxTransmitterFactory;
+    this.jsonDecoder = jsonDecoder;
   }
 
   @Override
@@ -59,11 +62,15 @@ public class PassThroughHandler implements JsonRpcRequestHandler, Handler<Routin
         request.method(), headersToSend, request.path(), context.getBodyAsString());
   }
 
-  private static boolean isRpc(final RoutingContext context) {
-    final RequestBody body = context.body();
-    final String jsonRpcVersion = body.asJsonObject().getString("jsonrpc");
+  private boolean isRpc(final RoutingContext context) {
     final HttpMethod method = context.request().method();
-    return method.equals(HttpMethod.POST) && jsonRpcVersion != null && jsonRpcVersion.equals("2.0");
+    try {
+      final JsonRpcRequest request =
+          jsonDecoder.decodeValue(context.getBody(), JsonRpcRequest.class);
+      return method.equals(HttpMethod.POST) && request.getVersion().equals("2.0");
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   private void logRequest(final HttpServerRequest httpRequest, final String body) {
