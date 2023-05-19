@@ -35,7 +35,6 @@ public class PassThroughAcceptanceTest extends Eth1RpcAcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth1")
-            .withDownstreamHttpProxyEnabled(true)
             .withDownstreamHttpPort(besu.ports().getHttpRpc())
             .build();
     startSigner(web3SignerConfiguration);

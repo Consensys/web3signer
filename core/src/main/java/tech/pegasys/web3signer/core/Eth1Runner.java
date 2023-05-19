@@ -103,40 +103,38 @@ public class Eth1Runner extends Runner {
 
     final Router router = context.getRouterBuilder().createRouter();
 
-    if (eth1Config.getDownstreamHttpProxyEnabled()) {
-      final DownstreamPathCalculator downstreamPathCalculator =
-          new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
+    final DownstreamPathCalculator downstreamPathCalculator =
+        new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
 
-      final WebClientOptions webClientOptions =
-          new WebClientOptionsFactory().createWebClientOptions(eth1Config);
-      final HttpClient downStreamConnection = context.getVertx().createHttpClient(webClientOptions);
+    final WebClientOptions webClientOptions =
+        new WebClientOptionsFactory().createWebClientOptions(eth1Config);
+    final HttpClient downStreamConnection = context.getVertx().createHttpClient(webClientOptions);
 
-      final VertxRequestTransmitterFactory transmitterFactory =
-          responseBodyHandler ->
-              new VertxRequestTransmitter(
-                  context.getVertx(),
-                  downStreamConnection,
-                  eth1Config.getDownstreamHttpRequestTimeout(),
-                  downstreamPathCalculator,
-                  responseBodyHandler);
+    final VertxRequestTransmitterFactory transmitterFactory =
+        responseBodyHandler ->
+            new VertxRequestTransmitter(
+                context.getVertx(),
+                downStreamConnection,
+                eth1Config.getDownstreamHttpRequestTimeout(),
+                downstreamPathCalculator,
+                responseBodyHandler);
 
-      final JsonDecoder jsonDecoder = createJsonDecoder();
-      final PassThroughHandler passThroughHandler =
-          new PassThroughHandler(transmitterFactory, jsonDecoder);
+    final JsonDecoder jsonDecoder = createJsonDecoder();
+    final PassThroughHandler passThroughHandler =
+        new PassThroughHandler(transmitterFactory, jsonDecoder);
 
-      final RequestMapper requestMapper =
-          createRequestMapper(transmitterFactory, signerProvider, jsonDecoder);
+    final RequestMapper requestMapper =
+        createRequestMapper(transmitterFactory, signerProvider, jsonDecoder);
 
-      router
-          .route(HttpMethod.POST, "/")
-          .produces(JSON)
-          .handler(ResponseContentTypeHandler.create())
-          .handler(BodyHandler.create())
-          .failureHandler(new JsonRpcErrorHandler(new HttpResponseFactory()))
-          .blockingHandler(new JsonRpcHandler(responseFactory, requestMapper, jsonDecoder), false);
+    router
+        .route(HttpMethod.POST, "/")
+        .produces(JSON)
+        .handler(ResponseContentTypeHandler.create())
+        .handler(BodyHandler.create())
+        .failureHandler(new JsonRpcErrorHandler(new HttpResponseFactory()))
+        .blockingHandler(new JsonRpcHandler(responseFactory, requestMapper, jsonDecoder), false);
 
-      router.route().handler(BodyHandler.create()).handler(passThroughHandler);
-    }
+    router.route().handler(BodyHandler.create()).handler(passThroughHandler);
 
     return router;
   }

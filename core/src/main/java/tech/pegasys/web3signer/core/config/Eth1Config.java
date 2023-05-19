@@ -19,8 +19,6 @@ import java.util.Optional;
 
 public interface Eth1Config {
 
-  Boolean getDownstreamHttpProxyEnabled();
-
   String getDownstreamHttpHost();
 
   Integer getDownstreamHttpPort();
