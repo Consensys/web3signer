@@ -52,7 +52,7 @@ public class PassThroughHandler implements JsonRpcRequestHandler, Handler<Routin
       return;
     }
 
-    logRequest(context.request(), context.getBodyAsString());
+    logRequest(context.request(), context.body().asString());
     final VertxRequestTransmitter transmitter =
         transmitterFactory.create(new ForwardedMessageResponder(context));
 
@@ -66,7 +66,7 @@ public class PassThroughHandler implements JsonRpcRequestHandler, Handler<Routin
     final HttpMethod method = context.request().method();
     try {
       final JsonRpcRequest request =
-          jsonDecoder.decodeValue(context.getBody(), JsonRpcRequest.class);
+          jsonDecoder.decodeValue(context.body().buffer(), JsonRpcRequest.class);
       return method.equals(HttpMethod.POST) && request.getVersion().equals("2.0");
     } catch (Exception e) {
       return false;
