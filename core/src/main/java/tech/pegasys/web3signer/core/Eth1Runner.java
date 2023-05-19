@@ -64,7 +64,7 @@ import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
-  private Eth1Config eth1Config;
+  private final Eth1Config eth1Config;
   private static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
   private final HttpResponseFactory responseFactory = new HttpResponseFactory();
 
@@ -103,38 +103,38 @@ public class Eth1Runner extends Runner {
 
     final Router router = context.getRouterBuilder().createRouter();
 
-    if (eth1Config.getDownstreamHttpProxyEnabled()) {
-      final DownstreamPathCalculator downstreamPathCalculator =
-          new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
+    final DownstreamPathCalculator downstreamPathCalculator =
+        new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
 
-      final WebClientOptions webClientOptions =
-          new WebClientOptionsFactory().createWebClientOptions(eth1Config);
-      final HttpClient downStreamConnection = context.getVertx().createHttpClient(webClientOptions);
+    final WebClientOptions webClientOptions =
+        new WebClientOptionsFactory().createWebClientOptions(eth1Config);
+    final HttpClient downStreamConnection = context.getVertx().createHttpClient(webClientOptions);
 
-      final VertxRequestTransmitterFactory transmitterFactory =
-          responseBodyHandler ->
-              new VertxRequestTransmitter(
-                  context.getVertx(),
-                  downStreamConnection,
-                  eth1Config.getDownstreamHttpRequestTimeout(),
-                  downstreamPathCalculator,
-                  responseBodyHandler);
+    final VertxRequestTransmitterFactory transmitterFactory =
+        responseBodyHandler ->
+            new VertxRequestTransmitter(
+                context.getVertx(),
+                downStreamConnection,
+                eth1Config.getDownstreamHttpRequestTimeout(),
+                downstreamPathCalculator,
+                responseBodyHandler);
 
-      final JsonDecoder jsonDecoder = createJsonDecoder();
-      final PassThroughHandler passThroughHandler = new PassThroughHandler(transmitterFactory);
+    final JsonDecoder jsonDecoder = createJsonDecoder();
+    final PassThroughHandler passThroughHandler =
+        new PassThroughHandler(transmitterFactory, jsonDecoder);
 
-      final RequestMapper requestMapper = createRequestMapper(transmitterFactory, signerProvider);
+    final RequestMapper requestMapper =
+        createRequestMapper(transmitterFactory, signerProvider, jsonDecoder);
 
-      router
-          .route(HttpMethod.POST, "/")
-          .produces(JSON)
-          .handler(ResponseContentTypeHandler.create())
-          .handler(BodyHandler.create())
-          .failureHandler(new JsonRpcErrorHandler(new HttpResponseFactory()))
-          .blockingHandler(new JsonRpcHandler(responseFactory, requestMapper, jsonDecoder), false);
+    router
+        .route(HttpMethod.POST, "/")
+        .produces(JSON)
+        .handler(ResponseContentTypeHandler.create())
+        .handler(BodyHandler.create())
+        .failureHandler(new JsonRpcErrorHandler(new HttpResponseFactory()))
+        .blockingHandler(new JsonRpcHandler(responseFactory, requestMapper, jsonDecoder), false);
 
-      router.route().handler(BodyHandler.create()).handler(passThroughHandler);
-    }
+    router.route().handler(BodyHandler.create()).handler(passThroughHandler);
 
     return router;
   }
@@ -188,8 +188,10 @@ public class Eth1Runner extends Runner {
 
   private RequestMapper createRequestMapper(
       final VertxRequestTransmitterFactory transmitterFactory,
-      ArtifactSignerProvider signerProvider) {
-    final PassThroughHandler defaultHandler = new PassThroughHandler(transmitterFactory);
+      final ArtifactSignerProvider signerProvider,
+      final JsonDecoder jsonDecoder) {
+    final PassThroughHandler defaultHandler =
+        new PassThroughHandler(transmitterFactory, jsonDecoder);
 
     final RequestMapper requestMapper = new RequestMapper(defaultHandler);
     requestMapper.addHandler(

@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
-import static tech.pegasys.web3signer.commandline.DefaultCommandValues.BOOL_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.HOST_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.LONG_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PATH_FORMAT_HELP;
@@ -44,15 +43,6 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
   public static final String COMMAND_NAME = "eth1";
 
   @CommandLine.Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
-
-  @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
-  @CommandLine.Option(
-      names = "--downstream-http-proxy-enabled",
-      description =
-          "Enable http downstream proxying of requests to the web3provider (default: ${DEFAULT-VALUE})",
-      paramLabel = BOOL_FORMAT_HELP,
-      arity = "1")
-  private Boolean downstreamHttpProxyEnabled = false;
 
   @SuppressWarnings("FieldMayBeFinal") // Because PicoCLI requires Strings to not be final.
   @CommandLine.Option(
@@ -151,11 +141,6 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
   @Override
   protected void validateArgs() {
     checkIfRequiredOptionsAreInitialized(this);
-  }
-
-  @Override
-  public Boolean getDownstreamHttpProxyEnabled() {
-    return downstreamHttpProxyEnabled;
   }
 
   @Override

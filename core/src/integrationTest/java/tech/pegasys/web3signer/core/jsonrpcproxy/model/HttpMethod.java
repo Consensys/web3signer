@@ -10,30 +10,11 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.config;
+package tech.pegasys.web3signer.core.jsonrpcproxy.model;
 
-import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
-
-import java.time.Duration;
-import java.util.Optional;
-
-public interface Eth1Config {
-
-  String getDownstreamHttpHost();
-
-  Integer getDownstreamHttpPort();
-
-  String getDownstreamHttpPath();
-
-  Duration getDownstreamHttpRequestTimeout();
-
-  String getHttpProxyHost();
-
-  Integer getHttpProxyPort();
-
-  String getHttpProxyUsername();
-
-  String getHttpProxyPassword();
-
-  Optional<ClientTlsOptions> getClientTlsOptions();
+public enum HttpMethod {
+  POST,
+  GET,
+  PUT,
+  DELETE
 }

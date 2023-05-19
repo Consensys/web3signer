@@ -36,11 +36,6 @@ public class TestEth1Config implements Eth1Config {
   }
 
   @Override
-  public Boolean getDownstreamHttpProxyEnabled() {
-    return true;
-  }
-
-  @Override
   public String getDownstreamHttpHost() {
     return downstreamHttpHost;
   }

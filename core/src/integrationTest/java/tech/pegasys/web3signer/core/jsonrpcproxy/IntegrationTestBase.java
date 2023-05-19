@@ -25,6 +25,7 @@ import static org.web3j.utils.Async.defaultExecutorService;
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.Eth1Config;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.HttpMethod;
 import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.EthNodeRequest;
 import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.EthRequestFactory;
 import tech.pegasys.web3signer.core.jsonrpcproxy.model.request.Web3SignerRequest;
@@ -251,6 +252,21 @@ public class IntegrationTestBase {
             .body(request.getBody())
             .headers(RestAssuredConverter.headers(request.getHeaders()))
             .delete(path);
+    verifyResponseMatchesExpected(response, expectResponse);
+  }
+
+  void sendRequestAndVerifyResponse(
+      final HttpMethod httpMethod,
+      final Web3SignerRequest request,
+      final Web3SignerResponse expectResponse,
+      final String path) {
+    final Response response =
+        given()
+            .when()
+            .body(request.getBody())
+            .headers(RestAssuredConverter.headers(request.getHeaders()))
+            .request(httpMethod.name(), path);
+
     verifyResponseMatchesExpected(response, expectResponse);
   }
 
