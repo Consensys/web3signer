@@ -18,7 +18,6 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.tests.eth1rpc.Eth1RpcAcceptanceTestBase;
 
 import java.io.File;
 import java.io.IOException;
