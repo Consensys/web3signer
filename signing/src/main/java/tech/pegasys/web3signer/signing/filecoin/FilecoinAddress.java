@@ -19,6 +19,7 @@ import static tech.pegasys.web3signer.signing.filecoin.FilecoinProtocol.SECP256K
 import tech.pegasys.web3signer.signing.filecoin.exceptions.InvalidAddressChecksumException;
 import tech.pegasys.web3signer.signing.filecoin.exceptions.InvalidAddressLengthException;
 import tech.pegasys.web3signer.signing.filecoin.exceptions.InvalidAddressPayloadException;
+import tech.pegasys.web3signer.signing.filecoin.exceptions.InvalidFilecoinProtocolException;
 import tech.pegasys.web3signer.signing.util.Blake2b;
 import tech.pegasys.web3signer.signing.util.ByteUtils;
 
@@ -54,11 +55,6 @@ public class FilecoinAddress {
 
   public Bytes getPayload() {
     return payload;
-  }
-
-  public Bytes getEncodedBytes() {
-    final byte protocolByte = Byte.parseByte(protocol.getAddrValue());
-    return Bytes.concatenate(Bytes.wrap(new byte[] {protocolByte}), payload);
   }
 
   public FilecoinProtocol getProtocol() {
@@ -105,9 +101,13 @@ public class FilecoinAddress {
     return filecoinAddress;
   }
 
-  public static Bytes checksum(final FilecoinAddress address) {
-    final Integer protocolValue = Integer.valueOf(address.protocol.getAddrValue());
-    return Blake2b.sum32(Bytes.concatenate(Bytes.of(protocolValue), address.getPayload()));
+  private static Bytes checksum(final FilecoinAddress address) {
+    try {
+      final Integer protocolValue = Integer.valueOf(address.protocol.getAddrValue());
+      return Blake2b.sum32(Bytes.concatenate(Bytes.of(protocolValue), address.getPayload()));
+    } catch (NumberFormatException nfe) {
+      throw new InvalidFilecoinProtocolException();
+    }
   }
 
   public static boolean validateChecksum(

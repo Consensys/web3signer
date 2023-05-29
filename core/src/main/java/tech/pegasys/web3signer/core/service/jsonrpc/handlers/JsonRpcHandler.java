@@ -47,9 +47,9 @@ public class JsonRpcHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext context) {
     try {
-      LOG.trace("Request body = {}", context.getBodyAsString());
+      LOG.trace("Request body = {}", context.body().asString());
       final JsonRpcRequest request =
-          jsonDecoder.decodeValue(context.getBody(), JsonRpcRequest.class);
+          jsonDecoder.decodeValue(context.body().buffer(), JsonRpcRequest.class);
       context.put(ID_ELEMENT_NAME, request.getId());
       final JsonRpcRequestHandler handler =
           requestHandlerMapper.getMatchingHandler(request.getMethod());
@@ -61,7 +61,7 @@ public class JsonRpcHandler implements Handler<RoutingContext> {
 
   private void sendParseErrorResponse(final RoutingContext context, final Throwable error) {
     LOG.info("Dropping request from {}", context.request().remoteAddress());
-    LOG.debug("Parsing body as JSON failed for: {}", context.getBodyAsString(), error);
+    LOG.debug("Parsing body as JSON failed for: {}", context.body().asString(), error);
     responseFactory.response(
         context.response(),
         HttpResponseStatus.BAD_REQUEST.code(),

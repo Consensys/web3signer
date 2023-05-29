@@ -150,7 +150,7 @@ public class KeystoreFileManager {
     try {
       Files.deleteIfExists(file);
     } catch (final IOException e) {
-      LOG.warn("Unable to delete file {} due to {}", file, e.getMessage());
+      LOG.warn("Unable to delete file {} due to {}", file.getFileName(), e.getMessage());
     }
   }
 }
