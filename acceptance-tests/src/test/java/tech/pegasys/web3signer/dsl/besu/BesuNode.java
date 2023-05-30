@@ -15,6 +15,9 @@ package tech.pegasys.web3signer.dsl.besu;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 
+import tech.pegasys.web3signer.dsl.Accounts;
+import tech.pegasys.web3signer.dsl.Eth;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
@@ -52,7 +55,7 @@ public class BesuNode {
   private final String[] args;
   private final Map<String, String> environment;
   private final Properties portsProperties = new Properties();
-
+  private Accounts accounts;
   private Future<ProcessResult> besuProcess;
   private Web3j jsonRpc;
   private BesuNodePorts besuNodePorts;
@@ -123,10 +126,18 @@ public class BesuNode {
     } catch (final ConditionTimeoutException e) {
       throw new RuntimeException("Failed to start the Besu node", e);
     }
+
+    final Eth eth = new Eth(jsonRpc);
+
+    accounts = new Accounts(eth);
   }
 
   public BesuNodePorts ports() {
     return besuNodePorts;
+  }
+
+  public Accounts accounts() {
+    return accounts;
   }
 
   public Ethereum jsonRpc() {
