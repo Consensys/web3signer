@@ -59,7 +59,7 @@ public class PassThroughHandler implements JsonRpcRequestHandler, Handler<Routin
     final HttpServerRequest request = context.request();
     final MultiMap headersToSend = HeaderHelpers.createHeaders(request.headers());
     transmitter.sendRequest(
-        request.method(), headersToSend, request.path(), context.getBodyAsString());
+        request.method(), headersToSend, request.path(), context.body().asString());
   }
 
   private boolean isRpc(final RoutingContext context) {

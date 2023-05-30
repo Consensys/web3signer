@@ -102,7 +102,7 @@ public class FilecoinRunner extends Runner {
         .handler(fcJsonRpcMetrics::incTotalFilecoinRequests)
         .blockingHandler(
             routingContext -> {
-              final String body = routingContext.getBodyAsString();
+              final String body = routingContext.body().asString();
               final String jsonRpcResponse = jsonRpcServer.handle(body, fileCoinJsonRpc);
               routingContext.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonRpcResponse);
             },
