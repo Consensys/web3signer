@@ -143,7 +143,7 @@ public abstract class Runner implements Runnable {
 
       routerBuilder.rootHandler(
           CorsHandler.create()
-              .addOrigin(buildCorsRegexFromConfig())
+              .addRelativeOrigin(buildCorsRegexFromConfig())
               .allowedHeader("*")
               .allowedMethod(HttpMethod.GET)
               .allowedMethod(HttpMethod.POST)
