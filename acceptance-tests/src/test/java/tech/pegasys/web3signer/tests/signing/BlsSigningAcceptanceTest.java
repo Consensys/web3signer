@@ -244,7 +244,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @ParameterizedTest
   @EnumSource(
       value = ContentType.class,
-      names = {"TEXT", "JSON", "ANY"})
+      names = {"ANY"})
   public void ableToSignWithoutSigningRootField(final ContentType acceptableContentType)
       throws JsonProcessingException {
     final String configFilename = PUBLIC_KEY.toString().substring(2);

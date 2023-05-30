@@ -14,10 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.DEFAULT_CHECK;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_UNEXPECTED;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.HEALTHCHECK;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.UPCHECK;
 
-import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.common.ApplicationInfo;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
@@ -30,16 +27,13 @@ import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.web3signer.core.util.FileUtil;
-import tech.pegasys.web3signer.core.util.OpenApiSpecsExtractor;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.StringJoiner;
@@ -47,6 +41,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
@@ -66,7 +61,6 @@ import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import io.vertx.ext.web.openapi.RouterBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
@@ -75,6 +69,8 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public abstract class Runner implements Runnable {
+  public static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
+  public static final String TEXT = HttpHeaderValues.TEXT_PLAIN + "; charset=utf-8";
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -104,6 +100,8 @@ public abstract class Runner implements Runnable {
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
 
     final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
+    final Router router = Router.router(vertx);
+
     final LogErrorHandler errorHandler = new LogErrorHandler();
     healthCheckHandler = HealthCheckHandler.create(vertx);
 
@@ -121,53 +119,40 @@ public abstract class Runner implements Runnable {
             KEYS_CHECK_UNEXPECTED, promise -> promise.complete(Status.KO()));
       }
 
-      final OpenApiSpecsExtractor openApiSpecsExtractor =
-          new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
-              .withConvertRelativeRefToAbsoluteRef(true)
-              .withForceDeleteOnJvmExit(true)
-              .build();
-      final Path openApiSpec =
-          openApiSpecsExtractor
-              .getSpecFilePathAtDestination(getOpenApiSpecResource())
-              .orElseThrow(
-                  () ->
-                      new RuntimeException(
-                          "Unable to load OpenApi spec " + getOpenApiSpecResource()));
-      // vertx needs a scheme present (file://) to determine this is an absolute path
-      final URI openApiSpecUri = openApiSpec.toUri();
-      final RouterBuilder routerBuilder = getRouterBuilder(vertx, openApiSpecUri.toString());
       // register access log handler first
       if (baseConfig.isAccessLogsEnabled()) {
-        routerBuilder.rootHandler(LoggerHandler.create(LoggerFormat.DEFAULT));
+        router.route().handler(LoggerHandler.create(LoggerFormat.DEFAULT));
       }
 
-      routerBuilder.rootHandler(
-          CorsHandler.create(buildCorsRegexFromConfig())
-              .allowedHeader("*")
-              .allowedMethod(HttpMethod.GET)
-              .allowedMethod(HttpMethod.POST)
-              .allowedMethod(HttpMethod.DELETE)
-              .allowedMethod(HttpMethod.OPTIONS));
+      router
+          .route()
+          .handler(
+              CorsHandler.create(buildCorsRegexFromConfig())
+                  .allowedHeader("*")
+                  .allowedMethod(HttpMethod.GET)
+                  .allowedMethod(HttpMethod.POST)
+                  .allowedMethod(HttpMethod.DELETE)
+                  .allowedMethod(HttpMethod.OPTIONS));
 
       /*
        Add our own instance of BodyHandler as the default BodyHandler doesn't seem to handle large json bodies.
        BodyHandler must be first handler after platform and security handlers
       */
-      routerBuilder.rootHandler(BodyHandler.create());
-      registerUpcheckRoute(routerBuilder, errorHandler);
-      registerHttpHostAllowListHandler(routerBuilder);
+      router.route().handler(BodyHandler.create());
+      registerUpcheckRoute(router, errorHandler);
+      registerHttpHostAllowListHandler(router);
 
-      routerBuilder
-          .operation(HEALTHCHECK.name())
+      router
+          .route(HttpMethod.GET, "/healthcheck")
           .handler(healthCheckHandler)
           .failureHandler(errorHandler);
 
       registerHealthCheckProcedure(DEFAULT_CHECK, promise -> promise.complete(Status.OK()));
 
       final Context context =
-          new Context(routerBuilder, metricsSystem, errorHandler, vertx, artifactSignerProvider);
+          new Context(router, metricsSystem, errorHandler, vertx, artifactSignerProvider);
 
-      final Router router = populateRouter(context);
+      populateRouter(context);
       if (baseConfig.isSwaggerUIEnabled()) {
         new SwaggerUIRoute(router).register();
       }
@@ -211,63 +196,40 @@ public abstract class Runner implements Runnable {
   protected abstract ArtifactSignerProvider createArtifactSignerProvider(
       final Vertx vertx, final MetricsSystem metricsSystem);
 
-  protected abstract Router populateRouter(final Context context);
+  protected abstract void populateRouter(final Context context);
 
-  protected abstract String getOpenApiSpecResource();
-
-  public static RouterBuilder getRouterBuilder(final Vertx vertx, final String specUrl)
-      throws InterruptedException, ExecutionException {
-    final CompletableFuture<RouterBuilder> completableFuture = new CompletableFuture<>();
-    RouterBuilder.create(
-        vertx,
-        specUrl,
-        ar -> {
-          if (ar.succeeded()) {
-            completableFuture.complete(ar.result());
-          } else {
-            completableFuture.completeExceptionally(ar.cause());
-          }
-        });
-
-    final RouterBuilder routerBuilder = completableFuture.get();
-
-    // disable automatic response content handler as it doesn't handle some corner cases.
-    // Our handlers must set content type header manually.
-    routerBuilder.getOptions().setMountResponseContentTypeHandler(false);
-    // vertx-json-schema fails to createRouter for unknown string type formats
-    routerBuilder.getSchemaParser().withStringFormatValidator("uint64", Runner::validateUInt64);
-    return routerBuilder;
-  }
-
-  private static boolean validateUInt64(final String value) {
-    try {
-      UInt64.valueOf(value);
-      return true;
-    } catch (RuntimeException e) {
-      LOG.warn("Validation failed for uint64 value: {}", value);
-      return false;
-    }
-  }
+  //  protected abstract String getOpenApiSpecResource();
+  //
+  //  private static boolean validateUInt64(final String value) {
+  //    try {
+  //      UInt64.valueOf(value);
+  //      return true;
+  //    } catch (RuntimeException e) {
+  //      LOG.warn("Validation failed for uint64 value: {}", value);
+  //      return false;
+  //    }
+  //  }
 
   protected void addPublicKeysListHandler(
-      final RouterBuilder routerBuilder,
+      final Router router,
       final ArtifactSignerProvider artifactSignerProvider,
-      final String operationId,
+      final String path,
       final LogErrorHandler errorHandler) {
-    routerBuilder
-        .operation(operationId)
+    router
+        .route(HttpMethod.GET, path)
+        .produces(JSON)
         .handler(
             new BlockingHandlerDecorator(new PublicKeysListHandler(artifactSignerProvider), false))
         .failureHandler(errorHandler);
   }
 
   protected void addReloadHandler(
-      final RouterBuilder routerBuilder,
+      final Router router,
       final ArtifactSignerProvider artifactSignerProvider,
-      final String operationId,
       final LogErrorHandler errorHandler) {
-    routerBuilder
-        .operation(operationId)
+    router
+        .route(HttpMethod.POST, "/reload")
+        .produces(JSON)
         .handler(
             routingContext -> {
               artifactSignerProvider.load();
@@ -276,10 +238,10 @@ public abstract class Runner implements Runnable {
         .failureHandler(errorHandler);
   }
 
-  private void registerUpcheckRoute(
-      final RouterBuilder routerBuilder, final LogErrorHandler errorHandler) {
-    routerBuilder
-        .operation(UPCHECK.name())
+  private void registerUpcheckRoute(final Router router, final LogErrorHandler errorHandler) {
+    router
+        .route(HttpMethod.GET, "/upcheck")
+        .produces(JSON)
         .handler(new BlockingHandlerDecorator(new UpcheckHandler(), false))
         .failureHandler(errorHandler);
   }
@@ -289,8 +251,8 @@ public abstract class Runner implements Runnable {
     healthCheckHandler.register(name, procedure);
   }
 
-  private void registerHttpHostAllowListHandler(final RouterBuilder routerBuilder) {
-    routerBuilder.rootHandler(new HostAllowListHandler(baseConfig.getHttpHostAllowList()));
+  private void registerHttpHostAllowListHandler(final Router router) {
+    router.route().handler(new HostAllowListHandler(baseConfig.getHttpHostAllowList()));
   }
 
   private HttpServer createServerAndWait(

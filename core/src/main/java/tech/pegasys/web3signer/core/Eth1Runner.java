@@ -12,9 +12,6 @@
  */
 package tech.pegasys.web3signer.core;
 
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_LIST;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH1_SIGN;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
@@ -51,7 +48,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpMethod;
@@ -60,12 +56,11 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
   private final Eth1Config eth1Config;
-  private static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
+
   private final HttpResponseFactory responseFactory = new HttpResponseFactory();
 
   public Eth1Runner(final BaseConfig baseConfig, final Eth1Config eth1Config) {
@@ -73,24 +68,24 @@ public class Eth1Runner extends Runner {
     this.eth1Config = eth1Config;
   }
 
-  @Override
-  protected String getOpenApiSpecResource() {
-    return "eth1/web3signer.yaml";
-  }
+  //  @Override
+  //  protected String getOpenApiSpecResource() {
+  //    return "eth1/web3signer.yaml";
+  //  }
 
   @Override
-  protected Router populateRouter(final Context context) {
-    final RouterBuilder routerBuilder = context.getRouterBuilder();
+  protected void populateRouter(final Context context) {
+    final Router router = context.getRouter();
     final LogErrorHandler errorHandler = context.getErrorHandler();
     final ArtifactSignerProvider signerProvider = context.getArtifactSignerProvider();
 
     addPublicKeysListHandler(
-        routerBuilder, signerProvider, ETH1_LIST.name(), context.getErrorHandler());
+        router, signerProvider, "/api/v1/eth1/publicKeys", context.getErrorHandler());
 
     final SignerForIdentifier<SecpArtifactSignature> secpSigner =
         new SignerForIdentifier<>(signerProvider, this::formatSecpSignature, SECP256K1);
-    routerBuilder
-        .operation(ETH1_SIGN.name())
+    router
+        .route(HttpMethod.POST, "/api/v1/eth1/sign/:identifier")
         .handler(
             new BlockingHandlerDecorator(
                 new Eth1SignForIdentifierHandler(
@@ -99,9 +94,7 @@ public class Eth1Runner extends Runner {
                 false))
         .failureHandler(errorHandler);
 
-    addReloadHandler(routerBuilder, signerProvider, RELOAD.name(), context.getErrorHandler());
-
-    final Router router = context.getRouterBuilder().createRouter();
+    addReloadHandler(router, signerProvider, context.getErrorHandler());
 
     final DownstreamPathCalculator downstreamPathCalculator =
         new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
@@ -128,15 +121,13 @@ public class Eth1Runner extends Runner {
 
     router
         .route(HttpMethod.POST, "/")
-        .produces(JSON)
+        .produces(Runner.JSON)
         .handler(ResponseContentTypeHandler.create())
         .handler(BodyHandler.create())
         .failureHandler(new JsonRpcErrorHandler(new HttpResponseFactory()))
         .blockingHandler(new JsonRpcHandler(responseFactory, requestMapper, jsonDecoder), false);
 
     router.route().handler(BodyHandler.create()).handler(passThroughHandler);
-
-    return router;
   }
 
   @Override

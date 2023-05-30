@@ -39,7 +39,6 @@ dependencyManagement {
       entry 'vertx-unit'
       entry 'vertx-web-client'
       entry 'vertx-web'
-      entry 'vertx-web-openapi'
       entry 'vertx-junit5'
       entry 'vertx-health-check'
     }
