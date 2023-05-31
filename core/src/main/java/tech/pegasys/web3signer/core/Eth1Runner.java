@@ -68,11 +68,6 @@ public class Eth1Runner extends Runner {
     this.eth1Config = eth1Config;
   }
 
-  //  @Override
-  //  protected String getOpenApiSpecResource() {
-  //    return "eth1/web3signer.yaml";
-  //  }
-
   @Override
   protected void populateRouter(final Context context) {
     final Router router = context.getRouter();

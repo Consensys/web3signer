@@ -58,11 +58,6 @@ public class FilecoinRunner extends Runner {
     this.network = network;
   }
 
-  //  @Override
-  //  protected String getOpenApiSpecResource() {
-  //    return "filecoin/web3signer.yaml";
-  //  }
-
   @Override
   protected void populateRouter(final Context context) {
     addReloadHandler(

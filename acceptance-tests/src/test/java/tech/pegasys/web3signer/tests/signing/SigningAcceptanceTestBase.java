@@ -92,7 +92,7 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
 
   protected Bytes verifyAndGetSignatureResponse(
       final Response response, final ContentType expectedContentType) {
-    response.then().statusCode(200);
+    response.then().contentType(expectedContentType).statusCode(200);
     final String signature =
         expectedContentType == ContentType.JSON
             ? response.body().jsonPath().getString("signature")
