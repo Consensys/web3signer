@@ -14,7 +14,11 @@ package tech.pegasys.web3signer.core.service.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.web3signer.core.util.OpenApiSpecsExtractor;
+
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
@@ -37,18 +41,18 @@ class SwaggerUIRouteTest {
     final Router router = Router.router(vertx);
     final SwaggerUIRoute swaggerUIRoute = new SwaggerUIRoute(router);
 
-    //    final OpenApiSpecsExtractor openApiSpecsExtractor =
-    //        new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
-    //            .withConvertRelativeRefToAbsoluteRef(false)
-    //            .withForceDeleteOnJvmExit(true)
-    //            .build();
+    final OpenApiSpecsExtractor openApiSpecsExtractor =
+        new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
+            .withConvertRelativeRefToAbsoluteRef(false)
+            .withForceDeleteOnJvmExit(true)
+            .build();
 
-    //    final Map<Path, String> swaggerUIWebRoot =
-    //        swaggerUIRoute.loadSwaggerUIStaticContent(openApiSpecsExtractor);
-    //    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui"));
-    //    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/"));
-    //    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/eth2/web3signer.yaml"));
-    //    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/filecoin/web3signer.yaml"));
-    //    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/eth1/web3signer.yaml"));
+    final Map<Path, String> swaggerUIWebRoot =
+        swaggerUIRoute.loadSwaggerUIStaticContent(openApiSpecsExtractor);
+    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui"));
+    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/"));
+    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/eth2/web3signer.yaml"));
+    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/filecoin/web3signer.yaml"));
+    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/eth1/web3signer.yaml"));
   }
 }

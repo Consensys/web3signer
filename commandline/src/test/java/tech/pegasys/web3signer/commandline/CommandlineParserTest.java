@@ -547,10 +547,5 @@ class CommandlineParserTest {
 
     @Override
     protected void populateRouter(final Context context) {}
-
-    @Override
-    protected String getOpenApiSpecResource() {
-      return null;
-    }
   }
 }
