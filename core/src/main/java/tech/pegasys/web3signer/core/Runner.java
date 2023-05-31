@@ -133,6 +133,7 @@ public abstract class Runner implements Runnable {
                   .allowedMethod(HttpMethod.POST)
                   .allowedMethod(HttpMethod.DELETE)
                   .allowedMethod(HttpMethod.OPTIONS));
+      registerHttpHostAllowListHandler(router);
 
       /*
        Add our own instance of BodyHandler as the default BodyHandler doesn't seem to handle large json bodies.
@@ -140,7 +141,6 @@ public abstract class Runner implements Runnable {
       */
       router.route().handler(BodyHandler.create());
       registerUpcheckRoute(router, errorHandler);
-      registerHttpHostAllowListHandler(router);
 
       router
           .route(HttpMethod.GET, "/healthcheck")
