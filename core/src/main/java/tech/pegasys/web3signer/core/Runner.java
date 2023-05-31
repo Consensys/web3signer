@@ -125,15 +125,15 @@ public abstract class Runner implements Runnable {
       }
 
       router
-              .route()
-              .handler(
-          CorsHandler.create()
-              .addRelativeOrigin(buildCorsRegexFromConfig())
-              .allowedHeader("*")
-              .allowedMethod(HttpMethod.GET)
-              .allowedMethod(HttpMethod.POST)
-              .allowedMethod(HttpMethod.DELETE)
-              .allowedMethod(HttpMethod.OPTIONS));
+          .route()
+          .handler(
+              CorsHandler.create()
+                  .addRelativeOrigin(buildCorsRegexFromConfig())
+                  .allowedHeader("*")
+                  .allowedMethod(HttpMethod.GET)
+                  .allowedMethod(HttpMethod.POST)
+                  .allowedMethod(HttpMethod.DELETE)
+                  .allowedMethod(HttpMethod.OPTIONS));
 
       /*
        Add our own instance of BodyHandler as the default BodyHandler doesn't seem to handle large json bodies.
