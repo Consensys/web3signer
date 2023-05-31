@@ -21,6 +21,7 @@ import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
+import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
@@ -69,7 +70,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public abstract class Runner implements Runnable {
   public static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
-  public static final String TEXT = HttpHeaderValues.TEXT_PLAIN + "; charset=utf-8";
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -133,6 +133,7 @@ public abstract class Runner implements Runnable {
                   .allowedMethod(HttpMethod.POST)
                   .allowedMethod(HttpMethod.DELETE)
                   .allowedMethod(HttpMethod.OPTIONS));
+      registerHttpHostAllowListHandler(router);
 
       /*
        Add our own instance of BodyHandler as the default BodyHandler doesn't seem to handle large json bodies.
@@ -197,18 +198,6 @@ public abstract class Runner implements Runnable {
 
   protected abstract void populateRouter(final Context context);
 
-  //  protected abstract String getOpenApiSpecResource();
-  //
-  //  private static boolean validateUInt64(final String value) {
-  //    try {
-  //      UInt64.valueOf(value);
-  //      return true;
-  //    } catch (RuntimeException e) {
-  //      LOG.warn("Validation failed for uint64 value: {}", value);
-  //      return false;
-  //    }
-  //  }
-
   protected void addPublicKeysListHandler(
       final Router router,
       final ArtifactSignerProvider artifactSignerProvider,
@@ -248,6 +237,10 @@ public abstract class Runner implements Runnable {
   protected void registerHealthCheckProcedure(
       final String name, final Handler<Promise<Status>> procedure) {
     healthCheckHandler.register(name, procedure);
+  }
+
+  private void registerHttpHostAllowListHandler(final Router router) {
+    router.route().handler(new HostAllowListHandler(baseConfig.getHttpHostAllowList()));
   }
 
   private HttpServer createServerAndWait(
