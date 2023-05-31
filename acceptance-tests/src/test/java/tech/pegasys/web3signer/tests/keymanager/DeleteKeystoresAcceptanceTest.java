@@ -27,6 +27,7 @@ import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +36,7 @@ import io.restassured.response.Response;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   private static final String BLS_PRIVATE_KEY_1 =
@@ -192,15 +194,19 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
   }
 
   @Test
-  public void deletingDisablesSigningForAllWeb3Signers()
+  public void deletingDisablesSigningForAllWeb3Signers(@TempDir Path signer2KeyStoreDirectory)
       throws URISyntaxException, JsonProcessingException {
-    final String firstPubkey = createBlsKey("eth2/bls_keystore.json", "somepassword");
-    final String secondPubKey = createBlsKey("eth2/bls_keystore_2.json", "otherpassword");
+    final String firstPubkey =
+        createBlsKey(testDirectory, "eth2/bls_keystore.json", "somepassword");
+    final String secondPubKey =
+        createBlsKey(testDirectory, "eth2/bls_keystore_2.json", "otherpassword");
     setupSignerWithKeyManagerApi(WITH_SLASHING_PROTECTION_DATA);
 
+    createBlsKey(signer2KeyStoreDirectory, "eth2/bls_keystore.json", "somepassword");
+    createBlsKey(signer2KeyStoreDirectory, "eth2/bls_keystore_2.json", "otherpassword");
     final SignerConfiguration signer2Configuration =
         new SignerConfigurationBuilder()
-            .withKeyStoreDirectory(testDirectory)
+            .withKeyStoreDirectory(signer2KeyStoreDirectory)
             .withMode("eth2")
             .withNetwork("minimal")
             .withAltairForkEpoch(MINIMAL_ALTAIR_FORK)
@@ -214,6 +220,25 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
     signer2.start();
     signer2.awaitStartupCompletion();
 
+    // both signers should have all keys loaded
+    callListKeys(signer)
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("data.size()", is(2))
+        .and()
+        .body("data[0].validating_pubkey", is(firstPubkey))
+        .body("data[1].validating_pubkey", is(secondPubKey));
+
+    callListKeys(signer2)
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("data.size()", is(2))
+        .and()
+        .body("data[0].validating_pubkey", is(firstPubkey))
+        .body("data[1].validating_pubkey", is(secondPubKey));
+
     callDeleteKeystores(composeRequestBody())
         .then()
         .contentType(ContentType.JSON)
@@ -223,6 +248,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .and()
         .body("slashing_protection", is(SINGLE_ENTRY_SLASHING_DATA));
 
+    // after deleting on first signer, it should only have the 2nd key
     callListKeys()
         .then()
         .statusCode(200)
@@ -231,6 +257,7 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
         .and()
         .body("data[0].validating_pubkey", is(secondPubKey));
 
+    // keys on the second signer should be unaffected
     callListKeys(signer2)
         .then()
         .statusCode(200)
@@ -242,12 +269,16 @@ public class DeleteKeystoresAcceptanceTest extends KeyManagerTestBase {
 
     final Eth2SigningRequestBody attestationRequest =
         Eth2RequestUtils.createCannedRequest(ArtifactType.ATTESTATION);
+    // signing should fail on first signer since the key doesn't exist anymore
     signer.eth2Sign(firstPubkey, attestationRequest, ContentType.TEXT).then().statusCode(404);
+    // signing should fail on second signer since it has been disabled in the database
     signer2.eth2Sign(firstPubkey, attestationRequest, ContentType.TEXT).then().statusCode(412);
 
     final Eth2SigningRequestBody blockRequest =
         Eth2RequestUtils.createCannedRequest(ArtifactType.BLOCK_V2);
+    // signing should fail on first signer since the key doesn't exist anymore
     signer.eth2Sign(firstPubkey, blockRequest, ContentType.TEXT).then().statusCode(404);
+    // signing should fail on second signer since it has been disabled in the database
     signer2.eth2Sign(firstPubkey, blockRequest, ContentType.TEXT).then().statusCode(412);
   }
 

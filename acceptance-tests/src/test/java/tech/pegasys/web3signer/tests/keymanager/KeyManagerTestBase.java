@@ -115,13 +115,19 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
         .delete(KEYSTORE_ENDPOINT);
   }
 
-  protected String createBlsKey(final String keystorePath, final String password)
+  protected String createBlsKey(final String keystoreFile, final String password)
       throws URISyntaxException {
-    final Path keystoreFile =
-        Path.of(new File(Resources.getResource(keystorePath).toURI()).getAbsolutePath());
-    final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
+    return createBlsKey(testDirectory, keystoreFile, password);
+  }
+
+  protected String createBlsKey(
+      final Path signerKeystoreDirectory, final String keystoreFile, final String password)
+      throws URISyntaxException {
+    final Path keystoreFilePath =
+        Path.of(new File(Resources.getResource(keystoreFile).toURI()).getAbsolutePath());
+    final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFilePath);
     final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
-    return createKeystoreYamlFile(privateKey.toHexString());
+    return createKeystoreYamlFile(signerKeystoreDirectory, privateKey.toHexString());
   }
 
   protected void validateApiResponse(
@@ -130,11 +136,15 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
   }
 
   protected String createKeystoreYamlFile(final String privateKey) {
+    return createKeystoreYamlFile(testDirectory, privateKey);
+  }
+
+  protected String createKeystoreYamlFile(final Path keystoreDirectory, final String privateKey) {
     final BLSSecretKey key = BLSSecretKey.fromBytes(Bytes32.fromHexString(privateKey));
     final BLSKeyPair keyPair = new BLSKeyPair(key);
     final BLSPublicKey publicKey = keyPair.getPublicKey();
     final String configFilename = publicKey.toString();
-    final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+    final Path keyConfigFile = keystoreDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(keyConfigFile, keyPair, KdfFunction.PBKDF2);
     return publicKey.toString();
   }

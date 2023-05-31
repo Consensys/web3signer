@@ -21,7 +21,8 @@ public class DeleteKeystoresRequestBody {
   private final List<String> pubkeys;
 
   @JsonCreator
-  public DeleteKeystoresRequestBody(@JsonProperty("pubkeys") final List<String> pubkeys) {
+  public DeleteKeystoresRequestBody(
+      @JsonProperty(value = "pubkeys", required = true) final List<String> pubkeys) {
     this.pubkeys = pubkeys;
   }
 

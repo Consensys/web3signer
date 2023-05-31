@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.commons.lang3.ObjectUtils;
 import tech.pegasys.teku.api.exceptions.BadRequestException;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.BeaconBlockHeader;
