@@ -35,7 +35,6 @@ import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -386,6 +385,6 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   private boolean isJsonCompatibleHeader(final MIMEHeader mimeHeader) {
     final String mimeType =
         mimeHeader.value(); // Must use value() rather than component() to ensure header is parsed
-    return Objects.equals("application/json", mimeType) || Objects.equals("*/*", mimeType);
+    return "application/json".equalsIgnoreCase(mimeType) || "*/*".equalsIgnoreCase(mimeType);
   }
 }

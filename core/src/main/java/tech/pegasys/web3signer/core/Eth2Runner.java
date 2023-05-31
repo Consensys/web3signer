@@ -130,11 +130,6 @@ public class Eth2Runner extends Runner {
     }
   }
 
-  //  @Override
-  //  protected String getOpenApiSpecResource() {
-  //    return "eth2/web3signer.yaml";
-  //  }
-
   @Override
   public void populateRouter(final Context context) {
     registerEth2Routes(
