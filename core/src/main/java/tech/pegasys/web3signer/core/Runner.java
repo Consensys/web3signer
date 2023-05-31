@@ -21,7 +21,6 @@ import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
-import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
@@ -249,10 +248,6 @@ public abstract class Runner implements Runnable {
   protected void registerHealthCheckProcedure(
       final String name, final Handler<Promise<Status>> procedure) {
     healthCheckHandler.register(name, procedure);
-  }
-
-  private void registerHttpHostAllowListHandler(final Router router) {
-    router.route().handler(new HostAllowListHandler(baseConfig.getHttpHostAllowList()));
   }
 
   private HttpServer createServerAndWait(
