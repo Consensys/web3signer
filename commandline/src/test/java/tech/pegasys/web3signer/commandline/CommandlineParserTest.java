@@ -30,6 +30,7 @@ import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -542,7 +543,7 @@ class CommandlineParserTest {
     @Override
     protected ArtifactSignerProvider createArtifactSignerProvider(
         final Vertx vertx, final MetricsSystem metricsSystem) {
-      return null;
+      return new DefaultArtifactSignerProvider(Collections::emptyList);
     }
 
     @Override

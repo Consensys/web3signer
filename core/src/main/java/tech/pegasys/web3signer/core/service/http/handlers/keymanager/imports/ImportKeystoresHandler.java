@@ -189,7 +189,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   }
 
   private void handleInvalidRequest(final RoutingContext routingContext, final Exception e) {
-    LOG.info("Invalid import keystores request - " + routingContext.getBodyAsString(), e);
+    LOG.info("Invalid import keystores request - " + routingContext.body().asString(), e);
     routingContext.fail(BAD_REQUEST, e);
   }
 

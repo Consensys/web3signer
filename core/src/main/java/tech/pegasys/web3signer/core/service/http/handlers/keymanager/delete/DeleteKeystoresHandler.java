@@ -79,7 +79,7 @@ public class DeleteKeystoresHandler implements Handler<RoutingContext> {
   }
 
   private void handleInvalidRequest(final RoutingContext routingContext, final Exception e) {
-    LOG.debug("Invalid delete keystores request - " + routingContext.getBodyAsString(), e);
+    LOG.debug("Invalid delete keystores request - " + routingContext.body().asString(), e);
     routingContext.fail(BAD_REQUEST);
   }
 }
