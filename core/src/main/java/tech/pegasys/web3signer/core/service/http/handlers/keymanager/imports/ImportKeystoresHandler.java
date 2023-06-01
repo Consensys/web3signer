@@ -41,9 +41,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.validation.RequestParameters;
-import io.vertx.ext.web.validation.ValidationHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -78,10 +77,9 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext context) {
     // API spec - https://github.com/ethereum/keymanager-APIs/tree/master/flows#import
-    final RequestParameters params = context.get(ValidationHandler.REQUEST_CONTEXT_KEY);
     final ImportKeystoresRequestBody parsedBody;
     try {
-      parsedBody = parseRequestBody(params);
+      parsedBody = parseRequestBody(context.body());
     } catch (final IllegalArgumentException | JsonProcessingException e) {
       handleInvalidRequest(context, e);
       return;
@@ -184,9 +182,9 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     }
   }
 
-  private ImportKeystoresRequestBody parseRequestBody(final RequestParameters params)
+  private ImportKeystoresRequestBody parseRequestBody(final RequestBody requestBody)
       throws JsonProcessingException {
-    final String body = params.body().toString();
+    final String body = requestBody.asString();
     return objectMapper.readValue(body, ImportKeystoresRequestBody.class);
   }
 

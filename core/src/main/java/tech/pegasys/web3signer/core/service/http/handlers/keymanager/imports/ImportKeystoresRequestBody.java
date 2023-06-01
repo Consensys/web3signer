@@ -24,8 +24,8 @@ public class ImportKeystoresRequestBody {
 
   @JsonCreator
   public ImportKeystoresRequestBody(
-      @JsonProperty("keystores") final List<String> keystores,
-      @JsonProperty("passwords") final List<String> passwords,
+      @JsonProperty(value = "keystores", required = true) final List<String> keystores,
+      @JsonProperty(value = "passwords", required = true) final List<String> passwords,
       @JsonProperty("slashing_protection") final String slashingProtection) {
     this.keystores = keystores;
     this.passwords = passwords;
