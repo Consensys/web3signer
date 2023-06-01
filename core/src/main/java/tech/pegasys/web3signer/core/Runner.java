@@ -70,6 +70,9 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public abstract class Runner implements Runnable {
   public static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
+  public static final String HEALTHCHECK_PATH = "/healthcheck";
+  public static final String UPCHECK_PATH = "/upcheck";
+  public static final String RELOAD_PATH = "/reload";
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -143,7 +146,7 @@ public abstract class Runner implements Runnable {
       registerUpcheckRoute(router, errorHandler);
 
       router
-          .route(HttpMethod.GET, "/healthcheck")
+          .route(HttpMethod.GET, HEALTHCHECK_PATH)
           .handler(healthCheckHandler)
           .failureHandler(errorHandler);
 
@@ -216,7 +219,7 @@ public abstract class Runner implements Runnable {
       final ArtifactSignerProvider artifactSignerProvider,
       final LogErrorHandler errorHandler) {
     router
-        .route(HttpMethod.POST, "/reload")
+        .route(HttpMethod.POST, RELOAD_PATH)
         .produces(JSON)
         .handler(
             routingContext -> {
@@ -228,7 +231,7 @@ public abstract class Runner implements Runnable {
 
   private void registerUpcheckRoute(final Router router, final LogErrorHandler errorHandler) {
     router
-        .route(HttpMethod.GET, "/upcheck")
+        .route(HttpMethod.GET, UPCHECK_PATH)
         .produces(JSON)
         .handler(new BlockingHandlerDecorator(new UpcheckHandler(), false))
         .failureHandler(errorHandler);

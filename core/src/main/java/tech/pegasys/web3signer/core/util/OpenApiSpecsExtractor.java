@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -63,10 +62,6 @@ public class OpenApiSpecsExtractor {
     if (forceDeleteOnJvmExit) {
       FileUtils.forceDeleteOnExit(destinationDirectory.toFile());
     }
-  }
-
-  public Optional<Path> getSpecFilePathAtDestination(final String specFilename) {
-    return destinationSpecPaths.stream().filter(path -> path.endsWith(specFilename)).findFirst();
   }
 
   public Path getDestinationDirectory() {

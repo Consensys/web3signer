@@ -87,6 +87,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
+  public static final String KEYSTORES_PATH = "/eth/v1/keystores";
+  public static final String PUBLIC_KEYS_PATH = "/api/v1/eth2/publicKeys";
+  public static final String SIGN_PATH = "/api/v1/eth2/sign/:identifier";
   private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<SlashingProtectionContext> slashingProtectionContext;
@@ -148,12 +151,12 @@ public class Eth2Runner extends Runner {
       final Optional<SlashingProtectionContext> slashingProtectionContext) {
     final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
 
-    addPublicKeysListHandler(router, blsSignerProvider, "/api/v1/eth2/publicKeys", errorHandler);
+    addPublicKeysListHandler(router, blsSignerProvider, PUBLIC_KEYS_PATH, errorHandler);
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
     router
-        .route(HttpMethod.POST, "/api/v1/eth2/sign/:identifier")
+        .route(HttpMethod.POST, SIGN_PATH)
         .handler(
             new BlockingHandlerDecorator(
                 new Eth2SignForIdentifierHandler(
@@ -170,7 +173,7 @@ public class Eth2Runner extends Runner {
 
     if (isKeyManagerApiEnabled) {
       router
-          .route(HttpMethod.GET, "/eth/v1/keystores")
+          .route(HttpMethod.GET, KEYSTORES_PATH)
           .handler(
               new BlockingHandlerDecorator(
                   new ListKeystoresHandler(blsSignerProvider, objectMapper), false))
@@ -180,7 +183,7 @@ public class Eth2Runner extends Runner {
           createValidatorManager(blsSignerProvider, objectMapper);
 
       router
-          .route(HttpMethod.POST, "/eth/v1/keystores")
+          .route(HttpMethod.POST, KEYSTORES_PATH)
           .handler(
               new BlockingHandlerDecorator(
                   new ImportKeystoresHandler(
@@ -194,7 +197,7 @@ public class Eth2Runner extends Runner {
           .failureHandler(errorHandler);
 
       router
-          .route(HttpMethod.DELETE, "/eth/v1/keystores")
+          .route(HttpMethod.DELETE, KEYSTORES_PATH)
           .handler(
               new BlockingHandlerDecorator(
                   new DeleteKeystoresHandler(

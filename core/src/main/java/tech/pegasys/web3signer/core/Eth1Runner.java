@@ -59,6 +59,9 @@ import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
+  public static final String PUBLIC_KEYS_PATH = "/api/v1/eth1/publicKeys";
+  public static final String ROOT_PATH = "/";
+  public static final String SIGN_PATH = "/api/v1/eth1/sign/:identifier";
   private final Eth1Config eth1Config;
 
   private final HttpResponseFactory responseFactory = new HttpResponseFactory();
@@ -74,13 +77,12 @@ public class Eth1Runner extends Runner {
     final LogErrorHandler errorHandler = context.getErrorHandler();
     final ArtifactSignerProvider signerProvider = context.getArtifactSignerProvider();
 
-    addPublicKeysListHandler(
-        router, signerProvider, "/api/v1/eth1/publicKeys", context.getErrorHandler());
+    addPublicKeysListHandler(router, signerProvider, PUBLIC_KEYS_PATH, context.getErrorHandler());
 
     final SignerForIdentifier<SecpArtifactSignature> secpSigner =
         new SignerForIdentifier<>(signerProvider, this::formatSecpSignature, SECP256K1);
     router
-        .route(HttpMethod.POST, "/api/v1/eth1/sign/:identifier")
+        .route(HttpMethod.POST, SIGN_PATH)
         .handler(
             new BlockingHandlerDecorator(
                 new Eth1SignForIdentifierHandler(
@@ -115,7 +117,7 @@ public class Eth1Runner extends Runner {
         createRequestMapper(transmitterFactory, signerProvider, jsonDecoder);
 
     router
-        .route(HttpMethod.POST, "/")
+        .route(HttpMethod.POST, ROOT_PATH)
         .produces(Runner.JSON)
         .handler(ResponseContentTypeHandler.create())
         .handler(BodyHandler.create())
