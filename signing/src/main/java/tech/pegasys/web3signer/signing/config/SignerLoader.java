@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.signing.config;
 
 import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
-import tech.pegasys.web3signer.signing.config.metadata.HashicorpSigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;
 
@@ -49,8 +48,18 @@ public class SignerLoader {
   private static final Logger LOG = LogManager.getLogger();
   private static final long FILES_PROCESSED_TO_REPORT = 10;
   private static final int MAX_FORK_JOIN_THREADS = 5;
+  // enable or disable parallel streams to convert and load private keys from metadata files
+  private final boolean useParallelStreams;
 
   private static final Map<Path, FileTime> metadataConfigFilesPathCache = new HashMap<>();
+
+  public SignerLoader(final boolean useParallelStreams) {
+    this.useParallelStreams = useParallelStreams;
+  }
+
+  public SignerLoader() {
+    this(true);
+  }
 
   public MappedResults<ArtifactSigner> load(
       final Path configsDirectory, final String fileExtension, final SignerParser signerParser) {
@@ -66,7 +75,7 @@ public class SignerLoader {
         calculateTimeTaken(start));
 
     final Instant conversionStartInstant = Instant.now();
-    // convert yaml file content to list of SigningMetadata
+    // Step 1: convert yaml file content to list of SigningMetadata
     final MappedResults<SigningMetadata> signingMetadataResults =
         convertConfigFileContent(configFileContent.getContentMap(), signerParser);
 
@@ -74,32 +83,22 @@ public class SignerLoader {
         "Signing configuration metadata files converted to signing metadata {}",
         signingMetadataResults.getValues().size());
 
-    final Collection<SigningMetadata> signingMetadata = signingMetadataResults.getValues();
-    // filter hashicorp signing metadata, we want them to be processed sequentially.
-    final Map<Boolean, List<SigningMetadata>> partitionedMetadata =
-        signingMetadata.stream()
-            .collect(
-                Collectors.partitioningBy(
-                    metadata -> !metadata.getType().equals(HashicorpSigningMetadata.TYPE)));
-    final MappedResults<ArtifactSigner> metadataResultParallel =
-        mapToArtifactSignerInParallel(partitionedMetadata.get(true), signerParser);
-    final MappedResults<ArtifactSigner> metadataResultSequential =
-        mapToArtifactSignerSequentially(partitionedMetadata.get(false), signerParser);
-
-    final MappedResults<ArtifactSigner> metadataResult =
-        MappedResults.merge(metadataResultParallel, metadataResultSequential);
+    // Step 2: Convert SigningMetadata to ArtifactSigners. This involves connecting to remote
+    // Hashicorp vault, AWS, Azure or decrypting local keystore files.
+    final MappedResults<ArtifactSigner> artifactSigners =
+        mapMetadataToArtifactSigner(signingMetadataResults.getValues(), signerParser);
 
     // merge error counts of config file parsing errors ...
-    metadataResult.mergeErrorCount(signingMetadataResults.getErrorCount());
-    metadataResult.mergeErrorCount(configFileContent.getErrorCount());
+    artifactSigners.mergeErrorCount(signingMetadataResults.getErrorCount());
+    artifactSigners.mergeErrorCount(configFileContent.getErrorCount());
 
     LOG.info(
         "Total Artifact Signer loaded via configuration files: {}\nError count {}\nTime Taken: {}.",
-        metadataResult.getValues().size(),
-        metadataResult.getErrorCount(),
+        artifactSigners.getValues().size(),
+        artifactSigners.getErrorCount(),
         calculateTimeTaken(conversionStartInstant));
 
-    return metadataResult;
+    return artifactSigners;
   }
 
   private MappedResults<SigningMetadata> convertConfigFileContent(
@@ -184,7 +183,7 @@ public class SignerLoader {
     return new SimpleEntry<>(path, Files.readString(path, StandardCharsets.UTF_8));
   }
 
-  private MappedResults<ArtifactSigner> mapToArtifactSignerInParallel(
+  private MappedResults<ArtifactSigner> mapMetadataToArtifactSigner(
       final Collection<SigningMetadata> signingMetadataCollection,
       final SignerParser signerParser) {
 
@@ -192,40 +191,29 @@ public class SignerLoader {
       return MappedResults.newSetInstance();
     }
 
-    LOG.info("Converting signing metadata to Artifact Signer using parallel streams ...");
+    LOG.info(
+        "Converting signing metadata to Artifact Signer using {} streams ...",
+        useParallelStreams ? "parallel" : "sequential");
 
     // use custom fork-join pool instead of common. Limit number of threads to avoid Azure bug
     ForkJoinPool forkJoinPool = null;
     try {
-      forkJoinPool = new ForkJoinPool(numberOfThreads());
-      return forkJoinPool
-          .submit(
-              () -> mapToArtifactSigner(signingMetadataCollection.parallelStream(), signerParser))
-          .get();
+      if (useParallelStreams) {
+        forkJoinPool = new ForkJoinPool(numberOfThreads());
+        return forkJoinPool
+            .submit(
+                () -> mapToArtifactSigner(signingMetadataCollection.parallelStream(), signerParser))
+            .get();
+      } else {
+        return mapToArtifactSigner(signingMetadataCollection.stream(), signerParser);
+      }
     } catch (final Exception e) {
-      LOG.error(
-          "Unexpected error in processing configuration files in parallel: {}", e.getMessage(), e);
+      LOG.error("Unexpected error in processing configuration files: {}", e.getMessage(), e);
       return MappedResults.errorResult();
     } finally {
       if (forkJoinPool != null) {
         forkJoinPool.shutdown();
       }
-    }
-  }
-
-  private MappedResults<ArtifactSigner> mapToArtifactSignerSequentially(
-      final Collection<SigningMetadata> signingMetadataCollection,
-      final SignerParser signerParser) {
-    if (signingMetadataCollection.isEmpty()) {
-      return MappedResults.newSetInstance();
-    }
-
-    LOG.info("Converting signing metadata to Artifact Signer using sequential streams ...");
-
-    try {
-      return mapToArtifactSigner(signingMetadataCollection.stream(), signerParser);
-    } catch (final Exception e) {
-      return MappedResults.errorResult();
     }
   }
 

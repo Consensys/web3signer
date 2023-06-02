@@ -150,4 +150,9 @@ public class TestBaseConfig implements BaseConfig {
   public Boolean isAccessLogsEnabled() {
     return false;
   }
+
+  @Override
+  public boolean keystoreParallelProcessingEnabled() {
+    return true;
+  }
 }
