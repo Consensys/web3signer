@@ -2,6 +2,7 @@
 ## Upcoming release
 ### Features Added
 - Optional Azure bulk loading tags support using cli option `--azure-secrets-tags`.
+- Support Prometheus Push Gateway Metrics [#796](https://github.com/ConsenSys/web3signer/pull/796)
 
 ### Bugs Fixed
 - Upgrade jackson and vertx to upgrade snakeyaml to 2.0 to fix CVE-2022-1471
