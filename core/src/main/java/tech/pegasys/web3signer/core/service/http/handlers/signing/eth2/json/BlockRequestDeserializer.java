@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json;
 
+import tech.pegasys.teku.api.exceptions.BadRequestException;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.BeaconBlockHeader;
 import tech.pegasys.teku.api.schema.altair.BeaconBlockAltair;
@@ -42,16 +43,25 @@ public class BlockRequestDeserializer extends JsonDeserializer<BlockRequest> {
     switch (specMilestone) {
       case PHASE0:
         beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlock.class);
+        if (beaconBlock == null) {
+          throw new BadRequestException("No beacon block in request");
+        }
         blockRequest = new BlockRequest(specMilestone, beaconBlock);
         break;
       case ALTAIR:
         beaconBlock = codec.treeToValue(node.findValue("block"), BeaconBlockAltair.class);
+        if (beaconBlock == null) {
+          throw new BadRequestException("No beacon block in request");
+        }
         blockRequest = new BlockRequest(specMilestone, beaconBlock);
         break;
       default:
         // for BELLATRIX and onward we only need block_header instead of complete block
         beaconBlockHeader =
             codec.treeToValue(node.findValue("block_header"), BeaconBlockHeader.class);
+        if (beaconBlockHeader == null) {
+          throw new BadRequestException("No beacon block header in request");
+        }
         blockRequest = new BlockRequest(specMilestone, beaconBlockHeader);
         break;
     }

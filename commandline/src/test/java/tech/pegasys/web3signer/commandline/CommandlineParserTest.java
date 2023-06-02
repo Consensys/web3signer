@@ -39,7 +39,6 @@ import java.util.Collections;
 import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
-import io.vertx.ext.web.Router;
 import org.apache.logging.log4j.Level;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.junit.jupiter.api.BeforeEach;
@@ -548,13 +547,6 @@ class CommandlineParserTest {
     }
 
     @Override
-    protected Router populateRouter(final Context context) {
-      return null;
-    }
-
-    @Override
-    protected String getOpenApiSpecResource() {
-      return null;
-    }
+    protected void populateRouter(final Context context) {}
   }
 }

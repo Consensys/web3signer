@@ -17,12 +17,6 @@ import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZ
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_CONFIG_FILE_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_KEYSTORE_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.SLASHING_PROTECTION_DB;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_LIST;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.ETH2_SIGN;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYMANAGER_DELETE;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYMANAGER_IMPORT;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.KEYMANAGER_LIST;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
@@ -81,11 +75,11 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
-import io.vertx.ext.web.openapi.RouterBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -93,6 +87,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
+  public static final String KEYSTORES_PATH = "/eth/v1/keystores";
+  public static final String PUBLIC_KEYS_PATH = "/api/v1/eth2/publicKeys";
+  public static final String SIGN_PATH = "/api/v1/eth2/sign/:identifier";
   private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<SlashingProtectionContext> slashingProtectionContext;
@@ -137,48 +134,29 @@ public class Eth2Runner extends Runner {
   }
 
   @Override
-  protected String getOpenApiSpecResource() {
-    return "eth2/web3signer.yaml";
-  }
-
-  @Override
-  public Router populateRouter(final Context context) {
+  public void populateRouter(final Context context) {
     registerEth2Routes(
-        context.getRouterBuilder(),
+        context.getRouter(),
         context.getArtifactSignerProvider(),
         context.getErrorHandler(),
         context.getMetricsSystem(),
         slashingProtectionContext);
-    return context.getRouterBuilder().createRouter();
   }
 
   private void registerEth2Routes(
-      final RouterBuilder routerBuilder,
+      final Router router,
       final ArtifactSignerProvider blsSignerProvider,
       final LogErrorHandler errorHandler,
       final MetricsSystem metricsSystem,
       final Optional<SlashingProtectionContext> slashingProtectionContext) {
     final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
 
-    // security handler for keymanager endpoints
-    routerBuilder.securityHandler(
-        "bearerAuth",
-        context -> {
-          // TODO Auth token security logic
-          final boolean authorized = true;
-          if (authorized) {
-            context.next();
-          } else {
-            context.response().setStatusCode(401).end("{ message: \"permission denied\" }");
-          }
-        });
-
-    addPublicKeysListHandler(routerBuilder, blsSignerProvider, ETH2_LIST.name(), errorHandler);
+    addPublicKeysListHandler(router, blsSignerProvider, PUBLIC_KEYS_PATH, errorHandler);
 
     final SignerForIdentifier<BlsArtifactSignature> blsSigner =
         new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    routerBuilder
-        .operation(ETH2_SIGN.name())
+    router
+        .route(HttpMethod.POST, SIGN_PATH)
         .handler(
             new BlockingHandlerDecorator(
                 new Eth2SignForIdentifierHandler(
@@ -191,11 +169,11 @@ public class Eth2Runner extends Runner {
                 false))
         .failureHandler(errorHandler);
 
-    addReloadHandler(routerBuilder, blsSignerProvider, RELOAD.name(), errorHandler);
+    addReloadHandler(router, blsSignerProvider, errorHandler);
 
     if (isKeyManagerApiEnabled) {
-      routerBuilder
-          .operation(KEYMANAGER_LIST.name())
+      router
+          .route(HttpMethod.GET, KEYSTORES_PATH)
           .handler(
               new BlockingHandlerDecorator(
                   new ListKeystoresHandler(blsSignerProvider, objectMapper), false))
@@ -204,8 +182,8 @@ public class Eth2Runner extends Runner {
       final ValidatorManager validatorManager =
           createValidatorManager(blsSignerProvider, objectMapper);
 
-      routerBuilder
-          .operation(KEYMANAGER_IMPORT.name())
+      router
+          .route(HttpMethod.POST, KEYSTORES_PATH)
           .handler(
               new BlockingHandlerDecorator(
                   new ImportKeystoresHandler(
@@ -218,8 +196,8 @@ public class Eth2Runner extends Runner {
                   false))
           .failureHandler(errorHandler);
 
-      routerBuilder
-          .operation(KEYMANAGER_DELETE.name())
+      router
+          .route(HttpMethod.DELETE, KEYSTORES_PATH)
           .handler(
               new BlockingHandlerDecorator(
                   new DeleteKeystoresHandler(

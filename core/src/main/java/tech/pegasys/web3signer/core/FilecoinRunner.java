@@ -16,7 +16,6 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
 import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS;
 import static com.fasterxml.jackson.databind.MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
-import static tech.pegasys.web3signer.core.service.http.OpenApiOperationsId.RELOAD;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
 import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
@@ -47,7 +46,6 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.arteam.simplejsonrpc.server.JsonRpcServer;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.openapi.RouterBuilder;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class FilecoinRunner extends Runner {
@@ -61,30 +59,18 @@ public class FilecoinRunner extends Runner {
   }
 
   @Override
-  protected String getOpenApiSpecResource() {
-    return "filecoin/web3signer.yaml";
-  }
-
-  @Override
-  protected Router populateRouter(final Context context) {
+  protected void populateRouter(final Context context) {
     addReloadHandler(
-        context.getRouterBuilder(),
-        context.getArtifactSignerProvider(),
-        RELOAD.name(),
-        context.getErrorHandler());
+        context.getRouter(), context.getArtifactSignerProvider(), context.getErrorHandler());
 
-    return registerFilecoinJsonRpcRoute(
-        context.getRouterBuilder(),
-        context.getMetricsSystem(),
-        context.getArtifactSignerProvider());
+    registerFilecoinJsonRpcRoute(
+        context.getRouter(), context.getMetricsSystem(), context.getArtifactSignerProvider());
   }
 
   private Router registerFilecoinJsonRpcRoute(
-      final RouterBuilder routerBuilder,
+      final Router router,
       final MetricsSystem metricsSystem,
       final ArtifactSignerProvider fcSigners) {
-
-    final Router router = routerBuilder.createRouter();
 
     final FcJsonRpcMetrics fcJsonRpcMetrics = new FcJsonRpcMetrics(metricsSystem);
     final FcJsonRpc fileCoinJsonRpc = new FcJsonRpc(fcSigners, fcJsonRpcMetrics);

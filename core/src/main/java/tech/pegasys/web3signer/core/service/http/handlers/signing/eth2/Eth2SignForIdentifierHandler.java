@@ -35,7 +35,6 @@ import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -45,9 +44,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.MIMEHeader;
+import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.validation.RequestParameters;
-import io.vertx.ext.web.validation.ValidationHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -90,11 +88,10 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   public void handle(final RoutingContext routingContext) {
     try (final TimingContext ignored = httpMetrics.getSigningTimer().startTimer()) {
       LOG.trace("{} || {}", routingContext.normalizedPath(), routingContext.body().asString());
-      final RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-      final String identifier = params.pathParameter("identifier").toString();
+      final String identifier = routingContext.pathParam("identifier");
       final Eth2SigningRequestBody eth2SigningRequestBody;
       try {
-        eth2SigningRequestBody = getSigningRequest(params);
+        eth2SigningRequestBody = getSigningRequest(routingContext.body());
       } catch (final IllegalArgumentException | JsonProcessingException e) {
         handleInvalidRequest(routingContext, e);
         return;
@@ -371,9 +368,9 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
     routingContext.response().putHeader(CONTENT_TYPE, acceptableContentType).end(body);
   }
 
-  private Eth2SigningRequestBody getSigningRequest(final RequestParameters params)
+  private Eth2SigningRequestBody getSigningRequest(final RequestBody requestBody)
       throws JsonProcessingException {
-    final String body = params.body().toString();
+    final String body = requestBody.asString();
     return objectMapper.readValue(body, Eth2SigningRequestBody.class);
   }
 
@@ -386,8 +383,8 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   }
 
   private boolean isJsonCompatibleHeader(final MIMEHeader mimeHeader) {
-    final String mimeComponent = mimeHeader.component() + "/" + mimeHeader.subComponent();
-    return Objects.equals("application/json", mimeComponent)
-        || Objects.equals("*/*", mimeComponent);
+    final String mimeType =
+        mimeHeader.value(); // Must use value() rather than component() to ensure header is parsed
+    return "application/json".equalsIgnoreCase(mimeType) || "*/*".equalsIgnoreCase(mimeType);
   }
 }
