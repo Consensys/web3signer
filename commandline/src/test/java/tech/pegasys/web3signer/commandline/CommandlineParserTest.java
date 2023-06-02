@@ -134,7 +134,8 @@ class CommandlineParserTest {
   @Test
   void pushMetricsParsesSuccessfully() {
     String cmdline = validBaseCommandOptions();
-    cmdline += "--metrics-push-enabled --metrics-push-port 9091 --metrics-push-host=127.0.0.1 --metrics-push-interval=30 --metrics-push-prometheus-job=\"web3signer\" eth2 --slashing-protection-enabled=false";
+    cmdline +=
+        "--metrics-push-enabled --metrics-push-port 9091 --metrics-push-host=127.0.0.1 --metrics-push-interval=30 --metrics-push-prometheus-job=\"web3signer\" eth2 --slashing-protection-enabled=false";
 
     parser.registerSubCommands(new MockEth2SubCommand());
     final int result = parser.parseCommandLine(cmdline.split(" "));
