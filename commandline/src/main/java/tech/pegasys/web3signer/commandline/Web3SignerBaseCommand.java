@@ -208,7 +208,7 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       names = {"--metrics-push-prometheus-job"},
       description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
       arity = "1")
-  private String metricsPrometheusJob = "besu-client";
+  private String metricsPrometheusJob = "web3signer-job";
 
   @Option(
       names = {"--idle-connection-timeout-seconds"},
