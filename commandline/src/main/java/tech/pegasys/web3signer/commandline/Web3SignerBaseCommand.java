@@ -191,6 +191,14 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       description = "Enable access logs (default: ${DEFAULT-VALUE})")
   private final Boolean accessLogsEnabled = false;
 
+  @Option(
+      names = "--Xkey-store-parallel-processing-enabled",
+      description = "Set to false to disable parallel processing of key stores.",
+      paramLabel = "<BOOL>",
+      arity = "1",
+      hidden = true)
+  private boolean keystoreParallelProcessingEnabled = true;
+
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
   @Override
@@ -280,6 +288,11 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   @Override
   public Boolean isAccessLogsEnabled() {
     return accessLogsEnabled;
+  }
+
+  @Override
+  public boolean keystoreParallelProcessingEnabled() {
+    return keystoreParallelProcessingEnabled;
   }
 
   @Override

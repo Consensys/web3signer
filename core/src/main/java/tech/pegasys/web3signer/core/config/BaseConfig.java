@@ -58,4 +58,6 @@ public interface BaseConfig {
   Boolean isSwaggerUIEnabled();
 
   Boolean isAccessLogsEnabled();
+
+  boolean keystoreParallelProcessingEnabled();
 }

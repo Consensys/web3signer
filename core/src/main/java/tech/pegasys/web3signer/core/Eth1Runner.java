@@ -148,7 +148,7 @@ public class Eth1Runner extends Runner {
                     EthSecpArtifactSigner::new,
                     true);
 
-            return new SignerLoader()
+            return new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
                 .load(
                     baseConfig.getKeyConfigPath(),
                     "yaml",

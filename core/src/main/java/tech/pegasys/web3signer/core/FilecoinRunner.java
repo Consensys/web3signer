@@ -132,7 +132,7 @@ public class FilecoinRunner extends Runner {
                     signer -> new FcSecpArtifactSigner(signer, network),
                     false);
 
-            return new SignerLoader()
+            return new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
                 .load(
                     baseConfig.getKeyConfigPath(),
                     "yaml",
