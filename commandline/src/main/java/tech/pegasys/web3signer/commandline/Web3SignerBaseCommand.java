@@ -12,9 +12,11 @@
  */
 package tech.pegasys.web3signer.commandline;
 
+import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.FILE_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.HOST_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.INTEGER_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PORT_FORMAT_HELP;
 import static tech.pegasys.web3signer.common.Web3SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
@@ -174,6 +176,41 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   private final AllowListHostsProperty metricsHostAllowList = new AllowListHostsProperty();
 
   @Option(
+      names = {"--metrics-push-enabled"},
+      description = "Enable the metrics push gateway integration (default: ${DEFAULT-VALUE})")
+  private final Boolean isMetricsPushEnabled = false;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @Option(
+      names = {"--metrics-push-host"},
+      paramLabel = HOST_FORMAT_HELP,
+      description = "Host of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String metricsPushHost = InetAddress.getLoopbackAddress().getHostAddress();
+
+  @Option(
+      names = {"--metrics-push-port"},
+      paramLabel = PORT_FORMAT_HELP,
+      description = "Port of the Prometheus Push Gateway for push mode (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer metricsPushPort = DEFAULT_METRICS_PUSH_PORT;
+
+  @Option(
+      names = {"--metrics-push-interval"},
+      paramLabel = INTEGER_FORMAT_HELP,
+      description =
+          "Interval in seconds to push metrics when in push mode (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private final Integer metricsPushIntervalSeconds = 15;
+
+  @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
+  @Option(
+      names = {"--metrics-push-prometheus-job"},
+      description = "Job name to use when in push mode (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private String metricsPrometheusJob = "besu-client";
+
+  @Option(
       names = {"--idle-connection-timeout-seconds"},
       paramLabel = "<timeout in seconds>",
       description =
@@ -259,6 +296,31 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   @Override
+  public Boolean isMetricsPushEnabled() {
+    return isMetricsPushEnabled;
+  }
+
+  @Override
+  public String getMetricsPushHost() {
+    return metricsPushHost;
+  }
+
+  @Override
+  public Integer getMetricsPushPort() {
+    return metricsPushPort;
+  }
+
+  @Override
+  public Integer getMetricsPushIntervalSeconds() {
+    return metricsPushIntervalSeconds;
+  }
+
+  @Override
+  public String getMetricsPrometheusJob() {
+    return metricsPrometheusJob;
+  }
+
+  @Override
   public Optional<TlsOptions> getTlsOptions() {
     if (picoCliTlsServerOptions.getKeyStoreFile() != null
         && picoCliTlsServerOptions.getKeyStorePasswordFile() != null) {
@@ -321,6 +383,13 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
     final PicoCliTlsServerOptionsValidator picoCliTlsServerOptionsValidator =
         new PicoCliTlsServerOptionsValidator(spec, picoCliTlsServerOptions);
     picoCliTlsServerOptionsValidator.validate();
+
+    if (isMetricsEnabled() && isMetricsPushEnabled()) {
+      throw new CommandLine.MutuallyExclusiveArgsException(
+          spec.commandLine(),
+          "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
+              + "time.  Please refer to CLI reference for more details about this constraint.");
+    }
   }
 
   public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {

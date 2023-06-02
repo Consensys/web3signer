@@ -33,20 +33,30 @@ public class MetricsEndpoint {
       final Integer metricsPort,
       final String metricsNetworkInterface,
       final Set<MetricCategory> metricCategories,
-      final List<String> metricsHostAllowList) {
+      final List<String> metricsHostAllowList,
+      final Boolean metricsPushEnabled,
+      final String metricsPushHost,
+      final Integer metricsPushPort,
+      final Integer metricsPushInterval,
+      final String metricsPrometheusJob) {
     final MetricsConfiguration metricsConfig =
         createMetricsConfiguration(
             metricsEnabled,
             metricsPort,
             metricsNetworkInterface,
             metricCategories,
-            metricsHostAllowList);
+            metricsHostAllowList,
+            metricsPushEnabled,
+            metricsPushHost,
+            metricsPushPort,
+            metricsPushInterval,
+            metricsPrometheusJob);
     this.metricsSystem = MetricsSystemFactory.create(metricsConfig);
     this.metricsConfig = metricsConfig;
   }
 
   public void start(final Vertx vertx) {
-    if (metricsConfig.isEnabled()) {
+    if (metricsConfig.isEnabled() || metricsConfig.isPushEnabled()) {
       metricsService = MetricsService.create(vertx, metricsConfig, metricsSystem);
     } else {
       metricsService = Optional.empty();
@@ -71,13 +81,23 @@ public class MetricsEndpoint {
       final Integer metricsPort,
       final String metricsNetworkInterface,
       final Set<MetricCategory> metricCategories,
-      final List<String> metricsHostAllowList) {
+      final List<String> metricsHostAllowList,
+      final Boolean metricsPushEnabled,
+      final String metricsPushHost,
+      final Integer metricsPushPort,
+      final Integer metricsPushInterval,
+      final String metricsPrometheusJob) {
     return MetricsConfiguration.builder()
         .enabled(metricsEnabled)
         .port(metricsPort)
         .host(metricsNetworkInterface)
         .metricCategories(metricCategories)
         .hostsAllowlist(metricsHostAllowList)
+        .pushEnabled(metricsPushEnabled)
+        .pushHost(metricsPushHost)
+        .pushPort(metricsPushPort)
+        .pushInterval(metricsPushInterval)
+        .prometheusJob(metricsPrometheusJob)
         .build();
   }
 }

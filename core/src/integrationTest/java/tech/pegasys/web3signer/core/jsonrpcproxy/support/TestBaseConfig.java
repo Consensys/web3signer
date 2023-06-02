@@ -104,6 +104,31 @@ public class TestBaseConfig implements BaseConfig {
   }
 
   @Override
+  public Boolean isMetricsPushEnabled() {
+    return false;
+  }
+
+  @Override
+  public String getMetricsPushHost() {
+    return "127.0.0.1";
+  }
+
+  @Override
+  public Integer getMetricsPushPort() {
+    return 0;
+  }
+
+  @Override
+  public Integer getMetricsPushIntervalSeconds() {
+    return 0;
+  }
+
+  @Override
+  public String getMetricsPrometheusJob() {
+    return "stub";
+  }
+
+  @Override
   public Optional<TlsOptions> getTlsOptions() {
     return Optional.empty();
   }

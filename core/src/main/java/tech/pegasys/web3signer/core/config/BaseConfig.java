@@ -49,6 +49,16 @@ public interface BaseConfig {
 
   List<String> getMetricsHostAllowList();
 
+  Boolean isMetricsPushEnabled();
+
+  String getMetricsPushHost();
+
+  Integer getMetricsPushPort();
+
+  Integer getMetricsPushIntervalSeconds();
+
+  String getMetricsPrometheusJob();
+
   Optional<TlsOptions> getTlsOptions();
 
   int getIdleConnectionTimeoutSeconds();

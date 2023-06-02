@@ -21,4 +21,5 @@ public interface DefaultCommandValues {
   String PORT_FORMAT_HELP = "<PORT>";
   String BOOL_FORMAT_HELP = "<BOOL>";
   String LONG_FORMAT_HELP = "<LONG>";
+  String INTEGER_FORMAT_HELP = "<INTEGER>";
 }

@@ -97,7 +97,12 @@ public abstract class Runner implements Runnable {
             baseConfig.getMetricsPort(),
             baseConfig.getMetricsNetworkInterface(),
             baseConfig.getMetricCategories(),
-            baseConfig.getMetricsHostAllowList());
+            baseConfig.getMetricsHostAllowList(),
+            baseConfig.isMetricsPushEnabled(),
+            baseConfig.getMetricsPushHost(),
+            baseConfig.getMetricsPushPort(),
+            baseConfig.getMetricsPushIntervalSeconds(),
+            baseConfig.getMetricsPrometheusJob());
 
     final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
 
