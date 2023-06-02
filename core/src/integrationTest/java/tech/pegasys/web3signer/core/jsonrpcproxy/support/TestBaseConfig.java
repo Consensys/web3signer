@@ -127,7 +127,7 @@ public class TestBaseConfig implements BaseConfig {
   }
 
   @Override
-  public boolean metadataFilesParallelProcessingEnabled() {
+  public boolean keystoreParallelProcessingEnabled() {
     return true;
   }
 }

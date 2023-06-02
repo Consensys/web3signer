@@ -59,5 +59,5 @@ public interface BaseConfig {
 
   Boolean isAccessLogsEnabled();
 
-  boolean metadataFilesParallelProcessingEnabled();
+  boolean keystoreParallelProcessingEnabled();
 }

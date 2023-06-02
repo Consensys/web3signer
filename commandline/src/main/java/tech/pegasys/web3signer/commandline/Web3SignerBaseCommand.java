@@ -192,12 +192,12 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   private final Boolean accessLogsEnabled = false;
 
   @Option(
-      names = "--Xmetadata-files-parallel-processing-enabled",
-      description = "Set to false to disable parallel processing of metadata config files.",
+      names = "--Xkey-store-parallel-processing-enabled",
+      description = "Set to false to disable parallel processing of key stores.",
       paramLabel = "<BOOL>",
       arity = "1",
       hidden = true)
-  private boolean metadataFilesParallelProcessingEnabled = true;
+  private boolean keystoreParallelProcessingEnabled = true;
 
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
@@ -291,8 +291,8 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   @Override
-  public boolean metadataFilesParallelProcessingEnabled() {
-    return metadataFilesParallelProcessingEnabled;
+  public boolean keystoreParallelProcessingEnabled() {
+    return keystoreParallelProcessingEnabled;
   }
 
   @Override
