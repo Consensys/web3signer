@@ -125,4 +125,9 @@ public class TestBaseConfig implements BaseConfig {
   public Boolean isAccessLogsEnabled() {
     return false;
   }
+
+  @Override
+  public boolean metadataFilesParallelProcessingEnabled() {
+    return true;
+  }
 }

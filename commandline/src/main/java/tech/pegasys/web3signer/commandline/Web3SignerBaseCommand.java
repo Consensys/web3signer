@@ -191,6 +191,14 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       description = "Enable access logs (default: ${DEFAULT-VALUE})")
   private final Boolean accessLogsEnabled = false;
 
+  @Option(
+      names = "--Xmetadata-files-parallel-processing-enabled",
+      description = "Set to false to disable parallel processing of metadata config files.",
+      paramLabel = "<BOOL>",
+      arity = "1",
+      hidden = true)
+  private boolean metadataFilesParallelProcessingEnabled = true;
+
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
   @Override
@@ -280,6 +288,11 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   @Override
   public Boolean isAccessLogsEnabled() {
     return accessLogsEnabled;
+  }
+
+  @Override
+  public boolean metadataFilesParallelProcessingEnabled() {
+    return metadataFilesParallelProcessingEnabled;
   }
 
   @Override

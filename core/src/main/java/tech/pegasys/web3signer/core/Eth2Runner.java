@@ -259,7 +259,7 @@ public class Eth2Runner extends Runner {
                         new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
 
             final MappedResults<ArtifactSigner> results =
-                new SignerLoader()
+                new SignerLoader(baseConfig.metadataFilesParallelProcessingEnabled())
                     .load(
                         baseConfig.getKeyConfigPath(),
                         "yaml",
