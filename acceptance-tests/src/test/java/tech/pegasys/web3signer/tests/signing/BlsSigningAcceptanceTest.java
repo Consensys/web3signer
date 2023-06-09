@@ -19,7 +19,6 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.signers.bls.keystore.model.KdfFunction;
-import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -33,6 +32,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2Signi
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
+import tech.pegasys.web3signer.keystore.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.net.URI;

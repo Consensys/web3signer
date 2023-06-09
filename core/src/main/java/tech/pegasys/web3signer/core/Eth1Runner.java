@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.Eth1Config;
@@ -33,6 +32,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.PassThroughHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.RequestMapper;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.InternalResponseHandler;
+import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;

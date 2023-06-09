@@ -16,13 +16,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 
-import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
-import tech.pegasys.signers.common.MappedResults;
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.FileHiddenUtil;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
+import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.BlsArtifactSignerFactory;

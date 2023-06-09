@@ -12,11 +12,11 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata;
 
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.signers.secp256k1.api.Signer;
 import tech.pegasys.signers.secp256k1.azure.AzureConfig;
 import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.signers.secp256k1.filebased.CredentialSigner;
+import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
