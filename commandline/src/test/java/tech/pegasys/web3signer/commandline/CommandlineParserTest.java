@@ -145,7 +145,7 @@ class CommandlineParserTest {
   }
 
   @Test
-  void metricsFailsToParse() {
+  void metricsEnabledWithMetricsPushEnabledFailsToParse() {
     String cmdline = validBaseCommandOptions();
     cmdline += "--metrics-enabled --metrics-push-enabled eth2 --slashing-protection-enabled=false";
 
