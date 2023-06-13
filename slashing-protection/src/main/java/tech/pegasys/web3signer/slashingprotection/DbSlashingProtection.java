@@ -60,8 +60,6 @@ public class DbSlashingProtection implements SlashingProtection {
   private final long pruningSlotsPerEpoch;
   private final RegisteredValidators registeredValidators;
 
-  private Bytes32 cachedGenesisValidatorRoot;
-
   public DbSlashingProtection(
       final Jdbi jdbi,
       final Jdbi pruningJdbi,
@@ -163,7 +161,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes32 genesisValidatorsRoot) {
     final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
 
-    if (isNotValidGVR(genesisValidatorsRoot)) {
+    if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
       return false;
     }
 
@@ -216,7 +214,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final UInt64 blockSlot,
       final Bytes32 genesisValidatorsRoot) {
     final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
-    if (isNotValidGVR(genesisValidatorsRoot)) {
+    if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
       return false;
     }
     return jdbi.inTransaction(
@@ -296,30 +294,5 @@ public class DbSlashingProtection implements SlashingProtection {
 
   private boolean isEnabled(final Handle handle, final int validatorId) {
     return validatorsDao.isEnabled(handle, validatorId);
-  }
-
-  private boolean isNotValidGVR(final Bytes32 genesisValidatorsRoot) {
-    // validate from in-memory cached gvr first.
-    if (cachedGenesisValidatorRoot != null) {
-      if (cachedGenesisValidatorRoot.equals(genesisValidatorsRoot)) {
-        return false;
-      } else {
-        LOG.warn(
-            "Supplied genesis validators root {} does not match value in database",
-            genesisValidatorsRoot);
-        return true;
-      }
-    }
-
-    // update in-memory cache
-    if (gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
-      // gvr has been successfully inserted (or validated from existing value) in database,
-      this.cachedGenesisValidatorRoot = genesisValidatorsRoot;
-      return false;
-    } else {
-      // fetch from database and update our in-memory cache.
-      this.cachedGenesisValidatorRoot = gvrValidator.genesisValidatorRoot().orElse(null);
-      return true;
-    }
   }
 }

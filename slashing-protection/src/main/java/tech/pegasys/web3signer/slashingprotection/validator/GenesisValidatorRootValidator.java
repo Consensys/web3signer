@@ -35,6 +35,8 @@ public class GenesisValidatorRootValidator {
   private final MetadataDao metadataDao;
   private final FailsafeExecutor<Object> failsafeExecutor;
 
+  private Bytes32 cachedGenesisValidatorRoot;
+
   public GenesisValidatorRootValidator(final Jdbi jdbi, final MetadataDao metadataDao) {
     this.jdbi = jdbi;
     this.metadataDao = metadataDao;
@@ -43,10 +45,21 @@ public class GenesisValidatorRootValidator {
   }
 
   public boolean checkGenesisValidatorsRootAndInsertIfEmpty(final Bytes32 genesisValidatorsRoot) {
+    if (cachedGenesisValidatorRoot != null) {
+      if (cachedGenesisValidatorRoot.equals(genesisValidatorsRoot)) {
+        return true;
+      } else {
+        LOG.warn(
+            "Supplied genesis validators root {} does not match value in database",
+            genesisValidatorsRoot);
+        return false;
+      }
+    }
+
     return failsafeExecutor.get(
         () ->
             jdbi.inTransaction(
-                READ_COMMITTED, handle -> validateGvr(handle, genesisValidatorsRoot)));
+                READ_COMMITTED, handle -> findAndInsertGVR(handle, genesisValidatorsRoot)));
   }
 
   public Optional<Bytes32> genesisValidatorRoot() {
@@ -54,16 +67,24 @@ public class GenesisValidatorRootValidator {
         () -> jdbi.inTransaction(READ_COMMITTED, metadataDao::findGenesisValidatorsRoot));
   }
 
-  private boolean validateGvr(final Handle handle, final Bytes32 genesisValidatorsRoot) {
+  private boolean findAndInsertGVR(final Handle handle, final Bytes32 genesisValidatorsRoot) {
     final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(handle);
-    final boolean isValidGvr = dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(true);
-    if (!isValidGvr) {
-      LOG.warn(
-          "Supplied genesis validators root {} does not match value in database",
-          genesisValidatorsRoot);
-    } else if (dbGvr.isEmpty()) {
+    if (dbGvr.isPresent()) {
+      cachedGenesisValidatorRoot = dbGvr.get();
+
+      if (cachedGenesisValidatorRoot.equals(genesisValidatorsRoot)) {
+        return true;
+      } else {
+        LOG.warn(
+            "Supplied genesis validators root {} does not match value in database",
+            genesisValidatorsRoot);
+        return false;
+      }
+    } else {
+      // insert and update local cache
       metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
+      cachedGenesisValidatorRoot = genesisValidatorsRoot;
+      return true;
     }
-    return isValidGvr;
   }
 }

@@ -13,6 +13,9 @@
 package tech.pegasys.web3signer.slashingprotection.validator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 
@@ -23,43 +26,68 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(DatabaseSetupExtension.class)
+@ExtendWith(MockitoExtension.class)
 class GenesisValidatorRootValidatorTest {
+  @Spy private MetadataDao metadataDao = new MetadataDao();
+
   @Test
   void checkGenesisValidatorReturnTrueForNewGVR(final Jdbi jdbi) {
     final GenesisValidatorRootValidator gvrValidator =
-        new GenesisValidatorRootValidator(jdbi, new MetadataDao());
-    assertThat(
-            gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(Bytes32.leftPad(Bytes.of(3))))
+        new GenesisValidatorRootValidator(jdbi, metadataDao);
+    final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(3));
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
         .isTrue();
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
+        .isTrue();
+
+    // the database interaction happens for the first call only, cached gvr is used for subsequent
+    // calls.
+    Mockito.verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
+    Mockito.verify(metadataDao, times(1))
+        .insertGenesisValidatorsRoot(any(), eq(genesisValidatorsRoot));
   }
 
   @Test
   void checkGenesisValidatorReturnsTrueForExistingGVR(final Jdbi jdbi, final Handle handle) {
     final GenesisValidatorRootValidator gvrValidator =
-        new GenesisValidatorRootValidator(jdbi, new MetadataDao());
+        new GenesisValidatorRootValidator(jdbi, metadataDao);
     Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(3));
     insertGvr(handle, genesisValidatorsRoot);
     assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
         .isTrue();
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
+        .isTrue();
+
+    // the database interaction happens for the first call only, cached gvr is used for subsequent
+    // calls.
+    Mockito.verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
   }
 
   @Test
   void checkGenesisValidatorReturnsFalseForDifferentGVR(final Jdbi jdbi, final Handle handle) {
     final GenesisValidatorRootValidator gvrValidator =
-        new GenesisValidatorRootValidator(jdbi, new MetadataDao());
+        new GenesisValidatorRootValidator(jdbi, metadataDao);
     Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(3));
     insertGvr(handle, genesisValidatorsRoot);
     assertThat(
             gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(Bytes32.leftPad(Bytes.of(4))))
         .isFalse();
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(Bytes32.ZERO)).isFalse();
+
+    // the database interaction happens for the first call only, cached gvr is used for subsequent
+    // calls.
+    Mockito.verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
   }
 
   @Test
   void genesisValidatorRootReturnsEmptyWhenMetadataIsEmpty(final Jdbi jdbi) {
     final GenesisValidatorRootValidator gvrValidator =
-        new GenesisValidatorRootValidator(jdbi, new MetadataDao());
+        new GenesisValidatorRootValidator(jdbi, metadataDao);
     assertThat(gvrValidator.genesisValidatorRoot()).isEmpty();
   }
 
@@ -67,7 +95,7 @@ class GenesisValidatorRootValidatorTest {
   void genesisValidatorRootReturnsPresentWhenMetadataIsNotEmpty(
       final Jdbi jdbi, final Handle handle) {
     final GenesisValidatorRootValidator gvrValidator =
-        new GenesisValidatorRootValidator(jdbi, new MetadataDao());
+        new GenesisValidatorRootValidator(jdbi, metadataDao);
     insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
     assertThat(gvrValidator.genesisValidatorRoot()).isPresent();
   }
