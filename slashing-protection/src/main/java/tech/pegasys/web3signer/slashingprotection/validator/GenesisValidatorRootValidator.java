@@ -16,6 +16,7 @@ import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMIT
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import net.jodah.failsafe.Failsafe;
@@ -51,8 +52,7 @@ public class GenesisValidatorRootValidator {
               jdbi.inTransaction(
                   READ_COMMITTED, handle -> findAndInsertGVR(handle, genesisValidatorsRoot)));
     }
-
-    if (cachedGenesisValidatorRoot.equals(genesisValidatorsRoot)) {
+    if (Objects.equals(cachedGenesisValidatorRoot, genesisValidatorsRoot)) {
       return true;
     } else {
       LOG.warn(
