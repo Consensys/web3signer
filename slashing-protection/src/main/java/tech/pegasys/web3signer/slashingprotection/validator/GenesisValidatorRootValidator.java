@@ -47,11 +47,14 @@ public class GenesisValidatorRootValidator {
 
   public boolean checkGenesisValidatorsRootAndInsertIfEmpty(final Bytes32 genesisValidatorsRoot) {
     if (cachedGenesisValidatorRoot == null) {
-      failsafeExecutor.get(
-          () ->
-              jdbi.inTransaction(
-                  READ_COMMITTED, handle -> findAndInsertGVR(handle, genesisValidatorsRoot)));
+      cachedGenesisValidatorRoot =
+          failsafeExecutor.get(
+              () ->
+                  jdbi.inTransaction(
+                      READ_COMMITTED,
+                      handle -> findAndInsertIfNotExists(handle, genesisValidatorsRoot)));
     }
+
     if (Objects.equals(cachedGenesisValidatorRoot, genesisValidatorsRoot)) {
       return true;
     } else {
@@ -70,15 +73,14 @@ public class GenesisValidatorRootValidator {
                 handle -> metadataDao.findGenesisValidatorsRoot(handle).isPresent()));
   }
 
-  private Void findAndInsertGVR(final Handle handle, final Bytes32 genesisValidatorsRoot) {
+  private Bytes32 findAndInsertIfNotExists(
+      final Handle handle, final Bytes32 genesisValidatorsRoot) {
     final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(handle);
     if (dbGvr.isPresent()) {
-      cachedGenesisValidatorRoot = dbGvr.get();
+      return dbGvr.get();
     } else {
-      // insert and update local cache
       metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
-      cachedGenesisValidatorRoot = genesisValidatorsRoot;
+      return genesisValidatorsRoot;
     }
-    return null;
   }
 }
