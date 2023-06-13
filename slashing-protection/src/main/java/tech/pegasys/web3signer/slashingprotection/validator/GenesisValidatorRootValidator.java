@@ -45,21 +45,21 @@ public class GenesisValidatorRootValidator {
   }
 
   public boolean checkGenesisValidatorsRootAndInsertIfEmpty(final Bytes32 genesisValidatorsRoot) {
-    if (cachedGenesisValidatorRoot != null) {
-      if (cachedGenesisValidatorRoot.equals(genesisValidatorsRoot)) {
-        return true;
-      } else {
-        LOG.warn(
-            "Supplied genesis validators root {} does not match value in database",
-            genesisValidatorsRoot);
-        return false;
-      }
+    if (cachedGenesisValidatorRoot == null) {
+      failsafeExecutor.get(
+          () ->
+              jdbi.inTransaction(
+                  READ_COMMITTED, handle -> findAndInsertGVR(handle, genesisValidatorsRoot)));
     }
 
-    return failsafeExecutor.get(
-        () ->
-            jdbi.inTransaction(
-                READ_COMMITTED, handle -> findAndInsertGVR(handle, genesisValidatorsRoot)));
+    if (cachedGenesisValidatorRoot.equals(genesisValidatorsRoot)) {
+      return true;
+    } else {
+      LOG.warn(
+          "Supplied genesis validators root {} does not match value in database",
+          genesisValidatorsRoot);
+      return false;
+    }
   }
 
   public boolean genesisValidatorRootExists() {
@@ -70,24 +70,15 @@ public class GenesisValidatorRootValidator {
                 handle -> metadataDao.findGenesisValidatorsRoot(handle).isPresent()));
   }
 
-  private boolean findAndInsertGVR(final Handle handle, final Bytes32 genesisValidatorsRoot) {
+  private Void findAndInsertGVR(final Handle handle, final Bytes32 genesisValidatorsRoot) {
     final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(handle);
     if (dbGvr.isPresent()) {
       cachedGenesisValidatorRoot = dbGvr.get();
-
-      if (cachedGenesisValidatorRoot.equals(genesisValidatorsRoot)) {
-        return true;
-      } else {
-        LOG.warn(
-            "Supplied genesis validators root {} does not match value in database",
-            genesisValidatorsRoot);
-        return false;
-      }
     } else {
       // insert and update local cache
       metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
       cachedGenesisValidatorRoot = genesisValidatorsRoot;
-      return true;
     }
+    return null;
   }
 }
