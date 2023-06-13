@@ -57,19 +57,19 @@ class GenesisValidatorRootValidatorTest {
   }
 
   @Test
-  void genesisValidatorRootExistsReturnsFalseWhenMetadataIsEmpty(final Jdbi jdbi) {
+  void genesisValidatorRootReturnsEmptyWhenMetadataIsEmpty(final Jdbi jdbi) {
     final GenesisValidatorRootValidator gvrValidator =
         new GenesisValidatorRootValidator(jdbi, new MetadataDao());
-    assertThat(gvrValidator.genesisValidatorRootExists()).isFalse();
+    assertThat(gvrValidator.genesisValidatorRoot()).isEmpty();
   }
 
   @Test
-  void genesisValidatorRootExistsReturnsTrueWhenMetadataIsNotEmpty(
+  void genesisValidatorRootReturnsPresentWhenMetadataIsNotEmpty(
       final Jdbi jdbi, final Handle handle) {
     final GenesisValidatorRootValidator gvrValidator =
         new GenesisValidatorRootValidator(jdbi, new MetadataDao());
     insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
-    assertThat(gvrValidator.genesisValidatorRootExists()).isTrue();
+    assertThat(gvrValidator.genesisValidatorRoot()).isPresent();
   }
 
   private void insertGvr(final Handle handle, final Bytes genesisValidatorsRoot) {

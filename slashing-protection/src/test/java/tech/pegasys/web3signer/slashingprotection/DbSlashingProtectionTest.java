@@ -51,6 +51,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -563,8 +564,9 @@ public class DbSlashingProtectionTest {
     when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.empty());
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isTrue();
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isTrue();
 
-    verify(metadataDao).insertGenesisValidatorsRoot(any(), eq(GVR));
+    verify(metadataDao, Mockito.times(1)).insertGenesisValidatorsRoot(any(), eq(GVR));
   }
 
   @Test
@@ -575,8 +577,12 @@ public class DbSlashingProtectionTest {
             dbSlashingProtection.maySignAttestation(
                 PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
         .isTrue();
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+        .isTrue();
 
-    verify(metadataDao).insertGenesisValidatorsRoot(any(), eq(GVR));
+    verify(metadataDao, Mockito.times(1)).insertGenesisValidatorsRoot(any(), eq(GVR));
   }
 
   @Test

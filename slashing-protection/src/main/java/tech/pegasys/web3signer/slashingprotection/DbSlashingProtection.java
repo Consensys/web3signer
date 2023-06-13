@@ -60,6 +60,8 @@ public class DbSlashingProtection implements SlashingProtection {
   private final long pruningSlotsPerEpoch;
   private final RegisteredValidators registeredValidators;
 
+  private Bytes32 cachedGenesisValidatorRoot;
+
   public DbSlashingProtection(
       final Jdbi jdbi,
       final Jdbi pruningJdbi,
@@ -140,7 +142,7 @@ public class DbSlashingProtection implements SlashingProtection {
   public IncrementalExporter createIncrementalExporter(final OutputStream out) {
     // when GVR is empty, there is no slashing data to export, hence return a No-Op exporter that
     // can nicely close OutputStream.
-    if (!gvrValidator.genesisValidatorRootExists()) {
+    if (gvrValidator.genesisValidatorRoot().isEmpty()) {
       return new EmptyDataIncrementalInterchangeV5Exporter(out);
     }
 
@@ -161,7 +163,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final Bytes32 genesisValidatorsRoot) {
     final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
 
-    if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
+    if (isNotValidGVR(genesisValidatorsRoot)) {
       return false;
     }
 
@@ -214,7 +216,7 @@ public class DbSlashingProtection implements SlashingProtection {
       final UInt64 blockSlot,
       final Bytes32 genesisValidatorsRoot) {
     final int validatorId = registeredValidators.mustGetValidatorIdForPublicKey(publicKey);
-    if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
+    if (isNotValidGVR(genesisValidatorsRoot)) {
       return false;
     }
     return jdbi.inTransaction(
@@ -294,5 +296,30 @@ public class DbSlashingProtection implements SlashingProtection {
 
   private boolean isEnabled(final Handle handle, final int validatorId) {
     return validatorsDao.isEnabled(handle, validatorId);
+  }
+
+  private boolean isNotValidGVR(final Bytes32 genesisValidatorsRoot) {
+    // validate from in-memory cached gvr first.
+    if (cachedGenesisValidatorRoot != null) {
+      if (cachedGenesisValidatorRoot.equals(genesisValidatorsRoot)) {
+        return false;
+      } else {
+        LOG.warn(
+            "Supplied genesis validators root {} does not match value in database",
+            genesisValidatorsRoot);
+        return true;
+      }
+    }
+
+    // update in-memory cache
+    if (gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot)) {
+      // gvr has been successfully inserted (or validated from existing value) in database,
+      this.cachedGenesisValidatorRoot = genesisValidatorsRoot;
+      return false;
+    } else {
+      // fetch from database and update our in-memory cache.
+      this.cachedGenesisValidatorRoot = gvrValidator.genesisValidatorRoot().orElse(null);
+      return true;
+    }
   }
 }
