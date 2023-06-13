@@ -4,6 +4,9 @@
 - Optional Azure bulk loading tags support using cli option `--azure-secrets-tags`.
 - Support Prometheus Push Gateway Metrics [#796](https://github.com/ConsenSys/web3signer/pull/796)
 
+### Performance Enhancements
+- Cache GVR in-memory on first lookup. This would reduce database lookups during sign operations and improve performance. [#600](https://github.com/ConsenSys/web3signer/issues/600)
+
 ### Bugs Fixed
 - Upgrade jackson and vertx to upgrade snakeyaml to 2.0 to fix CVE-2022-1471
 - Fixed handling of very large number (30,000+) of signing metadata files with Hashicorp connection by introducing 
