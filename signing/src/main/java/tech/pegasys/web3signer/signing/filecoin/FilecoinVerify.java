@@ -18,6 +18,7 @@ import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
+import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.util.Blake2b;
 
 import java.math.BigInteger;
@@ -62,8 +63,7 @@ public class FilecoinVerify {
 
   private static BigInteger recoverSignature(
       final SecpArtifactSignature artifactSignature, final byte[] digest) {
-    final tech.pegasys.signers.secp256k1.api.Signature signatureData =
-        artifactSignature.getSignatureData();
+    final Signature signatureData = artifactSignature.getSignatureData();
     final ECDSASignature signature = new ECDSASignature(signatureData.getR(), signatureData.getS());
     final ECDSASignature canonicalSignature = signature.toCanonicalised();
     final int recId = signatureData.getV().intValue();

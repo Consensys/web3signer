@@ -43,8 +43,6 @@ dependencies {
   implementation 'org.web3j:crypto'
   implementation 'org.web3j:besu'
   implementation 'tech.pegasys.signers.internal:bls-keystore'
-  implementation 'tech.pegasys.signers.internal:signing-secp256k1-api'
-  implementation 'tech.pegasys.signers.internal:signing-secp256k1-impl'
   implementation 'tech.pegasys.teku.internal:serializer'
   implementation 'tech.pegasys.teku.internal:spec'
   implementation 'tech.pegasys.teku.internal:unsigned'

@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.core.util;
 
-import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
+import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 
 import java.security.interfaces.ECPublicKey;
 

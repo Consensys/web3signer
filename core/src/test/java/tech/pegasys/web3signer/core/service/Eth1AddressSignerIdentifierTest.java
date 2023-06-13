@@ -14,11 +14,11 @@ package tech.pegasys.web3signer.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
-import tech.pegasys.signers.secp256k1.api.SignerIdentifier;
-import tech.pegasys.signers.secp256k1.api.util.AddressUtil;
 import tech.pegasys.web3signer.core.Eth1AddressSignerIdentifier;
 import tech.pegasys.web3signer.core.util.PublicKeyUtils;
+import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
+import tech.pegasys.web3signer.signing.secp256k1.SignerIdentifier;
+import tech.pegasys.web3signer.signing.secp256k1.util.AddressUtil;
 
 import java.security.interfaces.ECPublicKey;
 import java.util.Locale;

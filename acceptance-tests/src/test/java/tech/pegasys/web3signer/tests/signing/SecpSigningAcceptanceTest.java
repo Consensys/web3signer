@@ -17,11 +17,11 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.crypto.Sign.signedMessageToKey;
 
-import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 
 import java.io.File;
 import java.math.BigInteger;

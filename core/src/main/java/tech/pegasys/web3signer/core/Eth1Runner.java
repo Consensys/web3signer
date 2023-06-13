@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
-import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.service.DownstreamPathCalculator;
@@ -43,6 +42,7 @@ import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyPro
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
+import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.util.List;
 
