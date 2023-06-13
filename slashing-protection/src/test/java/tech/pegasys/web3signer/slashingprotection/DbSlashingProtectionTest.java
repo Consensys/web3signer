@@ -542,7 +542,7 @@ public class DbSlashingProtectionTest {
                 PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
         .isFalse();
 
-    verify(metadataDao).findGenesisValidatorsRoot(any());
+    verify(metadataDao, Mockito.times(2)).findGenesisValidatorsRoot(any());
     verify(signedAttestationsDao, never()).insertAttestation(any(), any());
     verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
   }
@@ -554,7 +554,7 @@ public class DbSlashingProtectionTest {
 
     assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isFalse();
 
-    verify(metadataDao).findGenesisValidatorsRoot(any());
+    verify(metadataDao, Mockito.times(2)).findGenesisValidatorsRoot(any());
     verify(signedBlocksDao, never()).insertBlockProposal(any(), any());
     verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), eq(GVR));
   }
