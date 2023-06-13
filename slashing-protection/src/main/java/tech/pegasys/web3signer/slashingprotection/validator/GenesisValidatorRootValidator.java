@@ -62,9 +62,12 @@ public class GenesisValidatorRootValidator {
                 READ_COMMITTED, handle -> findAndInsertGVR(handle, genesisValidatorsRoot)));
   }
 
-  public Optional<Bytes32> genesisValidatorRoot() {
+  public boolean genesisValidatorRootExists() {
     return failsafeExecutor.get(
-        () -> jdbi.inTransaction(READ_COMMITTED, metadataDao::findGenesisValidatorsRoot));
+        () ->
+            jdbi.inTransaction(
+                READ_COMMITTED,
+                handle -> metadataDao.findGenesisValidatorsRoot(handle).isPresent()));
   }
 
   private boolean findAndInsertGVR(final Handle handle, final Bytes32 genesisValidatorsRoot) {
