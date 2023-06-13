@@ -19,11 +19,13 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PORT_FORM
 import static tech.pegasys.web3signer.common.Web3SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
 import tech.pegasys.web3signer.commandline.config.AllowListHostsProperty;
+import tech.pegasys.web3signer.commandline.config.PicoCliMetricsPushOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptions;
 import tech.pegasys.web3signer.commandline.config.PicoCliTlsServerOptionsValidator;
 import tech.pegasys.web3signer.commandline.convertor.MetricCategoryConverter;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.core.config.BaseConfig;
+import tech.pegasys.web3signer.core.config.MetricsPushOptions;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 
 import java.io.File;
@@ -173,6 +175,8 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       defaultValue = "localhost,127.0.0.1")
   private final AllowListHostsProperty metricsHostAllowList = new AllowListHostsProperty();
 
+  @CommandLine.Mixin private PicoCliMetricsPushOptions metricsPushOptions;
+
   @Option(
       names = {"--idle-connection-timeout-seconds"},
       paramLabel = "<timeout in seconds>",
@@ -267,6 +271,14 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   @Override
+  public Optional<MetricsPushOptions> getMetricsPushOptions() {
+    if (metricsPushOptions.isMetricsPushEnabled()) {
+      return Optional.of(metricsPushOptions);
+    }
+    return Optional.empty();
+  }
+
+  @Override
   public Optional<TlsOptions> getTlsOptions() {
     if (picoCliTlsServerOptions.getKeyStoreFile() != null
         && picoCliTlsServerOptions.getKeyStorePasswordFile() != null) {
@@ -334,6 +346,13 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
     final PicoCliTlsServerOptionsValidator picoCliTlsServerOptionsValidator =
         new PicoCliTlsServerOptionsValidator(spec, picoCliTlsServerOptions);
     picoCliTlsServerOptionsValidator.validate();
+
+    if (isMetricsEnabled() && metricsPushOptions.isMetricsPushEnabled()) {
+      throw new CommandLine.MutuallyExclusiveArgsException(
+          spec.commandLine(),
+          "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
+              + "time.  Please refer to CLI reference for more details about this constraint.");
+    }
   }
 
   public static class Web3signerMetricCategoryConverter extends MetricCategoryConverter {
