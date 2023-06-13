@@ -42,11 +42,21 @@ class GenesisValidatorRootValidatorTest {
     final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(3));
     assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
         .isTrue();
+  }
+
+  @Test
+  void verifyCachedGVRIsUsedForCheckGenesis(final Jdbi jdbi) {
+    final GenesisValidatorRootValidator gvrValidator =
+        new GenesisValidatorRootValidator(jdbi, metadataDao);
+    final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(3));
+
+    // perform check call twice, only first call will perform database operations.
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
+        .isTrue();
     assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
         .isTrue();
 
-    // the database interaction happens for the first call only, cached gvr is used for subsequent
-    // calls.
+    // verify database methods interaction happens only once
     Mockito.verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
     Mockito.verify(metadataDao, times(1))
         .insertGenesisValidatorsRoot(any(), eq(genesisValidatorsRoot));
@@ -60,12 +70,6 @@ class GenesisValidatorRootValidatorTest {
     insertGvr(handle, genesisValidatorsRoot);
     assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
         .isTrue();
-    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
-        .isTrue();
-
-    // the database interaction happens for the first call only, cached gvr is used for subsequent
-    // calls.
-    Mockito.verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
   }
 
   @Test
@@ -77,11 +81,6 @@ class GenesisValidatorRootValidatorTest {
     assertThat(
             gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(Bytes32.leftPad(Bytes.of(4))))
         .isFalse();
-    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(Bytes32.ZERO)).isFalse();
-
-    // the database interaction happens for the first call only, cached gvr is used for subsequent
-    // calls.
-    Mockito.verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
   }
 
   @Test
