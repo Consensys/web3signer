@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.jsonrpcproxy.support;
 
 import tech.pegasys.web3signer.core.config.BaseConfig;
+import tech.pegasys.web3signer.core.config.MetricsPushOptions;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 
 import java.nio.file.Path;
@@ -104,28 +105,8 @@ public class TestBaseConfig implements BaseConfig {
   }
 
   @Override
-  public Boolean isMetricsPushEnabled() {
-    return false;
-  }
-
-  @Override
-  public String getMetricsPushHost() {
-    return "127.0.0.1";
-  }
-
-  @Override
-  public Integer getMetricsPushPort() {
-    return 0;
-  }
-
-  @Override
-  public Integer getMetricsPushIntervalSeconds() {
-    return 0;
-  }
-
-  @Override
-  public String getMetricsPrometheusJob() {
-    return "stub";
+  public Optional<MetricsPushOptions> getMetricsPushOptions() {
+    return Optional.empty();
   }
 
   @Override
