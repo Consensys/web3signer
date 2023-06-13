@@ -132,6 +132,33 @@ class CommandlineParserTest {
   }
 
   @Test
+  void pushMetricsParsesSuccessfully() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        "--metrics-push-enabled --metrics-push-port 9091 --metrics-push-host=127.0.0.1 --metrics-push-interval=30 --metrics-push-prometheus-job=\"web3signer\" eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isZero();
+    assertThat(commandError.toString()).isEmpty();
+  }
+
+  @Test
+  void metricsEnabledWithMetricsPushEnabledFailsToParse() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--metrics-enabled --metrics-push-enabled eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: --metrics-enabled option and --metrics-push-enabled option can't be used at the same time.  Please refer to CLI reference for more details about this constraint");
+  }
+
+  @Test
   void missingAzureKeyVaultParamsProducesSuitableError() {
     String cmdline = validBaseCommandOptions();
     cmdline = cmdline + "eth2 --slashing-protection-enabled=false --azure-vault-enabled=true";

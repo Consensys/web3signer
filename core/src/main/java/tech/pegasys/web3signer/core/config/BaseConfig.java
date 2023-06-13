@@ -49,6 +49,8 @@ public interface BaseConfig {
 
   List<String> getMetricsHostAllowList();
 
+  Optional<MetricsPushOptions> getMetricsPushOptions();
+
   Optional<TlsOptions> getTlsOptions();
 
   int getIdleConnectionTimeoutSeconds();

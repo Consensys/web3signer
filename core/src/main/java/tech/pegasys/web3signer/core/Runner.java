@@ -18,8 +18,8 @@ import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_UN
 import tech.pegasys.web3signer.common.ApplicationInfo;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
+import tech.pegasys.web3signer.core.config.MetricsPushOptions;
 import tech.pegasys.web3signer.core.config.TlsOptions;
-import tech.pegasys.web3signer.core.metrics.MetricsEndpoint;
 import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
@@ -65,7 +65,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.net.tls.VertxTrustOptions;
+import org.hyperledger.besu.metrics.MetricsService;
+import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
+import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public abstract class Runner implements Runnable {
@@ -91,15 +94,9 @@ public abstract class Runner implements Runnable {
       Configurator.setRootLevel(baseConfig.getLogLevel());
     }
 
-    final MetricsEndpoint metricsEndpoint =
-        new MetricsEndpoint(
-            baseConfig.isMetricsEnabled(),
-            baseConfig.getMetricsPort(),
-            baseConfig.getMetricsNetworkInterface(),
-            baseConfig.getMetricCategories(),
-            baseConfig.getMetricsHostAllowList());
-
-    final MetricsSystem metricsSystem = metricsEndpoint.getMetricsSystem();
+    final MetricsConfiguration metricsConfiguration = createMetricsConfiguration();
+    final MetricsSystem metricsSystem = MetricsSystemFactory.create(metricsConfiguration);
+    Optional<MetricsService> metricsService = Optional.empty();
 
     final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
     final Router router = Router.router(vertx);
@@ -112,7 +109,8 @@ public abstract class Runner implements Runnable {
 
     try {
       createVersionMetric(metricsSystem);
-      metricsEndpoint.start(vertx);
+      metricsService = MetricsService.create(vertx, metricsConfiguration, metricsSystem);
+      metricsService.ifPresent(MetricsService::start);
       try {
         artifactSignerProvider.load().get(); // wait for signers to get loaded ...
       } catch (final InterruptedException | ExecutionException e) {
@@ -168,7 +166,8 @@ public abstract class Runner implements Runnable {
           baseConfig.getHttpListenHost(),
           httpServer.actualPort());
 
-      persistPortInformation(httpServer.actualPort(), metricsEndpoint.getPort());
+      persistPortInformation(
+          httpServer.actualPort(), metricsService.flatMap(MetricsService::getPort));
     } catch (final InitializationException e) {
       throw e;
     } catch (final Throwable e) {
@@ -176,8 +175,30 @@ public abstract class Runner implements Runnable {
         artifactSignerProvider.close();
       }
       vertx.close();
-      metricsEndpoint.stop();
+      metricsService.ifPresent(MetricsService::stop);
       LOG.error("Failed to initialise application", e);
+    }
+  }
+
+  private MetricsConfiguration createMetricsConfiguration() {
+    if (baseConfig.getMetricsPushOptions().isPresent()) {
+      MetricsPushOptions options = baseConfig.getMetricsPushOptions().get();
+      return MetricsConfiguration.builder()
+          .metricCategories(baseConfig.getMetricCategories())
+          .pushEnabled(options.isMetricsPushEnabled())
+          .pushHost(options.getMetricsPushHost())
+          .pushPort(options.getMetricsPushPort())
+          .pushInterval(options.getMetricsPushIntervalSeconds())
+          .prometheusJob(options.getMetricsPrometheusJob())
+          .build();
+    } else {
+      return MetricsConfiguration.builder()
+          .enabled(baseConfig.isMetricsEnabled())
+          .port(baseConfig.getMetricsPort())
+          .host(baseConfig.getMetricsNetworkInterface())
+          .metricCategories(baseConfig.getMetricCategories())
+          .hostsAllowlist(baseConfig.getMetricsHostAllowList())
+          .build();
     }
   }
 
