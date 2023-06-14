@@ -32,6 +32,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcErrorHandler
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.PassThroughHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.RequestMapper;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.InternalResponseHandler;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
@@ -186,6 +187,9 @@ public class Eth1Runner extends Runner {
         "eth_accounts",
         new InternalResponseHandler<>(
             responseFactory, new Eth1AccountsHandler(signerProvider::availableIdentifiers)));
+    requestMapper.addHandler(
+            "eth_sign",
+            new InternalResponseHandler<>(responseFactory, new EthSignResultProvider(signerProvider)));
 
     return requestMapper;
   }
