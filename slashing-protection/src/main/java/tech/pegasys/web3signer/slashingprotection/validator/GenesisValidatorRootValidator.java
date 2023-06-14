@@ -16,6 +16,7 @@ import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMIT
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import net.jodah.failsafe.Failsafe;
@@ -35,6 +36,8 @@ public class GenesisValidatorRootValidator {
   private final MetadataDao metadataDao;
   private final FailsafeExecutor<Object> failsafeExecutor;
 
+  private Bytes32 cachedGenesisValidatorRoot;
+
   public GenesisValidatorRootValidator(final Jdbi jdbi, final MetadataDao metadataDao) {
     this.jdbi = jdbi;
     this.metadataDao = metadataDao;
@@ -43,10 +46,23 @@ public class GenesisValidatorRootValidator {
   }
 
   public boolean checkGenesisValidatorsRootAndInsertIfEmpty(final Bytes32 genesisValidatorsRoot) {
-    return failsafeExecutor.get(
-        () ->
-            jdbi.inTransaction(
-                READ_COMMITTED, handle -> validateGvr(handle, genesisValidatorsRoot)));
+    if (cachedGenesisValidatorRoot == null) {
+      cachedGenesisValidatorRoot =
+          failsafeExecutor.get(
+              () ->
+                  jdbi.inTransaction(
+                      READ_COMMITTED,
+                      handle -> findAndInsertIfNotExists(handle, genesisValidatorsRoot)));
+    }
+
+    if (Objects.equals(cachedGenesisValidatorRoot, genesisValidatorsRoot)) {
+      return true;
+    } else {
+      LOG.warn(
+          "Supplied genesis validators root {} does not match value in database",
+          genesisValidatorsRoot);
+      return false;
+    }
   }
 
   public boolean genesisValidatorRootExists() {
@@ -57,16 +73,14 @@ public class GenesisValidatorRootValidator {
                 handle -> metadataDao.findGenesisValidatorsRoot(handle).isPresent()));
   }
 
-  private boolean validateGvr(final Handle handle, final Bytes32 genesisValidatorsRoot) {
+  private Bytes32 findAndInsertIfNotExists(
+      final Handle handle, final Bytes32 genesisValidatorsRoot) {
     final Optional<Bytes32> dbGvr = metadataDao.findGenesisValidatorsRoot(handle);
-    final boolean isValidGvr = dbGvr.map(gvr -> gvr.equals(genesisValidatorsRoot)).orElse(true);
-    if (!isValidGvr) {
-      LOG.warn(
-          "Supplied genesis validators root {} does not match value in database",
-          genesisValidatorsRoot);
-    } else if (dbGvr.isEmpty()) {
+    if (dbGvr.isPresent()) {
+      return dbGvr.get();
+    } else {
       metadataDao.insertGenesisValidatorsRoot(handle, genesisValidatorsRoot);
+      return genesisValidatorsRoot;
     }
-    return isValidGvr;
   }
 }
