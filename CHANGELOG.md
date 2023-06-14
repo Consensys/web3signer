@@ -3,8 +3,6 @@
 ### Features Added
 - Optional Azure bulk loading tags support using cli option `--azure-secrets-tags`.
 - Support Prometheus Push Gateway Metrics [#796](https://github.com/ConsenSys/web3signer/pull/796)
-
-### Performance Enhancements
 - Cache GVR in-memory on first lookup. This would reduce database lookups during sign operations and improve performance. [#600](https://github.com/ConsenSys/web3signer/issues/600)
 
 ### Bugs Fixed
