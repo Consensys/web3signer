@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.jsonrpcproxy.support;
 
 import tech.pegasys.web3signer.core.config.BaseConfig;
+import tech.pegasys.web3signer.core.config.MetricsPushOptions;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 
 import java.nio.file.Path;
@@ -101,6 +102,11 @@ public class TestBaseConfig implements BaseConfig {
   @Override
   public List<String> getMetricsHostAllowList() {
     return Collections.emptyList();
+  }
+
+  @Override
+  public Optional<MetricsPushOptions> getMetricsPushOptions() {
+    return Optional.empty();
   }
 
   @Override

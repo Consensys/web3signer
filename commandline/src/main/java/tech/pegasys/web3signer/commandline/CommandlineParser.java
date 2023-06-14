@@ -99,7 +99,8 @@ public class CommandlineParser {
   private int handleParseException(final ParameterException ex, final String[] args) {
     errorWriter.println("Error parsing parameters: " + ex.getMessage());
 
-    if (!CommandLine.UnmatchedArgumentException.printSuggestions(ex, outputWriter)) {
+    if (!(ex instanceof CommandLine.MutuallyExclusiveArgsException)
+        && !CommandLine.UnmatchedArgumentException.printSuggestions(ex, outputWriter)) {
       ex.getCommandLine().usage(outputWriter, Ansi.AUTO);
     }
 
