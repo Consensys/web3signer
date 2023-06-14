@@ -104,7 +104,6 @@ dependencyManagement {
 
     dependencySet(group: 'tech.pegasys.signers.internal', version: '2.2.10') {
       entry 'bls-keystore'
-      entry 'acceptance-tests'
     }
 
     dependency 'io.rest-assured:rest-assured:4.4.0'

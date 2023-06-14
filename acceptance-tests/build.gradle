@@ -70,7 +70,6 @@ dependencies {
   testImplementation 'org.web3j:crypto'
   testImplementation 'org.web3j:besu'
   testImplementation (testFixtures(project(":keystorage")))
-  testImplementation (group: 'tech.pegasys.signers.internal', name: 'acceptance-tests', classifier: 'test-fixtures')
   testImplementation (testFixtures(project(":slashing-protection")))
   testImplementation (testFixtures(project(":signing")))
   testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
