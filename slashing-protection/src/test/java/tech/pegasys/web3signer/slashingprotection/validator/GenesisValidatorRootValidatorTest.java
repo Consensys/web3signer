@@ -13,8 +13,10 @@
 package tech.pegasys.web3signer.slashingprotection.validator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -49,37 +51,66 @@ class GenesisValidatorRootValidatorTest {
   void verifyCachedGVRIsUsedForNewGVR(final Jdbi jdbi) {
     final GenesisValidatorRootValidator gvrValidator =
         new GenesisValidatorRootValidator(jdbi, metadataDao);
-    final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(3));
+    final Bytes32 gvr = Bytes32.leftPad(Bytes.of(3));
+    final Bytes32 otherGvr = Bytes32.leftPad(Bytes.of(4));
 
-    // perform check call twice, only first call will perform database operations.
-    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
-        .isTrue();
-    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
-        .isTrue();
+    // call checkGVR multiple times, only first call should interact with database.
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr)).isTrue();
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr)).isTrue();
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(otherGvr)).isFalse();
 
-    // verify database methods interaction happens only once
+    // verify database interactions
     verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
-    verify(metadataDao, times(1)).insertGenesisValidatorsRoot(any(), eq(genesisValidatorsRoot));
+    verify(metadataDao, times(1)).insertGenesisValidatorsRoot(any(), eq(gvr));
   }
 
   @Test
   void verifyCachedGVRIsUsedForExistingGVR(final Jdbi jdbi, final Handle handle) {
     final GenesisValidatorRootValidator gvrValidator =
         new GenesisValidatorRootValidator(jdbi, metadataDao);
-    final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(3));
-    insertGvr(handle, genesisValidatorsRoot);
+    final Bytes32 gvr = Bytes32.leftPad(Bytes.of(3));
+    final Bytes32 otherGvr = Bytes32.leftPad(Bytes.of(4));
 
-    // perform checkGVR call twice, the first call will look up and cache the value.
-    // Subsequent calls should not engage in database calls
-    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
-        .isTrue();
-    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
-        .isTrue();
+    insertGvr(handle, gvr);
 
-    // verify database methods interaction happens only once
+    // call checkGVR multiple times, only first call should interact with database.
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr)).isTrue();
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr)).isTrue();
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(otherGvr)).isFalse();
+
+    // verify database interactions
     verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
-    // interaction with metadataDao.insertGVR is not meant to happen
     verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), any());
+  }
+
+  @Test
+  void verifyCachedGVRIsNotInitializedWhenDBExceptionHappens(final Jdbi jdbi) {
+    // set up exception to be thrown in first call and call real method in second call.
+    doThrow(new RuntimeException("DB Not Available"))
+        .doCallRealMethod()
+        .when(metadataDao)
+        .findGenesisValidatorsRoot(any());
+
+    final GenesisValidatorRootValidator gvrValidator =
+        new GenesisValidatorRootValidator(jdbi, metadataDao);
+    final Bytes32 gvr = Bytes32.leftPad(Bytes.of(3));
+    final Bytes32 otherGvr = Bytes32.leftPad(Bytes.of(4));
+
+    // first call should throw an exception.
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr));
+
+    // second call should call find (which returns empty result) and insert the supplied gvr.
+    // Also cache the supplied gvr in-memory.
+    gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr);
+
+    // subsequent calls should not interact with the database
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr)).isTrue();
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(otherGvr)).isFalse();
+
+    // verify interactions
+    verify(metadataDao, times(2)).findGenesisValidatorsRoot(any());
+    verify(metadataDao, times(1)).insertGenesisValidatorsRoot(any(), any());
   }
 
   @Test
