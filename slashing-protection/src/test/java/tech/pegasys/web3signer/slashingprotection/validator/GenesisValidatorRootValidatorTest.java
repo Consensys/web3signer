@@ -15,7 +15,9 @@ package tech.pegasys.web3signer.slashingprotection.validator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 
@@ -26,7 +28,6 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -45,7 +46,7 @@ class GenesisValidatorRootValidatorTest {
   }
 
   @Test
-  void verifyCachedGVRIsUsedForCheckGenesis(final Jdbi jdbi) {
+  void verifyCachedGVRIsUsedForNewGVR(final Jdbi jdbi) {
     final GenesisValidatorRootValidator gvrValidator =
         new GenesisValidatorRootValidator(jdbi, metadataDao);
     final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(3));
@@ -57,9 +58,28 @@ class GenesisValidatorRootValidatorTest {
         .isTrue();
 
     // verify database methods interaction happens only once
-    Mockito.verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
-    Mockito.verify(metadataDao, times(1))
-        .insertGenesisValidatorsRoot(any(), eq(genesisValidatorsRoot));
+    verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
+    verify(metadataDao, times(1)).insertGenesisValidatorsRoot(any(), eq(genesisValidatorsRoot));
+  }
+
+  @Test
+  void verifyCachedGVRIsUsedForExistingGVR(final Jdbi jdbi, final Handle handle) {
+    final GenesisValidatorRootValidator gvrValidator =
+        new GenesisValidatorRootValidator(jdbi, metadataDao);
+    final Bytes32 genesisValidatorsRoot = Bytes32.leftPad(Bytes.of(3));
+    insertGvr(handle, genesisValidatorsRoot);
+
+    // perform checkGVR call twice, the first call will look up and cache the value.
+    // Subsequent calls should not engage in database calls
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
+        .isTrue();
+    assertThat(gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(genesisValidatorsRoot))
+        .isTrue();
+
+    // verify database methods interaction happens only once
+    verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
+    // interaction with metadataDao.insertGVR is not meant to happen
+    verify(metadataDao, never()).insertGenesisValidatorsRoot(any(), any());
   }
 
   @Test
