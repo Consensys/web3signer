@@ -188,8 +188,8 @@ public class Eth1Runner extends Runner {
         new InternalResponseHandler<>(
             responseFactory, new Eth1AccountsHandler(signerProvider::availableIdentifiers)));
     requestMapper.addHandler(
-            "eth_sign",
-            new InternalResponseHandler<>(responseFactory, new EthSignResultProvider(signerProvider)));
+        "eth_sign",
+        new InternalResponseHandler<>(responseFactory, new EthSignResultProvider(signerProvider)));
 
     return requestMapper;
   }

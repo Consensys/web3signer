@@ -12,32 +12,25 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.web3j.utils.Numeric;
-import tech.pegasys.signers.secp256k1.api.Signature;
-import tech.pegasys.signers.secp256k1.api.Signer;
-import tech.pegasys.web3signer.core.Eth1AddressSignerProvider;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
-import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
-import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
-import tech.pegasys.web3signer.signing.ArtifactSignature;
-import tech.pegasys.web3signer.signing.ArtifactSigner;
-import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.SecpArtifactSignature;
-import tech.pegasys.web3signer.signing.util.ByteUtils;
-
-import java.util.List;
-import java.util.Optional;
-
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 import static tech.pegasys.web3signer.core.util.EthMessageUtil.getEthereumMessage;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
+import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
+import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.SecpArtifactSignature;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class EthSignResultProvider implements ResultProvider<String> {
 
@@ -69,9 +62,9 @@ public class EthSignResultProvider implements ResultProvider<String> {
     final Bytes ethMessage = getEthereumMessage(params.get(1));
 
     final SignerForIdentifier<SecpArtifactSignature> secpSigner =
-            new SignerForIdentifier<>(transactionSignerProvider, this::formatSecpSignature, SECP256K1);
+        new SignerForIdentifier<>(transactionSignerProvider, this::formatSecpSignature, SECP256K1);
 
-    return secpSigner.sign(address,ethMessage).get();
+    return secpSigner.sign(address, ethMessage).get();
   }
 
   private List<String> getParams(final JsonRpcRequest request) {

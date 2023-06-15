@@ -12,11 +12,11 @@
  */
 package tech.pegasys.web3signer.core.util;
 
-import org.apache.tuweni.bytes.Bytes;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.util.Locale;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.apache.tuweni.bytes.Bytes;
 
 // adapted from
 // https://github.com/web3j/web3j/blob/7054ab324cab0d44a759780e61ee12978fd17490/crypto/src/main/java/org/web3j/crypto/Sign.java#L59
