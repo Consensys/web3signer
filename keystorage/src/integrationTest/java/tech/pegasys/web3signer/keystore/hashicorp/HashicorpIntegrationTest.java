@@ -16,16 +16,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
-import static tech.pegasys.web3signer.keystore.hashicorp.util.HashicorpConfigUtil.createConfigFile;
 
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnection;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpException;
-import tech.pegasys.web3signer.keystorage.hashicorp.config.HashicorpKeyConfig;
-import tech.pegasys.web3signer.keystorage.hashicorp.config.toml.TomlConfigLoader;
+import tech.pegasys.web3signer.keystorage.hashicorp.TrustStoreType;
+import tech.pegasys.web3signer.keystorage.hashicorp.config.ConnectionParameters;
+import tech.pegasys.web3signer.keystorage.hashicorp.config.KeyDefinition;
+import tech.pegasys.web3signer.keystorage.hashicorp.config.TlsOptions;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
 
@@ -41,12 +43,12 @@ class HashicorpIntegrationTest {
   private static final String ROOT_TOKEN = "token";
   private static final String EXPECTED_KEY_STRING =
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
-  private static final int TIMEOUT_MILLISECONDS = 10_000;
+  private static final long TIMEOUT_MILLISECONDS = 10_000;
 
   private final HashicorpConnectionFactory factory = new HashicorpConnectionFactory();
 
   @Test
-  void hashicorpVaultReturnsEncryptionKey() throws IOException {
+  void hashicorpVaultReturnsEncryptionKey() {
     final ClientAndServer clientAndServer = new ClientAndServer(0);
     clientAndServer
         .when(request().withPath(".*"))
@@ -55,28 +57,22 @@ class HashicorpIntegrationTest {
                 .withStatusCode(200)
                 .withBody("{\"data\":{\"data\":{\"value\":\"" + EXPECTED_KEY_STRING + "\"}}}"));
 
-    final Path configFile =
-        createConfigFile(
+    final ConnectionParameters connectionParameters =
+        new ConnectionParameters(
             DEFAULT_HOST,
-            clientAndServer.getLocalPort(),
-            ROOT_TOKEN,
-            KEY_PATH,
-            null,
-            TIMEOUT_MILLISECONDS,
-            false,
-            null,
-            null,
-            null);
+            Optional.of(clientAndServer.getLocalPort()),
+            Optional.empty(),
+            Optional.of(TIMEOUT_MILLISECONDS));
+    final KeyDefinition key = new KeyDefinition(KEY_PATH, Optional.empty(), ROOT_TOKEN);
 
-    final HashicorpKeyConfig keyConfig = TomlConfigLoader.fromToml(configFile, null);
-    final HashicorpConnection connection = factory.create(keyConfig.getConnectionParams());
-    final String keyFetched = connection.fetchKey(keyConfig.getKeyDefinition());
+    final HashicorpConnection connection = factory.create(connectionParameters);
+    final String keyFetched = connection.fetchKey(key);
 
     assertThat(keyFetched).isEqualTo(EXPECTED_KEY_STRING);
   }
 
   @Test
-  void hashicorpVaultReturnsEncryptionKeyOverTls() throws IOException {
+  void hashicorpVaultReturnsEncryptionKeyOverTls() {
 
     KeyStoreFactory keyStoreFactory = new KeyStoreFactory(new MockServerLogger());
     keyStoreFactory.loadOrCreateKeyStore();
@@ -90,22 +86,21 @@ class HashicorpIntegrationTest {
                 .withStatusCode(200)
                 .withBody("{\"data\":{\"data\":{\"value\":\"" + EXPECTED_KEY_STRING + "\"}}}"));
 
-    final Path configFile =
-        createConfigFile(
-            DEFAULT_HOST,
-            clientAndServer.getLocalPort(),
-            ROOT_TOKEN,
-            KEY_PATH,
-            null,
-            TIMEOUT_MILLISECONDS,
-            true,
-            "JKS",
-            keyStoreFactory.keyStoreFileName,
+    final TlsOptions tlsOptions =
+        new TlsOptions(
+            Optional.of(TrustStoreType.JKS),
+            Path.of(keyStoreFactory.keyStoreFileName),
             KeyStoreFactory.KEY_STORE_PASSWORD);
+    final ConnectionParameters connectionParameters =
+        new ConnectionParameters(
+            DEFAULT_HOST,
+            Optional.of(clientAndServer.getLocalPort()),
+            Optional.of(tlsOptions),
+            Optional.of(TIMEOUT_MILLISECONDS));
+    final KeyDefinition key = new KeyDefinition(KEY_PATH, Optional.empty(), ROOT_TOKEN);
 
-    final HashicorpKeyConfig keyConfig = TomlConfigLoader.fromToml(configFile, null);
-    final HashicorpConnection connection = factory.create(keyConfig.getConnectionParams());
-    final String keyFetched = connection.fetchKey(keyConfig.getKeyDefinition());
+    final HashicorpConnection connection = factory.create(connectionParameters);
+    final String keyFetched = connection.fetchKey(key);
 
     assertThat(keyFetched).isEqualTo(EXPECTED_KEY_STRING);
   }
@@ -117,23 +112,16 @@ class HashicorpIntegrationTest {
         .when(request().withPath(".*"))
         .respond(response().withDelay(TimeUnit.SECONDS, 5));
 
-    final Path configFile =
-        createConfigFile(
+    final ConnectionParameters connectionParameters =
+        new ConnectionParameters(
             DEFAULT_HOST,
-            clientAndServer.getLocalPort(),
-            ROOT_TOKEN,
-            KEY_PATH,
-            null,
-            1,
-            false,
-            null,
-            null,
-            null);
+            Optional.of(clientAndServer.getLocalPort()),
+            Optional.empty(),
+            Optional.of(1L));
+    final KeyDefinition key = new KeyDefinition(KEY_PATH, Optional.empty(), ROOT_TOKEN);
 
-    final HashicorpKeyConfig keyConfig = TomlConfigLoader.fromToml(configFile, null);
-    final HashicorpConnection connection = factory.create(keyConfig.getConnectionParams());
-
-    assertThatThrownBy(() -> connection.fetchKey(keyConfig.getKeyDefinition()))
+    final HashicorpConnection connection = factory.create(connectionParameters);
+    assertThatThrownBy(() -> connection.fetchKey(key))
         .isInstanceOf(HashicorpException.class)
         .hasMessageContaining("timed out");
   }
@@ -143,23 +131,16 @@ class HashicorpIntegrationTest {
     final ClientAndServer clientAndServer = new ClientAndServer(0);
     clientAndServer.when(request().withPath(".*")).respond(response().withStatusCode(500));
 
-    final Path configFile =
-        createConfigFile(
+    final ConnectionParameters connectionParameters =
+        new ConnectionParameters(
             DEFAULT_HOST,
-            clientAndServer.getLocalPort(),
-            ROOT_TOKEN,
-            KEY_PATH,
-            null,
-            TIMEOUT_MILLISECONDS,
-            false,
-            null,
-            null,
-            null);
+            Optional.of(clientAndServer.getLocalPort()),
+            Optional.empty(),
+            Optional.of(TIMEOUT_MILLISECONDS));
+    final KeyDefinition key = new KeyDefinition(KEY_PATH, Optional.empty(), ROOT_TOKEN);
 
-    final HashicorpKeyConfig keyConfig = TomlConfigLoader.fromToml(configFile, null);
-    final HashicorpConnection connection = factory.create(keyConfig.getConnectionParams());
-
-    assertThatThrownBy(() -> connection.fetchKey(keyConfig.getKeyDefinition()))
+    final HashicorpConnection connection = factory.create(connectionParameters);
+    assertThatThrownBy(() -> connection.fetchKey(key))
         .isInstanceOf(HashicorpException.class)
         .hasMessage(
             "Error communicating with Hashicorp vault: Received invalid Http status code 500.");

@@ -43,7 +43,6 @@ dependencies {
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-net'
-  implementation 'org.apache.tuweni:tuweni-toml'
   implementation 'org.bouncycastle:bcpkix-jdk15on'
   implementation 'org.bouncycastle:bcprov-jdk15on'
   implementation 'org.xipki.iaik:sunpkcs11-wrapper'

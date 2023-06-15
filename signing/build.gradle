@@ -36,7 +36,6 @@ dependencies {
   implementation 'tech.pegasys.teku.internal:unsigned'
   implementation 'com.azure:azure-security-keyvault-keys'
   implementation 'org.apache.tuweni:tuweni-net'
-  implementation 'org.apache.tuweni:tuweni-toml'
   implementation 'com.google.guava:guava'
 
   runtimeOnly 'com.squareup.okhttp3:okhttp'

@@ -54,7 +54,6 @@ dependencyManagement {
 
     dependencySet(group: 'org.apache.tuweni', version: '2.3.1') {
       entry 'tuweni-net'
-      entry 'tuweni-toml'
       entry 'tuweni-bytes'
       entry 'tuweni-crypto'
       entry 'tuweni-units'

@@ -16,11 +16,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnection;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
-import tech.pegasys.web3signer.keystorage.hashicorp.config.HashicorpKeyConfig;
-import tech.pegasys.web3signer.keystorage.hashicorp.config.toml.TomlConfigLoader;
+import tech.pegasys.web3signer.keystorage.hashicorp.TrustStoreType;
+import tech.pegasys.web3signer.keystorage.hashicorp.config.ConnectionParameters;
+import tech.pegasys.web3signer.keystorage.hashicorp.config.KeyDefinition;
+import tech.pegasys.web3signer.keystorage.hashicorp.config.TlsOptions;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.CertificateHelpers;
-import tech.pegasys.web3signer.keystore.hashicorp.util.HashicorpConfigUtil;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -57,25 +58,24 @@ public class HashicorpVaultAccessAcceptanceTest {
   }
 
   @Test
-  void keyCanBeExtractedFromVault() throws IOException {
+  void keyCanBeExtractedFromVault() {
     hashicorpNode = HashicorpNode.createAndStartHashicorp(false);
     hashicorpNode.addSecretsToVault(
         Collections.singletonMap(SECRET_KEY, SECRET_VALUE), KEY_SUBPATH);
 
-    final Path configFilePath =
-        HashicorpConfigUtil.createConfigFile(
+    final ConnectionParameters connectionParameters =
+        new ConnectionParameters(
             hashicorpNode.getHost(),
-            hashicorpNode.getPort(),
-            hashicorpNode.getVaultToken(),
+            Optional.of(hashicorpNode.getPort()),
+            Optional.empty(),
+            Optional.of(30_000L));
+    final KeyDefinition key =
+        new KeyDefinition(
             hashicorpNode.getHttpApiPathForSecret(KEY_SUBPATH),
-            SECRET_KEY,
-            30_000,
-            false,
-            null,
-            null,
-            null);
+            Optional.of(SECRET_KEY),
+            hashicorpNode.getVaultToken());
 
-    final String secretData = fetchSecretFromVault(configFilePath);
+    final String secretData = fetchSecretFromVault(connectionParameters, key);
 
     assertThat(secretData).isEqualTo(SECRET_VALUE);
   }
@@ -94,27 +94,27 @@ public class HashicorpVaultAccessAcceptanceTest {
     hashicorpNode.addSecretsToVault(
         Collections.singletonMap(SECRET_KEY, SECRET_VALUE), KEY_SUBPATH);
 
-    final Path configFilePath =
-        HashicorpConfigUtil.createConfigFile(
+    final TlsOptions tlsOptions =
+        new TlsOptions(Optional.of(TrustStoreType.WHITELIST), fingerprintFile, null);
+    final ConnectionParameters connectionParameters =
+        new ConnectionParameters(
             hashicorpNode.getHost(),
-            hashicorpNode.getPort(),
-            hashicorpNode.getVaultToken(),
+            Optional.of(hashicorpNode.getPort()),
+            Optional.of(tlsOptions),
+            Optional.of(30_000L));
+    final KeyDefinition key =
+        new KeyDefinition(
             hashicorpNode.getHttpApiPathForSecret(KEY_SUBPATH),
-            SECRET_KEY,
-            30_000,
-            true,
-            "WHITELIST",
-            fingerprintFile.toString(),
-            null);
+            Optional.of(SECRET_KEY),
+            hashicorpNode.getVaultToken());
 
-    final String secretData = fetchSecretFromVault(configFilePath);
+    final String secretData = fetchSecretFromVault(connectionParameters, key);
 
     assertThat(secretData).isEqualTo(SECRET_VALUE);
   }
 
   @Test
-  void canConnectToHashicorpVaultUsingPkcs12Certificate(@TempDir final Path testDir)
-      throws IOException {
+  void canConnectToHashicorpVaultUsingPkcs12Certificate(@TempDir final Path testDir) {
     final String TRUST_STORE_PASSWORD = "password";
     hashicorpNode = HashicorpNode.createAndStartHashicorp(true);
 
@@ -125,27 +125,27 @@ public class HashicorpVaultAccessAcceptanceTest {
         CertificateHelpers.createPkcs12TrustStore(
             testDir, hashicorpNode.getServerCertificate().get(), TRUST_STORE_PASSWORD);
 
-    final Path configFilePath =
-        HashicorpConfigUtil.createConfigFile(
+    final TlsOptions tlsOptions =
+        new TlsOptions(Optional.of(TrustStoreType.PKCS12), trustStorePath, TRUST_STORE_PASSWORD);
+    final ConnectionParameters connectionParameters =
+        new ConnectionParameters(
             hashicorpNode.getHost(),
-            hashicorpNode.getPort(),
-            hashicorpNode.getVaultToken(),
+            Optional.of(hashicorpNode.getPort()),
+            Optional.of(tlsOptions),
+            Optional.of(30_000L));
+    final KeyDefinition key =
+        new KeyDefinition(
             hashicorpNode.getHttpApiPathForSecret(KEY_SUBPATH),
-            SECRET_KEY,
-            30_000,
-            true,
-            "PKCS12",
-            trustStorePath.toString(),
-            TRUST_STORE_PASSWORD);
+            Optional.of(SECRET_KEY),
+            hashicorpNode.getVaultToken());
 
-    final String secretData = fetchSecretFromVault(configFilePath);
+    final String secretData = fetchSecretFromVault(connectionParameters, key);
 
     assertThat(secretData).isEqualTo(SECRET_VALUE);
   }
 
   @Test
-  void canConnectToHashicorpVaultUsingJksCertificate(@TempDir final Path testDir)
-      throws IOException {
+  void canConnectToHashicorpVaultUsingJksCertificate(@TempDir final Path testDir) {
     final String TRUST_STORE_PASSWORD = "password";
     hashicorpNode = HashicorpNode.createAndStartHashicorp(true);
 
@@ -156,20 +156,21 @@ public class HashicorpVaultAccessAcceptanceTest {
         CertificateHelpers.createJksTrustStore(
             testDir, hashicorpNode.getServerCertificate().get(), TRUST_STORE_PASSWORD);
 
-    final Path configFilePath =
-        HashicorpConfigUtil.createConfigFile(
+    final TlsOptions tlsOptions =
+        new TlsOptions(Optional.of(TrustStoreType.JKS), trustStorePath, TRUST_STORE_PASSWORD);
+    final ConnectionParameters connectionParameters =
+        new ConnectionParameters(
             hashicorpNode.getHost(),
-            hashicorpNode.getPort(),
-            hashicorpNode.getVaultToken(),
+            Optional.of(hashicorpNode.getPort()),
+            Optional.of(tlsOptions),
+            Optional.of(30_000L));
+    final KeyDefinition key =
+        new KeyDefinition(
             hashicorpNode.getHttpApiPathForSecret(KEY_SUBPATH),
-            SECRET_KEY,
-            30_000,
-            true,
-            "JKS",
-            trustStorePath.toString(),
-            TRUST_STORE_PASSWORD);
+            Optional.of(SECRET_KEY),
+            hashicorpNode.getVaultToken());
 
-    final String secretData = fetchSecretFromVault(configFilePath);
+    final String secretData = fetchSecretFromVault(connectionParameters, key);
 
     assertThat(secretData).isEqualTo(SECRET_VALUE);
   }
@@ -185,30 +186,30 @@ public class HashicorpVaultAccessAcceptanceTest {
     final Path trustStorePath = testDir.resolve("cert.crt");
     hashicorpNode.getServerCertificate().get().writeCertificateToFile(trustStorePath);
 
-    final Path configFilePath =
-        HashicorpConfigUtil.createConfigFile(
+    final TlsOptions tlsOptions =
+        new TlsOptions(Optional.of(TrustStoreType.PEM), trustStorePath, null);
+    final ConnectionParameters connectionParameters =
+        new ConnectionParameters(
             hashicorpNode.getHost(),
-            hashicorpNode.getPort(),
-            hashicorpNode.getVaultToken(),
+            Optional.of(hashicorpNode.getPort()),
+            Optional.of(tlsOptions),
+            Optional.of(30_000L));
+    final KeyDefinition key =
+        new KeyDefinition(
             hashicorpNode.getHttpApiPathForSecret(KEY_SUBPATH),
-            SECRET_KEY,
-            30_000,
-            true,
-            "PEM",
-            trustStorePath.toString(),
-            null);
+            Optional.of(SECRET_KEY),
+            hashicorpNode.getVaultToken());
 
-    final String secretData = fetchSecretFromVault(configFilePath);
+    final String secretData = fetchSecretFromVault(connectionParameters, key);
 
     assertThat(secretData).isEqualTo(SECRET_VALUE);
   }
 
-  private String fetchSecretFromVault(final Path configFilePath) {
-    final HashicorpKeyConfig config = TomlConfigLoader.fromToml(configFilePath, null);
-
-    final HashicorpConnectionFactory factory = new HashicorpConnectionFactory();
-    final HashicorpConnection connection = factory.create(config.getConnectionParams());
-
-    return connection.fetchKey(config.getKeyDefinition());
+  private String fetchSecretFromVault(
+      final ConnectionParameters connectionParameters, final KeyDefinition key) {
+    try (HashicorpConnectionFactory factory = new HashicorpConnectionFactory()) {
+      final HashicorpConnection connection = factory.create(connectionParameters);
+      return connection.fetchKey(key);
+    }
   }
 }
