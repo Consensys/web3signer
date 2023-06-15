@@ -55,7 +55,7 @@ public class EthSignResultProvider implements ResultProvider<String> {
     final String address = params.get(0);
     final Optional<ArtifactSigner> transactionSigner = transactionSignerProvider.getSigner(address);
     if (transactionSigner.isEmpty()) {
-      LOG.info("Address ({}) does not match any available account", address);
+      LOG.debug("Address ({}) does not match any available account", address);
       throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
     }
 
@@ -73,7 +73,7 @@ public class EthSignResultProvider implements ResultProvider<String> {
       final List<String> params = (List<String>) request.getParams();
       return params;
     } catch (final ClassCastException e) {
-      LOG.info(
+      LOG.debug(
           "eth_sign should have a list of 2 parameters, but received an object: {}",
           request.getParams());
       throw new JsonRpcException(INVALID_PARAMS);
