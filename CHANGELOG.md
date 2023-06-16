@@ -7,6 +7,8 @@ We have decided to deprecate our [EthSigner](https://github.com/Consensys/EthSig
 
 Rest assured, we are not dropping existing EthSigner functionality. We are updating Web3Signer to incorporate the functionalities of EthSigner alongside everything else in Web3Signer. We will ensure a smooth transition by maintaining EthSigner with necessary patches for an additional six months. We hope this provides ample time for any necessary migration to Web3Signer.
 
+**We have begun adding EthSigner functionality to Web3Signer. This is a work in progress and not complete.**  
+
 ### Features Added
 - Optional Azure bulk loading tags support using cli option `--azure-secrets-tags`.
 - Support Prometheus Push Gateway Metrics [#796](https://github.com/ConsenSys/web3signer/pull/796)
