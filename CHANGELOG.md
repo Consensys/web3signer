@@ -8,12 +8,14 @@ for GVR during sign operations and improve their performance. [#600](https://git
 - Add eth_accounts RPC method under the eth1 subcommand [#784](https://github.com/ConsenSys/web3signer/pull/784)
 - Add eth_sign RPC method under the eth1 subcommand [#803](https://github.com/ConsenSys/web3signer/pull/803)
 
+
 ### Bugs Fixed
 - Upgrade jackson and vertx to upgrade snakeyaml to 2.0 to fix CVE-2022-1471
 - Fixed handling of very large number (30,000+) of signing metadata files with Hashicorp connection by introducing 
 experimental flag to disable parallel processing `--Xmetadata-files-parallel-processing-enabled`. 
 [#794](https://github.com/ConsenSys/web3signer/pull/794)
 - Fixed startup error with web3signer where openAPI spec cannot be loaded [#772](https://github.com/ConsenSys/web3signer/issues/772)
+- Removed unmaintained and out-of-date helm chart [#802](https://github.com/ConsenSys/web3signer/pull/802)
 
 ---
 ## 23.3.1
