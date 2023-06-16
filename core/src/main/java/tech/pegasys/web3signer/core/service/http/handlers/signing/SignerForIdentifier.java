@@ -82,8 +82,4 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
       throw new IllegalStateException("Invalid signature type");
     }
   }
-
-  public Optional<ArtifactSigner> getSigner(final String identifier) {
-    return signerProvider.getSigner(identifier);
-  }
 }
