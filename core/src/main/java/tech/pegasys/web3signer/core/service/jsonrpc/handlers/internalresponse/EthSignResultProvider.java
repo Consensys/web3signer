@@ -48,21 +48,21 @@ public class EthSignResultProvider implements ResultProvider<String> {
   public String createResponseResult(final JsonRpcRequest request) {
     final List<String> params = getParams(request);
     if (params == null || params.size() != 2) {
-      LOG.info(
+      LOG.debug(
           "eth_sign should have a list of 2 parameters, but has {}",
           params == null ? "null" : params.size());
       throw new JsonRpcException(INVALID_PARAMS);
     }
 
-    final String address = params.get(0);
-    final Optional<ArtifactSigner> transactionSigner = transactionSignerProvider.getArtifactSignerProvider().getSigner(address);
+    final String identifier = params.get(0);
+    final Optional<ArtifactSigner> transactionSigner = transactionSignerProvider.getSigner(identifier);
     if (transactionSigner.isEmpty()) {
-      LOG.info("Address ({}) does not match any available account", address);
+      LOG.debug("Address ({}) does not match any available account", identifier);
       throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
     }
     final Bytes ethMessage = getEthereumMessage(params.get(1));
 
-    return transactionSignerProvider.sign(address, ethMessage).get();
+    return transactionSignerProvider.sign(normaliseIdentifier(identifier), ethMessage).get();
   }
 
   private List<String> getParams(final JsonRpcRequest request) {
@@ -71,7 +71,7 @@ public class EthSignResultProvider implements ResultProvider<String> {
       final List<String> params = (List<String>) request.getParams();
       return params;
     } catch (final ClassCastException e) {
-      LOG.info(
+      LOG.debug(
           "eth_sign should have a list of 2 parameters, but received an object: {}",
           request.getParams());
       throw new JsonRpcException(INVALID_PARAMS);
