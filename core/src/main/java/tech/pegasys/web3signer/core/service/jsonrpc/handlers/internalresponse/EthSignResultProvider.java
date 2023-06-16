@@ -55,7 +55,7 @@ public class EthSignResultProvider implements ResultProvider<String> {
     final String identifier = params.get(0);
         final Bytes ethMessage = getEthereumMessage(params.get(1));
     return transactionSignerProvider
-        .sign(identifier, ethMessage)
+        .sign(normaliseIdentifier(identifier), ethMessage)
         .orElseThrow(
             () -> {
               LOG.debug("Address ({}) does not match any available account", identifier);
