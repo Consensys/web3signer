@@ -1,13 +1,21 @@
 # Changelog
-## Upcoming release
+## 23.6.0
+
+As part of our ongoing commitment to deliver the best remote signing solutions, we are announcing a change in our product offerings.
+
+We have decided to deprecate our [EthSigner](https://github.com/Consensys/EthSigner) product to focus our efforts on enhancing Web3Signer, our newly comprehensive remote signing solution. This is rooted in our strategy to streamline our offerings and focus on a single, robust product that will provide functionality for both Eth1 and Eth2 signing. We hope this makes it applicable to all use-cases like public Ethereum signing, staking infrastructure offerings, and in private network contexts.
+
+Rest assured, we are not dropping existing EthSigner functionality. We are updating Web3Signer to incorporate the functionalities of EthSigner alongside everything else in Web3Signer. We will ensure a smooth transition by maintaining EthSigner with necessary patches for an additional six months. We hope this provides ample time for any necessary migration to Web3Signer.
+
+**We have begun adding EthSigner functionality to Web3Signer. This is a work in progress and not complete.**  
+
 ### Features Added
 - Optional Azure bulk loading tags support using cli option `--azure-secrets-tags`.
 - Support Prometheus Push Gateway Metrics [#796](https://github.com/ConsenSys/web3signer/pull/796)
 - Cache Genesis Validators Root (GVR) in-memory on first database lookup. This would eliminate further database lookups 
 for GVR during sign operations and improve their performance. [#600](https://github.com/ConsenSys/web3signer/issues/600)
+- Add RPC proxy support to execution client under the eth1 subcommand [#775](https://github.com/ConsenSys/web3signer/pull/775)
 - Add eth_accounts RPC method under the eth1 subcommand [#784](https://github.com/ConsenSys/web3signer/pull/784)
-- Add eth_sign RPC method under the eth1 subcommand [#803](https://github.com/ConsenSys/web3signer/pull/803)
-
 
 ### Bugs Fixed
 - Upgrade jackson and vertx to upgrade snakeyaml to 2.0 to fix CVE-2022-1471
