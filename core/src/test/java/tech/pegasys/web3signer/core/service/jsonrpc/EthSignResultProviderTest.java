@@ -57,7 +57,6 @@ import org.web3j.utils.Numeric;
 public class EthSignResultProviderTest {
 
   @Mock SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider;
-  @Mock ArtifactSigner mockSigner;
 
   @ParameterizedTest
   @ArgumentsSource(InvalidParamsProvider.class)
@@ -80,7 +79,7 @@ public class EthSignResultProviderTest {
   @Test
   public void ifAddressIsNotUnlockedExceptionIsThrownWithSigningNotUnlocked() {
 
-    doReturn(Optional.empty()).when(transactionSignerProvider).getSigner(anyString());
+    //doReturn(Optional.empty()).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider =
         new EthSignResultProvider(transactionSignerProvider);
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_sign");
@@ -104,7 +103,7 @@ public class EthSignResultProviderTest {
         .when(transactionSignerProvider)
         .sign(any(), any(Bytes.class));
 
-    doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
+    //doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider =
         new EthSignResultProvider(transactionSignerProvider);
 
@@ -153,7 +152,7 @@ public class EthSignResultProviderTest {
         .when(transactionSignerProvider)
         .sign(anyString(), any(Bytes.class));
 
-    doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
+    //doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider =
         new EthSignResultProvider(transactionSignerProvider);
 
