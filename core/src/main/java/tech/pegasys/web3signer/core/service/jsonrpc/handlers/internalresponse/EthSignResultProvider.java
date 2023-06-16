@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ConsenSys AG.
+ * Copyright 2023 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,14 +15,13 @@ package tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 import static tech.pegasys.web3signer.core.util.EthMessageUtil.getEthereumMessage;
-import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
+import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
-import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 
 import java.util.List;
@@ -36,9 +35,10 @@ public class EthSignResultProvider implements ResultProvider<String> {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final ArtifactSignerProvider transactionSignerProvider;
+  private final SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider;
 
-  public EthSignResultProvider(final ArtifactSignerProvider transactionSignerProvider) {
+  public EthSignResultProvider(
+      final SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider) {
     this.transactionSignerProvider = transactionSignerProvider;
   }
 
@@ -46,25 +46,22 @@ public class EthSignResultProvider implements ResultProvider<String> {
   public String createResponseResult(final JsonRpcRequest request) {
     final List<String> params = getParams(request);
     if (params == null || params.size() != 2) {
-      LOG.info(
+      LOG.debug(
           "eth_sign should have a list of 2 parameters, but has {}",
           params == null ? "null" : params.size());
       throw new JsonRpcException(INVALID_PARAMS);
     }
 
-    final String address = params.get(0);
-    final Optional<ArtifactSigner> transactionSigner = transactionSignerProvider.getSigner(address);
+    final String identifier = params.get(0);
+    final Optional<ArtifactSigner> transactionSigner =
+        transactionSignerProvider.getSigner(identifier);
     if (transactionSigner.isEmpty()) {
-      LOG.info("Address ({}) does not match any available account", address);
+      LOG.debug("Address ({}) does not match any available account", identifier);
       throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
     }
-
     final Bytes ethMessage = getEthereumMessage(params.get(1));
 
-    final SignerForIdentifier<SecpArtifactSignature> secpSigner =
-        new SignerForIdentifier<>(transactionSignerProvider, this::formatSecpSignature, SECP256K1);
-
-    return secpSigner.sign(address, ethMessage).get();
+    return transactionSignerProvider.sign(normaliseIdentifier(identifier), ethMessage).get();
   }
 
   private List<String> getParams(final JsonRpcRequest request) {
@@ -73,14 +70,10 @@ public class EthSignResultProvider implements ResultProvider<String> {
       final List<String> params = (List<String>) request.getParams();
       return params;
     } catch (final ClassCastException e) {
-      LOG.info(
+      LOG.debug(
           "eth_sign should have a list of 2 parameters, but received an object: {}",
           request.getParams());
       throw new JsonRpcException(INVALID_PARAMS);
     }
-  }
-
-  private String formatSecpSignature(final SecpArtifactSignature signature) {
-    return SecpArtifactSignature.toBytes(signature).toHexString();
   }
 }
