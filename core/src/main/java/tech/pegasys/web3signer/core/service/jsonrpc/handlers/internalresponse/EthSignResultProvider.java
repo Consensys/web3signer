@@ -15,7 +15,6 @@ package tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 import static tech.pegasys.web3signer.core.util.EthMessageUtil.getEthereumMessage;
-import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
@@ -23,7 +22,6 @@ import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
-import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 
 import java.util.List;
@@ -32,7 +30,6 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 
 public class EthSignResultProvider implements ResultProvider<String> {
 
@@ -40,7 +37,8 @@ public class EthSignResultProvider implements ResultProvider<String> {
 
   private final SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider;
 
-  public EthSignResultProvider(final SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider) {
+  public EthSignResultProvider(
+      final SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider) {
     this.transactionSignerProvider = transactionSignerProvider;
   }
 
@@ -55,7 +53,8 @@ public class EthSignResultProvider implements ResultProvider<String> {
     }
 
     final String identifier = params.get(0);
-    final Optional<ArtifactSigner> transactionSigner = transactionSignerProvider.getSigner(identifier);
+    final Optional<ArtifactSigner> transactionSigner =
+        transactionSignerProvider.getSigner(identifier);
     if (transactionSigner.isEmpty()) {
       LOG.debug("Address ({}) does not match any available account", identifier);
       throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
