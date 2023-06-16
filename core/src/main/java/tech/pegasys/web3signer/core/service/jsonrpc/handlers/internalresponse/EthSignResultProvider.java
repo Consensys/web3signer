@@ -21,11 +21,9 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
-import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,7 +51,7 @@ public class EthSignResultProvider implements ResultProvider<String> {
     }
 
     final String identifier = params.get(0);
-        final Bytes ethMessage = getEthereumMessage(params.get(1));
+    final Bytes ethMessage = getEthereumMessage(params.get(1));
     return transactionSignerProvider
         .sign(normaliseIdentifier(identifier), ethMessage)
         .orElseThrow(

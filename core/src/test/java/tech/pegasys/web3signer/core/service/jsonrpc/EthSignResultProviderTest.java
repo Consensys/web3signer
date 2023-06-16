@@ -26,7 +26,6 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignResultProvider;
 import tech.pegasys.web3signer.core.util.EthMessageUtil;
-import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 
 import java.math.BigInteger;
@@ -79,7 +78,7 @@ public class EthSignResultProviderTest {
   @Test
   public void ifAddressIsNotUnlockedExceptionIsThrownWithSigningNotUnlocked() {
 
-    //doReturn(Optional.empty()).when(transactionSignerProvider).getSigner(anyString());
+    // doReturn(Optional.empty()).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider =
         new EthSignResultProvider(transactionSignerProvider);
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_sign");
@@ -103,7 +102,7 @@ public class EthSignResultProviderTest {
         .when(transactionSignerProvider)
         .sign(any(), any(Bytes.class));
 
-    //doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
+    // doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider =
         new EthSignResultProvider(transactionSignerProvider);
 
@@ -152,7 +151,7 @@ public class EthSignResultProviderTest {
         .when(transactionSignerProvider)
         .sign(anyString(), any(Bytes.class));
 
-    //doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
+    // doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider =
         new EthSignResultProvider(transactionSignerProvider);
 
