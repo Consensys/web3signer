@@ -61,8 +61,6 @@ public class EthSignResultProviderTest {
   SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider;
   @Mock
   ArtifactSigner mockSigner;
-  @Mock
-  ArtifactSignerProvider mockArtifactSignerProvider;
 
   @ParameterizedTest
   @ArgumentsSource(InvalidParamsProvider.class)
@@ -83,8 +81,8 @@ public class EthSignResultProviderTest {
 
   @Test
   public void ifAddressIsNotUnlockedExceptionIsThrownWithSigningNotUnlocked() {
-    doReturn(mockArtifactSignerProvider).when(transactionSignerProvider).getArtifactSignerProvider();
-    doReturn(Optional.empty()).when(mockArtifactSignerProvider).getSigner(anyString());
+
+    doReturn(Optional.empty()).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider = new EthSignResultProvider(transactionSignerProvider);
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_sign");
     request.setId(new JsonRpcRequestId(1));
@@ -106,8 +104,8 @@ public class EthSignResultProviderTest {
         .when(transactionSignerProvider)
         .sign(any(),any(Bytes.class));
 
-    doReturn(mockArtifactSignerProvider).when(transactionSignerProvider).getArtifactSignerProvider();
-    doReturn(Optional.of(mockSigner)).when(mockArtifactSignerProvider).getSigner(anyString());
+
+    doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider = new EthSignResultProvider(transactionSignerProvider);
 
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_sign");
@@ -153,8 +151,8 @@ public class EthSignResultProviderTest {
         .when(transactionSignerProvider)
         .sign(anyString(),any(Bytes.class));
 
-    doReturn(mockArtifactSignerProvider).when(transactionSignerProvider).getArtifactSignerProvider();
-    doReturn(Optional.of(mockSigner)).when(mockArtifactSignerProvider).getSigner(anyString());
+
+    doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider = new EthSignResultProvider(transactionSignerProvider);
 
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_sign");
