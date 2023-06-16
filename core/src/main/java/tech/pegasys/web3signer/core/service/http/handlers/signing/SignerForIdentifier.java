@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
 import tech.pegasys.web3signer.signing.ArtifactSignature;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.KeyType;
 
@@ -81,4 +82,8 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
       throw new IllegalStateException("Invalid signature type");
     }
   }
+  public Optional<ArtifactSigner> getSigner(final String identifier){
+    return signerProvider.getSigner(identifier);
+  }
+
 }
