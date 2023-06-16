@@ -115,7 +115,7 @@ public class Eth1Runner extends Runner {
         new PassThroughHandler(transmitterFactory, jsonDecoder);
 
     final RequestMapper requestMapper =
-        createRequestMapper(transmitterFactory, signerProvider, jsonDecoder);
+        createRequestMapper(transmitterFactory, signerProvider, jsonDecoder, secpSigner);
 
     router
         .route(HttpMethod.POST, ROOT_PATH)
@@ -178,7 +178,8 @@ public class Eth1Runner extends Runner {
   private RequestMapper createRequestMapper(
       final VertxRequestTransmitterFactory transmitterFactory,
       final ArtifactSignerProvider signerProvider,
-      final JsonDecoder jsonDecoder) {
+      final JsonDecoder jsonDecoder,
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner) {
     final PassThroughHandler defaultHandler =
         new PassThroughHandler(transmitterFactory, jsonDecoder);
 
@@ -189,7 +190,7 @@ public class Eth1Runner extends Runner {
             responseFactory, new Eth1AccountsHandler(signerProvider::availableIdentifiers)));
     requestMapper.addHandler(
         "eth_sign",
-        new InternalResponseHandler<>(responseFactory, new EthSignResultProvider(signerProvider)));
+        new InternalResponseHandler<>(responseFactory, new EthSignResultProvider(secpSigner)));
 
     return requestMapper;
   }
