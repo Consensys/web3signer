@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
     <!-- See https://jeremylong.github.io/DependencyCheck/general/suppression.html for examples -->
-
     <suppress>
         <notes><![CDATA[
-        Suppress false positive for CVE-2020-8908 as it is only applicable for versions up to 30.0. We use 31.1.
-            Our code does not use com.google.common.io.Files.createTempDir() as well.
-            - https://nvd.nist.gov/vuln/detail/cve-2020-8908
-            - https://github.com/jeremylong/DependencyCheck/issues/5526
-            - https://github.com/google/guava/issues/4011
+        Suppress CVE-2023-35116 as this is not considered a CVE according to discussion in https://github.com/FasterXML/jackson-databind/issues/3972
         ]]></notes>
-        <cve>CVE-2020-8908</cve>
+        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
+        <vulnerabilityName>CVE-2023-35116</vulnerabilityName>
     </suppress>
 </suppressions>
