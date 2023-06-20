@@ -19,10 +19,6 @@ import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_KE
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.SLASHING_PROTECTION_DB;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
-import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
-import tech.pegasys.signers.azure.AzureKeyVault;
-import tech.pegasys.signers.common.MappedResults;
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.spec.Spec;
@@ -36,6 +32,10 @@ import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKe
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
+import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
+import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.AWSBulkLoadingArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;

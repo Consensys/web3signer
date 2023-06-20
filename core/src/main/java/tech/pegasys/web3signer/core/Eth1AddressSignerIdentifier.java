@@ -13,10 +13,10 @@
 package tech.pegasys.web3signer.core;
 
 import static org.web3j.crypto.Keys.getAddress;
-import static tech.pegasys.signers.secp256k1.EthPublicKeyUtils.toHexString;
-import static tech.pegasys.signers.secp256k1.api.util.AddressUtil.remove0xPrefix;
+import static tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils.toHexString;
+import static tech.pegasys.web3signer.signing.secp256k1.util.AddressUtil.remove0xPrefix;
 
-import tech.pegasys.signers.secp256k1.api.SignerIdentifier;
+import tech.pegasys.web3signer.signing.secp256k1.SignerIdentifier;
 
 import java.security.interfaces.ECPublicKey;
 import java.util.Locale;

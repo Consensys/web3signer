@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
-import tech.pegasys.signers.azure.AzureKeyVault;
+import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 
 import java.util.Optional;
 
