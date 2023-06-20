@@ -3,7 +3,7 @@
 
 As part of our ongoing commitment to deliver the best remote signing solutions, we are announcing a change in our product offerings.
 
-We have decided to deprecate our [EthSigner](https://github.com/Consensys/EthSigner) product to focus our efforts on enhancing Web3Signer, our newly comprehensive remote signing solution. This is rooted in our strategy to streamline our offerings and focus on a single, robust product that will provide functionality for both Eth1 and Eth2 signing. We hope this makes it applicable to all use-cases like public Ethereum signing, staking infrastructure offerings, and in private network contexts.
+We have decided to deprecate our [EthSigner](https://github.com/Consensys/EthSigner) product to focus our efforts on enhancing Web3Signer, our newly comprehensive remote signing solution. This is rooted in our strategy to streamline our offerings and focus on a single, robust product that will provide functionality for both transaction and Ethereum validator signing. We hope this makes it applicable to all your use-cases like public Ethereum signing, staking infrastructure offerings, and in private network contexts.
 
 Rest assured, we are not dropping existing EthSigner functionality. We are updating Web3Signer to incorporate the functionalities of EthSigner alongside everything else in Web3Signer. We will ensure a smooth transition by maintaining EthSigner with necessary patches for an additional six months. We hope this provides ample time for any necessary migration to Web3Signer.
 

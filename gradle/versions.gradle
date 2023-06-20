@@ -13,8 +13,8 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.15.0-rc3'
-    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.0-rc3'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2'
 
     dependencySet(group: 'com.google.errorprone', version: '2.17.0') {
       entry 'error_prone_annotation'
@@ -25,7 +25,7 @@ dependencyManagement {
 
     dependency 'tech.pegasys.tools.epchecks:errorprone-checks:1.1.1'
 
-    dependency 'com.google.guava:guava:31.1-jre'
+    dependency 'com.google.guava:guava:32.0.1-jre'
 
     dependency 'commons-cli:commons-cli:1.5.0'
     dependency 'commons-io:commons-io:2.11.0'
@@ -197,5 +197,22 @@ dependencyManagement {
 
     dependency 'net.minidev:json-smart:2.4.10'
     dependency 'com.nimbusds:nimbus-jose-jwt:9.31'
+
+    // manually overriding of io.grpc to avoid CVE-2023-32732, we can't update to latest besu metrics-core until
+    // we have Java 17 support in Web3Signer
+    /*
+      +--- org.hyperledger.besu.internal:metrics-core -> 22.10.3
+      |    |    |    |    +--- org.hyperledger.besu:plugin-api:22.10.3
+      |    |    |    |    |    +--- org.apache.commons:commons-lang3:3.12.0
+      |    |    |    |    |    +--- org.apache.tuweni:tuweni-bytes:2.3.1 (*)
+      |    |    |    |    |    \--- org.apache.tuweni:tuweni-units:2.3.1 (*)
+      |    |    |    |    +--- io.grpc:grpc-netty:1.47.0
+     */
+    dependencySet(group: 'io.grpc', version: '1.56.0') {
+      entry 'grpc-all'
+      entry 'grpc-core'
+      entry 'grpc-netty'
+      entry 'grpc-stub'
+    }
   }
 }
