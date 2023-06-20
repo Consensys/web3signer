@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.tests;
 
 import static io.restassured.RestAssured.given;
 
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 
@@ -31,7 +32,11 @@ public class MetricsHostAllowListAcceptanceTest extends AcceptanceTestBase {
   @Test
   void metricsWithDefaultAllowHostsRespondsWithOkResponse() {
     final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder().withMetricsEnabled(true).withMode("eth1").build();
+        new SignerConfigurationBuilder()
+            .withMetricsEnabled(true)
+            .withMode("eth1")
+            .withChainIdProvider(new ConfigurationChainId(DEFAULT_CHAIN_ID))
+            .build();
     startSigner(signerConfiguration);
 
     given()
@@ -53,6 +58,7 @@ public class MetricsHostAllowListAcceptanceTest extends AcceptanceTestBase {
             .withMetricsEnabled(true)
             .withMode("eth1")
             .withUseConfigFile(useConfigFile)
+            .withChainIdProvider(new ConfigurationChainId(DEFAULT_CHAIN_ID))
             .build();
     startSigner(signerConfiguration);
 
@@ -74,6 +80,7 @@ public class MetricsHostAllowListAcceptanceTest extends AcceptanceTestBase {
             .withMetricsHostAllowList(Collections.singletonList("foo"))
             .withMetricsEnabled(true)
             .withMode("eth1")
+            .withChainIdProvider(new ConfigurationChainId(DEFAULT_CHAIN_ID))
             .build();
     startSigner(signerConfiguration);
 
