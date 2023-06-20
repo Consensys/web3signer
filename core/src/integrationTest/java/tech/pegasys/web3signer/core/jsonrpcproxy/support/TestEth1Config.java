@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.jsonrpcproxy.support;
 
 import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -78,5 +79,10 @@ public class TestEth1Config implements Eth1Config {
   @Override
   public Optional<ClientTlsOptions> getClientTlsOptions() {
     return Optional.empty();
+  }
+
+  @Override
+  public ChainIdProvider getChainId() {
+    return null;
   }
 }
