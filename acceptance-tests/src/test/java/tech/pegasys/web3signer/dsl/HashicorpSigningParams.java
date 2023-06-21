@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.dsl;
 
-import tech.pegasys.signers.hashicorp.dsl.HashicorpNode;
-import tech.pegasys.signers.hashicorp.dsl.certificates.SelfSignedCertificate;
+import tech.pegasys.web3signer.keystore.hashicorp.dsl.HashicorpNode;
+import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.SelfSignedCertificate;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.util.Optional;

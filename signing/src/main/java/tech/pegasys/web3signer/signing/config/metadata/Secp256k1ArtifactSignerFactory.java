@@ -12,15 +12,15 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata;
 
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
-import tech.pegasys.signers.secp256k1.api.Signer;
-import tech.pegasys.signers.secp256k1.azure.AzureConfig;
-import tech.pegasys.signers.secp256k1.azure.AzureKeyVaultSignerFactory;
-import tech.pegasys.signers.secp256k1.filebased.CredentialSigner;
+import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
+import tech.pegasys.web3signer.signing.secp256k1.Signer;
+import tech.pegasys.web3signer.signing.secp256k1.azure.AzureConfig;
+import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
+import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
 
 import java.io.IOException;
 import java.nio.file.Path;

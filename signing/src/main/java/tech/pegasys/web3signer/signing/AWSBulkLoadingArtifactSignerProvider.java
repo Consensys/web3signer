@@ -12,11 +12,11 @@
  */
 package tech.pegasys.web3signer.signing;
 
-import tech.pegasys.signers.aws.AwsSecretsManager;
-import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
-import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManager;
+import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;

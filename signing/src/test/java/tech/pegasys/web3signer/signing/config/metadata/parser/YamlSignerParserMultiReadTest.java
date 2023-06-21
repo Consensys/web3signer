@@ -19,12 +19,12 @@ import static org.mockito.Mockito.lenient;
 import static tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParserTest.getFileKeystoreConfigMetadata;
 import static tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParserTest.getFileRawConfigYaml;
 
-import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
-import tech.pegasys.signers.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.KeystoreUtil;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
+import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
+import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
