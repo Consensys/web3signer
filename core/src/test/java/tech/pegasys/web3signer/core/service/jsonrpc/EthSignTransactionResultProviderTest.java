@@ -22,13 +22,13 @@ import static org.mockito.Mockito.mock;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 
-import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
-import tech.pegasys.signers.secp256k1.api.Signature;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignTransactionResultProvider;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
+import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
+import tech.pegasys.web3signer.signing.secp256k1.Signature;
 
 import java.math.BigInteger;
 import java.security.interfaces.ECPublicKey;
