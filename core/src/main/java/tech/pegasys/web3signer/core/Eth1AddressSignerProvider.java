@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.core;
 
-import tech.pegasys.signers.secp256k1.api.Signer;
-import tech.pegasys.signers.secp256k1.api.SignerProvider;
+import tech.pegasys.web3signer.signing.secp256k1.Signer;
+import tech.pegasys.web3signer.signing.secp256k1.SignerProvider;
 
 import java.security.interfaces.ECPublicKey;
 import java.util.Optional;

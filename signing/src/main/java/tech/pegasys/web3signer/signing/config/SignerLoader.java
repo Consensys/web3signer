@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
-import tech.pegasys.signers.common.MappedResults;
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.SigningMetadata;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SignerParser;

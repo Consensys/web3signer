@@ -14,10 +14,10 @@ package tech.pegasys.web3signer.signing.filecoin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.signers.secp256k1.api.Signature;
 import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
+import tech.pegasys.web3signer.signing.secp256k1.Signature;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;

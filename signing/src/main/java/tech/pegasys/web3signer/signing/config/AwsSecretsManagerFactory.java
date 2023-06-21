@@ -12,8 +12,8 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
-import tech.pegasys.signers.aws.AwsSecretsManager;
-import tech.pegasys.signers.aws.AwsSecretsManagerProvider;
+import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManager;
+import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
 
 public class AwsSecretsManagerFactory {
 

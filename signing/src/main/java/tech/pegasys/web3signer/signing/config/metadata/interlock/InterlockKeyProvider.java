@@ -12,9 +12,9 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata.interlock;
 
-import tech.pegasys.signers.interlock.InterlockSession;
-import tech.pegasys.signers.interlock.InterlockSessionFactoryProvider;
-import tech.pegasys.signers.interlock.vertx.InterlockSessionFactoryImpl;
+import tech.pegasys.web3signer.keystorage.interlock.InterlockSession;
+import tech.pegasys.web3signer.keystorage.interlock.InterlockSessionFactoryProvider;
+import tech.pegasys.web3signer.keystorage.interlock.vertx.InterlockSessionFactoryImpl;
 import tech.pegasys.web3signer.signing.config.metadata.InterlockSigningMetadata;
 
 import java.util.Map;

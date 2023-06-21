@@ -24,9 +24,9 @@ import tech.pegasys.signers.bls.keystore.model.KdfParam;
 import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.signers.bls.keystore.model.SCryptParam;
-import tech.pegasys.signers.hashicorp.dsl.certificates.CertificateHelpers;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
+import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.CertificateHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.io.IOException;

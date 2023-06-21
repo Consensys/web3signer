@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata.yubihsm;
 
-import tech.pegasys.signers.yubihsm.pkcs11.Pkcs11Module;
-import tech.pegasys.signers.yubihsm.pkcs11.Pkcs11Session;
-import tech.pegasys.signers.yubihsm.pkcs11.Pkcs11YubiHsm;
-import tech.pegasys.signers.yubihsm.pkcs11.Pkcs11YubiHsmPin;
+import tech.pegasys.web3signer.keystorage.yubihsm.pkcs11.Pkcs11Module;
+import tech.pegasys.web3signer.keystorage.yubihsm.pkcs11.Pkcs11Session;
+import tech.pegasys.web3signer.keystorage.yubihsm.pkcs11.Pkcs11YubiHsm;
+import tech.pegasys.web3signer.keystorage.yubihsm.pkcs11.Pkcs11YubiHsmPin;
 import tech.pegasys.web3signer.signing.config.metadata.YubiHsmSigningMetadata;
 
 import java.nio.file.Path;

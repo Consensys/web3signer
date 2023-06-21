@@ -685,3 +685,16 @@ task cloudsmithUpload {
     }
   }
 }
+
+def calculateJarName(Project project) {
+  def jarName = project.name
+  def parent = project.parent
+
+  while (parent != null) {
+    if (parent != rootProject) {
+      jarName = parent.name + '-' + jarName
+    }
+    parent = parent.parent
+  }
+  return jarName
+}

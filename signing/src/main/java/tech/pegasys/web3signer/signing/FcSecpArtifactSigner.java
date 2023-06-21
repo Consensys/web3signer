@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.signing;
 
-import tech.pegasys.signers.secp256k1.api.Signature;
-import tech.pegasys.signers.secp256k1.api.Signer;
 import tech.pegasys.web3signer.signing.filecoin.FilecoinAddress;
 import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
+import tech.pegasys.web3signer.signing.secp256k1.Signature;
+import tech.pegasys.web3signer.signing.secp256k1.Signer;
 import tech.pegasys.web3signer.signing.util.Blake2b;
 
 import java.math.BigInteger;
