@@ -21,12 +21,12 @@ import static org.mockito.Mockito.doReturn;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 
-import tech.pegasys.signers.secp256k1.api.Signature;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignResultProvider;
 import tech.pegasys.web3signer.core.util.EthMessageUtil;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
+import tech.pegasys.web3signer.signing.secp256k1.Signature;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -78,7 +78,6 @@ public class EthSignResultProviderTest {
   @Test
   public void ifAddressIsNotUnlockedExceptionIsThrownWithSigningNotUnlocked() {
 
-    // doReturn(Optional.empty()).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider =
         new EthSignResultProvider(transactionSignerProvider);
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_sign");
@@ -102,7 +101,6 @@ public class EthSignResultProviderTest {
         .when(transactionSignerProvider)
         .sign(any(), any(Bytes.class));
 
-    // doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider =
         new EthSignResultProvider(transactionSignerProvider);
 
@@ -151,7 +149,6 @@ public class EthSignResultProviderTest {
         .when(transactionSignerProvider)
         .sign(anyString(), any(Bytes.class));
 
-    // doReturn(Optional.of(mockSigner)).when(transactionSignerProvider).getSigner(anyString());
     final EthSignResultProvider resultProvider =
         new EthSignResultProvider(transactionSignerProvider);
 
