@@ -22,7 +22,6 @@ import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.EthTransaction;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.GoQuorumPrivateTransactionSerializer;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.TransactionSerializer;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
@@ -74,8 +73,7 @@ public class EthSignTransactionResultProvider implements ResultProvider<String> 
     LOG.debug("Obtaining signer for {}", transaction.sender());
     try {
       final TransactionSerializer transactionSerializer =
-          getTransactionSerializer(
-              ethSendTransactionJsonParameters, signerProvider, transaction.sender());
+          getTransactionSerializer(signerProvider, transaction.sender());
       return transactionSerializer.serialize(transaction);
     } catch (Exception e) {
       LOG.debug("From address ({}) does not match any available account", transaction.sender());
@@ -84,12 +82,8 @@ public class EthSignTransactionResultProvider implements ResultProvider<String> 
   }
 
   private TransactionSerializer getTransactionSerializer(
-      final EthSendTransactionJsonParameters params,
-      final ArtifactSignerProvider signer,
-      final String identifier) {
-    return params.privateFor().isPresent()
-        ? new GoQuorumPrivateTransactionSerializer(signer, chainId, identifier)
-        : new TransactionSerializer(signer, chainId, identifier);
+      final ArtifactSignerProvider signer, final String identifier) {
+    return new TransactionSerializer(signer, chainId, identifier);
   }
 
   private Transaction createTransaction(
