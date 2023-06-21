@@ -14,11 +14,11 @@ package tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing;
 
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 
-import tech.pegasys.signers.secp256k1.api.Signature;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
+import tech.pegasys.web3signer.signing.secp256k1.Signature;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
