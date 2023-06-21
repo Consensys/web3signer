@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 
-import tech.pegasys.signers.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthAccountsResultProvider;
+import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 
 import java.security.interfaces.ECPublicKey;
 import java.util.List;

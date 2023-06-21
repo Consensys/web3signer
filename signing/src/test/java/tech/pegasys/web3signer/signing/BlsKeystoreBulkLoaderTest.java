@@ -14,10 +14,10 @@ package tech.pegasys.web3signer.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.signers.common.MappedResults;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.KeystoreUtil;
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
 
 import java.io.IOException;
 import java.nio.file.Files;
