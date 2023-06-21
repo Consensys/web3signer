@@ -14,9 +14,9 @@ package tech.pegasys.web3signer.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.signers.secp256k1.api.Signature;
-import tech.pegasys.signers.secp256k1.filebased.CredentialSigner;
 import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
+import tech.pegasys.web3signer.signing.secp256k1.Signature;
+import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
 import tech.pegasys.web3signer.signing.util.ByteUtils;
 
 import org.apache.tuweni.bytes.Bytes;
