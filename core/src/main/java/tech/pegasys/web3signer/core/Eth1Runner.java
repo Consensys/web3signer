@@ -30,6 +30,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcErrorHandler
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.PassThroughHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.RequestMapper;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.InternalResponseHandler;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
@@ -114,7 +115,7 @@ public class Eth1Runner extends Runner {
         new PassThroughHandler(transmitterFactory, jsonDecoder);
 
     final RequestMapper requestMapper =
-        createRequestMapper(transmitterFactory, signerProvider, jsonDecoder);
+        createRequestMapper(transmitterFactory, signerProvider, jsonDecoder, secpSigner);
 
     router
         .route(HttpMethod.POST, ROOT_PATH)
@@ -177,7 +178,8 @@ public class Eth1Runner extends Runner {
   private RequestMapper createRequestMapper(
       final VertxRequestTransmitterFactory transmitterFactory,
       final ArtifactSignerProvider signerProvider,
-      final JsonDecoder jsonDecoder) {
+      final JsonDecoder jsonDecoder,
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner) {
     final PassThroughHandler defaultHandler =
         new PassThroughHandler(transmitterFactory, jsonDecoder);
 
@@ -186,6 +188,9 @@ public class Eth1Runner extends Runner {
         "eth_accounts",
         new InternalResponseHandler<>(
             responseFactory, new Eth1AccountsHandler(signerProvider::availableIdentifiers)));
+    requestMapper.addHandler(
+        "eth_sign",
+        new InternalResponseHandler<>(responseFactory, new EthSignResultProvider(secpSigner)));
 
     return requestMapper;
   }
