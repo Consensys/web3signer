@@ -97,14 +97,10 @@ dependencyManagement {
       entry ('spec') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
-      entry ('serializer') {
-        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
-      }
+      entry 'serializer'
       entry 'unsigned'
       entry 'async'
-      entry ('networks') {
-        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
-      }
+      entry 'networks'
       entry 'json'
       entry 'jackson'
     }
