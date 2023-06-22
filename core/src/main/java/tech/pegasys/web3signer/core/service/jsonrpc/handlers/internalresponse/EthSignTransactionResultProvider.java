@@ -73,17 +73,12 @@ public class EthSignTransactionResultProvider implements ResultProvider<String> 
     LOG.debug("Obtaining signer for {}", transaction.sender());
     try {
       final TransactionSerializer transactionSerializer =
-          getTransactionSerializer(signerProvider, transaction.sender());
+          new TransactionSerializer(signerProvider, chainId, transaction.sender());
       return transactionSerializer.serialize(transaction);
     } catch (Exception e) {
       LOG.debug("From address ({}) does not match any available account", transaction.sender());
       throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
     }
-  }
-
-  private TransactionSerializer getTransactionSerializer(
-      final ArtifactSignerProvider signer, final String identifier) {
-    return new TransactionSerializer(signer, chainId, identifier);
   }
 
   private Transaction createTransaction(
