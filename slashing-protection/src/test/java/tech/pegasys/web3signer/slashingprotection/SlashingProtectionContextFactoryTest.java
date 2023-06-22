@@ -14,6 +14,8 @@ package tech.pegasys.web3signer.slashingprotection;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import java.util.Optional;
+
 import db.DatabaseUtil;
 import dsl.TestSlashingProtectionParameters;
 import org.jdbi.v3.core.Jdbi;
@@ -32,7 +34,7 @@ class SlashingProtectionContextFactoryTest {
         SlashingProtectionContextFactory.create(
             new TestSlashingProtectionParameters(
                 testDatabaseInfo.databaseUrl(), USERNAME, PASSWORD, false));
-    assertThat(factory.getPruningJdbi()).isEqualTo(null);
+    assertThat(factory.getPruningJdbi()).isEqualTo(Optional.empty());
   }
 
   @Test
@@ -43,6 +45,6 @@ class SlashingProtectionContextFactoryTest {
         SlashingProtectionContextFactory.create(
             new TestSlashingProtectionParameters(
                 testDatabaseInfo.databaseUrl(), USERNAME, PASSWORD, true));
-    assertThat(factory.getPruningJdbi()).isInstanceOf(Jdbi.class);
+    assertThat(factory.getPruningJdbi().get()).isInstanceOf(Jdbi.class);
   }
 }

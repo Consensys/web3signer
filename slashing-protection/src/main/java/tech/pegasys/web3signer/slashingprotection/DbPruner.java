@@ -32,13 +32,13 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 
 public class DbPruner {
-  private final Jdbi jdbi;
+  private final Optional<Jdbi> jdbi;
   private final SignedBlocksDao signedBlocksDao;
   private final SignedAttestationsDao signedAttestationsDao;
   private final LowWatermarkDao lowWatermarkDao;
 
   public DbPruner(
-      final Jdbi jdbi,
+      final Optional<Jdbi> jdbi,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
       final LowWatermarkDao lowWatermarkDao) {
@@ -60,6 +60,10 @@ public class DbPruner {
   }
 
   private void pruneBlocks(final int validatorId, final long slotsToKeep) {
+
+    final Jdbi jdbi =
+        this.jdbi.orElseThrow(() -> new NullPointerException("Pruner has no connection created"));
+
     final boolean hasWatermark =
         jdbi.inTransaction(
             READ_UNCOMMITTED,
@@ -92,6 +96,9 @@ public class DbPruner {
   }
 
   private void pruneAttestations(final int validatorId, final long epochsToKeep) {
+    final Jdbi jdbi =
+        this.jdbi.orElseThrow(() -> new NullPointerException("Pruner has no connection created"));
+
     final boolean hasWatermark =
         jdbi.inTransaction(
             READ_UNCOMMITTED,

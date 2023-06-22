@@ -62,7 +62,7 @@ public class DbSlashingProtection implements SlashingProtection {
 
   public DbSlashingProtection(
       final Jdbi jdbi,
-      final Jdbi pruningJdbi,
+      final Optional<Jdbi> pruningJdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,

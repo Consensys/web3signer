@@ -21,6 +21,8 @@ import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
+import java.util.Optional;
+
 import org.jdbi.v3.core.Jdbi;
 
 public class SlashingProtectionContextFactory {
@@ -37,15 +39,16 @@ public class SlashingProtectionContextFactory {
     verifyVersion(jdbi);
 
     // create separate Jdbi instance for pruning operations
-    final Jdbi pruningJdbi =
+    final Optional<Jdbi> pruningJdbi =
         slashingProtectionParameters.isPruningEnabled()
-            ? DbConnection.createPruningConnection(
-                slashingProtectionParameters.getDbUrl(),
-                slashingProtectionParameters.getDbUsername(),
-                slashingProtectionParameters.getDbPassword(),
-                slashingProtectionParameters.getPruningDbPoolConfigurationFile(),
-                slashingProtectionParameters.isDbConnectionPoolEnabled())
-            : null;
+            ? Optional.of(
+                DbConnection.createPruningConnection(
+                    slashingProtectionParameters.getDbUrl(),
+                    slashingProtectionParameters.getDbUsername(),
+                    slashingProtectionParameters.getDbPassword(),
+                    slashingProtectionParameters.getPruningDbPoolConfigurationFile(),
+                    slashingProtectionParameters.isDbConnectionPoolEnabled()))
+            : Optional.empty();
 
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final RegisteredValidators registeredValidators = new RegisteredValidators(jdbi, validatorsDao);

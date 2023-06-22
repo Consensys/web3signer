@@ -12,18 +12,20 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
+import java.util.Optional;
+
 import org.jdbi.v3.core.Jdbi;
 
 public class SlashingProtectionContext {
 
   private final Jdbi slashingProtectionJdbi;
-  private final Jdbi pruningJdbi;
+  private final Optional<Jdbi> pruningJdbi;
   private final RegisteredValidators registeredValidators;
   private final SlashingProtection slashingProtection;
 
   public SlashingProtectionContext(
       final Jdbi slashingProtectionJdbi,
-      final Jdbi pruningJdbi,
+      final Optional<Jdbi> pruningJdbi,
       final RegisteredValidators registeredValidators,
       final SlashingProtection slashingProtection) {
     this.slashingProtectionJdbi = slashingProtectionJdbi;
@@ -36,7 +38,7 @@ public class SlashingProtectionContext {
     return slashingProtectionJdbi;
   }
 
-  public Jdbi getPruningJdbi() {
+  public Optional<Jdbi> getPruningJdbi() {
     return pruningJdbi;
   }
 

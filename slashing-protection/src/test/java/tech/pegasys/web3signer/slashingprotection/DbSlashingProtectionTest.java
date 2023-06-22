@@ -74,13 +74,13 @@ public class DbSlashingProtectionTest {
 
   private DbSlashingProtection dbSlashingProtection;
   private Jdbi slashingJdbi;
-  private Jdbi pruningJdbi;
+  private Optional<Jdbi> pruningJdbi;
 
   @BeforeEach
   public void setup(final Jdbi jdbi) {
     DbConnection.configureJdbi(jdbi);
     slashingJdbi = spy(jdbi);
-    pruningJdbi = spy(jdbi);
+    pruningJdbi = Optional.of(spy(jdbi));
     dbSlashingProtection =
         new DbSlashingProtection(
             slashingJdbi,
@@ -161,7 +161,7 @@ public class DbSlashingProtectionTest {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
-            jdbi,
+            Optional.of(jdbi),
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
@@ -332,7 +332,7 @@ public class DbSlashingProtectionTest {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
-            jdbi,
+            Optional.of(jdbi),
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
@@ -582,7 +582,7 @@ public class DbSlashingProtectionTest {
   @Test
   public void pruningUseSeparateDatasource() {
     dbSlashingProtection.prune();
-    verify(pruningJdbi, atLeast(2))
+    verify(pruningJdbi.get(), atLeast(2))
         .inTransaction(eq(TransactionIsolationLevel.READ_UNCOMMITTED), any());
     verifyNoInteractions(slashingJdbi);
   }
