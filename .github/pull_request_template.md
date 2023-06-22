@@ -14,3 +14,7 @@
 ## Changelog
 
 - [ ] I thought about adding a changelog entry, and added one if I deemed necessary.
+
+## Testing
+
+- [ ] I thought about testing these changes in a realistic/non-local environment.
