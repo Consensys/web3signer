@@ -41,8 +41,11 @@ public class HashicorpConnectionTest {
         new TlsOptions(Optional.of(TrustStoreType.JKS), tempFile.toPath(), "anyPassword");
 
     final ConnectionParameters params =
-        new ConnectionParameters(
-            CONFIGURED_HOST, Optional.empty(), Optional.of(tlsOptions), Optional.of(10L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(CONFIGURED_HOST)
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(10L)
+            .build();
 
     assertThatThrownBy(() -> connectionFactory.create(params))
         .isInstanceOf(HashicorpException.class)
@@ -62,8 +65,11 @@ public class HashicorpConnectionTest {
         new TlsOptions(Optional.of(TrustStoreType.PKCS12), keystorePath, "wrongPassword");
 
     final ConnectionParameters params =
-        new ConnectionParameters(
-            CONFIGURED_HOST, Optional.empty(), Optional.of(tlsOptions), Optional.of(10L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(CONFIGURED_HOST)
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(10L)
+            .build();
 
     assertThatThrownBy(() -> connectionFactory.create(params))
         .isInstanceOf(HashicorpException.class)

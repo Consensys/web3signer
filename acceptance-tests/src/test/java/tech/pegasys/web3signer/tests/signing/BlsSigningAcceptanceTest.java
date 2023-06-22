@@ -50,6 +50,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 
 public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
@@ -120,7 +121,32 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
       final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
       METADATA_FILE_HELPERS.createHashicorpYamlFileAt(
           keyConfigFile,
-          new HashicorpSigningParams(hashicorpNode, secretPath, secretName, KeyType.BLS));
+          new HashicorpSigningParams(hashicorpNode, secretPath, secretName, KeyType.BLS),
+          Optional.empty());
+
+      signAndVerifySignature(ArtifactType.BLOCK);
+    } finally {
+      hashicorpNode.shutdown();
+    }
+  }
+
+  @ParameterizedTest(name = "{index} - Using http protocol version: {0}, with TLS: {1}")
+  @CsvSource({"HTTP_1_1, true", "HTTP_2, true", "HTTP_1_1, false", "HTTP_2, false"})
+  public void ableToSignUsingHashicorpWithHttpProtocolOverride(
+      final String httpProtocolVersion, boolean withTLS) throws JsonProcessingException {
+    final String configFilename = KEY_PAIR.getPublicKey().toString().substring(2);
+    final HashicorpNode hashicorpNode = HashicorpNode.createAndStartHashicorp(withTLS);
+    try {
+      final String secretPath = "acceptanceTestSecretPath";
+      final String secretName = "secretName";
+
+      hashicorpNode.addSecretsToVault(singletonMap(secretName, PRIVATE_KEY), secretPath);
+
+      final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
+      METADATA_FILE_HELPERS.createHashicorpYamlFileAt(
+          keyConfigFile,
+          new HashicorpSigningParams(hashicorpNode, secretPath, secretName, KeyType.BLS),
+          Optional.ofNullable(httpProtocolVersion));
 
       signAndVerifySignature(ArtifactType.BLOCK);
     } finally {

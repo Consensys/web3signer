@@ -107,7 +107,9 @@ public class MetadataFileHelpers {
   }
 
   public void createHashicorpYamlFileAt(
-      final Path metadataFilePath, final HashicorpSigningParams node) {
+      final Path metadataFilePath,
+      final HashicorpSigningParams node,
+      Optional<String> httpProtocolVersion) {
     try {
       final Map<String, String> signingMetadata = new HashMap<>();
 
@@ -130,6 +132,8 @@ public class MetadataFileHelpers {
       signingMetadata.put("keyName", node.getSecretName());
       signingMetadata.put("token", node.getVaultToken());
       signingMetadata.put("keyType", node.getKeyType().toString());
+
+      httpProtocolVersion.ifPresent(version -> signingMetadata.put("httpProtocolVersion", version));
 
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {
