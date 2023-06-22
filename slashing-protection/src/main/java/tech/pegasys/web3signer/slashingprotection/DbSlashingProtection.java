@@ -55,7 +55,7 @@ public class DbSlashingProtection implements SlashingProtection {
   private final InterchangeManager interchangeManager;
   private final LowWatermarkDao lowWatermarkDao;
   private final GenesisValidatorRootValidator gvrValidator;
-  private final DbPruner dbPruner;
+  private final Optional<DbPruner> dbPruner;
   private final long pruningEpochsToKeep;
   private final long pruningSlotsPerEpoch;
   private final RegisteredValidators registeredValidators;
@@ -86,8 +86,12 @@ public class DbSlashingProtection implements SlashingProtection {
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao);
+
     this.dbPruner =
-        new DbPruner(pruningJdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
+        pruningJdbi != null
+            ? Optional.of(
+                new DbPruner(pruningJdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao))
+            : Optional.empty();
     this.pruningEpochsToKeep = pruningEpochsToKeep;
     this.pruningSlotsPerEpoch = pruningSlotsPerEpoch;
   }
@@ -247,6 +251,9 @@ public class DbSlashingProtection implements SlashingProtection {
 
   @Override
   public void prune() {
+    if (dbPruner.isEmpty()) {
+      throw new IllegalStateException("prune() called when dbPruner isn't initialized");
+    }
     final Set<Integer> validatorKeys = registeredValidators.validatorIds();
     LOG.info("Pruning slashing protection database for {} validators", validatorKeys.size());
     final AtomicInteger pruningCount = new AtomicInteger();
@@ -257,7 +264,7 @@ public class DbSlashingProtection implements SlashingProtection {
               pruningCount::incrementAndGet,
               validatorKeys::size,
               () -> registeredValidators.getPublicKeyForValidatorId(v));
-          dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch);
+          dbPruner.get().pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch);
         });
     LOG.info("Pruning slashing protection database complete");
   }
