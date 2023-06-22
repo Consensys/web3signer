@@ -35,7 +35,9 @@ dependencyManagement {
 
     dependencySet(group: 'io.vertx', version: '4.4.1') {
       entry 'vertx-codegen'
-      entry 'vertx-core'
+      entry ('vertx-core') {
+        exclude group: 'io.netty', name: 'netty-handler'
+      }
       entry 'vertx-unit'
       entry 'vertx-web-client'
       entry 'vertx-web'
@@ -64,9 +66,9 @@ dependencyManagement {
 
     dependency 'org.awaitility:awaitility:4.1.1'
 
-    dependencySet(group: 'org.bouncycastle', version: '1.70') {
-      entry 'bcpkix-jdk15on'
-      entry 'bcprov-jdk15on'
+    dependencySet(group: 'org.bouncycastle', version: '1.74') {
+      entry 'bcpkix-jdk18on'
+      entry 'bcprov-jdk18on'
     }
 
     dependencySet(group: 'org.junit.jupiter', version: '5.8.2') {
@@ -89,8 +91,12 @@ dependencyManagement {
     dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.9'
 
     dependencySet(group: 'tech.pegasys.teku.internal', version: '23.6.0') {
-      entry 'bls'
-      entry 'spec'
+      entry ('bls') {
+        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
+      }
+      entry ('spec') {
+        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
+      }
       entry 'serializer'
       entry 'unsigned'
       entry 'async'
@@ -102,7 +108,9 @@ dependencyManagement {
     dependency 'tech.pegasys:jblst:0.3.8'
 
     dependencySet(group: 'tech.pegasys.signers.internal', version: '2.2.10') {
-      entry 'bls-keystore'
+      entry ('bls-keystore') {
+        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
+      }
     }
 
     dependency 'io.rest-assured:rest-assured:4.4.0'
@@ -113,6 +121,9 @@ dependencyManagement {
         exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
       }
       entry 'crypto'
+      entry ('utils') {
+        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
+      }
     }
 
     dependency 'com.github.arteam:simple-json-rpc-server:1.3'
@@ -166,8 +177,10 @@ dependencyManagement {
      */
     dependency 'com.squareup.okhttp3:logging-interceptor:4.10.0'
 
-    // addressing CVE-2022-41881 and CVE-2022-41915
-    dependency 'io.netty:netty-all:4.1.86.Final'
+    // addressing CVE-2022-41881, CVE-2022-41915
+    dependency 'io.netty:netty-all:4.1.94.Final'
+    // CVE-2023-34462
+    dependency 'io.netty:netty-handler:4.1.94.Final'
 
     /* io.projectreactor.netty:reactor-netty-http:1.0.18 // CVE-2022-31684
        \--- com.azure:azure-core-http-netty:1.12.0

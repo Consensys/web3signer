@@ -43,8 +43,8 @@ dependencies {
   implementation 'org.apache.logging.log4j:log4j-api'
   implementation 'org.apache.tuweni:tuweni-bytes'
   implementation 'org.apache.tuweni:tuweni-net'
-  implementation 'org.bouncycastle:bcpkix-jdk15on'
-  implementation 'org.bouncycastle:bcprov-jdk15on'
+  implementation 'org.bouncycastle:bcpkix-jdk18on'
+  implementation 'org.bouncycastle:bcprov-jdk18on'
   implementation 'org.xipki.iaik:sunpkcs11-wrapper'
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:secretsmanager'
@@ -52,11 +52,11 @@ dependencies {
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
-  runtimeOnly 'org.bouncycastle:bcpkix-jdk15on'
-  runtimeOnly 'org.bouncycastle:bcprov-jdk15on'
+  runtimeOnly 'org.bouncycastle:bcpkix-jdk18on'
+  runtimeOnly 'org.bouncycastle:bcprov-jdk18on'
 
-  testRuntimeOnly 'org.bouncycastle:bcpkix-jdk15on'
-  testRuntimeOnly 'org.bouncycastle:bcprov-jdk15on'
+  testRuntimeOnly 'org.bouncycastle:bcpkix-jdk18on'
+  testRuntimeOnly 'org.bouncycastle:bcprov-jdk18on'
   testRuntimeOnly 'org.apache.logging.log4j:log4j-core'
   testRuntimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
   testRuntimeOnly 'org.apache.logging.log4j:log4j-api'
@@ -79,8 +79,8 @@ dependencies {
   testFixturesImplementation 'org.apache.tuweni:tuweni-net'
   testFixturesImplementation 'org.assertj:assertj-core'
   testFixturesImplementation 'org.awaitility:awaitility'
-  testFixturesImplementation 'org.bouncycastle:bcpkix-jdk15on'
-  testFixturesImplementation 'org.bouncycastle:bcprov-jdk15on'
+  testFixturesImplementation 'org.bouncycastle:bcpkix-jdk18on'
+  testFixturesImplementation 'org.bouncycastle:bcprov-jdk18on'
   testFixturesImplementation 'org.zeroturnaround:zt-exec'
 
   errorprone("com.google.errorprone:error_prone_core")
