@@ -37,6 +37,7 @@ dependencies {
   implementation 'com.azure:azure-security-keyvault-keys'
   implementation 'org.apache.tuweni:tuweni-net'
   implementation 'com.google.guava:guava'
+  implementation 'org.bouncycastle:bcprov-jdk18on'
 
   runtimeOnly 'com.squareup.okhttp3:okhttp'
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
