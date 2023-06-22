@@ -50,7 +50,7 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
   @BeforeEach
   void setupSlashingProtection() {
     slashingProtectionParameters =
-        new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1);
+        new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, true);
     scheduledExecutorService =
         new ScheduledThreadPoolExecutor(
             1, new ThreadFactoryBuilder().setNameFormat("slashing-db-pruner" + "-%d").build());
@@ -126,7 +126,7 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
   @Test
   void prunesValidatorsForScheduledRunAreRunPeriodically() {
     final SlashingProtectionParameters slashingProtectionParameters =
-        new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, 1);
+        new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, 1, true);
     final TestSlashingProtection testSlashingProtection =
         new TestSlashingProtection(
             pruningSlashingProtectionContext.getSlashingProtection(),
@@ -155,7 +155,7 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
   @Test
   void prunesValidatorsForScheduledRunHandlesErrors() {
     final SlashingProtectionParameters slashingProtectionParameters =
-        new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, 1);
+        new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, 1, true);
     final TestSlashingProtection testSlashingProtection =
         new TestSlashingProtection(pruningSlashingProtectionContext.getSlashingProtection());
     final DbPrunerRunner dbPrunerRunner =

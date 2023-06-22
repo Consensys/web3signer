@@ -39,16 +39,15 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
 
   public TestSlashingProtectionParameters(
       final String dbUrl, final String dbUser, final String dbPassword) {
-    this(dbUrl, dbUser, dbPassword, 0, 0);
+    this(dbUrl, dbUser, dbPassword, 0, 0, true);
   }
 
   public TestSlashingProtectionParameters(
       final String dbUrl,
       final String dbUser,
       final String dbPassword,
-      final int pruningEpochsToKeep,
-      final int pruningSlotsPerEpoch) {
-    this(dbUrl, dbUser, dbPassword, pruningEpochsToKeep, pruningSlotsPerEpoch, Long.MAX_VALUE);
+      final boolean pruningEnabled) {
+    this(dbUrl, dbUser, dbPassword, 0, 0, pruningEnabled);
   }
 
   public TestSlashingProtectionParameters(
@@ -57,7 +56,25 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
       final String dbPassword,
       final int pruningEpochsToKeep,
       final int pruningSlotsPerEpoch,
-      final long pruningInterval) {
+      final boolean pruningEnabled) {
+    this(
+        dbUrl,
+        dbUser,
+        dbPassword,
+        pruningEpochsToKeep,
+        pruningSlotsPerEpoch,
+        Long.MAX_VALUE,
+        pruningEnabled);
+  }
+
+  public TestSlashingProtectionParameters(
+      final String dbUrl,
+      final String dbUser,
+      final String dbPassword,
+      final int pruningEpochsToKeep,
+      final int pruningSlotsPerEpoch,
+      final long pruningInterval,
+      final boolean pruningEnabled) {
     this(
         dbUrl,
         dbUser,
@@ -69,7 +86,8 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
         pruningInterval,
         3000,
         3000,
-        true);
+        true,
+        pruningEnabled);
   }
 
   public TestSlashingProtectionParameters(
@@ -83,13 +101,14 @@ public class TestSlashingProtectionParameters implements SlashingProtectionParam
       final long pruningInterval,
       final int dbHealthCheckTimeoutMilliseconds,
       final int dbHealthCheckIntervalMilliseconds,
-      final boolean dbConnectionPoolEnabled) {
+      final boolean dbConnectionPoolEnabled,
+      final boolean pruningEnabled) {
     this.dbUrl = dbUrl;
     this.dbUser = dbUser;
     this.dbPassword = dbPassword;
     this.dbPoolConfigurationFile = dbPoolConfigurationFile;
     this.pruningDbPoolConfigurationFile = pruningDbPoolConfigurationFile;
-    this.pruningEnabled = true;
+    this.pruningEnabled = pruningEnabled;
     this.pruningAtBootEnabled = true;
     this.pruningEpochsToKeep = pruningEpochsToKeep;
     this.pruningSlotsPerEpoch = pruningSlotsPerEpoch;

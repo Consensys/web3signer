@@ -49,7 +49,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
     final SlashingProtectionContext slashingProtectionContext =
         SlashingProtectionContextFactory.create(
             new TestSlashingProtectionParameters(
-                databaseUrl, USERNAME, PASSWORD, amountToKeep, slotsPerEpoch));
+                databaseUrl, USERNAME, PASSWORD, amountToKeep, slotsPerEpoch, true));
     final int size = 10;
     insertValidatorAndCreateSlashingData(
         slashingProtectionContext.getRegisteredValidators(), size, size, 1);
@@ -82,7 +82,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
   void dataUnchangedForNonRegisteredValidators() {
     final SlashingProtectionContext slashingProtectionContext =
         SlashingProtectionContextFactory.create(
-            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 1, 1));
+            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 1, 1, true));
     jdbi.withHandle(h -> validators.registerValidators(h, List.of(Bytes.of(1))));
     createSlashingData(2, 2, 1);
     insertValidatorAndCreateSlashingData(
@@ -101,7 +101,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
   void watermarkIsNotMovedLower() {
     final SlashingProtectionContext slashingProtectionContext =
         SlashingProtectionContextFactory.create(
-            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1));
+            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, true));
     insertValidatorAndCreateSlashingData(
         slashingProtectionContext.getRegisteredValidators(), 10, 10, 1);
     jdbi.useTransaction(
@@ -121,7 +121,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
   void noPruningOccursWhenThereIsNoWatermark() {
     final SlashingProtectionContext slashingProtectionContext =
         SlashingProtectionContextFactory.create(
-            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 1, 1));
+            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 1, 1, true));
     slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(Bytes.of(1)));
     for (int i = 0; i < 5; i++) {
       insertBlockAt(UInt64.valueOf(i), 1);
@@ -139,7 +139,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
   void prunesForDataWithGaps() {
     final SlashingProtectionContext slashingProtectionContext =
         SlashingProtectionContextFactory.create(
-            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1));
+            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, true));
     slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(Bytes.of(1)));
 
     for (int i = 0; i < 2; i++) {
@@ -169,7 +169,7 @@ public class PruningIntegrationTest extends IntegrationTestBase {
   void prunesForDataWithGapsAndDoesNotDeleteAllData() {
     final SlashingProtectionContext slashingProtectionContext =
         SlashingProtectionContextFactory.create(
-            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1));
+            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, true));
     slashingProtectionContext.getRegisteredValidators().registerValidators(List.of(Bytes.of(1)));
 
     for (int i = 0; i < 2; i++) {
