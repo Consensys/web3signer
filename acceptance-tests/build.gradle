@@ -74,6 +74,7 @@ dependencies {
   testImplementation (testFixtures(project(":signing")))
   testImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
   testImplementation 'io.zonky.test:embedded-postgres'
+  testImplementation 'org.bouncycastle:bcprov-jdk18on'
 
   gatlingImplementation configurations.getByName("testImplementation")
 
