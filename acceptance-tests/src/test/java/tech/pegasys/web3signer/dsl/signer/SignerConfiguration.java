@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.dsl.signer;
 
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
@@ -73,7 +72,6 @@ public class SignerConfiguration {
   private int downstreamHttpPort;
   private Optional<ClientTlsOptions> downstreamTlsOptions;
   private final Duration startupTimeout;
-  private final ChainIdProvider chainIdProvider;
 
   public SignerConfiguration(
       final String hostname,
@@ -115,8 +113,7 @@ public class SignerConfiguration {
       final boolean keyManagerApiEnabled,
       final Optional<WatermarkRepairParameters> watermarkRepairParameters,
       final int downstreamHttpPort,
-      final Optional<ClientTlsOptions> downstreamTlsOptions,
-      final ChainIdProvider chainIdProvider) {
+      final Optional<ClientTlsOptions> downstreamTlsOptions) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -157,7 +154,6 @@ public class SignerConfiguration {
     this.watermarkRepairParameters = watermarkRepairParameters;
     this.downstreamHttpPort = downstreamHttpPort;
     this.downstreamTlsOptions = downstreamTlsOptions;
-    this.chainIdProvider = chainIdProvider;
   }
 
   public String hostname() {
@@ -326,9 +322,5 @@ public class SignerConfiguration {
 
   public Optional<ClientTlsOptions> getDownstreamTlsOptions() {
     return downstreamTlsOptions;
-  }
-
-  public ChainIdProvider getChainIdProvider() {
-    return chainIdProvider;
   }
 }

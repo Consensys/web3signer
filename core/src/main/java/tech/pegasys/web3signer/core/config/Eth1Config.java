@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.core.config;
 
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -37,6 +36,4 @@ public interface Eth1Config {
   String getHttpProxyPassword();
 
   Optional<ClientTlsOptions> getClientTlsOptions();
-
-  ChainIdProvider getChainId();
 }

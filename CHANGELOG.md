@@ -1,11 +1,4 @@
 # Changelog
-## Upcoming Release
-
-### Features Added
-- Add eth_SignTransaction RPC method under the eth1 subcommand[#812](https://github.com/ConsenSys/web3signer/pull/812)
-
-### Bugs Fixed
-
 ## 23.6.0
 
 As part of our ongoing commitment to deliver the best remote signing solutions, we are announcing a change in our product offerings.

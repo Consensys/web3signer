@@ -14,8 +14,6 @@ package tech.pegasys.web3signer.core.jsonrpcproxy.support;
 
 import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -25,19 +23,16 @@ public class TestEth1Config implements Eth1Config {
   private final String downstreamHttpHost;
   private final int downstreamHttpPort;
   private final Duration downstreamHttpRequestTimeout;
-  private final ConfigurationChainId chainId;
 
   public TestEth1Config(
       final String downstreamHttpRequestPath,
       final String downstreamHttpHost,
       final int downstreamHttpPort,
-      final Duration downstreamHttpRequestTimeout,
-      final ConfigurationChainId chainId) {
+      final Duration downstreamHttpRequestTimeout) {
     this.downstreamHttpRequestPath = downstreamHttpRequestPath;
     this.downstreamHttpHost = downstreamHttpHost;
     this.downstreamHttpPort = downstreamHttpPort;
     this.downstreamHttpRequestTimeout = downstreamHttpRequestTimeout;
-    this.chainId = chainId;
   }
 
   @Override
@@ -83,10 +78,5 @@ public class TestEth1Config implements Eth1Config {
   @Override
   public Optional<ClientTlsOptions> getClientTlsOptions() {
     return Optional.empty();
-  }
-
-  @Override
-  public ChainIdProvider getChainId() {
-    return chainId;
   }
 }

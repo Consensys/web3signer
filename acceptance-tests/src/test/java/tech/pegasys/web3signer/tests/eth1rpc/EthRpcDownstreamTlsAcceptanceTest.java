@@ -21,7 +21,6 @@ import static tech.pegasys.web3signer.dsl.tls.support.CertificateHelpers.populat
 
 import tech.pegasys.web3signer.core.config.KeyStoreOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.dsl.tls.client.BasicClientTlsOptions;
@@ -67,10 +66,7 @@ class EthRpcDownstreamTlsAcceptanceTest extends Eth1RpcAcceptanceTestBase {
         Files.writeString(workDir.resolve("clientKeystorePassword"), presentedCert.getPassword());
 
     final Path fingerPrintFilePath = workDir.resolve("known_servers");
-    final SignerConfigurationBuilder builder =
-        new SignerConfigurationBuilder()
-            .withMode("eth1")
-            .withChainIdProvider(new ConfigurationChainId(DEFAULT_CHAIN_ID));
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder().withMode("eth1");
     final Optional<Integer> downstreamWeb3ServerPort =
         Optional.of(Integers.valueOf(downstreamWeb3Port));
 
