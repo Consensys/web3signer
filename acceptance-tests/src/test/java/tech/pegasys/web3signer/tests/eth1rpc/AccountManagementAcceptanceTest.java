@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.tests.eth1rpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -51,7 +50,6 @@ public class AccountManagementAcceptanceTest extends Eth1RpcAcceptanceTestBase {
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth1")
             .withDownstreamHttpPort(besu.ports().getHttpRpc())
-            .withChainIdProvider(new ConfigurationChainId(DEFAULT_CHAIN_ID))
             .build();
     startSigner(web3SignerConfiguration);
   }

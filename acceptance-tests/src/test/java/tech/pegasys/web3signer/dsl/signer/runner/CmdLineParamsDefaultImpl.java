@@ -140,8 +140,6 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     } else if (signerConfig.getMode().equals("eth1")) {
       params.add("--downstream-http-port");
       params.add(Integer.toString(signerConfig.getDownstreamHttpPort()));
-      params.add("--chain-id");
-      params.add(Long.toString(signerConfig.getChainIdProvider().id()));
       params.addAll(createDownstreamTlsArgs());
     }
 

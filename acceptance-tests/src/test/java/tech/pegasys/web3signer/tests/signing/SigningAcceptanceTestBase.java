@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.tests.signing;
 
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
@@ -30,10 +29,7 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
 
   protected void setupEth1Signer() {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder
-        .withKeyStoreDirectory(testDirectory)
-        .withMode("eth1")
-        .withChainIdProvider(new ConfigurationChainId(DEFAULT_CHAIN_ID));
+    builder.withKeyStoreDirectory(testDirectory).withMode("eth1");
     startSigner(builder.build());
   }
 
