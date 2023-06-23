@@ -62,7 +62,7 @@ public class DbPruner {
   private void pruneBlocks(final int validatorId, final long slotsToKeep) {
 
     final Jdbi jdbi =
-        this.jdbi.orElseThrow(() -> new NullPointerException("Pruner has no connection created"));
+        this.jdbi.orElseThrow(() -> new IllegalStateException("Pruner has no connection created"));
 
     final boolean hasWatermark =
         jdbi.inTransaction(
@@ -97,7 +97,7 @@ public class DbPruner {
 
   private void pruneAttestations(final int validatorId, final long epochsToKeep) {
     final Jdbi jdbi =
-        this.jdbi.orElseThrow(() -> new NullPointerException("Pruner has no connection created"));
+        this.jdbi.orElseThrow(() -> new IllegalStateException("Pruner has no connection created"));
 
     final boolean hasWatermark =
         jdbi.inTransaction(
