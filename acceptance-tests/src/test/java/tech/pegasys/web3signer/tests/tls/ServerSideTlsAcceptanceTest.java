@@ -21,9 +21,11 @@ import static org.hamcrest.text.IsEqualIgnoringCase.equalToIgnoringCase;
 import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpecification;
 import static tech.pegasys.web3signer.dsl.tls.support.CertificateHelpers.populateFingerprintFile;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
+import static tech.pegasys.web3signer.tests.AcceptanceTestBase.DEFAULT_CHAIN_ID;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.tls.BasicTlsOptions;
@@ -105,7 +107,8 @@ class ServerSideTlsAcceptanceTest {
           new SignerConfigurationBuilder()
               .withHttpPort(fixedListenPort)
               .withUseConfigFile(useConfigFile)
-              .withMode("eth1");
+              .withMode("eth1")
+              .withChainIdProvider(new ConfigurationChainId(DEFAULT_CHAIN_ID));
 
       final ClientAuthConstraints clientAuthConstraints;
       if (clientCertInServerWhitelist != null) {
