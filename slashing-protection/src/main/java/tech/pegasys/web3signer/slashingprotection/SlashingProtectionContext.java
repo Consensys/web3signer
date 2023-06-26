@@ -17,27 +17,20 @@ import org.jdbi.v3.core.Jdbi;
 public class SlashingProtectionContext {
 
   private final Jdbi slashingProtectionJdbi;
-  private final Jdbi pruningJdbi;
   private final RegisteredValidators registeredValidators;
   private final SlashingProtection slashingProtection;
 
   public SlashingProtectionContext(
       final Jdbi slashingProtectionJdbi,
-      final Jdbi pruningJdbi,
       final RegisteredValidators registeredValidators,
       final SlashingProtection slashingProtection) {
     this.slashingProtectionJdbi = slashingProtectionJdbi;
-    this.pruningJdbi = pruningJdbi;
     this.registeredValidators = registeredValidators;
     this.slashingProtection = slashingProtection;
   }
 
   public Jdbi getSlashingProtectionJdbi() {
     return slashingProtectionJdbi;
-  }
-
-  public Jdbi getPruningJdbi() {
-    return pruningJdbi;
   }
 
   public RegisteredValidators getRegisteredValidators() {
