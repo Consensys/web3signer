@@ -185,7 +185,7 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
   }
 
   // Test version of slashing protection that delegates everything but also captures the thread that
-  // pruning was run so we can verify this
+  // pruning was run, so we can verify this
   private static class TestSlashingProtection implements SlashingProtection {
 
     private final SlashingProtection delegate;

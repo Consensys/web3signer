@@ -72,7 +72,7 @@ public class DbSlashingProtectionTest {
   @Mock private MetadataDao metadataDao;
   @Mock private LowWatermarkDao lowWatermarkDao;
 
-  private DbSlashingProtection dbSlashingProtection;
+  private DbSlashingProtectionPruner dbSlashingProtection;
   private Jdbi slashingJdbi;
   private Jdbi pruningJdbi;
 
@@ -81,19 +81,28 @@ public class DbSlashingProtectionTest {
     DbConnection.configureJdbi(jdbi);
     slashingJdbi = spy(jdbi);
     pruningJdbi = spy(jdbi);
+    final RegisteredValidators registeredValidators =
+        new RegisteredValidators(
+            slashingJdbi, validatorsDao, HashBiMap.create(Map.of(PUBLIC_KEY1, VALIDATOR_ID)));
+
     dbSlashingProtection =
-        new DbSlashingProtection(
-            slashingJdbi,
+        new DbSlashingProtectionPruner(
+            new DbSlashingProtection(
+                slashingJdbi,
+                validatorsDao,
+                signedBlocksDao,
+                signedAttestationsDao,
+                metadataDao,
+                lowWatermarkDao,
+                registeredValidators),
             pruningJdbi,
-            validatorsDao,
+            1,
+            1,
             signedBlocksDao,
             signedAttestationsDao,
-            metadataDao,
             lowWatermarkDao,
-            1,
-            1,
-            new RegisteredValidators(
-                slashingJdbi, validatorsDao, HashBiMap.create(Map.of(PUBLIC_KEY1, VALIDATOR_ID))));
+            registeredValidators);
+
     lenient().when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(GVR));
     lenient().when(validatorsDao.isEnabled(any(), eq(VALIDATOR_ID))).thenReturn(true);
   }
@@ -161,14 +170,11 @@ public class DbSlashingProtectionTest {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
-            jdbi,
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao,
-            0,
-            0,
             new RegisteredValidators(jdbi, validatorsDao));
 
     assertThatThrownBy(
@@ -332,14 +338,11 @@ public class DbSlashingProtectionTest {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
-            jdbi,
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao,
-            0,
-            0,
             new RegisteredValidators(jdbi, validatorsDao));
 
     assertThatThrownBy(
