@@ -34,8 +34,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,21 +53,16 @@ public class DbSlashingProtection implements SlashingProtection {
   private final InterchangeManager interchangeManager;
   private final LowWatermarkDao lowWatermarkDao;
   private final GenesisValidatorRootValidator gvrValidator;
-  private final DbPruner dbPruner;
-  private final long pruningEpochsToKeep;
-  private final long pruningSlotsPerEpoch;
+
   private final RegisteredValidators registeredValidators;
 
   public DbSlashingProtection(
       final Jdbi jdbi,
-      final Jdbi pruningJdbi,
       final ValidatorsDao validatorsDao,
       final SignedBlocksDao signedBlocksDao,
       final SignedAttestationsDao signedAttestationsDao,
       final MetadataDao metadataDao,
       final LowWatermarkDao lowWatermarkDao,
-      final long pruningEpochsToKeep,
-      final long pruningSlotsPerEpoch,
       final RegisteredValidators registeredValidators) {
     this.jdbi = jdbi;
     this.validatorsDao = validatorsDao;
@@ -86,10 +79,6 @@ public class DbSlashingProtection implements SlashingProtection {
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao);
-    this.dbPruner =
-        new DbPruner(pruningJdbi, signedBlocksDao, signedAttestationsDao, lowWatermarkDao);
-    this.pruningEpochsToKeep = pruningEpochsToKeep;
-    this.pruningSlotsPerEpoch = pruningSlotsPerEpoch;
   }
 
   @Override
@@ -246,23 +235,6 @@ public class DbSlashingProtection implements SlashingProtection {
   }
 
   @Override
-  public void prune() {
-    final Set<Integer> validatorKeys = registeredValidators.validatorIds();
-    LOG.info("Pruning slashing protection database for {} validators", validatorKeys.size());
-    final AtomicInteger pruningCount = new AtomicInteger();
-    validatorKeys.forEach(
-        v -> {
-          LOG.trace(
-              "Pruning {} of {} validator {}",
-              pruningCount::incrementAndGet,
-              validatorKeys::size,
-              () -> registeredValidators.getPublicKeyForValidatorId(v));
-          dbPruner.pruneForValidator(v, pruningEpochsToKeep, pruningSlotsPerEpoch);
-        });
-    LOG.info("Pruning slashing protection database complete");
-  }
-
-  @Override
   public boolean hasSlashingProtectionDataFor(final Bytes publicKey) {
     final Optional<Integer> maybeValidatorId =
         registeredValidators.getValidatorIdForPublicKey(publicKey);
@@ -290,6 +262,11 @@ public class DbSlashingProtection implements SlashingProtection {
           lockForValidator(handle, LockType.BLOCK, validatorId);
           validatorsDao.setEnabled(handle, validatorId, enabled);
         });
+  }
+
+  @Override
+  public void prune() {
+    // no-op;
   }
 
   private boolean isEnabled(final Handle handle, final int validatorId) {
