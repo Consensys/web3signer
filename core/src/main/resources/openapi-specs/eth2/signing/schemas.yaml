@@ -77,6 +77,7 @@ components:
             - attestation
     BlockSigning:
       description: '** DEPRECATED ** See BeaconBlockSigning.'
+      summary: '** DEPRECATED ** See BeaconBlockSigning.'
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
