@@ -20,9 +20,13 @@
         {url: "/swagger-ui/filecoin/web3signer.yaml", name: "Filecoin"},
         ],
         dom_id: '#swagger-ui',
+        deepLinking: true,
         presets: [
           SwaggerUIBundle.presets.apis,
           SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
         ],
         layout: "StandaloneLayout",
       });
