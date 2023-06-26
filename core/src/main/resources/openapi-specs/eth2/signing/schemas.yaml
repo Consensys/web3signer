@@ -5,13 +5,16 @@ components:
       properties:
         type:
           type: "string"
+          description: Signing Request type such as BLOCK_V2, ATTESTATION, RANDAO_REVEAL etc.
         fork_info:
           type: object
           properties:
             fork:
               $ref: '#/components/schemas/Fork'
+              description: Fork information
             genesis_validators_root:
               type: "string"
+              description: Genesis Validators Root in hex string format.
           required:
             - fork
             - genesis_validators_root
@@ -419,11 +422,18 @@ components:
       type: object
       properties:
         beacon_block:
-          anyOf:
+          oneOf:
             - $ref: '#/components/schemas/BlockRequestPhase0'
             - $ref: '#/components/schemas/BlockRequestAltair'
             - $ref: '#/components/schemas/BlockRequestBellatrix'
             - $ref: '#/components/schemas/BlockRequestCapella'
+          discriminator:
+            propertyName: version
+            mapping:
+              PHASE0: '#/components/schemas/BlockRequestPhase0'
+              ALTAIR: '#/components/schemas/BlockRequestAltair'
+              BELLATRIX: '#/components/schemas/BlockRequestBellatrix'
+              CAPELLA: '#/components/schemas/BlockRequestCapella'
       required:
         - beacon_block
     BlockRequestPhase0:
