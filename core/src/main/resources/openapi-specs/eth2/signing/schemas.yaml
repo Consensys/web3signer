@@ -77,7 +77,6 @@ components:
             - attestation
     BlockSigning:
       description: '** DEPRECATED ** See BeaconBlockSigning.'
-      summary: '** DEPRECATED ** See BeaconBlockSigning.'
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
@@ -236,11 +235,18 @@ components:
         previous_version:
           pattern: "^0x[a-fA-F0-9]{8}$"
           type: "string"
+          description: 'Previous version of fork'
+          example: '0x00000001'
         current_version:
           pattern: "^0x[a-fA-F0-9]{8}$"
           type: "string"
+          description: 'Current version of fork'
+          example: '0x00000001'
         epoch:
           type: "string"
+          description: 'Epoch value in String format'
+          format: "uint64"
+          example: '1'
     BeaconBlock:
       type: "object"
       properties:
