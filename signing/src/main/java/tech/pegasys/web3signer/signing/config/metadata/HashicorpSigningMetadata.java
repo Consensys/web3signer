@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.signing.config.metadata;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 
+import java.net.http.HttpClient;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,6 +35,7 @@ public class HashicorpSigningMetadata extends SigningMetadata {
 
   private Boolean tlsEnabled = false;
   private Path tlsKnownServerFile = null;
+  private HttpClient.Version httpProtocolVersion;
 
   @JsonCreator
   public HashicorpSigningMetadata(
@@ -72,6 +74,11 @@ public class HashicorpSigningMetadata extends SigningMetadata {
     this.tlsKnownServerFile = value;
   }
 
+  @JsonSetter("httpProtocolVersion")
+  public void setHttpProtocolVersion(final HttpClient.Version httpProtocolVersion) {
+    this.httpProtocolVersion = httpProtocolVersion;
+  }
+
   public String getServerHost() {
     return serverHost;
   }
@@ -102,6 +109,10 @@ public class HashicorpSigningMetadata extends SigningMetadata {
 
   public Path getTlsKnownServerFile() {
     return tlsKnownServerFile;
+  }
+
+  public HttpClient.Version getHttpProtocolVersion() {
+    return httpProtocolVersion;
   }
 
   @Override

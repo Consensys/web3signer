@@ -64,11 +64,11 @@ public class HashicorpVaultAccessAcceptanceTest {
         Collections.singletonMap(SECRET_KEY, SECRET_VALUE), KEY_SUBPATH);
 
     final ConnectionParameters connectionParameters =
-        new ConnectionParameters(
-            hashicorpNode.getHost(),
-            Optional.of(hashicorpNode.getPort()),
-            Optional.empty(),
-            Optional.of(30_000L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(hashicorpNode.getHost())
+            .withServerPort(hashicorpNode.getPort())
+            .withTimeoutMs(30_000L)
+            .build();
     final KeyDefinition key =
         new KeyDefinition(
             hashicorpNode.getHttpApiPathForSecret(KEY_SUBPATH),
@@ -97,11 +97,12 @@ public class HashicorpVaultAccessAcceptanceTest {
     final TlsOptions tlsOptions =
         new TlsOptions(Optional.of(TrustStoreType.WHITELIST), fingerprintFile, null);
     final ConnectionParameters connectionParameters =
-        new ConnectionParameters(
-            hashicorpNode.getHost(),
-            Optional.of(hashicorpNode.getPort()),
-            Optional.of(tlsOptions),
-            Optional.of(30_000L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(hashicorpNode.getHost())
+            .withServerPort(hashicorpNode.getPort())
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(30_000L)
+            .build();
     final KeyDefinition key =
         new KeyDefinition(
             hashicorpNode.getHttpApiPathForSecret(KEY_SUBPATH),
@@ -128,11 +129,12 @@ public class HashicorpVaultAccessAcceptanceTest {
     final TlsOptions tlsOptions =
         new TlsOptions(Optional.of(TrustStoreType.PKCS12), trustStorePath, TRUST_STORE_PASSWORD);
     final ConnectionParameters connectionParameters =
-        new ConnectionParameters(
-            hashicorpNode.getHost(),
-            Optional.of(hashicorpNode.getPort()),
-            Optional.of(tlsOptions),
-            Optional.of(30_000L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(hashicorpNode.getHost())
+            .withServerPort(hashicorpNode.getPort())
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(30_000L)
+            .build();
     final KeyDefinition key =
         new KeyDefinition(
             hashicorpNode.getHttpApiPathForSecret(KEY_SUBPATH),
@@ -159,11 +161,12 @@ public class HashicorpVaultAccessAcceptanceTest {
     final TlsOptions tlsOptions =
         new TlsOptions(Optional.of(TrustStoreType.JKS), trustStorePath, TRUST_STORE_PASSWORD);
     final ConnectionParameters connectionParameters =
-        new ConnectionParameters(
-            hashicorpNode.getHost(),
-            Optional.of(hashicorpNode.getPort()),
-            Optional.of(tlsOptions),
-            Optional.of(30_000L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(hashicorpNode.getHost())
+            .withServerPort(hashicorpNode.getPort())
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(30_000L)
+            .build();
     final KeyDefinition key =
         new KeyDefinition(
             hashicorpNode.getHttpApiPathForSecret(KEY_SUBPATH),
@@ -189,11 +192,12 @@ public class HashicorpVaultAccessAcceptanceTest {
     final TlsOptions tlsOptions =
         new TlsOptions(Optional.of(TrustStoreType.PEM), trustStorePath, null);
     final ConnectionParameters connectionParameters =
-        new ConnectionParameters(
-            hashicorpNode.getHost(),
-            Optional.of(hashicorpNode.getPort()),
-            Optional.of(tlsOptions),
-            Optional.of(30_000L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(hashicorpNode.getHost())
+            .withServerPort(hashicorpNode.getPort())
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(30_000L)
+            .build();
     final KeyDefinition key =
         new KeyDefinition(
             hashicorpNode.getHttpApiPathForSecret(KEY_SUBPATH),

@@ -46,8 +46,11 @@ public class HashicorpConnectionFactoryTest {
     final TlsOptions tlsOptions =
         new TlsOptions(Optional.of(TrustStoreType.WHITELIST), invalidWhitelist.toPath(), null);
     final ConnectionParameters params =
-        new ConnectionParameters(
-            CONFIGURED_HOST, Optional.empty(), Optional.of(tlsOptions), Optional.of(10L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(CONFIGURED_HOST)
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(10L)
+            .build();
 
     assertThatThrownBy(() -> connectionFactory.create(params))
         .isInstanceOf(HashicorpException.class);
@@ -60,8 +63,11 @@ public class HashicorpConnectionFactoryTest {
     final TlsOptions tlsOptions =
         new TlsOptions(Optional.of(TrustStoreType.WHITELIST), invalidFile, null);
     final ConnectionParameters params =
-        new ConnectionParameters(
-            CONFIGURED_HOST, Optional.empty(), Optional.of(tlsOptions), Optional.of(10L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(CONFIGURED_HOST)
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(10L)
+            .build();
 
     assertThatThrownBy(() -> connectionFactory.create(params))
         .isInstanceOf(HashicorpException.class)
@@ -75,10 +81,12 @@ public class HashicorpConnectionFactoryTest {
 
     final TlsOptions tlsOptions =
         spy(new TlsOptions(Optional.of(TrustStoreType.PKCS12), keystorePath, "password"));
-
     final ConnectionParameters params =
-        new ConnectionParameters(
-            CONFIGURED_HOST, Optional.empty(), Optional.of(tlsOptions), Optional.of(10L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(CONFIGURED_HOST)
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(10L)
+            .build();
 
     connectionFactory.create(params);
 
@@ -90,10 +98,12 @@ public class HashicorpConnectionFactoryTest {
   @Test
   void defaultPortIsUsedByConnectionParametersIfNonConfigured() {
     final ConnectionParameters params =
-        new ConnectionParameters(
-            CONFIGURED_HOST, Optional.empty(), Optional.empty(), Optional.of(10L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(CONFIGURED_HOST)
+            .withTimeoutMs(10L)
+            .build();
 
-    assertThat(params.getServerPort()).isEqualTo(8200);
+    assertThat(params.getVaultURI().getPort()).isEqualTo(8200);
   }
 
   @ParameterizedTest
@@ -103,8 +113,11 @@ public class HashicorpConnectionFactoryTest {
         new TlsOptions(Optional.of(TrustStoreType.fromString(trustType).get()), null, null);
 
     final ConnectionParameters params =
-        new ConnectionParameters(
-            CONFIGURED_HOST, Optional.empty(), Optional.of(tlsOptions), Optional.of(10L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(CONFIGURED_HOST)
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(10L)
+            .build();
 
     assertThatThrownBy(() -> connectionFactory.create(params))
         .isInstanceOf(HashicorpException.class);
@@ -120,8 +133,11 @@ public class HashicorpConnectionFactoryTest {
             Optional.of(TrustStoreType.fromString(trustType).get()), tempFile.toPath(), null);
 
     final ConnectionParameters params =
-        new ConnectionParameters(
-            CONFIGURED_HOST, Optional.empty(), Optional.of(tlsOptions), Optional.of(10L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(CONFIGURED_HOST)
+            .withTlsOptions(tlsOptions)
+            .withTimeoutMs(10L)
+            .build();
 
     assertThatThrownBy(() -> connectionFactory.create(params))
         .isInstanceOf(HashicorpException.class);

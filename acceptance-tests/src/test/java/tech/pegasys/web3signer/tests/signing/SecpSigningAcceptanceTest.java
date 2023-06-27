@@ -29,6 +29,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.SignatureException;
 import java.security.interfaces.ECPublicKey;
+import java.util.Optional;
 
 import com.google.common.io.Resources;
 import io.restassured.response.Response;
@@ -81,7 +82,9 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
           new HashicorpSigningParams(hashicorpNode, secretPath, secretName, KeyType.SECP256K1);
 
       METADATA_FILE_HELPERS.createHashicorpYamlFileAt(
-          testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"), hashicorpSigningParams);
+          testDirectory.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+          hashicorpSigningParams,
+          Optional.empty());
 
       signAndVerifySignature();
     } finally {
