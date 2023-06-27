@@ -27,6 +27,7 @@ public class SlashingProtectionContextFactory {
 
   public static SlashingProtectionContext create(
       final SlashingProtectionParameters slashingProtectionParameters) {
+
     final Jdbi jdbi =
         DbConnection.createConnection(
             slashingProtectionParameters.getDbUrl(),
@@ -36,31 +37,43 @@ public class SlashingProtectionContextFactory {
             slashingProtectionParameters.isDbConnectionPoolEnabled());
     verifyVersion(jdbi);
 
-    // create separate Jdbi instance for pruning operations
-    final Jdbi pruningJdbi =
-        DbConnection.createPruningConnection(
-            slashingProtectionParameters.getDbUrl(),
-            slashingProtectionParameters.getDbUsername(),
-            slashingProtectionParameters.getDbPassword(),
-            slashingProtectionParameters.getPruningDbPoolConfigurationFile(),
-            slashingProtectionParameters.isDbConnectionPoolEnabled());
-
     final ValidatorsDao validatorsDao = new ValidatorsDao();
+    final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
+    final SignedAttestationsDao signedAttestationsDao = new SignedAttestationsDao();
+    final MetadataDao metadataDao = new MetadataDao();
+    final LowWatermarkDao lowWatermarkDao = new LowWatermarkDao();
     final RegisteredValidators registeredValidators = new RegisteredValidators(jdbi, validatorsDao);
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
-            pruningJdbi,
             validatorsDao,
-            new SignedBlocksDao(),
-            new SignedAttestationsDao(),
-            new MetadataDao(),
-            new LowWatermarkDao(),
-            slashingProtectionParameters.getPruningEpochsToKeep(),
-            slashingProtectionParameters.getPruningSlotsPerEpoch(),
+            signedBlocksDao,
+            signedAttestationsDao,
+            metadataDao,
+            lowWatermarkDao,
             registeredValidators);
-    return new SlashingProtectionContext(
-        jdbi, pruningJdbi, registeredValidators, dbSlashingProtection);
+    if (slashingProtectionParameters.isPruningEnabled()) {
+      final Jdbi pruningJdbi =
+          DbConnection.createPruningConnection(
+              slashingProtectionParameters.getDbUrl(),
+              slashingProtectionParameters.getDbUsername(),
+              slashingProtectionParameters.getDbPassword(),
+              slashingProtectionParameters.getPruningDbPoolConfigurationFile(),
+              slashingProtectionParameters.isDbConnectionPoolEnabled());
+      final SlashingProtectionPruner slashingProtectionPruner =
+          new DBSlashingProtectionPruner(
+              pruningJdbi,
+              slashingProtectionParameters.getPruningEpochsToKeep(),
+              slashingProtectionParameters.getPruningSlotsPerEpoch(),
+              registeredValidators,
+              signedBlocksDao,
+              signedAttestationsDao,
+              lowWatermarkDao);
+      return new SlashingProtectionContext(
+          jdbi, slashingProtectionPruner, registeredValidators, dbSlashingProtection);
+    }
+
+    return new SlashingProtectionContext(jdbi, registeredValidators, dbSlashingProtection);
   }
 
   private static void verifyVersion(final Jdbi jdbi) {
