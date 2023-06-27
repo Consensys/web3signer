@@ -33,7 +33,9 @@ public class CmdlineHelpers {
   }
 
   public static String validBaseYamlAliasOptions() {
-    return "metrics-category: \"HTTP\"\n" + "l: \"INFO\"\n" + "key-store-path: \"./keys_yaml_alias\"\n";
+    return "metrics-category: \"HTTP\"\n"
+        + "l: \"INFO\"\n"
+        + "key-store-path: \"./keys_yaml_alias\"\n";
   }
 
   public static Map<String, String> validBaseEnvironmentVariableOptions() {
