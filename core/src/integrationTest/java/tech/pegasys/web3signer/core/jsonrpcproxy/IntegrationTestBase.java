@@ -37,6 +37,7 @@ import tech.pegasys.web3signer.core.jsonrpcproxy.support.MockServer;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.RestAssuredConverter;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestBaseConfig;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestEth1Config;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.io.File;
@@ -96,6 +97,8 @@ public class IntegrationTestBase {
   public static final String PUBLIC_KEY_HEX_STRING =
       "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
 
+  public static final long DEFAULT_CHAIN_ID = 9;
+
   @BeforeAll
   static void setupWeb3Signer() throws Exception {
     setupWeb3Signer("");
@@ -118,7 +121,8 @@ public class IntegrationTestBase {
             downstreamHttpRequestPath,
             LOCALHOST,
             clientAndServer.getLocalPort(),
-            downstreamTimeout);
+            downstreamTimeout,
+            new ConfigurationChainId(DEFAULT_CHAIN_ID));
     vertx = Vertx.vertx();
     runner = new Eth1Runner(baseConfig, eth1Config);
     runner.run();

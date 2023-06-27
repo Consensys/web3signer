@@ -19,6 +19,7 @@ import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.web3signer.BLSTestUtil;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.Eth2RequestUtils;
@@ -53,6 +54,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
             .withMetricsEnabled(true)
             .withMode("filecoin")
             .withUseConfigFile(useConfigFile)
+            .withChainIdProvider(new ConfigurationChainId(FILECOIN_CHAIN_ID))
             .build();
     startSigner(signerConfiguration);
 
@@ -135,6 +137,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
             .withMetricsEnabled(true)
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth1")
+            .withChainIdProvider(new ConfigurationChainId(DEFAULT_CHAIN_ID))
             .build();
 
     startSigner(signerConfiguration);
