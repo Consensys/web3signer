@@ -2,7 +2,7 @@
 ## Upcoming Release
 
 ### Features Added
-- Add eth_SignTransaction RPC method under the eth1 subcommand[#812](https://github.com/ConsenSys/web3signer/pull/812)
+- Add eth_SignTransaction RPC method under the eth1 subcommand[#822](https://github.com/ConsenSys/web3signer/pull/822)
 
 ### Bugs Fixed
 
