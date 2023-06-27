@@ -1,4 +1,12 @@
 # Changelog
+
+## Next release
+### Features Added
+- Hashicorp connection properties can now override http protocol to HTTP/1.1 from the default of HTTP/2. [#817](https://github.com/ConsenSys/web3signer/pull/817)
+
+### Bugs fixed
+
+---
 ## 23.6.0
 
 As part of our ongoing commitment to deliver the best remote signing solutions, we are announcing a change in our product offerings.

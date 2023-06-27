@@ -43,7 +43,6 @@ class HashicorpIntegrationTest {
   private static final String ROOT_TOKEN = "token";
   private static final String EXPECTED_KEY_STRING =
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
-  private static final long TIMEOUT_MILLISECONDS = 10_000;
 
   private final HashicorpConnectionFactory factory = new HashicorpConnectionFactory();
 
@@ -58,11 +57,10 @@ class HashicorpIntegrationTest {
                 .withBody("{\"data\":{\"data\":{\"value\":\"" + EXPECTED_KEY_STRING + "\"}}}"));
 
     final ConnectionParameters connectionParameters =
-        new ConnectionParameters(
-            DEFAULT_HOST,
-            Optional.of(clientAndServer.getLocalPort()),
-            Optional.empty(),
-            Optional.of(TIMEOUT_MILLISECONDS));
+        ConnectionParameters.newBuilder()
+            .withServerHost(DEFAULT_HOST)
+            .withServerPort(clientAndServer.getLocalPort())
+            .build();
     final KeyDefinition key = new KeyDefinition(KEY_PATH, Optional.empty(), ROOT_TOKEN);
 
     final HashicorpConnection connection = factory.create(connectionParameters);
@@ -92,11 +90,11 @@ class HashicorpIntegrationTest {
             Path.of(keyStoreFactory.keyStoreFileName),
             KeyStoreFactory.KEY_STORE_PASSWORD);
     final ConnectionParameters connectionParameters =
-        new ConnectionParameters(
-            DEFAULT_HOST,
-            Optional.of(clientAndServer.getLocalPort()),
-            Optional.of(tlsOptions),
-            Optional.of(TIMEOUT_MILLISECONDS));
+        ConnectionParameters.newBuilder()
+            .withServerHost(DEFAULT_HOST)
+            .withServerPort(clientAndServer.getLocalPort())
+            .withTlsOptions(tlsOptions)
+            .build();
     final KeyDefinition key = new KeyDefinition(KEY_PATH, Optional.empty(), ROOT_TOKEN);
 
     final HashicorpConnection connection = factory.create(connectionParameters);
@@ -113,11 +111,11 @@ class HashicorpIntegrationTest {
         .respond(response().withDelay(TimeUnit.SECONDS, 5));
 
     final ConnectionParameters connectionParameters =
-        new ConnectionParameters(
-            DEFAULT_HOST,
-            Optional.of(clientAndServer.getLocalPort()),
-            Optional.empty(),
-            Optional.of(1L));
+        ConnectionParameters.newBuilder()
+            .withServerHost(DEFAULT_HOST)
+            .withServerPort(clientAndServer.getLocalPort())
+            .withTimeoutMs(1L)
+            .build();
     final KeyDefinition key = new KeyDefinition(KEY_PATH, Optional.empty(), ROOT_TOKEN);
 
     final HashicorpConnection connection = factory.create(connectionParameters);
@@ -132,11 +130,10 @@ class HashicorpIntegrationTest {
     clientAndServer.when(request().withPath(".*")).respond(response().withStatusCode(500));
 
     final ConnectionParameters connectionParameters =
-        new ConnectionParameters(
-            DEFAULT_HOST,
-            Optional.of(clientAndServer.getLocalPort()),
-            Optional.empty(),
-            Optional.of(TIMEOUT_MILLISECONDS));
+        ConnectionParameters.newBuilder()
+            .withServerHost(DEFAULT_HOST)
+            .withServerPort(clientAndServer.getLocalPort())
+            .build();
     final KeyDefinition key = new KeyDefinition(KEY_PATH, Optional.empty(), ROOT_TOKEN);
 
     final HashicorpConnection connection = factory.create(connectionParameters);
