@@ -32,6 +32,11 @@ public class DemoCommand {
   @Option(names = "--name", description = "Name")
   String name;
 
+  @Option(
+      names = {"--alias", "--aliases"},
+      description = "Aliases")
+  String alias;
+
   @Command(name = "country", description = "Country Codes")
   static class SubCommand {
     @Option(names = "--codes", split = ",")

@@ -83,6 +83,23 @@ class EnvironmentVariableDefaultProviderTest {
     assertThat(subCommand.countryCodes).isNullOrEmpty();
   }
 
+  @Test
+  void environmentVariablesAreCreatedForAliases() {
+
+    assertAliasCreated("DEMO_ALIAS", "testValue");
+    assertAliasCreated("DEMO_ALIASES", "testValue2");
+  }
+
+  private void assertAliasCreated(String envKey, String envValue) {
+    final EnvironmentVariableDefaultProvider defaultProvider =
+        new EnvironmentVariableDefaultProvider(Map.of(envKey, envValue));
+
+    commandLine.setDefaultValueProvider(defaultProvider);
+    commandLine.parseArgs();
+
+    assertThat(demoCommand.alias).isEqualTo(envValue);
+  }
+
   private Map<String, String> validEnvMap() {
     return Map.of(
         "DEMO_X", "10", "DEMO_Y", "20", "DEMO_NAME", "test name", "DEMO_COUNTRY_CODES", "AU,US");
