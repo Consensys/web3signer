@@ -41,5 +41,10 @@ public class DemoCommand {
   static class SubCommand {
     @Option(names = "--codes", split = ",")
     List<String> countryCodes;
+
+    @Option(
+        names = {"--subalias", "--subaliases"},
+        description = "Subcommand Alias")
+    String subalias;
   }
 }

@@ -88,16 +88,22 @@ class EnvironmentVariableDefaultProviderTest {
 
     assertAliasCreated("DEMO_ALIAS", "testValue");
     assertAliasCreated("DEMO_ALIASES", "testValue2");
+    assertAliasCreated("DEMO_COUNTRY_SUBALIAS", "testValue3", "country");
+    assertAliasCreated("DEMO_COUNTRY_SUBALIASES", "testValue4", "country");
   }
 
-  private void assertAliasCreated(String envKey, String envValue) {
+  private void assertAliasCreated(String envKey, String envValue, String... subCommandName) {
     final EnvironmentVariableDefaultProvider defaultProvider =
         new EnvironmentVariableDefaultProvider(Map.of(envKey, envValue));
 
     commandLine.setDefaultValueProvider(defaultProvider);
-    commandLine.parseArgs();
+    commandLine.parseArgs(subCommandName);
 
-    assertThat(demoCommand.alias).isEqualTo(envValue);
+    if (subCommandName.length > 0) {
+      assertThat(subCommand.subalias).isEqualTo(envValue);
+    } else {
+      assertThat(demoCommand.alias).isEqualTo(envValue);
+    }
   }
 
   private Map<String, String> validEnvMap() {
