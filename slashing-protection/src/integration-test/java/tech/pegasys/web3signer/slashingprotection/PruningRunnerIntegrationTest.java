@@ -16,10 +16,6 @@ import static db.DatabaseUtil.PASSWORD;
 import static db.DatabaseUtil.USERNAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.slashingprotection.interchange.IncrementalExporter;
-
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -32,9 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import dsl.TestSlashingProtectionParameters;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,15 +60,15 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
 
   @Test
   void prunesValidatorsForExecuteOnOwnThread() {
-    final TestSlashingProtection testSlashingProtection =
-        new TestSlashingProtection(pruningSlashingProtectionContext.getSlashingProtection());
+    final TestSlashingProtectionPruner testSlashingProtectionPruner =
+        new TestSlashingProtectionPruner(pruningSlashingProtectionContext.getPruner());
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
-            slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
+            slashingProtectionParameters, testSlashingProtectionPruner, scheduledExecutorService);
 
     dbPrunerRunner.execute();
 
-    final List<PruningStat> pruningStats = testSlashingProtection.getPruningStats();
+    final List<PruningStat> pruningStats = testSlashingProtectionPruner.getPruningStats();
     waitForPruningToFinish(pruningStats, 1);
     assertThat(pruningStats.get(0).getThread().getName()).isEqualTo(PRUNING_THREAD_NAME);
     assertThat(fetchAttestations(1)).hasSize(5);
@@ -84,18 +77,17 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
 
   @Test
   void prunesValidatorsForExecuteHandlesErrors() {
-    final TestSlashingProtection testSlashingProtection =
-        new TestSlashingProtection(
-            pruningSlashingProtectionContext.getSlashingProtection(),
-            createPrunerRunnerThatFailsOnFirstRun());
+    final TestSlashingProtectionPruner testSlashingProtectionPruner =
+        new TestSlashingProtectionPruner(
+            pruningSlashingProtectionContext.getPruner(), createPrunerRunnerThatFailsOnFirstRun());
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
-            slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
+            slashingProtectionParameters, testSlashingProtectionPruner, scheduledExecutorService);
 
     // run expecting error to occur and no pruning to happen
     dbPrunerRunner.execute();
 
-    final List<PruningStat> pruningStats = testSlashingProtection.getPruningStats();
+    final List<PruningStat> pruningStats = testSlashingProtectionPruner.getPruningStats();
     waitForPruningToFinish(pruningStats, 1);
     final Set<Thread> currentThreads = Thread.getAllStackTraces().keySet();
     assertThat(currentThreads.stream().anyMatch(t -> t.getName().equals(PRUNING_THREAD_NAME)))
@@ -118,7 +110,7 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
       if (pruningCount.addAndGet(1) == 1) {
         throw new IllegalStateException("Pruning failed");
       } else {
-        pruningSlashingProtectionContext.getSlashingProtection().prune();
+        pruningSlashingProtectionContext.getPruner().prune();
       }
     };
   }
@@ -127,17 +119,16 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
   void prunesValidatorsForScheduledRunAreRunPeriodically() {
     final SlashingProtectionParameters slashingProtectionParameters =
         new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, 1);
-    final TestSlashingProtection testSlashingProtection =
-        new TestSlashingProtection(
-            pruningSlashingProtectionContext.getSlashingProtection(),
-            createPrunerRunnerThatFailsOnFirstRun());
+    final TestSlashingProtectionPruner testSlashingProtectionPruner =
+        new TestSlashingProtectionPruner(
+            pruningSlashingProtectionContext.getPruner(), createPrunerRunnerThatFailsOnFirstRun());
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
-            slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
+            slashingProtectionParameters, testSlashingProtectionPruner, scheduledExecutorService);
 
     dbPrunerRunner.schedule();
 
-    final List<PruningStat> pruningStats = testSlashingProtection.getPruningStats();
+    final List<PruningStat> pruningStats = testSlashingProtectionPruner.getPruningStats();
     waitForPruningToFinish(pruningStats, 3);
     assertThat(
             pruningStats.stream()
@@ -156,15 +147,15 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
   void prunesValidatorsForScheduledRunHandlesErrors() {
     final SlashingProtectionParameters slashingProtectionParameters =
         new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 5, 1, 1);
-    final TestSlashingProtection testSlashingProtection =
-        new TestSlashingProtection(pruningSlashingProtectionContext.getSlashingProtection());
+    final TestSlashingProtectionPruner testSlashingProtectionPruner =
+        new TestSlashingProtectionPruner(pruningSlashingProtectionContext.getPruner());
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
-            slashingProtectionParameters, testSlashingProtection, scheduledExecutorService);
+            slashingProtectionParameters, testSlashingProtectionPruner, scheduledExecutorService);
 
     dbPrunerRunner.schedule();
 
-    final List<PruningStat> pruningStats = testSlashingProtection.getPruningStats();
+    final List<PruningStat> pruningStats = testSlashingProtectionPruner.getPruningStats();
     waitForPruningToFinish(pruningStats, 2);
     assertThat(
             pruningStats.stream()
@@ -184,72 +175,17 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
         .untilAsserted(() -> assertThat(pruningStats).hasSize(pruningSize));
   }
 
-  // Test version of slashing protection that delegates everything but also captures the thread that
-  // pruning was run so we can verify this
-  private static class TestSlashingProtection implements SlashingProtection {
+  private static class TestSlashingProtectionPruner implements SlashingProtectionPruner {
 
-    private final SlashingProtection delegate;
     private final Runnable pruningRunner;
     private final List<PruningStat> pruningStats = new ArrayList<>();
 
-    public TestSlashingProtection(final SlashingProtection delegate) {
-      this.delegate = delegate;
-      this.pruningRunner = delegate::prune;
+    public TestSlashingProtectionPruner(final SlashingProtectionPruner pruner) {
+      this.pruningRunner = pruner::prune;
     }
 
-    public TestSlashingProtection(final SlashingProtection delegate, final Runnable pruningRunner) {
-      this.delegate = delegate;
-      this.pruningRunner = pruningRunner;
-    }
-
-    @Override
-    public boolean maySignAttestation(
-        final Bytes publicKey,
-        final Bytes signingRoot,
-        final UInt64 sourceEpoch,
-        final UInt64 targetEpoch,
-        final Bytes32 genesisValidatorsRoot) {
-      return delegate.maySignAttestation(
-          publicKey, signingRoot, sourceEpoch, targetEpoch, genesisValidatorsRoot);
-    }
-
-    @Override
-    public boolean maySignBlock(
-        final Bytes publicKey,
-        final Bytes signingRoot,
-        final UInt64 blockSlot,
-        final Bytes32 genesisValidatorsRoot) {
-      return delegate.maySignBlock(publicKey, signingRoot, blockSlot, genesisValidatorsRoot);
-    }
-
-    @Override
-    public boolean hasSlashingProtectionDataFor(final Bytes publicKey) {
-      return delegate.hasSlashingProtectionDataFor(publicKey);
-    }
-
-    @Override
-    public void exportData(final OutputStream output) {
-      delegate.exportData(output);
-    }
-
-    @Override
-    public void exportDataWithFilter(OutputStream output, List<String> pubkeys) {
-      delegate.exportDataWithFilter(output, pubkeys);
-    }
-
-    @Override
-    public IncrementalExporter createIncrementalExporter(final OutputStream out) {
-      return delegate.createIncrementalExporter(out);
-    }
-
-    @Override
-    public void importData(final InputStream output) {
-      delegate.importData(output);
-    }
-
-    @Override
-    public void importDataWithFilter(InputStream output, List<String> pubkeys) {
-      delegate.importDataWithFilter(output, pubkeys);
+    public TestSlashingProtectionPruner(final SlashingProtectionPruner pruner, Runnable runnable) {
+      this.pruningRunner = runnable;
     }
 
     @Override
@@ -258,16 +194,6 @@ public class PruningRunnerIntegrationTest extends IntegrationTestBase {
       final LocalDateTime currentTime = LocalDateTime.now(ZoneId.systemDefault());
       pruningStats.add(new PruningStat(currentThread, currentTime));
       pruningRunner.run();
-    }
-
-    @Override
-    public boolean isEnabledValidator(final Bytes publicKey) {
-      return delegate.isEnabledValidator(publicKey);
-    }
-
-    @Override
-    public void updateValidatorEnabledStatus(final Bytes publicKey, final boolean enabled) {
-      delegate.updateValidatorEnabledStatus(publicKey, enabled);
     }
 
     public List<PruningStat> getPruningStats() {
