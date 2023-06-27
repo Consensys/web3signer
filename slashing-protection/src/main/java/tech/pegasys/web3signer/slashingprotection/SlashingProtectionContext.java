@@ -12,14 +12,12 @@
  */
 package tech.pegasys.web3signer.slashingprotection;
 
-import java.util.Optional;
-
 import org.jdbi.v3.core.Jdbi;
 
 public class SlashingProtectionContext {
 
   private final Jdbi slashingProtectionJdbi;
-  private final Optional<SlashingProtectionPruner> slashingProtectionPruner;
+  private final SlashingProtectionPruner slashingProtectionPruner;
   private final RegisteredValidators registeredValidators;
   private final SlashingProtection slashingProtection;
 
@@ -27,10 +25,7 @@ public class SlashingProtectionContext {
       final Jdbi slashingProtectionJdbi,
       final RegisteredValidators registeredValidators,
       final SlashingProtection slashingProtection) {
-    this.slashingProtectionJdbi = slashingProtectionJdbi;
-    this.slashingProtectionPruner = Optional.empty();
-    this.registeredValidators = registeredValidators;
-    this.slashingProtection = slashingProtection;
+    this(slashingProtectionJdbi, null, registeredValidators, slashingProtection);
   }
 
   public SlashingProtectionContext(
@@ -39,7 +34,7 @@ public class SlashingProtectionContext {
       final RegisteredValidators registeredValidators,
       final SlashingProtection slashingProtection) {
     this.slashingProtectionJdbi = slashingProtectionJdbi;
-    this.slashingProtectionPruner = Optional.of(slashingProtectionPruner);
+    this.slashingProtectionPruner = slashingProtectionPruner;
     this.registeredValidators = registeredValidators;
     this.slashingProtection = slashingProtection;
   }
@@ -49,7 +44,7 @@ public class SlashingProtectionContext {
   }
 
   public SlashingProtectionPruner getPruner() {
-    return slashingProtectionPruner.get();
+    return slashingProtectionPruner;
   }
 
   public RegisteredValidators getRegisteredValidators() {

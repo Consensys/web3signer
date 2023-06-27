@@ -37,8 +37,6 @@ public class SlashingProtectionContextFactory {
             slashingProtectionParameters.isDbConnectionPoolEnabled());
     verifyVersion(jdbi);
 
-    // create separate Jdbi instance for pruning operations
-
     final ValidatorsDao validatorsDao = new ValidatorsDao();
     final SignedBlocksDao signedBlocksDao = new SignedBlocksDao();
     final SignedAttestationsDao signedAttestationsDao = new SignedAttestationsDao();
