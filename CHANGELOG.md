@@ -2,6 +2,7 @@
 
 ## Next release
 ### Features Added
+- Azure bulk mode support for loading multiline (`\n` delimited, up to 200) keys per secret.
 - Hashicorp connection properties can now override http protocol to HTTP/1.1 from the default of HTTP/2. [#817](https://github.com/ConsenSys/web3signer/pull/817)
 
 ### Bugs fixed
