@@ -16,16 +16,12 @@ import static tech.pegasys.web3signer.core.service.jsonrpc.RpcUtil.decodeBigInte
 import static tech.pegasys.web3signer.core.service.jsonrpc.RpcUtil.validateNotEmpty;
 
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import org.web3j.utils.Base64String;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EthSendTransactionJsonParameters {
@@ -36,8 +32,6 @@ public class EthSendTransactionJsonParameters {
   private BigInteger value;
   private String receiver;
   private String data;
-  private Base64String privateFrom;
-  private List<Base64String> privateFor;
 
   @JsonCreator
   public EthSendTransactionJsonParameters(@JsonProperty("from") final String sender) {
@@ -75,17 +69,6 @@ public class EthSendTransactionJsonParameters {
     this.data = data;
   }
 
-  @JsonSetter("privateFrom")
-  public void privateFrom(final String privateFrom) {
-    this.privateFrom = Base64String.wrap(privateFrom);
-  }
-
-  @JsonSetter("privateFor")
-  public void privateFor(final String[] privateFor) {
-    this.privateFor =
-        Arrays.stream(privateFor).map(Base64String::wrap).collect(Collectors.toList());
-  }
-
   public Optional<String> data() {
     return Optional.ofNullable(data);
   }
@@ -112,13 +95,5 @@ public class EthSendTransactionJsonParameters {
 
   public String sender() {
     return sender;
-  }
-
-  public Optional<Base64String> privateFrom() {
-    return Optional.ofNullable(privateFrom);
-  }
-
-  public Optional<List<Base64String>> privateFor() {
-    return Optional.ofNullable(privateFor);
   }
 }
