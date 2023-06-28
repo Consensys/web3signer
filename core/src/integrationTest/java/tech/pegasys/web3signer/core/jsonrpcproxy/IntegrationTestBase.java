@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core.jsonrpcproxy;
 
 import static io.restassured.RestAssured.given;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
@@ -22,6 +23,10 @@ import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.model.JsonBody.json;
 import static org.web3j.utils.Async.defaultExecutorService;
 
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.WalletUtils;
+import org.web3j.protocol.eea.Eea;
+import org.web3j.protocol.eea.JsonRpc2_0Eea;
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.Eth1Config;
@@ -44,6 +49,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -84,8 +90,9 @@ public class IntegrationTestBase {
   private static Vertx vertx;
   private static Eth1Runner runner;
   static ClientAndServer clientAndServer;
-
+  static Credentials credentials;
   private JsonRpc2_0Web3j jsonRpc;
+  private JsonRpc2_0Eea eeaJsonRpc;
 
   protected final EthRequestFactory request = new EthRequestFactory();
   protected final EthResponseFactory response = new EthResponseFactory();
@@ -98,20 +105,26 @@ public class IntegrationTestBase {
       "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
 
   public static final long DEFAULT_CHAIN_ID = 9;
+  public static final int DEFAULT_ID = 77;
+  static final String MALFORMED_JSON = "{Bad Json: {{{}";
 
   @BeforeAll
-  static void setupWeb3Signer() throws Exception {
-    setupWeb3Signer("");
+  static void setupWeb3Signer(final long chainId) throws Exception {
+    setupWeb3Signer(chainId,"");
   }
 
-  static void setupWeb3Signer(final String downstreamHttpRequestPath) throws Exception {
-    setupWeb3Signer(downstreamHttpRequestPath, List.of("sample.com"));
+  static void setupWeb3Signer(final long chainId, final String downstreamHttpRequestPath) throws Exception {
+    setupWeb3Signer(chainId, downstreamHttpRequestPath, List.of("sample.com"));
   }
 
   static void setupWeb3Signer(
+      final long chainId,
       final String downstreamHttpRequestPath, final List<String> allowedCorsOrigin)
       throws Exception {
     clientAndServer = startClientAndServer();
+
+    final File keyFile = createKeyFile();
+    credentials = WalletUtils.loadCredentials("password", keyFile);
 
     createKeyStoreYamlFile();
 
@@ -122,7 +135,7 @@ public class IntegrationTestBase {
             LOCALHOST,
             clientAndServer.getLocalPort(),
             downstreamTimeout,
-            new ConfigurationChainId(DEFAULT_CHAIN_ID));
+            new ConfigurationChainId(chainId));
     vertx = Vertx.vertx();
     runner = new Eth1Runner(baseConfig, eth1Config);
     runner.run();
@@ -145,6 +158,7 @@ public class IntegrationTestBase {
   @BeforeEach
   public void setup() {
     jsonRpc = new JsonRpc2_0Web3j(null, 2000, defaultExecutorService());
+    eeaJsonRpc = new JsonRpc2_0Eea(null);
     if (clientAndServer.isRunning()) {
       clientAndServer.reset();
     }
@@ -177,6 +191,15 @@ public class IntegrationTestBase {
                 .withBody(response.getBody())
                 .withHeaders(MockServer.headers(response.getHeaders()))
                 .withStatusCode(response.getStatusCode()));
+  }
+
+  void timeoutRequest(final String bodyRegex) {
+    final int ENSURE_TIMEOUT = 5;
+    clientAndServer
+            .when(request().withBody(new RegexBody(bodyRegex)))
+            .respond(
+                    response()
+                            .withDelay(TimeUnit.MILLISECONDS, downstreamTimeout.toMillis() + ENSURE_TIMEOUT));
   }
 
   void timeoutRequest(final EthNodeRequest request) {
@@ -345,4 +368,18 @@ public class IntegrationTestBase {
         "pass",
         KeyType.SECP256K1);
   }
+
+  private static File createKeyFile() throws IOException {
+    final URL walletResource = Resources.getResource("keyfile.json");
+    final Path wallet = Files.createTempFile("web3Signer_intg_keyfile", ".json");
+    Files.write(wallet, Resources.toString(walletResource, UTF_8).getBytes(UTF_8));
+    final File keyFile = wallet.toFile();
+    keyFile.deleteOnExit();
+    return keyFile;
+  }
+
+  Eea eeaJsonRpc() {
+    return eeaJsonRpc;
+  }
+
 }

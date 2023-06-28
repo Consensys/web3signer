@@ -43,7 +43,7 @@ class EthAccountsIntegrationTest extends IntegrationTestBase {
         new JsonRpcSuccessResponse(requestBody.getId(), singletonList(expectedAccount));
 
     sendPostRequestAndVerifyResponse(
-        request.web3signer(Json.encode(requestBody)),
+        request.web3Signer(Json.encode(requestBody)),
         response.web3Signer(expectedHeaders, Json.encode(responseBody)));
   }
 }
