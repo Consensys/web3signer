@@ -40,7 +40,6 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   private static final String CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
   private static final String TENANT_ID = System.getenv("AZURE_TENANT_ID");
   private static final String VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
-
   private static final String EXPECTED_KEY =
       "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
 
