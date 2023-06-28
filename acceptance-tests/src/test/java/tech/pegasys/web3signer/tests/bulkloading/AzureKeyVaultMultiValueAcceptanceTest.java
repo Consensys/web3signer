@@ -79,6 +79,7 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
   @BeforeAll
   static void setup() {
     multiValueKeys = findAndCreateAzureMultiValueKeysIfNotExist();
+    assertThat(multiValueKeys).hasSize(200);
   }
 
   @AfterAll
