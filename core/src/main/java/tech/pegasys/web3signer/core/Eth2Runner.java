@@ -274,10 +274,10 @@ public class Eth2Runner extends Runner {
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
             LOG.info("Bulk loading keys from Azure key vault ... ");
             /*
-              Note: Azure supports 25K bytes per secret. https://learn.microsoft.com/en-us/azure/key-vault/secrets/about-secrets
-              Each raw bls private key in hex format is approximately 100 bytes. We should store about 200 or fewer
-              `\n` delimited keys per secret.
-             */
+             Note: Azure supports 25K bytes per secret. https://learn.microsoft.com/en-us/azure/key-vault/secrets/about-secrets
+             Each raw bls private key in hex format is approximately 100 bytes. We should store about 200 or fewer
+             `\n` delimited keys per secret.
+            */
             final MappedResults<ArtifactSigner> azureResult = loadAzureSigners();
             LOG.info(
                 "Keys loaded from Azure: [{}], with error count: [{}]",

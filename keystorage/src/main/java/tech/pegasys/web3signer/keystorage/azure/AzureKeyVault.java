@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.keystorage.azure;
 
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
+import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
 import java.util.Map;
 import java.util.Optional;
@@ -37,7 +38,6 @@ import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
 public class AzureKeyVault {
 
@@ -128,7 +128,8 @@ public class AzureKeyVault {
                           sp -> {
                             try {
                               final KeyVaultSecret secret = secretClient.getSecret(sp.getName());
-                              final MappedResults<R> multiResult = SecretValueMapperUtil.mapSecretValue(
+                              final MappedResults<R> multiResult =
+                                  SecretValueMapperUtil.mapSecretValue(
                                       mapper, sp.getName(), secret.getValue());
                               result.addAll(multiResult.getValues());
                               errorCount.addAndGet(multiResult.getErrorCount());

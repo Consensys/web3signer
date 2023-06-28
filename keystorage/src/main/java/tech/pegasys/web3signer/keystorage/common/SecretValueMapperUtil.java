@@ -31,7 +31,7 @@ public class SecretValueMapperUtil {
 
     // secretValue is the value received from remote vault. It should not be null.
     if (secretValue == null) {
-        return MappedResults.errorResult();
+      return MappedResults.errorResult();
     }
 
     final Set<R> result =
