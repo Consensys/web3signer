@@ -3,26 +3,17 @@
   <head>
     <meta charset="UTF-8">
     <title>Web3Signer Service OpenApi</title>
-    <link rel="stylesheet" type="text/css"
-          href="https://unpkg.com/swagger-ui-dist@4.11.1/swagger-ui.css"
-          integrity="sha384-hSHQxxghnNN115veM49c2ITvj7ueCj3L51MUg6uxyz3aEoUIiKrGmGeCCHZHZqJi"
-          crossorigin="anonymous">
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.1.0/swagger-ui.css" />
   </head>
 
   <body>
     <div id="swagger-ui"></div>
 
-    <script src="https://unpkg.com/swagger-ui-dist@4.11.1/swagger-ui-bundle.js"
-            integrity="sha384-qrHHBVFzmVK5BDvLwzddyLlHl1TitGDAY83oOOrL2NDQGTuwWoP1opCj0MQR3F4X"
-            crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/swagger-ui-dist@4.11.1/swagger-ui-standalone-preset.js"
-            integrity="sha384-tVUjDuM6jzwtm27EL5DIrH/szptX1Aq8TP1+d05kGIbyl+e1beKpxKzhlIDHqk9E"
-            crossorigin="anonymous"></script>
-
+    <script src="https://unpkg.com/swagger-ui-dist@5.1.0/swagger-ui-bundle.js" crossorigin></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.1.0/swagger-ui-standalone-preset.js" crossorigin></script>
     <script>
-    window.onload = function() {
-      // Begin Swagger UI call region
-      const ui = SwaggerUIBundle({
+    window.onload = () => {
+      window.ui = SwaggerUIBundle({
         urls: [
         {url: "/swagger-ui/eth2/web3signer.yaml", name: "Eth2"},
         {url: "/swagger-ui/eth1/web3signer.yaml", name: "Eth1"},
@@ -37,12 +28,10 @@
         plugins: [
           SwaggerUIBundle.plugins.DownloadUrl
         ],
-        layout: "StandaloneLayout"
-      })
-      // End Swagger UI call region
-
-      window.ui = ui
-    }
+        layout: "StandaloneLayout",
+      });
+    };
   </script>
+
   </body>
 </html>
