@@ -12,6 +12,24 @@
  */
 package tech.pegasys.web3signer.tests.bulkloading;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalTo;
+
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSPublicKey;
+import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.BLSTestUtil;
+import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
+import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.tests.AcceptanceTestBase;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.exception.ResourceNotFoundException;
 import com.azure.core.util.polling.SyncPoller;
@@ -29,42 +47,23 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSPublicKey;
-import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.web3signer.BLSTestUtil;
-import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
-import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
-import tech.pegasys.web3signer.tests.AcceptanceTestBase;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
 
 @EnabledIfEnvironmentVariable(
-        named = "AZURE_CLIENT_ID",
-        matches = ".*",
-        disabledReason = "AZURE_CLIENT_ID env variable is required")
+    named = "AZURE_CLIENT_ID",
+    matches = ".*",
+    disabledReason = "AZURE_CLIENT_ID env variable is required")
 @EnabledIfEnvironmentVariable(
-        named = "AZURE_CLIENT_SECRET",
-        matches = ".*",
-        disabledReason = "AZURE_CLIENT_SECRET env variable is required")
+    named = "AZURE_CLIENT_SECRET",
+    matches = ".*",
+    disabledReason = "AZURE_CLIENT_SECRET env variable is required")
 @EnabledIfEnvironmentVariable(
-        named = "AZURE_TENANT_ID",
-        matches = ".*",
-        disabledReason = "AZURE_TENANT_ID env variable is required")
+    named = "AZURE_TENANT_ID",
+    matches = ".*",
+    disabledReason = "AZURE_TENANT_ID env variable is required")
 @EnabledIfEnvironmentVariable(
-        named = "AZURE_KEY_VAULT_NAME",
-        matches = ".*",
-        disabledReason = "AZURE_KEY_VAULT_NAME env variable is required")
+    named = "AZURE_KEY_VAULT_NAME",
+    matches = ".*",
+    disabledReason = "AZURE_KEY_VAULT_NAME env variable is required")
 public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
 
   private static final String CLIENT_ID = System.getenv("AZURE_CLIENT_ID");
@@ -76,6 +75,7 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
   private static final String SECRET_NAME = "TEST-MULTILINE-KEY";
 
   private static List<BLSKeyPair> multiValueKeys;
+
   @BeforeAll
   static void setup() {
     multiValueKeys = findAndCreateAzureMultiValueKeysIfNotExist();
@@ -84,7 +84,8 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
   @AfterAll
   static void cleanupAzureResources() {
     final SecretClient azureSecretClient = buildAzureSecretClient();
-    SyncPoller<DeletedSecret, Void> deletedSecretVoidSyncPoller = azureSecretClient.beginDeleteSecret(SECRET_NAME);
+    final SyncPoller<DeletedSecret, Void> deletedSecretVoidSyncPoller =
+        azureSecretClient.beginDeleteSecret(SECRET_NAME);
     deletedSecretVoidSyncPoller.poll();
     deletedSecretVoidSyncPoller.waitForCompletion();
   }
@@ -94,7 +95,8 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
     // filter based on tag
 
     final AzureKeyVaultParameters azureParams =
-        new DefaultAzureKeyVaultParameters(VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET, TAG_FILTER);
+        new DefaultAzureKeyVaultParameters(
+            VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET, TAG_FILTER);
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder().withMode("eth2").withAzureKeyVaultParameters(azureParams);
@@ -117,10 +119,10 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
     // the tag filter will return only valid keys. The healtcheck should be UP
     final Response healthcheckResponse = signer.healthcheck();
     healthcheckResponse
-            .then()
-            .statusCode(200)
-            .contentType(ContentType.JSON)
-            .body("status", equalTo("UP"));
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("status", equalTo("UP"));
 
     // keys loaded reported in healthcheck response should total of be multiline keys
     final String jsonBody = healthcheckResponse.body().asString();
@@ -140,15 +142,14 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
         .orElse(-1);
   }
 
-
   private static List<BLSKeyPair> findAndCreateAzureMultiValueKeysIfNotExist() {
     final SecretClient azureSecretClient = buildAzureSecretClient();
     try {
       final String multiValueSecrets = azureSecretClient.getSecret(SECRET_NAME).getValue();
       return multiValueSecrets
-              .lines()
-              .map(key -> new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(key))))
-              .collect(Collectors.toList());
+          .lines()
+          .map(key -> new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(key))))
+          .collect(Collectors.toList());
     } catch (final ResourceNotFoundException e) {
       final StringBuilder multilineSecret = new StringBuilder();
       for (int i = 0; i < 200; i++) {
@@ -157,17 +158,18 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
             .append("\n");
       }
       // create multiline secrets
-      final KeyVaultSecret keyVaultSecret = new KeyVaultSecret(SECRET_NAME, multilineSecret.toString());
+      final KeyVaultSecret keyVaultSecret =
+          new KeyVaultSecret(SECRET_NAME, multilineSecret.toString());
       final SecretProperties secretProperties = new SecretProperties();
       secretProperties.setTags(TAG_FILTER);
       keyVaultSecret.setProperties(secretProperties);
 
       return azureSecretClient
-              .setSecret(keyVaultSecret)
-              .getValue()
-              .lines()
-              .map(key -> new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(key))))
-              .collect(Collectors.toList());
+          .setSecret(keyVaultSecret)
+          .getValue()
+          .lines()
+          .map(key -> new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(key))))
+          .collect(Collectors.toList());
     }
   }
 
