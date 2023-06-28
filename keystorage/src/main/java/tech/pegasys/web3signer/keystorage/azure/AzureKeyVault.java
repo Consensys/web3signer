@@ -37,6 +37,7 @@ import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
 public class AzureKeyVault {
 
@@ -127,15 +128,10 @@ public class AzureKeyVault {
                           sp -> {
                             try {
                               final KeyVaultSecret secret = secretClient.getSecret(sp.getName());
-                              final R obj = mapper.apply(sp.getName(), secret.getValue());
-                              if (obj != null) {
-                                result.add(obj);
-                              } else {
-                                LOG.warn(
-                                    "Mapped '{}' to a null object, and was discarded",
-                                    sp.getName());
-                                errorCount.incrementAndGet();
-                              }
+                              final MappedResults<R> multiResult = SecretValueMapperUtil.mapSecretValue(
+                                      mapper, sp.getName(), secret.getValue());
+                              result.addAll(multiResult.getValues());
+                              errorCount.addAndGet(multiResult.getErrorCount());
                             } catch (final Exception e) {
                               LOG.warn(
                                   "Failed to map secret '{}' to requested object type.",

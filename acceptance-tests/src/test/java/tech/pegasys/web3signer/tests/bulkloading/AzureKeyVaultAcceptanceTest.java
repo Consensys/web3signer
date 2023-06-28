@@ -40,6 +40,9 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   private static final String CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
   private static final String TENANT_ID = System.getenv("AZURE_TENANT_ID");
   private static final String VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
+
+  // since our Azure vault may contain some invalid secrets as well, lets filter out based on tag.
+  private static final Map<String, String> AZURE_KEY_VAULT_TAGS = Map.of("ENV", "TEST");
   private static final String EXPECTED_KEY =
       "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
 
@@ -52,7 +55,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  void ensureSecretsInKeyVaultAreLoadedAndReportedViaPublicKeysApi() {
+  void azureSecretsWithValidAndInvalidKeysWithoutTags() {
     final AzureKeyVaultParameters azureParams =
         new DefaultAzureKeyVaultParameters(VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET);
 
@@ -83,7 +86,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   void azureSecretsViaTag(boolean useConfigFile) {
     final AzureKeyVaultParameters azureParams =
         new DefaultAzureKeyVaultParameters(
-            VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET, Map.of("ENV", "TEST"));
+            VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET, AZURE_KEY_VAULT_TAGS);
 
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()

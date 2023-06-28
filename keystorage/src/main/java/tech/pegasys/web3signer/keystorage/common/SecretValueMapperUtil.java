@@ -28,6 +28,12 @@ public class SecretValueMapperUtil {
   public static <R> MappedResults<R> mapSecretValue(
       BiFunction<String, String, R> mapper, String secretName, String secretValue) {
     final AtomicInteger errorCount = new AtomicInteger(0);
+
+    // secretValue is the value received from remote vault. It should not be null.
+    if (secretValue == null) {
+        return MappedResults.errorResult();
+    }
+
     final Set<R> result =
         Streams.mapWithIndex(
                 secretValue.lines(),
