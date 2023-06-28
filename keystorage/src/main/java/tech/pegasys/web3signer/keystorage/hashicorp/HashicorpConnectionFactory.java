@@ -52,6 +52,8 @@ public class HashicorpConnectionFactory implements AutoCloseable {
         _key -> {
           final HttpClient.Builder httpClientBuilder =
               HttpClient.newBuilder()
+                  .followRedirects(HttpClient.Redirect.NORMAL)
+                  .version(connectionParameters.getHttpProtocolVersion())
                   .connectTimeout(Duration.ofMillis(connectionParameters.getTimeoutMilliseconds()));
           try {
             if (connectionParameters.getTlsOptions().isPresent()) {

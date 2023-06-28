@@ -1,11 +1,12 @@
 # Changelog
-## Upcoming Release
-
+## Next release
 ### Features Added
-- Add eth_SignTransaction RPC method under the eth1 subcommand[#812](https://github.com/ConsenSys/web3signer/pull/812)
+- Hashicorp connection properties can now override http protocol to HTTP/1.1 from the default of HTTP/2. [#817](https://github.com/ConsenSys/web3signer/pull/817)
+- Add eth_SignTransaction RPC method under the eth1 subcommand[#822](https://github.com/ConsenSys/web3signer/pull/822)
 
-### Bugs Fixed
+### Bugs fixed
 
+---
 ## 23.6.0
 
 As part of our ongoing commitment to deliver the best remote signing solutions, we are announcing a change in our product offerings.

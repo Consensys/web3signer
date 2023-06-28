@@ -20,12 +20,12 @@ import org.apache.logging.log4j.Logger;
 public class DbPrunerRunner {
   private static final Logger LOG = LogManager.getLogger();
   private final SlashingProtectionParameters slashingProtectionParameters;
-  private final SlashingProtection slashingProtection;
+  private final SlashingProtectionPruner slashingProtection;
   private final ScheduledExecutorService executorService;
 
   public DbPrunerRunner(
       final SlashingProtectionParameters slashingProtectionParameters,
-      final SlashingProtection slashingProtection,
+      final SlashingProtectionPruner slashingProtection,
       final ScheduledExecutorService executorService) {
     this.slashingProtectionParameters = slashingProtectionParameters;
     this.slashingProtection = slashingProtection;
