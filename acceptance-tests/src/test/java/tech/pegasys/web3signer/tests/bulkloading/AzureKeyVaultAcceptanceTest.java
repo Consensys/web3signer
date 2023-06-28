@@ -14,20 +14,34 @@ package tech.pegasys.web3signer.tests.bulkloading;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
+import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.BLSPublicKey;
+import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.azure.core.credential.TokenCredential;
+import com.azure.core.exception.ResourceNotFoundException;
+import com.azure.identity.ClientSecretCredentialBuilder;
+import com.azure.security.keyvault.secrets.SecretClient;
+import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.vertx.core.json.JsonObject;
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -43,12 +57,17 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   private static final String EXPECTED_KEY =
       "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
 
+  private static List<BLSKeyPair> multilineKeys =
+      new ArrayList<>(); // will be updated in beforeAll.
+
   @BeforeAll
   public static void setup() {
     Assumptions.assumeTrue(CLIENT_ID != null, "Set AZURE_CLIENT_ID environment variable");
     Assumptions.assumeTrue(CLIENT_SECRET != null, "Set AZURE_CLIENT_SECRET environment variable");
     Assumptions.assumeTrue(TENANT_ID != null, "Set AZURE_TENANT_ID environment variable");
     Assumptions.assumeTrue(VAULT_NAME != null, "Set AZURE_KEY_VAULT_NAME environment variable");
+
+    createAndFindAzureMultilineKeysIfNotExist();
   }
 
   @Test
@@ -61,8 +80,19 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
     startSigner(configBuilder.build());
 
-    final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
+    final List<String> publicKeys =
+        multilineKeys.stream()
+            .map(BLSKeyPair::getPublicKey)
+            .map(BLSPublicKey::toHexString)
+            .collect(Collectors.toList());
+    publicKeys.add(EXPECTED_KEY);
+
+    signer
+        .callApiPublicKeys(KeyType.BLS)
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("", containsInAnyOrder(publicKeys.toArray(String[]::new)));
 
     // Since our Azure vault contains some invalid keys, the healthcheck would return 503.
     final Response healthcheckResponse = signer.healthcheck();
@@ -72,10 +102,10 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("status", equalTo("DOWN"));
 
-    // keys loaded would still be 1 though
+    // keys loaded reported in healthcheck response should total of be multiline keys and single key
     final String jsonBody = healthcheckResponse.body().asString();
-    int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
-    assertThat(keysLoaded).isEqualTo(1);
+    int keysLoaded = getHealthCheckAzureBulkLoadKeysCountStat(jsonBody, "keys-loaded");
+    assertThat(keysLoaded).isEqualTo(publicKeys.size());
   }
 
   @ParameterizedTest(name = "{index} - Using config file: {0}")
@@ -106,23 +136,22 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
     // keys loaded should be 1 as well.
     final String jsonBody = healthcheckResponse.body().asString();
-    int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
-    int errorCount = getAzureBulkLoadingData(jsonBody, "error-count");
+    int keysLoaded = getHealthCheckAzureBulkLoadKeysCountStat(jsonBody, "keys-loaded");
+    int errorCount = getHealthCheckAzureBulkLoadKeysCountStat(jsonBody, "error-count");
     assertThat(keysLoaded).isOne();
     assertThat(errorCount).isZero();
   }
 
-  private static int getAzureBulkLoadingData(String healthCheckJsonBody, String dataKey) {
+  private static int getHealthCheckAzureBulkLoadKeysCountStat(
+      String healthCheckJsonBody, String dataKey) {
     JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
-    int keysLoaded =
-        jsonObject.getJsonArray("checks").stream()
-            .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
-            .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
-            .filter(o -> "azure-bulk-loading".equals(((JsonObject) o).getString("id")))
-            .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
-            .findFirst()
-            .orElse(-1);
-    return keysLoaded;
+    return jsonObject.getJsonArray("checks").stream()
+        .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
+        .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
+        .filter(o -> "azure-bulk-loading".equals(((JsonObject) o).getString("id")))
+        .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
+        .findFirst()
+        .orElse(-1);
   }
 
   @Test
@@ -162,7 +191,54 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
     startSigner(configBuilder.build());
 
-    final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
+    final List<String> publicKeys =
+        multilineKeys.stream()
+            .map(BLSKeyPair::getPublicKey)
+            .map(BLSPublicKey::toHexString)
+            .collect(Collectors.toList());
+    publicKeys.add(EXPECTED_KEY);
+
+    signer
+        .callApiPublicKeys(KeyType.BLS)
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("", containsInAnyOrder(publicKeys.toArray(String[]::new)));
+  }
+
+  private static void createAndFindAzureMultilineKeysIfNotExist() {
+    // add multiline secret if they are not already present
+    final TokenCredential tokenCredential =
+        new ClientSecretCredentialBuilder()
+            .clientId(CLIENT_ID)
+            .clientSecret(CLIENT_SECRET)
+            .tenantId(TENANT_ID)
+            .build();
+    final String vaultUrl = String.format("https://%s.vault.azure.net", VAULT_NAME);
+    final SecretClient azureSecretClient =
+        new SecretClientBuilder().vaultUrl(vaultUrl).credential(tokenCredential).buildClient();
+    try {
+      final String multilineSecrets = azureSecretClient.getSecret("TEST-MULTILINE-KEY").getValue();
+      multilineKeys =
+          multilineSecrets
+              .lines()
+              .map(key -> new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(key))))
+              .collect(Collectors.toList());
+    } catch (final ResourceNotFoundException e) {
+      final StringBuilder multilineSecret = new StringBuilder();
+      for (int i = 0; i < 200; i++) {
+        multilineSecret
+            .append(BLSTestUtil.randomKeyPair(i).getSecretKey().toBytes().toHexString())
+            .append("\n");
+      }
+      // create multiline secrets
+      multilineKeys =
+          azureSecretClient
+              .setSecret("TEST-MULTILINE-KEY", multilineSecret.toString())
+              .getValue()
+              .lines()
+              .map(key -> new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(key))))
+              .collect(Collectors.toList());
+    }
   }
 }

@@ -402,7 +402,10 @@ public class Eth2Runner extends Runner {
                 new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
             return new BlsArtifactSigner(keyPair, SignerOrigin.AZURE);
           } catch (final Exception e) {
-            LOG.error("Failed to load secret named {} from azure key vault.", name);
+            LOG.error(
+                "Failed to load secret named {} from azure key vault due to: {}.",
+                name,
+                e.getMessage());
             return null;
           }
         },
