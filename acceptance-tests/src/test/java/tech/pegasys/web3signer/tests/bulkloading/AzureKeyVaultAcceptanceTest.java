@@ -13,12 +13,10 @@
 package tech.pegasys.web3signer.tests.bulkloading;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 
-import org.hamcrest.Matchers;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.KeyType;
@@ -96,7 +94,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     startSigner(configBuilder.build());
 
     final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasItem(EXPECTED_KEY));
 
     // the tag filter will return only valid keys. The healtcheck should be UP
     final Response healthcheckResponse = signer.healthcheck();
