@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.EthAccounts;
 
-class EthAccountsIntegrationTest extends IntegrationTestBase {
+class EthAccountsIntegrationTest extends DefaultTestBase {
 
   @Test
   void ethAccountsRequestFromWeb3jRespondsWithNodesAddress() {
@@ -35,12 +35,8 @@ class EthAccountsIntegrationTest extends IntegrationTestBase {
     final Iterable<Entry<String, String>> expectedHeaders =
         singletonList(ImmutablePair.of("Content", HttpHeaderValues.APPLICATION_JSON.toString()));
 
-    // needs the hex prefix
-    final String expectedAccount =
-        "0x" + Eth1AddressSignerIdentifier.fromPublicKey(PUBLIC_KEY_HEX_STRING);
-
     final JsonRpcSuccessResponse responseBody =
-        new JsonRpcSuccessResponse(requestBody.getId(), singletonList(expectedAccount));
+        new JsonRpcSuccessResponse(requestBody.getId(), singletonList(unlockedAccount));
 
     sendPostRequestAndVerifyResponse(
         request.web3Signer(Json.encode(requestBody)),

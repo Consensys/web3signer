@@ -27,6 +27,8 @@ import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.eea.Eea;
 import org.web3j.protocol.eea.JsonRpc2_0Eea;
+import tech.pegasys.web3signer.core.Eth1AddressSignerIdentifier;
+import tech.pegasys.web3signer.core.Eth1AddressSignerProvider;
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.Eth1Config;
@@ -79,6 +81,9 @@ import org.mockserver.model.JsonBody;
 import org.mockserver.model.RegexBody;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
+import tech.pegasys.web3signer.signing.secp256k1.Signer;
+import tech.pegasys.web3signer.signing.secp256k1.SingleSignerProvider;
+import tech.pegasys.web3signer.signing.secp256k1.filebased.FileBasedSignerFactory;
 
 public class IntegrationTestBase {
 
@@ -97,18 +102,16 @@ public class IntegrationTestBase {
   protected final EthRequestFactory request = new EthRequestFactory();
   protected final EthResponseFactory response = new EthResponseFactory();
 
+  static String unlockedAccount;
   private static final Duration downstreamTimeout = Duration.ofSeconds(1);
 
   @TempDir static Path dataPath;
   @TempDir static Path keyConfigPath;
-  public static final String PUBLIC_KEY_HEX_STRING =
-      "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
 
   public static final long DEFAULT_CHAIN_ID = 9;
   public static final int DEFAULT_ID = 77;
   static final String MALFORMED_JSON = "{Bad Json: {{{}";
 
-  @BeforeAll
   static void setupWeb3Signer(final long chainId) throws Exception {
     setupWeb3Signer(chainId,"");
   }
@@ -124,9 +127,13 @@ public class IntegrationTestBase {
     clientAndServer = startClientAndServer();
 
     final File keyFile = createKeyFile();
+    final File passwordFile = createFile("password");
     credentials = WalletUtils.loadCredentials("password", keyFile);
 
-    createKeyStoreYamlFile();
+    final Eth1AddressSignerProvider transactionSignerProvider =
+            new Eth1AddressSignerProvider(new SingleSignerProvider(signer(keyFile, passwordFile)));
+
+    createKeyStoreYamlFile(transactionSignerProvider);
 
     final BaseConfig baseConfig = new TestBaseConfig(dataPath, keyConfigPath, allowedCorsOrigin);
     final Eth1Config eth1Config =
@@ -149,10 +156,21 @@ public class IntegrationTestBase {
         "Started web3signer on port {}, eth stub node on port {}",
         web3signerPort,
         clientAndServer.getLocalPort());
+
+    unlockedAccount =
+            transactionSignerProvider.availablePublicKeys().stream()
+                    .map(Eth1AddressSignerIdentifier::fromPublicKey)
+                    .map(signerIdentifier -> "0x" + signerIdentifier.toStringIdentifier())
+                    .findAny()
+                    .orElseThrow();
   }
 
   Web3j jsonRpc() {
     return jsonRpc;
+  }
+
+  Eea eeaJsonRpc() {
+    return eeaJsonRpc;
   }
 
   @BeforeEach
@@ -357,29 +375,42 @@ public class IntegrationTestBase {
             });
   }
 
-  private static void createKeyStoreYamlFile() throws IOException, URISyntaxException {
+  private static void createKeyStoreYamlFile(Eth1AddressSignerProvider transactionSignerProvider) throws IOException, URISyntaxException {
     final MetadataFileHelper METADATA_FILE_HELPERS = new MetadataFileHelper();
     final String keyPath =
-        new File(Resources.getResource("secp256k1/wallet.json").toURI()).getAbsolutePath();
+        new File(Resources.getResource("keyfile.json").toURI()).getAbsolutePath();
+
+    String unlockedAccountAddress = transactionSignerProvider.availablePublicKeys().stream()
+            .map(Eth1AddressSignerIdentifier::fromPublicKey)
+            .map(signerIdentifier -> signerIdentifier.toStringIdentifier())
+            .findAny().get();
 
     METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(
-        keyConfigPath.resolve(PUBLIC_KEY_HEX_STRING + ".yaml"),
+        keyConfigPath.resolve(unlockedAccountAddress + ".yaml"),
         Path.of(keyPath),
-        "pass",
+        "password",
         KeyType.SECP256K1);
   }
 
+  private static Signer signer(final File keyFile, final File passwordFile) {
+    return FileBasedSignerFactory.createSigner(keyFile.toPath(), passwordFile.toPath());
+  }
+
+  @SuppressWarnings("UnstableApiUsage")
   private static File createKeyFile() throws IOException {
     final URL walletResource = Resources.getResource("keyfile.json");
-    final Path wallet = Files.createTempFile("web3Signer_intg_keyfile", ".json");
+    final Path wallet = Files.createTempFile("ethsigner_intg_keyfile", ".json");
     Files.write(wallet, Resources.toString(walletResource, UTF_8).getBytes(UTF_8));
     final File keyFile = wallet.toFile();
     keyFile.deleteOnExit();
     return keyFile;
   }
 
-  Eea eeaJsonRpc() {
-    return eeaJsonRpc;
+  private static File createFile(final String s) throws IOException {
+    final Path path = Files.createTempFile("file", ".file");
+    Files.write(path, s.getBytes(UTF_8));
+    final File file = path.toFile();
+    file.deleteOnExit();
+    return file;
   }
-
 }
