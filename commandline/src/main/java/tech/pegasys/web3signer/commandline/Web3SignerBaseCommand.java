@@ -85,7 +85,7 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   private Path dataPath;
 
   @Option(
-      names = {"--key-store-path"},
+      names = {"--key-config-path", "--key-store-path"},
       description = "The path to a directory storing yaml files defining available keys",
       paramLabel = DefaultCommandValues.PATH_FORMAT_HELP,
       arity = "1")

@@ -19,7 +19,7 @@ public class CmdlineHelpers {
   public static String validBaseCommandOptions() {
     return "--http-listen-port=5001 "
         + "--http-listen-host=localhost "
-        + "--key-store-path=./keys "
+        + "--key-config-path=./keys "
         + "--idle-connection-timeout-seconds=45 "
         + "--logging=INFO ";
   }
@@ -27,8 +27,15 @@ public class CmdlineHelpers {
   public static String validBaseYamlOptions() {
     return "http-listen-port: 6001\n"
         + "http-listen-host: \"localhost\"\n"
-        + "key-store-path: \"./keys_yaml\"\n"
+        + "key-config-path: \"./keys_yaml\"\n"
+        + "metrics-categories: \"HTTP\"\n"
         + "logging: \"INFO\"\n";
+  }
+
+  public static String validBaseYamlAliasOptions() {
+    return "metrics-category: \"HTTP\"\n"
+        + "l: \"INFO\"\n"
+        + "key-store-path: \"./keys_yaml_alias\"\n";
   }
 
   public static Map<String, String> validBaseEnvironmentVariableOptions() {
@@ -37,7 +44,7 @@ public class CmdlineHelpers {
         "7001",
         "WEB3SIGNER_HTTP_LISTEN_HOST",
         "localhost",
-        "WEB3SIGNER_KEY_STORE_PATH",
+        "WEB3SIGNER_KEY_CONFIG_PATH",
         "./keys_env",
         "WEB3SIGNER_LOGGING",
         "INFO");
