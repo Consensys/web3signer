@@ -28,7 +28,12 @@ public class CmdlineHelpers {
     return "http-listen-port: 6001\n"
         + "http-listen-host: \"localhost\"\n"
         + "key-store-path: \"./keys_yaml\"\n"
+        + "metrics-categories: \"HTTP\"\n"
         + "logging: \"INFO\"\n";
+  }
+
+  public static String validBaseYamlAliasOptions() {
+    return "metrics-category: \"HTTP\"\n" + "l: \"INFO\"\n";
   }
 
   public static Map<String, String> validBaseEnvironmentVariableOptions() {
