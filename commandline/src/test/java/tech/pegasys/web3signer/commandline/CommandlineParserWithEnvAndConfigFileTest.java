@@ -52,7 +52,7 @@ class CommandlineParserWithEnvAndConfigFileTest {
     // remove keystorepath from cli.
     // The environment option should take precedence over config file.
     final String[] args =
-        removeFieldFrom(configArg + validBaseCommandOptions(), "key-store-path").split(" ");
+        removeFieldFrom(configArg + validBaseCommandOptions(), "key-config-path").split(" ");
 
     final int result = parser.parseCommandLine(args);
 
