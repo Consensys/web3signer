@@ -119,9 +119,9 @@ dependencyManagement {
       entry 'besu'
       entry ('core') {
         exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
+        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
-      entry 'crypto'
-      entry ('utils') {
+      entry ('crypto') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
     }
