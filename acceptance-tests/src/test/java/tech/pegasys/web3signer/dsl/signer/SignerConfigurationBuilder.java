@@ -13,9 +13,12 @@
 package tech.pegasys.web3signer.dsl.signer;
 
 import static java.util.Collections.emptyList;
+import static tech.pegasys.web3signer.tests.AcceptanceTestBase.DEFAULT_CHAIN_ID;
 
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
@@ -73,6 +76,8 @@ public class SignerConfigurationBuilder {
   private WatermarkRepairParameters watermarkRepairParameters;
   private int downstreamHttpPort;
   private ClientTlsOptions downstreamTlsOptions;
+
+  private ChainIdProvider chainIdProvider = new ConfigurationChainId(DEFAULT_CHAIN_ID);
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -288,6 +293,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withChainIdProvider(final ChainIdProvider chainIdProvider) {
+    this.chainIdProvider = chainIdProvider;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -332,6 +342,7 @@ public class SignerConfigurationBuilder {
         keyManagerApiEnabled,
         Optional.ofNullable(watermarkRepairParameters),
         downstreamHttpPort,
-        Optional.ofNullable(downstreamTlsOptions));
+        Optional.ofNullable(downstreamTlsOptions),
+        chainIdProvider);
   }
 }

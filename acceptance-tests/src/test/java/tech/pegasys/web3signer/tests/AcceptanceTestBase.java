@@ -25,6 +25,9 @@ public class AcceptanceTestBase {
   protected Signer signer;
   public static final String JSON_RPC_PATH = "/rpc/v0";
 
+  public static final Long FILECOIN_CHAIN_ID = 314L;
+  public static final Long DEFAULT_CHAIN_ID = 1337L;
+
   protected void startSigner(final SignerConfiguration config) {
     signer = new Signer(config, null);
     signer.start();
