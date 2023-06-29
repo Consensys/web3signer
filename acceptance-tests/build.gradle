@@ -76,6 +76,10 @@ dependencies {
   testImplementation 'io.zonky.test:embedded-postgres'
   testImplementation 'org.bouncycastle:bcprov-jdk18on'
 
+  testImplementation 'com.azure:azure-identity'
+  testImplementation 'com.azure:azure-security-keyvault-keys'
+  testImplementation 'com.azure:azure-security-keyvault-secrets'
+
   gatlingImplementation configurations.getByName("testImplementation")
 
   implementation 'software.amazon.awssdk:auth'

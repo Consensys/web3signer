@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.keystorage.azure;
 
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
+import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
 import java.util.Map;
 import java.util.Optional;
@@ -127,15 +128,11 @@ public class AzureKeyVault {
                           sp -> {
                             try {
                               final KeyVaultSecret secret = secretClient.getSecret(sp.getName());
-                              final R obj = mapper.apply(sp.getName(), secret.getValue());
-                              if (obj != null) {
-                                result.add(obj);
-                              } else {
-                                LOG.warn(
-                                    "Mapped '{}' to a null object, and was discarded",
-                                    sp.getName());
-                                errorCount.incrementAndGet();
-                              }
+                              final MappedResults<R> multiResult =
+                                  SecretValueMapperUtil.mapSecretValue(
+                                      mapper, sp.getName(), secret.getValue());
+                              result.addAll(multiResult.getValues());
+                              errorCount.addAndGet(multiResult.getErrorCount());
                             } catch (final Exception e) {
                               LOG.warn(
                                   "Failed to map secret '{}' to requested object type.",
