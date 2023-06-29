@@ -1,8 +1,10 @@
 # Changelog
+
 ## Next release
 ### Features Added
 - Hashicorp connection properties can now override http protocol to HTTP/1.1 from the default of HTTP/2. [#817](https://github.com/ConsenSys/web3signer/pull/817)
-- Add eth_SignTransaction RPC method under the eth1 subcommand[#822](https://github.com/ConsenSys/web3signer/pull/822)
+- Add --key-config-path as preferred alias to --key-store-path [#826](https://github.com/Consensys/web3signer/pull/826)
+- Add eth_SignTransaction RPC method under the eth1 subcommand [#822](https://github.com/ConsenSys/web3signer/pull/822)
 
 ### Bugs fixed
 - Support long name aliases in environment variables and YAML configuration [#825](https://github.com/Consensys/web3signer/pull/825)

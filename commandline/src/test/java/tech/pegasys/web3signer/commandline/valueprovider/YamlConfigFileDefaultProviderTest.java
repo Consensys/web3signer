@@ -47,7 +47,7 @@ class YamlConfigFileDefaultProviderTest {
     commandLine.setDefaultValueProvider(new YamlConfigFileDefaultProvider(commandLine, configFile));
 
     final String cmdArgs =
-        removeFieldFrom(validBaseCommandOptions(), "http-listen-port", "key-store-path");
+        removeFieldFrom(validBaseCommandOptions(), "http-listen-port", "key-config-path");
     final String[] args = cmdArgs.split(" ");
     commandLine.parseArgs(args);
 
@@ -103,6 +103,7 @@ class YamlConfigFileDefaultProviderTest {
     assertThat(web3SignerBaseCommand.getMetricCategories())
         .isEqualTo(Set.of(Web3SignerMetricCategory.HTTP));
     assertThat(web3SignerBaseCommand.getLogLevel()).isEqualTo(Level.INFO);
+    assertThat(web3SignerBaseCommand.getKeyConfigPath()).isEqualTo(Path.of("./keys_yaml_alias"));
     assertThat(subCommand.alias).isEqualTo("test alias");
   }
 
