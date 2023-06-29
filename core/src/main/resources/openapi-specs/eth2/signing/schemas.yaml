@@ -3,22 +3,24 @@ components:
     Signing:
       type: "object"
       properties:
-        type:
-          type: "string"
         fork_info:
           type: object
           properties:
             fork:
               $ref: '#/components/schemas/Fork'
+              description: Fork information
             genesis_validators_root:
               type: "string"
+              description: Genesis Validators Root in hex string format.
+              example: '0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673'
           required:
             - fork
             - genesis_validators_root
         signingRoot:
           type: "string"
+          description: 'signing root for optional verification if field present'
+          example: '0xaa2e0c465c1a45d7b6637fcce4ad6ceb71fc12064b548078d619a411f0de8adc'
       required:
-        - type
         - fork_info
     SigningResponse:
       type: "object"
@@ -32,6 +34,10 @@ components:
         - $ref: '#/components/schemas/Signing'
         - type: "object"
           properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'AGGREGATION_SLOT'
             aggregation_slot:
               type: "object"
               properties:
@@ -39,39 +45,58 @@ components:
                   type: string
                   format: "uint64"
           required:
+            - type
             - aggregation_slot
     AggregateAndProofSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'AGGREGATE_AND_PROOF'
             aggregate_and_proof:
               $ref: "#/components/schemas/AggregateAndProof"
           required:
+            - type
             - aggregate_and_proof
     AttestationSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'ATTESTATION'
             attestation:
               $ref: "#/components/schemas/AttestationData"
           required:
+            - type
             - attestation
     BlockSigning:
+      description: '** DEPRECATED ** See BeaconBlockSigning.'
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'BLOCK'
             block:
               $ref: "#/components/schemas/BeaconBlock"
           required:
+            - type
             - block
     DepositSigning:
       type: object
       properties:
         type:
           type: "string"
+          description: 'Signing Request type'
+          example: 'DEPOSIT'
         signingRoot:
           description: 'signing root for optional verification if field present'
           type: "string"
@@ -95,45 +120,70 @@ components:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'RANDAO_REVEAL'
             randao_reveal:
               $ref: "#/components/schemas/RandaoReveal"
           required:
+            - type
             - randao_reveal
     VoluntaryExitSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'VOLUNTARY_EXIT'
             voluntary_exit:
               $ref: "#/components/schemas/VoluntaryExit"
           required:
+            - type
             - voluntary_exit
     SyncCommitteeMessageSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'SYNC_COMMITTEE_MESSAGE'
             sync_committee_message:
               $ref: "#/components/schemas/SyncCommitteeMessage"
           required:
+            - type
             - sync_committee_message
     SyncCommitteeSelectionProofSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'SYNC_COMMITTEE_SELECTION_PROOF'
             sync_aggregator_selection_data:
               $ref: "#/components/schemas/SyncAggregatorSelectionData"
           required:
+            - type
             - sync_aggregator_selection_data
     SyncCommitteeContributionAndProofSigning:
       allOf:
         - $ref: '#/components/schemas/Signing'
         - type: object
           properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF'
             contribution_and_proof:
               $ref: "#/components/schemas/ContributionAndProof"
           required:
+            - type
             - contribution_and_proof
     ValidatorRegistrationSigning:
       allOf:
@@ -141,6 +191,8 @@ components:
           properties:
             type:
               type: "string"
+              description: Signing Request type
+              example: 'VALIDATOR_REGISTRATION'
             signingRoot:
               description: 'signing root for optional verification if field present'
               type: "string"
@@ -183,11 +235,18 @@ components:
         previous_version:
           pattern: "^0x[a-fA-F0-9]{8}$"
           type: "string"
+          description: 'Previous version of fork'
+          example: '0x00000001'
         current_version:
           pattern: "^0x[a-fA-F0-9]{8}$"
           type: "string"
+          description: 'Current version of fork'
+          example: '0x00000001'
         epoch:
           type: "string"
+          description: 'Epoch value in String format'
+          format: "uint64"
+          example: '1'
     BeaconBlock:
       type: "object"
       properties:
@@ -415,15 +474,28 @@ components:
       allOf:
         - $ref: '#/components/schemas/Signing'
         - $ref: '#/components/schemas/BeaconBlockRequest'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'BLOCK_V2'
     BeaconBlockRequest:
       type: object
       properties:
         beacon_block:
-          anyOf:
+          oneOf:
             - $ref: '#/components/schemas/BlockRequestPhase0'
             - $ref: '#/components/schemas/BlockRequestAltair'
             - $ref: '#/components/schemas/BlockRequestBellatrix'
             - $ref: '#/components/schemas/BlockRequestCapella'
+          discriminator:
+            propertyName: version
+            mapping:
+              PHASE0: '#/components/schemas/BlockRequestPhase0'
+              ALTAIR: '#/components/schemas/BlockRequestAltair'
+              BELLATRIX: '#/components/schemas/BlockRequestBellatrix'
+              CAPELLA: '#/components/schemas/BlockRequestCapella'
       required:
         - beacon_block
     BlockRequestPhase0:

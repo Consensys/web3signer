@@ -5,6 +5,7 @@
 - Add eth_SignTransaction RPC method under the eth1 subcommand[#822](https://github.com/ConsenSys/web3signer/pull/822)
 
 ### Bugs fixed
+- Support long name aliases in environment variables and YAML configuration [#825](https://github.com/Consensys/web3signer/pull/825)
 
 ---
 ## 23.6.0

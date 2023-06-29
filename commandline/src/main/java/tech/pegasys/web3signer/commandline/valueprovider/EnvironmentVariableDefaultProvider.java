@@ -33,9 +33,15 @@ public class EnvironmentVariableDefaultProvider implements IDefaultValueProvider
       final OptionSpec optionSpec = (OptionSpec) argSpec;
       final String qualifiedPrefix =
           optionSpec.command().qualifiedName("_").replace("-", "_").toUpperCase();
-      final String key = stripPrefix(optionSpec.longestName()).replace("-", "_").toUpperCase();
-      final String qualifiedKey = qualifiedPrefix + "_" + key;
-      return environment.get(qualifiedKey);
+
+      for (final String alias : optionSpec.names()) {
+        final String key = stripPrefix(alias).replace("-", "_").toUpperCase();
+        final String qualifiedKey = qualifiedPrefix + "_" + key;
+        final String value = environment.get(qualifiedKey);
+        if (value != null) {
+          return value;
+        }
+      }
     }
 
     return null; // currently not supporting positional parameters
