@@ -44,7 +44,7 @@ import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 
 /** Signing is a step during proxying a sendTransaction() JSON-RPC request to an Ethereum node. */
-class SigningEthSendTransactionIntegrationTest extends IntegrationTestBase {
+class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
 
   private static final String VALID_BODY_RESPONSE =
       "{\"jsonrpc\" : \"2.0\",\"id\" : 1,\"result\" : \"VALID\"}";
