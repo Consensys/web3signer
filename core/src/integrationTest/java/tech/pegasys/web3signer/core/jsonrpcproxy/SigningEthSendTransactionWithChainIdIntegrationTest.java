@@ -32,7 +32,7 @@ class SigningEthSendTransactionWithChainIdIntegrationTest extends IntegrationTes
 
   @SuppressWarnings("unused")
   @BeforeAll
-  private static void setupEthSigner() throws Exception {
+  private static void setupWeb3Signer() throws Exception {
     setupWeb3Signer(4123123123L);
   }
 
