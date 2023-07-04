@@ -33,6 +33,12 @@ class AwsKeySigningMetadataDeserializerTest {
       "src/test/resources/aws/aws_valid_config_environment.yaml";
   private static final String AWS_VALID_CONFIG_SPECIFIED_AUTH_MODE_PATH =
       "src/test/resources/aws/aws_valid_config_specified.yaml";
+
+  private static final String AWS_VALID_CONFIG_SECP_KEYTYPE_PATH =
+      "src/test/resources/aws/aws_valid_config_specified_secp.yaml";
+
+  private static final String AWS_VALID_CONFIG_WITHOUT_KEYTYPE_PATH =
+      "src/test/resources/aws/aws_valid_config_specified_wo_keytype.yaml";
   private static final YAMLMapper YAML_MAPPER = YamlMapperFactory.createYamlMapper();
 
   @Test
@@ -79,6 +85,36 @@ class AwsKeySigningMetadataDeserializerTest {
     final AwsKeySigningMetadata deserializedMetadata =
         YAML_MAPPER.readValue(
             new File(AWS_VALID_CONFIG_SPECIFIED_AUTH_MODE_PATH), AwsKeySigningMetadata.class);
+
+    assertThat(deserializedMetadata.getAuthenticationMode())
+        .isEqualTo(AwsAuthenticationMode.SPECIFIED);
+    assertThat(deserializedMetadata.getKeyType()).isEqualTo(KeyType.BLS);
+    assertThat(deserializedMetadata.getRegion()).isEqualTo("ap-southeast-2");
+    assertThat(deserializedMetadata.getSecretName()).isEqualTo("NewSuperSecret");
+    assertThat(deserializedMetadata.getAccessKeyId()).isEqualTo("foo");
+    assertThat(deserializedMetadata.getSecretAccessKey()).isEqualTo("bar");
+  }
+
+  @Test
+  public void deserializeValidAwsConfigWithSecpKeyType() throws IOException {
+    final AwsKeySigningMetadata deserializedMetadata =
+        YAML_MAPPER.readValue(
+            new File(AWS_VALID_CONFIG_SECP_KEYTYPE_PATH), AwsKeySigningMetadata.class);
+
+    assertThat(deserializedMetadata.getAuthenticationMode())
+        .isEqualTo(AwsAuthenticationMode.SPECIFIED);
+    assertThat(deserializedMetadata.getKeyType()).isEqualTo(KeyType.SECP256K1);
+    assertThat(deserializedMetadata.getRegion()).isEqualTo("ap-southeast-2");
+    assertThat(deserializedMetadata.getSecretName()).isEqualTo("NewSuperSecret");
+    assertThat(deserializedMetadata.getAccessKeyId()).isEqualTo("foo");
+    assertThat(deserializedMetadata.getSecretAccessKey()).isEqualTo("bar");
+  }
+
+  @Test
+  public void deserializeValidAwsConfigWithoutKeyKeyTypeDefaultsToBLS() throws IOException {
+    final AwsKeySigningMetadata deserializedMetadata =
+        YAML_MAPPER.readValue(
+            new File(AWS_VALID_CONFIG_WITHOUT_KEYTYPE_PATH), AwsKeySigningMetadata.class);
 
     assertThat(deserializedMetadata.getAuthenticationMode())
         .isEqualTo(AwsAuthenticationMode.SPECIFIED);

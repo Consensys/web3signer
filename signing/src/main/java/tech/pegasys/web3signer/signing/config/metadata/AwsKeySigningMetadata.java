@@ -38,8 +38,9 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
       final String accessKeyId,
       final String secretAccessKey,
       final String secretName,
+      final KeyType keyType,
       final Optional<URI> endpointOverride) {
-    super(TYPE, KeyType.BLS);
+    super(TYPE, keyType == null ? KeyType.BLS : keyType);
     this.authenticationMode = authenticationMode;
     this.region = region;
     this.accessKeyId = accessKeyId;
