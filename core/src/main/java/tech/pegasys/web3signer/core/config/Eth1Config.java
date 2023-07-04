@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.config;
 
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -39,4 +40,6 @@ public interface Eth1Config {
   Optional<ClientTlsOptions> getClientTlsOptions();
 
   ChainIdProvider getChainId();
+
+  AwsSecretsManagerParameters getAwsSecretsManagerParameters();
 }

@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.signing.config.metadata;
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManager;
+import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnection;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
@@ -23,6 +25,7 @@ import tech.pegasys.web3signer.keystorage.hashicorp.config.ConnectionParameters;
 import tech.pegasys.web3signer.keystorage.hashicorp.config.KeyDefinition;
 import tech.pegasys.web3signer.keystorage.hashicorp.config.TlsOptions;
 import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
@@ -41,16 +44,19 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   final Path configsDirectory;
   private final InterlockKeyProvider interlockKeyProvider;
   private final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
+  private final AwsSecretsManagerProvider awsSecretsManagerProvider;
 
   protected AbstractArtifactSignerFactory(
       final HashicorpConnectionFactory hashicorpConnectionFactory,
       final Path configsDirectory,
       final InterlockKeyProvider interlockKeyProvider,
-      final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider) {
+      final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider,
+      final AwsSecretsManagerProvider awsSecretsManagerProvider) {
     this.hashicorpConnectionFactory = hashicorpConnectionFactory;
     this.configsDirectory = configsDirectory;
     this.interlockKeyProvider = interlockKeyProvider;
     this.yubiHsmOpaqueDataProvider = yubiHsmOpaqueDataProvider;
+    this.awsSecretsManagerProvider = awsSecretsManagerProvider;
   }
 
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
@@ -109,6 +115,16 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
       throw new SigningMetadataException(
           "Failed to fetch opaque data from YubiHSM: " + e.getMessage(), e);
     }
+  }
+
+  protected Bytes extractBytesFromSecretsManager(final AwsKeySigningMetadata metadata) {
+    final AwsSecretsManager awsSecretsManager =
+        AwsSecretsManagerFactory.createAwsSecretsManager(awsSecretsManagerProvider, metadata);
+    return awsSecretsManager
+        .fetchSecret(metadata.getSecretName())
+        .map(Bytes::fromHexString)
+        .orElseThrow(
+            () -> new SigningMetadataException("Failed to fetch secret from AWS Secrets Manager"));
   }
 
   private Optional<TlsOptions> buildTlsOptions(final HashicorpSigningMetadata metadata) {

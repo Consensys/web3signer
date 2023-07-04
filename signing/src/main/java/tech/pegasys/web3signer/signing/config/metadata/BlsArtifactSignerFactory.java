@@ -19,12 +19,10 @@ import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
-import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManager;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
@@ -42,7 +40,6 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext
 public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
   private final LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
   private final Function<BlsArtifactSignerArgs, ArtifactSigner> signerFactory;
-  private final AwsSecretsManagerProvider awsSecretsManagerProvider;
 
   public BlsArtifactSignerFactory(
       final Path configsDirectory,
@@ -52,7 +49,12 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider,
       final AwsSecretsManagerProvider awsSecretsManagerProvider,
       final Function<BlsArtifactSignerArgs, ArtifactSigner> signerFactory) {
-    super(connectionFactory, configsDirectory, interlockKeyProvider, yubiHsmOpaqueDataProvider);
+    super(
+        connectionFactory,
+        configsDirectory,
+        interlockKeyProvider,
+        yubiHsmOpaqueDataProvider,
+        awsSecretsManagerProvider);
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
             Web3SignerMetricCategory.SIGNING,
@@ -60,7 +62,6 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
             "Time taken to retrieve private key",
             "signer");
     this.signerFactory = signerFactory;
-    this.awsSecretsManagerProvider = awsSecretsManagerProvider;
   }
 
   @Override
@@ -143,16 +144,6 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     } catch (final KeyStoreValidationException e) {
       throw new SigningMetadataException(e.getMessage(), e);
     }
-  }
-
-  private Bytes extractBytesFromSecretsManager(final AwsKeySigningMetadata metadata) {
-    final AwsSecretsManager awsSecretsManager =
-        AwsSecretsManagerFactory.createAwsSecretsManager(awsSecretsManagerProvider, metadata);
-    return awsSecretsManager
-        .fetchSecret(metadata.getSecretName())
-        .map(Bytes::fromHexString)
-        .orElseThrow(
-            () -> new SigningMetadataException("Failed to fetch secret from AWS Secrets Manager"));
   }
 
   @Override

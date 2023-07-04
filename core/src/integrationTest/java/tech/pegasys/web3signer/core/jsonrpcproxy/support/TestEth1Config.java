@@ -16,6 +16,9 @@ import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
+import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParametersBuilder;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -88,5 +91,15 @@ public class TestEth1Config implements Eth1Config {
   @Override
   public ChainIdProvider getChainId() {
     return chainId;
+  }
+
+  @Override
+  public AwsSecretsManagerParameters getAwsSecretsManagerParameters() {
+    /*
+    TODO: This will need to be refactored when AWS bulkloading is migrated to eth1 mode integ-test.
+     */
+    return AwsSecretsManagerParametersBuilder.anAwsSecretsManagerParameters()
+        .withAuthenticationMode(AwsAuthenticationMode.ENVIRONMENT)
+        .build();
   }
 }

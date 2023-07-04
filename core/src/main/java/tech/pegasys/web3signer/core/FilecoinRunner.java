@@ -129,6 +129,7 @@ public class FilecoinRunner extends Runner {
                     azureFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
+                    awsSecretsManagerProvider,
                     signer -> new FcSecpArtifactSigner(signer, network),
                     false);
 

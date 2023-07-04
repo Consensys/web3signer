@@ -33,6 +33,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.RequestMapper;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignTransactionResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.InternalResponseHandler;
+import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
@@ -135,11 +136,14 @@ public class Eth1Runner extends Runner {
     return new DefaultArtifactSignerProvider(
         () -> {
           final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
-          final HashicorpConnectionFactory hashicorpConnectionFactory =
-              new HashicorpConnectionFactory();
-          try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+          try (final HashicorpConnectionFactory hashicorpConnectionFactory =
+                  new HashicorpConnectionFactory();
+              final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                  new YubiHsmOpaqueDataProvider()) {
+                  new YubiHsmOpaqueDataProvider();
+              final AwsSecretsManagerProvider awsSecretsManagerProvider =
+                  new AwsSecretsManagerProvider(
+                      eth1Config.getAwsSecretsManagerParameters().getCacheMaximumSize())) {
             final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
                 new Secp256k1ArtifactSignerFactory(
                     hashicorpConnectionFactory,
@@ -147,6 +151,7 @@ public class Eth1Runner extends Runner {
                     azureFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
+                    awsSecretsManagerProvider,
                     EthSecpArtifactSigner::new,
                     true);
 

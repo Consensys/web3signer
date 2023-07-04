@@ -58,6 +58,7 @@ dependencies {
   testImplementation 'org.bouncycastle:bcprov-jdk18on'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
 
+  integrationTestImplementation (testFixtures(project(":signing")))
   integrationTestImplementation 'org.apache.logging.log4j:log4j'
   integrationTestImplementation 'org.apache.logging.log4j:log4j-core'
   integrationTestImplementation 'org.assertj:assertj-core'
