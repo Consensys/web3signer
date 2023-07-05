@@ -12,13 +12,13 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc;
 
-import io.vertx.core.json.JsonObject;
-import org.web3j.protocol.core.Request;
-import org.web3j.protocol.core.methods.response.EthSendTransaction;
-
 import static java.util.Collections.singletonList;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.IntegrationTestBase.DEFAULT_ID;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.TransactionJsonUtil.putValue;
+
+import io.vertx.core.json.JsonObject;
+import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 
 public class SendTransaction {
   public static final String FIELD_VALUE_DEFAULT = "0x0";

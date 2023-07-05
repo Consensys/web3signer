@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.core.jsonrpcproxy;
 
 import static java.util.Collections.singletonList;
 
-import tech.pegasys.web3signer.core.Eth1AddressSignerIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcSuccessResponse;
 
 import java.util.Map.Entry;

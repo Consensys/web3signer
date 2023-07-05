@@ -23,10 +23,6 @@ import static org.mockserver.model.HttpResponse.response;
 import static org.mockserver.model.JsonBody.json;
 import static org.web3j.utils.Async.defaultExecutorService;
 
-import org.web3j.crypto.Credentials;
-import org.web3j.crypto.WalletUtils;
-import org.web3j.protocol.eea.Eea;
-import org.web3j.protocol.eea.JsonRpc2_0Eea;
 import tech.pegasys.web3signer.core.Eth1AddressSignerIdentifier;
 import tech.pegasys.web3signer.core.Eth1AddressSignerProvider;
 import tech.pegasys.web3signer.core.Eth1Runner;
@@ -46,6 +42,9 @@ import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestBaseConfig;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestEth1Config;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.secp256k1.Signer;
+import tech.pegasys.web3signer.signing.secp256k1.SingleSignerProvider;
+import tech.pegasys.web3signer.signing.secp256k1.filebased.FileBasedSignerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -73,17 +72,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.JsonBody;
 import org.mockserver.model.RegexBody;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.WalletUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
-import tech.pegasys.web3signer.signing.secp256k1.Signer;
-import tech.pegasys.web3signer.signing.secp256k1.SingleSignerProvider;
-import tech.pegasys.web3signer.signing.secp256k1.filebased.FileBasedSignerFactory;
+import org.web3j.protocol.eea.Eea;
+import org.web3j.protocol.eea.JsonRpc2_0Eea;
 
 public class IntegrationTestBase {
 
@@ -113,16 +112,18 @@ public class IntegrationTestBase {
   static final String MALFORMED_JSON = "{Bad Json: {{{}";
 
   static void setupWeb3Signer(final long chainId) throws Exception {
-    setupWeb3Signer(chainId,"");
+    setupWeb3Signer(chainId, "");
   }
 
-  static void setupWeb3Signer(final long chainId, final String downstreamHttpRequestPath) throws Exception {
+  static void setupWeb3Signer(final long chainId, final String downstreamHttpRequestPath)
+      throws Exception {
     setupWeb3Signer(chainId, downstreamHttpRequestPath, List.of("sample.com"));
   }
 
   static void setupWeb3Signer(
       final long chainId,
-      final String downstreamHttpRequestPath, final List<String> allowedCorsOrigin)
+      final String downstreamHttpRequestPath,
+      final List<String> allowedCorsOrigin)
       throws Exception {
     clientAndServer = startClientAndServer();
 
@@ -131,7 +132,7 @@ public class IntegrationTestBase {
     credentials = WalletUtils.loadCredentials("password", keyFile);
 
     final Eth1AddressSignerProvider transactionSignerProvider =
-            new Eth1AddressSignerProvider(new SingleSignerProvider(signer(keyFile, passwordFile)));
+        new Eth1AddressSignerProvider(new SingleSignerProvider(signer(keyFile, passwordFile)));
 
     createKeyStoreYamlFile(transactionSignerProvider);
 
@@ -158,11 +159,11 @@ public class IntegrationTestBase {
         clientAndServer.getLocalPort());
 
     unlockedAccount =
-            transactionSignerProvider.availablePublicKeys().stream()
-                    .map(Eth1AddressSignerIdentifier::fromPublicKey)
-                    .map(signerIdentifier -> "0x" + signerIdentifier.toStringIdentifier())
-                    .findAny()
-                    .orElseThrow();
+        transactionSignerProvider.availablePublicKeys().stream()
+            .map(Eth1AddressSignerIdentifier::fromPublicKey)
+            .map(signerIdentifier -> "0x" + signerIdentifier.toStringIdentifier())
+            .findAny()
+            .orElseThrow();
   }
 
   Web3j jsonRpc() {
@@ -214,10 +215,10 @@ public class IntegrationTestBase {
   void timeoutRequest(final String bodyRegex) {
     final int ENSURE_TIMEOUT = 5;
     clientAndServer
-            .when(request().withBody(new RegexBody(bodyRegex)))
-            .respond(
-                    response()
-                            .withDelay(TimeUnit.MILLISECONDS, downstreamTimeout.toMillis() + ENSURE_TIMEOUT));
+        .when(request().withBody(new RegexBody(bodyRegex)))
+        .respond(
+            response()
+                .withDelay(TimeUnit.MILLISECONDS, downstreamTimeout.toMillis() + ENSURE_TIMEOUT));
   }
 
   void timeoutRequest(final EthNodeRequest request) {
@@ -375,15 +376,18 @@ public class IntegrationTestBase {
             });
   }
 
-  private static void createKeyStoreYamlFile(Eth1AddressSignerProvider transactionSignerProvider) throws IOException, URISyntaxException {
+  private static void createKeyStoreYamlFile(Eth1AddressSignerProvider transactionSignerProvider)
+      throws IOException, URISyntaxException {
     final MetadataFileHelper METADATA_FILE_HELPERS = new MetadataFileHelper();
     final String keyPath =
         new File(Resources.getResource("keyfile.json").toURI()).getAbsolutePath();
 
-    String unlockedAccountAddress = transactionSignerProvider.availablePublicKeys().stream()
+    String unlockedAccountAddress =
+        transactionSignerProvider.availablePublicKeys().stream()
             .map(Eth1AddressSignerIdentifier::fromPublicKey)
-            .map(signerIdentifier -> signerIdentifier.toStringIdentifier())
-            .findAny().get();
+            .map(signerIdentifier -> "0x" + signerIdentifier.toStringIdentifier())
+            .findAny()
+            .get();
 
     METADATA_FILE_HELPERS.createKeyStoreYamlFileAt(
         keyConfigPath.resolve(unlockedAccountAddress + ".yaml"),

@@ -12,6 +12,13 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc;
 
+import static org.web3j.utils.Numeric.decodeQuantity;
+import static tech.pegasys.web3signer.core.jsonrpcproxy.IntegrationTestBase.DEFAULT_CHAIN_ID;
+
+import java.math.BigInteger;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.google.common.io.BaseEncoding;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -25,13 +32,6 @@ import org.web3j.protocol.eea.crypto.PrivateTransactionEncoder;
 import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
 import org.web3j.utils.Base64String;
 import org.web3j.utils.Restriction;
-
-import java.math.BigInteger;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.web3j.utils.Numeric.decodeQuantity;
-import static tech.pegasys.web3signer.core.jsonrpcproxy.IntegrationTestBase.DEFAULT_CHAIN_ID;
 
 public class EeaSendRawTransaction {
 

@@ -12,12 +12,13 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction;
 
-import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
-import org.web3j.utils.Base64String;
-import org.web3j.utils.Restriction;
 import tech.pegasys.web3signer.core.service.jsonrpc.EeaSendTransactionJsonParameters;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestId;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.NonceProvider;
+
+import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
+import org.web3j.utils.Base64String;
+import org.web3j.utils.Restriction;
 
 public class BesuPrivateTransaction extends PrivateTransaction {
 

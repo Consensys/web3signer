@@ -12,14 +12,11 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.sendtransaction.transaction;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.web3j.crypto.Sign.SignatureData;
-import org.web3j.protocol.eea.crypto.PrivateTransactionDecoder;
-import org.web3j.protocol.eea.crypto.SignedRawPrivateTransaction;
-import org.web3j.utils.Base64String;
-import org.web3j.utils.Numeric;
-import org.web3j.utils.Restriction;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.utils.Bytes.trimLeadingZeroes;
+import static org.web3j.utils.Numeric.decodeQuantity;
+
 import tech.pegasys.web3signer.core.service.jsonrpc.EeaSendTransactionJsonParameters;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestId;
@@ -29,10 +26,14 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.tra
 import java.math.BigInteger;
 import java.util.List;
 
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.web3j.utils.Bytes.trimLeadingZeroes;
-import static org.web3j.utils.Numeric.decodeQuantity;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.web3j.crypto.Sign.SignatureData;
+import org.web3j.protocol.eea.crypto.PrivateTransactionDecoder;
+import org.web3j.protocol.eea.crypto.SignedRawPrivateTransaction;
+import org.web3j.utils.Base64String;
+import org.web3j.utils.Numeric;
+import org.web3j.utils.Restriction;
 
 public class EeaPrivateTransactionTest {
 

@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction;
 
-
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.NonceProvider;
 

@@ -12,12 +12,10 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.sendtransaction.transaction;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.web3j.crypto.Sign.SignatureData;
-import org.web3j.crypto.SignedRawTransaction;
-import org.web3j.crypto.TransactionDecoder;
-import org.web3j.utils.Numeric;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.utils.Bytes.trimLeadingZeroes;
+
 import tech.pegasys.web3signer.core.service.jsonrpc.EthSendTransactionJsonParameters;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestId;
@@ -26,9 +24,12 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.tra
 import java.math.BigInteger;
 import java.util.List;
 
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.web3j.utils.Bytes.trimLeadingZeroes;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.web3j.crypto.Sign.SignatureData;
+import org.web3j.crypto.SignedRawTransaction;
+import org.web3j.crypto.TransactionDecoder;
+import org.web3j.utils.Numeric;
 
 public class EthTransactionTest {
 

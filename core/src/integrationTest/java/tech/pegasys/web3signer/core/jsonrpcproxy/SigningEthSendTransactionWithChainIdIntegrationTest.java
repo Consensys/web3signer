@@ -12,18 +12,19 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.web3j.protocol.core.Request;
-import org.web3j.protocol.core.methods.response.EthSendTransaction;
+import static java.math.BigInteger.ONE;
+import static tech.pegasys.web3signer.core.jsonrpcproxy.support.TransactionCountResponder.TRANSACTION_COUNT_METHOD.ETH_GET_TRANSACTION_COUNT;
+
 import tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendRawTransaction;
 import tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendTransaction;
 import tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.Transaction;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.TransactionCountResponder;
 
-import static java.math.BigInteger.ONE;
-import static tech.pegasys.web3signer.core.jsonrpcproxy.support.TransactionCountResponder.TRANSACTION_COUNT_METHOD.ETH_GET_TRANSACTION_COUNT;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 
 class SigningEthSendTransactionWithChainIdIntegrationTest extends IntegrationTestBase {
 
@@ -59,7 +60,8 @@ class SigningEthSendTransactionWithChainIdIntegrationTest extends IntegrationTes
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }

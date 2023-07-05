@@ -13,12 +13,15 @@
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing;
 
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
+import static tech.pegasys.web3signer.core.util.Eth1AddressUtil.signerPublicKeyFromAddress;
 
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
+
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,17 +48,20 @@ public class TransactionSerializer {
   public String serialize(final Transaction transaction) {
     final byte[] bytesToSign = transaction.rlpEncode(chainId);
 
+    Optional<String> publicKey = signerPublicKeyFromAddress(signer, identifier);
+
+    if (publicKey.isEmpty()) {
+      LOG.debug("From address ({}) does not match any available account", identifier);
+      throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
+    }
+
     final SecpArtifactSignature artifactSignature =
         signer
-            .getSigner(identifier)
+            .getSigner(publicKey.get())
             .map(
                 artifactSigner ->
                     (SecpArtifactSignature) artifactSigner.sign(Bytes.of(bytesToSign)))
-            .orElseThrow(
-                () -> {
-                  LOG.debug("From address ({}) does not match any available account", identifier);
-                  throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
-                });
+            .get();
 
     final Signature signature = artifactSignature.getSignatureData();
 

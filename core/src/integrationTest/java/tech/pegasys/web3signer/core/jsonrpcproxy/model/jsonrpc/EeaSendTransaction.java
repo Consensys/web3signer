@@ -12,10 +12,6 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc;
 
-import io.vertx.core.json.JsonObject;
-import org.web3j.protocol.core.Request;
-import org.web3j.protocol.core.methods.response.EthSendTransaction;
-
 import static java.util.Collections.singletonList;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.IntegrationTestBase.DEFAULT_ID;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendTransaction.FIELD_DATA;
@@ -26,6 +22,10 @@ import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendTransa
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendTransaction.FIELD_TO;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendTransaction.FIELD_VALUE;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.TransactionJsonUtil.putValue;
+
+import io.vertx.core.json.JsonObject;
+import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 
 public class EeaSendTransaction {
   public static final String FIELD_PRIVATE_FROM = "privateFrom";

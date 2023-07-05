@@ -12,10 +12,6 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction;
 
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.EeaSendTransactionJsonParameters;
 import tech.pegasys.web3signer.core.service.jsonrpc.EthSendTransactionJsonParameters;
@@ -24,6 +20,11 @@ import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.NonceProvider;
 
 import java.util.List;
+
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class TransactionFactory {
 
@@ -54,15 +55,14 @@ public class TransactionFactory {
   }
 
   private Transaction createEthTransaction(
-      final JsonRpcRequest request,
-      final VertxNonceRequestTransmitter nonceRequestTransmitter) {
+      final JsonRpcRequest request, final VertxNonceRequestTransmitter nonceRequestTransmitter) {
     final EthSendTransactionJsonParameters params =
         fromRpcRequestToJsonParam(EthSendTransactionJsonParameters.class, request);
 
     final NonceProvider ethNonceProvider =
         new EthNonceProvider(params.sender(), nonceRequestTransmitter);
 
-      return new EthTransaction(params, ethNonceProvider, request.getId());
+    return new EthTransaction(params, ethNonceProvider, request.getId());
   }
 
   private Transaction createEeaTransaction(

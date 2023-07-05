@@ -12,11 +12,10 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSetter;
-import org.web3j.utils.Base64String;
+import static org.web3j.utils.Numeric.decodeQuantity;
+import static tech.pegasys.web3signer.core.service.jsonrpc.RpcUtil.decodeBigInteger;
+import static tech.pegasys.web3signer.core.service.jsonrpc.RpcUtil.fromRpcRequestToJsonParam;
+import static tech.pegasys.web3signer.core.service.jsonrpc.RpcUtil.validateNotEmpty;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -24,10 +23,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.web3j.utils.Numeric.decodeQuantity;
-import static tech.pegasys.web3signer.core.service.jsonrpc.RpcUtil.decodeBigInteger;
-import static tech.pegasys.web3signer.core.service.jsonrpc.RpcUtil.fromRpcRequestToJsonParam;
-import static tech.pegasys.web3signer.core.service.jsonrpc.RpcUtil.validateNotEmpty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import org.web3j.utils.Base64String;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EeaSendTransactionJsonParameters {

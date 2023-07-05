@@ -12,7 +12,9 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction;
 
-import io.vertx.ext.web.RoutingContext;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INTERNAL_ERROR;
+
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
@@ -20,8 +22,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.Transaction
 
 import java.util.Map.Entry;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INTERNAL_ERROR;
+import io.vertx.ext.web.RoutingContext;
 
 public class RetryingTransactionTransmitter extends TransactionTransmitter {
 

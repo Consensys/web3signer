@@ -12,12 +12,13 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction;
 
-import org.web3j.utils.Base64String;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.NonceProvider;
 
 import java.math.BigInteger;
 import java.util.List;
+
+import org.web3j.utils.Base64String;
 
 public class EeaPrivateNonceProvider implements NonceProvider {
 

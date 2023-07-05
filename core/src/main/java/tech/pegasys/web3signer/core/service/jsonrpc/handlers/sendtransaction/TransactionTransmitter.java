@@ -12,13 +12,10 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction;
 
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.json.EncodeException;
-import io.vertx.core.json.Json;
-import io.vertx.ext.web.RoutingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INTERNAL_ERROR;
+import static tech.pegasys.web3signer.core.util.ResponseCodeSelector.jsonRPCErrorCode;
+
 import tech.pegasys.web3signer.core.service.ForwardedMessageResponder;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitter;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
@@ -31,9 +28,13 @@ import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError;
 
 import java.util.Optional;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INTERNAL_ERROR;
-import static tech.pegasys.web3signer.core.util.ResponseCodeSelector.jsonRPCErrorCode;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.EncodeException;
+import io.vertx.core.json.Json;
+import io.vertx.ext.web.RoutingContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class TransactionTransmitter extends ForwardedMessageResponder {
 

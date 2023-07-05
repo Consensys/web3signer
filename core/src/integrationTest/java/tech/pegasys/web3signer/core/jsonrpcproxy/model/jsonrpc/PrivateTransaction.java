@@ -12,15 +12,15 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc;
 
-import java.util.List;
-import java.util.Optional;
-
 import static java.util.Collections.singletonList;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.EeaSendTransaction.DEFAULT_VALUE;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.EeaSendTransaction.PRIVACY_GROUP_ID;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.EeaSendTransaction.PRIVATE_FOR;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.EeaSendTransaction.PRIVATE_FROM;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.EeaSendTransaction.UNLOCKED_ACCOUNT;
+
+import java.util.List;
+import java.util.Optional;
 
 public class PrivateTransaction {
   // Values are held using a value holder as an Optional cannot contain a null value and we want to

@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc;
 
-import java.util.Optional;
-
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.EeaSendTransaction.UNLOCKED_ACCOUNT;
 import static tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendTransaction.FIELD_VALUE_DEFAULT;
+
+import java.util.Optional;
 
 public class Transaction {
   // Values are held using a value holder as an Optional cannot contain a null value and we want to

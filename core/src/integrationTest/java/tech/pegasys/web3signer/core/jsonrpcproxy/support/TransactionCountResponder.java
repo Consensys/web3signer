@@ -12,13 +12,8 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.support;
 
-import io.vertx.core.json.Json;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.mockserver.mock.action.ExpectationResponseCallback;
-import org.mockserver.model.HttpRequest;
-import org.mockserver.model.HttpResponse;
-import org.mockserver.model.RegexBody;
+import static org.mockserver.model.HttpResponse.response;
+
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestId;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcSuccessResponse;
@@ -26,7 +21,13 @@ import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcSuccessRespo
 import java.math.BigInteger;
 import java.util.function.Function;
 
-import static org.mockserver.model.HttpResponse.response;
+import io.vertx.core.json.Json;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.mockserver.mock.action.ExpectationResponseCallback;
+import org.mockserver.model.HttpRequest;
+import org.mockserver.model.HttpResponse;
+import org.mockserver.model.RegexBody;
 
 public class TransactionCountResponder implements ExpectationResponseCallback {
 

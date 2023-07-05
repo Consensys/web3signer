@@ -12,6 +12,12 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc;
 
+import static org.web3j.utils.Numeric.decodeQuantity;
+import static tech.pegasys.web3signer.core.jsonrpcproxy.IntegrationTestBase.DEFAULT_CHAIN_ID;
+
+import java.math.BigInteger;
+import java.util.List;
+
 import com.google.common.io.BaseEncoding;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -22,12 +28,6 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
-
-import java.math.BigInteger;
-import java.util.List;
-
-import static org.web3j.utils.Numeric.decodeQuantity;
-import static tech.pegasys.web3signer.core.jsonrpcproxy.IntegrationTestBase.DEFAULT_CHAIN_ID;
 
 public class SendRawTransaction {
 

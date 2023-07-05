@@ -189,9 +189,9 @@ public class Eth1Runner extends Runner {
         new PassThroughHandler(transmitterFactory, jsonDecoder);
 
     final TransactionFactory transactionFactory =
-            new TransactionFactory(jsonDecoder, transmitterFactory);
+        new TransactionFactory(jsonDecoder, transmitterFactory);
     final SendTransactionHandler sendTransactionHandler =
-            new SendTransactionHandler(chainId, signerProvider, transactionFactory, transmitterFactory);
+        new SendTransactionHandler(chainId, signerProvider, transactionFactory, transmitterFactory);
 
     final RequestMapper requestMapper = new RequestMapper(defaultHandler);
     requestMapper.addHandler(
@@ -205,8 +205,7 @@ public class Eth1Runner extends Runner {
         "eth_signTransaction",
         new InternalResponseHandler<>(
             responseFactory,
-            new EthSignTransactionResultProvider(
-                    chainId, signerProvider, jsonDecoder)));
+            new EthSignTransactionResultProvider(chainId, signerProvider, jsonDecoder)));
     requestMapper.addHandler("eth_sendTransaction", sendTransactionHandler);
 
     return requestMapper;

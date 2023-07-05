@@ -12,25 +12,19 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.sendtransaction;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.json.Json;
-import io.vertx.core.json.JsonObject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.NonceProvider;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.NonceTooLowRetryMechanism;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.RetryMechanism;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcErrorResponse;
 
-import java.math.BigInteger;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.when;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class NonceTooLowRetryMechanismTest {
@@ -44,7 +38,7 @@ public class NonceTooLowRetryMechanismTest {
 
     assertThat(
             retryMechanism.responseRequiresRetry(
-                    HttpResponseStatus.OK.code(), Json.encode(errorResponse)))
+                HttpResponseStatus.OK.code(), Json.encode(errorResponse)))
         .isTrue();
   }
 
@@ -56,7 +50,7 @@ public class NonceTooLowRetryMechanismTest {
 
     assertThat(
             retryMechanism.responseRequiresRetry(
-                    HttpResponseStatus.OK.code(), Json.encode(errorResponse)))
+                HttpResponseStatus.OK.code(), Json.encode(errorResponse)))
         .isTrue();
   }
 
@@ -67,7 +61,7 @@ public class NonceTooLowRetryMechanismTest {
 
     assertThat(
             retryMechanism.responseRequiresRetry(
-                    HttpResponseStatus.OK.code(), Json.encode(errorResponse)))
+                HttpResponseStatus.OK.code(), Json.encode(errorResponse)))
         .isTrue();
   }
 
@@ -78,7 +72,7 @@ public class NonceTooLowRetryMechanismTest {
 
     assertThat(
             retryMechanism.responseRequiresRetry(
-                    HttpResponseStatus.BAD_REQUEST.code(), Json.encode(errorResponse)))
+                HttpResponseStatus.BAD_REQUEST.code(), Json.encode(errorResponse)))
         .isFalse();
   }
 
@@ -94,7 +88,7 @@ public class NonceTooLowRetryMechanismTest {
 
     assertThat(
             retryMechanism.responseRequiresRetry(
-                    HttpResponseStatus.BAD_REQUEST.code(), Json.encode(errorResponse)))
+                HttpResponseStatus.BAD_REQUEST.code(), Json.encode(errorResponse)))
         .isFalse();
   }
 

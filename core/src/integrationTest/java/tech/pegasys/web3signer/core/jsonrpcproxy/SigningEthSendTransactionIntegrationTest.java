@@ -12,21 +12,6 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy;
 
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.vertx.core.json.Json;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.web3j.protocol.core.Request;
-import org.web3j.protocol.core.methods.response.EthSendTransaction;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendRawTransaction;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendTransaction;
-import tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.Transaction;
-import tech.pegasys.web3signer.core.jsonrpcproxy.support.TransactionCountResponder;
-
-import java.util.Optional;
-
 import static io.netty.handler.codec.http.HttpResponseStatus.GATEWAY_TIMEOUT;
 import static java.math.BigInteger.ONE;
 import static java.util.Collections.singletonList;
@@ -42,6 +27,22 @@ import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.NONCE_TOO_LOW;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
+
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendRawTransaction;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.SendTransaction;
+import tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc.Transaction;
+import tech.pegasys.web3signer.core.jsonrpcproxy.support.TransactionCountResponder;
+
+import java.util.Optional;
+
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.vertx.core.json.Json;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 
 /** Signing is a step during proxying a sendTransaction() JSON-RPC request to an Ethereum node. */
 class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
@@ -144,7 +145,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -169,7 +171,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -187,7 +190,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -208,7 +212,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -227,7 +232,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -245,7 +251,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -263,7 +270,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -282,7 +290,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -301,7 +310,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -329,7 +339,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -349,7 +360,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -376,7 +388,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -395,7 +408,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -423,7 +437,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }
@@ -459,7 +474,8 @@ class SigningEthSendTransactionIntegrationTest extends DefaultTestBase {
         request.ethNode(sendRawTransactionRequest), response.ethNode(sendRawTransactionResponse));
 
     sendPostRequestAndVerifyResponse(
-        request.web3Signer(sendTransactionRequest), response.web3Signer(sendRawTransactionResponse));
+        request.web3Signer(sendTransactionRequest),
+        response.web3Signer(sendRawTransactionResponse));
 
     verifyEthNodeReceived(sendRawTransactionRequest);
   }

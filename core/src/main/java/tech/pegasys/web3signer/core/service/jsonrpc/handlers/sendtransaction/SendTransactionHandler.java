@@ -12,11 +12,12 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction;
 
-import io.vertx.core.json.DecodeException;
-import io.vertx.ext.web.RoutingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import tech.pegasys.web3signer.core.Eth1AddressSignerProvider;
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
+import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
+import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
+import static tech.pegasys.web3signer.core.util.Eth1AddressUtil.signerPublicKeyFromAddress;
+import static tech.pegasys.web3signer.core.util.ResponseCodeSelector.jsonRPCErrorCode;
+
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestHandler;
@@ -25,14 +26,13 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.tra
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.TransactionSerializer;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.secp256k1.Signer;
 
 import java.util.Optional;
 
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
-import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
-import static tech.pegasys.web3signer.core.util.ResponseCodeSelector.jsonRPCErrorCode;
+import io.vertx.core.json.DecodeException;
+import io.vertx.ext.web.RoutingContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class SendTransactionHandler implements JsonRpcRequestHandler {
 
@@ -77,7 +77,14 @@ public class SendTransactionHandler implements JsonRpcRequestHandler {
       return;
     }
 
+    Optional<String> publicKey = signerPublicKeyFromAddress(signerProvider, transaction.sender());
 
+    if (publicKey.isEmpty()) {
+      LOG.debug("From address ({}) does not match any available account", transaction.sender());
+      context.fail(
+          BAD_REQUEST.code(), new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT));
+      return;
+    }
 
     sendTransaction(transaction, context, signerProvider, request);
   }
@@ -88,7 +95,8 @@ public class SendTransactionHandler implements JsonRpcRequestHandler {
       final ArtifactSignerProvider signerProvider,
       final JsonRpcRequest request) {
 
-    final TransactionSerializer transactionSerializer = new TransactionSerializer(signerProvider, chainId, transaction.sender());
+    final TransactionSerializer transactionSerializer =
+        new TransactionSerializer(signerProvider, chainId, transaction.sender());
 
     final TransactionTransmitter transmitter =
         createTransactionTransmitter(transaction, transactionSerializer, routingContext, request);

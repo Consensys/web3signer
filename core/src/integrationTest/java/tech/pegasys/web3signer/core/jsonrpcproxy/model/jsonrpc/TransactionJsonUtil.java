@@ -12,9 +12,9 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy.model.jsonrpc;
 
-import io.vertx.core.json.JsonObject;
-
 import java.util.Optional;
+
+import io.vertx.core.json.JsonObject;
 
 public class TransactionJsonUtil {
 

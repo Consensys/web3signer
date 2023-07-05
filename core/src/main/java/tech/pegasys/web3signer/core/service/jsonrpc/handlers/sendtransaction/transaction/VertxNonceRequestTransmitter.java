@@ -12,15 +12,8 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction;
 
-import io.vertx.core.MultiMap;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.json.DecodeException;
-import io.vertx.core.json.Json;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.web3j.exceptions.MessageDecodingException;
-import org.web3j.utils.Numeric;
+import static tech.pegasys.web3signer.core.service.jsonrpc.RpcUtil.determineErrorCode;
+
 import tech.pegasys.web3signer.core.service.DownstreamResponseHandler;
 import tech.pegasys.web3signer.core.service.RequestTransmitter;
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
@@ -37,8 +30,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static tech.pegasys.web3signer.core.service.jsonrpc.RpcUtil.determineErrorCode;
-
+import io.vertx.core.MultiMap;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.Json;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.web3j.exceptions.MessageDecodingException;
+import org.web3j.utils.Numeric;
 
 public class VertxNonceRequestTransmitter {
 

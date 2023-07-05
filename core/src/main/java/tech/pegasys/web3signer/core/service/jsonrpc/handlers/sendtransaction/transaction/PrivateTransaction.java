@@ -12,6 +12,14 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction;
 
+import tech.pegasys.web3signer.core.service.jsonrpc.EeaSendTransactionJsonParameters;
+import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
+import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestId;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.NonceProvider;
+
+import java.math.BigInteger;
+import java.util.List;
+
 import com.google.common.base.MoreObjects;
 import org.jetbrains.annotations.NotNull;
 import org.web3j.crypto.Sign.SignatureData;
@@ -20,13 +28,6 @@ import org.web3j.protocol.eea.crypto.RawPrivateTransaction;
 import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpType;
-import tech.pegasys.web3signer.core.service.jsonrpc.EeaSendTransactionJsonParameters;
-import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
-import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestId;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.NonceProvider;
-
-import java.math.BigInteger;
-import java.util.List;
 
 public abstract class PrivateTransaction implements Transaction {
 

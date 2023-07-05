@@ -12,14 +12,15 @@
  */
 package tech.pegasys.web3signer.core.jsonrpcproxy;
 
-import org.junit.jupiter.api.Test;
-import org.web3j.crypto.Credentials;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import tech.pegasys.web3signer.core.service.jsonrpc.EthSendTransactionJsonParameters;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.EthTransaction;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import org.junit.jupiter.api.Test;
+import org.web3j.crypto.Credentials;
 
 class IllegalSignatureCreationTest {
 
