@@ -27,7 +27,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.core.ConditionTimeoutException;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.protocol.exceptions.ClientConnectionException;
 
 public abstract class Contracts<T> {
 
@@ -46,15 +45,6 @@ public abstract class Contracts<T> {
 
   public String submit(final T smartContract) {
     return failOnIOException(() -> sendTransaction(smartContract));
-  }
-
-  public SignerResponse<JsonRpcErrorResponse> submitExceptional(final T smartContract) {
-    try {
-      return failOnIOException(() -> sendTransactionExpectsError(smartContract));
-    } catch (final ClientConnectionException e) {
-      LOG.info("ClientConnectionException with message: " + e.getMessage());
-      return SignerResponse.fromError(e);
-    }
   }
 
   public void awaitBlockContaining(final String hash) {

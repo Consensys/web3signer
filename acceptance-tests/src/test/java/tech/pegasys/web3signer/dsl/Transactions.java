@@ -19,8 +19,6 @@ import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcErrorResponse;
 import tech.pegasys.web3signer.dsl.signer.SignerResponse;
 
-import java.math.BigInteger;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.core.ConditionTimeoutException;
@@ -57,9 +55,5 @@ public class Transactions {
       LOG.error("Timed out waiting for a block containing the transaction receipt hash: " + hash);
       throw new RuntimeException("No receipt found for hash: " + hash);
     }
-  }
-
-  public BigInteger count(final String address) {
-    return failOnIOException(() -> eth.getTransactionCount(address));
   }
 }
