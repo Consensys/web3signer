@@ -32,7 +32,6 @@ import java.util.Optional;
 import org.apache.logging.log4j.Level;
 
 public class SignerConfigurationBuilder {
-
   private static final String LOCALHOST = "127.0.0.1";
   private Level logLevel = Level.DEBUG;
   private int httpRpcPort = 0;
