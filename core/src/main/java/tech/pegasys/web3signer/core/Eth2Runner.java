@@ -273,6 +273,11 @@ public class Eth2Runner extends Runner {
 
           if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
             LOG.info("Bulk loading keys from Azure key vault ... ");
+            /*
+             Note: Azure supports 25K bytes per secret. https://learn.microsoft.com/en-us/azure/key-vault/secrets/about-secrets
+             Each raw bls private key in hex format is approximately 100 bytes. We should store about 200 or fewer
+             `\n` delimited keys per secret.
+            */
             final MappedResults<ArtifactSigner> azureResult = loadAzureSigners();
             LOG.info(
                 "Keys loaded from Azure: [{}], with error count: [{}]",
@@ -377,7 +382,7 @@ public class Eth2Runner extends Runner {
     final DbPrunerRunner dbPrunerRunner =
         new DbPrunerRunner(
             slashingProtectionParameters,
-            slashingProtectionContext.get().getSlashingProtection(),
+            slashingProtectionContext.get().getPruner(),
             Executors.newScheduledThreadPool(1));
     if (slashingProtectionParameters.isPruningAtBootEnabled()) {
       dbPrunerRunner.execute();
@@ -397,7 +402,10 @@ public class Eth2Runner extends Runner {
                 new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKeyBytes)));
             return new BlsArtifactSigner(keyPair, SignerOrigin.AZURE);
           } catch (final Exception e) {
-            LOG.error("Failed to load secret named {} from azure key vault.", name);
+            LOG.error(
+                "Failed to load secret named {} from azure key vault due to: {}.",
+                name,
+                e.getMessage());
             return null;
           }
         },

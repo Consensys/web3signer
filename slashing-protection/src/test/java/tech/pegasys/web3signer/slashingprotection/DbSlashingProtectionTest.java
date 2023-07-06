@@ -19,7 +19,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -46,7 +45,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.core.transaction.TransactionIsolationLevel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -74,24 +72,19 @@ public class DbSlashingProtectionTest {
 
   private DbSlashingProtection dbSlashingProtection;
   private Jdbi slashingJdbi;
-  private Jdbi pruningJdbi;
 
   @BeforeEach
   public void setup(final Jdbi jdbi) {
     DbConnection.configureJdbi(jdbi);
     slashingJdbi = spy(jdbi);
-    pruningJdbi = spy(jdbi);
     dbSlashingProtection =
         new DbSlashingProtection(
             slashingJdbi,
-            pruningJdbi,
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao,
-            1,
-            1,
             new RegisteredValidators(
                 slashingJdbi, validatorsDao, HashBiMap.create(Map.of(PUBLIC_KEY1, VALIDATOR_ID))));
     lenient().when(metadataDao.findGenesisValidatorsRoot(any())).thenReturn(Optional.of(GVR));
@@ -161,14 +154,11 @@ public class DbSlashingProtectionTest {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
-            jdbi,
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao,
-            0,
-            0,
             new RegisteredValidators(jdbi, validatorsDao));
 
     assertThatThrownBy(
@@ -332,14 +322,11 @@ public class DbSlashingProtectionTest {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
             jdbi,
-            jdbi,
             validatorsDao,
             signedBlocksDao,
             signedAttestationsDao,
             metadataDao,
             lowWatermarkDao,
-            0,
-            0,
             new RegisteredValidators(jdbi, validatorsDao));
 
     assertThatThrownBy(
@@ -577,13 +564,5 @@ public class DbSlashingProtectionTest {
         .isTrue();
 
     verify(metadataDao).insertGenesisValidatorsRoot(any(), eq(GVR));
-  }
-
-  @Test
-  public void pruningUseSeparateDatasource() {
-    dbSlashingProtection.prune();
-    verify(pruningJdbi, atLeast(2))
-        .inTransaction(eq(TransactionIsolationLevel.READ_UNCOMMITTED), any());
-    verifyNoInteractions(slashingJdbi);
   }
 }

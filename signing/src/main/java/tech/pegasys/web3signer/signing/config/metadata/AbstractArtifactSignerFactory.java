@@ -69,13 +69,16 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
     final Optional<TlsOptions> tlsOptions = buildTlsOptions(metadata);
 
     try {
+      final ConnectionParameters connectionParameters =
+          ConnectionParameters.newBuilder()
+              .withServerHost(metadata.getServerHost())
+              .withServerPort(metadata.getServerPort())
+              .withTlsOptions(tlsOptions.orElse(null))
+              .withTimeoutMs(metadata.getTimeout())
+              .withHttpProtocolVersion(metadata.getHttpProtocolVersion())
+              .build();
       final HashicorpConnection connection =
-          hashicorpConnectionFactory.create(
-              new ConnectionParameters(
-                  metadata.getServerHost(),
-                  Optional.ofNullable(metadata.getServerPort()),
-                  tlsOptions,
-                  Optional.ofNullable(metadata.getTimeout())));
+          hashicorpConnectionFactory.create(connectionParameters);
 
       final String secret =
           connection.fetchKey(

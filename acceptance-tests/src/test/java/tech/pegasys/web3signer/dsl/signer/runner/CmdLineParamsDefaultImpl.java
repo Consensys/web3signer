@@ -64,7 +64,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add("--http-host-allowlist");
       params.add(String.join(",", signerConfig.getHttpHostAllowList()));
     }
-    params.add("--key-store-path");
+    params.add("--key-config-path");
     params.add(signerConfig.getKeyStorePath().toString());
     if (signerConfig.isMetricsEnabled()) {
       params.add("--metrics-enabled");

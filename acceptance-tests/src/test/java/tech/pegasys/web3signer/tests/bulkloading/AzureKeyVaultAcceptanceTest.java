@@ -13,8 +13,8 @@
 package tech.pegasys.web3signer.tests.bulkloading;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
@@ -62,7 +62,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     startSigner(configBuilder.build());
 
     final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasItem(EXPECTED_KEY));
 
     // Since our Azure vault contains some invalid keys, the healthcheck would return 503.
     final Response healthcheckResponse = signer.healthcheck();
@@ -72,10 +72,10 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("status", equalTo("DOWN"));
 
-    // keys loaded would still be 1 though
+    // keys loaded would still be >= 1 though
     final String jsonBody = healthcheckResponse.body().asString();
     int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
-    assertThat(keysLoaded).isEqualTo(1);
+    assertThat(keysLoaded).isGreaterThanOrEqualTo(1);
   }
 
   @ParameterizedTest(name = "{index} - Using config file: {0}")
@@ -94,7 +94,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     startSigner(configBuilder.build());
 
     final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasItem(EXPECTED_KEY));
 
     // the tag filter will return only valid keys. The healtcheck should be UP
     final Response healthcheckResponse = signer.healthcheck();
@@ -163,6 +163,6 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     startSigner(configBuilder.build());
 
     final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", contains(EXPECTED_KEY));
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasItem(EXPECTED_KEY));
   }
 }

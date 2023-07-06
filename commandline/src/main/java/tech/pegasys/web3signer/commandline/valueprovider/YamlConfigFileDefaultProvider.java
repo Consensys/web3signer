@@ -13,15 +13,16 @@
 package tech.pegasys.web3signer.commandline.valueprovider;
 
 import static java.util.function.Predicate.not;
-import static tech.pegasys.web3signer.commandline.valueprovider.PrefixUtil.stripPrefix;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -107,14 +108,14 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
     // parent command options
     final Set<String> mainCommandOptions =
         commandLine.getCommandSpec().options().stream()
-            .map(YamlConfigFileDefaultProvider::buildOptionName)
+            .flatMap(YamlConfigFileDefaultProvider::buildOptionNames)
             .collect(Collectors.toSet());
 
     // subcommands options
     final Set<String> subCommandsOptions =
         subCommandValues(commandLine)
             .flatMap(YamlConfigFileDefaultProvider::allSubCommandOptions)
-            .map(YamlConfigFileDefaultProvider::buildQualifiedOptionName)
+            .flatMap(YamlConfigFileDefaultProvider::buildQualifiedOptionNames)
             .collect(Collectors.toSet());
 
     picoCliOptionsKeys.addAll(mainCommandOptions);
@@ -142,15 +143,16 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
   }
 
   private String getConfigurationValue(final OptionSpec optionSpec) {
-    final String keyName;
+    final Stream<String> keyAliases;
     if (commandLine.getCommandName().equals(optionSpec.command().name())) {
-      keyName = buildOptionName(optionSpec);
+      keyAliases = buildOptionNames(optionSpec);
     } else {
       // subcommand option
-      keyName = buildQualifiedOptionName(optionSpec);
+      keyAliases = buildQualifiedOptionNames(optionSpec);
     }
 
-    final Object value = result.get(keyName);
+    final Object value =
+        keyAliases.map(k -> result.get(k)).filter(Objects::nonNull).findFirst().orElse(null);
 
     if (value == null) {
       return null;
@@ -173,13 +175,13 @@ public class YamlConfigFileDefaultProvider implements IDefaultValueProvider {
         subCommandValues(subcommand).flatMap(YamlConfigFileDefaultProvider::allSubCommandOptions));
   }
 
-  private static String buildQualifiedOptionName(final OptionSpec optionSpec) {
+  private static Stream<String> buildQualifiedOptionNames(final OptionSpec optionSpec) {
     final String cmdPrefix = optionSpec.command().qualifiedName(".");
     final String prefixWithoutWeb3Signer = cmdPrefix.replaceFirst(WEB3SIGNER_CMD_PREFIX, "");
-    return prefixWithoutWeb3Signer + "." + buildOptionName(optionSpec);
+    return buildOptionNames(optionSpec).map(s -> prefixWithoutWeb3Signer + "." + s);
   }
 
-  private static String buildOptionName(final OptionSpec optionSpec) {
-    return stripPrefix(optionSpec.longestName());
+  private static Stream<String> buildOptionNames(final OptionSpec optionSpec) {
+    return Arrays.stream(optionSpec.names()).map(PrefixUtil::stripPrefix);
   }
 }
