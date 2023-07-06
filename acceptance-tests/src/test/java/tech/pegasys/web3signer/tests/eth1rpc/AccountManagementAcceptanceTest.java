@@ -20,23 +20,21 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 public class AccountManagementAcceptanceTest extends Eth1RpcAcceptanceTestBase {
 
   @BeforeEach
-  public void setup(@TempDir Path testDirectory) throws URISyntaxException {
+  public void setup() throws URISyntaxException {
     startBesu();
     // generate key in temp dir before start web3signer
 
     final SignerConfiguration web3SignerConfiguration =
         new SignerConfigurationBuilder()
-            .withKeyStoreDirectory(testDirectory)
+            .withKeyStoreDirectory(keyFileTempDir)
             .withMode("eth1")
             .withDownstreamHttpPort(besu.ports().getHttpRpc())
             .withChainIdProvider(new ConfigurationChainId(DEFAULT_CHAIN_ID))
