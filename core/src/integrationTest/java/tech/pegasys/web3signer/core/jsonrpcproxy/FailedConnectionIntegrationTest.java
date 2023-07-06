@@ -20,10 +20,11 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.json.Json;
 import org.junit.jupiter.api.Test;
 
-class FailedConnectionIntegrationTest extends IntegrationTestBase {
+class FailedConnectionIntegrationTest extends DefaultTestBase {
 
   @Test
-  void failsToConnectToDownStreamRaisesTimeout() {
+  void failsToConnectToDownStreamRaisesTimeout() throws Exception {
+    setupWeb3Signer(DEFAULT_CHAIN_ID);
     clientAndServer.stop();
     final EthProtocolVersionRequest request = new EthProtocolVersionRequest(jsonRpc());
 

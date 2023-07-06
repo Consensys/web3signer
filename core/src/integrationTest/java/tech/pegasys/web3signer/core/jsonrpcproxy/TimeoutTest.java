@@ -20,7 +20,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.json.Json;
 import org.junit.jupiter.api.Test;
 
-class TimeoutTest extends IntegrationTestBase {
+class TimeoutTest extends DefaultTestBase {
 
   @Test
   void downstreamConnectsButDoesNotRespondReturnsGatewayTimeout() {
