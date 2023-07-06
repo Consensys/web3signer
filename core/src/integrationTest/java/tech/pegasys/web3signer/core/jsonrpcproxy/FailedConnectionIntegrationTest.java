@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 class FailedConnectionIntegrationTest extends DefaultTestBase {
 
   @Test
-  void failsToConnectToDownStreamRaisesTimeout() {
+  void failsToConnectToDownStreamRaisesTimeout(){
     clientAndServer.stop();
     final EthProtocolVersionRequest request = new EthProtocolVersionRequest(jsonRpc());
 
