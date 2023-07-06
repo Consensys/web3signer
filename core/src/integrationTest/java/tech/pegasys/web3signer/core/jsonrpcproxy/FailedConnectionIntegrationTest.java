@@ -24,7 +24,6 @@ class FailedConnectionIntegrationTest extends DefaultTestBase {
 
   @Test
   void failsToConnectToDownStreamRaisesTimeout() throws Exception {
-    setupWeb3Signer(DEFAULT_CHAIN_ID);
     clientAndServer.stop();
     final EthProtocolVersionRequest request = new EthProtocolVersionRequest(jsonRpc());
 
