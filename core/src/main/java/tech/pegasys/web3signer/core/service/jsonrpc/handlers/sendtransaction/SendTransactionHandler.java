@@ -96,7 +96,7 @@ public class SendTransactionHandler implements JsonRpcRequestHandler {
       final JsonRpcRequest request) {
 
     final TransactionSerializer transactionSerializer =
-        new TransactionSerializer(signerProvider, chainId, transaction.sender());
+        new TransactionSerializer(signerProvider, chainId);
 
     final TransactionTransmitter transmitter =
         createTransactionTransmitter(transaction, transactionSerializer, routingContext, request);

@@ -36,22 +36,18 @@ public class TransactionSerializer {
   protected final ArtifactSignerProvider signer;
   protected final long chainId;
 
-  protected final String identifier;
-
-  public TransactionSerializer(
-      final ArtifactSignerProvider signer, final long chainId, final String identifier) {
+  public TransactionSerializer(final ArtifactSignerProvider signer, final long chainId) {
     this.signer = signer;
     this.chainId = chainId;
-    this.identifier = identifier;
   }
 
   public String serialize(final Transaction transaction) {
     final byte[] bytesToSign = transaction.rlpEncode(chainId);
 
-    Optional<String> publicKey = signerPublicKeyFromAddress(signer, identifier);
+    Optional<String> publicKey = signerPublicKeyFromAddress(signer, transaction.sender());
 
     if (publicKey.isEmpty()) {
-      LOG.debug("From address ({}) does not match any available account", identifier);
+      LOG.debug("From address ({}) does not match any available account", transaction.sender());
       throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
     }
 

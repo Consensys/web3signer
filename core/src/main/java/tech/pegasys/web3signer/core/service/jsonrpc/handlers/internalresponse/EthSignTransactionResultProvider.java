@@ -13,8 +13,6 @@
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse;
 
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
-import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
-import static tech.pegasys.web3signer.core.util.Eth1AddressUtil.signerPublicKeyFromAddress;
 
 import tech.pegasys.web3signer.core.service.jsonrpc.EthSendTransactionJsonParameters;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonDecoder;
@@ -27,7 +25,6 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.Transaction
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.util.List;
-import java.util.Optional;
 
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
@@ -74,15 +71,8 @@ public class EthSignTransactionResultProvider implements ResultProvider<String> 
 
     LOG.debug("Obtaining signer for {}", transaction.sender());
 
-    Optional<String> publicKey = signerPublicKeyFromAddress(signerProvider, transaction.sender());
-
-    if (publicKey.isEmpty()) {
-      LOG.debug("From address ({}) does not match any available account", transaction.sender());
-      throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
-    }
-
     final TransactionSerializer transactionSerializer =
-        new TransactionSerializer(signerProvider, chainId, publicKey.get());
+        new TransactionSerializer(signerProvider, chainId);
     return transactionSerializer.serialize(transaction);
   }
 
