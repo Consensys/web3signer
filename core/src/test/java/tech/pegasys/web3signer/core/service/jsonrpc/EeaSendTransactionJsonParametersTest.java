@@ -35,7 +35,7 @@ public class EeaSendTransactionJsonParametersTest {
   @BeforeEach
   public void setup() {
     // NOTE: the factory has been configured as per its use in the application.
-    factory = new TransactionFactory(Eth1Runner.createJsonDecoder(), null);
+    factory = new TransactionFactory(1337L, Eth1Runner.createJsonDecoder(), null);
   }
 
   @Test
@@ -57,6 +57,30 @@ public class EeaSendTransactionJsonParametersTest {
     assertThat(txnParams.privateFor().get())
         .containsExactly(Base64String.wrap(parameters.getJsonArray("privateFor").getString(0)));
     assertThat(txnParams.restriction()).isEqualTo(parameters.getString("restriction"));
+  }
+
+  @Test
+  public void eip1559TransactionStoredInJsonArrayCanBeDecoded() {
+    final JsonObject parameters = validEip1559EeaTransactionParameters();
+
+    final JsonRpcRequest request = wrapParametersInRequest(parameters);
+    final EeaSendTransactionJsonParameters txnParams =
+        factory.fromRpcRequestToJsonParam(EeaSendTransactionJsonParameters.class, request);
+
+    assertThat(txnParams.gas()).isEqualTo(getStringAsOptionalBigInteger(parameters, "gas"));
+    assertThat(txnParams.gasPrice()).isEmpty();
+    assertThat(txnParams.nonce()).isEqualTo(getStringAsOptionalBigInteger(parameters, "nonce"));
+    assertThat(txnParams.receiver()).isEqualTo(Optional.of(parameters.getString("to")));
+    assertThat(txnParams.value()).isEqualTo(getStringAsOptionalBigInteger(parameters, "value"));
+    assertThat(txnParams.privateFrom())
+        .isEqualTo(Base64String.wrap(parameters.getString("privateFrom")));
+    assertThat(txnParams.privateFor().get())
+        .containsExactly(Base64String.wrap(parameters.getJsonArray("privateFor").getString(0)));
+    assertThat(txnParams.restriction()).isEqualTo(parameters.getString("restriction"));
+    assertThat(txnParams.maxPriorityFeePerGas())
+        .isEqualTo(getStringAsOptionalBigInteger(parameters, "maxPriorityFeePerGas"));
+    assertThat(txnParams.maxFeePerGas())
+        .isEqualTo(getStringAsOptionalBigInteger(parameters, "maxFeePerGas"));
   }
 
   @Test
@@ -175,6 +199,15 @@ public class EeaSendTransactionJsonParametersTest {
     parameters.put("privateFrom", "ZlapEsl9qDLPy/e88+/6yvCUEVIvH83y0N4A6wHuKXI=");
     parameters.put("privateFor", singletonList("GV8m0VZAccYGAAYMBuYQtKEj0XtpXeaw2APcoBmtA2w="));
     parameters.put("restriction", "restricted");
+
+    return parameters;
+  }
+
+  private JsonObject validEip1559EeaTransactionParameters() {
+    final JsonObject parameters = validEeaTransactionParameters();
+    parameters.put("maxFeePerGas", "0x9184e72a000");
+    parameters.put("maxPriorityFeePerGas", "0x9184e72a000");
+    parameters.put("gasPrice", null);
 
     return parameters;
   }

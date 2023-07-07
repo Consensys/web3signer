@@ -28,6 +28,7 @@ public class EeaPrivateTransaction extends PrivateTransaction {
   private final List<Base64String> privateFor;
 
   public static EeaPrivateTransaction from(
+      final long chainId,
       final EeaSendTransactionJsonParameters transactionJsonParameters,
       final NonceProvider nonceProvider,
       final JsonRpcRequestId id) {
@@ -36,21 +37,27 @@ public class EeaPrivateTransaction extends PrivateTransaction {
     }
 
     return new EeaPrivateTransaction(
-        transactionJsonParameters, nonceProvider, id, transactionJsonParameters.privateFor().get());
+        chainId,
+        transactionJsonParameters,
+        nonceProvider,
+        id,
+        transactionJsonParameters.privateFor().get());
   }
 
   private EeaPrivateTransaction(
+      final long chainId,
       final EeaSendTransactionJsonParameters transactionJsonParameters,
       final NonceProvider nonceProvider,
       final JsonRpcRequestId id,
       final List<Base64String> privateFor) {
-    super(transactionJsonParameters, nonceProvider, id);
+    super(chainId, transactionJsonParameters, nonceProvider, id);
     this.privateFor = privateFor;
   }
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
+        .add("chainId", chainId)
         .add("transactionJsonParameters", transactionJsonParameters)
         .add("id", id)
         .add("nonceProvider", nonceProvider)
@@ -60,14 +67,29 @@ public class EeaPrivateTransaction extends PrivateTransaction {
 
   @Override
   protected RawPrivateTransaction createTransaction() {
-    return RawPrivateTransaction.createTransaction(
-        nonce,
-        transactionJsonParameters.gasPrice().orElse(DEFAULT_GAS_PRICE),
-        transactionJsonParameters.gas().orElse(DEFAULT_GAS),
-        transactionJsonParameters.receiver().orElse(DEFAULT_TO),
-        transactionJsonParameters.data().orElse(DEFAULT_DATA),
-        transactionJsonParameters.privateFrom(),
-        privateFor,
-        Restriction.fromString(transactionJsonParameters.restriction()));
+    if (transactionJsonParameters.maxPriorityFeePerGas().isPresent()
+        && transactionJsonParameters.maxFeePerGas().isPresent()) {
+      return RawPrivateTransaction.createTransaction(
+          chainId,
+          nonce,
+          transactionJsonParameters.maxPriorityFeePerGas().orElseThrow(),
+          transactionJsonParameters.maxFeePerGas().orElseThrow(),
+          transactionJsonParameters.gas().orElse(DEFAULT_GAS),
+          transactionJsonParameters.receiver().orElse(DEFAULT_TO),
+          transactionJsonParameters.data().orElse(DEFAULT_DATA),
+          transactionJsonParameters.privateFrom(),
+          privateFor,
+          Restriction.fromString(transactionJsonParameters.restriction()));
+    } else {
+      return RawPrivateTransaction.createTransaction(
+          nonce,
+          transactionJsonParameters.gasPrice().orElse(DEFAULT_GAS_PRICE),
+          transactionJsonParameters.gas().orElse(DEFAULT_GAS),
+          transactionJsonParameters.receiver().orElse(DEFAULT_TO),
+          transactionJsonParameters.data().orElse(DEFAULT_DATA),
+          transactionJsonParameters.privateFrom(),
+          privateFor,
+          Restriction.fromString(transactionJsonParameters.restriction()));
+    }
   }
 }

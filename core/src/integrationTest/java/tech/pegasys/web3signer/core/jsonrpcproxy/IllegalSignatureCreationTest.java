@@ -41,7 +41,7 @@ class IllegalSignatureCreationTest {
     txnParams.data("0x0");
     txnParams.receiver("0x627306090abaB3A6e1400e9345bC60c78a8BEf57");
 
-    final EthTransaction txn = new EthTransaction(txnParams, null, null);
+    final EthTransaction txn = new EthTransaction(1337L, txnParams, null, null);
     final byte[] serialisedBytes = txn.rlpEncode(chainId);
 
     final CredentialSigner signer =
