@@ -12,16 +12,17 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc;
 
-import io.vertx.core.json.JsonObject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import io.vertx.core.json.JsonObject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthSendTransactionJsonParametersTest {
 

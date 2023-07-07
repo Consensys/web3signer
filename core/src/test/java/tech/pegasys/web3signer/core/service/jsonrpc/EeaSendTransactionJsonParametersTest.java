@@ -12,20 +12,21 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc;
 
-import io.vertx.core.json.DecodeException;
-import io.vertx.core.json.JsonObject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.web3j.utils.Base64String;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
 
 import java.math.BigInteger;
 import java.util.Optional;
 
-import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.JsonObject;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.web3j.utils.Base64String;
 
 public class EeaSendTransactionJsonParametersTest {
 
