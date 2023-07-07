@@ -23,6 +23,7 @@ import org.web3j.utils.Restriction;
 public class BesuPrivateTransaction extends PrivateTransaction {
 
   public static BesuPrivateTransaction from(
+      final long chainId,
       final EeaSendTransactionJsonParameters transactionJsonParameters,
       final NonceProvider nonceProvider,
       final JsonRpcRequestId id) {
@@ -32,30 +33,47 @@ public class BesuPrivateTransaction extends PrivateTransaction {
     }
 
     final Base64String privacyId = transactionJsonParameters.privacyGroupId().get();
-    return new BesuPrivateTransaction(transactionJsonParameters, nonceProvider, id, privacyId);
+    return new BesuPrivateTransaction(
+        chainId, transactionJsonParameters, nonceProvider, id, privacyId);
   }
 
   private final Base64String privacyGroupId;
 
   private BesuPrivateTransaction(
+      final long chainId,
       final EeaSendTransactionJsonParameters transactionJsonParameters,
       final NonceProvider nonceProvider,
       final JsonRpcRequestId id,
       final Base64String privacyGroupId) {
-    super(transactionJsonParameters, nonceProvider, id);
+    super(chainId, transactionJsonParameters, nonceProvider, id);
     this.privacyGroupId = privacyGroupId;
   }
 
   @Override
   protected RawPrivateTransaction createTransaction() {
-    return RawPrivateTransaction.createTransaction(
-        nonce,
-        transactionJsonParameters.gasPrice().orElse(DEFAULT_GAS_PRICE),
-        transactionJsonParameters.gas().orElse(DEFAULT_GAS),
-        transactionJsonParameters.receiver().orElse(DEFAULT_TO),
-        transactionJsonParameters.data().orElse(DEFAULT_DATA),
-        transactionJsonParameters.privateFrom(),
-        privacyGroupId,
-        Restriction.fromString(transactionJsonParameters.restriction()));
+    if (transactionJsonParameters.maxPriorityFeePerGas().isPresent()
+        && transactionJsonParameters.maxFeePerGas().isPresent()) {
+      return RawPrivateTransaction.createTransaction(
+          chainId,
+          nonce,
+          transactionJsonParameters.maxPriorityFeePerGas().orElseThrow(),
+          transactionJsonParameters.maxFeePerGas().orElseThrow(),
+          transactionJsonParameters.gas().orElse(DEFAULT_GAS),
+          transactionJsonParameters.receiver().orElse(DEFAULT_TO),
+          transactionJsonParameters.data().orElse(DEFAULT_DATA),
+          transactionJsonParameters.privateFrom(),
+          privacyGroupId,
+          Restriction.fromString(transactionJsonParameters.restriction()));
+    } else {
+      return RawPrivateTransaction.createTransaction(
+          nonce,
+          transactionJsonParameters.gasPrice().orElse(DEFAULT_GAS_PRICE),
+          transactionJsonParameters.gas().orElse(DEFAULT_GAS),
+          transactionJsonParameters.receiver().orElse(DEFAULT_TO),
+          transactionJsonParameters.data().orElse(DEFAULT_DATA),
+          transactionJsonParameters.privateFrom(),
+          privacyGroupId,
+          Restriction.fromString(transactionJsonParameters.restriction()));
+    }
   }
 }

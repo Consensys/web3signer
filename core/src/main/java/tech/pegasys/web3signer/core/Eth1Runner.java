@@ -189,7 +189,7 @@ public class Eth1Runner extends Runner {
         new PassThroughHandler(transmitterFactory, jsonDecoder);
 
     final TransactionFactory transactionFactory =
-        new TransactionFactory(jsonDecoder, transmitterFactory);
+        new TransactionFactory(chainId, jsonDecoder, transmitterFactory);
     final SendTransactionHandler sendTransactionHandler =
         new SendTransactionHandler(chainId, signerProvider, transactionFactory, transmitterFactory);
 
