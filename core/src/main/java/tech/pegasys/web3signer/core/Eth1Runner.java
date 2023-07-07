@@ -207,6 +207,7 @@ public class Eth1Runner extends Runner {
             responseFactory,
             new EthSignTransactionResultProvider(chainId, signerProvider, jsonDecoder)));
     requestMapper.addHandler("eth_sendTransaction", sendTransactionHandler);
+    requestMapper.addHandler("eea_sendTransaction", sendTransactionHandler);
 
     return requestMapper;
   }
