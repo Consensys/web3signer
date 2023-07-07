@@ -80,6 +80,7 @@ public class AzureKeyVaultSignerFactory {
     final Bytes rawPublicKey =
         Bytes.concatenate(Bytes.wrap(jsonWebKey.getX()), Bytes.wrap(jsonWebKey.getY()));
     final boolean useDeprecatedCurveName = DEPRECATED_CURVE_NAME.equals(curveName);
+    LOG.info("Created azure vault for key name={}, publicKey={}", config.getKeyName(), rawPublicKey);
     return new AzureKeyVaultSigner(config, rawPublicKey, needsToHash, useDeprecatedCurveName);
   }
 }

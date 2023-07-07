@@ -18,6 +18,7 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PATH_FORM
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PORT_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.util.RequiredOptionsUtil.checkIfRequiredOptionsAreInitialized;
 
+import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.annotations.RequiredOption;
 import tech.pegasys.web3signer.commandline.config.client.PicoCliClientTlsOptions;
 import tech.pegasys.web3signer.core.Eth1Runner;
@@ -26,6 +27,7 @@ import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -140,6 +142,8 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
 
   @CommandLine.Mixin private PicoCliClientTlsOptions clientTlsOptions;
 
+  @CommandLine.Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+
   @Override
   public Runner createRunner() {
     return new Eth1Runner(config, this);
@@ -203,5 +207,10 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
   @Override
   public ChainIdProvider getChainId() {
     return new ConfigurationChainId(chainId);
+  }
+
+  @Override
+  public AzureKeyVaultParameters getAzureKeyVaultConfig() {
+    return azureKeyVaultParameters;
   }
 }

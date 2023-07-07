@@ -13,16 +13,21 @@
 package tech.pegasys.web3signer.tests.bulkloading;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
+import java.util.List;
 import java.util.Map;
 
 import io.restassured.http.ContentType;
@@ -32,6 +37,7 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
@@ -40,8 +46,11 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   private static final String CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
   private static final String TENANT_ID = System.getenv("AZURE_TENANT_ID");
   private static final String VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
-  private static final String EXPECTED_KEY =
-      "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
+  private static final List<String> BLS_EXPECTED_KEYS = List.of(
+      "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf");
+
+  private static final List<String> SECP_EXPECTED_KEYS = List.of("0xfb854fd5249656ecf91d4acfc23209297b47a8e9615209ffa097405cdc53767608edd5d809b56a28c2b864cf601d43e9f8ad27c9d630769bd017a24247cf7482",
+          "0x964f00253459f1f43c7a7720a0db09a328d4ee6f18838015023135d7fc921f1448de34d05de7a1f72a7b5c9f6c76931d7ab33d0f0846ccce5452063bd20f5809");
 
   @BeforeAll
   public static void setup() {
@@ -51,18 +60,21 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     Assumptions.assumeTrue(VAULT_NAME != null, "Set AZURE_KEY_VAULT_NAME environment variable");
   }
 
-  @Test
-  void ensureSecretsInKeyVaultAreLoadedAndReportedViaPublicKeysApi() {
+  @ParameterizedTest
+  @EnumSource(KeyType.class)
+  void ensureSecretsInKeyVaultAreLoadedAndReportedViaPublicKeysApi(final KeyType keyType) {
     final AzureKeyVaultParameters azureParams =
         new DefaultAzureKeyVaultParameters(VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET);
 
     final SignerConfigurationBuilder configBuilder =
-        new SignerConfigurationBuilder().withMode("eth2").withAzureKeyVaultParameters(azureParams);
+        new SignerConfigurationBuilder()
+            .withMode(calculateMode(keyType))
+            .withAzureKeyVaultParameters(azureParams);
 
     startSigner(configBuilder.build());
 
-    final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasItem(EXPECTED_KEY));
+    final Response response = signer.callApiPublicKeys(keyType);
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasItems(expectedKeys(keyType)));
 
     // Since our Azure vault contains some invalid keys, the healthcheck would return 503.
     final Response healthcheckResponse = signer.healthcheck();
@@ -94,7 +106,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     startSigner(configBuilder.build());
 
     final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasItem(EXPECTED_KEY));
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasItem(BLS_EXPECTED_KEYS));
 
     // the tag filter will return only valid keys. The healtcheck should be UP
     final Response healthcheckResponse = signer.healthcheck();
@@ -113,16 +125,14 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   }
 
   private static int getAzureBulkLoadingData(String healthCheckJsonBody, String dataKey) {
-    JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
-    int keysLoaded =
-        jsonObject.getJsonArray("checks").stream()
-            .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
-            .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
-            .filter(o -> "azure-bulk-loading".equals(((JsonObject) o).getString("id")))
-            .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
-            .findFirst()
-            .orElse(-1);
-    return keysLoaded;
+    final JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
+    return jsonObject.getJsonArray("checks").stream()
+        .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
+        .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
+        .filter(o -> "azure-bulk-loading".equals(((JsonObject) o).getString("id")))
+        .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
+        .findFirst()
+        .orElse(-1);
   }
 
   @Test
@@ -163,6 +173,13 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     startSigner(configBuilder.build());
 
     final Response response = signer.callApiPublicKeys(KeyType.BLS);
-    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasItem(EXPECTED_KEY));
+    response.then().statusCode(200).contentType(ContentType.JSON).body("", hasItem(BLS_EXPECTED_KEYS));
+  }
+
+  private String[] expectedKeys(final KeyType keyType) {
+    final List<String> keys = keyType == KeyType.BLS ?
+            BLS_EXPECTED_KEYS
+            : SECP_EXPECTED_KEYS;
+    return keys.toArray(new String[0]);
   }
 }

@@ -15,12 +15,14 @@ package tech.pegasys.web3signer.keystorage.azure;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.exception.ResourceNotFoundException;
@@ -31,6 +33,7 @@ import com.azure.security.keyvault.keys.KeyClient;
 import com.azure.security.keyvault.keys.KeyClientBuilder;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClientBuilder;
+import com.azure.security.keyvault.keys.models.KeyProperties;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
@@ -148,6 +151,18 @@ public class AzureKeyVault {
     return MappedResults.newInstance(result, errorCount.intValue());
   }
 
+  public List<String> listKeyNames(final Map<String, String> tags) {
+    return keyClient
+        .listPropertiesOfKeys()
+        .streamByPage()
+        .flatMap(
+            keyPage ->
+                keyPage.getValue().parallelStream()
+                    .filter(keyProperties -> keyPropertiesPredicate(tags, keyProperties))
+                    .map(kp -> kp.getName()))
+        .collect(Collectors.toList());
+  }
+
   private static boolean secretPropertiesPredicate(
       final Map<String, String> tags, final SecretProperties secretProperties) {
     if (tags == null || tags.isEmpty()) {
@@ -156,5 +171,15 @@ public class AzureKeyVault {
 
     return secretProperties.getTags() != null // return false if remote secret doesn't have any tags
         && secretProperties.getTags().entrySet().containsAll(tags.entrySet());
+  }
+
+  private static boolean keyPropertiesPredicate(
+      final Map<String, String> tags, final KeyProperties keyProperties) {
+    if (tags == null || tags.isEmpty()) {
+      return true; // we don't want to filter if user-supplied tags map is empty
+    }
+
+    return keyProperties.getTags() != null // return false if remote secret doesn't have any tags
+        && keyProperties.getTags().entrySet().containsAll(tags.entrySet());
   }
 }

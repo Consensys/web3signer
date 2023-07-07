@@ -99,26 +99,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.addAll(createEth2Args());
 
       if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
-        final AzureKeyVaultParameters azureParams = signerConfig.getAzureKeyVaultParameters().get();
-        params.add("--azure-vault-enabled=true");
-        params.add("--azure-vault-auth-mode");
-        params.add(azureParams.getAuthenticationMode().name());
-        params.add("--azure-vault-name");
-        params.add(azureParams.getKeyVaultName());
-        params.add("--azure-client-id");
-        params.add(azureParams.getClientId());
-        params.add("--azure-client-secret");
-        params.add(azureParams.getClientSecret());
-        params.add("--azure-tenant-id");
-        params.add(azureParams.getTenantId());
-
-        azureParams
-            .getTags()
-            .forEach(
-                (tagName, tagValue) -> {
-                  params.add("--azure-secrets-tags");
-                  params.add(tagName + "=" + tagValue);
-                });
+        createAzureArgs(params);
       }
       if (signerConfig.getKeystoresParameters().isPresent()) {
         final KeystoresParameters keystoresParameters = signerConfig.getKeystoresParameters().get();
@@ -143,6 +124,10 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add("--chain-id");
       params.add(Long.toString(signerConfig.getChainIdProvider().id()));
       params.addAll(createDownstreamTlsArgs());
+
+      if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
+        createAzureArgs(params);
+      }
     }
 
     return params;
@@ -329,6 +314,29 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     }
 
     return params;
+  }
+
+  private void createAzureArgs(final List<String> params) {
+    final AzureKeyVaultParameters azureParams = signerConfig.getAzureKeyVaultParameters().get();
+    params.add("--azure-vault-enabled=true");
+    params.add("--azure-vault-auth-mode");
+    params.add(azureParams.getAuthenticationMode().name());
+    params.add("--azure-vault-name");
+    params.add(azureParams.getKeyVaultName());
+    params.add("--azure-client-id");
+    params.add(azureParams.getClientId());
+    params.add("--azure-client-secret");
+    params.add(azureParams.getClientSecret());
+    params.add("--azure-tenant-id");
+    params.add(azureParams.getTenantId());
+
+    azureParams
+        .getTags()
+        .forEach(
+            (tagName, tagValue) -> {
+              params.add("--azure-secrets-tags");
+              params.add(tagName + "=" + tagValue);
+            });
   }
 
   private List<String> createSubCommandArgs() {

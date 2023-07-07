@@ -12,8 +12,11 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.healthchecks.Status;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.service.DownstreamPathCalculator;
@@ -33,10 +36,15 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.RequestMapper;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignTransactionResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.InternalResponseHandler;
+import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
+import tech.pegasys.web3signer.signing.bulkloading.SecpAzureBulkLoader;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
@@ -50,6 +58,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpMethod;
@@ -58,12 +67,15 @@ import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
   public static final String PUBLIC_KEYS_PATH = "/api/v1/eth1/publicKeys";
   public static final String ROOT_PATH = "/";
   public static final String SIGN_PATH = "/api/v1/eth1/sign/:identifier";
+  private static final Logger LOG = LogManager.getLogger();
   private final Eth1Config eth1Config;
 
   private final HttpResponseFactory responseFactory = new HttpResponseFactory();
@@ -134,6 +146,7 @@ public class Eth1Runner extends Runner {
       final Vertx vertx, final MetricsSystem metricsSystem) {
     return new DefaultArtifactSignerProvider(
         () -> {
+          final List<ArtifactSigner> signers = Lists.newArrayList();
           final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
           final HashicorpConnectionFactory hashicorpConnectionFactory =
               new HashicorpConnectionFactory();
@@ -150,16 +163,34 @@ public class Eth1Runner extends Runner {
                     EthSecpArtifactSigner::new,
                     true);
 
-            return new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
-                .load(
-                    baseConfig.getKeyConfigPath(),
-                    "yaml",
-                    new YamlSignerParser(
-                        List.of(ethSecpArtifactSignerFactory),
-                        YamlMapperFactory.createYamlMapper(
-                            baseConfig.getKeyStoreConfigFileMaxSize())))
-                .getValues();
+            final MappedResults<ArtifactSigner> results =
+                new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
+                    .load(
+                        baseConfig.getKeyConfigPath(),
+                        "yaml",
+                        new YamlSignerParser(
+                            List.of(ethSecpArtifactSignerFactory),
+                            YamlMapperFactory.createYamlMapper(
+                                baseConfig.getKeyStoreConfigFileMaxSize())));
+            signers.addAll(results.getValues());
           }
+
+          if (eth1Config.getAzureKeyVaultConfig().isAzureKeyVaultEnabled()) {
+            LOG.info("Bulk loading keys from Azure key vault ... ");
+            final AzureKeyVault azureKeyVault =
+                AzureKeyVaultFactory.createAzureKeyVault(eth1Config.getAzureKeyVaultConfig());
+            final SecpAzureBulkLoader secpAzureBulkLoader =
+                new SecpAzureBulkLoader(azureKeyVault, azureFactory);
+            final MappedResults<ArtifactSigner> azureResult =
+                secpAzureBulkLoader.load(eth1Config.getAzureKeyVaultConfig());
+            LOG.info(
+                    "Keys loaded from Azure: [{}], with error count: [{}]",
+                    azureResult.getValues().size(),
+                    azureResult.getErrorCount());
+            registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
+            signers.addAll(azureResult.getValues());
+          }
+          return signers;
         });
   }
 
@@ -200,5 +231,19 @@ public class Eth1Runner extends Runner {
                 eth1Config.getChainId().id(), signerProvider, jsonDecoder)));
 
     return requestMapper;
+  }
+
+  private void registerSignerLoadingHealthCheck(
+          final String name, final MappedResults<ArtifactSigner> result) {
+    super.registerHealthCheckProcedure(
+            name,
+            promise -> {
+              final JsonObject statusJson =
+                      new JsonObject()
+                              .put("keys-loaded", result.getValues().size())
+                              .put("error-count", result.getErrorCount());
+              promise.complete(
+                      result.getErrorCount() > 0 ? Status.KO(statusJson) : Status.OK(statusJson));
+            });
   }
 }
