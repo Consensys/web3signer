@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing;
 
+import static tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction.longToBytes;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 import static tech.pegasys.web3signer.core.util.Eth1AddressUtil.signerPublicKeyFromAddress;
 
@@ -42,7 +43,9 @@ public class TransactionSerializer {
   }
 
   public String serialize(final Transaction transaction) {
-    final byte[] bytesToSign = transaction.rlpEncode(chainId);
+    final SignatureData signatureData =
+        new SignatureData(longToBytes(chainId), new byte[] {}, new byte[] {});
+    final byte[] bytesToSign = transaction.rlpEncode(signatureData);
 
     Optional<String> publicKey = signerPublicKeyFromAddress(signer, transaction.sender());
 
