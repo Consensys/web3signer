@@ -152,11 +152,12 @@ dependencyManagement {
     dependency 'com.github.ipld:java-cid:1.3.3'
     dependency 'net.jodah:failsafe:2.4.4'
 
-    dependencySet(group: 'software.amazon.awssdk', version: '2.20.12') {
+    dependencySet(group: 'software.amazon.awssdk', version: '2.20.101') {
       entry 'bom'
       entry 'auth'
       entry 'secretsmanager'
       entry 'sts'
+      entry 'kms'
     }
 
     dependency 'io.rest-assured:rest-assured:4.4.0'

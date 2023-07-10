@@ -84,6 +84,7 @@ dependencies {
 
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:secretsmanager'
+  implementation 'software.amazon.awssdk:kms'
 }
 
 test.enabled = false
