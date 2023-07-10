@@ -15,14 +15,13 @@ package tech.pegasys.web3signer.keystorage.azure;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.exception.ResourceNotFoundException;
@@ -151,23 +150,46 @@ public class AzureKeyVault {
     return MappedResults.newInstance(result, errorCount.intValue());
   }
 
-  public List<String> listKeyNames(final Map<String, String> tags) {
-    return keyClient
-        .listPropertiesOfKeys()
-        .streamByPage()
-        .flatMap(
-            keyPage ->
-                keyPage.getValue().parallelStream()
-                    .filter(keyProperties -> keyPropertiesPredicate(tags, keyProperties))
-                    .map(kp -> kp.getName()))
-        .collect(Collectors.toList());
+  public <R> MappedResults<R> mapKeyProperties(
+      final Function<KeyProperties, R> mapper, final Map<String, String> tags) {
+    final Set<R> result = ConcurrentHashMap.newKeySet();
+    final AtomicInteger errorCount = new AtomicInteger(0);
+    try {
+      keyClient
+          .listPropertiesOfKeys()
+          .streamByPage()
+          .forEach(
+              keyPage ->
+                  keyPage.getValue().parallelStream()
+                      .filter(keyProperties -> keyPropertiesPredicate(tags, keyProperties))
+                      .forEach(
+                          kp -> {
+                            try {
+                              final R value = mapper.apply(kp);
+                              result.add(value);
+                            } catch (final Exception e) {
+                              LOG.warn(
+                                  "Failed to map secret '{}' to requested object type.",
+                                  kp.getName());
+                              errorCount.incrementAndGet();
+                            }
+                          }));
+    } catch (final Exception e) {
+      LOG.error("Unexpected error during Azure map-secrets", e);
+      errorCount.incrementAndGet();
+    }
+
+    return MappedResults.newInstance(result, errorCount.intValue());
+  }
+
+  private static boolean isEmptyTags(final Map<String, String> tags) {
+    return tags == null || tags.isEmpty();
   }
 
   private static boolean secretPropertiesPredicate(
       final Map<String, String> tags, final SecretProperties secretProperties) {
-    if (tags == null || tags.isEmpty()) {
+    if (isEmptyTags(tags))
       return true; // we don't want to filter if user-supplied tags map is empty
-    }
 
     return secretProperties.getTags() != null // return false if remote secret doesn't have any tags
         && secretProperties.getTags().entrySet().containsAll(tags.entrySet());
@@ -175,9 +197,8 @@ public class AzureKeyVault {
 
   private static boolean keyPropertiesPredicate(
       final Map<String, String> tags, final KeyProperties keyProperties) {
-    if (tags == null || tags.isEmpty()) {
+    if (isEmptyTags(tags))
       return true; // we don't want to filter if user-supplied tags map is empty
-    }
 
     return keyProperties.getTags() != null // return false if remote secret doesn't have any tags
         && keyProperties.getTags().entrySet().containsAll(tags.entrySet());
