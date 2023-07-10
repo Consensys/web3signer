@@ -14,11 +14,13 @@ package tech.pegasys.web3signer.signing.secp256k1.aws;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import tech.pegasys.web3signer.keystorage.awskms.AwsKeyManagerService;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 /** Create AwsKMSSigner and instantiate AWS' KmsClient library. */
 public class AwsKMSSignerFactory {
@@ -38,9 +40,19 @@ public class AwsKMSSignerFactory {
     LOG.trace("Creating AWS Key Manager Signer");
     // fetch public key as we require it later on to create recovery key
 
-    // TODO: Call keystorage AwsKeyManagerService class here
+    try (AwsKeyManagerService awsKeyManagerService =
+        new AwsKeyManagerService(
+            awsKMSMetadata.getAuthenticationMode(),
+            awsKMSMetadata.getAwsCredentials().orElse(null),
+            awsKMSMetadata.getRegion(),
+            awsKMSMetadata.getKmsKeyId())) {
+      byte[] key = awsKeyManagerService.getKey();
+      LOG.debug("Public Key:" + Bytes.of(key));
 
-    // TODO: Fix ME
+      // TODO: Verify if above is the key we want .. or do we need to convert it similar to Azure
+    }
+
+    // TODO: Fix ME .. pass raw Public Key
     return new AwsKMSSigner(applySha3Hash);
   }
 }

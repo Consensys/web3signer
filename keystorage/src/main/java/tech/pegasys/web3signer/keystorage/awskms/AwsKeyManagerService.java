@@ -93,24 +93,8 @@ public class AwsKeyManagerService implements AutoCloseable {
     return publicKeyResponse.publicKey().asByteArray();
   }
 
-  public AwsAuthenticationMode getAuthMode() {
-    return authMode;
-  }
-
-  public AwsCredentials getAwsCredentials() {
-    return awsCredentials;
-  }
-
-  public String getRegion() {
-    return region;
-  }
-
-  public String getKmsKeyId() {
-    return kmsKeyId;
-  }
-
   @Override
-  public void close() throws Exception {
+  public void close() {
     if (kmsClient != null) {
       kmsClient.close();
     }
