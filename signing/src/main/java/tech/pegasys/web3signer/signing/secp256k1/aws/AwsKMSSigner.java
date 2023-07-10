@@ -17,9 +17,22 @@ import tech.pegasys.web3signer.signing.secp256k1.Signer;
 
 import java.security.interfaces.ECPublicKey;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class AwsKMSSigner implements Signer {
+  private static final Logger LOG = LogManager.getLogger();
+  private final boolean applySha3Hash; // Apply Hash.sha3(data) before signing
+
+  public AwsKMSSigner(final boolean applySha3Hash) {
+    this.applySha3Hash = applySha3Hash;
+  }
+
   @Override
   public Signature sign(byte[] data) {
+    LOG.trace("Signing with apply sha3 hash {}", applySha3Hash);
+
+    // TODO: Implement signing
     return null;
   }
 

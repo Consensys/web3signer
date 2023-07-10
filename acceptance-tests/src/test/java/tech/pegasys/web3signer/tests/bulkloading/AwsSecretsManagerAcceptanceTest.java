@@ -18,9 +18,9 @@ import static org.hamcrest.Matchers.hasSize;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.AwsSecretsManagerUtil;
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParametersBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;

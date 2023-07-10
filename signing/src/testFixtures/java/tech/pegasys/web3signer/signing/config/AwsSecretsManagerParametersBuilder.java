@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
+
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;

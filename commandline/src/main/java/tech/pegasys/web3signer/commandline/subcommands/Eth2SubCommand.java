@@ -29,9 +29,9 @@ import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.Eth2Runner;
 import tech.pegasys.web3signer.core.Runner;
-import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 

@@ -31,7 +31,7 @@ testFixturesJar {
 }
 
 dependencies {
-
+  implementation project(":common")
   implementation 'com.azure:azure-identity'
   implementation 'com.azure:azure-security-keyvault-keys'
   implementation 'com.azure:azure-security-keyvault-secrets'

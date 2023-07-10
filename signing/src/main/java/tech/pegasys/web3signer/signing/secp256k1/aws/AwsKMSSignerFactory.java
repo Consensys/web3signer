@@ -23,20 +23,24 @@ import org.apache.logging.log4j.Logger;
 /** Create AwsKMSSigner and instantiate AWS' KmsClient library. */
 public class AwsKMSSignerFactory {
   private static final Logger LOG = LogManager.getLogger();
-  private final boolean needsToHash; // Apply Hash.sha3(data) before signing
+  private final boolean applySha3Hash; // Apply Hash.sha3(data) before signing
 
   public AwsKMSSignerFactory() {
     this(true);
   }
 
-  public AwsKMSSignerFactory(final boolean needsToHash) {
-    this.needsToHash = needsToHash;
+  public AwsKMSSignerFactory(final boolean applySha3Hash) {
+    this.applySha3Hash = applySha3Hash;
   }
 
   public Signer createSigner(final AwsKMSMetadata awsKMSMetadata) {
     checkArgument(awsKMSMetadata != null, "awsKMSMetadata must not be null");
+    LOG.trace("Creating AWS Key Manager Signer");
+    // fetch public key as we require it later on to create recovery key
+
+    // TODO: Call keystorage AwsKeyManagerService class here
 
     // TODO: Fix ME
-    return new AwsKMSSigner();
+    return new AwsKMSSigner(applySha3Hash);
   }
 }

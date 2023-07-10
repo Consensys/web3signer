@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata;
 
-import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 
 import java.io.IOException;
 import java.net.URI;

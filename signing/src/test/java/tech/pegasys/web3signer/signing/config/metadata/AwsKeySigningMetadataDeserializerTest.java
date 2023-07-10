@@ -15,8 +15,8 @@ package tech.pegasys.web3signer.signing.config.metadata;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 
 import java.io.File;

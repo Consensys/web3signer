@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata;
 
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.common.config.AwsCredentials;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
-import tech.pegasys.web3signer.signing.config.AwsCredentials;
 
 import java.net.URI;
 import java.util.Optional;
@@ -65,6 +65,7 @@ public class AwsKMSMetadata extends SigningMetadata {
     return region;
   }
 
+  @Override
   public ArtifactSigner createSigner(final ArtifactSignerFactory factory) {
     return factory.create(this);
   }
