@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing;
 
+import static tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction.longToBytes;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
@@ -33,7 +34,9 @@ public class TransactionSerializer {
   }
 
   public String serialize(final Transaction transaction) {
-    final byte[] bytesToSign = transaction.rlpEncode(chainId);
+    final SignatureData signatureData =
+        new SignatureData(longToBytes(chainId), new byte[] {}, new byte[] {});
+    final byte[] bytesToSign = transaction.rlpEncode(signatureData);
 
     final SecpArtifactSignature artifactSignature =
         (SecpArtifactSignature) signer.sign(Bytes.of(bytesToSign));
