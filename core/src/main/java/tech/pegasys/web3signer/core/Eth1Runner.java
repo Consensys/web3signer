@@ -40,6 +40,7 @@ import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdpater;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
@@ -97,7 +98,12 @@ public class Eth1Runner extends Runner {
                 false))
         .failureHandler(errorHandler);
 
-    addReloadHandler(router, signerProvider, context.getErrorHandler());
+    final ArtifactSignerProvider secpArtifactSignerProvider =
+        new SecpArtifactSignerProviderAdpater(signerProvider);
+
+    // The order of the elements in the list DO matter
+    addReloadHandler(
+        router, List.of(signerProvider, secpArtifactSignerProvider), context.getErrorHandler());
 
     final DownstreamPathCalculator downstreamPathCalculator =
         new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
@@ -120,7 +126,8 @@ public class Eth1Runner extends Runner {
         new PassThroughHandler(transmitterFactory, jsonDecoder);
 
     final RequestMapper requestMapper =
-        createRequestMapper(transmitterFactory, signerProvider, jsonDecoder, secpSigner);
+        createRequestMapper(
+            transmitterFactory, secpArtifactSignerProvider, jsonDecoder, secpSigner);
 
     router
         .route(HttpMethod.POST, ROOT_PATH)
@@ -144,6 +151,7 @@ public class Eth1Runner extends Runner {
           try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider()) {
+
             final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
                 new Secp256k1ArtifactSignerFactory(
                     hashicorpConnectionFactory,
@@ -190,6 +198,8 @@ public class Eth1Runner extends Runner {
 
     final TransactionFactory transactionFactory =
         new TransactionFactory(jsonDecoder, transmitterFactory);
+
+    signerProvider.load();
     final SendTransactionHandler sendTransactionHandler =
         new SendTransactionHandler(chainId, signerProvider, transactionFactory, transmitterFactory);
 

@@ -15,8 +15,8 @@ package tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
-import static tech.pegasys.web3signer.core.util.Eth1AddressUtil.signerPublicKeyFromAddress;
 import static tech.pegasys.web3signer.core.util.ResponseCodeSelector.jsonRPCErrorCode;
+import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.TransactionSerializer;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.util.Optional;
@@ -77,22 +78,23 @@ public class SendTransactionHandler implements JsonRpcRequestHandler {
       return;
     }
 
-    Optional<String> publicKey = signerPublicKeyFromAddress(signerProvider, transaction.sender());
+    Optional<ArtifactSigner> signer =
+        signerProvider.getSigner(normaliseIdentifier(transaction.sender()));
 
-    if (publicKey.isEmpty()) {
+    if (signer.isEmpty()) {
       LOG.debug("From address ({}) does not match any available account", transaction.sender());
       context.fail(
           BAD_REQUEST.code(), new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT));
       return;
     }
 
-    sendTransaction(transaction, context, signerProvider, request);
+    sendTransaction(transaction, context, signer.get(), request);
   }
 
   private void sendTransaction(
       final Transaction transaction,
       final RoutingContext routingContext,
-      final ArtifactSignerProvider signerProvider,
+      final ArtifactSigner signerProvider,
       final JsonRpcRequest request) {
 
     final TransactionSerializer transactionSerializer =

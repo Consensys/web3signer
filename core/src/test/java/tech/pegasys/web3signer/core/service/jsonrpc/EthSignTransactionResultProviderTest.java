@@ -35,7 +35,6 @@ import java.security.interfaces.ECPublicKey;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -122,9 +121,6 @@ public class EthSignTransactionResultProviderTest {
         .when(mockSigner)
         .sign(any(Bytes.class));
 
-    doReturn(Set.of(EthPublicKeyUtils.toHexString(key)))
-        .when(mockSignerProvider)
-        .availableIdentifiers();
     doReturn(Optional.of(mockSigner)).when(mockSignerProvider).getSigner(anyString());
     final EthSignTransactionResultProvider resultProvider =
         new EthSignTransactionResultProvider(chainId, mockSignerProvider, jsonDecoder);
@@ -180,9 +176,7 @@ public class EthSignTransactionResultProviderTest {
             })
         .when(mockSigner)
         .sign(any(Bytes.class));
-    doReturn(Set.of(EthPublicKeyUtils.toHexString(key)))
-        .when(mockSignerProvider)
-        .availableIdentifiers();
+
     doReturn(Optional.of(mockSigner)).when(mockSignerProvider).getSigner(anyString());
     final EthSignTransactionResultProvider resultProvider =
         new EthSignTransactionResultProvider(chainId, mockSignerProvider, jsonDecoder);
