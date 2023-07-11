@@ -19,10 +19,14 @@ import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcErrorResponse;
 import tech.pegasys.web3signer.dsl.signer.SignerResponse;
 
+import java.io.IOException;
+import java.util.Optional;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.core.ConditionTimeoutException;
 import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.ClientConnectionException;
 
 public class Transactions {
@@ -54,6 +58,15 @@ public class Transactions {
     } catch (final ConditionTimeoutException e) {
       LOG.error("Timed out waiting for a block containing the transaction receipt hash: " + hash);
       throw new RuntimeException("No receipt found for hash: " + hash);
+    }
+  }
+
+  public Optional<TransactionReceipt> getTransactionReceipt(final String hash) {
+    try {
+      return eth.getTransactionReceipt(hash);
+    } catch (IOException e) {
+      LOG.error("IOException with message: " + e.getMessage());
+      throw new RuntimeException("No tx receipt found for hash: " + hash);
     }
   }
 }
