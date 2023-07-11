@@ -123,7 +123,7 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
 
   @Override
   public ArtifactSigner create(final AwsKMSMetadata awsKMSMetadata) {
-    return signerFactory.apply(new AwsKMSSignerFactory().createSigner(awsKMSMetadata));
+    return signerFactory.apply(new AwsKMSSignerFactory(needToHash).createSigner(awsKMSMetadata));
   }
 
   private ArtifactSigner createCredentialSigner(final Credentials credentials) {

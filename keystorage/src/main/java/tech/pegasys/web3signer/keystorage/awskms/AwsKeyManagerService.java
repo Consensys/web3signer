@@ -18,16 +18,28 @@ import static tech.pegasys.web3signer.common.config.AwsAuthenticationMode.ENVIRO
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
 
+import java.net.URI;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Optional;
+
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.KmsClientBuilder;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyRequest;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyResponse;
+import software.amazon.awssdk.services.kms.model.KeySpec;
+import software.amazon.awssdk.services.kms.model.SignRequest;
+import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
 
 public class AwsKeyManagerService implements AutoCloseable {
   private final AwsAuthenticationMode authMode;
@@ -37,15 +49,19 @@ public class AwsKeyManagerService implements AutoCloseable {
 
   private KmsClient kmsClient;
 
+  private Optional<URI> endpointOverride;
+
   public AwsKeyManagerService(
       final AwsAuthenticationMode authMode,
       final AwsCredentials awsCredentials,
       final String region,
-      final String kmsKeyId) {
+      final String kmsKeyId,
+      final Optional<URI> endpointOverride) {
     this.authMode = authMode;
     this.awsCredentials = awsCredentials;
     this.region = region;
     this.kmsKeyId = kmsKeyId;
+    this.endpointOverride = endpointOverride;
 
     initKmsClient();
   }
@@ -56,8 +72,16 @@ public class AwsKeyManagerService implements AutoCloseable {
     }
 
     final KmsClientBuilder kmsClientBuilder = KmsClient.builder();
-    final AwsCredentialsProvider awsCredentialsProvider;
+    endpointOverride.ifPresent(kmsClientBuilder::endpointOverride);
+    kmsClient =
+        kmsClientBuilder
+            .credentialsProvider(getAwsCredentialsProvider())
+            .region(Region.of(region))
+            .build();
+  }
 
+  private AwsCredentialsProvider getAwsCredentialsProvider() {
+    final AwsCredentialsProvider awsCredentialsProvider;
     if (authMode == ENVIRONMENT) {
       awsCredentialsProvider = DefaultCredentialsProvider.create();
     } else {
@@ -76,21 +100,39 @@ public class AwsKeyManagerService implements AutoCloseable {
 
       awsCredentialsProvider = StaticCredentialsProvider.create(awsSdkCredentials);
     }
-    kmsClient =
-        kmsClientBuilder
-            .credentialsProvider(awsCredentialsProvider)
-            .region(Region.of(region))
-            .build();
+    return awsCredentialsProvider;
   }
 
-  public byte[] getKey() {
+  public ECPublicKey getECPublicKey() {
     checkArgument(kmsClient != null, "KmsClient is not initialized");
 
     // Question ... do we need to set grantTokens?
     final GetPublicKeyRequest getPublicKeyRequest =
         GetPublicKeyRequest.builder().keyId(kmsKeyId).build();
     final GetPublicKeyResponse publicKeyResponse = kmsClient.getPublicKey(getPublicKeyRequest);
-    return publicKeyResponse.publicKey().asByteArray();
+    KeySpec keySpec = publicKeyResponse.keySpec();
+    if (keySpec != KeySpec.ECC_SECG_P256_K1) {
+      throw new RuntimeException("Unsupported key spec from AWS KMS: " + keySpec.toString());
+    }
+
+    final X509EncodedKeySpec encodedKeySpec =
+        new X509EncodedKeySpec(publicKeyResponse.publicKey().asByteArray());
+    try {
+      KeyFactory keyFactory = KeyFactory.getInstance("EC");
+      return (ECPublicKey) keyFactory.generatePublic(encodedKeySpec);
+    } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public byte[] sign(final byte[] data) {
+    final SignRequest signRequest =
+        SignRequest.builder()
+            .keyId(kmsKeyId)
+            .signingAlgorithm(SigningAlgorithmSpec.ECDSA_SHA_256)
+            .message(SdkBytes.fromByteArray(data))
+            .build();
+    return kmsClient.sign(signRequest).signature().asByteArray();
   }
 
   @Override

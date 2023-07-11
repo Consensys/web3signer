@@ -21,8 +21,8 @@ public class AwsCredentials {
   private String secretAccessKey;
   private Optional<String> sessionToken;
 
-  public static Builder builder() {
-    return new Builder();
+  public static AwsCredentialsBuilder builder() {
+    return new AwsCredentialsBuilder();
   }
 
   public String getAccessKeyId() {
@@ -37,24 +37,24 @@ public class AwsCredentials {
     return sessionToken;
   }
 
-  public static final class Builder {
+  public static final class AwsCredentialsBuilder {
     private String accessKeyId;
     private String secretAccessKey;
     private String sessionToken;
 
-    private Builder() {}
+    private AwsCredentialsBuilder() {}
 
-    public Builder withAccessKeyId(final String accessKeyId) {
+    public AwsCredentialsBuilder withAccessKeyId(final String accessKeyId) {
       this.accessKeyId = accessKeyId;
       return this;
     }
 
-    public Builder withSecretAccessKey(final String secretAccessKey) {
+    public AwsCredentialsBuilder withSecretAccessKey(final String secretAccessKey) {
       this.secretAccessKey = secretAccessKey;
       return this;
     }
 
-    public Builder withSessionToken(final String sessionToken) {
+    public AwsCredentialsBuilder withSessionToken(final String sessionToken) {
       this.sessionToken = sessionToken;
       return this;
     }

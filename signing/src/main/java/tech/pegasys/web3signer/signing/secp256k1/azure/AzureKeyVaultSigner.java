@@ -19,10 +19,9 @@ import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
 import tech.pegasys.web3signer.signing.secp256k1.common.SignerInitializationException;
+import tech.pegasys.web3signer.signing.secp256k1.util.Eth1SignatureUtil;
 
-import java.math.BigInteger;
 import java.security.interfaces.ECPublicKey;
-import java.util.Arrays;
 
 import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
 import com.azure.security.keyvault.keys.cryptography.models.SignResult;
@@ -30,10 +29,7 @@ import com.azure.security.keyvault.keys.cryptography.models.SignatureAlgorithm;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
-import org.web3j.crypto.ECDSASignature;
 import org.web3j.crypto.Hash;
-import org.web3j.crypto.Sign;
-import org.web3j.utils.Numeric;
 
 public class AzureKeyVaultSigner implements Signer {
 
@@ -88,44 +84,11 @@ public class AzureKeyVaultSigner implements Signer {
           "Invalid signature from the key vault signing service, must be 64 bytes long");
     }
 
-    // reference: blog by Tomislav Markovski
-    // https://tomislav.tech/2018-02-05-ethereum-keyvault-signing-transactions/
-    // The output of this will be a 64 byte array. The first 32 are the value for R and the rest is
-    // S.
-    final BigInteger R = new BigInteger(1, Arrays.copyOfRange(signature, 0, 32));
-    final BigInteger S = new BigInteger(1, Arrays.copyOfRange(signature, 32, 64));
-
-    // The Azure Signature MAY be in the "top" of the curve, which is illegal in Ethereum
-    // thus it must be transposed to the lower intersection.
-    final ECDSASignature initialSignature = new ECDSASignature(R, S);
-    final ECDSASignature canonicalSignature = initialSignature.toCanonicalised();
-
-    // Now we have to work backwards to figure out the recId needed to recover the signature.
-    final int recId = recoverKeyIndex(canonicalSignature, dataToSign);
-    if (recId == -1) {
-      throw new RuntimeException(
-          "Could not construct a recoverable key. Are your credentials valid?");
-    }
-
-    final int headerByte = recId + 27;
-    return new Signature(
-        BigInteger.valueOf(headerByte), canonicalSignature.r, canonicalSignature.s);
+    return Eth1SignatureUtil.deriveSignature(dataToSign, publicKey, signature);
   }
 
   @Override
   public ECPublicKey getPublicKey() {
     return publicKey;
-  }
-
-  private int recoverKeyIndex(final ECDSASignature sig, final byte[] hash) {
-    final BigInteger publicKey = Numeric.toBigInt(EthPublicKeyUtils.toByteArray(this.publicKey));
-    for (int i = 0; i < 4; i++) {
-      final BigInteger k = Sign.recoverFromSignature(i, sig, hash);
-      LOG.trace("recovered key: {}", k);
-      if (k != null && k.equals(publicKey)) {
-        return i;
-      }
-    }
-    return -1;
   }
 }
