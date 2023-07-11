@@ -13,6 +13,8 @@
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse;
 
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
+import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
+import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.jsonrpc.EthSendTransactionJsonParameters;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonDecoder;
@@ -22,9 +24,11 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.EthTransaction;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.TransactionSerializer;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.util.List;
+import java.util.Optional;
 
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
@@ -72,8 +76,16 @@ public class EthSignTransactionResultProvider implements ResultProvider<String> 
 
     LOG.debug("Obtaining signer for {}", transaction.sender());
 
+    Optional<ArtifactSigner> signer =
+        signerProvider.getSigner(normaliseIdentifier(transaction.sender()));
+
+    if (signer.isEmpty()) {
+      LOG.debug("From address ({}) does not match any available account", transaction.sender());
+      throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
+    }
+
     final TransactionSerializer transactionSerializer =
-        new TransactionSerializer(signerProvider, chainId);
+        new TransactionSerializer(signer.get(), chainId);
     return transactionSerializer.serialize(transaction);
   }
 

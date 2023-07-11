@@ -61,7 +61,9 @@ public class FilecoinRunner extends Runner {
   @Override
   protected void populateRouter(final Context context) {
     addReloadHandler(
-        context.getRouter(), context.getArtifactSignerProvider(), context.getErrorHandler());
+        context.getRouter(),
+        List.of(context.getArtifactSignerProvider()),
+        context.getErrorHandler());
 
     registerFilecoinJsonRpcRoute(
         context.getRouter(), context.getMetricsSystem(), context.getArtifactSignerProvider());
