@@ -18,6 +18,7 @@ import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECPoint;
 import java.util.Optional;
@@ -51,6 +52,12 @@ class AwsKeyManagerServiceTest {
 
     ECPublicKey publicKey = awsKeyManagerService.getECPublicKey();
     System.out.println(toBytes(publicKey).toHexString());
+
+    byte[] sign = awsKeyManagerService.sign("Hello World".getBytes(StandardCharsets.UTF_8));
+    System.out.println(Bytes.of(sign));
+
+    sign = awsKeyManagerService.sign("Hello World".getBytes(StandardCharsets.UTF_8));
+    System.out.println(Bytes.of(sign));
   }
 
   private static Bytes toBytes(final ECPublicKey publicKey) {
