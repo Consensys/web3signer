@@ -15,8 +15,6 @@ package tech.pegasys.web3signer.core;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.healthchecks.Status;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.service.DownstreamPathCalculator;
@@ -62,6 +60,8 @@ import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -184,9 +184,9 @@ public class Eth1Runner extends Runner {
             final MappedResults<ArtifactSigner> azureResult =
                 secpAzureBulkLoader.load(eth1Config.getAzureKeyVaultConfig());
             LOG.info(
-                    "Keys loaded from Azure: [{}], with error count: [{}]",
-                    azureResult.getValues().size(),
-                    azureResult.getErrorCount());
+                "Keys loaded from Azure: [{}], with error count: [{}]",
+                azureResult.getValues().size(),
+                azureResult.getErrorCount());
             registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
             signers.addAll(azureResult.getValues());
           }
@@ -234,16 +234,16 @@ public class Eth1Runner extends Runner {
   }
 
   private void registerSignerLoadingHealthCheck(
-          final String name, final MappedResults<ArtifactSigner> result) {
+      final String name, final MappedResults<ArtifactSigner> result) {
     super.registerHealthCheckProcedure(
-            name,
-            promise -> {
-              final JsonObject statusJson =
-                      new JsonObject()
-                              .put("keys-loaded", result.getValues().size())
-                              .put("error-count", result.getErrorCount());
-              promise.complete(
-                      result.getErrorCount() > 0 ? Status.KO(statusJson) : Status.OK(statusJson));
-            });
+        name,
+        promise -> {
+          final JsonObject statusJson =
+              new JsonObject()
+                  .put("keys-loaded", result.getValues().size())
+                  .put("error-count", result.getErrorCount());
+          promise.complete(
+              result.getErrorCount() > 0 ? Status.KO(statusJson) : Status.OK(statusJson));
+        });
   }
 }
