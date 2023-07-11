@@ -45,6 +45,7 @@ public class SecpArtifactSignerProviderAdpater implements ArtifactSignerProvider
     return executorService.submit(
         () -> {
           LOG.debug("Adding eth1 address for eth1 keys");
+
           signerProvider.availableIdentifiers().stream()
               .forEach(
                   (publicKey) -> {
@@ -52,6 +53,7 @@ public class SecpArtifactSignerProviderAdpater implements ArtifactSignerProvider
                         normaliseIdentifier(getAddress(publicKey)),
                         signerProvider.getSigner(publicKey).get());
                   });
+
           return null;
         });
   }

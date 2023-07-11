@@ -170,8 +170,6 @@ public abstract class Runner implements Runnable {
 
       persistPortInformation(
           httpServer.actualPort(), metricsService.flatMap(MetricsService::getPort));
-    } catch (final InitializationException e) {
-      throw e;
     } catch (final Throwable e) {
       if (artifactSignerProvider != null) {
         artifactSignerProvider.close();
@@ -179,6 +177,7 @@ public abstract class Runner implements Runnable {
       vertx.close();
       metricsService.ifPresent(MetricsService::stop);
       LOG.error("Failed to initialise application", e);
+      throw new InitializationException(e);
     }
   }
 
