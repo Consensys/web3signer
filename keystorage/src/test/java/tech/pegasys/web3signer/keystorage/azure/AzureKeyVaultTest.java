@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
+import com.azure.security.keyvault.keys.models.KeyProperties;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -99,6 +100,19 @@ public class AzureKeyVaultTest {
   }
 
   @Test
+  void keyPropertiesCanBeMappedUsingCustomMappingFunction() {
+    final AzureKeyVault azureKeyVault =
+        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+
+    final MappedResults<String> result =
+        azureKeyVault.mapKeyProperties(KeyProperties::getName, Collections.emptyMap());
+    final Collection<String> entries = result.getValues();
+    final Optional<String> testKeyEntry =
+        entries.stream().filter(e -> e.equals("TestKey")).findAny();
+    Assertions.assertThat(testKeyEntry).hasValue("TestKey");
+  }
+
+  @Test
   void mapSecretsUsingTags() {
     final AzureKeyVault azureKeyVault =
         createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
@@ -120,6 +134,20 @@ public class AzureKeyVaultTest {
   }
 
   @Test
+  void mapKeyPropertiesUsingTags() {
+    final AzureKeyVault azureKeyVault =
+        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+
+    final MappedResults<String> result =
+        azureKeyVault.mapKeyProperties(
+            KeyProperties::getName, Map.of("Used-For", "Signers Acceptance Test"));
+    final Collection<String> entries = result.getValues();
+    final Optional<String> testKeyEntry =
+        entries.stream().filter(e -> e.equals("TestKey2")).findAny();
+    Assertions.assertThat(testKeyEntry).hasValue("TestKey2");
+  }
+
+  @Test
   void mapSecretsWhenTagsDoesNotExist() {
     final AzureKeyVault azureKeyVault =
         createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
@@ -128,6 +156,22 @@ public class AzureKeyVaultTest {
         azureKeyVault.mapSecrets(SimpleEntry::new, Map.of("INVALID_TAG", "INVALID_TEST"));
 
     // The secret vault is not expected to have any secrets with above tags.
+    Assertions.assertThat(result.getValues()).isEmpty();
+
+    // we should not encounter any error count
+    Assertions.assertThat(result.getErrorCount()).isZero();
+  }
+
+  @Test
+  void mapKeyPropertiesWhenTagsDoesNotExist() {
+    final AzureKeyVault azureKeyVault =
+        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+
+    final MappedResults<String> result =
+        azureKeyVault.mapKeyProperties(
+            KeyProperties::getName, Map.of("INVALID_TAG", "INVALID_TEST"));
+
+    // The key vault is not expected to have any secrets with above tags.
     Assertions.assertThat(result.getValues()).isEmpty();
 
     // we should not encounter any error count
