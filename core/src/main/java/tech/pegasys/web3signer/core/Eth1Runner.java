@@ -69,7 +69,6 @@ public class Eth1Runner extends Runner {
   public static final String SIGN_PATH = "/api/v1/eth1/sign/:identifier";
   private final Eth1Config eth1Config;
   private final long chainId;
-
   private final HttpResponseFactory responseFactory = new HttpResponseFactory();
 
   public Eth1Runner(final BaseConfig baseConfig, final Eth1Config eth1Config) {
@@ -199,7 +198,11 @@ public class Eth1Runner extends Runner {
     final TransactionFactory transactionFactory =
         new TransactionFactory(jsonDecoder, transmitterFactory);
 
-    signerProvider.load();
+    try {
+      signerProvider.load().get(); // wait for signers to get loaded ...
+    } catch (final Exception e) {
+      throw new InitializationException(e);
+    }
     final SendTransactionHandler sendTransactionHandler =
         new SendTransactionHandler(chainId, signerProvider, transactionFactory, transmitterFactory);
 
