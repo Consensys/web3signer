@@ -22,6 +22,7 @@ import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 
+import java.nio.ByteBuffer;
 import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
@@ -29,6 +30,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.crypto.TransactionEncoder;
+import org.web3j.crypto.transaction.type.TransactionType;
 import org.web3j.utils.Numeric;
 
 public class TransactionSerializer {
@@ -43,14 +45,44 @@ public class TransactionSerializer {
   }
 
   public String serialize(final Transaction transaction) {
-    final SignatureData signatureData =
-        new SignatureData(longToBytes(chainId), new byte[] {}, new byte[] {});
-    final byte[] bytesToSign = transaction.rlpEncode(signatureData);
 
-    Optional<String> publicKey = signerPublicKeyFromAddress(signer, transaction.sender());
+    SignatureData signatureData = null;
+
+    if (!transaction.isEip1559()) {
+      signatureData = new SignatureData(longToBytes(chainId), new byte[] {}, new byte[] {});
+    }
+
+    byte[] bytesToSign = transaction.rlpEncode(signatureData);
+
+    if (transaction.isEip1559()) {
+      bytesToSign = prependEip1559TransactionType(bytesToSign);
+    }
+
+    final Signature signature = sign(transaction.sender(), bytesToSign);
+
+    SignatureData web3jSignature =
+        new SignatureData(
+            signature.getV().toByteArray(),
+            signature.getR().toByteArray(),
+            signature.getS().toByteArray());
+
+    if (!transaction.isEip1559()) {
+      web3jSignature = TransactionEncoder.createEip155SignatureData(web3jSignature, chainId);
+    }
+
+    byte[] serializedBytes = transaction.rlpEncode(web3jSignature);
+    if (transaction.isEip1559()) {
+      serializedBytes = prependEip1559TransactionType(serializedBytes);
+    }
+
+    return Numeric.toHexString(serializedBytes);
+  }
+
+  private Signature sign(final String sender, final byte[] bytesToSign) {
+    Optional<String> publicKey = signerPublicKeyFromAddress(signer, sender);
 
     if (publicKey.isEmpty()) {
-      LOG.debug("From address ({}) does not match any available account", transaction.sender());
+      LOG.debug("From address ({}) does not match any available account", sender);
       throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
     }
 
@@ -63,17 +95,13 @@ public class TransactionSerializer {
             .get();
 
     final Signature signature = artifactSignature.getSignatureData();
+    return signature;
+  }
 
-    final SignatureData web3jSignature =
-        new SignatureData(
-            signature.getV().toByteArray(),
-            signature.getR().toByteArray(),
-            signature.getS().toByteArray());
-
-    final SignatureData eip155Signature =
-        TransactionEncoder.createEip155SignatureData(web3jSignature, chainId);
-
-    final byte[] serializedBytes = transaction.rlpEncode(eip155Signature);
-    return Numeric.toHexString(serializedBytes);
+  private static byte[] prependEip1559TransactionType(byte[] bytesToSign) {
+    return ByteBuffer.allocate(bytesToSign.length + 1)
+        .put(TransactionType.EIP1559.getRlpType())
+        .put(bytesToSign)
+        .array();
   }
 }

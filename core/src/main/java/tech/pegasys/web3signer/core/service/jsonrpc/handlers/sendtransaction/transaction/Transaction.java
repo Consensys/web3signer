@@ -58,4 +58,6 @@ public interface Transaction {
   }
 
   JsonRpcRequestId getId();
+
+  boolean isEip1559();
 }

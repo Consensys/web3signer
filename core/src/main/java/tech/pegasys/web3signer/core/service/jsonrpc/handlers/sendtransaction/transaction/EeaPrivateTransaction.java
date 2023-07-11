@@ -67,8 +67,7 @@ public class EeaPrivateTransaction extends PrivateTransaction {
 
   @Override
   protected RawPrivateTransaction createTransaction() {
-    if (transactionJsonParameters.maxPriorityFeePerGas().isPresent()
-        && transactionJsonParameters.maxFeePerGas().isPresent()) {
+    if (isEip1559()) {
       return RawPrivateTransaction.createTransaction(
           chainId,
           nonce,

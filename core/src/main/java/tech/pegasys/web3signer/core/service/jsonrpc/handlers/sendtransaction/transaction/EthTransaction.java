@@ -93,6 +93,12 @@ public class EthTransaction implements Transaction {
   }
 
   @Override
+  public boolean isEip1559() {
+    return transactionJsonParameters.maxPriorityFeePerGas().isPresent()
+        && transactionJsonParameters.maxFeePerGas().isPresent();
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("chainId", chainId)
@@ -104,8 +110,7 @@ public class EthTransaction implements Transaction {
   }
 
   protected RawTransaction createTransaction() {
-    if (transactionJsonParameters.maxPriorityFeePerGas().isPresent()
-        && transactionJsonParameters.maxFeePerGas().isPresent()) {
+    if (isEip1559()) {
       return RawTransaction.createTransaction(
           chainId,
           nonce,

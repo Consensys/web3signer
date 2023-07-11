@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.tests.eth1rpc.signing;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.web3j.crypto.transaction.type.TransactionType.EIP1559;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
 
@@ -40,6 +41,8 @@ public class ValueTransferAcceptanceTest extends Eth1RpcAcceptanceTestBase {
 
   private static final String RECIPIENT = "0x1b00ba00ca00bb00aa00bc00be00ac00ca00da00";
   private static final long FIFTY_TRANSACTIONS = 50;
+  private static final String FRONTIER = "0x0";
+  private static final String EIP1559 = "0x2";
 
   @BeforeEach
   public void setup() {
@@ -74,6 +77,39 @@ public class ValueTransferAcceptanceTest extends Eth1RpcAcceptanceTestBase {
     final BigInteger expectedEndBalance = startBalance.add(transferAmountWei);
     final BigInteger actualEndBalance = besu.accounts().balance(RECIPIENT);
     assertThat(actualEndBalance).isEqualTo(expectedEndBalance);
+
+    // assert tx is FRONTIER type
+    final var receipt = besu.transactions().getTransactionReceipt(hash).orElseThrow();
+    assertThat(receipt.getType()).isEqualTo(FRONTIER);
+  }
+
+  @Test
+  public void valueTransferEip1559() {
+    final BigInteger transferAmountWei = Convert.toWei("1.75", Unit.ETHER).toBigIntegerExact();
+    final BigInteger startBalance = besu.accounts().balance(RECIPIENT);
+    final Transaction eip1559Transaction =
+        new Transaction(
+            richBenefactor().address(),
+            null,
+            null,
+            INTRINSIC_GAS,
+            RECIPIENT,
+            transferAmountWei,
+            null,
+            2018L,
+            GAS_PRICE,
+            GAS_PRICE);
+
+    final String hash = signer.transactions().submit(eip1559Transaction);
+    besu.transactions().awaitBlockContaining(hash);
+
+    final BigInteger expectedEndBalance = startBalance.add(transferAmountWei);
+    final BigInteger actualEndBalance = besu.accounts().balance(RECIPIENT);
+    assertThat(actualEndBalance).isEqualTo(expectedEndBalance);
+
+    // assert tx is EIP1559 type
+    final var receipt = besu.transactions().getTransactionReceipt(hash).orElseThrow();
+    assertThat(receipt.getType()).isEqualTo(EIP1559);
   }
 
   @Test
