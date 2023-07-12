@@ -238,7 +238,7 @@ public abstract class Runner implements Runnable {
 
   protected void addReloadHandler(
       final Router router,
-      final List<ArtifactSignerProvider> artifactSignerProvider,
+      final ArrayList<ArtifactSignerProvider> orderedArtifactSignerProviders,
       final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.POST, RELOAD_PATH)
