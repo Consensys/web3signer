@@ -43,9 +43,9 @@ public class AwsKMSSignerFactory {
             awsKMSMetadata.getAuthenticationMode(),
             awsKMSMetadata.getAwsCredentials().orElse(null),
             awsKMSMetadata.getRegion(),
-            awsKMSMetadata.getKmsKeyId(),
             awsKMSMetadata.getEndpointOverride())) {
-      final ECPublicKey ecPublicKey = awsKeyManagerService.getECPublicKey();
+      final ECPublicKey ecPublicKey =
+          awsKeyManagerService.getECPublicKey(awsKMSMetadata.getKmsKeyId());
       LOG.debug("Public Key:" + EthPublicKeyUtils.toHexString(ecPublicKey));
       return new AwsKMSSigner(awsKMSMetadata, ecPublicKey, applySha3Hash);
     }

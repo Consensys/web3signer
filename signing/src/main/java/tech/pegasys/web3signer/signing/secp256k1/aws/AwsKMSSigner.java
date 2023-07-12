@@ -47,9 +47,8 @@ public class AwsKMSSigner implements Signer {
             awsKMSMetadata.getAuthenticationMode(),
             awsKMSMetadata.getAwsCredentials().orElse(null),
             awsKMSMetadata.getRegion(),
-            awsKMSMetadata.getKmsKeyId(),
             awsKMSMetadata.getEndpointOverride())) {
-      signature = awsKeyManagerService.sign(dataToSign);
+      signature = awsKeyManagerService.sign(awsKMSMetadata.getKmsKeyId(), dataToSign);
     }
 
     if (signature.length != 64) {

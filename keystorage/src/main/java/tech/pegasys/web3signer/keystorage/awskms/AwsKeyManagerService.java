@@ -26,6 +26,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
@@ -45,7 +46,6 @@ public class AwsKeyManagerService implements AutoCloseable {
   private final AwsAuthenticationMode authMode;
   private final AwsCredentials awsCredentials;
   private final String region;
-  private final String kmsKeyId;
 
   private KmsClient kmsClient;
 
@@ -55,12 +55,10 @@ public class AwsKeyManagerService implements AutoCloseable {
       final AwsAuthenticationMode authMode,
       final AwsCredentials awsCredentials,
       final String region,
-      final String kmsKeyId,
       final Optional<URI> endpointOverride) {
     this.authMode = authMode;
     this.awsCredentials = awsCredentials;
     this.region = region;
-    this.kmsKeyId = kmsKeyId;
     this.endpointOverride = endpointOverride;
 
     initKmsClient();
@@ -103,7 +101,7 @@ public class AwsKeyManagerService implements AutoCloseable {
     return awsCredentialsProvider;
   }
 
-  public ECPublicKey getECPublicKey() {
+  public ECPublicKey getECPublicKey(final String kmsKeyId) {
     checkArgument(kmsClient != null, "KmsClient is not initialized");
 
     // Question ... do we need to set grantTokens?
@@ -125,7 +123,7 @@ public class AwsKeyManagerService implements AutoCloseable {
     }
   }
 
-  public byte[] sign(final byte[] data) {
+  public byte[] sign(final String kmsKeyId, final byte[] data) {
     final SignRequest signRequest =
         SignRequest.builder()
             .keyId(kmsKeyId)
@@ -133,6 +131,11 @@ public class AwsKeyManagerService implements AutoCloseable {
             .message(SdkBytes.fromByteArray(data))
             .build();
     return kmsClient.sign(signRequest).signature().asByteArray();
+  }
+
+  @VisibleForTesting
+  KmsClient getKmsClient() {
+    return kmsClient;
   }
 
   @Override
