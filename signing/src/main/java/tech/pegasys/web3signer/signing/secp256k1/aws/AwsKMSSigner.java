@@ -28,17 +28,19 @@ public class AwsKMSSigner implements Signer {
   private final boolean applySha3Hash; // Apply Hash.sha3(data) before signing
 
   public AwsKMSSigner(
-      AwsKMSMetadata awsKMSMetadata, ECPublicKey ecPublicKey, boolean applySha3Hash) {
+      final AwsKMSMetadata awsKMSMetadata,
+      final ECPublicKey ecPublicKey,
+      final boolean applySha3Hash) {
     this.awsKMSMetadata = awsKMSMetadata;
     this.ecPublicKey = ecPublicKey;
     this.applySha3Hash = applySha3Hash;
   }
 
   @Override
-  public Signature sign(byte[] data) {
+  public Signature sign(final byte[] data) {
     final byte[] dataToSign = applySha3Hash ? Hash.sha3(data) : data;
     final byte[] signature;
-    try (AwsKeyManagerService awsKeyManagerService =
+    try (final AwsKeyManagerService awsKeyManagerService =
         new AwsKeyManagerService(
             awsKMSMetadata.getAuthenticationMode(),
             awsKMSMetadata.getAwsCredentials().orElse(null),
