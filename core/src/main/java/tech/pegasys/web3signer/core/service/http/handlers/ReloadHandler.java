@@ -22,10 +22,10 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
 public class ReloadHandler implements Handler<RoutingContext> {
-  List<ArtifactSignerProvider> artifactSignerProvider;
+  ArrayList<ArtifactSignerProvider> orderedArtifactSignerProviders;
 
-  public ReloadHandler(List<ArtifactSignerProvider> artifactSignerProvider) {
-    this.artifactSignerProvider = artifactSignerProvider;
+  public ReloadHandler(ArrayList<ArtifactSignerProvider> orderedArtifactSignerProviders) {
+    this.orderedArtifactSignerProviders = orderedArtifactSignerProviders;
   }
 
   @Override
