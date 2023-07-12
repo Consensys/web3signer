@@ -22,9 +22,9 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
 public class ReloadHandler implements Handler<RoutingContext> {
-  ArrayList<ArtifactSignerProvider> orderedArtifactSignerProviders;
+  List<ArtifactSignerProvider> orderedArtifactSignerProviders;
 
-  public ReloadHandler(ArrayList<ArtifactSignerProvider> orderedArtifactSignerProviders) {
+  public ReloadHandler(List<ArtifactSignerProvider> orderedArtifactSignerProviders) {
     this.orderedArtifactSignerProviders = orderedArtifactSignerProviders;
   }
 
@@ -35,7 +35,7 @@ public class ReloadHandler implements Handler<RoutingContext> {
         .submit(
             () ->
                 orderedArtifactSignerProviders.stream()
-                    .forEachOrdered(
+                    .forEach(
                         signer -> {
                           try {
                             signer.load().get();

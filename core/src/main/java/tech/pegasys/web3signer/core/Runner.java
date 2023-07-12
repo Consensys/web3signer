@@ -238,12 +238,12 @@ public abstract class Runner implements Runnable {
 
   protected void addReloadHandler(
       final Router router,
-      final ArrayList<ArtifactSignerProvider> orderedArtifactSignerProviders,
+      final List<ArtifactSignerProvider> orderedArtifactSignerProviders,
       final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.POST, RELOAD_PATH)
         .produces(JSON)
-        .handler(new ReloadHandler(artifactSignerProvider))
+        .handler(new ReloadHandler(orderedArtifactSignerProviders))
         .failureHandler(errorHandler);
   }
 

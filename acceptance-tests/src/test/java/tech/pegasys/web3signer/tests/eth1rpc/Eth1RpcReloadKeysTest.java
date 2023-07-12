@@ -84,7 +84,7 @@ public class Eth1RpcReloadKeysTest extends Eth1RpcAcceptanceTestBase {
                     List.of(normaliseIdentifier(getAddress(additionalKeys[0]))).toArray())));
   }
 
-  protected String[] createSecpKeys(final String... privateKeys) {
+  private String[] createSecpKeys(final String... privateKeys) {
     return Stream.of(privateKeys)
         .map(
             privateKey -> {
@@ -120,7 +120,7 @@ public class Eth1RpcReloadKeysTest extends Eth1RpcAcceptanceTestBase {
         KeyType.SECP256K1);
   }
 
-  protected String[] privateKeys() {
+  private String[] privateKeys() {
     return new String[] {SECP_PRIVATE_KEY_1, SECP_PRIVATE_KEY_2};
   }
 }

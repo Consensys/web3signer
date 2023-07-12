@@ -72,6 +72,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockserver.integration.ClientAndServer;
@@ -110,6 +111,11 @@ public class IntegrationTestBase {
   public static final long DEFAULT_CHAIN_ID = 9;
   public static final int DEFAULT_ID = 77;
   static final String MALFORMED_JSON = "{Bad Json: {{{}";
+
+  @BeforeAll
+  private static void setupWeb3Signer() throws Exception {
+    setupWeb3Signer(DEFAULT_CHAIN_ID);
+  }
 
   static void setupWeb3Signer(final long chainId) throws Exception {
     setupWeb3Signer(chainId, "");
