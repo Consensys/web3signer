@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.common.config;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class AwsCredentials {
@@ -35,6 +36,21 @@ public class AwsCredentials {
 
   public Optional<String> getSessionToken() {
     return sessionToken;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    AwsCredentials that = (AwsCredentials) o;
+    return Objects.equals(accessKeyId, that.accessKeyId)
+        && Objects.equals(secretAccessKey, that.secretAccessKey)
+        && Objects.equals(sessionToken, that.sessionToken);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(accessKeyId, secretAccessKey, sessionToken);
   }
 
   public static final class AwsCredentialsBuilder {

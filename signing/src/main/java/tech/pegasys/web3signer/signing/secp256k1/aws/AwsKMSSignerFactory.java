@@ -35,9 +35,7 @@ public class AwsKMSSignerFactory {
 
   public Signer createSigner(final AwsKMSMetadata awsKMSMetadata) {
     checkArgument(awsKMSMetadata != null, "awsKMSMetadata must not be null");
-    LOG.trace("Creating AWS Key Manager Signer");
     // fetch public key as we require it later on to create recovery key
-
     try (AwsKeyManagerService awsKeyManagerService =
         new AwsKeyManagerService(
             awsKMSMetadata.getAuthenticationMode(),
@@ -46,7 +44,7 @@ public class AwsKMSSignerFactory {
             awsKMSMetadata.getEndpointOverride())) {
       final ECPublicKey ecPublicKey =
           awsKeyManagerService.getECPublicKey(awsKMSMetadata.getKmsKeyId());
-      LOG.debug("Public Key:" + EthPublicKeyUtils.toHexString(ecPublicKey));
+      LOG.trace("AWS KMS Public Key:" + EthPublicKeyUtils.toHexString(ecPublicKey));
       return new AwsKMSSigner(awsKMSMetadata, ecPublicKey, applySha3Hash);
     }
   }

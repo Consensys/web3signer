@@ -24,6 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -44,6 +45,10 @@ import software.amazon.awssdk.services.kms.model.SignRequest;
 import software.amazon.awssdk.services.kms.model.SignResponse;
 import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
 
+/**
+ * Wraps AWS KMS Client and expose public key and sign operations. Since KmsClient is thread safe,
+ * same instance of this class can be used to talk to same host/credentials.
+ */
 public class AwsKeyManagerService implements AutoCloseable {
   private final AwsAuthenticationMode authMode;
   private final AwsCredentials awsCredentials;
@@ -147,5 +152,21 @@ public class AwsKeyManagerService implements AutoCloseable {
     if (kmsClient != null) {
       kmsClient.close();
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    AwsKeyManagerService that = (AwsKeyManagerService) o;
+    return authMode == that.authMode
+        && Objects.equals(awsCredentials, that.awsCredentials)
+        && Objects.equals(region, that.region)
+        && Objects.equals(endpointOverride, that.endpointOverride);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(authMode, awsCredentials, region, endpointOverride);
   }
 }
