@@ -34,7 +34,7 @@ public class ReloadHandler implements Handler<RoutingContext> {
     Executors.newSingleThreadExecutor()
         .submit(
             () ->
-                artifactSignerProvider.stream()
+                orderedArtifactSignerProviders.stream()
                     .forEachOrdered(
                         signer -> {
                           try {
