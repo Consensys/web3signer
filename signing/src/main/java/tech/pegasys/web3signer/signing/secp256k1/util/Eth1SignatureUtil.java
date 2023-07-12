@@ -28,16 +28,33 @@ import org.web3j.utils.Numeric;
 public class Eth1SignatureUtil {
   private static final Logger LOG = LogManager.getLogger();
 
-  public static Signature deriveSignature(
+  public static Signature deriveSignatureFromDerEncoded(
       final byte[] dataToSign, final ECPublicKey ecPublicKey, final byte[] signature) {
-    // reference: blog by Tomislav Markovski
-    // https://tomislav.tech/2018-02-05-ethereum-keyvault-signing-transactions/
+    final BigInteger R = extractR(signature);
+    final BigInteger S = extractS(signature);
+
+    return deriveSignature(dataToSign, ecPublicKey, R, S);
+  }
+
+  public static Signature deriveSignatureFromP1363Encoded(
+      final byte[] dataToSign, final ECPublicKey ecPublicKey, final byte[] signature) {
     // The output of this will be a 64 byte array. The first 32 are the value for R and the rest is
     // S.
+
     final BigInteger R = new BigInteger(1, Arrays.copyOfRange(signature, 0, 32));
     final BigInteger S = new BigInteger(1, Arrays.copyOfRange(signature, 32, 64));
+    return deriveSignature(dataToSign, ecPublicKey, R, S);
+  }
 
-    // The Azure Signature MAY be in the "top" of the curve, which is illegal in Ethereum
+  private static Signature deriveSignature(
+      final byte[] dataToSign,
+      final ECPublicKey ecPublicKey,
+      final BigInteger R,
+      final BigInteger S) {
+    // reference: blog by Tomislav Markovski
+    // https://tomislav.tech/2018-02-05-ethereum-keyvault-signing-transactions/
+
+    // The Azure/AWS Signature MAY be in the "top" of the curve, which is illegal in Ethereum
     // thus it must be transposed to the lower intersection.
     final ECDSASignature initialSignature = new ECDSASignature(R, S);
     final ECDSASignature canonicalSignature = initialSignature.toCanonicalised();
@@ -65,5 +82,20 @@ public class Eth1SignatureUtil {
       }
     }
     return -1;
+  }
+
+  // See https://stackoverflow.com/a/49275839
+  private static BigInteger extractR(byte[] signature) {
+    int startR = (signature[1] & 0x80) != 0 ? 3 : 2;
+    int lengthR = signature[startR + 1];
+    return new BigInteger(Arrays.copyOfRange(signature, startR + 2, startR + 2 + lengthR));
+  }
+
+  private static BigInteger extractS(byte[] signature) {
+    int startR = (signature[1] & 0x80) != 0 ? 3 : 2;
+    int lengthR = signature[startR + 1];
+    int startS = startR + 2 + lengthR;
+    int lengthS = signature[startS + 1];
+    return new BigInteger(Arrays.copyOfRange(signature, startS + 2, startS + 2 + lengthS));
   }
 }

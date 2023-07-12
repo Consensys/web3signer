@@ -10,16 +10,22 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.keystorage.awskms;
+package tech.pegasys.web3signer.signing.secp256k1.aws;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
+import tech.pegasys.web3signer.keystorage.awskms.AwsKeyManagerService;
+import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
+import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
+import tech.pegasys.web3signer.signing.secp256k1.Signature;
+import tech.pegasys.web3signer.signing.secp256k1.Signer;
 
+import java.math.BigInteger;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
+import java.security.SignatureException;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterAll;
@@ -27,6 +33,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.web3j.crypto.Hash;
+import org.web3j.crypto.Sign;
+import org.web3j.utils.Numeric;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
 import software.amazon.awssdk.services.kms.model.CreateKeyResponse;
@@ -51,7 +60,7 @@ import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
     named = "AWS_SECRET_ACCESS_KEY",
     matches = ".*",
     disabledReason = "AWS_SECRET_ACCESS_KEY env variable is required")
-class AwsKeyManagerServiceTest {
+public class AwsKmsSignerTest {
   private static final String AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
   private static final String AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
 
@@ -116,25 +125,50 @@ class AwsKeyManagerServiceTest {
   }
 
   @Test
-  void testGetECPublicKey() {
-    // read-only user with GetPublicKey/sign rights
-    try (AwsKeyManagerService awsKeyManagerService =
-        new AwsKeyManagerService(
-            AwsAuthenticationMode.SPECIFIED, AWS_CREDENTIALS, AWS_REGION, ENDPOINT_OVERRIDE)) {
+  public void awsKmsSignerCanSignTwice() {
+    final AwsKMSSignerFactory awsKMSSignerFactory = new AwsKMSSignerFactory(true);
+    final AwsKMSMetadata awsKMSMetadata =
+        new AwsKMSMetadata(
+            AwsAuthenticationMode.SPECIFIED,
+            AWS_REGION,
+            Optional.of(AWS_CREDENTIALS),
+            testKeyId,
+            ENDPOINT_OVERRIDE);
+    final Signer signer = awsKMSSignerFactory.createSigner(awsKMSMetadata);
 
-      assertThatCode(() -> awsKeyManagerService.getECPublicKey(testKeyId))
-          .doesNotThrowAnyException();
-    }
+    final byte[] dataToHash = "Hello".getBytes(UTF_8);
+    signer.sign(dataToHash);
+    signer.sign(dataToHash);
   }
 
   @Test
-  void testSign() {
-    // read-only user with GetPublicKey/sign rights
-    try (AwsKeyManagerService awsKeyManagerService =
-        new AwsKeyManagerService(
-            AwsAuthenticationMode.SPECIFIED, AWS_CREDENTIALS, AWS_REGION, ENDPOINT_OVERRIDE)) {
+  void awsWithoutHashingDoesntHashData() throws SignatureException {
+    final AwsKMSSignerFactory awsKMSSignerFactory = new AwsKMSSignerFactory(false);
+    final AwsKMSMetadata awsKMSMetadata =
+        new AwsKMSMetadata(
+            AwsAuthenticationMode.SPECIFIED,
+            AWS_REGION,
+            Optional.of(AWS_CREDENTIALS),
+            testKeyId,
+            ENDPOINT_OVERRIDE);
+    final Signer signer = awsKMSSignerFactory.createSigner(awsKMSMetadata);
+    final BigInteger publicKey =
+        Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
 
-      awsKeyManagerService.sign(testKeyId, "Hello World".getBytes(StandardCharsets.UTF_8));
-    }
+    final byte[] dataToSign = "Hello".getBytes(UTF_8);
+    final byte[] hashedData = Hash.sha3(dataToSign); // manual hash before sending to remote signing
+
+    final Signature signature = signer.sign(hashedData);
+
+    // Determine if Web3j thinks the signature comes from the public key used (really proves
+    // that the hashedData isn't hashed a second time).
+    final Sign.SignatureData sigData =
+        new Sign.SignatureData(
+            signature.getV().toByteArray(),
+            Numeric.toBytesPadded(signature.getR(), 32),
+            Numeric.toBytesPadded(signature.getS(), 32));
+
+    final BigInteger recoveredPublicKey = Sign.signedMessageHashToKey(hashedData, sigData);
+    assertThat(recoveredPublicKey).isEqualTo(publicKey);
   }
 }

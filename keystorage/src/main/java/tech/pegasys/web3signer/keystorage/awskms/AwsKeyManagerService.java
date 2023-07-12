@@ -39,7 +39,9 @@ import software.amazon.awssdk.services.kms.KmsClientBuilder;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyRequest;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyResponse;
 import software.amazon.awssdk.services.kms.model.KeySpec;
+import software.amazon.awssdk.services.kms.model.MessageType;
 import software.amazon.awssdk.services.kms.model.SignRequest;
+import software.amazon.awssdk.services.kms.model.SignResponse;
 import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
 
 public class AwsKeyManagerService implements AutoCloseable {
@@ -128,13 +130,15 @@ public class AwsKeyManagerService implements AutoCloseable {
         SignRequest.builder()
             .keyId(kmsKeyId)
             .signingAlgorithm(SigningAlgorithmSpec.ECDSA_SHA_256)
+            .messageType(MessageType.DIGEST)
             .message(SdkBytes.fromByteArray(data))
             .build();
-    return kmsClient.sign(signRequest).signature().asByteArray();
+    final SignResponse signResponse = kmsClient.sign(signRequest);
+    return signResponse.signature().asByteArray();
   }
 
   @VisibleForTesting
-  KmsClient getKmsClient() {
+  public KmsClient getKmsClient() {
     return kmsClient;
   }
 

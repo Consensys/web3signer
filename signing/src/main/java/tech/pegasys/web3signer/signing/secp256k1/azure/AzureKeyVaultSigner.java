@@ -84,7 +84,7 @@ public class AzureKeyVaultSigner implements Signer {
           "Invalid signature from the key vault signing service, must be 64 bytes long");
     }
 
-    return Eth1SignatureUtil.deriveSignature(dataToSign, publicKey, signature);
+    return Eth1SignatureUtil.deriveSignatureFromP1363Encoded(dataToSign, publicKey, signature);
   }
 
   @Override

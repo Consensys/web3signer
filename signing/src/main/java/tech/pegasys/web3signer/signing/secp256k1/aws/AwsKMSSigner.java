@@ -20,12 +20,9 @@ import tech.pegasys.web3signer.signing.secp256k1.util.Eth1SignatureUtil;
 
 import java.security.interfaces.ECPublicKey;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.web3j.crypto.Hash;
 
 public class AwsKMSSigner implements Signer {
-  private static final Logger LOG = LogManager.getLogger();
   private final AwsKMSMetadata awsKMSMetadata;
   private final ECPublicKey ecPublicKey;
   private final boolean applySha3Hash; // Apply Hash.sha3(data) before signing
@@ -39,7 +36,6 @@ public class AwsKMSSigner implements Signer {
 
   @Override
   public Signature sign(byte[] data) {
-    LOG.trace("Signing with apply sha3 hash {}", applySha3Hash);
     final byte[] dataToSign = applySha3Hash ? Hash.sha3(data) : data;
     final byte[] signature;
     try (AwsKeyManagerService awsKeyManagerService =
@@ -48,13 +44,11 @@ public class AwsKMSSigner implements Signer {
             awsKMSMetadata.getAwsCredentials().orElse(null),
             awsKMSMetadata.getRegion(),
             awsKMSMetadata.getEndpointOverride())) {
+
       signature = awsKeyManagerService.sign(awsKMSMetadata.getKmsKeyId(), dataToSign);
     }
 
-    if (signature.length != 64) {
-      throw new RuntimeException("Invalid signature from the AWS KMS, must be 64 bytes long");
-    }
-    return Eth1SignatureUtil.deriveSignature(dataToSign, ecPublicKey, signature);
+    return Eth1SignatureUtil.deriveSignatureFromDerEncoded(dataToSign, ecPublicKey, signature);
   }
 
   @Override
