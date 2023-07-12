@@ -35,7 +35,7 @@ public class ReloadHandler implements Handler<RoutingContext> {
         .submit(
             () ->
                 orderedArtifactSignerProviders.stream()
-                    .forEach(
+                    .forEachOrdered(
                         signer -> {
                           try {
                             signer.load().get();
