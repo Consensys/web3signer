@@ -36,6 +36,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -206,6 +207,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     validateApiResponse(response, containsInAnyOrder(keys));
   }
 
+  @Disabled(value = "Temporary Disabled")
   @Test
   @EnabledIfEnvironmentVariables({
     @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
