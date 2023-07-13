@@ -43,7 +43,7 @@ import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestEth1Config;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
-import tech.pegasys.web3signer.signing.secp256k1.SingleSignerProvider;
+import tech.pegasys.web3signer.core.jsonrpcproxy.support.SingleSignerProvider;
 import tech.pegasys.web3signer.signing.secp256k1.filebased.FileBasedSignerFactory;
 
 import java.io.File;

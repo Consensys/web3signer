@@ -10,7 +10,11 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.signing.secp256k1;
+package tech.pegasys.web3signer.core.jsonrpcproxy.support;
+
+import tech.pegasys.web3signer.signing.secp256k1.Signer;
+import tech.pegasys.web3signer.signing.secp256k1.SignerIdentifier;
+import tech.pegasys.web3signer.signing.secp256k1.SignerProvider;
 
 import java.security.interfaces.ECPublicKey;
 import java.util.Collections;
