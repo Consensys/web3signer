@@ -68,13 +68,11 @@ public class Eth1Runner extends Runner {
   public static final String ROOT_PATH = "/";
   public static final String SIGN_PATH = "/api/v1/eth1/sign/:identifier";
   private final Eth1Config eth1Config;
-  private final long chainId;
   private final HttpResponseFactory responseFactory = new HttpResponseFactory();
 
   public Eth1Runner(final BaseConfig baseConfig, final Eth1Config eth1Config) {
     super(baseConfig);
     this.eth1Config = eth1Config;
-    this.chainId = eth1Config.getChainId().id();
   }
 
   @Override
@@ -99,6 +97,8 @@ public class Eth1Runner extends Runner {
 
     final ArtifactSignerProvider secpArtifactSignerProvider =
         new SecpArtifactSignerProviderAdpater(signerProvider);
+
+    loadSignerProvider(secpArtifactSignerProvider);
 
     // The order of the elements in the list DO matter
     addReloadHandler(
@@ -126,7 +126,11 @@ public class Eth1Runner extends Runner {
 
     final RequestMapper requestMapper =
         createRequestMapper(
-            transmitterFactory, secpArtifactSignerProvider, jsonDecoder, secpSigner);
+            transmitterFactory,
+            secpArtifactSignerProvider,
+            jsonDecoder,
+            secpSigner,
+            eth1Config.getChainId().id());
 
     router
         .route(HttpMethod.POST, ROOT_PATH)
@@ -191,18 +195,14 @@ public class Eth1Runner extends Runner {
       final VertxRequestTransmitterFactory transmitterFactory,
       final ArtifactSignerProvider signerProvider,
       final JsonDecoder jsonDecoder,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner) {
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
+      final long chainId) {
     final PassThroughHandler defaultHandler =
         new PassThroughHandler(transmitterFactory, jsonDecoder);
 
     final TransactionFactory transactionFactory =
         new TransactionFactory(jsonDecoder, transmitterFactory);
 
-    try {
-      signerProvider.load().get(); // wait for signers to get loaded ...
-    } catch (final Exception e) {
-      throw new InitializationException(e);
-    }
     final SendTransactionHandler sendTransactionHandler =
         new SendTransactionHandler(chainId, signerProvider, transactionFactory, transmitterFactory);
 
@@ -223,5 +223,13 @@ public class Eth1Runner extends Runner {
     requestMapper.addHandler("eea_sendTransaction", sendTransactionHandler);
 
     return requestMapper;
+  }
+
+  private void loadSignerProvider(final ArtifactSignerProvider signerProvider) {
+    try {
+      signerProvider.load().get(); // wait for signers to get loaded ...
+    } catch (final Exception e) {
+      throw new InitializationException(e);
+    }
   }
 }

@@ -34,7 +34,7 @@ public class SecpArtifactSignerProviderAdpater implements ArtifactSignerProvider
   private static final Logger LOG = LogManager.getLogger();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
-  private ArtifactSignerProvider signerProvider;
+  private final ArtifactSignerProvider signerProvider;
 
   public SecpArtifactSignerProviderAdpater(final ArtifactSignerProvider signerProvider) {
     this.signerProvider = signerProvider;
@@ -49,9 +49,12 @@ public class SecpArtifactSignerProviderAdpater implements ArtifactSignerProvider
           signerProvider.availableIdentifiers().stream()
               .forEach(
                   (publicKey) -> {
-                    signers.putIfAbsent(
-                        normaliseIdentifier(getAddress(publicKey)),
-                        signerProvider.getSigner(publicKey).get());
+                    signerProvider
+                        .getSigner(publicKey)
+                        .ifPresent(
+                            signer ->
+                                signers.putIfAbsent(
+                                    normaliseIdentifier(getAddress(publicKey)), signer));
                   });
 
           return null;
