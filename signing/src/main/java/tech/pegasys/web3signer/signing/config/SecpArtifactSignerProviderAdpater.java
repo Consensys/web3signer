@@ -46,7 +46,9 @@ public class SecpArtifactSignerProviderAdpater implements ArtifactSignerProvider
         () -> {
           LOG.debug("Adding eth1 address for eth1 keys");
 
-          signerProvider.availableIdentifiers().forEach(
+          signerProvider
+              .availableIdentifiers()
+              .forEach(
                   (publicKey) -> {
                     signerProvider
                         .getSigner(publicKey)
