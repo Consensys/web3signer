@@ -51,7 +51,7 @@ import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
     named = "AWS_SECRET_ACCESS_KEY",
     matches = ".*",
     disabledReason = "AWS_SECRET_ACCESS_KEY env variable is required")
-class AwsKeyManagerServiceTest {
+class AwsKMSTest {
   private static final String AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
   private static final String AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
 
@@ -79,17 +79,17 @@ class AwsKeyManagerServiceTest {
           .withSessionToken(AWS_SESSION_TOKEN)
           .build();
 
-  private static AwsKeyManagerService awsKeyManagerService;
+  private static AwsKMS awsKMS;
   private static String testKeyId;
 
   @BeforeAll
   static void init() {
-    awsKeyManagerService =
-        new AwsKeyManagerService(
+    awsKMS =
+        new AwsKMS(
             AwsAuthenticationMode.SPECIFIED, AWS_RW_CREDENTIALS, AWS_REGION, ENDPOINT_OVERRIDE);
 
     // create a test key
-    final KmsClient kmsClient = awsKeyManagerService.getKmsClient();
+    final KmsClient kmsClient = awsKMS.getKmsClient();
     final CreateKeyRequest web3SignerTestingKey =
         CreateKeyRequest.builder()
             .keySpec(KeySpec.ECC_SECG_P256_K1)
@@ -103,38 +103,37 @@ class AwsKeyManagerServiceTest {
 
   @AfterAll
   static void cleanup() {
-    if (awsKeyManagerService == null) {
+    if (awsKMS == null) {
       return;
     }
     // delete key
     ScheduleKeyDeletionRequest deletionRequest =
         ScheduleKeyDeletionRequest.builder().keyId(testKeyId).pendingWindowInDays(7).build();
-    awsKeyManagerService.getKmsClient().scheduleKeyDeletion(deletionRequest);
+    awsKMS.getKmsClient().scheduleKeyDeletion(deletionRequest);
 
     // close
-    awsKeyManagerService.close();
+    awsKMS.close();
   }
 
   @Test
   void testGetECPublicKey() {
     // read-only user with GetPublicKey/sign rights
-    try (AwsKeyManagerService awsKeyManagerService =
-        new AwsKeyManagerService(
+    try (AwsKMS awsKMS =
+        new AwsKMS(
             AwsAuthenticationMode.SPECIFIED, AWS_CREDENTIALS, AWS_REGION, ENDPOINT_OVERRIDE)) {
 
-      assertThatCode(() -> awsKeyManagerService.getECPublicKey(testKeyId))
-          .doesNotThrowAnyException();
+      assertThatCode(() -> awsKMS.getECPublicKey(testKeyId)).doesNotThrowAnyException();
     }
   }
 
   @Test
   void testSign() {
     // read-only user with GetPublicKey/sign rights
-    try (AwsKeyManagerService awsKeyManagerService =
-        new AwsKeyManagerService(
+    try (AwsKMS awsKMS =
+        new AwsKMS(
             AwsAuthenticationMode.SPECIFIED, AWS_CREDENTIALS, AWS_REGION, ENDPOINT_OVERRIDE)) {
 
-      awsKeyManagerService.sign(testKeyId, "Hello World".getBytes(StandardCharsets.UTF_8));
+      awsKMS.sign(testKeyId, "Hello World".getBytes(StandardCharsets.UTF_8));
     }
   }
 }

@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
-import tech.pegasys.web3signer.keystorage.awskms.AwsKeyManagerService;
+import tech.pegasys.web3signer.keystorage.awskms.AwsKMS;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
@@ -88,17 +88,17 @@ public class AwsKmsSignerTest {
           .withSessionToken(AWS_SESSION_TOKEN)
           .build();
 
-  private static AwsKeyManagerService awsKeyManagerService;
+  private static AwsKMS awsKMS;
   private static String testKeyId;
 
   @BeforeAll
   static void init() {
-    awsKeyManagerService =
-        new AwsKeyManagerService(
+    awsKMS =
+        new AwsKMS(
             AwsAuthenticationMode.SPECIFIED, AWS_RW_CREDENTIALS, AWS_REGION, ENDPOINT_OVERRIDE);
 
     // create a test key
-    final KmsClient kmsClient = awsKeyManagerService.getKmsClient();
+    final KmsClient kmsClient = awsKMS.getKmsClient();
     final CreateKeyRequest web3SignerTestingKey =
         CreateKeyRequest.builder()
             .keySpec(KeySpec.ECC_SECG_P256_K1)
@@ -112,16 +112,16 @@ public class AwsKmsSignerTest {
 
   @AfterAll
   static void cleanup() {
-    if (awsKeyManagerService == null) {
+    if (awsKMS == null) {
       return;
     }
     // delete key
     ScheduleKeyDeletionRequest deletionRequest =
         ScheduleKeyDeletionRequest.builder().keyId(testKeyId).pendingWindowInDays(7).build();
-    awsKeyManagerService.getKmsClient().scheduleKeyDeletion(deletionRequest);
+    awsKMS.getKmsClient().scheduleKeyDeletion(deletionRequest);
 
     // close
-    awsKeyManagerService.close();
+    awsKMS.close();
   }
 
   @Test

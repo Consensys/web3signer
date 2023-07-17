@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.signing.secp256k1.aws;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import tech.pegasys.web3signer.keystorage.awskms.AwsKeyManagerService;
+import tech.pegasys.web3signer.keystorage.awskms.AwsKMS;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
@@ -36,14 +36,13 @@ public class AwsKMSSignerFactory {
   public Signer createSigner(final AwsKMSMetadata awsKMSMetadata) {
     checkArgument(awsKMSMetadata != null, "awsKMSMetadata must not be null");
     // fetch public key as we require it later on to create recovery key
-    try (AwsKeyManagerService awsKeyManagerService =
-        new AwsKeyManagerService(
+    try (AwsKMS awsKMS =
+        new AwsKMS(
             awsKMSMetadata.getAuthenticationMode(),
             awsKMSMetadata.getAwsCredentials().orElse(null),
             awsKMSMetadata.getRegion(),
             awsKMSMetadata.getEndpointOverride())) {
-      final ECPublicKey ecPublicKey =
-          awsKeyManagerService.getECPublicKey(awsKMSMetadata.getKmsKeyId());
+      final ECPublicKey ecPublicKey = awsKMS.getECPublicKey(awsKMSMetadata.getKmsKeyId());
       LOG.trace("AWS KMS Public Key:" + EthPublicKeyUtils.toHexString(ecPublicKey));
       return new AwsKMSSigner(awsKMSMetadata, ecPublicKey, applySha3Hash);
     }

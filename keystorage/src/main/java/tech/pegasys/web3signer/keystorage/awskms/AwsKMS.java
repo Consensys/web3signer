@@ -48,8 +48,11 @@ import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
 /**
  * Wraps AWS KMS Client and expose public key and sign operations. Since KmsClient is thread safe,
  * same instance of this class can be used to talk to same host/credentials.
+ *
+ * <p>The constructor of this class should be wrap in try/resource block as the close method closes
+ * underlying AWS KmsClient instance.
  */
-public class AwsKeyManagerService implements AutoCloseable {
+public class AwsKMS implements AutoCloseable {
   private final AwsAuthenticationMode authMode;
   private final AwsCredentials awsCredentials;
   private final String region;
@@ -58,7 +61,7 @@ public class AwsKeyManagerService implements AutoCloseable {
 
   private Optional<URI> endpointOverride;
 
-  public AwsKeyManagerService(
+  public AwsKMS(
       final AwsAuthenticationMode authMode,
       final AwsCredentials awsCredentials,
       final String region,
@@ -159,7 +162,7 @@ public class AwsKeyManagerService implements AutoCloseable {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    AwsKeyManagerService that = (AwsKeyManagerService) o;
+    AwsKMS that = (AwsKMS) o;
     return authMode == that.authMode
         && Objects.equals(awsCredentials, that.awsCredentials)
         && Objects.equals(region, that.region)

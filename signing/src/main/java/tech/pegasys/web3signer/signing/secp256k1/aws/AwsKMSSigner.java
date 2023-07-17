@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.aws;
 
-import tech.pegasys.web3signer.keystorage.awskms.AwsKeyManagerService;
+import tech.pegasys.web3signer.keystorage.awskms.AwsKMS;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
@@ -40,14 +40,14 @@ public class AwsKMSSigner implements Signer {
   public Signature sign(final byte[] data) {
     final byte[] dataToSign = applySha3Hash ? Hash.sha3(data) : data;
     final byte[] signature;
-    try (final AwsKeyManagerService awsKeyManagerService =
-        new AwsKeyManagerService(
+    try (final AwsKMS awsKMS =
+        new AwsKMS(
             awsKMSMetadata.getAuthenticationMode(),
             awsKMSMetadata.getAwsCredentials().orElse(null),
             awsKMSMetadata.getRegion(),
             awsKMSMetadata.getEndpointOverride())) {
 
-      signature = awsKeyManagerService.sign(awsKMSMetadata.getKmsKeyId(), dataToSign);
+      signature = awsKMS.sign(awsKMSMetadata.getKmsKeyId(), dataToSign);
     }
 
     return Eth1SignatureUtil.deriveSignatureFromDerEncoded(dataToSign, ecPublicKey, signature);
