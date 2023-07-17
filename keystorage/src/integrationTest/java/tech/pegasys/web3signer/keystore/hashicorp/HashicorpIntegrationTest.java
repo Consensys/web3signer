@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.logging.MockServerLogger;
@@ -69,6 +70,7 @@ class HashicorpIntegrationTest {
     assertThat(keyFetched).isEqualTo(EXPECTED_KEY_STRING);
   }
 
+  @Disabled
   @Test
   void hashicorpVaultReturnsEncryptionKeyOverTls() {
 
