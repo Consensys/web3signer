@@ -46,7 +46,6 @@ import io.restassured.response.Response;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -155,7 +154,6 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     }
   }
 
-  @Disabled(value = "Temporary Disabled")
   @Test
   @EnabledIfEnvironmentVariables({
     @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
@@ -178,7 +176,6 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     signAndVerifySignature(ArtifactType.BLOCK);
   }
 
-  @Disabled(value = "Temporary Disabled")
   @Test
   @EnabledIfEnvironmentVariables({
     @EnabledIfEnvironmentVariable(

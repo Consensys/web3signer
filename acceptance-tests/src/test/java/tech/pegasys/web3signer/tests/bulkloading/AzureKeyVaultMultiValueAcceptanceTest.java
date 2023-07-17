@@ -45,11 +45,9 @@ import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
-@Disabled(value = "Temporary Disabled")
 @EnabledIfEnvironmentVariable(
     named = "AZURE_CLIENT_ID",
     matches = ".*",
