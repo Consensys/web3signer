@@ -39,7 +39,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -48,7 +47,6 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 NOTE: This AT attempts to create and load large number of keys from AWS Secrets Manager which may take several minutes,
 hence it should only be manually run in dev/test environment instead of automatically via CI
 */
-@Disabled(value = "Temporary Disabled")
 @EnabledIfEnvironmentVariable(
     named = "AWS_PERF_AT_ENABLED",
     matches = "true",

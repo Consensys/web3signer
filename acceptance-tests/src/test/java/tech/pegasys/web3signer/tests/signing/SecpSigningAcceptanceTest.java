@@ -34,7 +34,6 @@ import java.util.Optional;
 import com.google.common.io.Resources;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -93,7 +92,6 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     }
   }
 
-  @Disabled(value = "Temporary Disabled")
   @Test
   @EnabledIfEnvironmentVariables({
     @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),
