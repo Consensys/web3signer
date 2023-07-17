@@ -219,7 +219,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     final String keyVaultName = System.getenv("AZURE_KEY_VAULT_NAME");
     final String tenantId = System.getenv("AZURE_TENANT_ID");
     final String publicKeyHexString =
-        "964f00253459f1f43c7a7720a0db09a328d4ee6f18838015023135d7fc921f1448de34d05de7a1f72a7b5c9f6c76931d7ab33d0f0846ccce5452063bd20f5809";
+        "0xa95663509e608da3c2af5a48eb4315321f8430cbed5518a44590cc9d367f01dc72ebbc583fc7d94f9fdc20eb6e162c9f8cb35be8a91a3b1d32a63ecc10be4e08";
 
     METADATA_FILE_HELPERS.createAzureKeyYamlFileAt(
         testDirectory.resolve(publicKeyHexString + ".yaml"),
@@ -229,7 +229,7 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
         tenantId);
     initAndStartSigner("eth1");
     final Response response = callApiPublicKeysWithoutOpenApiClientSideFilter(SECP256K1);
-    validateApiResponse(response, containsInAnyOrder("0x" + publicKeyHexString));
+    validateApiResponse(response, containsInAnyOrder(publicKeyHexString));
   }
 
   @Test
