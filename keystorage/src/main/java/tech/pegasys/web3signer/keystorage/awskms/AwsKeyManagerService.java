@@ -71,11 +71,7 @@ public class AwsKeyManagerService implements AutoCloseable {
     initKmsClient();
   }
 
-  void initKmsClient() {
-    if (kmsClient != null) {
-      return;
-    }
-
+  private void initKmsClient() {
     final KmsClientBuilder kmsClientBuilder = KmsClient.builder();
     endpointOverride.ifPresent(kmsClientBuilder::endpointOverride);
     kmsClient =
@@ -109,6 +105,7 @@ public class AwsKeyManagerService implements AutoCloseable {
   }
 
   public ECPublicKey getECPublicKey(final String kmsKeyId) {
+    // kmsClient can be null/closed if close method has been called.
     checkArgument(kmsClient != null, "KmsClient is not initialized");
 
     // Question ... do we need to set grantTokens?
@@ -131,6 +128,9 @@ public class AwsKeyManagerService implements AutoCloseable {
   }
 
   public byte[] sign(final String kmsKeyId, final byte[] data) {
+    // kmsClient can be null/closed if close method has been called.
+    checkArgument(kmsClient != null, "KmsClient is not initialized");
+
     final SignRequest signRequest =
         SignRequest.builder()
             .keyId(kmsKeyId)
@@ -151,6 +151,7 @@ public class AwsKeyManagerService implements AutoCloseable {
   public void close() {
     if (kmsClient != null) {
       kmsClient.close();
+      kmsClient = null;
     }
   }
 
