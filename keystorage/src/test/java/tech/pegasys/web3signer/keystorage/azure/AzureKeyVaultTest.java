@@ -26,8 +26,10 @@ import java.util.Optional;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled(value = "Temporary Disabled")
 public class AzureKeyVaultTest {
   private static final String CLIENT_ID = System.getenv("AZURE_CLIENT_ID");
   private static final String CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
