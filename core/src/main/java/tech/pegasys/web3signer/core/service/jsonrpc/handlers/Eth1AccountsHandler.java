@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers;
 
-import tech.pegasys.web3signer.core.Eth1AddressSignerIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError;
@@ -44,11 +43,7 @@ public class Eth1AccountsHandler implements ResultProvider<List<String>> {
       throw new JsonRpcException(JsonRpcError.INVALID_PARAMS);
     }
 
-    return publicKeySupplier.get().stream()
-        .map(Eth1AddressSignerIdentifier::fromPublicKey)
-        .map(signerIdentifier -> "0x" + signerIdentifier.toStringIdentifier())
-        .sorted()
-        .collect(Collectors.toList());
+    return publicKeySupplier.get().stream().sorted().collect(Collectors.toList());
   }
 
   private boolean isPopulated(final Object params) {

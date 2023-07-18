@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.core.jsonrpcproxy;
 
 import static java.util.Collections.singletonList;
 
-import tech.pegasys.web3signer.core.Eth1AddressSignerIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcSuccessResponse;
 
 import java.util.Map.Entry;
@@ -35,15 +34,11 @@ class EthAccountsIntegrationTest extends IntegrationTestBase {
     final Iterable<Entry<String, String>> expectedHeaders =
         singletonList(ImmutablePair.of("Content", HttpHeaderValues.APPLICATION_JSON.toString()));
 
-    // needs the hex prefix
-    final String expectedAccount =
-        "0x" + Eth1AddressSignerIdentifier.fromPublicKey(PUBLIC_KEY_HEX_STRING);
-
     final JsonRpcSuccessResponse responseBody =
-        new JsonRpcSuccessResponse(requestBody.getId(), singletonList(expectedAccount));
+        new JsonRpcSuccessResponse(requestBody.getId(), singletonList(unlockedAccount));
 
     sendPostRequestAndVerifyResponse(
-        request.web3signer(Json.encode(requestBody)),
+        request.web3Signer(Json.encode(requestBody)),
         response.web3Signer(expectedHeaders, Json.encode(responseBody)));
   }
 }
