@@ -46,9 +46,7 @@ public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider
         () -> {
           LOG.debug("Adding eth1 address for eth1 keys");
 
-          signerProvider
-              .availableIdentifiers()
-              .forEach((publicKey) -> mapPublicKeyToEth1Address(publicKey));
+          signerProvider.availableIdentifiers().forEach(this::mapPublicKeyToEth1Address);
 
           return null;
         });
