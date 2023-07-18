@@ -53,8 +53,8 @@ public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider
   }
 
   @Override
-  public Optional<ArtifactSigner> getSigner(String address) {
-    return Optional.ofNullable(signers.get(address));
+  public Optional<ArtifactSigner> getSigner(String eth1Address) {
+    return Optional.ofNullable(signers.get(eth1Address));
   }
 
   @Override
@@ -68,7 +68,7 @@ public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider
   }
 
   @Override
-  public Future<Void> removeSigner(final String address) {
+  public Future<Void> removeSigner(final String eth1Address) {
     throw new NotImplementedException();
   }
 
