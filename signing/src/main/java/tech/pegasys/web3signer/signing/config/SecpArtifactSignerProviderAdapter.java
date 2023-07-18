@@ -48,15 +48,7 @@ public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider
 
           signerProvider
               .availableIdentifiers()
-              .forEach(
-                  (publicKey) -> {
-                    signerProvider
-                        .getSigner(publicKey)
-                        .ifPresent(
-                            signer ->
-                                signers.putIfAbsent(
-                                    normaliseIdentifier(getAddress(publicKey)), signer));
-                  });
+              .forEach((publicKey) -> mapPublicKeyToEth1Address(publicKey));
 
           return null;
         });
@@ -85,5 +77,12 @@ public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider
   @Override
   public void close() {
     executorService.shutdownNow();
+  }
+
+  private void mapPublicKeyToEth1Address(String publicKey) {
+    signerProvider
+        .getSigner(publicKey)
+        .ifPresent(
+            signer -> signers.putIfAbsent(normaliseIdentifier(getAddress(publicKey)), signer));
   }
 }
