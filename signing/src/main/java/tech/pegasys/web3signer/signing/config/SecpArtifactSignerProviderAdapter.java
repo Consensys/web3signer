@@ -30,13 +30,13 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class SecpArtifactSignerProviderAdpater implements ArtifactSignerProvider {
+public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
   private final ArtifactSignerProvider signerProvider;
 
-  public SecpArtifactSignerProviderAdpater(final ArtifactSignerProvider signerProvider) {
+  public SecpArtifactSignerProviderAdapter(final ArtifactSignerProvider signerProvider) {
     this.signerProvider = signerProvider;
   }
 

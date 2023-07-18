@@ -78,7 +78,7 @@ public class SendTransactionHandler implements JsonRpcRequestHandler {
       return;
     }
 
-    Optional<ArtifactSigner> signer =
+    final Optional<ArtifactSigner> signer =
         signerProvider.getSigner(normaliseIdentifier(transaction.sender()));
 
     if (signer.isEmpty()) {

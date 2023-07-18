@@ -40,7 +40,7 @@ import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdpater;
+import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdapter;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
@@ -96,7 +96,7 @@ public class Eth1Runner extends Runner {
         .failureHandler(errorHandler);
 
     final ArtifactSignerProvider secpArtifactSignerProvider =
-        new SecpArtifactSignerProviderAdpater(signerProvider);
+        new SecpArtifactSignerProviderAdapter(signerProvider);
 
     loadSignerProvider(secpArtifactSignerProvider);
 
