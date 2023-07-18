@@ -30,13 +30,13 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class SecpArtifactSignerProviderAdpater implements ArtifactSignerProvider {
+public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
   private final ArtifactSignerProvider signerProvider;
 
-  public SecpArtifactSignerProviderAdpater(final ArtifactSignerProvider signerProvider) {
+  public SecpArtifactSignerProviderAdapter(final ArtifactSignerProvider signerProvider) {
     this.signerProvider = signerProvider;
   }
 
@@ -46,25 +46,15 @@ public class SecpArtifactSignerProviderAdpater implements ArtifactSignerProvider
         () -> {
           LOG.debug("Adding eth1 address for eth1 keys");
 
-          signerProvider
-              .availableIdentifiers()
-              .forEach(
-                  (publicKey) -> {
-                    signerProvider
-                        .getSigner(publicKey)
-                        .ifPresent(
-                            signer ->
-                                signers.putIfAbsent(
-                                    normaliseIdentifier(getAddress(publicKey)), signer));
-                  });
+          signerProvider.availableIdentifiers().forEach(this::mapPublicKeyToEth1Address);
 
           return null;
         });
   }
 
   @Override
-  public Optional<ArtifactSigner> getSigner(String identifier) {
-    return Optional.ofNullable(signers.get(identifier));
+  public Optional<ArtifactSigner> getSigner(String eth1Address) {
+    return Optional.ofNullable(signers.get(eth1Address));
   }
 
   @Override
@@ -78,12 +68,19 @@ public class SecpArtifactSignerProviderAdpater implements ArtifactSignerProvider
   }
 
   @Override
-  public Future<Void> removeSigner(final String identifier) {
+  public Future<Void> removeSigner(final String eth1Address) {
     throw new NotImplementedException();
   }
 
   @Override
   public void close() {
     executorService.shutdownNow();
+  }
+
+  private void mapPublicKeyToEth1Address(String publicKey) {
+    signerProvider
+        .getSigner(publicKey)
+        .ifPresent(
+            signer -> signers.putIfAbsent(normaliseIdentifier(getAddress(publicKey)), signer));
   }
 }

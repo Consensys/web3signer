@@ -34,7 +34,6 @@ import java.util.Optional;
 import com.google.common.io.Resources;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
@@ -53,7 +52,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
   public static final String PUBLIC_KEY_HEX_STRING =
       "09b02f8a5fddd222ade4ea4528faefc399623af3f736be3c44f03e2df22fb792f3931a4d9573d333ca74343305762a753388c3422a86d98b713fc91c1ea04842";
   public static final String AZURE_PUBLIC_KEY_HEX_STRING =
-      "964f00253459f1f43c7a7720a0db09a328d4ee6f18838015023135d7fc921f1448de34d05de7a1f72a7b5c9f6c76931d7ab33d0f0846ccce5452063bd20f5809";
+      "a95663509e608da3c2af5a48eb4315321f8430cbed5518a44590cc9d367f01dc72ebbc583fc7d94f9fdc20eb6e162c9f8cb35be8a91a3b1d32a63ecc10be4e08";
 
   private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
 
@@ -93,7 +92,6 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     }
   }
 
-  @Disabled(value = "Temporary Disabled")
   @Test
   @EnabledIfEnvironmentVariables({
     @EnabledIfEnvironmentVariable(named = "AZURE_CLIENT_ID", matches = ".*"),

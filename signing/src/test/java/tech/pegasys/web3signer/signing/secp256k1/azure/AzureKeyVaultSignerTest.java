@@ -27,14 +27,12 @@ import java.security.SignatureException;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.utils.Numeric;
 
-@Disabled(value = "Temporary Disabled")
 public class AzureKeyVaultSignerTest {
   private static final String clientId = System.getenv("AZURE_CLIENT_ID");
   private static final String clientSecret = System.getenv("AZURE_CLIENT_SECRET");
