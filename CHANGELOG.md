@@ -5,7 +5,8 @@
 - Azure bulk mode support for loading multiline (`\n` delimited, up to 200) keys per secret.
 - Hashicorp connection properties can now override http protocol to HTTP/1.1 from the default of HTTP/2. [#817](https://github.com/ConsenSys/web3signer/pull/817)
 - Add --key-config-path as preferred alias to --key-store-path [#826](https://github.com/Consensys/web3signer/pull/826)
-- Add eth_SignTransaction RPC method under the eth1 subcommand [#822](https://github.com/ConsenSys/web3signer/pull/822)
+- Add eth_signTransaction RPC method under the eth1 subcommand [#822](https://github.com/ConsenSys/web3signer/pull/822)
+- Add eth_sendTransaction RPC method under the eth1 subcommand [#835](https://github.com/Consensys/web3signer/pull/835)
 - Add EIP-1559 support for eth1 public transactions for eth_sendTransaction and eth_signTransaction [#836](https://github.com/Consensys/web3signer/pull/836)
 
 ### Bugs fixed
