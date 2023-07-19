@@ -34,6 +34,8 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.RequestMapper;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignTransactionResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.InternalResponseHandler;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.SendTransactionHandler;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
@@ -44,6 +46,7 @@ import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.bulkloading.SecpAzureBulkLoader;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdapter;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
@@ -77,7 +80,6 @@ public class Eth1Runner extends Runner {
   public static final String SIGN_PATH = "/api/v1/eth1/sign/:identifier";
   private static final Logger LOG = LogManager.getLogger();
   private final Eth1Config eth1Config;
-
   private final HttpResponseFactory responseFactory = new HttpResponseFactory();
 
   public Eth1Runner(final BaseConfig baseConfig, final Eth1Config eth1Config) {
@@ -105,7 +107,14 @@ public class Eth1Runner extends Runner {
                 false))
         .failureHandler(errorHandler);
 
-    addReloadHandler(router, signerProvider, context.getErrorHandler());
+    final ArtifactSignerProvider secpArtifactSignerProvider =
+        new SecpArtifactSignerProviderAdapter(signerProvider);
+
+    loadSignerProvider(secpArtifactSignerProvider);
+
+    // The order of the elements in the list DO matter
+    addReloadHandler(
+        router, List.of(signerProvider, secpArtifactSignerProvider), context.getErrorHandler());
 
     final DownstreamPathCalculator downstreamPathCalculator =
         new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
@@ -128,7 +137,12 @@ public class Eth1Runner extends Runner {
         new PassThroughHandler(transmitterFactory, jsonDecoder);
 
     final RequestMapper requestMapper =
-        createRequestMapper(transmitterFactory, signerProvider, jsonDecoder, secpSigner);
+        createRequestMapper(
+            transmitterFactory,
+            secpArtifactSignerProvider,
+            jsonDecoder,
+            secpSigner,
+            eth1Config.getChainId().id());
 
     router
         .route(HttpMethod.POST, ROOT_PATH)
@@ -153,6 +167,7 @@ public class Eth1Runner extends Runner {
           try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider()) {
+
             final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
                 new Secp256k1ArtifactSignerFactory(
                     hashicorpConnectionFactory,
@@ -211,9 +226,16 @@ public class Eth1Runner extends Runner {
       final VertxRequestTransmitterFactory transmitterFactory,
       final ArtifactSignerProvider signerProvider,
       final JsonDecoder jsonDecoder,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner) {
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
+      final long chainId) {
     final PassThroughHandler defaultHandler =
         new PassThroughHandler(transmitterFactory, jsonDecoder);
+
+    final TransactionFactory transactionFactory =
+        new TransactionFactory(jsonDecoder, transmitterFactory);
+
+    final SendTransactionHandler sendTransactionHandler =
+        new SendTransactionHandler(chainId, signerProvider, transactionFactory, transmitterFactory);
 
     final RequestMapper requestMapper = new RequestMapper(defaultHandler);
     requestMapper.addHandler(
@@ -227,10 +249,19 @@ public class Eth1Runner extends Runner {
         "eth_signTransaction",
         new InternalResponseHandler<>(
             responseFactory,
-            new EthSignTransactionResultProvider(
-                eth1Config.getChainId().id(), signerProvider, jsonDecoder)));
+            new EthSignTransactionResultProvider(chainId, signerProvider, jsonDecoder)));
+    requestMapper.addHandler("eth_sendTransaction", sendTransactionHandler);
+    requestMapper.addHandler("eea_sendTransaction", sendTransactionHandler);
 
     return requestMapper;
+  }
+
+  private void loadSignerProvider(final ArtifactSignerProvider signerProvider) {
+    try {
+      signerProvider.load().get(); // wait for signers to get loaded ...
+    } catch (final Exception e) {
+      throw new InitializationException(e);
+    }
   }
 
   private void registerSignerLoadingHealthCheck(

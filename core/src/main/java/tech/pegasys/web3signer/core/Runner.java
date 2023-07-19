@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.ReloadHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.web3signer.core.util.FileUtil;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
@@ -34,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.StringJoiner;
@@ -168,8 +170,6 @@ public abstract class Runner implements Runnable {
 
       persistPortInformation(
           httpServer.actualPort(), metricsService.flatMap(MetricsService::getPort));
-    } catch (final InitializationException e) {
-      throw e;
     } catch (final Throwable e) {
       if (artifactSignerProvider != null) {
         artifactSignerProvider.close();
@@ -177,6 +177,7 @@ public abstract class Runner implements Runnable {
       vertx.close();
       metricsService.ifPresent(MetricsService::stop);
       LOG.error("Failed to initialise application", e);
+      throw new InitializationException(e);
     }
   }
 
@@ -237,16 +238,12 @@ public abstract class Runner implements Runnable {
 
   protected void addReloadHandler(
       final Router router,
-      final ArtifactSignerProvider artifactSignerProvider,
+      final List<ArtifactSignerProvider> orderedArtifactSignerProviders,
       final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.POST, RELOAD_PATH)
         .produces(JSON)
-        .handler(
-            routingContext -> {
-              artifactSignerProvider.load();
-              routingContext.response().setStatusCode(200).end();
-            })
+        .handler(new ReloadHandler(orderedArtifactSignerProviders))
         .failureHandler(errorHandler);
   }
 

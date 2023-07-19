@@ -32,18 +32,15 @@ import java.util.stream.Collectors;
 
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.exception.ResourceNotFoundException;
-import com.azure.core.util.polling.SyncPoller;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
-import com.azure.security.keyvault.secrets.models.DeletedSecret;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -72,7 +69,7 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
   private static final String VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
 
   private static final Map<String, String> TAG_FILTER = Map.of("ENV", "MULTILINE-TEST");
-  private static final String SECRET_NAME = "TEST-MULTILINE-KEY";
+  private static final String SECRET_NAME = "ACCTEST-MULTILINE-KEY";
 
   private static List<BLSKeyPair> multiValueKeys;
 
@@ -80,15 +77,6 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
   static void setup() {
     multiValueKeys = findAndCreateAzureMultiValueKeysIfNotExist();
     assertThat(multiValueKeys).hasSize(200);
-  }
-
-  @AfterAll
-  static void cleanupAzureResources() {
-    final SecretClient azureSecretClient = buildAzureSecretClient();
-    final SyncPoller<DeletedSecret, Void> deletedSecretVoidSyncPoller =
-        azureSecretClient.beginDeleteSecret(SECRET_NAME);
-    deletedSecretVoidSyncPoller.poll();
-    deletedSecretVoidSyncPoller.waitForCompletion();
   }
 
   @Test

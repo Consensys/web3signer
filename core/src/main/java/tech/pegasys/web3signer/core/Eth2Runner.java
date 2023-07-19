@@ -169,7 +169,7 @@ public class Eth2Runner extends Runner {
                 false))
         .failureHandler(errorHandler);
 
-    addReloadHandler(router, blsSignerProvider, errorHandler);
+    addReloadHandler(router, List.of(blsSignerProvider), errorHandler);
 
     if (isKeyManagerApiEnabled) {
       router
