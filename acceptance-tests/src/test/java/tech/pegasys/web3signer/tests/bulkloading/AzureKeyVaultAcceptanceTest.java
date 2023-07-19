@@ -23,7 +23,6 @@ import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -43,15 +42,14 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
   private static final String CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
   private static final String TENANT_ID = System.getenv("AZURE_TENANT_ID");
   private static final String VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
-  private static final String[] BLS_EXPECTED_KEYS =
-      List.of(
-              "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf")
-          .toArray(new String[0]);
-
-  private static final String[] SECP_EXPECTED_KEYS =
-      List.of(
-              "0xa95663509e608da3c2af5a48eb4315321f8430cbed5518a44590cc9d367f01dc72ebbc583fc7d94f9fdc20eb6e162c9f8cb35be8a91a3b1d32a63ecc10be4e08")
-          .toArray(new String[0]);
+  private static final String BLS_KEY =
+      "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
+  private static final String BLS_TAGGED_KEY =
+      "0x989d34725a2bfc3f15105f3f5fc8741f436c25ee1ee4f948e425d6bcb8c56bce6e06c269635b7e985a7ffa639e2409bf";
+  private static final String SECP_KEY =
+      "0xa95663509e608da3c2af5a48eb4315321f8430cbed5518a44590cc9d367f01dc72ebbc583fc7d94f9fdc20eb6e162c9f8cb35be8a91a3b1d32a63ecc10be4e08";
+  private static final String SECP_TAGGED_KEY =
+      "0x234053dbe014ebe573e5e8f6eab5e0417bf705466009f7c15b8d23593abd1bda426593d92b32efb240afe6efa46d5679fad0dc427e0aa0fc61c2464ce93c7c5e";
 
   @BeforeAll
   public static void setup() {
@@ -79,7 +77,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("", hasItems(expectedKeys(keyType)));
+        .body("", hasItems(expectedKey(keyType, false)));
 
     // Since our Azure vault contains some invalid keys, the healthcheck would return 503.
     final Response healthcheckResponse = signer.healthcheck();
@@ -115,7 +113,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("", hasItems(expectedKeys(keyType)));
+        .body("", hasItems(expectedKey(keyType, true)));
 
     // the tag filter will return only valid keys. The healthcheck should be UP
     final Response healthcheckResponse = signer.healthcheck();
@@ -199,10 +197,12 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("", hasItems(expectedKeys(keyType)));
+        .body("", hasItems(expectedKey(keyType, false)));
   }
 
-  private String[] expectedKeys(final KeyType keyType) {
-    return keyType == KeyType.BLS ? BLS_EXPECTED_KEYS : SECP_EXPECTED_KEYS;
+  private String expectedKey(final KeyType keyType, final boolean tagged) {
+    return keyType == KeyType.BLS
+        ? tagged ? BLS_TAGGED_KEY : BLS_KEY
+        : tagged ? SECP_TAGGED_KEY : SECP_KEY;
   }
 }
