@@ -32,9 +32,13 @@ public class TransactionFactory {
 
   private final VertxRequestTransmitterFactory transmitterFactory;
   private final JsonDecoder decoder;
+  private final long chainId;
 
   public TransactionFactory(
-      final JsonDecoder decoder, final VertxRequestTransmitterFactory transmitterFactory) {
+      final long chainId,
+      final JsonDecoder decoder,
+      final VertxRequestTransmitterFactory transmitterFactory) {
+    this.chainId = chainId;
     this.transmitterFactory = transmitterFactory;
     this.decoder = decoder;
   }
@@ -46,27 +50,31 @@ public class TransactionFactory {
 
     switch (method) {
       case "eth_sendtransaction":
-        return createEthTransaction(request, nonceRequestTransmitter);
+        return createEthTransaction(chainId, request, nonceRequestTransmitter);
       case "eea_sendtransaction":
-        return createEeaTransaction(request, nonceRequestTransmitter);
+        return createEeaTransaction(chainId, request, nonceRequestTransmitter);
       default:
         throw new IllegalStateException("Unknown send transaction method " + method);
     }
   }
 
   private Transaction createEthTransaction(
-      final JsonRpcRequest request, final VertxNonceRequestTransmitter nonceRequestTransmitter) {
+      final long chainId,
+      final JsonRpcRequest request,
+      final VertxNonceRequestTransmitter nonceRequestTransmitter) {
     final EthSendTransactionJsonParameters params =
         fromRpcRequestToJsonParam(EthSendTransactionJsonParameters.class, request);
 
     final NonceProvider ethNonceProvider =
         new EthNonceProvider(params.sender(), nonceRequestTransmitter);
 
-    return new EthTransaction(params, ethNonceProvider, request.getId());
+    return new EthTransaction(chainId, params, ethNonceProvider, request.getId());
   }
 
   private Transaction createEeaTransaction(
-      final JsonRpcRequest request, final VertxNonceRequestTransmitter requestTransmitter) {
+      final long chainId,
+      final JsonRpcRequest request,
+      final VertxNonceRequestTransmitter requestTransmitter) {
 
     final EeaSendTransactionJsonParameters params =
         fromRpcRequestToJsonParam(EeaSendTransactionJsonParameters.class, request);
@@ -83,13 +91,13 @@ public class TransactionFactory {
       final NonceProvider nonceProvider =
           new BesuPrivateNonceProvider(
               params.sender(), params.privacyGroupId().get(), requestTransmitter);
-      return BesuPrivateTransaction.from(params, nonceProvider, request.getId());
+      return BesuPrivateTransaction.from(chainId, params, nonceProvider, request.getId());
     }
 
     final NonceProvider nonceProvider =
         new EeaPrivateNonceProvider(
             params.sender(), params.privateFrom(), params.privateFor().get(), requestTransmitter);
-    return EeaPrivateTransaction.from(params, nonceProvider, request.getId());
+    return EeaPrivateTransaction.from(chainId, params, nonceProvider, request.getId());
   }
 
   public <T> T fromRpcRequestToJsonParam(final Class<T> type, final JsonRpcRequest request) {

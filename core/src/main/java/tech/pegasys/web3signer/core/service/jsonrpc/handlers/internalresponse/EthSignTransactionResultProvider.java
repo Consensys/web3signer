@@ -58,7 +58,8 @@ public class EthSignTransactionResultProvider implements ResultProvider<String> 
     try {
       ethSendTransactionJsonParameters =
           fromRpcRequestToJsonParam(EthSendTransactionJsonParameters.class, request);
-      transaction = new EthTransaction(ethSendTransactionJsonParameters, null, request.getId());
+      transaction =
+          new EthTransaction(chainId, ethSendTransactionJsonParameters, null, request.getId());
 
     } catch (final NumberFormatException e) {
       LOG.debug("Parsing values failed for request: {}", request.getParams(), e);

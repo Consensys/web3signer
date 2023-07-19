@@ -31,7 +31,7 @@ public class EthSendTransactionJsonParametersTest {
   @BeforeEach
   public void setup() {
     // NOTE: the factory has been configured as per its use in the application.
-    factory = new TransactionFactory(Eth1Runner.createJsonDecoder(), null);
+    factory = new TransactionFactory(1337L, Eth1Runner.createJsonDecoder(), null);
   }
 
   private Optional<BigInteger> getStringAsOptionalBigInteger(
@@ -54,6 +54,25 @@ public class EthSendTransactionJsonParametersTest {
     assertThat(txnParams.nonce()).isEqualTo(getStringAsOptionalBigInteger(parameters, "nonce"));
     assertThat(txnParams.receiver()).isEqualTo(Optional.of(parameters.getString("to")));
     assertThat(txnParams.value()).isEqualTo(getStringAsOptionalBigInteger(parameters, "value"));
+  }
+
+  @Test
+  public void eip1559TransactionStoredInJsonArrayCanBeDecoded() {
+    final JsonObject parameters = validEip1559EthTransactionParameters();
+
+    final JsonRpcRequest request = wrapParametersInRequest(parameters);
+    final EthSendTransactionJsonParameters txnParams =
+        factory.fromRpcRequestToJsonParam(EthSendTransactionJsonParameters.class, request);
+
+    assertThat(txnParams.gas()).isEqualTo(getStringAsOptionalBigInteger(parameters, "gas"));
+    assertThat(txnParams.gasPrice()).isEmpty();
+    assertThat(txnParams.nonce()).isEqualTo(getStringAsOptionalBigInteger(parameters, "nonce"));
+    assertThat(txnParams.receiver()).isEqualTo(Optional.of(parameters.getString("to")));
+    assertThat(txnParams.value()).isEqualTo(getStringAsOptionalBigInteger(parameters, "value"));
+    assertThat(txnParams.maxPriorityFeePerGas())
+        .isEqualTo(getStringAsOptionalBigInteger(parameters, "maxPriorityFeePerGas"));
+    assertThat(txnParams.maxFeePerGas())
+        .isEqualTo(getStringAsOptionalBigInteger(parameters, "maxFeePerGas"));
   }
 
   @Test
@@ -107,6 +126,15 @@ public class EthSendTransactionJsonParametersTest {
     parameters.put(
         "data",
         "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675");
+
+    return parameters;
+  }
+
+  private JsonObject validEip1559EthTransactionParameters() {
+    final JsonObject parameters = validEthTransactionParameters();
+    parameters.put("maxFeePerGas", "0x9184e72a000");
+    parameters.put("maxPriorityFeePerGas", "0x9184e72a000");
+    parameters.put("gasPrice", null);
 
     return parameters;
   }
