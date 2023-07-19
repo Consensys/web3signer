@@ -46,7 +46,7 @@ public class TransactionSerializer {
   }
 
   private byte[] serializeFrontier(final Transaction transaction) {
-    SignatureData preSigningSignatureData =
+    final SignatureData preSigningSignatureData =
         new SignatureData(longToBytes(chainId), new byte[] {}, new byte[] {});
     byte[] bytesToSign = transaction.rlpEncode(preSigningSignatureData);
 
