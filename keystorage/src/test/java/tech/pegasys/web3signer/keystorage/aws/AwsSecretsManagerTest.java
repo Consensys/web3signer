@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -49,7 +48,6 @@ import software.amazon.awssdk.services.secretsmanager.model.TagResourceRequest;
 import software.amazon.awssdk.services.secretsmanager.model.UntagResourceRequest;
 import software.amazon.awssdk.services.secretsmanager.model.UpdateSecretRequest;
 
-@Disabled(value = "Temporary Disabled")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledIfEnvironmentVariable(
     named = "RW_AWS_ACCESS_KEY_ID",

@@ -12,63 +12,76 @@
  */
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing;
 
-import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
+import static org.web3j.utils.Numeric.toHexString;
+import static tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction.longToBytes;
 
-import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
-import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.nio.ByteBuffer;
+
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.crypto.TransactionEncoder;
-import org.web3j.utils.Numeric;
+import org.web3j.crypto.transaction.type.TransactionType;
 
 public class TransactionSerializer {
-  private static final Logger LOG = LogManager.getLogger();
 
-  protected final ArtifactSignerProvider signer;
+  protected final ArtifactSigner signer;
   protected final long chainId;
 
-  protected final String identifier;
-
-  public TransactionSerializer(
-      final ArtifactSignerProvider signer, final long chainId, final String identifier) {
+  public TransactionSerializer(final ArtifactSigner signer, final long chainId) {
     this.signer = signer;
     this.chainId = chainId;
-    this.identifier = identifier;
   }
 
   public String serialize(final Transaction transaction) {
-    final byte[] bytesToSign = transaction.rlpEncode(chainId);
+    if (transaction.isEip1559()) {
+      return toHexString(serializeEip1559(transaction));
+    } else {
+      return toHexString(serializeFrontier(transaction));
+    }
+  }
 
+  private byte[] serializeFrontier(final Transaction transaction) {
+    final SignatureData preSigningSignatureData =
+        new SignatureData(longToBytes(chainId), new byte[] {}, new byte[] {});
+    byte[] bytesToSign = transaction.rlpEncode(preSigningSignatureData);
+
+    SignatureData signatureData = sign(bytesToSign);
+
+    signatureData = TransactionEncoder.createEip155SignatureData(signatureData, chainId);
+    return transaction.rlpEncode(signatureData);
+  }
+
+  private byte[] serializeEip1559(final Transaction transaction) {
+    byte[] bytesToSign = transaction.rlpEncode(null);
+    bytesToSign = prependEip1559TransactionType(bytesToSign);
+
+    final SignatureData signatureData = sign(bytesToSign);
+
+    byte[] serializedBytes = transaction.rlpEncode(signatureData);
+    return prependEip1559TransactionType(serializedBytes);
+  }
+
+  private static byte[] prependEip1559TransactionType(byte[] bytesToSign) {
+    return ByteBuffer.allocate(bytesToSign.length + 1)
+        .put(TransactionType.EIP1559.getRlpType())
+        .put(bytesToSign)
+        .array();
+  }
+
+  private SignatureData sign(final byte[] bytesToSign) {
     final SecpArtifactSignature artifactSignature =
-        signer
-            .getSigner(identifier)
-            .map(
-                artifactSigner ->
-                    (SecpArtifactSignature) artifactSigner.sign(Bytes.of(bytesToSign)))
-            .orElseThrow(
-                () -> {
-                  LOG.debug("From address ({}) does not match any available account", identifier);
-                  throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
-                });
+        (SecpArtifactSignature) signer.sign(Bytes.of(bytesToSign));
 
     final Signature signature = artifactSignature.getSignatureData();
 
-    final SignatureData web3jSignature =
-        new SignatureData(
-            signature.getV().toByteArray(),
-            signature.getR().toByteArray(),
-            signature.getS().toByteArray());
-
-    final SignatureData eip155Signature =
-        TransactionEncoder.createEip155SignatureData(web3jSignature, chainId);
-
-    final byte[] serializedBytes = transaction.rlpEncode(eip155Signature);
-    return Numeric.toHexString(serializedBytes);
+    return new SignatureData(
+        signature.getV().toByteArray(),
+        signature.getR().toByteArray(),
+        signature.getS().toByteArray());
   }
 }

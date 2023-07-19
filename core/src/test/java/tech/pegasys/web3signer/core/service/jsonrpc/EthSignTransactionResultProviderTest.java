@@ -109,6 +109,10 @@ public class EthSignTransactionResultProviderTest {
 
   @Test
   public void signatureHasTheExpectedFormat() {
+    final Credentials cs =
+        Credentials.create("0x1618fc3e47aec7e70451256e033b9edb67f4c469258d8e2fbb105552f141ae41");
+    final ECPublicKey key = EthPublicKeyUtils.createPublicKey(cs.getEcKeyPair().getPublicKey());
+    final String addr = Keys.getAddress(EthPublicKeyUtils.toHexString(key));
 
     final BigInteger v = BigInteger.ONE;
     final BigInteger r = BigInteger.TWO;
@@ -124,7 +128,9 @@ public class EthSignTransactionResultProviderTest {
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_signTransaction");
     final int id = 1;
     request.setId(new JsonRpcRequestId(id));
-    request.setParams(List.of(getTxParameters()));
+    final JsonObject params = getTxParameters();
+    params.put("from", addr);
+    request.setParams(params);
 
     final Object result = resultProvider.createResponseResult(request);
     assertThat(result).isInstanceOf(String.class);
@@ -151,7 +157,20 @@ public class EthSignTransactionResultProviderTest {
   }
 
   @Test
-  public void returnsExpectedSignature() {
+  public void returnsExpectedSignatureForFrontierTransaction() {
+    assertThat(executeEthSignTransaction(getTxParameters()))
+        .isEqualTo(
+            "0xf862468082760094627306090abab3a6e1400e9345bc60c78a8bef57020083015e7ba0e2b345c1c5af05f518e7fd716459fd41d4af3e355b4afb48d8fddc21eae98c13a043975efec1fcfd03f7af77c4a402510981a088765b180bc84163ecba8f01f46d");
+  }
+
+  @Test
+  public void returnsExpectedSignatureForEip1559Transaction() {
+    assertThat(executeEthSignTransaction(get1559TxParameters()))
+        .isEqualTo(
+            "0x02f86482af2c46010282760094627306090abab3a6e1400e9345bc60c78a8bef570200c080a0c12c61390b8e6c5cded74c3356bdfcace12f2df6ef936bb57b6ae396d430faafa04ac0efe035ef864a63381825e445eb58ad2d01f3927e8c814b5442949847338d");
+  }
+
+  private String executeEthSignTransaction(final JsonObject params) {
     final Credentials cs =
         Credentials.create("0x1618fc3e47aec7e70451256e033b9edb67f4c469258d8e2fbb105552f141ae41");
     final ECPublicKey key = EthPublicKeyUtils.createPublicKey(cs.getEcKeyPair().getPublicKey());
@@ -175,7 +194,6 @@ public class EthSignTransactionResultProviderTest {
     final EthSignTransactionResultProvider resultProvider =
         new EthSignTransactionResultProvider(chainId, mockSignerProvider, jsonDecoder);
 
-    final JsonObject params = getTxParameters();
     params.put("from", addr);
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_signTransaction");
     final int id = 1;
@@ -184,17 +202,27 @@ public class EthSignTransactionResultProviderTest {
 
     final Object result = resultProvider.createResponseResult(request);
     assertThat(result).isInstanceOf(String.class);
-    final String encodedTransaction = (String) result;
-    assertThat(encodedTransaction)
-        .isEqualTo(
-            "0xf862468082760094627306090abab3a6e1400e9345bc60c78a8bef57020083015e7ba0e2b345c1c5af05f518e7fd716459fd41d4af3e355b4afb48d8fddc21eae98c13a043975efec1fcfd03f7af77c4a402510981a088765b180bc84163ecba8f01f46d");
+    return (String) result;
   }
 
   private static JsonObject getTxParameters() {
     final JsonObject jsonObject = new JsonObject();
-    jsonObject.put("from", "0xf17f52151ebef6c7334fad080c5704d77216b732");
+    jsonObject.put("from", "0x0c8f735bc186ea3842e640ffdcb474def3e767a0");
     jsonObject.put("to", "0x627306090abaB3A6e1400e9345bC60c78a8BEf57");
     jsonObject.put("gasPrice", "0x0");
+    jsonObject.put("gas", "0x7600");
+    jsonObject.put("nonce", "0x46");
+    jsonObject.put("value", "0x2");
+    jsonObject.put("data", "0x0");
+    return jsonObject;
+  }
+
+  private static JsonObject get1559TxParameters() {
+    final JsonObject jsonObject = new JsonObject();
+    jsonObject.put("from", "0x0c8f735bc186ea3842e640ffdcb474def3e767a0");
+    jsonObject.put("to", "0x627306090abaB3A6e1400e9345bC60c78a8BEf57");
+    jsonObject.put("maxPriorityFeePerGas", "0x1");
+    jsonObject.put("maxFeePerGas", "0x2");
     jsonObject.put("gas", "0x7600");
     jsonObject.put("nonce", "0x46");
     jsonObject.put("value", "0x2");
