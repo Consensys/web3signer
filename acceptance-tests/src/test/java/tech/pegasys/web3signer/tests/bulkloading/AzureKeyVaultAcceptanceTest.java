@@ -71,7 +71,6 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("", hasItems(EXPECTED_KEY, EXPECTED_TAGGED_KEY));
 
-    // Since our Azure vault contains some invalid keys, the healthcheck would return 503.
     final Response healthcheckResponse = signer.healthcheck();
     healthcheckResponse
         .then()
