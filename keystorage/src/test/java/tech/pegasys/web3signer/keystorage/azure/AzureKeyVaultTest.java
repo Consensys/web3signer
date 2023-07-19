@@ -87,10 +87,6 @@ public class AzureKeyVaultTest {
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(SimpleEntry::new, Collections.emptyMap());
     final Collection<SimpleEntry<String, String>> entries = result.getValues();
-    final Optional<SimpleEntry<String, String>> myBlsEntry =
-        entries.stream().filter(e -> e.getKey().equals("MyBls")).findAny();
-    Assertions.assertThat(myBlsEntry).isPresent();
-    Assertions.assertThat(myBlsEntry.get().getValue()).isEqualTo("BlsKey");
 
     final Optional<SimpleEntry<String, String>> testKeyEntry =
         entries.stream().filter(e -> e.getKey().equals("TEST-KEY")).findAny();
@@ -180,8 +176,8 @@ public class AzureKeyVaultTest {
     Assertions.assertThat(testKeyEntry).isEmpty();
 
     final Optional<SimpleEntry<String, String>> myBlsEntry =
-        entries.stream().filter(e -> e.getKey().equals("MyBls")).findAny();
+        entries.stream().filter(e -> e.getKey().equals("TEST-KEY-2")).findAny();
     Assertions.assertThat(myBlsEntry).isPresent();
-    Assertions.assertThat(myBlsEntry.get().getValue()).isEqualTo("BlsKey");
+    Assertions.assertThat(myBlsEntry.get().getValue()).isEqualTo(EXPECTED_KEY);
   }
 }

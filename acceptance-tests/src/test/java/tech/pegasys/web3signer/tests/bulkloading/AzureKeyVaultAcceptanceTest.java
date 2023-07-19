@@ -68,14 +68,14 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     final Response healthcheckResponse = signer.healthcheck();
     healthcheckResponse
         .then()
-        .statusCode(503)
+        .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("status", equalTo("DOWN"));
+        .body("status", equalTo("UP"));
 
-    // keys loaded would still be >= 1 though
+    // keys loaded are ACCTEST-MULTILINE-KEY (200), TEST-KEY (1), TEST-KEY-2 (1)
     final String jsonBody = healthcheckResponse.body().asString();
     int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
-    assertThat(keysLoaded).isGreaterThanOrEqualTo(1);
+    assertThat(keysLoaded).isEqualTo(201);
   }
 
   @ParameterizedTest(name = "{index} - Using config file: {0}")
