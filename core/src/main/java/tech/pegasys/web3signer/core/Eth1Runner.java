@@ -192,13 +192,14 @@ public class Eth1Runner extends Runner {
 
   private RequestMapper createRequestMapper(
       final VertxRequestTransmitterFactory transmitterFactory,
-      final ArtifactSignerProvider signerProvider,
+      final ArtifactSignerProvider signerProviderMappedToEth1Address,
       final JsonDecoder jsonDecoder,
       final long chainId) {
     final PassThroughHandler defaultHandler =
         new PassThroughHandler(transmitterFactory, jsonDecoder);
     final SignerForIdentifier<SecpArtifactSignature> secpSigner =
-        new SignerForIdentifier<>(signerProvider, this::formatSecpSignature, SECP256K1);
+        new SignerForIdentifier<>(
+            signerProviderMappedToEth1Address, this::formatSecpSignature, SECP256K1);
     final TransactionFactory transactionFactory =
         new TransactionFactory(chainId, jsonDecoder, transmitterFactory);
     final SendTransactionHandler sendTransactionHandler =
@@ -208,7 +209,8 @@ public class Eth1Runner extends Runner {
     requestMapper.addHandler(
         "eth_accounts",
         new InternalResponseHandler<>(
-            responseFactory, new Eth1AccountsHandler(signerProvider::availableIdentifiers)));
+            responseFactory,
+            new Eth1AccountsHandler(signerProviderMappedToEth1Address::availableIdentifiers)));
     requestMapper.addHandler(
         "eth_sign",
         new InternalResponseHandler<>(responseFactory, new EthSignResultProvider(secpSigner)));
