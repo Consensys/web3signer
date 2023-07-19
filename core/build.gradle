@@ -72,6 +72,7 @@ dependencies {
   }
   integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  integrationTestImplementation (testFixtures(project(":signing")))
 }
 
 processResources {
