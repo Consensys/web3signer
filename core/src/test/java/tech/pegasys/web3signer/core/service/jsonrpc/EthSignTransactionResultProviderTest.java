@@ -15,17 +15,15 @@ package tech.pegasys.web3signer.core.service.jsonrpc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.INVALID_PARAMS;
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignTransactionResultProvider;
-import tech.pegasys.web3signer.signing.ArtifactSigner;
-import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
@@ -53,6 +51,7 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Keys;
 import org.web3j.crypto.Sign;
 
@@ -62,8 +61,7 @@ public class EthSignTransactionResultProviderTest {
   private static JsonDecoder jsonDecoder;
   private static long chainId;
 
-  @Mock ArtifactSignerProvider mockSignerProvider;
-  @Mock ArtifactSigner mockSigner;
+  @Mock SignerForIdentifier<SecpArtifactSignature> mockSignerForIdentifier;
 
   @BeforeAll
   static void beforeAll() {
@@ -78,9 +76,8 @@ public class EthSignTransactionResultProviderTest {
   @ArgumentsSource(InvalidParamsProvider.class)
   @NullSource
   public void ifParamIsInvalidExceptionIsThrownWithInvalidParams(final Object params) {
-    final ArtifactSignerProvider mockSignerProvider = mock(ArtifactSignerProvider.class);
     final EthSignTransactionResultProvider resultProvider =
-        new EthSignTransactionResultProvider(chainId, mockSignerProvider, jsonDecoder);
+        new EthSignTransactionResultProvider(chainId, mockSignerForIdentifier, jsonDecoder);
 
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_signTransaction");
     request.setId(new JsonRpcRequestId(1));
@@ -96,7 +93,7 @@ public class EthSignTransactionResultProviderTest {
   public void ifAddressIsNotUnlockedExceptionIsThrownWithSigningNotUnlocked() {
 
     final EthSignTransactionResultProvider resultProvider =
-        new EthSignTransactionResultProvider(chainId, mockSignerProvider, jsonDecoder);
+        new EthSignTransactionResultProvider(chainId, mockSignerForIdentifier, jsonDecoder);
 
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_signTransaction");
     request.setId(new JsonRpcRequestId(1));
@@ -117,13 +114,15 @@ public class EthSignTransactionResultProviderTest {
     final BigInteger v = BigInteger.ONE;
     final BigInteger r = BigInteger.TWO;
     final BigInteger s = BigInteger.TEN;
-    doReturn(new SecpArtifactSignature(new Signature(v, r, s)))
-        .when(mockSigner)
-        .sign(any(Bytes.class));
-
-    doReturn(Optional.of(mockSigner)).when(mockSignerProvider).getSigner(anyString());
+    doReturn(
+            Optional.of(
+                SecpArtifactSignature.toBytes(new SecpArtifactSignature(new Signature(v, r, s)))
+                    .toHexString()))
+        .when(mockSignerForIdentifier)
+        .sign(any(String.class), any(Bytes.class));
+    when(mockSignerForIdentifier.isSignerAvailable(any(String.class))).thenReturn(true);
     final EthSignTransactionResultProvider resultProvider =
-        new EthSignTransactionResultProvider(chainId, mockSignerProvider, jsonDecoder);
+        new EthSignTransactionResultProvider(chainId, mockSignerForIdentifier, jsonDecoder);
 
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_signTransaction");
     final int id = 1;
@@ -142,7 +141,7 @@ public class EthSignTransactionResultProviderTest {
   public void nonceNotProvidedExceptionIsThrownWithInvalidParams() {
 
     final EthSignTransactionResultProvider resultProvider =
-        new EthSignTransactionResultProvider(chainId, mockSignerProvider, jsonDecoder);
+        new EthSignTransactionResultProvider(chainId, mockSignerForIdentifier, jsonDecoder);
 
     final JsonObject params = getTxParameters();
     params.remove("nonce");
@@ -178,21 +177,16 @@ public class EthSignTransactionResultProviderTest {
 
     doAnswer(
             answer -> {
-              Bytes data = answer.getArgument(0, Bytes.class);
-              final Sign.SignatureData signature =
-                  Sign.signPrefixedMessage(data.toArrayUnsafe(), cs.getEcKeyPair());
-              return new SecpArtifactSignature(
-                  new Signature(
-                      new BigInteger(signature.getV()),
-                      new BigInteger(1, signature.getR()),
-                      new BigInteger(1, signature.getS())));
+              Bytes data = answer.getArgument(1, Bytes.class);
+              return signDataForKey(data, cs.getEcKeyPair());
             })
-        .when(mockSigner)
-        .sign(any(Bytes.class));
+        .when(mockSignerForIdentifier)
+        .sign(any(String.class), any(Bytes.class));
 
-    doReturn(Optional.of(mockSigner)).when(mockSignerProvider).getSigner(anyString());
+    when(mockSignerForIdentifier.isSignerAvailable(any(String.class))).thenReturn(true);
+
     final EthSignTransactionResultProvider resultProvider =
-        new EthSignTransactionResultProvider(chainId, mockSignerProvider, jsonDecoder);
+        new EthSignTransactionResultProvider(chainId, mockSignerForIdentifier, jsonDecoder);
 
     params.put("from", addr);
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_signTransaction");
@@ -239,5 +233,16 @@ public class EthSignTransactionResultProviderTest {
           Arguments.of(List.of(1, 2, 3)),
           Arguments.of(new Object()));
     }
+  }
+
+  private Optional<String> signDataForKey(Bytes data, ECKeyPair ecKeyPair) {
+    final Sign.SignatureData signature = Sign.signPrefixedMessage(data.toArrayUnsafe(), ecKeyPair);
+    final SecpArtifactSignature secpArtifactSignature =
+        new SecpArtifactSignature(
+            new Signature(
+                new BigInteger(signature.getV()),
+                new BigInteger(1, signature.getR()),
+                new BigInteger(1, signature.getS())));
+    return Optional.of(SecpArtifactSignature.toBytes(secpArtifactSignature).toHexString());
   }
 }
