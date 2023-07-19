@@ -16,6 +16,7 @@ import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError
 import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.EthSendTransactionJsonParameters;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonDecoder;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
@@ -24,11 +25,9 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.EthTransaction;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.TransactionSerializer;
-import tech.pegasys.web3signer.signing.ArtifactSigner;
-import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 
 import java.util.List;
-import java.util.Optional;
 
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
@@ -40,14 +39,16 @@ public class EthSignTransactionResultProvider implements ResultProvider<String> 
   private static final Logger LOG = LogManager.getLogger();
 
   private final long chainId;
-  private final ArtifactSignerProvider signerProvider;
   private final JsonDecoder decoder;
+  private final SignerForIdentifier<SecpArtifactSignature> secpSigner;
 
   public EthSignTransactionResultProvider(
-      final long chainId, final ArtifactSignerProvider signerProvider, final JsonDecoder decoder) {
+      final long chainId,
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
+      final JsonDecoder decoder) {
     this.chainId = chainId;
-    this.signerProvider = signerProvider;
     this.decoder = decoder;
+    this.secpSigner = secpSigner;
   }
 
   @Override
@@ -76,16 +77,13 @@ public class EthSignTransactionResultProvider implements ResultProvider<String> 
 
     LOG.debug("Obtaining signer for {}", transaction.sender());
 
-    Optional<ArtifactSigner> signer =
-        signerProvider.getSigner(normaliseIdentifier(transaction.sender()));
-
-    if (signer.isEmpty()) {
+    if (!secpSigner.isSignerAvailable(normaliseIdentifier(transaction.sender()))) {
       LOG.debug("From address ({}) does not match any available account", transaction.sender());
       throw new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
     }
 
     final TransactionSerializer transactionSerializer =
-        new TransactionSerializer(signer.get(), chainId);
+        new TransactionSerializer(secpSigner, chainId);
     return transactionSerializer.serialize(transaction);
   }
 

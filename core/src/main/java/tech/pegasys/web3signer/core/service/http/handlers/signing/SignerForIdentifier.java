@@ -81,4 +81,14 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
       throw new IllegalStateException("Invalid signature type");
     }
   }
+
+  /**
+   * Checks whether a signer for the passed identifiers is present
+   *
+   * @param identifier The identifier for which to sign data.
+   * @return true is there's a signer for the corresponding identifier, otherwise false
+   */
+  public boolean isSignerAvailable(final String identifier) {
+    return signerProvider.getSigner(identifier).isPresent();
+  }
 }

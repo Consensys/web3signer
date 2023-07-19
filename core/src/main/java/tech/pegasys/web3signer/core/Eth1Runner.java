@@ -129,7 +129,6 @@ public class Eth1Runner extends Runner {
             transmitterFactory,
             secpArtifactSignerProvider,
             jsonDecoder,
-            secpSigner,
             eth1Config.getChainId().id());
 
     router
@@ -195,15 +194,15 @@ public class Eth1Runner extends Runner {
       final VertxRequestTransmitterFactory transmitterFactory,
       final ArtifactSignerProvider signerProvider,
       final JsonDecoder jsonDecoder,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
       final long chainId) {
     final PassThroughHandler defaultHandler =
         new PassThroughHandler(transmitterFactory, jsonDecoder);
-
+    final SignerForIdentifier<SecpArtifactSignature> secpSigner =
+        new SignerForIdentifier<>(signerProvider, this::formatSecpSignature, SECP256K1);
     final TransactionFactory transactionFactory =
         new TransactionFactory(chainId, jsonDecoder, transmitterFactory);
     final SendTransactionHandler sendTransactionHandler =
-        new SendTransactionHandler(chainId, signerProvider, transactionFactory, transmitterFactory);
+        new SendTransactionHandler(chainId, transactionFactory, transmitterFactory, secpSigner);
 
     final RequestMapper requestMapper = new RequestMapper(defaultHandler);
     requestMapper.addHandler(
@@ -217,7 +216,7 @@ public class Eth1Runner extends Runner {
         "eth_signTransaction",
         new InternalResponseHandler<>(
             responseFactory,
-            new EthSignTransactionResultProvider(chainId, signerProvider, jsonDecoder)));
+            new EthSignTransactionResultProvider(chainId, secpSigner, jsonDecoder)));
     requestMapper.addHandler("eth_sendTransaction", sendTransactionHandler);
     requestMapper.addHandler("eea_sendTransaction", sendTransactionHandler);
 
