@@ -43,7 +43,9 @@ public class SignedAttestationsDaoTest {
             handle, 1, UInt64.valueOf(4), Bytes.of(3));
     assertThat(existingAttestation).isNotEmpty();
     assertThat(existingAttestation).hasSize(1);
-    assertThat(existingAttestation.get(0)).isEqualToComparingFieldByField(attestation(1, 3, 4, 2));
+    assertThat(existingAttestation.get(0))
+        .usingRecursiveComparison()
+        .isEqualTo(attestation(1, 3, 4, 2));
   }
 
   @Test
@@ -72,7 +74,7 @@ public class SignedAttestationsDaoTest {
             .mapToBean(SignedAttestation.class)
             .list();
     assertThat(attestations.size()).isEqualTo(1);
-    assertThat(attestations.get(0)).isEqualToComparingFieldByField(signedAttestation);
+    assertThat(attestations.get(0)).usingRecursiveComparison().isEqualTo(signedAttestation);
   }
 
   @Test
@@ -89,7 +91,7 @@ public class SignedAttestationsDaoTest {
     assertThat(attestation).isNotEmpty();
     // both existing attestations surround these source and target epochs but we expect that the
     // attestation with the highest target epoch is returned
-    assertThat(attestation.get(0)).isEqualToComparingFieldByField(attestation2);
+    assertThat(attestation.get(0)).usingRecursiveComparison().isEqualTo(attestation2);
 
     // target epoch is outside of the existing attestations target epoch
     assertThat(
@@ -124,7 +126,7 @@ public class SignedAttestationsDaoTest {
     assertThat(attestations).hasSize(1);
     // both attestations are surrounded by the source and target epochs but we expect that only the
     // attestation with the highest target epoch is returned
-    assertThat(attestations.get(0)).isEqualToComparingFieldByField(attestation2);
+    assertThat(attestations.get(0)).usingRecursiveComparison().isEqualTo(attestation2);
 
     // target epoch is not outside of the existing attestations
     assertThat(
@@ -199,8 +201,12 @@ public class SignedAttestationsDaoTest {
 
     // no longer contains the first entry with sourceEpoch=2, targetEpoch=3 others should remain
     assertThat(attestations.get(1)).hasSize(2);
-    assertThat(attestations.get(1).get(0)).isEqualToComparingFieldByField(attestation(1, 3, 4, 1));
-    assertThat(attestations.get(1).get(1)).isEqualToComparingFieldByField(attestation(1, 4, 5, 1));
+    assertThat(attestations.get(1).get(0))
+        .usingRecursiveComparison()
+        .isEqualTo(attestation(1, 3, 4, 1));
+    assertThat(attestations.get(1).get(1))
+        .usingRecursiveComparison()
+        .isEqualTo(attestation(1, 4, 5, 1));
   }
 
   @Test
@@ -224,12 +230,18 @@ public class SignedAttestationsDaoTest {
 
     // no longer contains the first entry with sourceEpoch=2, targetEpoch=3 others should remain
     assertThat(attestations.get(1)).hasSize(2);
-    assertThat(attestations.get(1).get(0)).isEqualToComparingFieldByField(attestation(1, 3, 4, 1));
-    assertThat(attestations.get(1).get(1)).isEqualToComparingFieldByField(attestation(1, 4, 5, 1));
+    assertThat(attestations.get(1).get(0))
+        .usingRecursiveComparison()
+        .isEqualTo(attestation(1, 3, 4, 1));
+    assertThat(attestations.get(1).get(1))
+        .usingRecursiveComparison()
+        .isEqualTo(attestation(1, 4, 5, 1));
 
     // all existing entries should remain
     assertThat(attestations.get(2)).hasSize(1);
-    assertThat(attestations.get(2).get(0)).isEqualToComparingFieldByField(attestation(2, 2, 3, 1));
+    assertThat(attestations.get(2).get(0))
+        .usingRecursiveComparison()
+        .isEqualTo(attestation(2, 2, 3, 1));
   }
 
   @Test
@@ -242,8 +254,8 @@ public class SignedAttestationsDaoTest {
     final List<SignedAttestation> attestations =
         signedAttestationsDao.findAllAttestationsSignedBy(handle, 1).collect(Collectors.toList());
     assertThat(attestations).hasSize(2);
-    assertThat(attestations.get(0)).isEqualToComparingFieldByField(attestation(1, 2, 3, 1));
-    assertThat(attestations.get(1)).isEqualToComparingFieldByField(attestation(1, 3, 4, 1));
+    assertThat(attestations.get(0)).usingRecursiveComparison().isEqualTo(attestation(1, 2, 3, 1));
+    assertThat(attestations.get(1)).usingRecursiveComparison().isEqualTo(attestation(1, 3, 4, 1));
   }
 
   @Test
@@ -272,12 +284,14 @@ public class SignedAttestationsDaoTest {
             signedAttestationsDao
                 .findNearestAttestationWithTargetEpoch(handle, 1, UInt64.valueOf(3))
                 .get())
-        .isEqualToComparingFieldByField(attestation(1, 2, 3, 1));
+        .usingRecursiveComparison()
+        .isEqualTo(attestation(1, 2, 3, 1));
     assertThat(
             signedAttestationsDao
                 .findNearestAttestationWithTargetEpoch(handle, 1, UInt64.valueOf(5))
                 .get())
-        .isEqualToComparingFieldByField(attestation(1, 7, 8, 1));
+        .usingRecursiveComparison()
+        .isEqualTo(attestation(1, 7, 8, 1));
   }
 
   @Test

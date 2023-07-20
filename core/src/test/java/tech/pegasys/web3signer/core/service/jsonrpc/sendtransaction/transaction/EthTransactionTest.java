@@ -22,6 +22,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestId;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.EthTransaction;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,8 @@ import org.junit.jupiter.api.Test;
 import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.crypto.SignedRawTransaction;
 import org.web3j.crypto.TransactionDecoder;
+import org.web3j.crypto.transaction.type.Transaction1559;
+import org.web3j.crypto.transaction.type.TransactionType;
 import org.web3j.utils.Numeric;
 
 public class EthTransactionTest {
@@ -47,7 +50,8 @@ public class EthTransactionTest {
     params.data(
         "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675");
 
-    ethTransaction = new EthTransaction(params, () -> BigInteger.ZERO, new JsonRpcRequestId(1));
+    ethTransaction =
+        new EthTransaction(1337L, params, () -> BigInteger.ZERO, new JsonRpcRequestId(1));
   }
 
   @Test
@@ -75,6 +79,51 @@ public class EthTransactionTest {
     assertThat(trimLeadingZeroes(decodedSignatureData.getV())).isEqualTo(new byte[] {1});
     assertThat(trimLeadingZeroes(decodedSignatureData.getR())).isEqualTo(new byte[] {2});
     assertThat(trimLeadingZeroes(decodedSignatureData.getS())).isEqualTo(new byte[] {3});
+  }
+
+  @Test
+  public void rlpEncodesEip1559Transaction() {
+    final EthSendTransactionJsonParameters params =
+        new EthSendTransactionJsonParameters("0x7577919ae5df4941180eac211965f275cdce314d");
+    params.receiver("0xd46e8dd67c5d32be8058bb8eb970870f07244567");
+    params.gas("0x76c0");
+    params.maxPriorityFeePerGas("0x9184e72a000");
+    params.maxFeePerGas("0x9184e72a001");
+    params.nonce("0xe04d296d2460cfb8472af2c5fd05b5a214109c25688d3704aed5484f9a7792f2");
+    params.value("0x0");
+    params.data(
+        "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675");
+
+    ethTransaction =
+        new EthTransaction(1337L, params, () -> BigInteger.ZERO, new JsonRpcRequestId(1));
+
+    final SignatureData signatureData = null;
+    final byte[] rlpEncodedBytes = ethTransaction.rlpEncode(signatureData);
+    final String rlpString = Numeric.toHexString(prependEip1559TransactionType(rlpEncodedBytes));
+
+    final Transaction1559 decodedTransaction =
+        (Transaction1559) TransactionDecoder.decode(rlpString).getTransaction();
+    assertThat(decodedTransaction.getTo()).isEqualTo("0xd46e8dd67c5d32be8058bb8eb970870f07244567");
+    assertThat(decodedTransaction.getGasLimit()).isEqualTo(Numeric.decodeQuantity("0x76c0"));
+    assertThat(decodedTransaction.getMaxPriorityFeePerGas())
+        .isEqualTo(Numeric.decodeQuantity("0x9184e72a000"));
+    assertThat(decodedTransaction.getMaxFeePerGas())
+        .isEqualTo(Numeric.decodeQuantity("0x9184e72a001"));
+    assertThat(decodedTransaction.getNonce())
+        .isEqualTo(
+            Numeric.decodeQuantity(
+                "0xe04d296d2460cfb8472af2c5fd05b5a214109c25688d3704aed5484f9a7792f2"));
+    assertThat(decodedTransaction.getValue()).isEqualTo(Numeric.decodeQuantity("0x0"));
+    assertThat(decodedTransaction.getData())
+        .isEqualTo(
+            "d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675");
+  }
+
+  private static byte[] prependEip1559TransactionType(byte[] bytesToSign) {
+    return ByteBuffer.allocate(bytesToSign.length + 1)
+        .put(TransactionType.EIP1559.getRlpType())
+        .put(bytesToSign)
+        .array();
   }
 
   @Test

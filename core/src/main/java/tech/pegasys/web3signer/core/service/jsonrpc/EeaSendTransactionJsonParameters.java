@@ -44,6 +44,8 @@ public class EeaSendTransactionJsonParameters {
   private String data;
   private Base64String privacyGroupId;
   private List<Base64String> privateFor;
+  private BigInteger maxFeePerGas;
+  private BigInteger maxPriorityFeePerGas;
 
   @JsonCreator
   public EeaSendTransactionJsonParameters(
@@ -98,6 +100,16 @@ public class EeaSendTransactionJsonParameters {
     this.privacyGroupId = Base64String.wrap(privacyGroupId);
   }
 
+  @JsonSetter("maxPriorityFeePerGas")
+  public void maxPriorityFeePerGas(final String maxPriorityFeePerGas) {
+    this.maxPriorityFeePerGas = decodeBigInteger(maxPriorityFeePerGas);
+  }
+
+  @JsonSetter("maxFeePerGas")
+  public void maxFeePerGas(final String maxFeePerGas) {
+    this.maxFeePerGas = decodeBigInteger(maxFeePerGas);
+  }
+
   public Optional<String> data() {
     return Optional.ofNullable(data);
   }
@@ -140,6 +152,14 @@ public class EeaSendTransactionJsonParameters {
 
   public String restriction() {
     return restriction;
+  }
+
+  public Optional<BigInteger> maxPriorityFeePerGas() {
+    return Optional.ofNullable(maxPriorityFeePerGas);
+  }
+
+  public Optional<BigInteger> maxFeePerGas() {
+    return Optional.ofNullable(maxFeePerGas);
   }
 
   public static EeaSendTransactionJsonParameters from(final JsonRpcRequest request) {
