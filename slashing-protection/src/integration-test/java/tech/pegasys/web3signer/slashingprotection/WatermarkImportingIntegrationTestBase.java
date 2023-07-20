@@ -48,8 +48,8 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
     final InputStream input = createInputDataWith(List.of(5, 4), emptyList());
     slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(4), null, null));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(4), null, null));
   }
 
   @Test
@@ -105,8 +105,8 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
             emptyList(), List.of(new ImmutablePair<>(3, 4), new ImmutablePair<>(2, 5)));
     slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(2), UInt64.valueOf(4)));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(2), UInt64.valueOf(4)));
   }
 
   @Test
@@ -122,8 +122,8 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
                 h, VALIDATOR_ID, UInt64.valueOf(3), UInt64.valueOf(4)));
 
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
 
     final InputStream input =
         createInputDataWith(
@@ -131,8 +131,8 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
     slashingProtectionContext.getSlashingProtection().importData(input);
 
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(8), UInt64.valueOf(10)));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(8), UInt64.valueOf(10)));
   }
 
   @Test
@@ -150,8 +150,8 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
     final InputStream input = createInputDataWith(emptyList(), List.of(new ImmutablePair<>(1, 2)));
     slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
   }
 
   @Test
@@ -169,8 +169,8 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
 
     slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(12)));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(12)));
   }
 
   @Test
@@ -188,8 +188,8 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
 
     slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(4), UInt64.valueOf(6)));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(4), UInt64.valueOf(6)));
   }
 
   @Test
@@ -208,7 +208,8 @@ public class WatermarkImportingIntegrationTestBase extends IntegrationTestBase {
     final InputStream input = createInputDataWith(emptyList(), emptyList());
     slashingProtectionContext.getSlashingProtection().importData(input);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
+        .usingRecursiveComparison()
+        .isEqualTo(
             new SigningWatermark(
                 VALIDATOR_ID, UInt64.valueOf(6), UInt64.valueOf(3), UInt64.valueOf(4)));
   }
