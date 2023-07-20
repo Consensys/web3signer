@@ -83,7 +83,7 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
   }
 
   /**
-   * Checks whether a signer for the passed identifiers is present
+   * Checks whether a signer for the passed identifier is present
    *
    * @param identifier The identifier for which to sign data.
    * @return true is there's a signer for the corresponding identifier, otherwise false
