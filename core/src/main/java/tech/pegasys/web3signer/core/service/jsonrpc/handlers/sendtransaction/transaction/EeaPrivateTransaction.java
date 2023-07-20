@@ -28,6 +28,7 @@ public class EeaPrivateTransaction extends PrivateTransaction {
   private final List<Base64String> privateFor;
 
   public static EeaPrivateTransaction from(
+      final long chainId,
       final EeaSendTransactionJsonParameters transactionJsonParameters,
       final NonceProvider nonceProvider,
       final JsonRpcRequestId id) {
@@ -36,21 +37,27 @@ public class EeaPrivateTransaction extends PrivateTransaction {
     }
 
     return new EeaPrivateTransaction(
-        transactionJsonParameters, nonceProvider, id, transactionJsonParameters.privateFor().get());
+        chainId,
+        transactionJsonParameters,
+        nonceProvider,
+        id,
+        transactionJsonParameters.privateFor().get());
   }
 
   private EeaPrivateTransaction(
+      final long chainId,
       final EeaSendTransactionJsonParameters transactionJsonParameters,
       final NonceProvider nonceProvider,
       final JsonRpcRequestId id,
       final List<Base64String> privateFor) {
-    super(transactionJsonParameters, nonceProvider, id);
+    super(chainId, transactionJsonParameters, nonceProvider, id);
     this.privateFor = privateFor;
   }
 
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
+        .add("chainId", chainId)
         .add("transactionJsonParameters", transactionJsonParameters)
         .add("id", id)
         .add("nonceProvider", nonceProvider)

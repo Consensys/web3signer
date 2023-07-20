@@ -57,7 +57,7 @@ public class EeaPrivateTransactionTest {
     params.privateFor(new String[] {"GV8m0VZAccYGAAYMBuYQtKEj0XtpXeaw2APcoBmtA2w="});
 
     privateTransaction =
-        EeaPrivateTransaction.from(params, () -> BigInteger.ZERO, new JsonRpcRequestId(1));
+        EeaPrivateTransaction.from(1337L, params, () -> BigInteger.ZERO, new JsonRpcRequestId(1));
   }
 
   @Test

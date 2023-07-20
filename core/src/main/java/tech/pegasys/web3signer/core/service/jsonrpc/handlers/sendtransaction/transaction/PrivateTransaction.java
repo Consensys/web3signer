@@ -32,15 +32,18 @@ import org.web3j.rlp.RlpType;
 public abstract class PrivateTransaction implements Transaction {
 
   protected static final String JSON_RPC_METHOD = "eea_sendRawTransaction";
+  protected final long chainId;
   protected final JsonRpcRequestId id;
   protected final NonceProvider nonceProvider;
   protected BigInteger nonce;
   protected final EeaSendTransactionJsonParameters transactionJsonParameters;
 
   PrivateTransaction(
+      final long chainId,
       final EeaSendTransactionJsonParameters transactionJsonParameters,
       final NonceProvider nonceProvider,
       final JsonRpcRequestId id) {
+    this.chainId = chainId;
     this.transactionJsonParameters = transactionJsonParameters;
     this.nonceProvider = nonceProvider;
     this.id = id;
@@ -91,8 +94,15 @@ public abstract class PrivateTransaction implements Transaction {
   }
 
   @Override
+  public boolean isEip1559() {
+    return transactionJsonParameters.maxPriorityFeePerGas().isPresent()
+        && transactionJsonParameters.maxFeePerGas().isPresent();
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
+        .add("chainId", chainId)
         .add("transactionJsonParameters", transactionJsonParameters)
         .add("id", id)
         .add("nonceProvider", nonceProvider)

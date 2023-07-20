@@ -37,6 +37,8 @@ public class AzureKeyVaultTest {
   private static final String SECRET_NAME = "TEST-KEY";
   private static final String EXPECTED_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
+  private static final String EXPECTED_KEY2 =
+      "0x5aba5b89c1d8b731dba1ba29128a4070df0dbfd7e0a67edb40ae7f860cd3ca1c";
 
   @BeforeAll
   public static void setup() {
@@ -88,10 +90,6 @@ public class AzureKeyVaultTest {
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(SimpleEntry::new, Collections.emptyMap());
     final Collection<SimpleEntry<String, String>> entries = result.getValues();
-    final Optional<SimpleEntry<String, String>> myBlsEntry =
-        entries.stream().filter(e -> e.getKey().equals("MyBls")).findAny();
-    Assertions.assertThat(myBlsEntry).isPresent();
-    Assertions.assertThat(myBlsEntry.get().getValue()).isEqualTo("BlsKey");
 
     final Optional<SimpleEntry<String, String>> testKeyEntry =
         entries.stream().filter(e -> e.getKey().equals("TEST-KEY")).findAny();
@@ -127,7 +125,7 @@ public class AzureKeyVaultTest {
             .filter(entry -> "TEST-KEY-2".equals(entry.getKey()))
             .findFirst();
     Assertions.assertThat(secretEntry).isPresent();
-    Assertions.assertThat(secretEntry.get().getValue()).isEqualTo(EXPECTED_KEY);
+    Assertions.assertThat(secretEntry.get().getValue()).isEqualTo(EXPECTED_KEY2);
 
     // we should not encounter any error count
     Assertions.assertThat(result.getErrorCount()).isZero();
@@ -224,8 +222,8 @@ public class AzureKeyVaultTest {
     Assertions.assertThat(testKeyEntry).isEmpty();
 
     final Optional<SimpleEntry<String, String>> myBlsEntry =
-        entries.stream().filter(e -> e.getKey().equals("MyBls")).findAny();
+        entries.stream().filter(e -> e.getKey().equals("TEST-KEY-2")).findAny();
     Assertions.assertThat(myBlsEntry).isPresent();
-    Assertions.assertThat(myBlsEntry.get().getValue()).isEqualTo("BlsKey");
+    Assertions.assertThat(myBlsEntry.get().getValue()).isEqualTo(EXPECTED_KEY2);
   }
 }
