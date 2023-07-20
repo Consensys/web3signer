@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing;
 import static org.web3j.utils.Numeric.toHexString;
 import static tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier.toBytes;
 import static tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction.longToBytes;
+import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
@@ -76,7 +77,8 @@ public class TransactionSerializer {
   }
 
   private SignatureData sign(final String eth1Address, final byte[] bytesToSign) {
-    final String bytesSigned = secpSigner.sign(eth1Address, Bytes.of(bytesToSign)).orElseThrow();
+    final String bytesSigned =
+        secpSigner.sign(normaliseIdentifier(eth1Address), Bytes.of(bytesToSign)).orElseThrow();
 
     final Signature signature =
         SecpArtifactSignature.fromBytes(toBytes(bytesSigned)).getSignatureData();
