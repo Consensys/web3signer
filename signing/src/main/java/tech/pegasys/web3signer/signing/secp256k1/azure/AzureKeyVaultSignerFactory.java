@@ -37,16 +37,6 @@ public class AzureKeyVaultSignerFactory {
   private static final Set<String> SUPPORTED_CURVE_NAMES = Set.of(DEPRECATED_CURVE_NAME, "P-256K");
   private static final Logger LOG = LogManager.getLogger();
 
-  private final boolean needsToHash;
-
-  public AzureKeyVaultSignerFactory() {
-    this(true);
-  }
-
-  public AzureKeyVaultSignerFactory(final boolean needsToHash) {
-    this.needsToHash = needsToHash;
-  }
-
   public Signer createSigner(final AzureConfig config) {
     checkNotNull(config, "Config must be specified");
 
@@ -82,6 +72,6 @@ public class AzureKeyVaultSignerFactory {
     final boolean useDeprecatedCurveName = DEPRECATED_CURVE_NAME.equals(curveName);
     LOG.info(
         "Created azure vault for key name={}, publicKey={}", config.getKeyName(), rawPublicKey);
-    return new AzureKeyVaultSigner(config, rawPublicKey, needsToHash, useDeprecatedCurveName);
+    return new AzureKeyVaultSigner(config, rawPublicKey, true, useDeprecatedCurveName);
   }
 }
