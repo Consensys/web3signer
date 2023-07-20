@@ -15,8 +15,6 @@ package tech.pegasys.web3signer.tests.bulkloading;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
@@ -88,10 +86,13 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("status", equalTo("UP"));
 
+    // BLS keys include additional multi-line key 200 keys
+    final int expectedKeyLoaded = keyType == KeyType.BLS ? 202 : 2;
+
     final String jsonBody = healthcheckResponse.body().asString();
     int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
     assertThat(keysLoaded)
-        .isEqualTo(202); // ACCTEST-MULTILINE-KEY (200) + TEST-KEY (1) + TEST-KEY-2 (1)
+        .isEqualTo(expectedKeyLoaded);
   }
 
   @ParameterizedTest(name = "{index} - KeyType: {0}, using config file: {1}")
