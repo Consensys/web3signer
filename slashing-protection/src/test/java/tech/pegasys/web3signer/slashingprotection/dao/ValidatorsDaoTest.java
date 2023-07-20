@@ -44,9 +44,11 @@ public class ValidatorsDaoTest {
         validatorsDao.retrieveValidators(handle, List.of(Bytes.of(101), Bytes.of(102)));
     assertThat(registeredValidators).hasSize(2);
     assertThat(registeredValidators.get(0))
-        .isEqualToComparingFieldByField(new Validator(2, Bytes.of(101)));
+        .usingRecursiveComparison()
+        .isEqualTo(new Validator(2, Bytes.of(101)));
     assertThat(registeredValidators.get(1))
-        .isEqualToComparingFieldByField(new Validator(3, Bytes.of(102)));
+        .usingRecursiveComparison()
+        .isEqualTo(new Validator(3, Bytes.of(102)));
   }
 
   @Test
@@ -56,8 +58,12 @@ public class ValidatorsDaoTest {
         validatorsDao.registerValidators(handle, List.of(Bytes.of(101), Bytes.of(102)));
 
     assertThat(validators.size()).isEqualTo(2);
-    assertThat(validators.get(0)).isEqualToComparingFieldByField(new Validator(1, Bytes.of(101)));
-    assertThat(validators.get(1)).isEqualToComparingFieldByField(new Validator(2, Bytes.of(102)));
+    assertThat(validators.get(0))
+        .usingRecursiveComparison()
+        .isEqualTo(new Validator(1, Bytes.of(101)));
+    assertThat(validators.get(1))
+        .usingRecursiveComparison()
+        .isEqualTo(new Validator(2, Bytes.of(102)));
   }
 
   @Test
@@ -81,11 +87,21 @@ public class ValidatorsDaoTest {
             .mapToBean(Validator.class)
             .list();
     assertThat(validators.size()).isEqualTo(5);
-    assertThat(validators.get(0)).isEqualToComparingFieldByField(new Validator(1, Bytes.of(100)));
-    assertThat(validators.get(1)).isEqualToComparingFieldByField(new Validator(2, Bytes.of(101)));
-    assertThat(validators.get(2)).isEqualToComparingFieldByField(new Validator(3, Bytes.of(102)));
-    assertThat(validators.get(3)).isEqualToComparingFieldByField(new Validator(4, Bytes.of(103)));
-    assertThat(validators.get(4)).isEqualToComparingFieldByField(new Validator(5, Bytes.of(104)));
+    assertThat(validators.get(0))
+        .usingRecursiveComparison()
+        .isEqualTo(new Validator(1, Bytes.of(100)));
+    assertThat(validators.get(1))
+        .usingRecursiveComparison()
+        .isEqualTo(new Validator(2, Bytes.of(101)));
+    assertThat(validators.get(2))
+        .usingRecursiveComparison()
+        .isEqualTo(new Validator(3, Bytes.of(102)));
+    assertThat(validators.get(3))
+        .usingRecursiveComparison()
+        .isEqualTo(new Validator(4, Bytes.of(103)));
+    assertThat(validators.get(4))
+        .usingRecursiveComparison()
+        .isEqualTo(new Validator(5, Bytes.of(104)));
   }
 
   @Test

@@ -70,7 +70,8 @@ public class PruningIntegrationTest extends IntegrationTestBase {
     assertThat(blocks).usingFieldByFieldElementComparator().isEqualTo(expectedBlocks);
 
     assertThat(getWatermark(1))
-        .isEqualToComparingFieldByField(
+        .usingRecursiveComparison()
+        .isEqualTo(
             new SigningWatermark(
                 1,
                 UInt64.valueOf(expectedLowestPopulatedSlot),
