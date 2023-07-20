@@ -36,6 +36,7 @@ class CredentialSignerTest {
     assertThat(hashingSigner.getPublicKey().getEncoded())
         .isEqualTo(nonHashingSigner.getPublicKey().getEncoded());
     assertThat(hashingSigner.sign(data))
-        .isEqualToComparingFieldByField(nonHashingSigner.sign(Hash.sha3(data)));
+        .usingRecursiveComparison()
+        .isEqualTo(nonHashingSigner.sign(Hash.sha3(data)));
   }
 }
