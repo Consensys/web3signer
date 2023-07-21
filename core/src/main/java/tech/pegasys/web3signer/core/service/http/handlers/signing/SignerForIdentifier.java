@@ -52,7 +52,7 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
   }
 
   @SuppressWarnings("unchecked")
-  public Optional<T> signTyped(final String identifier, final Bytes data) {
+  public Optional<T> signAndGetArtifactSignature(final String identifier, final Bytes data) {
     return signerProvider.getSigner(identifier).map(signer -> (T) signer.sign(data));
   }
 

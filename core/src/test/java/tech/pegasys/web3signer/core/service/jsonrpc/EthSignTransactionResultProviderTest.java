@@ -116,7 +116,7 @@ public class EthSignTransactionResultProviderTest {
     final BigInteger s = BigInteger.TEN;
     doReturn(Optional.of(new SecpArtifactSignature(new Signature(v, r, s))))
         .when(mockSignerForIdentifier)
-        .signTyped(any(String.class), any(Bytes.class));
+        .signAndGetArtifactSignature(any(String.class), any(Bytes.class));
     when(mockSignerForIdentifier.isSignerAvailable(any(String.class))).thenReturn(true);
     final EthSignTransactionResultProvider resultProvider =
         new EthSignTransactionResultProvider(chainId, mockSignerForIdentifier, jsonDecoder);
@@ -178,7 +178,7 @@ public class EthSignTransactionResultProviderTest {
               return signDataForKey(data, cs.getEcKeyPair());
             })
         .when(mockSignerForIdentifier)
-        .signTyped(any(String.class), any(Bytes.class));
+        .signAndGetArtifactSignature(any(String.class), any(Bytes.class));
 
     when(mockSignerForIdentifier.isSignerAvailable(any(String.class))).thenReturn(true);
 
