@@ -16,6 +16,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory.UNSUPPORTED_CURVE_NAME;
 
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
@@ -65,7 +66,8 @@ public class AzureKeyVaultSignerTest {
             AZURE_CLIENT_SECRET,
             AZURE_TENANT_ID);
 
-    final Signer azureNonHashedDataSigner = new AzureKeyVaultSignerFactory().createSigner(config);
+    final Signer azureNonHashedDataSigner =
+        new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory()).createSigner(config);
     final BigInteger publicKey =
         Numeric.toBigInt(EthPublicKeyUtils.toByteArray(azureNonHashedDataSigner.getPublicKey()));
 
@@ -96,7 +98,8 @@ public class AzureKeyVaultSignerTest {
             AZURE_CLIENT_SECRET,
             AZURE_TENANT_ID);
 
-    final AzureKeyVaultSignerFactory factory = new AzureKeyVaultSignerFactory();
+    final AzureKeyVaultSignerFactory factory =
+        new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory());
     Assertions.assertThatExceptionOfType(SignerInitializationException.class)
         .isThrownBy(() -> factory.createSigner(config))
         .withMessage(UNSUPPORTED_CURVE_NAME);

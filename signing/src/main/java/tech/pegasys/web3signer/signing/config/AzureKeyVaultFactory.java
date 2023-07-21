@@ -14,25 +14,53 @@ package tech.pegasys.web3signer.signing.config;
 
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class AzureKeyVaultFactory {
-  public static AzureKeyVault createAzureKeyVault(
-      final AzureKeyVaultParameters azureKeyVaultParameters) {
-    switch (azureKeyVaultParameters.getAuthenticationMode()) {
+public class AzureKeyVaultFactory implements AutoCloseable {
+  private final AtomicReference<ExecutorService> executorServiceCache = new AtomicReference<>();
+
+  public AzureKeyVault createAzureKeyVault(final AzureKeyVaultParameters azureKeyVaultParameters) {
+    return createAzureKeyVault(
+        azureKeyVaultParameters.getClientId(),
+        azureKeyVaultParameters.getClientSecret(),
+        azureKeyVaultParameters.getKeyVaultName(),
+        azureKeyVaultParameters.getTenantId(),
+        azureKeyVaultParameters.getAuthenticationMode());
+  }
+
+  public AzureKeyVault createAzureKeyVault(
+      final String clientId,
+      final String clientSecret,
+      final String keyVaultName,
+      final String tenantId,
+      final AzureAuthenticationMode mode) {
+    switch (mode) {
       case USER_ASSIGNED_MANAGED_IDENTITY:
-        return AzureKeyVault.createUsingManagedIdentity(
-            Optional.of(azureKeyVaultParameters.getClientId()),
-            azureKeyVaultParameters.getKeyVaultName());
+        return AzureKeyVault.createUsingManagedIdentity(Optional.of(clientId), keyVaultName);
       case SYSTEM_ASSIGNED_MANAGED_IDENTITY:
-        return AzureKeyVault.createUsingManagedIdentity(
-            Optional.empty(), azureKeyVaultParameters.getKeyVaultName());
+        return AzureKeyVault.createUsingManagedIdentity(Optional.empty(), keyVaultName);
       default:
         return AzureKeyVault.createUsingClientSecretCredentials(
-            azureKeyVaultParameters.getClientId(),
-            azureKeyVaultParameters.getClientSecret(),
-            azureKeyVaultParameters.getTenantId(),
-            azureKeyVaultParameters.getKeyVaultName());
+            clientId, clientSecret, tenantId, keyVaultName, getOrCreateExecutor());
+    }
+  }
+
+  private ExecutorService getOrCreateExecutor() {
+    return executorServiceCache.updateAndGet(
+        e ->
+            Objects.requireNonNullElseGet(
+                e, () -> Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors())));
+  }
+
+  @Override
+  public void close() {
+    final ExecutorService executorService = executorServiceCache.get();
+    if (executorService != null) {
+      executorService.shutdownNow();
     }
   }
 }

@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -54,13 +54,14 @@ public class AzureKeyVault {
       final String clientId,
       final String clientSecret,
       final String tenantId,
-      final String vaultName) {
+      final String vaultName,
+      final ExecutorService executorService) {
     final TokenCredential tokenCredential =
         new ClientSecretCredentialBuilder()
             .clientId(clientId)
             .clientSecret(clientSecret)
             .tenantId(tenantId)
-            .executorService(Executors.newCachedThreadPool())
+            .executorService(executorService)
             .build();
 
     return new AzureKeyVault(tokenCredential, vaultName);

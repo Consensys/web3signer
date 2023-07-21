@@ -22,6 +22,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.azure.security.keyvault.keys.models.KeyProperties;
 import org.assertj.core.api.Assertions;
@@ -39,6 +41,7 @@ public class AzureKeyVaultTest {
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
   private static final String EXPECTED_KEY2 =
       "0x5aba5b89c1d8b731dba1ba29128a4070df0dbfd7e0a67edb40ae7f860cd3ca1c";
+  private final ExecutorService azureExecutor = Executors.newCachedThreadPool();
 
   @BeforeAll
   public static void setup() {
@@ -51,7 +54,8 @@ public class AzureKeyVaultTest {
   @Test
   void fetchExistingSecretKeyFromAzureVault() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
     final Optional<String> hexKey = azureKeyVault.fetchSecret(SECRET_NAME);
     Assertions.assertThat(hexKey).isNotEmpty().get().isEqualTo(EXPECTED_KEY);
   }
@@ -59,7 +63,8 @@ public class AzureKeyVaultTest {
   @Test
   void connectingWithInvalidClientSecretThrowsException() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, "invalid", TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, "invalid", TENANT_ID, VAULT_NAME, azureExecutor);
     Assertions.assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> azureKeyVault.fetchSecret(SECRET_NAME))
         .withMessageContaining("Invalid client secret");
@@ -68,7 +73,8 @@ public class AzureKeyVaultTest {
   @Test
   void connectingWithInvalidClientIdThrowsException() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials("invalid", CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            "invalid", CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
     Assertions.assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> azureKeyVault.fetchSecret(SECRET_NAME))
         .withMessageContaining(
@@ -78,14 +84,16 @@ public class AzureKeyVaultTest {
   @Test
   void nonExistingSecretReturnEmpty() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
     assertThat(azureKeyVault.fetchSecret("X-" + SECRET_NAME)).isEmpty();
   }
 
   @Test
   void secretsCanBeMappedUsingCustomMappingFunction() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(SimpleEntry::new, Collections.emptyMap());
@@ -100,7 +108,8 @@ public class AzureKeyVaultTest {
   @Test
   void keyPropertiesCanBeMappedUsingCustomMappingFunction() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<String> result =
         azureKeyVault.mapKeyProperties(KeyProperties::getName, Collections.emptyMap());
@@ -113,7 +122,8 @@ public class AzureKeyVaultTest {
   @Test
   void mapSecretsUsingTags() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(SimpleEntry::new, Map.of("ENV", "TEST"));
@@ -134,7 +144,8 @@ public class AzureKeyVaultTest {
   @Test
   void mapKeyPropertiesUsingTags() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<String> result =
         azureKeyVault.mapKeyProperties(KeyProperties::getName, Map.of("ENV", "TEST"));
@@ -147,7 +158,8 @@ public class AzureKeyVaultTest {
   @Test
   void mapSecretsWhenTagsDoesNotExist() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(SimpleEntry::new, Map.of("INVALID_TAG", "INVALID_TEST"));
@@ -162,7 +174,8 @@ public class AzureKeyVaultTest {
   @Test
   void mapKeyPropertiesWhenTagsDoesNotExist() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<String> result =
         azureKeyVault.mapKeyProperties(
@@ -178,7 +191,8 @@ public class AzureKeyVaultTest {
   @Test
   void azureVaultThrowsAwayObjectsWhichFailMapper() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(
@@ -204,7 +218,8 @@ public class AzureKeyVaultTest {
   @Test
   void azureVaultThrowsAwayObjectsWhichMapToNull() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(

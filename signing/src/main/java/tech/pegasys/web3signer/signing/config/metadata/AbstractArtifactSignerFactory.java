@@ -41,20 +41,23 @@ public abstract class AbstractArtifactSignerFactory implements ArtifactSignerFac
   final Path configsDirectory;
   private final InterlockKeyProvider interlockKeyProvider;
   private final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
+  private final AzureKeyVaultFactory azureKeyVaultFactory;
 
   protected AbstractArtifactSignerFactory(
       final HashicorpConnectionFactory hashicorpConnectionFactory,
       final Path configsDirectory,
       final InterlockKeyProvider interlockKeyProvider,
-      final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider) {
+      final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider,
+      final AzureKeyVaultFactory azureKeyVaultFactory) {
     this.hashicorpConnectionFactory = hashicorpConnectionFactory;
     this.configsDirectory = configsDirectory;
     this.interlockKeyProvider = interlockKeyProvider;
     this.yubiHsmOpaqueDataProvider = yubiHsmOpaqueDataProvider;
+    this.azureKeyVaultFactory = azureKeyVaultFactory;
   }
 
   protected Bytes extractBytesFromVault(final AzureSecretSigningMetadata metadata) {
-    final AzureKeyVault azureVault = AzureKeyVaultFactory.createAzureKeyVault(metadata);
+    final AzureKeyVault azureVault = azureKeyVaultFactory.createAzureKeyVault(metadata);
 
     return azureVault
         .fetchSecret(metadata.getSecretName())

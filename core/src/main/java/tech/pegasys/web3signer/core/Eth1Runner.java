@@ -45,6 +45,7 @@ import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.bulkloading.SecpAzureBulkLoader;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdapter;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
@@ -161,7 +162,9 @@ public class Eth1Runner extends Runner {
     return new DefaultArtifactSignerProvider(
         () -> {
           final List<ArtifactSigner> signers = Lists.newArrayList();
-          final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+          final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
+          final AzureKeyVaultSignerFactory azureFactory =
+              new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
           final HashicorpConnectionFactory hashicorpConnectionFactory =
               new HashicorpConnectionFactory();
           try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
@@ -176,6 +179,7 @@ public class Eth1Runner extends Runner {
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
                     EthSecpArtifactSigner::new,
+                    azureKeyVaultFactory,
                     true);
 
             final MappedResults<ArtifactSigner> results =
@@ -190,14 +194,20 @@ public class Eth1Runner extends Runner {
             signers.addAll(results.getValues());
           }
 
-          if (eth1Config.getAzureKeyVaultConfig().isAzureKeyVaultEnabled()) {
+          final AzureKeyVaultParameters azureKeyVaultConfig = eth1Config.getAzureKeyVaultConfig();
+          if (azureKeyVaultConfig.isAzureKeyVaultEnabled()) {
             LOG.info("Bulk loading keys from Azure key vault ... ");
             final AzureKeyVault azureKeyVault =
-                AzureKeyVaultFactory.createAzureKeyVault(eth1Config.getAzureKeyVaultConfig());
+                azureKeyVaultFactory.createAzureKeyVault(
+                    azureKeyVaultConfig.getClientId(),
+                    azureKeyVaultConfig.getClientSecret(),
+                    azureKeyVaultConfig.getKeyVaultName(),
+                    azureKeyVaultConfig.getTenantId(),
+                    azureKeyVaultConfig.getAuthenticationMode());
             final SecpAzureBulkLoader secpAzureBulkLoader =
                 new SecpAzureBulkLoader(azureKeyVault, azureFactory);
             final MappedResults<ArtifactSigner> azureResult =
-                secpAzureBulkLoader.load(eth1Config.getAzureKeyVaultConfig());
+                secpAzureBulkLoader.load(azureKeyVaultConfig);
             LOG.info(
                 "Keys loaded from Azure: [{}], with error count: [{}]",
                 azureResult.getValues().size(),

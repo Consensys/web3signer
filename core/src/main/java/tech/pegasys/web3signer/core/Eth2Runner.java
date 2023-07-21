@@ -245,8 +245,8 @@ public class Eth2Runner extends Runner {
               final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
                   new YubiHsmOpaqueDataProvider();
               final AwsSecretsManagerProvider awsSecretsManagerProvider =
-                  new AwsSecretsManagerProvider(
-                      awsSecretsManagerParameters.getCacheMaximumSize())) {
+                  new AwsSecretsManagerProvider(awsSecretsManagerParameters.getCacheMaximumSize());
+              final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory()) {
             final AbstractArtifactSignerFactory artifactSignerFactory =
                 new BlsArtifactSignerFactory(
                     baseConfig.getKeyConfigPath(),
@@ -256,7 +256,8 @@ public class Eth2Runner extends Runner {
                     yubiHsmOpaqueDataProvider,
                     awsSecretsManagerProvider,
                     (args) ->
-                        new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
+                        new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()),
+                    azureKeyVaultFactory);
 
             final MappedResults<ArtifactSigner> results =
                 new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
@@ -269,22 +270,23 @@ public class Eth2Runner extends Runner {
                                 baseConfig.getKeyStoreConfigFileMaxSize())));
             registerSignerLoadingHealthCheck(KEYS_CHECK_CONFIG_FILE_LOADING, results);
             signers.addAll(results.getValues());
-          }
 
-          if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
-            LOG.info("Bulk loading keys from Azure key vault ... ");
-            /*
-             Note: Azure supports 25K bytes per secret. https://learn.microsoft.com/en-us/azure/key-vault/secrets/about-secrets
-             Each raw bls private key in hex format is approximately 100 bytes. We should store about 200 or fewer
-             `\n` delimited keys per secret.
-            */
-            final MappedResults<ArtifactSigner> azureResult = loadAzureSigners();
-            LOG.info(
-                "Keys loaded from Azure: [{}], with error count: [{}]",
-                azureResult.getValues().size(),
-                azureResult.getErrorCount());
-            registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
-            signers.addAll(azureResult.getValues());
+            if (azureKeyVaultParameters.isAzureKeyVaultEnabled()) {
+              LOG.info("Bulk loading keys from Azure key vault ... ");
+              /*
+               Note: Azure supports 25K bytes per secret. https://learn.microsoft.com/en-us/azure/key-vault/secrets/about-secrets
+               Each raw bls private key in hex format is approximately 100 bytes. We should store about 200 or fewer
+               `\n` delimited keys per secret.
+              */
+              final MappedResults<ArtifactSigner> azureResult =
+                  loadAzureSigners(azureKeyVaultFactory);
+              LOG.info(
+                  "Keys loaded from Azure: [{}], with error count: [{}]",
+                  azureResult.getValues().size(),
+                  azureResult.getErrorCount());
+              registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
+              signers.addAll(azureResult.getValues());
+            }
           }
 
           if (keystoresParameters.isEnabled()) {
@@ -390,9 +392,10 @@ public class Eth2Runner extends Runner {
     dbPrunerRunner.schedule();
   }
 
-  final MappedResults<ArtifactSigner> loadAzureSigners() {
+  final MappedResults<ArtifactSigner> loadAzureSigners(
+      final AzureKeyVaultFactory azureKeyVaultFactory) {
     final AzureKeyVault keyVault =
-        AzureKeyVaultFactory.createAzureKeyVault(azureKeyVaultParameters);
+        azureKeyVaultFactory.createAzureKeyVault(azureKeyVaultParameters);
 
     return keyVault.mapSecrets(
         (name, value) -> {
