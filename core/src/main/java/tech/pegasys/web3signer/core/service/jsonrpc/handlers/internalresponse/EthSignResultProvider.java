@@ -50,13 +50,13 @@ public class EthSignResultProvider implements ResultProvider<String> {
       throw new JsonRpcException(INVALID_PARAMS);
     }
 
-    final String identifier = params.get(0);
+    final String eth1Address = params.get(0);
     final Bytes ethMessage = getEthereumMessage(params.get(1));
     return transactionSignerProvider
-        .sign(normaliseIdentifier(identifier), ethMessage)
+        .sign(normaliseIdentifier(eth1Address), ethMessage)
         .orElseThrow(
             () -> {
-              LOG.debug("Address ({}) does not match any available account", identifier);
+              LOG.debug("Address ({}) does not match any available account", eth1Address);
               return new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT);
             });
   }
