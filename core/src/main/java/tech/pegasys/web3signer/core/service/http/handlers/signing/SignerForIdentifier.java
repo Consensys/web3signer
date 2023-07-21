@@ -51,6 +51,11 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
     return signerProvider.getSigner(identifier).map(signer -> formatSignature(signer.sign(data)));
   }
 
+  @SuppressWarnings("unchecked")
+  public Optional<T> signTyped(final String identifier, final Bytes data) {
+    return signerProvider.getSigner(identifier).map(signer -> (T) signer.sign(data));
+  }
+
   /**
    * Converts hex string to bytes
    *

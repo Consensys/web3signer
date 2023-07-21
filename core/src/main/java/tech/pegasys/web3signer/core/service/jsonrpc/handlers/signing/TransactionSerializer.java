@@ -13,11 +13,12 @@
 package tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing;
 
 import static org.web3j.utils.Numeric.toHexString;
-import static tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier.toBytes;
 import static tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction.longToBytes;
+import static tech.pegasys.web3signer.core.service.jsonrpc.response.JsonRpcError.SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
+import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
@@ -77,11 +78,12 @@ public class TransactionSerializer {
   }
 
   private SignatureData sign(final String eth1Address, final byte[] bytesToSign) {
-    final String bytesSigned =
-        secpSigner.sign(normaliseIdentifier(eth1Address), Bytes.of(bytesToSign)).orElseThrow();
+    final SecpArtifactSignature artifactSignature =
+        secpSigner
+            .signTyped(normaliseIdentifier(eth1Address), Bytes.of(bytesToSign))
+            .orElseThrow(() -> new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT));
 
-    final Signature signature =
-        SecpArtifactSignature.fromBytes(toBytes(bytesSigned)).getSignatureData();
+    final Signature signature = artifactSignature.getSignatureData();
 
     return new SignatureData(
         signature.getV().toByteArray(),

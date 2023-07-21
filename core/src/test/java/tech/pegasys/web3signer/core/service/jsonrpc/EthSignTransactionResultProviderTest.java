@@ -114,12 +114,9 @@ public class EthSignTransactionResultProviderTest {
     final BigInteger v = BigInteger.ONE;
     final BigInteger r = BigInteger.TWO;
     final BigInteger s = BigInteger.TEN;
-    doReturn(
-            Optional.of(
-                SecpArtifactSignature.toBytes(new SecpArtifactSignature(new Signature(v, r, s)))
-                    .toHexString()))
+    doReturn(Optional.of(new SecpArtifactSignature(new Signature(v, r, s))))
         .when(mockSignerForIdentifier)
-        .sign(any(String.class), any(Bytes.class));
+        .signTyped(any(String.class), any(Bytes.class));
     when(mockSignerForIdentifier.isSignerAvailable(any(String.class))).thenReturn(true);
     final EthSignTransactionResultProvider resultProvider =
         new EthSignTransactionResultProvider(chainId, mockSignerForIdentifier, jsonDecoder);
@@ -181,7 +178,7 @@ public class EthSignTransactionResultProviderTest {
               return signDataForKey(data, cs.getEcKeyPair());
             })
         .when(mockSignerForIdentifier)
-        .sign(any(String.class), any(Bytes.class));
+        .signTyped(any(String.class), any(Bytes.class));
 
     when(mockSignerForIdentifier.isSignerAvailable(any(String.class))).thenReturn(true);
 
@@ -235,7 +232,7 @@ public class EthSignTransactionResultProviderTest {
     }
   }
 
-  private Optional<String> signDataForKey(Bytes data, ECKeyPair ecKeyPair) {
+  private Optional<SecpArtifactSignature> signDataForKey(Bytes data, ECKeyPair ecKeyPair) {
     final Sign.SignatureData signature = Sign.signPrefixedMessage(data.toArrayUnsafe(), ecKeyPair);
     final SecpArtifactSignature secpArtifactSignature =
         new SecpArtifactSignature(
@@ -243,6 +240,6 @@ public class EthSignTransactionResultProviderTest {
                 new BigInteger(signature.getV()),
                 new BigInteger(1, signature.getR()),
                 new BigInteger(1, signature.getS())));
-    return Optional.of(SecpArtifactSignature.toBytes(secpArtifactSignature).toHexString());
+    return Optional.of(secpArtifactSignature);
   }
 }
