@@ -106,6 +106,7 @@ public class FilecoinRunner extends Runner {
     return new DefaultArtifactSignerProvider(
         () -> {
           final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
+          registerClose(azureKeyVaultFactory::close);
           final AzureKeyVaultSignerFactory azureSignerFactory =
               new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
 

@@ -163,6 +163,7 @@ public class Eth1Runner extends Runner {
         () -> {
           final List<ArtifactSigner> signers = Lists.newArrayList();
           final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
+          registerClose(azureKeyVaultFactory::close);
           final AzureKeyVaultSignerFactory azureFactory =
               new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
           final HashicorpConnectionFactory hashicorpConnectionFactory =
