@@ -106,8 +106,8 @@ public class AzureKeyVaultTest {
         azureKeyVault.mapKeyProperties(KeyProperties::getName, Collections.emptyMap());
     final Collection<String> entries = result.getValues();
     final Optional<String> testKeyEntry =
-        entries.stream().filter(e -> e.equals("TestKey")).findAny();
-    Assertions.assertThat(testKeyEntry).hasValue("TestKey");
+        entries.stream().filter(e -> e.equals("TestKey2")).findAny();
+    Assertions.assertThat(testKeyEntry).hasValue("TestKey2");
   }
 
   @Test
@@ -137,12 +137,11 @@ public class AzureKeyVaultTest {
         createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
 
     final MappedResults<String> result =
-        azureKeyVault.mapKeyProperties(
-            KeyProperties::getName, Map.of("Used-For", "Signers Acceptance Test"));
+        azureKeyVault.mapKeyProperties(KeyProperties::getName, Map.of("ENV", "TEST"));
     final Collection<String> entries = result.getValues();
     final Optional<String> testKeyEntry =
-        entries.stream().filter(e -> e.equals("TestKey2")).findAny();
-    Assertions.assertThat(testKeyEntry).hasValue("TestKey2");
+        entries.stream().filter(e -> e.equals("TestKeyWithTag")).findAny();
+    Assertions.assertThat(testKeyEntry).hasValue("TestKeyWithTag");
   }
 
   @Test

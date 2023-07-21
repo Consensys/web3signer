@@ -37,7 +37,8 @@ public class AzureKeyVaultSignerTest {
   private static final String AZURE_CLIENT_SECRET = System.getenv("AZURE_CLIENT_SECRET");
   private static final String AZURE_KEY_VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
   private static final String AZURE_TENANT_ID = System.getenv("AZURE_TENANT_ID");
-  private static final String AZURE_INVALID_KEY_VAULT_NAME = System.getenv("AZURE_INVALID_KEY_VAULT_NAME");
+  private static final String AZURE_INVALID_KEY_VAULT_NAME =
+      System.getenv("AZURE_INVALID_KEY_VAULT_NAME");
 
   private static final String KEY_NAME = "TestKey2"; // uses curve name P-256K
   private static final String UNSUPPORTED_CURVE_KEY_NAME = "TestKeyP521";

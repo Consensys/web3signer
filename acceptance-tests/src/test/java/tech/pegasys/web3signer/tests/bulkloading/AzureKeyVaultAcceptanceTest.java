@@ -91,8 +91,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
     final String jsonBody = healthcheckResponse.body().asString();
     int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
-    assertThat(keysLoaded)
-        .isEqualTo(expectedKeyLoaded);
+    assertThat(keysLoaded).isEqualTo(expectedKeyLoaded);
   }
 
   @ParameterizedTest(name = "{index} - KeyType: {0}, using config file: {1}")
