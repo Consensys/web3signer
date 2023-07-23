@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
+import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
@@ -35,6 +36,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
 import software.amazon.awssdk.services.kms.model.CreateKeyResponse;
@@ -87,45 +89,45 @@ public class AwsKmsSignerTest {
           .withSessionToken(AWS_SESSION_TOKEN)
           .build();
 
-  private static AwsKMS awsKMS;
+  private static KmsClient awsKMSClient;
   private static String testKeyId;
 
   @BeforeAll
   static void init() {
-    awsKMS =
-        new AwsKMS(
-            AwsAuthenticationMode.SPECIFIED, AWS_RW_CREDENTIALS, AWS_REGION, ENDPOINT_OVERRIDE);
+    AwsCredentialsProvider awsCredentialsProvider =
+        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+            AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_RW_CREDENTIALS));
+    awsKMSClient =
+        AwsKMSClientFactory.createKMSClient(awsCredentialsProvider, AWS_REGION, ENDPOINT_OVERRIDE);
 
     // create a test key
-    final KmsClient kmsClient = awsKMS.getKmsClient();
     final CreateKeyRequest web3SignerTestingKey =
         CreateKeyRequest.builder()
             .keySpec(KeySpec.ECC_SECG_P256_K1)
             .description("Web3Signer Testing Key")
             .keyUsage(KeyUsageType.SIGN_VERIFY)
             .build();
-    CreateKeyResponse createKeyResponse = kmsClient.createKey(web3SignerTestingKey);
+    CreateKeyResponse createKeyResponse = awsKMSClient.createKey(web3SignerTestingKey);
     testKeyId = createKeyResponse.keyMetadata().keyId();
     assertThat(testKeyId).isNotEmpty();
   }
 
   @AfterAll
   static void cleanup() {
-    if (awsKMS == null) {
+    if (awsKMSClient == null) {
       return;
     }
     // delete key
     ScheduleKeyDeletionRequest deletionRequest =
         ScheduleKeyDeletionRequest.builder().keyId(testKeyId).pendingWindowInDays(7).build();
-    awsKMS.getKmsClient().scheduleKeyDeletion(deletionRequest);
+    awsKMSClient.scheduleKeyDeletion(deletionRequest);
 
     // close
-    awsKMS.close();
+    awsKMSClient.close();
   }
 
   @Test
   public void awsKmsSignerCanSignTwice() {
-    final AwsKMSSignerFactory awsKMSSignerFactory = new AwsKMSSignerFactory(true);
     final AwsKMSMetadata awsKMSMetadata =
         new AwsKMSMetadata(
             AwsAuthenticationMode.SPECIFIED,
@@ -133,7 +135,7 @@ public class AwsKmsSignerTest {
             Optional.of(AWS_CREDENTIALS),
             testKeyId,
             ENDPOINT_OVERRIDE);
-    final Signer signer = awsKMSSignerFactory.createSigner(awsKMSMetadata);
+    final Signer signer = AwsKMSSignerFactory.createSigner(awsKMSMetadata, true);
 
     final byte[] dataToHash = "Hello".getBytes(UTF_8);
     signer.sign(dataToHash);
@@ -142,7 +144,6 @@ public class AwsKmsSignerTest {
 
   @Test
   void awsWithoutHashingDoesntHashData() throws SignatureException {
-    final AwsKMSSignerFactory awsKMSSignerFactory = new AwsKMSSignerFactory(false);
     final AwsKMSMetadata awsKMSMetadata =
         new AwsKMSMetadata(
             AwsAuthenticationMode.SPECIFIED,
@@ -150,7 +151,7 @@ public class AwsKmsSignerTest {
             Optional.of(AWS_CREDENTIALS),
             testKeyId,
             ENDPOINT_OVERRIDE);
-    final Signer signer = awsKMSSignerFactory.createSigner(awsKMSMetadata);
+    final Signer signer = AwsKMSSignerFactory.createSigner(awsKMSMetadata, false);
     final BigInteger publicKey =
         Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
 
