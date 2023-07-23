@@ -59,7 +59,7 @@ public class AwsKMSSigner implements Signer {
     }
   }
 
-  private static ECPublicKey getECPublicKey(final KmsClient kmsClient, final String kmsKeyId) {
+  public static ECPublicKey getECPublicKey(final KmsClient kmsClient, final String kmsKeyId) {
     // kmsClient can be null/closed if close method has been called.
     checkArgument(kmsClient != null, "KmsClient is not initialized");
 

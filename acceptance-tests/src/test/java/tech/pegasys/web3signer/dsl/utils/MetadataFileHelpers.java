@@ -25,12 +25,16 @@ import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.CertificateHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
+import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadataDeserializer;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
@@ -259,6 +263,37 @@ public class MetadataFileHelpers {
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {
       throw new RuntimeException("Unable to construct aws yaml file", e);
+    }
+  }
+
+  public void createAwsKMSYamlFileAt(
+      final Path metadataFilePath,
+      final String awsRegion,
+      final String accessKeyId,
+      final String secretAccessKey,
+      final Optional<String> sessionToken,
+      final Optional<URI> endpointOverride,
+      final String kmsKeyId) {
+    try {
+      final Map<String, String> signingMetadata = new HashMap<>();
+
+      signingMetadata.put("type", AwsKMSMetadata.TYPE);
+      signingMetadata.put(
+          AwsKMSMetadataDeserializer.AUTH_MODE, AwsAuthenticationMode.SPECIFIED.toString());
+      signingMetadata.put(AwsKMSMetadataDeserializer.REGION, awsRegion);
+      signingMetadata.put(AwsKMSMetadataDeserializer.ACCESS_KEY_ID, accessKeyId);
+      signingMetadata.put(AwsKMSMetadataDeserializer.SECRET_ACCESS_KEY, secretAccessKey);
+      sessionToken.ifPresent(
+          token -> signingMetadata.put(AwsKMSMetadataDeserializer.SESSION_TOKEN, token));
+      endpointOverride.ifPresent(
+          endpoint ->
+              signingMetadata.put(
+                  AwsKMSMetadataDeserializer.ENDPOINT_OVERRIDE, endpoint.toString()));
+      signingMetadata.put(AwsKMSMetadataDeserializer.KMS_KEY_ID, kmsKeyId);
+
+      createYamlFile(metadataFilePath, signingMetadata);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to construct aws-kms yaml file", e);
     }
   }
 
