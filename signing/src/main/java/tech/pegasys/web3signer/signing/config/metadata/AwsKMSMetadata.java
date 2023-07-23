@@ -45,10 +45,6 @@ public class AwsKMSMetadata extends SigningMetadata {
     this.endpointOverride = endpointOverride;
   }
 
-  public boolean isEnabled() {
-    return true;
-  }
-
   public AwsAuthenticationMode getAuthenticationMode() {
     return this.authenticationMode;
   }
