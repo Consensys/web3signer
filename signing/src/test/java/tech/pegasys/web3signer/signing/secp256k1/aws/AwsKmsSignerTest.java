@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
-import tech.pegasys.web3signer.keystorage.awskms.AwsKMS;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;

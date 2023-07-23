@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.aws;
 
-import tech.pegasys.web3signer.keystorage.awskms.AwsKMS;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;

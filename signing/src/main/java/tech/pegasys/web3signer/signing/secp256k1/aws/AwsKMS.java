@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.keystorage.awskms;
+package tech.pegasys.web3signer.signing.secp256k1.aws;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static tech.pegasys.web3signer.common.config.AwsAuthenticationMode.ENVIRONMENT;

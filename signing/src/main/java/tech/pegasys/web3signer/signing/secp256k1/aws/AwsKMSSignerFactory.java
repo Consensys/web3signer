@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.signing.secp256k1.aws;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import tech.pegasys.web3signer.keystorage.awskms.AwsKMS;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
