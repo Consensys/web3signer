@@ -19,16 +19,14 @@ import static tech.pegasys.web3signer.core.util.ResponseCodeSelector.jsonRPCErro
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.VertxRequestTransmitterFactory;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequestHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.TransactionSerializer;
-import tech.pegasys.web3signer.signing.ArtifactSigner;
-import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-
-import java.util.Optional;
+import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 
 import io.vertx.core.json.DecodeException;
 import io.vertx.ext.web.RoutingContext;
@@ -40,21 +38,21 @@ public class SendTransactionHandler implements JsonRpcRequestHandler {
   private static final Logger LOG = LogManager.getLogger();
 
   private final long chainId;
-  private final ArtifactSignerProvider signerProvider;
   private final TransactionFactory transactionFactory;
   private final VertxRequestTransmitterFactory vertxTransmitterFactory;
 
+  private final SignerForIdentifier<SecpArtifactSignature> secpSigner;
   private static final int MAX_NONCE_RETRIES = 10;
 
   public SendTransactionHandler(
       final long chainId,
-      final ArtifactSignerProvider signerProvider,
       final TransactionFactory transactionFactory,
-      final VertxRequestTransmitterFactory vertxTransmitterFactory) {
+      final VertxRequestTransmitterFactory vertxTransmitterFactory,
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner) {
     this.chainId = chainId;
-    this.signerProvider = signerProvider;
     this.transactionFactory = transactionFactory;
     this.vertxTransmitterFactory = vertxTransmitterFactory;
+    this.secpSigner = secpSigner;
   }
 
   @Override
@@ -78,27 +76,24 @@ public class SendTransactionHandler implements JsonRpcRequestHandler {
       return;
     }
 
-    final Optional<ArtifactSigner> signer =
-        signerProvider.getSigner(normaliseIdentifier(transaction.sender()));
-
-    if (signer.isEmpty()) {
+    if (!secpSigner.isSignerAvailable(normaliseIdentifier(transaction.sender()))) {
       LOG.debug("From address ({}) does not match any available account", transaction.sender());
       context.fail(
           BAD_REQUEST.code(), new JsonRpcException(SIGNING_FROM_IS_NOT_AN_UNLOCKED_ACCOUNT));
       return;
     }
 
-    sendTransaction(transaction, context, signer.get(), request);
+    sendTransaction(transaction, context, secpSigner, request);
   }
 
   private void sendTransaction(
       final Transaction transaction,
       final RoutingContext routingContext,
-      final ArtifactSigner signerProvider,
+      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
       final JsonRpcRequest request) {
 
     final TransactionSerializer transactionSerializer =
-        new TransactionSerializer(signerProvider, chainId);
+        new TransactionSerializer(secpSigner, chainId);
 
     final TransactionTransmitter transmitter =
         createTransactionTransmitter(transaction, transactionSerializer, routingContext, request);
