@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
-public class AwsKMSMetadataDeserializer extends StdDeserializer<AwsKMSMetadata> {
+public class AwsKmsMetadataDeserializer extends StdDeserializer<AwsKmsMetadata> {
 
   public static final String AUTH_MODE = "authenticationMode";
   public static final String REGION = "region";
@@ -38,16 +38,16 @@ public class AwsKMSMetadataDeserializer extends StdDeserializer<AwsKMSMetadata> 
   public static final String ENDPOINT_OVERRIDE = "endpointOverride";
 
   @SuppressWarnings("Unused")
-  public AwsKMSMetadataDeserializer() {
+  public AwsKmsMetadataDeserializer() {
     this(null);
   }
 
-  protected AwsKMSMetadataDeserializer(final Class<?> vc) {
+  protected AwsKmsMetadataDeserializer(final Class<?> vc) {
     super(vc);
   }
 
   @Override
-  public AwsKMSMetadata deserialize(final JsonParser parser, final DeserializationContext context)
+  public AwsKmsMetadata deserialize(final JsonParser parser, final DeserializationContext context)
       throws IOException {
 
     AwsAuthenticationMode authMode = AwsAuthenticationMode.SPECIFIED;
@@ -109,7 +109,7 @@ public class AwsKMSMetadataDeserializer extends StdDeserializer<AwsKMSMetadata> 
                   .build());
     }
 
-    return new AwsKMSMetadata(authMode, region, awsCredentials, kmsKeyId, endpointOverride);
+    return new AwsKmsMetadata(authMode, region, awsCredentials, kmsKeyId, endpointOverride);
   }
 
   private void validate(

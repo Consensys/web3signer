@@ -25,8 +25,8 @@ import tech.pegasys.web3signer.keystore.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
-import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKMSClientFactory;
-import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKMSSigner;
+import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsClientFactory;
+import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -160,7 +160,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final ECPublicKey ecPublicKey = remoteAWSKMSKey.getValue();
 
     try {
-      METADATA_FILE_HELPERS.createAwsKMSYamlFileAt(
+      METADATA_FILE_HELPERS.createAwsKmsYamlFileAt(
           testDirectory.resolve("aws_kms_test.yaml"),
           region,
           roAwsAccessKeyId,
@@ -179,7 +179,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
           AwsCredentialsProviderFactory.createAwsCredentialsProvider(
               AwsAuthenticationMode.SPECIFIED, Optional.of(getAwsCredentialsFromEnvVar()));
       try (final KmsClient rwKmsClient =
-          AwsKMSClientFactory.createKMSClient(
+          AwsKmsClientFactory.createKmsClient(
               rwAwsCredentialsProvider, region, awsEndpointOverride)) {
         rwKmsClient.scheduleKeyDeletion(deletionRequest);
       }
@@ -229,7 +229,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
         AwsCredentialsProviderFactory.createAwsCredentialsProvider(
             AwsAuthenticationMode.SPECIFIED, Optional.of(getAwsCredentialsFromEnvVar()));
     try (final KmsClient rwKmsClient =
-        AwsKMSClientFactory.createKMSClient(
+        AwsKmsClientFactory.createKmsClient(
             rwAwsCredentialsProvider, region, awsEndpointOverride)) {
       // create a test key
       final CreateKeyRequest web3SignerTestingKey =
@@ -240,7 +240,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
               .build();
 
       final String testKeyId = rwKmsClient.createKey(web3SignerTestingKey).keyMetadata().keyId();
-      final ECPublicKey ecPublicKey = AwsKMSSigner.getECPublicKey(rwKmsClient, testKeyId);
+      final ECPublicKey ecPublicKey = AwsKmsSignerFactory.getECPublicKey(rwKmsClient, testKeyId);
       return Maps.immutableEntry(testKeyId, ecPublicKey);
     }
   }

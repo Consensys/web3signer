@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
 import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
-import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
+import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
@@ -98,7 +98,7 @@ public class AwsKmsSignerTest {
         AwsCredentialsProviderFactory.createAwsCredentialsProvider(
             AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_RW_CREDENTIALS));
     awsKMSClient =
-        AwsKMSClientFactory.createKMSClient(awsCredentialsProvider, AWS_REGION, ENDPOINT_OVERRIDE);
+        AwsKmsClientFactory.createKmsClient(awsCredentialsProvider, AWS_REGION, ENDPOINT_OVERRIDE);
 
     // create a test key
     final CreateKeyRequest web3SignerTestingKey =
@@ -128,14 +128,14 @@ public class AwsKmsSignerTest {
 
   @Test
   public void awsKmsSignerCanSignTwice() {
-    final AwsKMSMetadata awsKMSMetadata =
-        new AwsKMSMetadata(
+    final AwsKmsMetadata awsKmsMetadata =
+        new AwsKmsMetadata(
             AwsAuthenticationMode.SPECIFIED,
             AWS_REGION,
             Optional.of(AWS_CREDENTIALS),
             testKeyId,
             ENDPOINT_OVERRIDE);
-    final Signer signer = AwsKMSSignerFactory.createSigner(awsKMSMetadata, true);
+    final Signer signer = AwsKmsSignerFactory.createSigner(awsKmsMetadata, true);
 
     final byte[] dataToHash = "Hello".getBytes(UTF_8);
     signer.sign(dataToHash);
@@ -144,14 +144,14 @@ public class AwsKmsSignerTest {
 
   @Test
   void awsWithoutHashingDoesntHashData() throws SignatureException {
-    final AwsKMSMetadata awsKMSMetadata =
-        new AwsKMSMetadata(
+    final AwsKmsMetadata awsKmsMetadata =
+        new AwsKmsMetadata(
             AwsAuthenticationMode.SPECIFIED,
             AWS_REGION,
             Optional.of(AWS_CREDENTIALS),
             testKeyId,
             ENDPOINT_OVERRIDE);
-    final Signer signer = AwsKMSSignerFactory.createSigner(awsKMSMetadata, false);
+    final Signer signer = AwsKmsSignerFactory.createSigner(awsKmsMetadata, false);
     final BigInteger publicKey =
         Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
 

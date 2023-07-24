@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
   @JsonSubTypes.Type(value = InterlockSigningMetadata.class, name = InterlockSigningMetadata.TYPE),
   @JsonSubTypes.Type(value = YubiHsmSigningMetadata.class, name = YubiHsmSigningMetadata.TYPE),
   @JsonSubTypes.Type(value = AwsKeySigningMetadata.class, name = AwsKeySigningMetadata.TYPE),
-  @JsonSubTypes.Type(value = AwsKMSMetadata.class, name = AwsKMSMetadata.TYPE),
+  @JsonSubTypes.Type(value = AwsKmsMetadata.class, name = AwsKmsMetadata.TYPE),
 })
 public abstract class SigningMetadata {
 

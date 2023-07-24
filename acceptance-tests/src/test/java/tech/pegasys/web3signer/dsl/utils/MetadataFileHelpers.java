@@ -29,8 +29,8 @@ import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.certificates.CertificateHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadata;
-import tech.pegasys.web3signer.signing.config.metadata.AwsKMSMetadataDeserializer;
+import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
+import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadataDeserializer;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -266,7 +266,7 @@ public class MetadataFileHelpers {
     }
   }
 
-  public void createAwsKMSYamlFileAt(
+  public void createAwsKmsYamlFileAt(
       final Path metadataFilePath,
       final String awsRegion,
       final String accessKeyId,
@@ -277,19 +277,19 @@ public class MetadataFileHelpers {
     try {
       final Map<String, String> signingMetadata = new HashMap<>();
 
-      signingMetadata.put("type", AwsKMSMetadata.TYPE);
+      signingMetadata.put("type", AwsKmsMetadata.TYPE);
       signingMetadata.put(
-          AwsKMSMetadataDeserializer.AUTH_MODE, AwsAuthenticationMode.SPECIFIED.toString());
-      signingMetadata.put(AwsKMSMetadataDeserializer.REGION, awsRegion);
-      signingMetadata.put(AwsKMSMetadataDeserializer.ACCESS_KEY_ID, accessKeyId);
-      signingMetadata.put(AwsKMSMetadataDeserializer.SECRET_ACCESS_KEY, secretAccessKey);
+          AwsKmsMetadataDeserializer.AUTH_MODE, AwsAuthenticationMode.SPECIFIED.toString());
+      signingMetadata.put(AwsKmsMetadataDeserializer.REGION, awsRegion);
+      signingMetadata.put(AwsKmsMetadataDeserializer.ACCESS_KEY_ID, accessKeyId);
+      signingMetadata.put(AwsKmsMetadataDeserializer.SECRET_ACCESS_KEY, secretAccessKey);
       sessionToken.ifPresent(
-          token -> signingMetadata.put(AwsKMSMetadataDeserializer.SESSION_TOKEN, token));
+          token -> signingMetadata.put(AwsKmsMetadataDeserializer.SESSION_TOKEN, token));
       endpointOverride.ifPresent(
           endpoint ->
               signingMetadata.put(
-                  AwsKMSMetadataDeserializer.ENDPOINT_OVERRIDE, endpoint.toString()));
-      signingMetadata.put(AwsKMSMetadataDeserializer.KMS_KEY_ID, kmsKeyId);
+                  AwsKmsMetadataDeserializer.ENDPOINT_OVERRIDE, endpoint.toString()));
+      signingMetadata.put(AwsKmsMetadataDeserializer.KMS_KEY_ID, kmsKeyId);
 
       createYamlFile(metadataFilePath, signingMetadata);
     } catch (final Exception e) {

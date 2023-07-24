@@ -18,7 +18,7 @@ import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
-import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKMSSignerFactory;
+import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureConfig;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
@@ -122,8 +122,8 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
   }
 
   @Override
-  public ArtifactSigner create(final AwsKMSMetadata awsKMSMetadata) {
-    return signerFactory.apply(AwsKMSSignerFactory.createSigner(awsKMSMetadata, needToHash));
+  public ArtifactSigner create(final AwsKmsMetadata awsKmsMetadata) {
+    return signerFactory.apply(AwsKmsSignerFactory.createSigner(awsKmsMetadata, needToHash));
   }
 
   private ArtifactSigner createCredentialSigner(final Credentials credentials) {

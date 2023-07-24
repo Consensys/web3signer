@@ -56,7 +56,7 @@ public interface ArtifactSignerFactory {
         "Unable to generate a signer of requested type from supplied metadata");
   }
 
-  default ArtifactSigner create(final AwsKMSMetadata awsKMSMetadata) {
+  default ArtifactSigner create(final AwsKmsMetadata awsKmsMetadata) {
     throw new UnsupportedOperationException(
         "Unable to generate a signer of requested type from supplied metadata");
   }

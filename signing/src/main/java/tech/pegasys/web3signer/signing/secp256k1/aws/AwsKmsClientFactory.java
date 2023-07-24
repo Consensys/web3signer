@@ -21,9 +21,9 @@ import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.KmsClientBuilder;
 
 /** Factory class that provide instance of KmsClient */
-public class AwsKMSClientFactory {
+public class AwsKmsClientFactory {
 
-  public static KmsClient createKMSClient(
+  public static KmsClient createKmsClient(
       final AwsCredentialsProvider awsCredentialsProvider,
       final String region,
       final Optional<URI> endpointOverride) {

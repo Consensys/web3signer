@@ -22,8 +22,8 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-@JsonDeserialize(using = AwsKMSMetadataDeserializer.class)
-public class AwsKMSMetadata extends SigningMetadata {
+@JsonDeserialize(using = AwsKmsMetadataDeserializer.class)
+public class AwsKmsMetadata extends SigningMetadata {
   public static final String TYPE = "aws-kms";
   private final AwsAuthenticationMode authenticationMode;
   private final String region;
@@ -31,7 +31,7 @@ public class AwsKMSMetadata extends SigningMetadata {
   private final String kmsKeyId;
   private final Optional<URI> endpointOverride;
 
-  public AwsKMSMetadata(
+  public AwsKmsMetadata(
       final AwsAuthenticationMode authenticationMode,
       final String region,
       final Optional<AwsCredentials> awsCredentials,
