@@ -56,11 +56,11 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpMethod;
@@ -161,7 +161,7 @@ public class Eth1Runner extends Runner {
       final Vertx vertx, final MetricsSystem metricsSystem) {
     return new DefaultArtifactSignerProvider(
         () -> {
-          final List<ArtifactSigner> signers = Lists.newArrayList();
+          final List<ArtifactSigner> signers = new ArrayList<>();
           final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
           registerClose(azureKeyVaultFactory::close);
           final AzureKeyVaultSignerFactory azureFactory =

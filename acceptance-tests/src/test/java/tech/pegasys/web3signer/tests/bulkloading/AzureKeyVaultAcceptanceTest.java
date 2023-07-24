@@ -86,11 +86,11 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         .contentType(ContentType.JSON)
         .body("status", equalTo("UP"));
 
-    // BLS keys include additional multi-line key 200 keys
+    // BLS keys include additional multi-line key with 200 keys
     final int expectedKeyLoaded = keyType == KeyType.BLS ? 202 : 2;
 
     final String jsonBody = healthcheckResponse.body().asString();
-    int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
+    final int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
     assertThat(keysLoaded).isEqualTo(expectedKeyLoaded);
   }
 
@@ -126,8 +126,8 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
     // keys loaded should be 1 as well.
     final String jsonBody = healthcheckResponse.body().asString();
-    int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
-    int errorCount = getAzureBulkLoadingData(jsonBody, "error-count");
+    final int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
+    final int errorCount = getAzureBulkLoadingData(jsonBody, "error-count");
     assertThat(keysLoaded).isOne();
     assertThat(errorCount).isZero();
   }

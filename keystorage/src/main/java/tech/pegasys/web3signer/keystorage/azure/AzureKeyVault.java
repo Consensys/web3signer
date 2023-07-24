@@ -172,13 +172,13 @@ public class AzureKeyVault {
                               result.add(value);
                             } catch (final Exception e) {
                               LOG.warn(
-                                  "Failed to map secret '{}' to requested object type.",
+                                  "Failed to map keyProperties '{}' to requested object type.",
                                   kp.getName());
                               errorCount.incrementAndGet();
                             }
                           }));
     } catch (final Exception e) {
-      LOG.error("Unexpected error during Azure map-secrets", e);
+      LOG.error("Unexpected error during Azure mapKeyProperties", e);
       errorCount.incrementAndGet();
     }
 
