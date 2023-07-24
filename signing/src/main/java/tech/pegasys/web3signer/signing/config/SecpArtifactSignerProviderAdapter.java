@@ -30,6 +30,10 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Adapts the provided ArtifactSignerProvider into a map of signers using their eth1 address as the
+ * identifier rather than the public key which is the default behaviour
+ */
 public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
