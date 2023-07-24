@@ -1,0 +1,100 @@
+/*
+ * Copyright 2023 ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+package tech.pegasys.web3signer.signing.config;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.concurrent.ExecutorService;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
+class AzureKeyVaultFactoryTest {
+  final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
+
+  @AfterEach
+  void shutdownExecutor() {
+    azureKeyVaultFactory.close();
+  }
+
+  @Test
+  void executorIsNotCreatedWhenFactoryIsCreated() {
+    assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNull();
+  }
+
+  @Test
+  void createsExecutorWhenUsingClientSecretMode() {
+    azureKeyVaultFactory.createAzureKeyVault(
+        "clientId",
+        "clientSecret",
+        "keyVaultName",
+        "tenantId",
+        AzureAuthenticationMode.CLIENT_SECRET);
+    assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNotNull();
+  }
+
+  @Test
+  void reusesExecutorWhenUsingClientSecretMode() {
+    azureKeyVaultFactory.createAzureKeyVault(
+        "clientId",
+        "clientSecret",
+        "keyVaultName",
+        "tenantId",
+        AzureAuthenticationMode.CLIENT_SECRET);
+    final ExecutorService executorService1 = azureKeyVaultFactory.getExecutorServiceCache().get();
+    assertThat(executorService1).isNotNull();
+
+    azureKeyVaultFactory.createAzureKeyVault(
+        "clientId",
+        "clientSecret",
+        "keyVaultName",
+        "tenantId",
+        AzureAuthenticationMode.CLIENT_SECRET);
+    final ExecutorService executorService2 = azureKeyVaultFactory.getExecutorServiceCache().get();
+    assertThat(executorService1).isSameAs(executorService2);
+  }
+
+  @Test
+  void doesNotCreateExecutorWhenUsingUserAssignedMode() {
+    azureKeyVaultFactory.createAzureKeyVault(
+        "clientId",
+        "clientSecret",
+        "keyVaultName",
+        "tenantId",
+        AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY);
+    assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNull();
+  }
+
+  @Test
+  void doesNotCreateExecutorWhenUsingSystemAssignedMode() {
+    azureKeyVaultFactory.createAzureKeyVault(
+        "clientId",
+        "clientSecret",
+        "keyVaultName",
+        "tenantId",
+        AzureAuthenticationMode.SYSTEM_ASSIGNED_MANAGED_IDENTITY);
+    assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNull();
+  }
+
+  @Test
+  void closeShutdownsExecutor() {
+    azureKeyVaultFactory.createAzureKeyVault(
+        "clientId",
+        "clientSecret",
+        "keyVaultName",
+        "tenantId",
+        AzureAuthenticationMode.CLIENT_SECRET);
+    azureKeyVaultFactory.close();
+    assertThat(azureKeyVaultFactory.getExecutorServiceCache().get().isShutdown()).isTrue();
+  }
+}

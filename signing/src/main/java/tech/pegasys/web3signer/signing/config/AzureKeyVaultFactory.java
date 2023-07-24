@@ -20,6 +20,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.annotations.VisibleForTesting;
+
 public class AzureKeyVaultFactory implements AutoCloseable {
   private final AtomicReference<ExecutorService> executorServiceCache = new AtomicReference<>();
 
@@ -62,5 +64,10 @@ public class AzureKeyVaultFactory implements AutoCloseable {
     if (executorService != null) {
       executorService.shutdownNow();
     }
+  }
+
+  @VisibleForTesting
+  protected AtomicReference<ExecutorService> getExecutorServiceCache() {
+    return executorServiceCache;
   }
 }
