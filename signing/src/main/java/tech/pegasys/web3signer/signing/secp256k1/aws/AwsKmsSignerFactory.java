@@ -65,7 +65,7 @@ public class AwsKmsSignerFactory {
     final GetPublicKeyRequest getPublicKeyRequest =
         GetPublicKeyRequest.builder().keyId(kmsKeyId).build();
     final GetPublicKeyResponse publicKeyResponse = kmsClient.getPublicKey(getPublicKeyRequest);
-    KeySpec keySpec = publicKeyResponse.keySpec();
+    final KeySpec keySpec = publicKeyResponse.keySpec();
     if (keySpec != KeySpec.ECC_SECG_P256_K1) {
       throw new RuntimeException("Unsupported key spec from AWS KMS: " + keySpec.toString());
     }

@@ -52,16 +52,15 @@ public class AwsKmsSigner implements Signer {
             .message(SdkBytes.fromByteArray(dataToSign))
             .build();
 
-    final byte[] signature;
     try (final KmsClient kmsClient =
         AwsKmsClientFactory.createKmsClient(
             AwsCredentialsProviderFactory.createAwsCredentialsProvider(
                 awsKmsMetadata.getAuthenticationMode(), awsKmsMetadata.getAwsCredentials()),
             awsKmsMetadata.getRegion(),
             awsKmsMetadata.getEndpointOverride())) {
-      signature = kmsClient.sign(signRequest).signature().asByteArray();
+      final byte[] signature = kmsClient.sign(signRequest).signature().asByteArray();
+      return Eth1SignatureUtil.deriveSignatureFromDerEncoded(dataToSign, ecPublicKey, signature);
     }
-    return Eth1SignatureUtil.deriveSignatureFromDerEncoded(dataToSign, ecPublicKey, signature);
   }
 
   @Override
