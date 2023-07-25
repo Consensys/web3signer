@@ -12,6 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.aws;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-class AwsKmsClientFactoryTest {}
+class AwsKmsClientFactoryTest {
+  // TODO: Add test that validates that cached instance is used
+}
