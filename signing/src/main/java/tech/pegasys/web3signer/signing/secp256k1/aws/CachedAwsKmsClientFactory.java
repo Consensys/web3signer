@@ -13,25 +13,34 @@
 package tech.pegasys.web3signer.signing.secp256k1.aws;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.KmsClientBuilder;
 
-/** Factory class that provide instance of KmsClient */
-public class AwsKmsClientFactory {
+/** Factory class that provide cached instance of KmsClient */
+public class CachedAwsKmsClientFactory {
+  private static final Map<AwsKmsClientKey, AwsKmsClient> CACHE = new ConcurrentHashMap<>();
 
-  public static KmsClient createKmsClient(
+  public static AwsKmsClient createKmsClient(
       final AwsCredentialsProvider awsCredentialsProvider,
       final String region,
       final Optional<URI> endpointOverride) {
-    final KmsClientBuilder kmsClientBuilder = KmsClient.builder();
-    endpointOverride.ifPresent(kmsClientBuilder::endpointOverride);
-    return kmsClientBuilder
-        .credentialsProvider(awsCredentialsProvider)
-        .region(Region.of(region))
-        .build();
+    final AwsKmsClientKey awsKmsClientKey =
+        new AwsKmsClientKey(awsCredentialsProvider.resolveCredentials(), region, endpointOverride);
+
+    return CACHE.computeIfAbsent(
+        awsKmsClientKey,
+        k -> {
+          final KmsClientBuilder kmsClientBuilder = KmsClient.builder();
+          endpointOverride.ifPresent(kmsClientBuilder::endpointOverride);
+          kmsClientBuilder.credentialsProvider(awsCredentialsProvider).region(Region.of(region));
+
+          return new AwsKmsClient(kmsClientBuilder.build());
+        });
   }
 }

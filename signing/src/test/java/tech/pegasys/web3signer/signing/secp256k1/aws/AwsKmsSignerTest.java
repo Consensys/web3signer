@@ -37,9 +37,7 @@ import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
-import software.amazon.awssdk.services.kms.model.CreateKeyResponse;
 import software.amazon.awssdk.services.kms.model.KeySpec;
 import software.amazon.awssdk.services.kms.model.KeyUsageType;
 import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
@@ -89,7 +87,7 @@ public class AwsKmsSignerTest {
           .withSessionToken(AWS_SESSION_TOKEN)
           .build();
 
-  private static KmsClient awsKMSClient;
+  private static AwsKmsClient awsKMSClient;
   private static String testKeyId;
 
   @BeforeAll
@@ -98,7 +96,8 @@ public class AwsKmsSignerTest {
         AwsCredentialsProviderFactory.createAwsCredentialsProvider(
             AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_RW_CREDENTIALS));
     awsKMSClient =
-        AwsKmsClientFactory.createKmsClient(awsCredentialsProvider, AWS_REGION, ENDPOINT_OVERRIDE);
+        CachedAwsKmsClientFactory.createKmsClient(
+            awsCredentialsProvider, AWS_REGION, ENDPOINT_OVERRIDE);
 
     // create a test key
     final CreateKeyRequest web3SignerTestingKey =
@@ -107,8 +106,7 @@ public class AwsKmsSignerTest {
             .description("Web3Signer Testing Key")
             .keyUsage(KeyUsageType.SIGN_VERIFY)
             .build();
-    CreateKeyResponse createKeyResponse = awsKMSClient.createKey(web3SignerTestingKey);
-    testKeyId = createKeyResponse.keyMetadata().keyId();
+    testKeyId = awsKMSClient.createKey(web3SignerTestingKey);
     assertThat(testKeyId).isNotEmpty();
   }
 

@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.aws;
 
-import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
-import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
 import tech.pegasys.web3signer.signing.secp256k1.util.Eth1SignatureUtil;
@@ -21,22 +19,22 @@ import tech.pegasys.web3signer.signing.secp256k1.util.Eth1SignatureUtil;
 import java.security.interfaces.ECPublicKey;
 
 import org.web3j.crypto.Hash;
-import software.amazon.awssdk.core.SdkBytes;
-import software.amazon.awssdk.services.kms.KmsClient;
-import software.amazon.awssdk.services.kms.model.MessageType;
-import software.amazon.awssdk.services.kms.model.SignRequest;
-import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
 
 public class AwsKmsSigner implements Signer {
-  private final AwsKmsMetadata awsKmsMetadata;
   private final ECPublicKey ecPublicKey;
+  private final AwsKmsClient awsKmsClient;
+  private final String kmsKeyId;
   // required for eth1 signing. Filecoin signing doesn't need it.
   private final boolean applySha3Hash;
 
-  AwsKmsSigner(
-      final ECPublicKey ecPublicKey, final AwsKmsMetadata awsKmsMetadata, boolean applySha3Hash) {
+  public AwsKmsSigner(
+      final ECPublicKey ecPublicKey,
+      final AwsKmsClient awsKmsClient,
+      final String kmsKeyId,
+      final boolean applySha3Hash) {
     this.ecPublicKey = ecPublicKey;
-    this.awsKmsMetadata = awsKmsMetadata;
+    this.awsKmsClient = awsKmsClient;
+    this.kmsKeyId = kmsKeyId;
     this.applySha3Hash = applySha3Hash;
   }
 
@@ -44,23 +42,8 @@ public class AwsKmsSigner implements Signer {
   public Signature sign(final byte[] data) {
     // sha3hash is required for eth1 signing. Filecoin signing doesn't need hashing.
     final byte[] dataToSign = applySha3Hash ? Hash.sha3(data) : data;
-    final SignRequest signRequest =
-        SignRequest.builder()
-            .keyId(awsKmsMetadata.getKmsKeyId())
-            .signingAlgorithm(SigningAlgorithmSpec.ECDSA_SHA_256)
-            .messageType(MessageType.DIGEST)
-            .message(SdkBytes.fromByteArray(dataToSign))
-            .build();
-
-    try (final KmsClient kmsClient =
-        AwsKmsClientFactory.createKmsClient(
-            AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-                awsKmsMetadata.getAuthenticationMode(), awsKmsMetadata.getAwsCredentials()),
-            awsKmsMetadata.getRegion(),
-            awsKmsMetadata.getEndpointOverride())) {
-      final byte[] signature = kmsClient.sign(signRequest).signature().asByteArray();
-      return Eth1SignatureUtil.deriveSignatureFromDerEncoded(dataToSign, ecPublicKey, signature);
-    }
+    final byte[] signature = awsKmsClient.sign(kmsKeyId, dataToSign);
+    return Eth1SignatureUtil.deriveSignatureFromDerEncoded(dataToSign, ecPublicKey, signature);
   }
 
   @Override
