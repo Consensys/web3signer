@@ -148,12 +148,11 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final String roAwsSecretAccessKey = System.getenv("AWS_SECRET_ACCESS_KEY");
     final Optional<String> awsSessionToken =
         Optional.ofNullable(System.getenv("AWS_SESSION_TOKEN"));
+    // default region to us-east-2 if environment variable is not defined.
     final String region = Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
     // can be pointed to localstack
     final Optional<URI> awsEndpointOverride =
-        System.getenv("AWS_ENDPOINT_OVERRIDE") != null
-            ? Optional.of(URI.create(System.getenv("AWS_ENDPOINT_OVERRIDE")))
-            : Optional.empty();
+        Optional.ofNullable(System.getenv("AWS_ENDPOINT_OVERRIDE")).map(URI::create);
 
     final Map.Entry<String, ECPublicKey> remoteAWSKMSKey = createRemoteAWSKMSKey();
     final String awsKeyId = remoteAWSKMSKey.getKey();
