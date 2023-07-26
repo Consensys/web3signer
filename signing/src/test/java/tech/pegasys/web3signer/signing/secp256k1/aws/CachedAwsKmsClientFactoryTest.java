@@ -12,6 +12,87 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.aws;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.common.config.AwsCredentials;
+import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
+
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 class CachedAwsKmsClientFactoryTest {
-  // TODO: Add test that validates that cached instance is used
+  @Test
+  void cachedInstanceOfKmsClientIsReturnedForSpecifiedCredentials() {
+    final AwsKmsClient kmsClient_1 =
+        CachedAwsKmsClientFactory.createKmsClient(
+            AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                AwsAuthenticationMode.SPECIFIED,
+                Optional.of(
+                    AwsCredentials.builder()
+                        .withAccessKeyId("test")
+                        .withSecretAccessKey("test")
+                        .build())),
+            "us-east-2",
+            Optional.empty());
+
+    final AwsKmsClient kmsClient_2 =
+        CachedAwsKmsClientFactory.createKmsClient(
+            AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                AwsAuthenticationMode.SPECIFIED,
+                Optional.of(
+                    AwsCredentials.builder()
+                        .withAccessKeyId("test")
+                        .withSecretAccessKey("test")
+                        .build())),
+            "us-east-2",
+            Optional.empty());
+
+    final AwsKmsClient kmsClient_3 =
+            CachedAwsKmsClientFactory.createKmsClient(
+                    AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                            AwsAuthenticationMode.SPECIFIED,
+                            Optional.of(
+                                    AwsCredentials.builder()
+                                            .withAccessKeyId("test3")
+                                            .withSecretAccessKey("test3")
+                                            .build())),
+                    "us-east-2",
+                    Optional.empty());
+
+    assertThat(kmsClient_1).isEqualTo(kmsClient_2);
+    assertThat(kmsClient_1).isNotEqualTo(kmsClient_3);
+  }
+
+  @Test
+  void cachedInstanceOfKmsClientIsReturnedForSpecifiedCredentialsWithSessionToken() {
+    final AwsKmsClient kmsClient_1 =
+            CachedAwsKmsClientFactory.createKmsClient(
+                    AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                            AwsAuthenticationMode.SPECIFIED,
+                            Optional.of(
+                                    AwsCredentials.builder()
+                                            .withAccessKeyId("test")
+                                            .withSecretAccessKey("test")
+                                            .withSessionToken("test")
+                                            .build())),
+                    "us-east-2",
+                    Optional.empty());
+
+    final AwsKmsClient kmsClient_2 =
+            CachedAwsKmsClientFactory.createKmsClient(
+                    AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                            AwsAuthenticationMode.SPECIFIED,
+                            Optional.of(
+                                    AwsCredentials.builder()
+                                            .withAccessKeyId("test")
+                                            .withSecretAccessKey("test")
+                                            .withSessionToken("test")
+                                            .build())),
+                    "us-east-2",
+                    Optional.empty());
+
+    assertThat(kmsClient_1).isEqualTo(kmsClient_2);
+  }
 }
