@@ -67,8 +67,7 @@ public class AwsKmsMetadataDeserializer extends StdDeserializer<AwsKmsMetadata> 
       try {
         authMode = AwsAuthenticationMode.valueOf(node.get(AUTH_MODE).asText());
       } catch (final IllegalArgumentException e) {
-        throw new JsonMappingException(
-            parser, "Error converting " + AUTH_MODE + ": " + e.getMessage());
+        throw new JsonMappingException(parser, "Invalid value for parameter: " + AUTH_MODE + ".");
       }
     }
 
@@ -93,7 +92,12 @@ public class AwsKmsMetadataDeserializer extends StdDeserializer<AwsKmsMetadata> 
     }
 
     if (node.get(ENDPOINT_OVERRIDE) != null) {
-      endpointOverride = Optional.of(URI.create(node.get(ENDPOINT_OVERRIDE).asText()));
+      try {
+        endpointOverride = Optional.of(URI.create(node.get(ENDPOINT_OVERRIDE).asText()));
+      } catch (final IllegalArgumentException e) {
+        throw new JsonMappingException(
+            parser, "Invalid value for parameter: " + ENDPOINT_OVERRIDE + ".");
+      }
     }
 
     // validate
@@ -144,7 +148,8 @@ public class AwsKmsMetadataDeserializer extends StdDeserializer<AwsKmsMetadata> 
 
     if (!missingParameters.isEmpty()) {
       throw new JsonMappingException(
-          parser, "Missing values for required parameters: " + String.join(",", missingParameters));
+          parser,
+          "Missing values for required parameters: " + String.join(", ", missingParameters));
     }
   }
 }
