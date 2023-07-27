@@ -59,12 +59,7 @@ public class AzureKeyVaultSignerTest {
   void azureSignerCanSign() throws SignatureException {
     final AzureConfig config =
         new AzureConfig(
-            AZURE_KEY_VAULT_NAME,
-            KEY_NAME,
-            "",
-            AZURE_CLIENT_ID,
-            AZURE_CLIENT_SECRET,
-            AZURE_TENANT_ID);
+            AZURE_KEY_VAULT_NAME, KEY_NAME, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID);
 
     final Signer azureNonHashedDataSigner =
         new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory()).createSigner(config);

@@ -22,7 +22,7 @@ public class AzureConfig {
   private final String clientSecret;
   private final String tenantId;
 
-  private static final String LATEST_VERSION = "";
+  private static final String KEY_LATEST_VERSION = "";
 
   @JsonCreator
   public AzureConfig(
@@ -46,7 +46,7 @@ public class AzureConfig {
       final String clientId,
       final String clientSecret,
       final String tenantId) {
-    this(keyVaultName, keyName, LATEST_VERSION, clientId, clientSecret, tenantId);
+    this(keyVaultName, keyName, KEY_LATEST_VERSION, clientId, clientSecret, tenantId);
   }
 
   public String getKeyVaultName() {
