@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.keystorage.azure;
 
 import com.azure.identity.ManagedIdentityCredential;
+import com.azure.identity.TokenCachePersistenceOptions;
 import com.microsoft.aad.msal4j.ClientCredentialFactory;
 import com.microsoft.aad.msal4j.ClientCredentialParameters;
 import com.microsoft.aad.msal4j.ConfidentialClientApplication;
@@ -61,35 +62,22 @@ public class AzureKeyVault {
 
   private static final Logger LOG = LogManager.getLogger();
   private final TokenCredential tokenCredential;
-//  private final ConfidentialClientApplication cca;
   private final SecretClient secretClient;
   private final KeyClient keyClient;
-  private Optional<AccessToken> accessToken = Optional.empty();
-
+  private static final List<String> SCOPE = List.of("https://vault.azure.net/.default");
+  final TokenRequestContext tokenRequestContext = new TokenRequestContext().setScopes(SCOPE);
   public static AzureKeyVault createUsingClientSecretCredentials(
       final String clientId,
       final String clientSecret,
       final String tenantId,
       final String vaultName) {
+
     final TokenCredential tokenCredential =
         new ClientSecretCredentialBuilder()
             .clientId(clientId)
             .clientSecret(clientSecret)
             .tenantId(tenantId)
             .build();
-
-//    IClientCredential credential = ClientCredentialFactory.createFromSecret(clientSecret);
-//    final ConfidentialClientApplication cca;
-//    try {
-//     ConfidentialClientApplication
-//              .builder(clientId, credential)
-//              .authority("https://login.microsoftonline.com/"+tenantId)
-//              .build();
-//    } catch (MalformedURLException e) {
-//      throw new RuntimeException(e);
-//    }
-
-
     return new AzureKeyVault(tokenCredential, vaultName);
   }
 
@@ -98,22 +86,11 @@ public class AzureKeyVault {
     final ManagedIdentityCredentialBuilder managedIdentityCredentialBuilder =
         new ManagedIdentityCredentialBuilder();
     clientId.ifPresent(managedIdentityCredentialBuilder::clientId);
-//    IClientCredential credential = ClientCredentialFactory.createFromSecret("clientSecret");
-//    final ConfidentialClientApplication cca;
-//    try {
-//      cca = ConfidentialClientApplication
-//              .builder(clientId.get(),credential)
-//              .authority("test")
-//              .build();
-//    } catch (MalformedURLException e) {
-//      throw new RuntimeException(e);
-//    }
 
     return new AzureKeyVault(managedIdentityCredentialBuilder.build(), vaultName);
   }
 
   private AzureKeyVault(final TokenCredential tokenCredential, final String vaultName) {
-//    this.cca = cca;
     this.tokenCredential = tokenCredential;
     final String vaultUrl = constructAzureKeyVaultUrl(vaultName);
 
@@ -160,10 +137,9 @@ public class AzureKeyVault {
 
     return HttpRequest.newBuilder(uri)
         .header("Content-Type", "application/json")
-        .header("Authorization", "Bearer " + getOrCreateNewAccessToken().getToken())
+        .header("Authorization", "Bearer " + tokenCredential.getTokenSync(tokenRequestContext).getToken())
         .POST(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))
         .build();
-
   }
 
   private static String constructAzureSignApitUri(
@@ -235,34 +211,5 @@ public class AzureKeyVault {
     return secretProperties.getTags() != null // return false if remote secret doesn't have any tags
         && secretProperties.getTags().entrySet().containsAll(tags.entrySet());
   }
-
-  private AccessToken getOrCreateNewAccessToken() {
-    if (accessToken.isEmpty() || accessToken.get().isExpired()) {
-      if (accessToken.isEmpty()) {
-        LOG.debug("Token had not been acquired before. Requesting new token");
-      } else {
-        LOG.debug("Token expired {} currently time is {}", accessToken.get().getExpiresAt(), System.currentTimeMillis());
-      }
-      final List<String> SCOPE = List.of("https://vault.azure.net/.default");
-      final TokenRequestContext tokenRequestContext = new TokenRequestContext().setScopes(SCOPE);
-      accessToken = Optional.of(tokenCredential.getTokenSync(tokenRequestContext));
-    }
-    return accessToken.get();
-
-
-//      final Set<String> SCOPE = Set.of("https://vault.azure.net/.default");
-//
-//      // Client credential requests will by default try to look for a valid token in the
-//      // in-memory token cache. If found, it will return this token. If a token is not found, or the
-//      // token is not valid, it will fall back to acquiring a token from the AAD service. Although
-//      // not recommended unless there is a reason for doing so, you can skip the cache lookup
-//      // by using .skipCache(true) in ClientCredentialParameters.
-//      ClientCredentialParameters parameters =
-//              ClientCredentialParameters
-//                      .builder(SCOPE)
-//                      .build();
-//
-//      return cca.acquireToken(parameters).join();
-   }
 
 }

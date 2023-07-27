@@ -92,11 +92,13 @@ public class AzureKeyVaultSigner implements Signer {
         vault.fetchKey(config.getKeyName(), config.getKeyVersion());
 
     final byte[] dataToSign = needsToHash ? Hash.sha3(data) : data;
-    long millis = System.currentTimeMillis();
+
+    // 2023-07-27 - We can use the sign method from the azure
+    // library again once they fix the issue with the SECP256K
+    // for java 17
     //final SignResult result = cryptoClient.sign(signingAlgo, dataToSign);
     final SignResult result = signViaRestApi(vault, cryptoClient, signingAlgo, dataToSign);
 
-    System.out.println(MessageFormat.format("Signing call time:{0}", System.currentTimeMillis() - millis));
     final byte[] signature = result.getSignature();
 
     if (signature.length != 64) {
@@ -128,7 +130,6 @@ public class AzureKeyVaultSigner implements Signer {
         BigInteger.valueOf(headerByte), canonicalSignature.r, canonicalSignature.s);
   }
 
-  @SuppressWarnings("Unused")
   private SignResult signViaRestApi(
       final AzureKeyVault vault,
       CryptographyClient cryptoClient,
@@ -136,16 +137,14 @@ public class AzureKeyVaultSigner implements Signer {
       byte[] dataToSign) {
     final String vaultName = config.getKeyVaultName();
 
-    long millis = System.currentTimeMillis();
-
+    //Assemble httpRequest
     final HttpRequest httpRequest =
     vault.getRemoteSigningHttpRequest(cryptoClient, dataToSign, signingAlgo, vaultName);
-    System.out.println(MessageFormat.format("Execute httpRequest as Azure instructs:{0}", System.currentTimeMillis() - millis));
 
-    millis = System.currentTimeMillis();
+    //execute
     var response = azureConnection.executeHttpRequest(httpRequest);
-    System.out.println(MessageFormat.format("Executing http request:{0}", System.currentTimeMillis() - millis));
 
+    //retrieve the results
     final Base64Url signatureBytes = new Base64Url(response.get("value"));
     final String kid = response.get("kid");
 

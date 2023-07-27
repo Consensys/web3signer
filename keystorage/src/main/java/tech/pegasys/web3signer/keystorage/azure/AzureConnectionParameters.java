@@ -42,7 +42,7 @@ public class AzureConnectionParameters {
     this.httpProtocolVersion = httpProtocolVersion.orElse(HttpClient.Version.HTTP_2);
     this.vaultURI =
         URI.create(
-            String.format("https://%s:%d", serverHost, serverPort.orElse(DEFAULT_SERVER_PORT)));
+            String.format("%s:%d", serverHost, serverPort.orElse(DEFAULT_SERVER_PORT)));
   }
 
   public long getTimeoutMilliseconds() {
