@@ -27,6 +27,7 @@ import java.math.BigInteger;
 import java.net.http.HttpRequest;
 import java.security.interfaces.ECPublicKey;
 import java.util.Arrays;
+import java.util.Map;
 
 import com.azure.core.util.Base64Url;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
@@ -131,9 +132,9 @@ public class AzureKeyVaultSigner implements Signer {
 
   private SignResult signViaRestApi(
       final AzureKeyVault vault,
-      CryptographyClient cryptoClient,
-      SignatureAlgorithm signingAlgo,
-      byte[] dataToSign) {
+      final CryptographyClient cryptoClient,
+      final SignatureAlgorithm signingAlgo,
+      final byte[] dataToSign) {
     final String vaultName = config.getKeyVaultName();
 
     // Assemble httpRequest
@@ -141,7 +142,7 @@ public class AzureKeyVaultSigner implements Signer {
         vault.getRemoteSigningHttpRequest(cryptoClient, dataToSign, signingAlgo, vaultName);
 
     // execute
-    var response = azureConnection.executeHttpRequest(httpRequest);
+    final Map<String, String> response = azureConnection.executeHttpRequest(httpRequest);
 
     // retrieve the results
     final Base64Url signatureBytes = new Base64Url(response.get("value"));

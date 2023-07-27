@@ -117,12 +117,12 @@ public class AzureKeyVault {
     final String keyVersion = cryptoClient.getKey().getProperties().getVersion();
     final String apiVersion = KeyServiceVersion.getLatest().getVersion();
 
-    JsonObject jsonBody = new JsonObject();
+    final JsonObject jsonBody = new JsonObject();
     jsonBody.put("alg", signingAlgo);
     jsonBody.put("value", Bytes.of(data).toBase64String());
 
-    String uriString = constructAzureSignApitUri(vaultName, keyName, keyVersion, apiVersion);
-    URI uri = URI.create(uriString);
+    final String uriString = constructAzureSignApitUri(vaultName, keyName, keyVersion, apiVersion);
+    final URI uri = URI.create(uriString);
 
     return HttpRequest.newBuilder(uri)
         .header("Content-Type", "application/json")
