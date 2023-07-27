@@ -12,8 +12,11 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
+import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.constructAzureKeyVaultUrl;
 import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.createUsingClientSecretCredentials;
 
+import tech.pegasys.web3signer.keystorage.azure.AzureConnection;
+import tech.pegasys.web3signer.keystorage.azure.AzureConnectionParameters;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
@@ -21,9 +24,12 @@ import tech.pegasys.web3signer.signing.secp256k1.Signer;
 import tech.pegasys.web3signer.signing.secp256k1.common.SignerInitializationException;
 
 import java.math.BigInteger;
+import java.net.http.HttpRequest;
 import java.security.interfaces.ECPublicKey;
+import java.text.MessageFormat;
 import java.util.Arrays;
 
+import com.azure.core.util.Base64Url;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
 import com.azure.security.keyvault.keys.cryptography.models.SignResult;
 import com.azure.security.keyvault.keys.cryptography.models.SignatureAlgorithm;
@@ -46,6 +52,8 @@ public class AzureKeyVaultSigner implements Signer {
   private final SignatureAlgorithm signingAlgo;
   private final boolean needsToHash; // Apply Hash.sha3(data) before signing
 
+  private final AzureConnection azureConnection;
+
   AzureKeyVaultSigner(
       final AzureConfig config,
       final Bytes publicKey,
@@ -58,6 +66,12 @@ public class AzureKeyVaultSigner implements Signer {
         useDeprecatedSignatureAlgorithm
             ? SignatureAlgorithm.fromString("ECDSA256")
             : SignatureAlgorithm.ES256K;
+    final AzureConnectionFactory connFactory = new AzureConnectionFactory();
+    final AzureConnectionParameters connectionParameters =
+            AzureConnectionParameters.newBuilder()
+                    .withServerHost(constructAzureKeyVaultUrl(config.getKeyVaultName()))
+                    .build();
+    this.azureConnection = connFactory.getOrCreateConnection(connectionParameters);
   }
 
   @Override
@@ -79,8 +93,11 @@ public class AzureKeyVaultSigner implements Signer {
         vault.fetchKey(config.getKeyName(), config.getKeyVersion());
 
     final byte[] dataToSign = needsToHash ? Hash.sha3(data) : data;
-    final SignResult result = cryptoClient.sign(signingAlgo, dataToSign);
+    long millis = System.currentTimeMillis();
+    //final SignResult result = cryptoClient.sign(signingAlgo, dataToSign);
+    final SignResult result = signViaRestApi(vault, cryptoClient, signingAlgo, dataToSign);
 
+    System.out.println(MessageFormat.format("Signing call time:{0}", System.currentTimeMillis() - millis));
     final byte[] signature = result.getSignature();
 
     if (signature.length != 64) {
@@ -110,6 +127,30 @@ public class AzureKeyVaultSigner implements Signer {
     final int headerByte = recId + 27;
     return new Signature(
         BigInteger.valueOf(headerByte), canonicalSignature.r, canonicalSignature.s);
+  }
+
+  @SuppressWarnings("Unused")
+  private SignResult signViaRestApi(
+      final AzureKeyVault vault,
+      CryptographyClient cryptoClient,
+      SignatureAlgorithm signingAlgo,
+      byte[] dataToSign) {
+    final String vaultName = config.getKeyVaultName();
+
+    long millis = System.currentTimeMillis();
+
+    final HttpRequest httpRequest =
+    vault.getRemoteSigningHttpRequest(cryptoClient, dataToSign, signingAlgo, vaultName);
+    System.out.println(MessageFormat.format("Execute httpRequest as Azure instructs:{0}", System.currentTimeMillis() - millis));
+
+    millis = System.currentTimeMillis();
+    var response = azureConnection.executeHttpRequest(httpRequest);
+    System.out.println(MessageFormat.format("Executing http request:{0}", System.currentTimeMillis() - millis));
+
+    final Base64Url signatureBytes = new Base64Url(response.get("value"));
+    final String kid = response.get("kid");
+
+    return new SignResult(signatureBytes.decodedBytes(), signingAlgo, kid);
   }
 
   @Override
