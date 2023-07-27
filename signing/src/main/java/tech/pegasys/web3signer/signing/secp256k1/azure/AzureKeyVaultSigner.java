@@ -51,8 +51,8 @@ public class AzureKeyVaultSigner implements Signer {
   private final ECPublicKey publicKey;
   private final SignatureAlgorithm signingAlgo;
   private final boolean needsToHash; // Apply Hash.sha3(data) before signing
-
   private final AzureConnection azureConnection;
+  private final AzureKeyVault vault;
 
   AzureKeyVaultSigner(
       final AzureConfig config,
@@ -72,22 +72,21 @@ public class AzureKeyVaultSigner implements Signer {
                     .withServerHost(constructAzureKeyVaultUrl(config.getKeyVaultName()))
                     .build();
     this.azureConnection = connFactory.getOrCreateConnection(connectionParameters);
-  }
-
-  @Override
-  public Signature sign(byte[] data) {
-    final AzureKeyVault vault;
     try {
-      vault =
-          createUsingClientSecretCredentials(
-              config.getClientId(),
-              config.getClientSecret(),
-              config.getTenantId(),
-              config.getKeyVaultName());
+      this.vault =
+              createUsingClientSecretCredentials(
+                      config.getClientId(),
+                      config.getClientSecret(),
+                      config.getTenantId(),
+                      config.getKeyVaultName());
     } catch (final Exception e) {
       LOG.error("Failed to connect to vault", e);
       throw new SignerInitializationException(INACCESSIBLE_KEY_ERROR, e);
     }
+  }
+
+  @Override
+  public Signature sign(byte[] data) {
 
     final CryptographyClient cryptoClient =
         vault.fetchKey(config.getKeyName(), config.getKeyVersion());
