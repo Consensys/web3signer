@@ -200,7 +200,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
             (tagName, tagValue) ->
                 yamlConfig.append(
                     String.format(
-                        YAML_STRING_FMT, mode + ".azure-secrets-tags", tagName + "=" + tagValue)));
+                        YAML_STRING_FMT, mode + ".azure-tags", tagName + "=" + tagValue)));
     return yamlConfig.toString();
   }
 

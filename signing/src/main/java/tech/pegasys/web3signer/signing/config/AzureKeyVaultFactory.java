@@ -63,6 +63,7 @@ public class AzureKeyVaultFactory implements AutoCloseable {
     final ExecutorService executorService = executorServiceCache.get();
     if (executorService != null) {
       executorService.shutdownNow();
+      executorServiceCache.set(null);
     }
   }
 

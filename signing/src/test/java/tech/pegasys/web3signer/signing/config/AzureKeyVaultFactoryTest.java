@@ -51,8 +51,8 @@ class AzureKeyVaultFactoryTest {
         "keyVaultName",
         "tenantId",
         AzureAuthenticationMode.CLIENT_SECRET);
-    final ExecutorService executorService1 = azureKeyVaultFactory.getExecutorServiceCache().get();
-    assertThat(executorService1).isNotNull();
+    final ExecutorService executorService = azureKeyVaultFactory.getExecutorServiceCache().get();
+    assertThat(executorService).isNotNull();
 
     azureKeyVaultFactory.createAzureKeyVault(
         "clientId",
@@ -61,7 +61,7 @@ class AzureKeyVaultFactoryTest {
         "tenantId",
         AzureAuthenticationMode.CLIENT_SECRET);
     final ExecutorService executorService2 = azureKeyVaultFactory.getExecutorServiceCache().get();
-    assertThat(executorService1).isSameAs(executorService2);
+    assertThat(executorService).isSameAs(executorService2);
   }
 
   @Test
@@ -94,7 +94,11 @@ class AzureKeyVaultFactoryTest {
         "keyVaultName",
         "tenantId",
         AzureAuthenticationMode.CLIENT_SECRET);
+    final ExecutorService executorService = azureKeyVaultFactory.getExecutorServiceCache().get();
+    assertThat(executorService).isNotNull();
+
     azureKeyVaultFactory.close();
-    assertThat(azureKeyVaultFactory.getExecutorServiceCache().get().isShutdown()).isTrue();
+    assertThat(executorService.isShutdown()).isTrue();
+    assertThat(azureKeyVaultFactory.getExecutorServiceCache().get()).isNull();
   }
 }

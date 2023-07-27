@@ -18,7 +18,7 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PATH_FORM
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PORT_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.util.RequiredOptionsUtil.checkIfRequiredOptionsAreInitialized;
 
-import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
+import tech.pegasys.web3signer.commandline.PicoCliEth1AzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.annotations.RequiredOption;
 import tech.pegasys.web3signer.commandline.config.client.PicoCliClientTlsOptions;
 import tech.pegasys.web3signer.core.Eth1Runner;
@@ -142,7 +142,7 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
 
   @CommandLine.Mixin private PicoCliClientTlsOptions clientTlsOptions;
 
-  @CommandLine.Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @CommandLine.Mixin private PicoCliEth1AzureKeyVaultParameters azureKeyVaultParameters;
 
   @Override
   public Runner createRunner() {

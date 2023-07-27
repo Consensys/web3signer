@@ -405,7 +405,11 @@ public abstract class Runner implements Runnable, AutoCloseable {
   @Override
   public void close() throws Exception {
     for (Closeable closeable : closeables) {
-      closeable.close();
+      try {
+        closeable.close();
+      } catch (Exception e) {
+        LOG.error("Failed to close Runner resource", e);
+      }
     }
   }
 }

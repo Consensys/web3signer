@@ -334,7 +334,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
         .getTags()
         .forEach(
             (tagName, tagValue) -> {
-              params.add("--azure-secrets-tags");
+              params.add("--azure-tags");
               params.add(tagName + "=" + tagValue);
             });
   }
