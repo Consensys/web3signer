@@ -26,7 +26,6 @@ import tech.pegasys.web3signer.signing.secp256k1.common.SignerInitializationExce
 import java.math.BigInteger;
 import java.net.http.HttpRequest;
 import java.security.interfaces.ECPublicKey;
-import java.text.MessageFormat;
 import java.util.Arrays;
 
 import com.azure.core.util.Base64Url;
@@ -68,17 +67,17 @@ public class AzureKeyVaultSigner implements Signer {
             : SignatureAlgorithm.ES256K;
     final AzureConnectionFactory connFactory = new AzureConnectionFactory();
     final AzureConnectionParameters connectionParameters =
-            AzureConnectionParameters.newBuilder()
-                    .withServerHost(constructAzureKeyVaultUrl(config.getKeyVaultName()))
-                    .build();
+        AzureConnectionParameters.newBuilder()
+            .withServerHost(constructAzureKeyVaultUrl(config.getKeyVaultName()))
+            .build();
     this.azureConnection = connFactory.getOrCreateConnection(connectionParameters);
     try {
       this.vault =
-              createUsingClientSecretCredentials(
-                      config.getClientId(),
-                      config.getClientSecret(),
-                      config.getTenantId(),
-                      config.getKeyVaultName());
+          createUsingClientSecretCredentials(
+              config.getClientId(),
+              config.getClientSecret(),
+              config.getTenantId(),
+              config.getKeyVaultName());
     } catch (final Exception e) {
       LOG.error("Failed to connect to vault", e);
       throw new SignerInitializationException(INACCESSIBLE_KEY_ERROR, e);
@@ -96,7 +95,7 @@ public class AzureKeyVaultSigner implements Signer {
     // 2023-07-27 - We can use the sign method from the azure
     // library again once they fix the issue with the SECP256K
     // for java 17
-    //final SignResult result = cryptoClient.sign(signingAlgo, dataToSign);
+    // final SignResult result = cryptoClient.sign(signingAlgo, dataToSign);
     final SignResult result = signViaRestApi(vault, cryptoClient, signingAlgo, dataToSign);
 
     final byte[] signature = result.getSignature();
@@ -137,14 +136,14 @@ public class AzureKeyVaultSigner implements Signer {
       byte[] dataToSign) {
     final String vaultName = config.getKeyVaultName();
 
-    //Assemble httpRequest
+    // Assemble httpRequest
     final HttpRequest httpRequest =
-    vault.getRemoteSigningHttpRequest(cryptoClient, dataToSign, signingAlgo, vaultName);
+        vault.getRemoteSigningHttpRequest(cryptoClient, dataToSign, signingAlgo, vaultName);
 
-    //execute
+    // execute
     var response = azureConnection.executeHttpRequest(httpRequest);
 
-    //retrieve the results
+    // retrieve the results
     final Base64Url signatureBytes = new Base64Url(response.get("value"));
     final String kid = response.get("kid");
 

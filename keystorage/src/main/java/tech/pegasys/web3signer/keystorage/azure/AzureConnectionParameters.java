@@ -18,14 +18,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.util.Optional;
 
-// TODO revisit this to cleanup unnecessary params for azure
-// Copied from hashicorp
 public class AzureConnectionParameters {
   private static final Long DEFAULT_TIMEOUT_MILLISECONDS = 10_000L;
   private static final Integer DEFAULT_SERVER_PORT = 8200;
   private final long timeoutMs;
   private final HttpClient.Version httpProtocolVersion;
-
   private final URI vaultURI;
 
   public static Builder newBuilder() {
@@ -41,8 +38,7 @@ public class AzureConnectionParameters {
     this.timeoutMs = timeoutMs.orElse(DEFAULT_TIMEOUT_MILLISECONDS);
     this.httpProtocolVersion = httpProtocolVersion.orElse(HttpClient.Version.HTTP_2);
     this.vaultURI =
-        URI.create(
-            String.format("%s:%d", serverHost, serverPort.orElse(DEFAULT_SERVER_PORT)));
+        URI.create(String.format("%s:%d", serverHost, serverPort.orElse(DEFAULT_SERVER_PORT)));
   }
 
   public long getTimeoutMilliseconds() {

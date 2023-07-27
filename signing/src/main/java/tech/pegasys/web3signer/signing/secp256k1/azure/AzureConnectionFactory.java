@@ -24,7 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AzureConnectionFactory {
   private final Map<URI, HttpClient> httpClientMap = new ConcurrentHashMap<>();
 
-  public AzureConnection getOrCreateConnection(final AzureConnectionParameters connectionParameters) {
+  public AzureConnection getOrCreateConnection(
+      final AzureConnectionParameters connectionParameters) {
     return new AzureConnection(getHttpClient(connectionParameters));
   }
 

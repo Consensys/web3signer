@@ -12,21 +12,11 @@
  */
 package tech.pegasys.web3signer.keystorage.azure;
 
-import com.azure.identity.ManagedIdentityCredential;
-import com.azure.identity.TokenCachePersistenceOptions;
-import com.microsoft.aad.msal4j.ClientCredentialFactory;
-import com.microsoft.aad.msal4j.ClientCredentialParameters;
-import com.microsoft.aad.msal4j.ConfidentialClientApplication;
-import com.microsoft.aad.msal4j.IAuthenticationResult;
-import com.microsoft.aad.msal4j.IClientCredential;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.http.HttpRequest;
-import java.text.MessageFormat;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +25,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
-import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
 import com.azure.core.exception.ResourceNotFoundException;
@@ -66,6 +55,7 @@ public class AzureKeyVault {
   private final KeyClient keyClient;
   private static final List<String> SCOPE = List.of("https://vault.azure.net/.default");
   final TokenRequestContext tokenRequestContext = new TokenRequestContext().setScopes(SCOPE);
+
   public static AzureKeyVault createUsingClientSecretCredentials(
       final String clientId,
       final String clientSecret,
@@ -98,7 +88,6 @@ public class AzureKeyVault {
         new SecretClientBuilder().vaultUrl(vaultUrl).credential(tokenCredential).buildClient();
 
     keyClient = new KeyClientBuilder().vaultUrl(vaultUrl).credential(tokenCredential).buildClient();
-
   }
 
   public Optional<String> fetchSecret(final String secretName) {
@@ -137,7 +126,9 @@ public class AzureKeyVault {
 
     return HttpRequest.newBuilder(uri)
         .header("Content-Type", "application/json")
-        .header("Authorization", "Bearer " + tokenCredential.getTokenSync(tokenRequestContext).getToken())
+        .header(
+            "Authorization",
+            "Bearer " + tokenCredential.getTokenSync(tokenRequestContext).getToken())
         .POST(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))
         .build();
   }
@@ -211,5 +202,4 @@ public class AzureKeyVault {
     return secretProperties.getTags() != null // return false if remote secret doesn't have any tags
         && secretProperties.getTags().entrySet().containsAll(tags.entrySet());
   }
-
 }
