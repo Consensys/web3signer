@@ -163,60 +163,71 @@ public class Eth1Runner extends Runner {
           final List<ArtifactSigner> signers = new ArrayList<>();
           final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
           registerClose(azureKeyVaultFactory::close);
-          final AzureKeyVaultSignerFactory azureFactory =
+          final AzureKeyVaultSignerFactory azureSignerFactory =
               new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
-          final HashicorpConnectionFactory hashicorpConnectionFactory =
-              new HashicorpConnectionFactory();
-          try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
-              final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                  new YubiHsmOpaqueDataProvider()) {
 
-            final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
-                new Secp256k1ArtifactSignerFactory(
-                    hashicorpConnectionFactory,
-                    baseConfig.getKeyConfigPath(),
-                    azureFactory,
-                    interlockKeyProvider,
-                    yubiHsmOpaqueDataProvider,
-                    EthSecpArtifactSigner::new,
-                    azureKeyVaultFactory,
-                    true);
-
-            final MappedResults<ArtifactSigner> results =
-                new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
-                    .load(
-                        baseConfig.getKeyConfigPath(),
-                        "yaml",
-                        new YamlSignerParser(
-                            List.of(ethSecpArtifactSignerFactory),
-                            YamlMapperFactory.createYamlMapper(
-                                baseConfig.getKeyStoreConfigFileMaxSize())));
-            signers.addAll(results.getValues());
-          }
-
-          final AzureKeyVaultParameters azureKeyVaultConfig = eth1Config.getAzureKeyVaultConfig();
-          if (azureKeyVaultConfig.isAzureKeyVaultEnabled()) {
-            LOG.info("Bulk loading keys from Azure key vault ... ");
-            final AzureKeyVault azureKeyVault =
-                azureKeyVaultFactory.createAzureKeyVault(
-                    azureKeyVaultConfig.getClientId(),
-                    azureKeyVaultConfig.getClientSecret(),
-                    azureKeyVaultConfig.getKeyVaultName(),
-                    azureKeyVaultConfig.getTenantId(),
-                    azureKeyVaultConfig.getAuthenticationMode());
-            final SecpAzureBulkLoader secpAzureBulkLoader =
-                new SecpAzureBulkLoader(azureKeyVault, azureFactory);
-            final MappedResults<ArtifactSigner> azureResult =
-                secpAzureBulkLoader.load(azureKeyVaultConfig);
-            LOG.info(
-                "Keys loaded from Azure: [{}], with error count: [{}]",
-                azureResult.getValues().size(),
-                azureResult.getErrorCount());
-            registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
-            signers.addAll(azureResult.getValues());
-          }
+          signers.addAll(loadSignersFromConfigFiles(vertx, azureKeyVaultFactory).getValues());
+          signers.addAll(bulkLoadSigners(azureKeyVaultFactory, azureSignerFactory).getValues());
           return signers;
         });
+  }
+
+  private MappedResults<ArtifactSigner> loadSignersFromConfigFiles(
+      final Vertx vertx, final AzureKeyVaultFactory azureKeyVaultFactory) {
+    final AzureKeyVaultSignerFactory azureFactory =
+        new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
+    final HashicorpConnectionFactory hashicorpConnectionFactory = new HashicorpConnectionFactory();
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+            new YubiHsmOpaqueDataProvider()) {
+
+      final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
+          new Secp256k1ArtifactSignerFactory(
+              hashicorpConnectionFactory,
+              baseConfig.getKeyConfigPath(),
+              azureFactory,
+              interlockKeyProvider,
+              yubiHsmOpaqueDataProvider,
+              EthSecpArtifactSigner::new,
+              azureKeyVaultFactory,
+              true);
+
+      return new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
+          .load(
+              baseConfig.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(
+                  List.of(ethSecpArtifactSignerFactory),
+                  YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())));
+    }
+  }
+
+  private MappedResults<ArtifactSigner> bulkLoadSigners(
+      final AzureKeyVaultFactory azureKeyVaultFactory,
+      final AzureKeyVaultSignerFactory azureSignerFactory) {
+    final AzureKeyVaultParameters azureKeyVaultConfig = eth1Config.getAzureKeyVaultConfig();
+    if (azureKeyVaultConfig.isAzureKeyVaultEnabled()) {
+      LOG.info("Bulk loading keys from Azure key vault ... ");
+      final AzureKeyVault azureKeyVault =
+          azureKeyVaultFactory.createAzureKeyVault(
+              azureKeyVaultConfig.getClientId(),
+              azureKeyVaultConfig.getClientSecret(),
+              azureKeyVaultConfig.getKeyVaultName(),
+              azureKeyVaultConfig.getTenantId(),
+              azureKeyVaultConfig.getAuthenticationMode());
+      final SecpAzureBulkLoader secpAzureBulkLoader =
+          new SecpAzureBulkLoader(azureKeyVault, azureSignerFactory);
+      final MappedResults<ArtifactSigner> azureResult =
+          secpAzureBulkLoader.load(azureKeyVaultConfig);
+      LOG.info(
+          "Keys loaded from Azure: [{}], with error count: [{}]",
+          azureResult.getValues().size(),
+          azureResult.getErrorCount());
+      registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
+      return azureResult;
+    } else {
+      return MappedResults.newSetInstance();
+    }
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {

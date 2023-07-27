@@ -46,9 +46,8 @@ public class SignerLoader {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final long FILES_PROCESSED_TO_REPORT = 10;
-  private final boolean
-      useParallelStreams; // whether to parallel streams to convert and load private keys from
-  // metadata files
+  // enable or disable parallel streams to convert and load private keys from metadata files
+  private final boolean useParallelStreams;
 
   private static final Map<Path, FileTime> metadataConfigFilesPathCache = new HashMap<>();
 
