@@ -19,7 +19,7 @@ import java.net.http.HttpClient;
 import java.util.Optional;
 
 // TODO revisit this to cleanup unnecessary params for azure
-// Copied from hashicorp directory
+// Copied from hashicorp
 public class AzureConnectionParameters {
   private static final Long DEFAULT_TIMEOUT_MILLISECONDS = 10_000L;
   private static final Integer DEFAULT_SERVER_PORT = 8200;

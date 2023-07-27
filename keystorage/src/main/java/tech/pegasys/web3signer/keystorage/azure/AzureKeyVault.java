@@ -12,9 +12,21 @@
  */
 package tech.pegasys.web3signer.keystorage.azure;
 
+import com.azure.identity.ManagedIdentityCredential;
+import com.microsoft.aad.msal4j.ClientCredentialFactory;
+import com.microsoft.aad.msal4j.ClientCredentialParameters;
+import com.microsoft.aad.msal4j.ConfidentialClientApplication;
+import com.microsoft.aad.msal4j.IAuthenticationResult;
+import com.microsoft.aad.msal4j.IClientCredential;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.text.MessageFormat;
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -22,30 +34,37 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
+import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
+import com.azure.core.credential.TokenRequestContext;
 import com.azure.core.exception.ResourceNotFoundException;
 import com.azure.core.http.rest.PagedIterable;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
 import com.azure.security.keyvault.keys.KeyClient;
 import com.azure.security.keyvault.keys.KeyClientBuilder;
+import com.azure.security.keyvault.keys.KeyServiceVersion;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClientBuilder;
+import com.azure.security.keyvault.keys.cryptography.models.SignatureAlgorithm;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
+import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class AzureKeyVault {
 
   private static final Logger LOG = LogManager.getLogger();
-
   private final TokenCredential tokenCredential;
+//  private final ConfidentialClientApplication cca;
   private final SecretClient secretClient;
   private final KeyClient keyClient;
+  private Optional<AccessToken> accessToken = Optional.empty();
 
   public static AzureKeyVault createUsingClientSecretCredentials(
       final String clientId,
@@ -59,6 +78,18 @@ public class AzureKeyVault {
             .tenantId(tenantId)
             .build();
 
+//    IClientCredential credential = ClientCredentialFactory.createFromSecret(clientSecret);
+//    final ConfidentialClientApplication cca;
+//    try {
+//     ConfidentialClientApplication
+//              .builder(clientId, credential)
+//              .authority("https://login.microsoftonline.com/"+tenantId)
+//              .build();
+//    } catch (MalformedURLException e) {
+//      throw new RuntimeException(e);
+//    }
+
+
     return new AzureKeyVault(tokenCredential, vaultName);
   }
 
@@ -67,10 +98,22 @@ public class AzureKeyVault {
     final ManagedIdentityCredentialBuilder managedIdentityCredentialBuilder =
         new ManagedIdentityCredentialBuilder();
     clientId.ifPresent(managedIdentityCredentialBuilder::clientId);
+//    IClientCredential credential = ClientCredentialFactory.createFromSecret("clientSecret");
+//    final ConfidentialClientApplication cca;
+//    try {
+//      cca = ConfidentialClientApplication
+//              .builder(clientId.get(),credential)
+//              .authority("test")
+//              .build();
+//    } catch (MalformedURLException e) {
+//      throw new RuntimeException(e);
+//    }
+
     return new AzureKeyVault(managedIdentityCredentialBuilder.build(), vaultName);
   }
 
   private AzureKeyVault(final TokenCredential tokenCredential, final String vaultName) {
+//    this.cca = cca;
     this.tokenCredential = tokenCredential;
     final String vaultUrl = constructAzureKeyVaultUrl(vaultName);
 
@@ -78,6 +121,7 @@ public class AzureKeyVault {
         new SecretClientBuilder().vaultUrl(vaultUrl).credential(tokenCredential).buildClient();
 
     keyClient = new KeyClientBuilder().vaultUrl(vaultUrl).credential(tokenCredential).buildClient();
+
   }
 
   public Optional<String> fetchSecret(final String secretName) {
@@ -96,6 +140,40 @@ public class AzureKeyVault {
         .credential(tokenCredential)
         .keyIdentifier(keyId)
         .buildClient();
+  }
+
+  public HttpRequest getRemoteSigningHttpRequest(
+      final CryptographyClient cryptoClient,
+      final byte[] data,
+      final SignatureAlgorithm signingAlgo,
+      final String vaultName) {
+    final String keyName = cryptoClient.getKey().getName();
+    final String keyVersion = cryptoClient.getKey().getProperties().getVersion();
+    final String apiVersion = KeyServiceVersion.getLatest().getVersion();
+
+    JsonObject jsonBody = new JsonObject();
+    jsonBody.put("alg", signingAlgo);
+    jsonBody.put("value", Bytes.of(data).toBase64String());
+
+    String uriString = constructAzureSignApitUri(vaultName, keyName, keyVersion, apiVersion);
+    URI uri = URI.create(uriString);
+
+    return HttpRequest.newBuilder(uri)
+        .header("Content-Type", "application/json")
+        .header("Authorization", "Bearer " + getOrCreateNewAccessToken().getToken())
+        .POST(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))
+        .build();
+
+  }
+
+  private static String constructAzureSignApitUri(
+      final String keyVaultName,
+      final String keyName,
+      final String keyVersion,
+      final String apiVersion) {
+    return String.format(
+        "https://%s.vault.azure.net/keys/%s/%s/sign?api-version=%s",
+        keyVaultName, keyName, keyVersion, apiVersion);
   }
 
   public static String constructAzureKeyVaultUrl(final String keyVaultName) {
@@ -157,4 +235,34 @@ public class AzureKeyVault {
     return secretProperties.getTags() != null // return false if remote secret doesn't have any tags
         && secretProperties.getTags().entrySet().containsAll(tags.entrySet());
   }
+
+  private AccessToken getOrCreateNewAccessToken() {
+    if (accessToken.isEmpty() || accessToken.get().isExpired()) {
+      if (accessToken.isEmpty()) {
+        LOG.debug("Token had not been acquired before. Requesting new token");
+      } else {
+        LOG.debug("Token expired {} currently time is {}", accessToken.get().getExpiresAt(), System.currentTimeMillis());
+      }
+      final List<String> SCOPE = List.of("https://vault.azure.net/.default");
+      final TokenRequestContext tokenRequestContext = new TokenRequestContext().setScopes(SCOPE);
+      accessToken = Optional.of(tokenCredential.getTokenSync(tokenRequestContext));
+    }
+    return accessToken.get();
+
+
+//      final Set<String> SCOPE = Set.of("https://vault.azure.net/.default");
+//
+//      // Client credential requests will by default try to look for a valid token in the
+//      // in-memory token cache. If found, it will return this token. If a token is not found, or the
+//      // token is not valid, it will fall back to acquiring a token from the AAD service. Although
+//      // not recommended unless there is a reason for doing so, you can skip the cache lookup
+//      // by using .skipCache(true) in ClientCredentialParameters.
+//      ClientCredentialParameters parameters =
+//              ClientCredentialParameters
+//                      .builder(SCOPE)
+//                      .build();
+//
+//      return cca.acquireToken(parameters).join();
+   }
+
 }
