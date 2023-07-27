@@ -133,7 +133,7 @@ dependencyManagement {
       entry 'azure-security-keyvault-secrets'
       entry 'azure-security-keyvault-keys'
     }
-
+    dependency 'com.azure:azure-identity:1.9.2'
     dependency 'com.azure:azure-core-http-netty:1.13.5'
 
     dependency 'com.zaxxer:HikariCP:5.0.1'
