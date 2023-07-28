@@ -12,10 +12,7 @@
  */
 package tech.pegasys.web3signer.keystorage.azure;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
@@ -29,7 +26,7 @@ public class AzureKVResponseMapper {
    * @param json response from Azure REST API
    * @return All key/value pairs
    */
-  public static Map<String, String> from(final String json) {
+  public static Map<String, Object> from(final String json) {
     if (json == null) {
       throw new RuntimeException(ERROR_INVALID_JSON);
     }
@@ -40,13 +37,6 @@ public class AzureKVResponseMapper {
       throw new RuntimeException(ERROR_INVALID_JSON, de);
     }
 
-    return Collections.unmodifiableMap(
-        jsonResponse.stream()
-            .filter(entry -> Objects.nonNull(entry.getValue()))
-            .collect(Collectors.toMap(Map.Entry::getKey, AzureKVResponseMapper::getValueToString)));
-  }
-
-  private static String getValueToString(final Map.Entry<String, Object> v) {
-    return v.getValue().toString();
+    return jsonResponse.getMap();
   }
 }

@@ -124,7 +124,7 @@ public class AzureKeyVault {
     jsonBody.put("alg", signingAlgo);
     jsonBody.put("value", Bytes.of(data).toBase64String());
 
-    final String uriString = constructAzureSignApitUri(vaultName, keyName, keyVersion, apiVersion);
+    final String uriString = constructAzureSignApiUri(vaultName, keyName, keyVersion, apiVersion);
     final URI uri = URI.create(uriString);
 
     return HttpRequest.newBuilder(uri)
@@ -136,7 +136,7 @@ public class AzureKeyVault {
         .build();
   }
 
-  private static String constructAzureSignApitUri(
+  private static String constructAzureSignApiUri(
       final String keyVaultName,
       final String keyName,
       final String keyVersion,

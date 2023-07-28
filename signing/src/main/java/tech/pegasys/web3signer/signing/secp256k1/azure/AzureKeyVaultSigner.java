@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
 import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.constructAzureKeyVaultUrl;
-import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.createUsingClientSecretCredentials;
 
 import tech.pegasys.web3signer.keystorage.azure.AzureConnection;
 import tech.pegasys.web3signer.keystorage.azure.AzureConnectionParameters;
@@ -52,7 +51,6 @@ public class AzureKeyVaultSigner implements Signer {
   private final AzureConfig config;
   private final ECPublicKey publicKey;
   private final SignatureAlgorithm signingAlgo;
-  private final AzureKeyVaultFactory azureKeyVaultFactory;
   private final boolean needsToHash; // Apply Hash.sha3(data) before signing
   private final AzureConnection azureConnection;
   private final AzureKeyVault vault;
@@ -76,15 +74,14 @@ public class AzureKeyVaultSigner implements Signer {
             .withServerHost(constructAzureKeyVaultUrl(config.getKeyVaultName()))
             .build();
     this.azureConnection = connFactory.getOrCreateConnection(connectionParameters);
-    this.azureKeyVaultFactory = azureKeyVaultFactory;
     try {
       this.vault =
-              azureKeyVaultFactory.createAzureKeyVault(
-                      config.getClientId(),
-                      config.getClientSecret(),
-                      config.getKeyVaultName(),
-                      config.getTenantId(),
-                      AzureAuthenticationMode.CLIENT_SECRET);
+          azureKeyVaultFactory.createAzureKeyVault(
+              config.getClientId(),
+              config.getClientSecret(),
+              config.getKeyVaultName(),
+              config.getTenantId(),
+              AzureAuthenticationMode.CLIENT_SECRET);
     } catch (final Exception e) {
       LOG.error("Failed to connect to vault", e);
       throw new SignerInitializationException(INACCESSIBLE_KEY_ERROR, e);
@@ -99,9 +96,8 @@ public class AzureKeyVaultSigner implements Signer {
 
     final byte[] dataToSign = needsToHash ? Hash.sha3(data) : data;
 
-    // 2023-07-27 - We can use the sign method from the azure
-    // library again once they fix the issue with the SECP256K
-    // for java 17
+    // TODO - We can use the sign method from the azure library again once they fix the issue with
+    // the SECP256K for java 17
     // final SignResult result = cryptoClient.sign(signingAlgo, dataToSign);
     final SignResult result = signViaRestApi(vault, cryptoClient, signingAlgo, dataToSign);
 
@@ -148,11 +144,11 @@ public class AzureKeyVaultSigner implements Signer {
         vault.getRemoteSigningHttpRequest(cryptoClient, dataToSign, signingAlgo, vaultName);
 
     // execute
-    final Map<String, String> response = azureConnection.executeHttpRequest(httpRequest);
+    final Map<String, Object> response = azureConnection.executeHttpRequest(httpRequest);
 
     // retrieve the results
-    final Base64Url signatureBytes = new Base64Url(response.get("value"));
-    final String kid = response.get("kid");
+    final Base64Url signatureBytes = new Base64Url(response.get("value").toString());
+    final String kid = response.get("kid").toString();
 
     return new SignResult(signatureBytes.decodedBytes(), signingAlgo, kid);
   }
