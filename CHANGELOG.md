@@ -1,6 +1,10 @@
 # Changelog
 
 ## Next release
+
+### Breaking Changes
+- Eth2 Azure command line option --azure-secrets-tags is now deprecated and is replaced with --azure-tags. The --azure-secrets-tags option will be removed in a future release.
+
 ### Features Added
 - Azure bulk mode support for loading multiline (`\n` delimited, up to 200) keys per secret.
 - Hashicorp connection properties can now override http protocol to HTTP/1.1 from the default of HTTP/2. [#817](https://github.com/ConsenSys/web3signer/pull/817)

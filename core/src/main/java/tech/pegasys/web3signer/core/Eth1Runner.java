@@ -174,7 +174,7 @@ public class Eth1Runner extends Runner {
 
   private MappedResults<ArtifactSigner> loadSignersFromConfigFiles(
       final Vertx vertx, final AzureKeyVaultFactory azureKeyVaultFactory) {
-    final AzureKeyVaultSignerFactory azureFactory =
+    final AzureKeyVaultSignerFactory azureSignerFactory =
         new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
     final HashicorpConnectionFactory hashicorpConnectionFactory = new HashicorpConnectionFactory();
     try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
@@ -185,7 +185,7 @@ public class Eth1Runner extends Runner {
           new Secp256k1ArtifactSignerFactory(
               hashicorpConnectionFactory,
               baseConfig.getKeyConfigPath(),
-              azureFactory,
+              azureSignerFactory,
               interlockKeyProvider,
               yubiHsmOpaqueDataProvider,
               EthSecpArtifactSigner::new,
