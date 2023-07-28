@@ -25,7 +25,7 @@ public class AzureConnection {
     this.httpClient = httpClient;
   }
 
-  public Map<String, String> executeHttpRequest(final HttpRequest httpRequest) {
+  public Map<String, Object> executeHttpRequest(final HttpRequest httpRequest) {
 
     final HttpResponse<String> response;
     try {
