@@ -166,16 +166,18 @@ public class Eth1Runner extends Runner {
           final AzureKeyVaultSignerFactory azureSignerFactory =
               new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
 
-          signers.addAll(loadSignersFromConfigFiles(vertx, azureKeyVaultFactory).getValues());
+          signers.addAll(
+              loadSignersFromKeyConfigFiles(vertx, azureKeyVaultFactory, azureSignerFactory)
+                  .getValues());
           signers.addAll(bulkLoadSigners(azureKeyVaultFactory, azureSignerFactory).getValues());
           return signers;
         });
   }
 
-  private MappedResults<ArtifactSigner> loadSignersFromConfigFiles(
-      final Vertx vertx, final AzureKeyVaultFactory azureKeyVaultFactory) {
-    final AzureKeyVaultSignerFactory azureSignerFactory =
-        new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
+  private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
+      final Vertx vertx,
+      final AzureKeyVaultFactory azureKeyVaultFactory,
+      final AzureKeyVaultSignerFactory azureSignerFactory) {
     final HashicorpConnectionFactory hashicorpConnectionFactory = new HashicorpConnectionFactory();
     try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
         final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =

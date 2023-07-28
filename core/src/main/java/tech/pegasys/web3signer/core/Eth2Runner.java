@@ -241,7 +241,8 @@ public class Eth2Runner extends Runner {
           try (final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory()) {
             final List<ArtifactSigner> signers = new ArrayList<>();
             signers.addAll(
-                loadSignersFromConfigFile(vertx, azureKeyVaultFactory, metricsSystem).getValues());
+                loadSignersFromKeyConfigFiles(vertx, azureKeyVaultFactory, metricsSystem)
+                    .getValues());
             signers.addAll(bulkLoadSigners(azureKeyVaultFactory).getValues());
 
             final List<Bytes> validators =
@@ -261,7 +262,7 @@ public class Eth2Runner extends Runner {
         });
   }
 
-  private MappedResults<ArtifactSigner> loadSignersFromConfigFile(
+  private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
       final Vertx vertx,
       final AzureKeyVaultFactory azureKeyVaultFactory,
       final MetricsSystem metricsSystem) {
