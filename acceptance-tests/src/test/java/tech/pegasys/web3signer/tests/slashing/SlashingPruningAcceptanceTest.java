@@ -46,14 +46,16 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
   protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
 
   @Test
-  void slashingDataIsPruned(@TempDir final Path testDirectory) throws IOException {
+  void slashingDataIsPruned(
+      @TempDir final Path dataSignerDirectory, @TempDir final Path prunerSignerDirectory)
+      throws IOException {
     final TestDatabaseInfo testDatabaseInfo = DatabaseUtil.create();
     final String dbUrl = testDatabaseInfo.databaseUrl();
     final Jdbi jdbi = testDatabaseInfo.getJdbi();
 
-    final Path keyConfigFile = testDirectory.resolve("keyfile.yaml");
+    final Path dataSignerKeyConfigFile = dataSignerDirectory.resolve("keyfile.yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(
-        keyConfigFile, keyPair.getSecretKey().toBytes().toHexString(), KeyType.BLS);
+        dataSignerKeyConfigFile, keyPair.getSecretKey().toBytes().toHexString(), KeyType.BLS);
 
     final SignerConfigurationBuilder signerBuilder =
         new SignerConfigurationBuilder()
@@ -63,7 +65,7 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
             .withSlashingProtectionDbPassword(DB_PASSWORD)
             .withSlashingProtectionDbUrl(dbUrl)
             .withNetwork("minimal")
-            .withKeyStoreDirectory(testDirectory);
+            .withKeyStoreDirectory(dataSignerDirectory);
 
     final Signer dataCreatingSigner = new Signer(signerBuilder.build(), null);
     dataCreatingSigner.start();
@@ -88,12 +90,17 @@ public class SlashingPruningAcceptanceTest extends AcceptanceTestBase {
     assertThat(blocksBeforePruning).hasSize(2);
 
     // start signer with pruning enabled at boot configured to only keep one block and attestation
+    final Path prunerKeyConfigFile = prunerSignerDirectory.resolve("keyfile.yaml");
+    METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(
+        prunerKeyConfigFile, keyPair.getSecretKey().toBytes().toHexString(), KeyType.BLS);
+
     signerBuilder
         .withSlashingPruningEnabled(true)
         .withSlashingPruningEnabledAtBoot(true)
         .withSlashingPruningEpochsToKeep(1)
         .withSlashingPruningSlotsPerEpoch(1)
-        .withSlashingPruningInterval(1);
+        .withSlashingPruningInterval(1)
+        .withKeyStoreDirectory(prunerSignerDirectory);
     final Signer pruningSigner = new Signer(signerBuilder.build(), null);
     pruningSigner.start();
     pruningSigner.awaitStartupCompletion();

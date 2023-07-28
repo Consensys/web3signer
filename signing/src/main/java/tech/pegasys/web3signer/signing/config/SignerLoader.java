@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -47,7 +46,6 @@ public class SignerLoader {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final long FILES_PROCESSED_TO_REPORT = 10;
-  private static final int MAX_FORK_JOIN_THREADS = 5;
   // enable or disable parallel streams to convert and load private keys from metadata files
   private final boolean useParallelStreams;
 
@@ -195,25 +193,15 @@ public class SignerLoader {
         "Converting signing metadata to Artifact Signer using {} streams ...",
         useParallelStreams ? "parallel" : "sequential");
 
-    // use custom fork-join pool instead of common. Limit number of threads to avoid Azure bug
-    ForkJoinPool forkJoinPool = null;
     try {
       if (useParallelStreams) {
-        forkJoinPool = new ForkJoinPool(numberOfThreads());
-        return forkJoinPool
-            .submit(
-                () -> mapToArtifactSigner(signingMetadataCollection.parallelStream(), signerParser))
-            .get();
+        return mapToArtifactSigner(signingMetadataCollection.parallelStream(), signerParser);
       } else {
         return mapToArtifactSigner(signingMetadataCollection.stream(), signerParser);
       }
     } catch (final Exception e) {
       LOG.error("Unexpected error in processing configuration files: {}", e.getMessage(), e);
       return MappedResults.errorResult();
-    } finally {
-      if (forkJoinPool != null) {
-        forkJoinPool.shutdown();
-      }
     }
   }
 
@@ -257,17 +245,5 @@ public class SignerLoader {
         filename,
         ExceptionUtils.getRootCauseMessage(t));
     LOG.debug(ExceptionUtils.getStackTrace(t));
-  }
-
-  private int numberOfThreads() {
-    // try to allocate between 1-5 threads (based on processor cores) to process files in parallel
-    int defaultNumberOfThreads = Runtime.getRuntime().availableProcessors() / 2;
-
-    if (defaultNumberOfThreads >= MAX_FORK_JOIN_THREADS) {
-      return MAX_FORK_JOIN_THREADS;
-    } else if (defaultNumberOfThreads < 1) {
-      return 1;
-    }
-    return defaultNumberOfThreads;
   }
 }
