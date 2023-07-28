@@ -79,7 +79,7 @@ public class AzureKeyVaultSigner implements Signer {
     this.azureKeyVaultFactory = azureKeyVaultFactory;
     try {
       this.vault =
-              azureKeyVaultFactory.createUsingClientSecretCredentials(
+              azureKeyVaultFactory.createAzureKeyVault(
                       config.getClientId(),
                       config.getClientSecret(),
                       config.getKeyVaultName(),
