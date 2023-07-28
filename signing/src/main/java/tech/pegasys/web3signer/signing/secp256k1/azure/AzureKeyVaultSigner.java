@@ -18,6 +18,8 @@ import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.createUsing
 import tech.pegasys.web3signer.keystorage.azure.AzureConnection;
 import tech.pegasys.web3signer.keystorage.azure.AzureConnectionParameters;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
+import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
@@ -50,6 +52,7 @@ public class AzureKeyVaultSigner implements Signer {
   private final AzureConfig config;
   private final ECPublicKey publicKey;
   private final SignatureAlgorithm signingAlgo;
+  private final AzureKeyVaultFactory azureKeyVaultFactory;
   private final boolean needsToHash; // Apply Hash.sha3(data) before signing
   private final AzureConnection azureConnection;
   private final AzureKeyVault vault;
@@ -58,7 +61,8 @@ public class AzureKeyVaultSigner implements Signer {
       final AzureConfig config,
       final Bytes publicKey,
       final boolean needsToHash,
-      final boolean useDeprecatedSignatureAlgorithm) {
+      final boolean useDeprecatedSignatureAlgorithm,
+      final AzureKeyVaultFactory azureKeyVaultFactory) {
     this.config = config;
     this.publicKey = EthPublicKeyUtils.createPublicKey(publicKey);
     this.needsToHash = needsToHash;
@@ -72,13 +76,15 @@ public class AzureKeyVaultSigner implements Signer {
             .withServerHost(constructAzureKeyVaultUrl(config.getKeyVaultName()))
             .build();
     this.azureConnection = connFactory.getOrCreateConnection(connectionParameters);
+    this.azureKeyVaultFactory = azureKeyVaultFactory;
     try {
       this.vault =
-          createUsingClientSecretCredentials(
-              config.getClientId(),
-              config.getClientSecret(),
-              config.getTenantId(),
-              config.getKeyVaultName());
+              azureKeyVaultFactory.createUsingClientSecretCredentials(
+                      config.getClientId(),
+                      config.getClientSecret(),
+                      config.getKeyVaultName(),
+                      config.getTenantId(),
+                      AzureAuthenticationMode.CLIENT_SECRET);
     } catch (final Exception e) {
       LOG.error("Failed to connect to vault", e);
       throw new SignerInitializationException(INACCESSIBLE_KEY_ERROR, e);

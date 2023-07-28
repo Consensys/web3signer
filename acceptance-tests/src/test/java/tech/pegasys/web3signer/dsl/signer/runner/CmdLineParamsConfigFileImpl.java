@@ -115,33 +115,6 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     if (signerConfig.getMode().equals("eth2")) {
       yamlConfig.append(createEth2SlashingProtectionArgs());
 
-      if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
-        final AzureKeyVaultParameters azureParams = signerConfig.getAzureKeyVaultParameters().get();
-        yamlConfig.append(
-            String.format(YAML_BOOLEAN_FMT, "eth2.azure-vault-enabled", Boolean.TRUE));
-        yamlConfig.append(
-            String.format(
-                YAML_STRING_FMT,
-                "eth2.azure-vault-auth-mode",
-                azureParams.getAuthenticationMode().name()));
-        yamlConfig.append(
-            String.format(YAML_STRING_FMT, "eth2.azure-vault-name", azureParams.getKeyVaultName()));
-        yamlConfig.append(
-            String.format(YAML_STRING_FMT, "eth2.azure-client-id", azureParams.getClientId()));
-        yamlConfig.append(
-            String.format(
-                YAML_STRING_FMT, "eth2.azure-client-secret", azureParams.getClientSecret()));
-        yamlConfig.append(
-            String.format(YAML_STRING_FMT, "eth2.azure-tenant-id", azureParams.getTenantId()));
-
-        azureParams
-            .getTags()
-            .forEach(
-                (tagName, tagValue) ->
-                    yamlConfig.append(
-                        String.format(
-                            YAML_STRING_FMT, "eth2.azure-secrets-tags", tagName + "=" + tagValue)));
-      }
       if (signerConfig.getKeystoresParameters().isPresent()) {
         final KeystoresParameters keystoresParameters = signerConfig.getKeystoresParameters().get();
         yamlConfig.append(
@@ -181,6 +154,12 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       yamlConfig.append(createDownstreamTlsArgs());
     }
 
+    signerConfig
+        .getAzureKeyVaultParameters()
+        .ifPresent(
+            azureParams ->
+                yamlConfig.append(azureBulkLoadingOptions(signerConfig.getMode(), azureParams)));
+
     // create temporary config file
     try {
       final Path configFile = Files.createTempFile("web3signer_config", ".yaml");
@@ -194,6 +173,35 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     }
 
     return params;
+  }
+
+  private String azureBulkLoadingOptions(
+      final String mode, final AzureKeyVaultParameters azureParams) {
+    final StringBuilder yamlConfig = new StringBuilder();
+    yamlConfig.append(String.format(YAML_BOOLEAN_FMT, mode + ".azure-vault-enabled", Boolean.TRUE));
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            mode + ".azure-vault-auth-mode",
+            azureParams.getAuthenticationMode().name()));
+    yamlConfig.append(
+        String.format(YAML_STRING_FMT, mode + ".azure-vault-name", azureParams.getKeyVaultName()));
+    yamlConfig.append(
+        String.format(YAML_STRING_FMT, mode + ".azure-client-id", azureParams.getClientId()));
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT, mode + ".azure-client-secret", azureParams.getClientSecret()));
+    yamlConfig.append(
+        String.format(YAML_STRING_FMT, mode + ".azure-tenant-id", azureParams.getTenantId()));
+
+    azureParams
+        .getTags()
+        .forEach(
+            (tagName, tagValue) ->
+                yamlConfig.append(
+                    String.format(
+                        YAML_STRING_FMT, mode + ".azure-tags", tagName + "=" + tagValue)));
+    return yamlConfig.toString();
   }
 
   private CommandArgs createSubCommandArgs() {

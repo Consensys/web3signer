@@ -18,6 +18,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.KeystoreUtil;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
+import tech.pegasys.web3signer.signing.bulkloading.BlsKeystoreBulkLoader;
 
 import java.io.IOException;
 import java.nio.file.Files;

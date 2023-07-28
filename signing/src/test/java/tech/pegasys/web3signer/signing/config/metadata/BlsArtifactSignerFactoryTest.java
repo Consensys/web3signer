@@ -31,6 +31,7 @@ import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
@@ -65,6 +66,7 @@ class BlsArtifactSignerFactoryTest {
   private InterlockKeyProvider interlockKeyProvider;
   private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
   private AwsSecretsManagerProvider awsSecretsManagerProvider;
+  private AzureKeyVaultFactory azureKeyVaultFactory;
 
   @BeforeAll
   static void setupKeystoreFiles() throws IOException {
@@ -85,6 +87,7 @@ class BlsArtifactSignerFactoryTest {
     interlockKeyProvider = new InterlockKeyProvider(vertx);
     yubiHsmOpaqueDataProvider = new YubiHsmOpaqueDataProvider();
     awsSecretsManagerProvider = new AwsSecretsManagerProvider(100);
+    azureKeyVaultFactory = new AzureKeyVaultFactory();
 
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
@@ -94,7 +97,8 @@ class BlsArtifactSignerFactoryTest {
             interlockKeyProvider,
             yubiHsmOpaqueDataProvider,
             awsSecretsManagerProvider,
-            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin()));
+            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin()),
+            azureKeyVaultFactory);
   }
 
   @AfterEach
