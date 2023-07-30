@@ -50,16 +50,16 @@ class CachedAwsKmsClientFactoryTest {
             Optional.empty());
 
     final AwsKmsClient kmsClient_3 =
-            CachedAwsKmsClientFactory.createKmsClient(
-                    AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-                            AwsAuthenticationMode.SPECIFIED,
-                            Optional.of(
-                                    AwsCredentials.builder()
-                                            .withAccessKeyId("test3")
-                                            .withSecretAccessKey("test3")
-                                            .build())),
-                    "us-east-2",
-                    Optional.empty());
+        CachedAwsKmsClientFactory.createKmsClient(
+            AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                AwsAuthenticationMode.SPECIFIED,
+                Optional.of(
+                    AwsCredentials.builder()
+                        .withAccessKeyId("test3")
+                        .withSecretAccessKey("test3")
+                        .build())),
+            "us-east-2",
+            Optional.empty());
 
     assertThat(kmsClient_1).isEqualTo(kmsClient_2);
     assertThat(kmsClient_1).isNotEqualTo(kmsClient_3);
@@ -68,30 +68,30 @@ class CachedAwsKmsClientFactoryTest {
   @Test
   void cachedInstanceOfKmsClientIsReturnedForSpecifiedCredentialsWithSessionToken() {
     final AwsKmsClient kmsClient_1 =
-            CachedAwsKmsClientFactory.createKmsClient(
-                    AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-                            AwsAuthenticationMode.SPECIFIED,
-                            Optional.of(
-                                    AwsCredentials.builder()
-                                            .withAccessKeyId("test")
-                                            .withSecretAccessKey("test")
-                                            .withSessionToken("test")
-                                            .build())),
-                    "us-east-2",
-                    Optional.empty());
+        CachedAwsKmsClientFactory.createKmsClient(
+            AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                AwsAuthenticationMode.SPECIFIED,
+                Optional.of(
+                    AwsCredentials.builder()
+                        .withAccessKeyId("test")
+                        .withSecretAccessKey("test")
+                        .withSessionToken("test")
+                        .build())),
+            "us-east-2",
+            Optional.empty());
 
     final AwsKmsClient kmsClient_2 =
-            CachedAwsKmsClientFactory.createKmsClient(
-                    AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-                            AwsAuthenticationMode.SPECIFIED,
-                            Optional.of(
-                                    AwsCredentials.builder()
-                                            .withAccessKeyId("test")
-                                            .withSecretAccessKey("test")
-                                            .withSessionToken("test")
-                                            .build())),
-                    "us-east-2",
-                    Optional.empty());
+        CachedAwsKmsClientFactory.createKmsClient(
+            AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                AwsAuthenticationMode.SPECIFIED,
+                Optional.of(
+                    AwsCredentials.builder()
+                        .withAccessKeyId("test")
+                        .withSecretAccessKey("test")
+                        .withSessionToken("test")
+                        .build())),
+            "us-east-2",
+            Optional.empty());
 
     assertThat(kmsClient_1).isEqualTo(kmsClient_2);
   }

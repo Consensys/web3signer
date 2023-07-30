@@ -22,12 +22,12 @@ import software.amazon.awssdk.auth.credentials.AwsCredentials;
 final class AwsKmsClientKey {
   final AwsCredentials awsCredentials;
   final String region;
-  final Optional<URI> endpointOverrid;
+  final Optional<URI> endpointOverride;
 
-  AwsKmsClientKey(AwsCredentials awsCredentials, String region, Optional<URI> endpointOverrid) {
+  AwsKmsClientKey(AwsCredentials awsCredentials, String region, Optional<URI> endpointOverride) {
     this.awsCredentials = awsCredentials;
     this.region = region;
-    this.endpointOverrid = endpointOverrid;
+    this.endpointOverride = endpointOverride;
   }
 
   @Override
@@ -37,11 +37,11 @@ final class AwsKmsClientKey {
     AwsKmsClientKey that = (AwsKmsClientKey) o;
     return Objects.equals(awsCredentials, that.awsCredentials)
         && Objects.equals(region, that.region)
-        && Objects.equals(endpointOverrid, that.endpointOverrid);
+        && Objects.equals(endpointOverride, that.endpointOverride);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(awsCredentials, region, endpointOverrid);
+    return Objects.hash(awsCredentials, region, endpointOverride);
   }
 }
