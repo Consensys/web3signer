@@ -22,7 +22,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import com.azure.security.keyvault.keys.models.KeyProperties;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -34,10 +37,14 @@ public class AzureKeyVaultTest {
   private static final String TENANT_ID = System.getenv("AZURE_TENANT_ID");
   private static final String VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
   private static final String SECRET_NAME = "TEST-KEY";
+  private static final String SECRET_NAME2 = "TEST-KEY-2";
+  public static final String KEY_NAME = "TestKey2";
+  public static final String KEY_NAME2 = "TestKeyWithTag";
   private static final String EXPECTED_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
   private static final String EXPECTED_KEY2 =
       "0x5aba5b89c1d8b731dba1ba29128a4070df0dbfd7e0a67edb40ae7f860cd3ca1c";
+  private final ExecutorService azureExecutor = Executors.newCachedThreadPool();
 
   @BeforeAll
   public static void setup() {
@@ -50,7 +57,8 @@ public class AzureKeyVaultTest {
   @Test
   void fetchExistingSecretKeyFromAzureVault() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
     final Optional<String> hexKey = azureKeyVault.fetchSecret(SECRET_NAME);
     Assertions.assertThat(hexKey).isNotEmpty().get().isEqualTo(EXPECTED_KEY);
   }
@@ -58,7 +66,8 @@ public class AzureKeyVaultTest {
   @Test
   void connectingWithInvalidClientSecretThrowsException() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, "invalid", TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, "invalid", TENANT_ID, VAULT_NAME, azureExecutor);
     Assertions.assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> azureKeyVault.fetchSecret(SECRET_NAME))
         .withMessageContaining("Invalid client secret");
@@ -67,7 +76,8 @@ public class AzureKeyVaultTest {
   @Test
   void connectingWithInvalidClientIdThrowsException() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials("invalid", CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            "invalid", CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
     Assertions.assertThatExceptionOfType(RuntimeException.class)
         .isThrownBy(() -> azureKeyVault.fetchSecret(SECRET_NAME))
         .withMessageContaining(
@@ -77,29 +87,48 @@ public class AzureKeyVaultTest {
   @Test
   void nonExistingSecretReturnEmpty() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
     assertThat(azureKeyVault.fetchSecret("X-" + SECRET_NAME)).isEmpty();
   }
 
   @Test
   void secretsCanBeMappedUsingCustomMappingFunction() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(SimpleEntry::new, Collections.emptyMap());
     final Collection<SimpleEntry<String, String>> entries = result.getValues();
 
     final Optional<SimpleEntry<String, String>> testKeyEntry =
-        entries.stream().filter(e -> e.getKey().equals("TEST-KEY")).findAny();
+        entries.stream().filter(e -> e.getKey().equals(SECRET_NAME)).findAny();
     Assertions.assertThat(testKeyEntry).isPresent();
     Assertions.assertThat(testKeyEntry.get().getValue()).isEqualTo(EXPECTED_KEY);
+    Assertions.assertThat(result.getErrorCount()).isZero();
+  }
+
+  @Test
+  void keyPropertiesCanBeMappedUsingCustomMappingFunction() {
+    final AzureKeyVault azureKeyVault =
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
+
+    final MappedResults<String> result =
+        azureKeyVault.mapKeyProperties(KeyProperties::getName, Collections.emptyMap());
+    final Collection<String> entries = result.getValues();
+    final Optional<String> testKeyEntry =
+        entries.stream().filter(e -> e.equals(KEY_NAME)).findAny();
+    Assertions.assertThat(testKeyEntry).hasValue(KEY_NAME);
+    Assertions.assertThat(result.getErrorCount()).isZero();
   }
 
   @Test
   void mapSecretsUsingTags() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(SimpleEntry::new, Map.of("ENV", "TEST"));
@@ -108,7 +137,7 @@ public class AzureKeyVaultTest {
     Assertions.assertThat(result.getValues().size()).isOne();
     Optional<SimpleEntry<String, String>> secretEntry =
         result.getValues().stream()
-            .filter(entry -> "TEST-KEY-2".equals(entry.getKey()))
+            .filter(entry -> SECRET_NAME2.equals(entry.getKey()))
             .findFirst();
     Assertions.assertThat(secretEntry).isPresent();
     Assertions.assertThat(secretEntry.get().getValue()).isEqualTo(EXPECTED_KEY2);
@@ -118,9 +147,25 @@ public class AzureKeyVaultTest {
   }
 
   @Test
+  void mapKeyPropertiesUsingTags() {
+    final AzureKeyVault azureKeyVault =
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
+
+    final MappedResults<String> result =
+        azureKeyVault.mapKeyProperties(KeyProperties::getName, Map.of("ENV", "TEST"));
+    final Collection<String> entries = result.getValues();
+    final Optional<String> testKeyEntry =
+        entries.stream().filter(e -> e.equals(KEY_NAME2)).findAny();
+    Assertions.assertThat(testKeyEntry).hasValue(KEY_NAME2);
+    Assertions.assertThat(result.getErrorCount()).isZero();
+  }
+
+  @Test
   void mapSecretsWhenTagsDoesNotExist() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(SimpleEntry::new, Map.of("INVALID_TAG", "INVALID_TEST"));
@@ -133,53 +178,132 @@ public class AzureKeyVaultTest {
   }
 
   @Test
-  void azureVaultThrowsAwayObjectsWhichFailMapper() {
+  void mapKeyPropertiesWhenTagsDoesNotExist() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
+
+    final MappedResults<String> result =
+        azureKeyVault.mapKeyProperties(
+            KeyProperties::getName, Map.of("INVALID_TAG", "INVALID_TEST"));
+
+    // The key vault is not expected to have any secrets with above tags.
+    Assertions.assertThat(result.getValues()).isEmpty();
+
+    // we should not encounter any error count
+    Assertions.assertThat(result.getErrorCount()).isZero();
+  }
+
+  @Test
+  void mapSecretsThrowsAwayObjectsWhichFailMapper() {
+    final AzureKeyVault azureKeyVault =
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(
             (name, value) -> {
-              if (name.equals("MyBls")) {
+              if (name.equals(SECRET_NAME2)) {
                 throw new RuntimeException("Arbitrary Failure");
               }
               return new SimpleEntry<>(name, value);
             },
             Collections.emptyMap());
     final Collection<SimpleEntry<String, String>> entries = result.getValues();
+    Assertions.assertThat(result.getErrorCount()).isOne();
 
     final Optional<SimpleEntry<String, String>> testKeyEntry =
-        entries.stream().filter(e -> e.getKey().equals("TEST-KEY")).findAny();
+        entries.stream().filter(e -> e.getKey().equals(SECRET_NAME)).findAny();
     Assertions.assertThat(testKeyEntry).isPresent();
     Assertions.assertThat(testKeyEntry.get().getValue()).isEqualTo(EXPECTED_KEY);
 
-    final Optional<SimpleEntry<String, String>> myBlsEntry =
-        entries.stream().filter(e -> e.getKey().equals("MyBls")).findAny();
-    Assertions.assertThat(myBlsEntry).isEmpty();
+    final Optional<SimpleEntry<String, String>> testKey2 =
+        entries.stream().filter(e -> e.getKey().equals(SECRET_NAME2)).findAny();
+    Assertions.assertThat(testKey2).isEmpty();
   }
 
   @Test
-  void azureVaultThrowsAwayObjectsWhichMapToNull() {
+  void mapKeyPropertiesThrowsAwayObjectsWhichFailMapper() {
     final AzureKeyVault azureKeyVault =
-        createUsingClientSecretCredentials(CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME);
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
+
+    final MappedResults<String> result =
+        azureKeyVault.mapKeyProperties(
+            keyProperties -> {
+              if (keyProperties.getName().equals(KEY_NAME2)) {
+                throw new RuntimeException("Arbitrary Failure");
+              }
+              return keyProperties.getName();
+            },
+            Collections.emptyMap());
+
+    final Collection<String> entries = result.getValues();
+    Assertions.assertThat(result.getErrorCount()).isOne();
+
+    final Optional<String> testKey2Entry =
+        entries.stream().filter(e -> e.equals(KEY_NAME)).findAny();
+    Assertions.assertThat(testKey2Entry).isPresent();
+    Assertions.assertThat(testKey2Entry).hasValue(KEY_NAME);
+
+    final Optional<String> testKeyWithTag =
+        entries.stream().filter(e -> e.equals(KEY_NAME2)).findAny();
+    Assertions.assertThat(testKeyWithTag).isEmpty();
+  }
+
+  @Test
+  void mapSecretsThrowsAwayObjectsWhichMapToNull() {
+    final AzureKeyVault azureKeyVault =
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
 
     final MappedResults<SimpleEntry<String, String>> result =
         azureKeyVault.mapSecrets(
             (name, value) -> {
-              if (name.equals("TEST-KEY")) {
+              if (name.equals(SECRET_NAME)) {
                 return null;
               }
               return new SimpleEntry<>(name, value);
             },
             Collections.emptyMap());
     final Collection<SimpleEntry<String, String>> entries = result.getValues();
+    Assertions.assertThat(result.getErrorCount()).isOne();
     final Optional<SimpleEntry<String, String>> testKeyEntry =
-        entries.stream().filter(e -> e.getKey().equals("TEST-KEY")).findAny();
+        entries.stream().filter(e -> e.getKey().equals(SECRET_NAME)).findAny();
     Assertions.assertThat(testKeyEntry).isEmpty();
 
-    final Optional<SimpleEntry<String, String>> myBlsEntry =
-        entries.stream().filter(e -> e.getKey().equals("TEST-KEY-2")).findAny();
-    Assertions.assertThat(myBlsEntry).isPresent();
-    Assertions.assertThat(myBlsEntry.get().getValue()).isEqualTo(EXPECTED_KEY2);
+    final Optional<SimpleEntry<String, String>> testKey2Entry =
+        entries.stream().filter(e -> e.getKey().equals(SECRET_NAME2)).findAny();
+    Assertions.assertThat(testKey2Entry).isPresent();
+    Assertions.assertThat(testKey2Entry.get().getValue()).isEqualTo(EXPECTED_KEY2);
+  }
+
+  @Test
+  void mapKeyPropertiesThrowsAwayObjectsWhichMapToNull() {
+    final AzureKeyVault azureKeyVault =
+        createUsingClientSecretCredentials(
+            CLIENT_ID, CLIENT_SECRET, TENANT_ID, VAULT_NAME, azureExecutor);
+
+    final MappedResults<String> result =
+        azureKeyVault.mapKeyProperties(
+            keyProperties -> {
+              if (keyProperties.getName().equals(KEY_NAME2)) {
+                return null;
+              }
+              return keyProperties.getName();
+            },
+            Collections.emptyMap());
+
+    final Collection<String> entries = result.getValues();
+    Assertions.assertThat(result.getErrorCount()).isOne();
+
+    final Optional<String> testKey2Entry =
+        entries.stream().filter(e -> e.equals(KEY_NAME)).findAny();
+    Assertions.assertThat(testKey2Entry).isPresent();
+    Assertions.assertThat(testKey2Entry).hasValue(KEY_NAME);
+
+    final Optional<String> testKeyWithTag =
+        entries.stream().filter(e -> e.equals(KEY_NAME2)).findAny();
+    Assertions.assertThat(testKeyWithTag).isEmpty();
   }
 }

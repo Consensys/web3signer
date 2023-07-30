@@ -30,11 +30,13 @@ import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.web3signer.core.util.FileUtil;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -73,7 +75,7 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-public abstract class Runner implements Runnable {
+public abstract class Runner implements Runnable, AutoCloseable {
   public static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
   public static final String HEALTHCHECK_PATH = "/healthcheck";
   public static final String UPCHECK_PATH = "/upcheck";
@@ -84,6 +86,7 @@ public abstract class Runner implements Runnable {
   protected final BaseConfig baseConfig;
 
   private HealthCheckHandler healthCheckHandler;
+  private final List<Closeable> closeables = new ArrayList<>();
 
   protected Runner(final BaseConfig baseConfig) {
     this.baseConfig = baseConfig;
@@ -392,6 +395,21 @@ public abstract class Runner implements Runnable {
           .filter(s -> !s.isEmpty())
           .forEach(stringJoiner::add);
       return stringJoiner.toString();
+    }
+  }
+
+  protected void registerClose(final Closeable closeable) {
+    closeables.add(closeable);
+  }
+
+  @Override
+  public void close() throws Exception {
+    for (Closeable closeable : closeables) {
+      try {
+        closeable.close();
+      } catch (Exception e) {
+        LOG.error("Failed to close Runner resource", e);
+      }
     }
   }
 }

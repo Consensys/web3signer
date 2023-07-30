@@ -21,9 +21,9 @@ import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.util.List;

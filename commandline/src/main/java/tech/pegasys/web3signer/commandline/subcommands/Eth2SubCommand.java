@@ -26,7 +26,7 @@ import tech.pegasys.teku.spec.ForkSchedule;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
-import tech.pegasys.web3signer.commandline.PicoCliAzureKeyVaultParameters;
+import tech.pegasys.web3signer.commandline.PicoCliEth2AzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
@@ -124,7 +124,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   private boolean isKeyManagerApiEnabled = false;
 
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
-  @Mixin private PicoCliAzureKeyVaultParameters azureKeyVaultParameters;
+  @Mixin private PicoCliEth2AzureKeyVaultParameters azureKeyVaultParameters;
   @Mixin private PicoKeystoresParameters keystoreParameters;
   @Mixin private PicoCliAwsSecretsManagerParameters awsSecretsManagerParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;

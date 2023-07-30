@@ -15,12 +15,9 @@ package tech.pegasys.web3signer.commandline;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
-import java.util.Collections;
-import java.util.Map;
-
 import picocli.CommandLine.Option;
 
-public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
+public abstract class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
   @Option(
       names = {"--azure-vault-enabled"},
@@ -64,14 +61,6 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
       paramLabel = "<CLIENT_SECRET>")
   private String clientSecret;
 
-  @Option(
-      names = {"--azure-secrets-tags"},
-      description =
-          "Specify optional tags to filter the secrets. "
-              + "For example --azure-secrets-tags ENV=prod --azure-secrets-tags=CLIENT=A.",
-      paramLabel = "<TAG_NAME=TAG_VALUE>")
-  private Map<String, String> tags = Collections.emptyMap();
-
   @Override
   public boolean isAzureKeyVaultEnabled() {
     return azureKeyVaultEnabled;
@@ -100,10 +89,5 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
   @Override
   public String getClientSecret() {
     return clientSecret;
-  }
-
-  @Override
-  public Map<String, String> getTags() {
-    return tags;
   }
 }

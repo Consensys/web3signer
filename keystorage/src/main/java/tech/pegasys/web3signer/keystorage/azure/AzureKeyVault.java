@@ -19,8 +19,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.exception.ResourceNotFoundException;
@@ -31,6 +33,7 @@ import com.azure.security.keyvault.keys.KeyClient;
 import com.azure.security.keyvault.keys.KeyClientBuilder;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
 import com.azure.security.keyvault.keys.cryptography.CryptographyClientBuilder;
+import com.azure.security.keyvault.keys.models.KeyProperties;
 import com.azure.security.keyvault.keys.models.KeyVaultKey;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
@@ -51,12 +54,14 @@ public class AzureKeyVault {
       final String clientId,
       final String clientSecret,
       final String tenantId,
-      final String vaultName) {
+      final String vaultName,
+      final ExecutorService executorService) {
     final TokenCredential tokenCredential =
         new ClientSecretCredentialBuilder()
             .clientId(clientId)
             .clientSecret(clientSecret)
             .tenantId(tenantId)
+            .executorService(executorService)
             .build();
 
     return new AzureKeyVault(tokenCredential, vaultName);
@@ -148,13 +153,57 @@ public class AzureKeyVault {
     return MappedResults.newInstance(result, errorCount.intValue());
   }
 
+  public <R> MappedResults<R> mapKeyProperties(
+      final Function<KeyProperties, R> mapper, final Map<String, String> tags) {
+    final Set<R> result = ConcurrentHashMap.newKeySet();
+    final AtomicInteger errorCount = new AtomicInteger(0);
+    try {
+      keyClient
+          .listPropertiesOfKeys()
+          .streamByPage()
+          .forEach(
+              keyPage ->
+                  keyPage.getValue().parallelStream()
+                      .filter(keyProperties -> keyPropertiesPredicate(tags, keyProperties))
+                      .forEach(
+                          kp -> {
+                            try {
+                              final R value = mapper.apply(kp);
+                              result.add(value);
+                            } catch (final Exception e) {
+                              LOG.warn(
+                                  "Failed to map keyProperties '{}' to requested object type.",
+                                  kp.getName());
+                              errorCount.incrementAndGet();
+                            }
+                          }));
+    } catch (final Exception e) {
+      LOG.error("Unexpected error during Azure mapKeyProperties", e);
+      errorCount.incrementAndGet();
+    }
+
+    return MappedResults.newInstance(result, errorCount.intValue());
+  }
+
+  private static boolean isEmptyTags(final Map<String, String> tags) {
+    return tags == null || tags.isEmpty();
+  }
+
   private static boolean secretPropertiesPredicate(
       final Map<String, String> tags, final SecretProperties secretProperties) {
-    if (tags == null || tags.isEmpty()) {
+    if (isEmptyTags(tags))
       return true; // we don't want to filter if user-supplied tags map is empty
-    }
 
     return secretProperties.getTags() != null // return false if remote secret doesn't have any tags
         && secretProperties.getTags().entrySet().containsAll(tags.entrySet());
+  }
+
+  private static boolean keyPropertiesPredicate(
+      final Map<String, String> tags, final KeyProperties keyProperties) {
+    if (isEmptyTags(tags))
+      return true; // we don't want to filter if user-supplied tags map is empty
+
+    return keyProperties.getTags() != null // return false if remote secret doesn't have any tags
+        && keyProperties.getTags().entrySet().containsAll(tags.entrySet());
   }
 }

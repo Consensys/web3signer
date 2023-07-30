@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 import tech.pegasys.web3signer.core.config.BaseConfig;
@@ -35,10 +36,16 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.Et
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.InternalResponseHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.SendTransactionHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
+import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
+import tech.pegasys.web3signer.signing.bulkloading.SecpAzureBulkLoader;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdapter;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
@@ -49,6 +56,7 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -56,17 +64,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.ext.web.impl.BlockingHandlerDecorator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth1Runner extends Runner {
   public static final String PUBLIC_KEYS_PATH = "/api/v1/eth1/publicKeys";
   public static final String ROOT_PATH = "/";
   public static final String SIGN_PATH = "/api/v1/eth1/sign/:identifier";
+  private static final Logger LOG = LogManager.getLogger();
   private final Eth1Config eth1Config;
   private final HttpResponseFactory responseFactory = new HttpResponseFactory();
 
@@ -147,34 +160,76 @@ public class Eth1Runner extends Runner {
       final Vertx vertx, final MetricsSystem metricsSystem) {
     return new DefaultArtifactSignerProvider(
         () -> {
-          final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
-          final HashicorpConnectionFactory hashicorpConnectionFactory =
-              new HashicorpConnectionFactory();
-          try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
-              final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
-                  new YubiHsmOpaqueDataProvider()) {
+          final List<ArtifactSigner> signers = new ArrayList<>();
+          final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
+          registerClose(azureKeyVaultFactory::close);
+          final AzureKeyVaultSignerFactory azureSignerFactory =
+              new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
 
-            final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
-                new Secp256k1ArtifactSignerFactory(
-                    hashicorpConnectionFactory,
-                    baseConfig.getKeyConfigPath(),
-                    azureFactory,
-                    interlockKeyProvider,
-                    yubiHsmOpaqueDataProvider,
-                    EthSecpArtifactSigner::new,
-                    true);
-
-            return new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
-                .load(
-                    baseConfig.getKeyConfigPath(),
-                    "yaml",
-                    new YamlSignerParser(
-                        List.of(ethSecpArtifactSignerFactory),
-                        YamlMapperFactory.createYamlMapper(
-                            baseConfig.getKeyStoreConfigFileMaxSize())))
-                .getValues();
-          }
+          signers.addAll(
+              loadSignersFromKeyConfigFiles(vertx, azureKeyVaultFactory, azureSignerFactory)
+                  .getValues());
+          signers.addAll(bulkLoadSigners(azureKeyVaultFactory, azureSignerFactory).getValues());
+          return signers;
         });
+  }
+
+  private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
+      final Vertx vertx,
+      final AzureKeyVaultFactory azureKeyVaultFactory,
+      final AzureKeyVaultSignerFactory azureSignerFactory) {
+    final HashicorpConnectionFactory hashicorpConnectionFactory = new HashicorpConnectionFactory();
+    try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
+        final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
+            new YubiHsmOpaqueDataProvider()) {
+
+      final Secp256k1ArtifactSignerFactory ethSecpArtifactSignerFactory =
+          new Secp256k1ArtifactSignerFactory(
+              hashicorpConnectionFactory,
+              baseConfig.getKeyConfigPath(),
+              azureSignerFactory,
+              interlockKeyProvider,
+              yubiHsmOpaqueDataProvider,
+              EthSecpArtifactSigner::new,
+              azureKeyVaultFactory,
+              true);
+
+      return new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
+          .load(
+              baseConfig.getKeyConfigPath(),
+              "yaml",
+              new YamlSignerParser(
+                  List.of(ethSecpArtifactSignerFactory),
+                  YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())));
+    }
+  }
+
+  private MappedResults<ArtifactSigner> bulkLoadSigners(
+      final AzureKeyVaultFactory azureKeyVaultFactory,
+      final AzureKeyVaultSignerFactory azureSignerFactory) {
+    final AzureKeyVaultParameters azureKeyVaultConfig = eth1Config.getAzureKeyVaultConfig();
+    if (azureKeyVaultConfig.isAzureKeyVaultEnabled()) {
+      LOG.info("Bulk loading keys from Azure key vault ... ");
+      final AzureKeyVault azureKeyVault =
+          azureKeyVaultFactory.createAzureKeyVault(
+              azureKeyVaultConfig.getClientId(),
+              azureKeyVaultConfig.getClientSecret(),
+              azureKeyVaultConfig.getKeyVaultName(),
+              azureKeyVaultConfig.getTenantId(),
+              azureKeyVaultConfig.getAuthenticationMode());
+      final SecpAzureBulkLoader secpAzureBulkLoader =
+          new SecpAzureBulkLoader(azureKeyVault, azureSignerFactory);
+      final MappedResults<ArtifactSigner> azureResult =
+          secpAzureBulkLoader.load(azureKeyVaultConfig);
+      LOG.info(
+          "Keys loaded from Azure: [{}], with error count: [{}]",
+          azureResult.getValues().size(),
+          azureResult.getErrorCount());
+      registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
+      return azureResult;
+    } else {
+      return MappedResults.newSetInstance();
+    }
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {
@@ -231,5 +286,19 @@ public class Eth1Runner extends Runner {
     } catch (final Exception e) {
       throw new InitializationException(e);
     }
+  }
+
+  private void registerSignerLoadingHealthCheck(
+      final String name, final MappedResults<ArtifactSigner> result) {
+    super.registerHealthCheckProcedure(
+        name,
+        promise -> {
+          final JsonObject statusJson =
+              new JsonObject()
+                  .put("keys-loaded", result.getValues().size())
+                  .put("error-count", result.getErrorCount());
+          promise.complete(
+              result.getErrorCount() > 0 ? Status.KO(statusJson) : Status.OK(statusJson));
+        });
   }
 }

@@ -1,6 +1,10 @@
 # Changelog
 
 ## Next release
+
+### Breaking Changes
+- Eth2 Azure command line option --azure-secrets-tags is now deprecated and is replaced with --azure-tags. The --azure-secrets-tags option will be removed in a future release.
+
 ### Features Added
 - Add support for SECP256K1 remote signing using AWS Key Management Service. [#501](https://github.com/Consensys/web3signer/issues/501)
 - Azure bulk mode support for loading multiline (`\n` delimited, up to 200) keys per secret.
@@ -9,6 +13,7 @@
 - Add eth_signTransaction RPC method under the eth1 subcommand [#822](https://github.com/ConsenSys/web3signer/pull/822)
 - Add eth_sendTransaction RPC method under the eth1 subcommand [#835](https://github.com/Consensys/web3signer/pull/835)
 - Add EIP-1559 support for eth1 public transactions for eth_sendTransaction and eth_signTransaction [#836](https://github.com/Consensys/web3signer/pull/836)
+- Add Azure bulk loading for secp256k1 keys in eth1 mode [#850](https://github.com/Consensys/web3signer/pull/850)
 
 ### Bugs fixed
 - Support long name aliases in environment variables and YAML configuration [#825](https://github.com/Consensys/web3signer/pull/825)

@@ -66,6 +66,7 @@ class SignerLoaderTest {
   @Mock private InterlockKeyProvider interlockKeyProvider;
   @Mock private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
   @Mock private AwsSecretsManagerProvider awsSecretsManagerProvider;
+  @Mock private AzureKeyVaultFactory azureKeyVaultFactory;
   @Mock private LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
   @Mock private OperationTimer operationTimer;
 
@@ -98,7 +99,8 @@ class SignerLoaderTest {
             interlockKeyProvider,
             yubiHsmOpaqueDataProvider,
             awsSecretsManagerProvider,
-            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
+            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()),
+            azureKeyVaultFactory);
 
     signerParser =
         new YamlSignerParser(

@@ -27,6 +27,7 @@ import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.FcBlsArtifactSigner;
 import tech.pegasys.web3signer.signing.FcSecpArtifactSigner;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFactory;
@@ -104,7 +105,10 @@ public class FilecoinRunner extends Runner {
       final Vertx vertx, final MetricsSystem metricsSystem) {
     return new DefaultArtifactSignerProvider(
         () -> {
-          final AzureKeyVaultSignerFactory azureFactory = new AzureKeyVaultSignerFactory();
+          final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
+          registerClose(azureKeyVaultFactory::close);
+          final AzureKeyVaultSignerFactory azureSignerFactory =
+              new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
 
           try (final HashicorpConnectionFactory hashicorpConnectionFactory =
                   new HashicorpConnectionFactory();
@@ -122,16 +126,18 @@ public class FilecoinRunner extends Runner {
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
                     awsSecretsManagerProvider,
-                    (args) -> new FcBlsArtifactSigner(args.getKeyPair(), network));
+                    (args) -> new FcBlsArtifactSigner(args.getKeyPair(), network),
+                    azureKeyVaultFactory);
 
             final AbstractArtifactSignerFactory secpArtifactSignerFactory =
                 new Secp256k1ArtifactSignerFactory(
                     hashicorpConnectionFactory,
                     baseConfig.getKeyConfigPath(),
-                    azureFactory,
+                    azureSignerFactory,
                     interlockKeyProvider,
                     yubiHsmOpaqueDataProvider,
                     signer -> new FcSecpArtifactSigner(signer, network),
+                    azureKeyVaultFactory,
                     false);
 
             return new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
