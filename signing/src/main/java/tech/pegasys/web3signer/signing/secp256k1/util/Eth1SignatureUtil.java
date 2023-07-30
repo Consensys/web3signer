@@ -28,6 +28,14 @@ import org.web3j.utils.Numeric;
 public class Eth1SignatureUtil {
   private static final Logger LOG = LogManager.getLogger();
 
+  /**
+   * Java or OpenSSL signature is ANS.1/DER encoded. i.e. SEQUENCE := {r INTEGER, s INTEGER}
+   *
+   * @param dataToSign The data that was signed
+   * @param ecPublicKey the EC Public Key to verify
+   * @param signature ANS.1/DER encoded signature
+   * @return instance of Signature that contains r and s along with v
+   */
   public static Signature deriveSignatureFromDerEncoded(
       final byte[] dataToSign, final ECPublicKey ecPublicKey, final byte[] signature) {
     final BigInteger R = extractR(signature);
@@ -36,6 +44,14 @@ public class Eth1SignatureUtil {
     return deriveSignature(dataToSign, ecPublicKey, R, S);
   }
 
+  /**
+   * P1363 signature is 32+32 size for r and s (due to secp-256 encoding)
+   *
+   * @param dataToSign The data that was signed
+   * @param ecPublicKey the EC Public Key to verify
+   * @param signature P1363 encoded data
+   * @return instance of Signature that contains r and s along with v
+   */
   public static Signature deriveSignatureFromP1363Encoded(
       final byte[] dataToSign, final ECPublicKey ecPublicKey, final byte[] signature) {
     // The output of this will be a 64 byte array. The first 32 are the value for R and the rest is

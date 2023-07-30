@@ -125,7 +125,7 @@ public class AwsKmsSignerTest {
   }
 
   @Test
-  public void awsKmsSignerCanSignTwice() {
+  void awsSignatureCanBeVerified() throws SignatureException {
     final AwsKmsMetadata awsKmsMetadata =
         new AwsKmsMetadata(
             AwsAuthenticationMode.SPECIFIED,
@@ -134,39 +134,27 @@ public class AwsKmsSignerTest {
             testKeyId,
             ENDPOINT_OVERRIDE);
     final Signer signer = AwsKmsSignerFactory.createSigner(awsKmsMetadata, true);
-
-    final byte[] dataToHash = "Hello".getBytes(UTF_8);
-    signer.sign(dataToHash);
-    signer.sign(dataToHash);
-  }
-
-  @Test
-  void awsWithoutHashingDoesntHashData() throws SignatureException {
-    final AwsKmsMetadata awsKmsMetadata =
-        new AwsKmsMetadata(
-            AwsAuthenticationMode.SPECIFIED,
-            AWS_REGION,
-            Optional.of(AWS_CREDENTIALS),
-            testKeyId,
-            ENDPOINT_OVERRIDE);
-    final Signer signer = AwsKmsSignerFactory.createSigner(awsKmsMetadata, false);
     final BigInteger publicKey =
         Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
 
     final byte[] dataToSign = "Hello".getBytes(UTF_8);
-    final byte[] hashedData = Hash.sha3(dataToSign); // manual hash before sending to remote signing
 
-    final Signature signature = signer.sign(hashedData);
+    for (int i = 0; i < 2; i++) {
+      final Signature signature = signer.sign(dataToSign);
+      // Use web3j library to recover the primary key from the signature
+      final BigInteger recoveredPublicKey = recoverPublicKeyFromSignature(signature, dataToSign);
+      assertThat(recoveredPublicKey).isEqualTo(publicKey);
+    }
+  }
 
-    // Determine if Web3j thinks the signature comes from the public key used (really proves
-    // that the hashedData isn't hashed a second time).
+  private static BigInteger recoverPublicKeyFromSignature(
+      final Signature signature, final byte[] dataToSign) throws SignatureException {
     final Sign.SignatureData sigData =
         new Sign.SignatureData(
             signature.getV().toByteArray(),
             Numeric.toBytesPadded(signature.getR(), 32),
             Numeric.toBytesPadded(signature.getS(), 32));
 
-    final BigInteger recoveredPublicKey = Sign.signedMessageHashToKey(hashedData, sigData);
-    assertThat(recoveredPublicKey).isEqualTo(publicKey);
+    return Sign.signedMessageHashToKey(Hash.sha3(dataToSign), sigData);
   }
 }
