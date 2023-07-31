@@ -177,7 +177,7 @@ dependencyManagement {
       com.squareup.okhttp3:logging-interceptor:4.9.0 // CVE-2021-0341
       \--- org.web3j:core:4.9.2
      */
-    dependency 'com.squareup.okhttp3:logging-interceptor:4.10.0'
+    dependency 'com.squareup.okhttp3:logging-interceptor:4.11.0'
 
     dependencySet(group: 'com.squareup.okhttp3', version: '4.11.0') {
       entry 'okhttp'
