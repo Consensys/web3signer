@@ -8,4 +8,11 @@
         <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson\-databind@.*$</packageUrl>
         <vulnerabilityName>CVE-2023-35116</vulnerabilityName>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Suppress CVE-2023-3782 as Web3Signer doesn't use brotli and the NVD is incorrectly applying against all okhttp packages instead of just brotli one. See discussion in https://github.com/square/okhttp/issues/7738
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.squareup\.okhttp3/.*$</packageUrl>
+        <cve>CVE-2023-3782</cve>
+    </suppress>
 </suppressions>
