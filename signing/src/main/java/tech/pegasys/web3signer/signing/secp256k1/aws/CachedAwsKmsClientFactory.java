@@ -34,7 +34,6 @@ import software.amazon.awssdk.services.kms.KmsClientBuilder;
  * increased if different set of credentials or region is anticipated.
  */
 public class CachedAwsKmsClientFactory {
-  // private static final Map<AwsKmsClientKey, AwsKmsClient> CACHE = new ConcurrentHashMap<>();
   private final LoadingCache<AwsKmsClientKey, AwsKmsClient> cache;
 
   public CachedAwsKmsClientFactory(final long cacheSize) {
