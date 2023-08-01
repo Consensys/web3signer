@@ -18,9 +18,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public class AzureConnection {
   private final HttpClient httpClient;
 
@@ -28,23 +25,19 @@ public class AzureConnection {
     this.httpClient = httpClient;
   }
 
-  private static final Logger LOG = LogManager.getLogger();
-
   public Map<String, Object> executeHttpRequest(final HttpRequest httpRequest) {
 
     final HttpResponse<String> response;
     try {
       response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
     } catch (final IOException | InterruptedException | RuntimeException e) {
-      LOG.error("Error communicating with Azure vault:" + e.getMessage());
       throw new RuntimeException("Error communicating with Azure vault: " + e.getMessage(), e);
     }
 
     if (response.statusCode() != 200 && response.statusCode() != 204) {
       throw new RuntimeException(
           String.format(
-              "Error communicating with Azure vault: Received invalid Http status code %d.",
-              response.statusCode()));
+              "Error communicating with Azure vault: Received invalid response %s.", response));
     }
 
     return AzureKVResponseMapper.from(response.body());
