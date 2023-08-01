@@ -58,32 +58,32 @@ class CachedAwsKmsClientFactoryTest {
             Optional.empty());
 
     final AwsKmsClient kmsClient_3 =
-            cachedAwsKmsClientFactory.createKmsClient(
-                    AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-                            AwsAuthenticationMode.SPECIFIED,
-                            Optional.of(
-                                    AwsCredentials.builder()
-                                            .withAccessKeyId("test")
-                                            .withSecretAccessKey("test")
-                                            .build())),
-                    "us-east-2",
-                    Optional.empty());
+        cachedAwsKmsClientFactory.createKmsClient(
+            AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                AwsAuthenticationMode.SPECIFIED,
+                Optional.of(
+                    AwsCredentials.builder()
+                        .withAccessKeyId("test")
+                        .withSecretAccessKey("test")
+                        .build())),
+            "us-east-2",
+            Optional.empty());
 
     final AwsKmsClient kmsClient_4 =
-            cachedAwsKmsClientFactory.createKmsClient(
-                    AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-                            AwsAuthenticationMode.SPECIFIED,
-                            Optional.of(
-                                    AwsCredentials.builder()
-                                            .withAccessKeyId("test3")
-                                            .withSecretAccessKey("test3")
-                                            .build())),
-                    "us-east-2",
-                    Optional.empty());
+        cachedAwsKmsClientFactory.createKmsClient(
+            AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                AwsAuthenticationMode.SPECIFIED,
+                Optional.of(
+                    AwsCredentials.builder()
+                        .withAccessKeyId("test3")
+                        .withSecretAccessKey("test3")
+                        .build())),
+            "us-east-2",
+            Optional.empty());
 
     assertThat(kmsClient_1).isEqualTo(kmsClient_3);
     assertThat(kmsClient_2).isEqualTo(kmsClient_4);
-    
+
     assertThat(kmsClient_1).isNotEqualTo(kmsClient_2);
   }
 
