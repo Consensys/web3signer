@@ -12,11 +12,13 @@
  */
 package tech.pegasys.web3signer.keystorage.azure;
 
+import com.azure.core.credential.AccessToken;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,7 +59,10 @@ public class AzureKeyVault {
   private final SecretClient secretClient;
   private final KeyClient keyClient;
   private static final List<String> SCOPE = List.of("https://vault.azure.net/.default");
-  final TokenRequestContext tokenRequestContext = new TokenRequestContext().setScopes(SCOPE);
+  private final TokenRequestContext tokenRequestContext =
+      new TokenRequestContext().setScopes(SCOPE);
+
+  private Optional<AccessToken> maybeToken = Optional.empty();
 
   public static AzureKeyVault createUsingClientSecretCredentials(
       final String clientId,
@@ -112,31 +117,33 @@ public class AzureKeyVault {
   }
 
   public HttpRequest getRemoteSigningHttpRequest(
-      final CryptographyClient cryptoClient,
       final byte[] data,
       final SignatureAlgorithm signingAlgo,
-      final String vaultName) {
-    final String keyName = cryptoClient.getKey().getName();
-    final String keyVersion = cryptoClient.getKey().getProperties().getVersion();
+      final String vaultName,
+      final String azureKeyName,
+      final String azureKeyVersion) {
+
     final String apiVersion = KeyServiceVersion.getLatest().getVersion();
 
     final JsonObject jsonBody = new JsonObject();
     jsonBody.put("alg", signingAlgo);
     jsonBody.put("value", Bytes.of(data).toBase64String());
 
-    final String uriString = constructAzureSignApiUri(vaultName, keyName, keyVersion, apiVersion);
+    final String uriString = constructAzureSignApiUri(vaultName, azureKeyName, azureKeyVersion, apiVersion);
     final URI uri = URI.create(uriString);
 
-    return HttpRequest.newBuilder(uri)
+    final HttpRequest httpRequest =  HttpRequest.newBuilder(uri)
         .header("Content-Type", "application/json")
         .header(
             "Authorization",
-            "Bearer " + tokenCredential.getTokenSync(tokenRequestContext).getToken())
+            "Bearer " + getOrRequestNewToken())
         .POST(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))
         .build();
+
+    return httpRequest;
   }
 
-  private static String constructAzureSignApiUri(
+  private String constructAzureSignApiUri(
       final String keyVaultName,
       final String keyName,
       final String keyVersion,
@@ -248,5 +255,13 @@ public class AzureKeyVault {
 
     return keyProperties.getTags() != null // return false if remote secret doesn't have any tags
         && keyProperties.getTags().entrySet().containsAll(tags.entrySet());
+  }
+
+  private String getOrRequestNewToken(){
+    if(maybeToken.isEmpty() || maybeToken.get().isExpired()){
+      maybeToken = Optional.of(tokenCredential.getTokenSync(tokenRequestContext));
+    }
+
+    return maybeToken.get().getToken();
   }
 }

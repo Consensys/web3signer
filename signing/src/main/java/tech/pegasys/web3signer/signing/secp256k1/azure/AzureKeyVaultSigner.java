@@ -12,13 +12,8 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
-import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.constructAzureKeyVaultUrl;
-
 import tech.pegasys.web3signer.keystorage.azure.AzureConnection;
-import tech.pegasys.web3signer.keystorage.azure.AzureConnectionParameters;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
-import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
-import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
@@ -27,6 +22,7 @@ import tech.pegasys.web3signer.signing.secp256k1.common.SignerInitializationExce
 import java.math.BigInteger;
 import java.net.http.HttpRequest;
 import java.security.interfaces.ECPublicKey;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -60,7 +56,8 @@ public class AzureKeyVaultSigner implements Signer {
       final Bytes publicKey,
       final boolean needsToHash,
       final boolean useDeprecatedSignatureAlgorithm,
-      final AzureKeyVaultFactory azureKeyVaultFactory) {
+      final AzureKeyVault azureKeyVault,
+      final AzureConnection azureConnection) {
     this.config = config;
     this.publicKey = EthPublicKeyUtils.createPublicKey(publicKey);
     this.needsToHash = needsToHash;
@@ -68,38 +65,24 @@ public class AzureKeyVaultSigner implements Signer {
         useDeprecatedSignatureAlgorithm
             ? SignatureAlgorithm.fromString("ECDSA256")
             : SignatureAlgorithm.ES256K;
-    final AzureConnectionFactory connFactory = new AzureConnectionFactory();
-    final AzureConnectionParameters connectionParameters =
-        AzureConnectionParameters.newBuilder()
-            .withServerHost(constructAzureKeyVaultUrl(config.getKeyVaultName()))
-            .build();
-    this.azureConnection = connFactory.getOrCreateConnection(connectionParameters);
-    try {
-      this.vault =
-          azureKeyVaultFactory.createAzureKeyVault(
-              config.getClientId(),
-              config.getClientSecret(),
-              config.getKeyVaultName(),
-              config.getTenantId(),
-              AzureAuthenticationMode.CLIENT_SECRET);
-    } catch (final Exception e) {
-      LOG.error("Failed to connect to vault", e);
-      throw new SignerInitializationException(INACCESSIBLE_KEY_ERROR, e);
-    }
+    this.azureConnection = azureConnection;
+    this.vault = azureKeyVault;
+
   }
 
   @Override
   public Signature sign(byte[] data) {
 
-    final CryptographyClient cryptoClient =
-        vault.fetchKey(config.getKeyName(), config.getKeyVersion());
+
 
     final byte[] dataToSign = needsToHash ? Hash.sha3(data) : data;
 
     // TODO - We can use the sign method from the azure library again once they fix the issue with
-    // the SECP256K for java 17
+    // the SECP256K1 for java 17
+    // final CryptographyClient cryptoClient =
+    // vault.fetchKey(config.getKeyName(), config.getKeyVersion());
     // final SignResult result = cryptoClient.sign(signingAlgo, dataToSign);
-    final SignResult result = signViaRestApi(vault, cryptoClient, signingAlgo, dataToSign);
+    final SignResult result = signViaRestApi(vault, config, signingAlgo, dataToSign);
 
     final byte[] signature = result.getSignature();
 
@@ -134,17 +117,18 @@ public class AzureKeyVaultSigner implements Signer {
 
   private SignResult signViaRestApi(
       final AzureKeyVault vault,
-      final CryptographyClient cryptoClient,
+      final AzureConfig azureConfig,
       final SignatureAlgorithm signingAlgo,
       final byte[] dataToSign) {
     final String vaultName = config.getKeyVaultName();
 
     // Assemble httpRequest
     final HttpRequest httpRequest =
-        vault.getRemoteSigningHttpRequest(cryptoClient, dataToSign, signingAlgo, vaultName);
+        vault.getRemoteSigningHttpRequest(dataToSign, signingAlgo, vaultName, azureConfig.getKeyName(), azureConfig.getKeyVersion());
 
     // execute
     final Map<String, Object> response = azureConnection.executeHttpRequest(httpRequest);
+
 
     // retrieve the results
     final Base64Url signatureBytes = new Base64Url(response.get("value").toString());
