@@ -58,8 +58,9 @@ public class FilecoinSubCommand extends ModeSubCommand {
   @CommandLine.Option(
       names = {"--aws-kms-client-cache-size"},
       paramLabel = "<LONG>",
+      defaultValue = "1",
       description =
-          "AWS Kms Client Cache size. Should be set based on different set of credentials and region (default: ${DEFAULT-VALUE})")
+          "AWS Kms Client cache size. Should be set based on different set of credentials and region (default: ${DEFAULT-VALUE})")
   public void setAwsKmsClientCacheSize(long awsKmsClientCacheSize) {
     if (awsKmsClientCacheSize < 1) {
       throw new CommandLine.ParameterException(
