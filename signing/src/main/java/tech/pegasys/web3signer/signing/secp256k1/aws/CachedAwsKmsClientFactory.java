@@ -12,35 +12,56 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.aws;
 
-import java.net.URI;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import static com.google.common.base.Preconditions.checkArgument;
 
+import java.net.URI;
+import java.util.Optional;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.KmsClientBuilder;
 
-/** Factory class that provide cached instance of KmsClient */
+/**
+ * Factory class that provide cached instances of KmsClient. Each cached KmsClient is identified by
+ * aws credentials, region and optional override endpoint URL.
+ *
+ * <p>It is anticipated that web3signer instance would be using same aws host/credentials for its
+ * kms operations, hence the default cache size should be set to 1. The cache size should be
+ * increased if different set of credentials or region is anticipated.
+ */
 public class CachedAwsKmsClientFactory {
-  private static final Map<AwsKmsClientKey, AwsKmsClient> CACHE = new ConcurrentHashMap<>();
+  // private static final Map<AwsKmsClientKey, AwsKmsClient> CACHE = new ConcurrentHashMap<>();
+  private final LoadingCache<AwsKmsClientKey, AwsKmsClient> cache;
 
-  public static AwsKmsClient createKmsClient(
+  public CachedAwsKmsClientFactory(final long cacheSize) {
+    checkArgument(cacheSize > 0, "Cache size must be positive");
+    cache =
+        CacheBuilder.newBuilder()
+            .maximumSize(cacheSize)
+            .build(
+                new CacheLoader<>() {
+                  @Override
+                  public AwsKmsClient load(final AwsKmsClientKey key) {
+                    final KmsClientBuilder kmsClientBuilder = KmsClient.builder();
+                    key.getEndpointOverride().ifPresent(kmsClientBuilder::endpointOverride);
+                    kmsClientBuilder
+                        .credentialsProvider(key.getAwsCredentialsProvider())
+                        .region(Region.of(key.getRegion()));
+
+                    return new AwsKmsClient(kmsClientBuilder.build());
+                  }
+                });
+  }
+
+  public AwsKmsClient createKmsClient(
       final AwsCredentialsProvider awsCredentialsProvider,
       final String region,
       final Optional<URI> endpointOverride) {
-    final AwsKmsClientKey awsKmsClientKey =
-        new AwsKmsClientKey(awsCredentialsProvider.resolveCredentials(), region, endpointOverride);
-
-    return CACHE.computeIfAbsent(
-        awsKmsClientKey,
-        k -> {
-          final KmsClientBuilder kmsClientBuilder = KmsClient.builder();
-          endpointOverride.ifPresent(kmsClientBuilder::endpointOverride);
-          kmsClientBuilder.credentialsProvider(awsCredentialsProvider).region(Region.of(region));
-
-          return new AwsKmsClient(kmsClientBuilder.build());
-        });
+    return cache.getUnchecked(
+        new AwsKmsClientKey(awsCredentialsProvider, region, endpointOverride));
   }
 }

@@ -87,6 +87,8 @@ public class AwsKmsSignerTest {
           .withSessionToken(AWS_SESSION_TOKEN)
           .build();
 
+  private static final CachedAwsKmsClientFactory KMS_CLIENT_FACTORY =
+      new CachedAwsKmsClientFactory(1);
   private static AwsKmsClient awsKMSClient;
   private static String testKeyId;
 
@@ -96,8 +98,7 @@ public class AwsKmsSignerTest {
         AwsCredentialsProviderFactory.createAwsCredentialsProvider(
             AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_RW_CREDENTIALS));
     awsKMSClient =
-        CachedAwsKmsClientFactory.createKmsClient(
-            awsCredentialsProvider, AWS_REGION, ENDPOINT_OVERRIDE);
+        KMS_CLIENT_FACTORY.createKmsClient(awsCredentialsProvider, AWS_REGION, ENDPOINT_OVERRIDE);
 
     // create a test key
     final CreateKeyRequest web3SignerTestingKey =
@@ -119,9 +120,6 @@ public class AwsKmsSignerTest {
     ScheduleKeyDeletionRequest deletionRequest =
         ScheduleKeyDeletionRequest.builder().keyId(testKeyId).pendingWindowInDays(7).build();
     awsKMSClient.scheduleKeyDeletion(deletionRequest);
-
-    // close
-    awsKMSClient.close();
   }
 
   @Test
@@ -133,7 +131,10 @@ public class AwsKmsSignerTest {
             Optional.of(AWS_CREDENTIALS),
             testKeyId,
             ENDPOINT_OVERRIDE);
-    final Signer signer = AwsKmsSignerFactory.createSigner(awsKmsMetadata, true);
+    final long kmsClientCacheSize = 1;
+    final boolean applySha3Hash = true;
+    final Signer signer =
+        new AwsKmsSignerFactory(kmsClientCacheSize, applySha3Hash).createSigner(awsKmsMetadata);
     final BigInteger publicKey =
         Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
 

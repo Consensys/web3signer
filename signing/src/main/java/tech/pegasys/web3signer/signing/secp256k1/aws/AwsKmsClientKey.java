@@ -17,17 +17,35 @@ import java.util.Objects;
 import java.util.Optional;
 
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
 /** This class acts as a key to identify Aws KmsClient from the cache. */
 final class AwsKmsClientKey {
-  final AwsCredentials awsCredentials;
-  final String region;
-  final Optional<URI> endpointOverride;
+  private final AwsCredentialsProvider awsCredentialsProvider;
+  private final AwsCredentials awsCredentials;
+  private final String region;
+  private final Optional<URI> endpointOverride;
 
-  AwsKmsClientKey(AwsCredentials awsCredentials, String region, Optional<URI> endpointOverride) {
-    this.awsCredentials = awsCredentials;
+  AwsKmsClientKey(
+      final AwsCredentialsProvider awsCredentialsProvider,
+      final String region,
+      final Optional<URI> endpointOverride) {
+    this.awsCredentialsProvider = awsCredentialsProvider;
+    this.awsCredentials = awsCredentialsProvider.resolveCredentials();
     this.region = region;
     this.endpointOverride = endpointOverride;
+  }
+
+  public AwsCredentialsProvider getAwsCredentialsProvider() {
+    return awsCredentialsProvider;
+  }
+
+  public String getRegion() {
+    return region;
+  }
+
+  public Optional<URI> getEndpointOverride() {
+    return endpointOverride;
   }
 
   @Override

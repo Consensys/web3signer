@@ -25,7 +25,25 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 /** A Signer factory that create an instance of `Signer` type backed by AWS KMS. */
 public class AwsKmsSignerFactory {
 
-  public static Signer createSigner(final AwsKmsMetadata awsKmsMetadata, boolean applySha3Hash) {
+  private final CachedAwsKmsClientFactory factory;
+
+  private final boolean applySha3Hash;
+
+  /**
+   * Construct AwsKmsSignerFactory
+   *
+   * @param kmsClientCacheSize The cache size of AWS kms clients. This size should be set based on
+   *     the number of credentials/region used. If same set of credentials/region used to access
+   *     kms, set to 1.
+   * @param applySha3Hash Set to true for eth1 signing. Set false for filecoin signing.
+   */
+  public AwsKmsSignerFactory(final long kmsClientCacheSize, final boolean applySha3Hash) {
+    checkArgument(kmsClientCacheSize > 0, "Kms client cache Size must be positive.");
+    factory = new CachedAwsKmsClientFactory(kmsClientCacheSize);
+    this.applySha3Hash = applySha3Hash;
+  }
+
+  public Signer createSigner(final AwsKmsMetadata awsKmsMetadata) {
     checkArgument(awsKmsMetadata != null, "awsKmsMetadata must not be null");
 
     final AwsCredentialsProvider awsCredentialsProvider =
@@ -33,7 +51,7 @@ public class AwsKmsSignerFactory {
             awsKmsMetadata.getAuthenticationMode(), awsKmsMetadata.getAwsCredentials());
 
     final AwsKmsClient kmsClient =
-        CachedAwsKmsClientFactory.createKmsClient(
+        factory.createKmsClient(
             awsCredentialsProvider,
             awsKmsMetadata.getRegion(),
             awsKmsMetadata.getEndpointOverride());

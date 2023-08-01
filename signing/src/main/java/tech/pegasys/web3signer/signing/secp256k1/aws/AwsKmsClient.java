@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.signing.secp256k1.aws;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.io.Closeable;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
@@ -37,9 +36,10 @@ import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
 
 /**
  * Wraps KmsClient to allow the same instance to be cached and re-used. It exposes the methods that
- * our code use.
+ * our code use. Since AwsKmsClient is meant to live for the duration of web3signer life, we have
+ * not implemented close method.
  */
-public class AwsKmsClient implements Closeable {
+public class AwsKmsClient {
   private static final Provider BC_PROVIDER = new BouncyCastleProvider();
   private final KmsClient kmsClient;
 
@@ -90,10 +90,5 @@ public class AwsKmsClient implements Closeable {
   @VisibleForTesting
   public void scheduleKeyDeletion(ScheduleKeyDeletionRequest deletionRequest) {
     kmsClient.scheduleKeyDeletion(deletionRequest);
-  }
-
-  @Override
-  public void close() {
-    kmsClient.close();
   }
 }

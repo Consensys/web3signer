@@ -38,6 +38,7 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
+import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.util.List;
@@ -53,10 +54,15 @@ public class FilecoinRunner extends Runner {
   private static final int AWS_CACHE_MAXIMUM_SIZE = 1;
   private static final String FC_JSON_RPC_PATH = "/rpc/v0";
   private final FilecoinNetwork network;
+  private final long awsKmsClientCacheSize;
 
-  public FilecoinRunner(final BaseConfig baseConfig, final FilecoinNetwork network) {
+  public FilecoinRunner(
+      final BaseConfig baseConfig,
+      final FilecoinNetwork network,
+      final long awsKmsClientCacheSize) {
     super(baseConfig);
     this.network = network;
+    this.awsKmsClientCacheSize = awsKmsClientCacheSize;
   }
 
   @Override
@@ -109,6 +115,9 @@ public class FilecoinRunner extends Runner {
           registerClose(azureKeyVaultFactory::close);
           final AzureKeyVaultSignerFactory azureSignerFactory =
               new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
+          final boolean applySha3Hash = false;
+          final AwsKmsSignerFactory awsKmsSignerFactory =
+              new AwsKmsSignerFactory(awsKmsClientCacheSize, applySha3Hash);
 
           try (final HashicorpConnectionFactory hashicorpConnectionFactory =
                   new HashicorpConnectionFactory();
@@ -138,7 +147,8 @@ public class FilecoinRunner extends Runner {
                     yubiHsmOpaqueDataProvider,
                     signer -> new FcSecpArtifactSigner(signer, network),
                     azureKeyVaultFactory,
-                    false);
+                    awsKmsSignerFactory,
+                    applySha3Hash);
 
             return new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())
                 .load(
