@@ -90,7 +90,7 @@ dependencyManagement {
 
     dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.9'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.6.0') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.6.2') {
       entry ('bls') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
@@ -176,7 +176,7 @@ dependencyManagement {
       com.squareup.okhttp3:logging-interceptor:4.9.0 // CVE-2021-0341
       \--- org.web3j:core:4.9.2
      */
-    dependency 'com.squareup.okhttp3:logging-interceptor:4.10.0'
+    dependency 'com.squareup.okhttp3:logging-interceptor:4.11.0'
 
     dependencySet(group: 'com.squareup.okhttp3', version: '4.11.0') {
       entry 'okhttp'
