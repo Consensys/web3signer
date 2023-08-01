@@ -17,17 +17,14 @@ import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
-import tech.pegasys.web3signer.signing.secp256k1.common.SignerInitializationException;
 
 import java.math.BigInteger;
 import java.net.http.HttpRequest;
 import java.security.interfaces.ECPublicKey;
-import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Map;
 
 import com.azure.core.util.Base64Url;
-import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
 import com.azure.security.keyvault.keys.cryptography.models.SignResult;
 import com.azure.security.keyvault.keys.cryptography.models.SignatureAlgorithm;
 import org.apache.logging.log4j.LogManager;
@@ -67,13 +64,10 @@ public class AzureKeyVaultSigner implements Signer {
             : SignatureAlgorithm.ES256K;
     this.azureConnection = azureConnection;
     this.vault = azureKeyVault;
-
   }
 
   @Override
   public Signature sign(byte[] data) {
-
-
 
     final byte[] dataToSign = needsToHash ? Hash.sha3(data) : data;
 
@@ -124,11 +118,15 @@ public class AzureKeyVaultSigner implements Signer {
 
     // Assemble httpRequest
     final HttpRequest httpRequest =
-        vault.getRemoteSigningHttpRequest(dataToSign, signingAlgo, vaultName, azureConfig.getKeyName(), azureConfig.getKeyVersion());
+        vault.getRemoteSigningHttpRequest(
+            dataToSign,
+            signingAlgo,
+            vaultName,
+            azureConfig.getKeyName(),
+            azureConfig.getKeyVersion());
 
     // execute
     final Map<String, Object> response = azureConnection.executeHttpRequest(httpRequest);
-
 
     // retrieve the results
     final Base64Url signatureBytes = new Base64Url(response.get("value").toString());

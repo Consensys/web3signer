@@ -12,13 +12,11 @@
  */
 package tech.pegasys.web3signer.keystorage.azure;
 
-import com.azure.core.credential.AccessToken;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
 import com.azure.core.exception.ResourceNotFoundException;
@@ -129,16 +128,16 @@ public class AzureKeyVault {
     jsonBody.put("alg", signingAlgo);
     jsonBody.put("value", Bytes.of(data).toBase64String());
 
-    final String uriString = constructAzureSignApiUri(vaultName, azureKeyName, azureKeyVersion, apiVersion);
+    final String uriString =
+        constructAzureSignApiUri(vaultName, azureKeyName, azureKeyVersion, apiVersion);
     final URI uri = URI.create(uriString);
 
-    final HttpRequest httpRequest =  HttpRequest.newBuilder(uri)
-        .header("Content-Type", "application/json")
-        .header(
-            "Authorization",
-            "Bearer " + getOrRequestNewToken())
-        .POST(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))
-        .build();
+    final HttpRequest httpRequest =
+        HttpRequest.newBuilder(uri)
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + getOrRequestNewToken())
+            .POST(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))
+            .build();
 
     return httpRequest;
   }
@@ -257,8 +256,8 @@ public class AzureKeyVault {
         && keyProperties.getTags().entrySet().containsAll(tags.entrySet());
   }
 
-  private String getOrRequestNewToken(){
-    if(maybeToken.isEmpty() || maybeToken.get().isExpired()){
+  private String getOrRequestNewToken() {
+    if (maybeToken.isEmpty() || maybeToken.get().isExpired()) {
       maybeToken = Optional.of(tokenCredential.getTokenSync(tokenRequestContext));
     }
 

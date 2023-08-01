@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
-import org.jetbrains.annotations.VisibleForTesting;
 import tech.pegasys.web3signer.keystorage.azure.AzureConnection;
 import tech.pegasys.web3signer.keystorage.azure.AzureConnectionParameters;
 
@@ -22,9 +21,10 @@ import java.time.Duration;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.jetbrains.annotations.VisibleForTesting;
 
 public class AzureConnectionFactory {
-    private final int CONNECTION_POOL_SIZE_LIMIT = 10;
+  private final int CONNECTION_POOL_SIZE_LIMIT = 10;
   private final Cache<URI, HttpClient> httpClientMap =
       Caffeine.newBuilder().maximumSize(CONNECTION_POOL_SIZE_LIMIT).build();
 
@@ -53,8 +53,9 @@ public class AzureConnectionFactory {
               }
             });
   }
+
   @VisibleForTesting
-  protected Cache<URI, HttpClient> getConnectionPool(){
-      return httpClientMap;
+  protected Cache<URI, HttpClient> getConnectionPool() {
+    return httpClientMap;
   }
 }
