@@ -12,7 +12,12 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.constructAzureKeyVaultUrl;
+
+import tech.pegasys.web3signer.keystorage.azure.AzureConnection;
+import tech.pegasys.web3signer.keystorage.azure.AzureConnectionParameters;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
+import tech.pegasys.web3signer.signing.secp256k1.azure.AzureConnectionFactory;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -24,8 +29,10 @@ import com.google.common.annotations.VisibleForTesting;
 
 public class AzureKeyVaultFactory implements AutoCloseable {
   private final AtomicReference<ExecutorService> executorServiceCache = new AtomicReference<>();
+  private AzureConnection azureConnection;
 
   public AzureKeyVault createAzureKeyVault(final AzureKeyVaultParameters azureKeyVaultParameters) {
+    initializeConnection(azureKeyVaultParameters.getKeyVaultName());
     return createAzureKeyVault(
         azureKeyVaultParameters.getClientId(),
         azureKeyVaultParameters.getClientSecret(),
@@ -40,6 +47,7 @@ public class AzureKeyVaultFactory implements AutoCloseable {
       final String keyVaultName,
       final String tenantId,
       final AzureAuthenticationMode mode) {
+    initializeConnection(keyVaultName);
     switch (mode) {
       case USER_ASSIGNED_MANAGED_IDENTITY:
         return AzureKeyVault.createUsingManagedIdentity(Optional.of(clientId), keyVaultName);
@@ -70,5 +78,18 @@ public class AzureKeyVaultFactory implements AutoCloseable {
   @VisibleForTesting
   protected AtomicReference<ExecutorService> getExecutorServiceCache() {
     return executorServiceCache;
+  }
+
+  private void initializeConnection(String keyVaultName) {
+    final AzureConnectionFactory connFactory = new AzureConnectionFactory();
+    final AzureConnectionParameters connectionParameters =
+        AzureConnectionParameters.newBuilder()
+            .withServerHost(constructAzureKeyVaultUrl(keyVaultName))
+            .build();
+    this.azureConnection = connFactory.getOrCreateConnection(connectionParameters);
+  }
+
+  public AzureConnection getAzureConnection() {
+    return this.azureConnection;
   }
 }

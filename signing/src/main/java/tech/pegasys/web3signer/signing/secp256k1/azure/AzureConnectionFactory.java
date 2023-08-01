@@ -12,17 +12,21 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
+import org.jetbrains.annotations.VisibleForTesting;
 import tech.pegasys.web3signer.keystorage.azure.AzureConnection;
 import tech.pegasys.web3signer.keystorage.azure.AzureConnectionParameters;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 public class AzureConnectionFactory {
-  private final Map<URI, HttpClient> httpClientMap = new ConcurrentHashMap<>();
+    private final int CONNECTION_POOL_SIZE_LIMIT = 10;
+  private final Cache<URI, HttpClient> httpClientMap =
+      Caffeine.newBuilder().maximumSize(CONNECTION_POOL_SIZE_LIMIT).build();
 
   public AzureConnection getOrCreateConnection(
       final AzureConnectionParameters connectionParameters) {
@@ -31,19 +35,26 @@ public class AzureConnectionFactory {
 
   private HttpClient getHttpClient(AzureConnectionParameters connectionParameters) {
 
-    return httpClientMap.computeIfAbsent(
-        connectionParameters.getVaultURI(),
-        _key -> {
-          final HttpClient.Builder httpClientBuilder =
-              HttpClient.newBuilder()
-                  .followRedirects(HttpClient.Redirect.NORMAL)
-                  .version(connectionParameters.getHttpProtocolVersion())
-                  .connectTimeout(Duration.ofMillis(connectionParameters.getTimeoutMilliseconds()));
-          try {
-            return httpClientBuilder.build();
-          } catch (final Exception e) {
-            throw new RuntimeException("Unable to initialise connection to azure vault.", e);
-          }
-        });
+    return httpClientMap
+        .asMap()
+        .computeIfAbsent(
+            connectionParameters.getVaultURI(),
+            _key -> {
+              final HttpClient.Builder httpClientBuilder =
+                  HttpClient.newBuilder()
+                      .followRedirects(HttpClient.Redirect.NORMAL)
+                      .version(connectionParameters.getHttpProtocolVersion())
+                      .connectTimeout(
+                          Duration.ofMillis(connectionParameters.getTimeoutMilliseconds()));
+              try {
+                return httpClientBuilder.build();
+              } catch (final Exception e) {
+                throw new RuntimeException("Unable to initialise connection to azure vault.", e);
+              }
+            });
+  }
+  @VisibleForTesting
+  protected Cache<URI, HttpClient> getConnectionPool(){
+      return httpClientMap;
   }
 }

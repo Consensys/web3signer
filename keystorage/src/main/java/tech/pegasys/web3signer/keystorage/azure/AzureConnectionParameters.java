@@ -20,7 +20,6 @@ import java.util.Optional;
 
 public class AzureConnectionParameters {
   private static final Long DEFAULT_TIMEOUT_MILLISECONDS = 10_000L;
-  private static final Integer DEFAULT_SERVER_PORT = 8200;
   private final long timeoutMs;
   private final HttpClient.Version httpProtocolVersion;
   private final URI vaultURI;
@@ -32,13 +31,11 @@ public class AzureConnectionParameters {
   /* Optional parameters will be set to their defaults when connecting */
   private AzureConnectionParameters(
       final String serverHost,
-      final Optional<Integer> serverPort,
       final Optional<Long> timeoutMs,
       final Optional<HttpClient.Version> httpProtocolVersion) {
     this.timeoutMs = timeoutMs.orElse(DEFAULT_TIMEOUT_MILLISECONDS);
     this.httpProtocolVersion = httpProtocolVersion.orElse(HttpClient.Version.HTTP_2);
-    this.vaultURI =
-        URI.create(String.format("%s:%d", serverHost, serverPort.orElse(DEFAULT_SERVER_PORT)));
+    this.vaultURI = URI.create(serverHost);
   }
 
   public long getTimeoutMilliseconds() {
@@ -55,7 +52,6 @@ public class AzureConnectionParameters {
 
   public static final class Builder {
     private String serverHost;
-    private Optional<Integer> serverPort = Optional.empty();
     private Optional<Long> timeoutMs = Optional.empty();
     private Optional<HttpClient.Version> httpProtocolVersion = Optional.empty();
 
@@ -66,24 +62,9 @@ public class AzureConnectionParameters {
       return this;
     }
 
-    public Builder withServerPort(final Integer serverPort) {
-      this.serverPort = Optional.ofNullable(serverPort);
-      return this;
-    }
-
-    public Builder withTimeoutMs(final Long timeoutMs) {
-      this.timeoutMs = Optional.ofNullable(timeoutMs);
-      return this;
-    }
-
-    public Builder withHttpProtocolVersion(final HttpClient.Version httpProtocolVersion) {
-      this.httpProtocolVersion = Optional.ofNullable(httpProtocolVersion);
-      return this;
-    }
-
     public AzureConnectionParameters build() {
       checkNotNull(serverHost, "Azure host cannot be null");
-      return new AzureConnectionParameters(serverHost, serverPort, timeoutMs, httpProtocolVersion);
+      return new AzureConnectionParameters(serverHost, timeoutMs, httpProtocolVersion);
     }
   }
 }
