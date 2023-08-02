@@ -117,6 +117,15 @@ public class Eth2SubCommand extends ModeSubCommand {
   private UInt64 capellaForkEpoch;
 
   @CommandLine.Option(
+      names = {"--Xnetwork-deneb-fork-epoch"},
+      hidden = true,
+      paramLabel = "<epoch>",
+      description = "Override the Deneb fork activation epoch.",
+      arity = "1",
+      converter = UInt64Converter.class)
+  private UInt64 denebForkEpoch;
+
+  @CommandLine.Option(
       names = {"--key-manager-api-enabled", "--enable-key-manager-api"},
       paramLabel = "<BOOL>",
       description = "Enable the key manager API to manage key stores (default: ${DEFAULT-VALUE}).",
@@ -181,6 +190,9 @@ public class Eth2SubCommand extends ModeSubCommand {
     }
     if (capellaForkEpoch != null) {
       builder.capellaForkEpoch(capellaForkEpoch);
+    }
+    if (denebForkEpoch != null) {
+      builder.denebForkEpoch(denebForkEpoch);
     }
     return builder.build();
   }

@@ -69,6 +69,7 @@ public class SignerConfigurationBuilder {
   private Long altairForkEpoch = null;
   private Long bellatrixForkEpoch = null;
   private Long capellaForkEpoch = null;
+  private Long denebForkEpoch = null;
   private String network = null;
   private boolean keyManagerApiEnabled = false;
   private KeystoresParameters keystoresParameters;
@@ -255,6 +256,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withDenebForkEpoch(final long denebForkEpoch) {
+    this.denebForkEpoch = denebForkEpoch;
+    return this;
+  }
+
   public SignerConfigurationBuilder withNetwork(final String network) {
     this.network = network;
     return this;
@@ -337,6 +343,7 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(altairForkEpoch),
         Optional.ofNullable(bellatrixForkEpoch),
         Optional.ofNullable(capellaForkEpoch),
+        Optional.ofNullable(denebForkEpoch),
         Optional.ofNullable(network),
         keyManagerApiEnabled,
         Optional.ofNullable(watermarkRepairParameters),
