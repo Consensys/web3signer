@@ -15,12 +15,17 @@ package tech.pegasys.web3signer.signing.secp256k1.util;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.math.BigInteger;
 import java.security.interfaces.ECPublicKey;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Integer;
+import org.bouncycastle.asn1.DLSequence;
 import org.web3j.crypto.ECDSASignature;
 import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
@@ -38,10 +43,8 @@ public class Eth1SignatureUtil {
    */
   public static Signature deriveSignatureFromDerEncoded(
       final byte[] dataToSign, final ECPublicKey ecPublicKey, final byte[] signature) {
-    final BigInteger R = extractR(signature);
-    final BigInteger S = extractS(signature);
-
-    return deriveSignature(dataToSign, ecPublicKey, R, S);
+    final BigInteger[] sig = extractRAndSFromDERSignature(signature);
+    return deriveSignature(dataToSign, ecPublicKey, sig[0], sig[1]);
   }
 
   /**
@@ -100,18 +103,31 @@ public class Eth1SignatureUtil {
     return -1;
   }
 
-  // See https://stackoverflow.com/a/49275839
-  private static BigInteger extractR(byte[] signature) {
-    int startR = (signature[1] & 0x80) != 0 ? 3 : 2;
-    int lengthR = signature[startR + 1];
-    return new BigInteger(Arrays.copyOfRange(signature, startR + 2, startR + 2 + lengthR));
-  }
+  /**
+   * Uses Bouncycastle to decode DER signature. A DER signature format is SEQUENCE := {r INTEGER, s
+   * INTEGER}
+   *
+   * @param der DER encoded byte[]
+   * @return Array of BigInteger containing R and S.
+   */
+  private static BigInteger[] extractRAndSFromDERSignature(final byte[] der) {
+    try (final ASN1InputStream asn1InputStream = new ASN1InputStream(der)) {
+      final DLSequence seq = (DLSequence) asn1InputStream.readObject();
+      if (seq == null) {
+        throw new RuntimeException("Unexpected end of ASN.1 stream.");
+      }
 
-  private static BigInteger extractS(byte[] signature) {
-    int startR = (signature[1] & 0x80) != 0 ? 3 : 2;
-    int lengthR = signature[startR + 1];
-    int startS = startR + 2 + lengthR;
-    int lengthS = signature[startS + 1];
-    return new BigInteger(Arrays.copyOfRange(signature, startS + 2, startS + 2 + lengthS));
+      try {
+        final ASN1Integer r = (ASN1Integer) seq.getObjectAt(0);
+        final ASN1Integer s = (ASN1Integer) seq.getObjectAt(1);
+
+        return new BigInteger[] {r.getPositiveValue(), s.getPositiveValue()};
+      } catch (final ClassCastException e) {
+        throw new IllegalArgumentException(e);
+      }
+
+    } catch (final IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 }
