@@ -130,10 +130,9 @@ public class AzureKeyVault {
 
     final String uriString =
         constructAzureSignApiUri(vaultName, azureKeyName, azureKeyVersion, apiVersion);
-    final URI uri = URI.create(uriString);
 
     final HttpRequest httpRequest =
-        HttpRequest.newBuilder(uri)
+        HttpRequest.newBuilder(URI.create(uriString))
             .header("Content-Type", "application/json")
             .header("Authorization", "Bearer " + getOrRequestNewToken())
             .POST(HttpRequest.BodyPublishers.ofString(jsonBody.toString()))

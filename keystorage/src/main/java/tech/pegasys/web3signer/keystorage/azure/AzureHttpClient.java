@@ -18,14 +18,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 
-public class AzureConnection {
+public class AzureHttpClient {
   private final HttpClient httpClient;
 
-  public AzureConnection(final HttpClient httpClient) {
+  public AzureHttpClient(final HttpClient httpClient) {
     this.httpClient = httpClient;
   }
 
-  public Map<String, Object> executeHttpRequest(final HttpRequest httpRequest) {
+  public Map<String, Object> signViaHttpRequest(final HttpRequest httpRequest) {
 
     final HttpResponse<String> response;
     try {

@@ -18,7 +18,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.util.Optional;
 
-public class AzureConnectionParameters {
+public class AzureHttpClientParameters {
   private static final Long DEFAULT_TIMEOUT_MILLISECONDS = 10_000L;
   private final long timeoutMs;
   private final HttpClient.Version httpProtocolVersion;
@@ -29,7 +29,7 @@ public class AzureConnectionParameters {
   }
 
   /* Optional parameters will be set to their defaults when connecting */
-  private AzureConnectionParameters(
+  private AzureHttpClientParameters(
       final String serverHost,
       final Optional<Long> timeoutMs,
       final Optional<HttpClient.Version> httpProtocolVersion) {
@@ -62,9 +62,9 @@ public class AzureConnectionParameters {
       return this;
     }
 
-    public AzureConnectionParameters build() {
+    public AzureHttpClientParameters build() {
       checkNotNull(serverHost, "Azure host cannot be null");
-      return new AzureConnectionParameters(serverHost, timeoutMs, httpProtocolVersion);
+      return new AzureHttpClientParameters(serverHost, timeoutMs, httpProtocolVersion);
     }
   }
 }

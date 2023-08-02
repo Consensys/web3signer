@@ -13,10 +13,7 @@
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.constructAzureKeyVaultUrl;
 
-import tech.pegasys.web3signer.keystorage.azure.AzureConnection;
-import tech.pegasys.web3signer.keystorage.azure.AzureConnectionParameters;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
@@ -41,13 +38,13 @@ public class AzureKeyVaultSignerFactory {
   private static final Set<String> SUPPORTED_CURVE_NAMES = Set.of(DEPRECATED_CURVE_NAME, "P-256K");
   private static final Logger LOG = LogManager.getLogger();
   private final AzureKeyVaultFactory azureKeyVaultFactory;
-  private final AzureConnectionFactory azureConnectionFactory;
+  private final AzureHttpClientFactory azureHttpClientFactory;
 
   public AzureKeyVaultSignerFactory(
       final AzureKeyVaultFactory azureKeyVaultFactory,
-      final AzureConnectionFactory azureConnectionFactory) {
+      final AzureHttpClientFactory azureHttpClientFactory) {
     this.azureKeyVaultFactory = azureKeyVaultFactory;
-    this.azureConnectionFactory = azureConnectionFactory;
+    this.azureHttpClientFactory = azureHttpClientFactory;
   }
 
   public Signer createSigner(final AzureConfig config) {
@@ -84,14 +81,8 @@ public class AzureKeyVaultSignerFactory {
     final Bytes rawPublicKey =
         Bytes.concatenate(Bytes.wrap(jsonWebKey.getX()), Bytes.wrap(jsonWebKey.getY()));
     final boolean useDeprecatedCurveName = DEPRECATED_CURVE_NAME.equals(curveName);
-    final AzureConnectionParameters connectionParameters =
-        AzureConnectionParameters.newBuilder()
-            .withServerHost(constructAzureKeyVaultUrl(config.getKeyVaultName()))
-            .build();
 
-    final AzureConnection azureConnection =
-        azureConnectionFactory.getOrCreateConnection(connectionParameters);
     return new AzureKeyVaultSigner(
-        config, rawPublicKey, true, useDeprecatedCurveName, vault, azureConnection);
+        config, rawPublicKey, true, useDeprecatedCurveName, vault, azureHttpClientFactory);
   }
 }

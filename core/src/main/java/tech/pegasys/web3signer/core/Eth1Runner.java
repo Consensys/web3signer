@@ -54,7 +54,7 @@ import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyPro
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
-import tech.pegasys.web3signer.signing.secp256k1.azure.AzureConnectionFactory;
+import tech.pegasys.web3signer.signing.secp256k1.azure.AzureHttpClientFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.util.ArrayList;
@@ -163,10 +163,10 @@ public class Eth1Runner extends Runner {
         () -> {
           final List<ArtifactSigner> signers = new ArrayList<>();
           final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory();
-          final AzureConnectionFactory azureConnectionFactory = new AzureConnectionFactory();
+          final AzureHttpClientFactory azureHttpClientFactory = new AzureHttpClientFactory();
           registerClose(azureKeyVaultFactory::close);
           final AzureKeyVaultSignerFactory azureSignerFactory =
-              new AzureKeyVaultSignerFactory(azureKeyVaultFactory, azureConnectionFactory);
+              new AzureKeyVaultSignerFactory(azureKeyVaultFactory, azureHttpClientFactory);
 
           signers.addAll(
               loadSignersFromKeyConfigFiles(vertx, azureKeyVaultFactory, azureSignerFactory)

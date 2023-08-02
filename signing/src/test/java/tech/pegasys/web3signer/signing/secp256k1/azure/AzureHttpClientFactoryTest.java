@@ -15,36 +15,41 @@ package tech.pegasys.web3signer.signing.secp256k1.azure;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.constructAzureKeyVaultUrl;
 
-import tech.pegasys.web3signer.keystorage.azure.AzureConnectionParameters;
+import tech.pegasys.web3signer.keystorage.azure.AzureHttpClient;
+import tech.pegasys.web3signer.keystorage.azure.AzureHttpClientParameters;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class AzureConnectionFactoryTest {
+public class AzureHttpClientFactoryTest {
 
   @Test
   public void azureCacheConnectionsPerVault() {
 
-    final AzureConnectionFactory azureConnFactory = new AzureConnectionFactory();
-    final AzureConnectionParameters azureConnParams =
-        AzureConnectionParameters.newBuilder()
+    final AzureHttpClientFactory azureConnFactory = new AzureHttpClientFactory();
+    final AzureHttpClientParameters azureConnParams =
+        AzureHttpClientParameters.newBuilder()
             .withServerHost(constructAzureKeyVaultUrl("Vault1"))
             .build();
-    final AzureConnectionParameters azureConnParams2 =
-        AzureConnectionParameters.newBuilder()
+    final AzureHttpClientParameters azureConnParams2 =
+        AzureHttpClientParameters.newBuilder()
             .withServerHost(constructAzureKeyVaultUrl("Vault2"))
             .build();
-    azureConnFactory.getOrCreateConnection(azureConnParams);
-
+    final AzureHttpClient conn1 = azureConnFactory.getOrCreateHttpClient(azureConnParams);
+    // assert a new client has been created
     assertThat(azureConnFactory.getConnectionPool().asMap().size()).isEqualTo(1);
 
-    azureConnFactory.getOrCreateConnection(azureConnParams);
+    final AzureHttpClient conn2 = azureConnFactory.getOrCreateHttpClient(azureConnParams);
 
+    // assert a client1 and 2 are the same
+    assertThat(conn1).isEqualTo(conn2);
+
+    // assert no new clients have been created
     assertThat(azureConnFactory.getConnectionPool().asMap().size()).isEqualTo(1);
 
-    azureConnFactory.getOrCreateConnection(azureConnParams2);
-
+    azureConnFactory.getOrCreateHttpClient(azureConnParams2);
+    // new client created for a different vault
     assertThat(azureConnFactory.getConnectionPool().asMap().size()).isEqualTo(2);
   }
 
@@ -52,14 +57,14 @@ public class AzureConnectionFactoryTest {
   @ValueSource(ints = {10, 15})
   public void azureCacheLimitTo10Connections(int connectionPoolLimit) {
 
-    final AzureConnectionFactory azureConnFactory = new AzureConnectionFactory();
+    final AzureHttpClientFactory azureConnFactory = new AzureHttpClientFactory();
 
     for (int i = 0; i <= connectionPoolLimit; i++) {
-      final AzureConnectionParameters azureConnParams =
-          AzureConnectionParameters.newBuilder()
+      final AzureHttpClientParameters azureConnParams =
+          AzureHttpClientParameters.newBuilder()
               .withServerHost(constructAzureKeyVaultUrl("Vault" + i))
               .build();
-      azureConnFactory.getOrCreateConnection(azureConnParams);
+      azureConnFactory.getOrCreateHttpClient(azureConnParams);
     }
     // call clean up to ensure cache is synchronously cleaned up
     azureConnFactory.getConnectionPool().cleanUp();
