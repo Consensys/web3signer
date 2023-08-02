@@ -135,8 +135,8 @@ public class DataStructureUtilAdapter {
                     .blockHash(util.randomBytes32())
                     .transactions(util.randomExecutionPayloadTransactions())
                     .withdrawals(() -> randomExecutionPayloadWithdrawals(specVersion))
-                    .excessDataGas(util::randomUInt64)
-                    .dataGasUsed(util::randomUInt64));
+                    .blobGasUsed(util::randomUInt64)
+                    .excessBlobGas(util::randomUInt64));
   }
 
   private List<Withdrawal> randomExecutionPayloadWithdrawals(final SpecVersion specVersion) {

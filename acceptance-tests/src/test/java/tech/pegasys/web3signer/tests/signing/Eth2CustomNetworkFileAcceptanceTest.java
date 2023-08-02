@@ -19,16 +19,19 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
+import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.SpecFactory;
 import tech.pegasys.teku.spec.datastructures.util.ForkAndSpecMilestone;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.Eth2BlockSigningRequestUtil;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.io.Resources;
@@ -50,6 +53,10 @@ public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBa
       BLSSecretKey.fromBytes(Bytes32.fromHexString(PRIVATE_KEY));
   private static final BLSKeyPair KEY_PAIR = new BLSKeyPair(KEY);
   private static final BLSPublicKey PUBLIC_KEY = KEY_PAIR.getPublicKey();
+  private static final String TRUSTED_SETUP_PATH =
+      Objects.requireNonNull(
+              Eth2NetworkConfiguration.class.getResource("minimal-trusted-setup.txt"))
+          .toExternalForm();
 
   @BeforeEach
   void setup() {
@@ -57,12 +64,23 @@ public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBa
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    setupEth2SignerWithCustomNetworkConfig(NETWORK_CONFIG_PATH);
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder
+        .withKeyStoreDirectory(testDirectory)
+        .withMode("eth2")
+        .withNetwork(NETWORK_CONFIG_PATH)
+        .withTrustedSetup(TRUSTED_SETUP_PATH);
+    startSigner(builder.build());
   }
 
   @Test
   void signAndVerifyBlockV2SignatureForAllEnabledMilestones() throws Exception {
-    final Spec spec = SpecFactory.create(NETWORK_CONFIG_PATH.toString());
+    final Spec spec =
+        SpecFactory.create(
+            NETWORK_CONFIG_PATH.toString(),
+            specConfigBuilder ->
+                specConfigBuilder.denebBuilder(
+                    denebBuilder -> denebBuilder.trustedSetupPath(TRUSTED_SETUP_PATH)));
     final List<ForkAndSpecMilestone> enabledMilestones = spec.getEnabledMilestones();
     assertThat(enabledMilestones.size()).isEqualTo(5);
 

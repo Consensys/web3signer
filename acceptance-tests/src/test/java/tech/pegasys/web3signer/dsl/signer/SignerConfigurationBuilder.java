@@ -78,6 +78,7 @@ public class SignerConfigurationBuilder {
   private ClientTlsOptions downstreamTlsOptions;
 
   private ChainIdProvider chainIdProvider = new ConfigurationChainId(DEFAULT_CHAIN_ID);
+  private String trustedSetup;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -303,6 +304,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withTrustedSetup(final String trustedSetup) {
+    this.trustedSetup = trustedSetup;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -349,6 +355,7 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(watermarkRepairParameters),
         downstreamHttpPort,
         Optional.ofNullable(downstreamTlsOptions),
-        chainIdProvider);
+        chainIdProvider,
+        Optional.ofNullable(trustedSetup));
   }
 }

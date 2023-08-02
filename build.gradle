@@ -113,7 +113,7 @@ allprojects {
   targetCompatibility = 17
 
   repositories {
-    // mavenLocal() //for local testing only, uncomment while testing locally build signers.
+    mavenLocal() //for local testing only, uncomment while testing locally build signers.
     mavenCentral()
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
     maven { url "https://artifacts.consensys.net/public/teku/maven/" }

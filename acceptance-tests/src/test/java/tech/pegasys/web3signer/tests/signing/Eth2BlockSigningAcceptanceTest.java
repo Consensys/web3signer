@@ -94,7 +94,7 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
       name = "#{index} - Empty block request for spec {0} should return bad request status")
   @EnumSource(
       value = SpecMilestone.class,
-      names = {"DENEB"})
+      names = {"PHASE0", "ALTAIR", "BELLATRIX", "CAPELLA", "DENEB"})
   void emptyBlockRequestReturnsBadRequestStatus(final SpecMilestone specMilestone)
       throws JsonProcessingException {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
