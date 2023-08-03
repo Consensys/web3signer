@@ -25,6 +25,7 @@ dependencies {
   testImplementation project(":core")
   testImplementation project(":signing")
   testImplementation project(":commandline")
+  testImplementation project(":common")
 
   testImplementation 'org.apache.tuweni:tuweni-bytes'
   testImplementation 'org.apache.tuweni:tuweni-units'
@@ -84,6 +85,7 @@ dependencies {
 
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:secretsmanager'
+  implementation 'software.amazon.awssdk:kms'
 }
 
 test.enabled = false

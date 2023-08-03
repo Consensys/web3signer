@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.commandline;
 
-import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 
 import java.net.URI;

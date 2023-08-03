@@ -19,6 +19,7 @@ import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
+import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureConfig;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
@@ -36,6 +37,7 @@ import org.web3j.crypto.WalletUtils;
 public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactory {
 
   private final AzureKeyVaultSignerFactory azureCloudSignerFactory;
+  final AwsKmsSignerFactory awsKmsSignerFactory;
   private final Function<Signer, ArtifactSigner> signerFactory;
 
   private final boolean needToHash;
@@ -48,6 +50,7 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
       final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider,
       final Function<Signer, ArtifactSigner> signerFactory,
       final AzureKeyVaultFactory azureKeyVaultFactory,
+      final AwsKmsSignerFactory awsKmsSignerFactory,
       final boolean needToHash) {
     super(
         hashicorpConnectionFactory,
@@ -56,6 +59,7 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
         yubiHsmOpaqueDataProvider,
         azureKeyVaultFactory);
     this.azureCloudSignerFactory = azureCloudSignerFactory;
+    this.awsKmsSignerFactory = awsKmsSignerFactory;
     this.signerFactory = signerFactory;
     this.needToHash = needToHash;
   }
@@ -121,6 +125,11 @@ public class Secp256k1ArtifactSignerFactory extends AbstractArtifactSignerFactor
     final Credentials credentials =
         Credentials.create(extractOpaqueDataFromYubiHsm(yubiHsmSigningMetadata).toHexString());
     return createCredentialSigner(credentials);
+  }
+
+  @Override
+  public ArtifactSigner create(final AwsKmsMetadata awsKmsMetadata) {
+    return signerFactory.apply(awsKmsSignerFactory.createSigner(awsKmsMetadata));
   }
 
   private ArtifactSigner createCredentialSigner(final Credentials credentials) {

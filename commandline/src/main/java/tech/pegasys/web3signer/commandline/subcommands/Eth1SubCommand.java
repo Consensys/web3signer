@@ -140,6 +140,8 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
       arity = "1")
   private String httpProxyPassword = null;
 
+  private long awsKmsClientCacheSize = 1;
+
   @CommandLine.Mixin private PicoCliClientTlsOptions clientTlsOptions;
 
   @CommandLine.Mixin private PicoCliEth1AzureKeyVaultParameters azureKeyVaultParameters;
@@ -212,5 +214,24 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
   @Override
   public AzureKeyVaultParameters getAzureKeyVaultConfig() {
     return azureKeyVaultParameters;
+  }
+
+  @CommandLine.Option(
+      names = {"--aws-kms-client-cache-size"},
+      paramLabel = "<LONG>",
+      defaultValue = "1",
+      description =
+          "AWS Kms Client cache size. Should be set based on different set of credentials and region (default: ${DEFAULT-VALUE})")
+  public void setAwsKmsClientCacheSize(long awsKmsClientCacheSize) {
+    if (awsKmsClientCacheSize < 1) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(), "--aws-kms-client-cache-size must be positive");
+    }
+    this.awsKmsClientCacheSize = awsKmsClientCacheSize;
+  }
+
+  @Override
+  public long getAwsKmsClientCacheSize() {
+    return awsKmsClientCacheSize;
   }
 }
