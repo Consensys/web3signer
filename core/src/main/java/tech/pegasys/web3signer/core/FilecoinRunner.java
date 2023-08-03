@@ -38,8 +38,8 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
-import tech.pegasys.web3signer.signing.secp256k1.azure.AzureHttpClientFactory;
 import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
+import tech.pegasys.web3signer.signing.secp256k1.azure.AzureHttpClientFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.util.List;
@@ -117,7 +117,6 @@ public class FilecoinRunner extends Runner {
           final AzureHttpClientFactory azureHttpClientFactory = new AzureHttpClientFactory();
           final AzureKeyVaultSignerFactory azureSignerFactory =
               new AzureKeyVaultSignerFactory(azureKeyVaultFactory, azureHttpClientFactory);
-              new AzureKeyVaultSignerFactory(azureKeyVaultFactory);
           final boolean applySha3Hash = false;
           final AwsKmsSignerFactory awsKmsSignerFactory =
               new AwsKmsSignerFactory(awsKmsClientCacheSize, applySha3Hash);

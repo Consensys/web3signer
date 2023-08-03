@@ -32,7 +32,7 @@ public class AzureHttpClientFactory {
 
     return httpClientMap.get(
         connectionParameters.getVaultURI(),
-        (key) -> {
+        key -> {
           final HttpClient.Builder httpClientBuilder =
               HttpClient.newBuilder()
                   .followRedirects(HttpClient.Redirect.NORMAL)

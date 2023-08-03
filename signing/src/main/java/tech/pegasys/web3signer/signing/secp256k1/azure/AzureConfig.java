@@ -21,7 +21,7 @@ public class AzureConfig {
   private final String clientId;
   private final String clientSecret;
   private final String tenantId;
-
+  // empty string means latest in azure
   private static final String KEY_LATEST_VERSION = "";
 
   @JsonCreator

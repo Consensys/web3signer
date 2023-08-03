@@ -20,28 +20,21 @@ import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
-import tech.pegasys.web3signer.signing.secp256k1.common.SignerInitializationException;
 import tech.pegasys.web3signer.signing.secp256k1.util.Eth1SignatureUtil;
 
-import java.math.BigInteger;
 import java.net.http.HttpRequest;
 import java.security.interfaces.ECPublicKey;
-import java.util.Arrays;
 import java.util.Map;
 
 import com.azure.core.util.Base64Url;
 import com.azure.security.keyvault.keys.cryptography.models.SignResult;
 import com.azure.security.keyvault.keys.cryptography.models.SignatureAlgorithm;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.crypto.Hash;
 
 public class AzureKeyVaultSigner implements Signer {
 
   public static final String INACCESSIBLE_KEY_ERROR = "Failed to authenticate to vault.";
-
-  private static final Logger LOG = LogManager.getLogger();
 
   private final AzureConfig config;
   private final ECPublicKey publicKey;
