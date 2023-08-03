@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.signing.config.metadata;
 
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.common.config.AwsCredentials;
 
 import java.io.IOException;
 import java.net.URI;
@@ -26,33 +27,38 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
-public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySigningMetadata> {
+public class AwsKmsMetadataDeserializer extends StdDeserializer<AwsKmsMetadata> {
 
   public static final String AUTH_MODE = "authenticationMode";
   public static final String REGION = "region";
   public static final String ACCESS_KEY_ID = "accessKeyId";
   public static final String SECRET_ACCESS_KEY = "secretAccessKey";
-  public static final String SECRET_NAME = "secretName";
+  public static final String SESSION_TOKEN = "sessionToken";
+  public static final String KMS_KEY_ID = "kmsKeyId";
   public static final String ENDPOINT_OVERRIDE = "endpointOverride";
 
   @SuppressWarnings("Unused")
-  public AwsKeySigningMetadataDeserializer() {
+  public AwsKmsMetadataDeserializer() {
     this(null);
   }
 
-  protected AwsKeySigningMetadataDeserializer(final Class<?> vc) {
+  protected AwsKmsMetadataDeserializer(final Class<?> vc) {
     super(vc);
   }
 
   @Override
-  public AwsKeySigningMetadata deserialize(
-      final JsonParser parser, final DeserializationContext context) throws IOException {
+  public AwsKmsMetadata deserialize(final JsonParser parser, final DeserializationContext context)
+      throws IOException {
 
     AwsAuthenticationMode authMode = AwsAuthenticationMode.SPECIFIED;
     String region = null;
+
     String accessKeyId = null;
     String secretAccessKey = null;
-    String secretName = null;
+    String sessionToken = null;
+    Optional<AwsCredentials> awsCredentials = Optional.empty();
+
+    String kmsKeyId = null;
     Optional<URI> endpointOverride = Optional.empty();
 
     final JsonNode node = parser.getCodec().readTree(parser);
@@ -61,8 +67,7 @@ public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySig
       try {
         authMode = AwsAuthenticationMode.valueOf(node.get(AUTH_MODE).asText());
       } catch (final IllegalArgumentException e) {
-        throw new JsonMappingException(
-            parser, "Error converting " + AUTH_MODE + ": " + e.getMessage());
+        throw new JsonMappingException(parser, "Invalid value for parameter: " + AUTH_MODE + ".");
       }
     }
 
@@ -78,50 +83,73 @@ public class AwsKeySigningMetadataDeserializer extends StdDeserializer<AwsKeySig
       secretAccessKey = node.get(SECRET_ACCESS_KEY).asText();
     }
 
-    if (node.get(SECRET_NAME) != null) {
-      secretName = node.get(SECRET_NAME).asText();
+    if (node.get(SESSION_TOKEN) != null) {
+      sessionToken = node.get(SESSION_TOKEN).asText();
+    }
+
+    if (node.get(KMS_KEY_ID) != null) {
+      kmsKeyId = node.get(KMS_KEY_ID).asText();
     }
 
     if (node.get(ENDPOINT_OVERRIDE) != null) {
-      endpointOverride = Optional.of(URI.create(node.get(ENDPOINT_OVERRIDE).asText()));
+      try {
+        endpointOverride = Optional.of(URI.create(node.get(ENDPOINT_OVERRIDE).asText()));
+      } catch (final IllegalArgumentException e) {
+        throw new JsonMappingException(
+            parser, "Invalid value for parameter: " + ENDPOINT_OVERRIDE + ".");
+      }
     }
 
-    final AwsKeySigningMetadata awsKeySigningMetadata =
-        new AwsKeySigningMetadata(
-            authMode, region, accessKeyId, secretAccessKey, secretName, endpointOverride);
+    // validate
+    validate(parser, authMode, region, accessKeyId, secretAccessKey, kmsKeyId);
 
-    validate(parser, awsKeySigningMetadata);
+    if (authMode == AwsAuthenticationMode.SPECIFIED) {
+      awsCredentials =
+          Optional.of(
+              AwsCredentials.builder()
+                  .withAccessKeyId(accessKeyId)
+                  .withSecretAccessKey(secretAccessKey)
+                  .withSessionToken(sessionToken)
+                  .build());
+    }
 
-    return awsKeySigningMetadata;
+    return new AwsKmsMetadata(authMode, region, awsCredentials, kmsKeyId, endpointOverride);
   }
 
-  private void validate(final JsonParser parser, final AwsKeySigningMetadata awsKeySigningMetadata)
+  private void validate(
+      final JsonParser parser,
+      final AwsAuthenticationMode authMode,
+      final String region,
+      final String accessKeyId,
+      final String secretAccessKey,
+      final String kmsKeyId)
       throws JsonMappingException {
     final List<String> missingParameters = new ArrayList<>();
 
     // globally required fields
-    if (awsKeySigningMetadata.getRegion() == null) {
+    if (region == null) {
       missingParameters.add(REGION);
     }
 
-    if (awsKeySigningMetadata.getSecretName() == null) {
-      missingParameters.add(SECRET_NAME);
+    if (kmsKeyId == null) {
+      missingParameters.add(KMS_KEY_ID);
     }
 
     // Specified auth mode required fields
-    if (awsKeySigningMetadata.getAuthenticationMode() == AwsAuthenticationMode.SPECIFIED) {
-      if (awsKeySigningMetadata.getAccessKeyId() == null) {
+    if (authMode == AwsAuthenticationMode.SPECIFIED) {
+      if (accessKeyId == null) {
         missingParameters.add(ACCESS_KEY_ID);
       }
 
-      if (awsKeySigningMetadata.getSecretAccessKey() == null) {
+      if (secretAccessKey == null) {
         missingParameters.add(SECRET_ACCESS_KEY);
       }
     }
 
     if (!missingParameters.isEmpty()) {
       throw new JsonMappingException(
-          parser, "Missing values for required parameters: " + String.join(",", missingParameters));
+          parser,
+          "Missing values for required parameters: " + String.join(", ", missingParameters));
     }
   }
 }

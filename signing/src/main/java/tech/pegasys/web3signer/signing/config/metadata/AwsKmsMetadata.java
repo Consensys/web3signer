@@ -13,66 +13,50 @@
 package tech.pegasys.web3signer.signing.config.metadata;
 
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.common.config.AwsCredentials;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 
 import java.net.URI;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-@JsonDeserialize(using = AwsKeySigningMetadataDeserializer.class)
-public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecretsManagerParameters {
-  public static final String TYPE = "aws-secret";
+@JsonDeserialize(using = AwsKmsMetadataDeserializer.class)
+public class AwsKmsMetadata extends SigningMetadata {
+  public static final String TYPE = "aws-kms";
   private final AwsAuthenticationMode authenticationMode;
   private final String region;
-  private final String accessKeyId;
-  private final String secretAccessKey;
-  private final String secretName;
+  private final Optional<AwsCredentials> awsCredentials;
+  private final String kmsKeyId;
   private final Optional<URI> endpointOverride;
 
-  public AwsKeySigningMetadata(
+  public AwsKmsMetadata(
       final AwsAuthenticationMode authenticationMode,
       final String region,
-      final String accessKeyId,
-      final String secretAccessKey,
-      final String secretName,
+      final Optional<AwsCredentials> awsCredentials,
+      final String kmsKeyId,
       final Optional<URI> endpointOverride) {
-    super(TYPE, KeyType.BLS);
+    super(TYPE, KeyType.SECP256K1);
     this.authenticationMode = authenticationMode;
     this.region = region;
-    this.accessKeyId = accessKeyId;
-    this.secretAccessKey = secretAccessKey;
-    this.secretName = secretName;
+    this.awsCredentials = awsCredentials;
+    this.kmsKeyId = kmsKeyId;
     this.endpointOverride = endpointOverride;
   }
 
-  @Override
-  public boolean isEnabled() {
-    return true;
-  }
-
-  @Override
   public AwsAuthenticationMode getAuthenticationMode() {
     return this.authenticationMode;
   }
 
-  @Override
-  public String getAccessKeyId() {
-    return accessKeyId;
+  public Optional<AwsCredentials> getAwsCredentials() {
+    return awsCredentials;
   }
 
-  @Override
-  public String getSecretAccessKey() {
-    return secretAccessKey;
+  public String getKmsKeyId() {
+    return kmsKeyId;
   }
 
-  public String getSecretName() {
-    return secretName;
-  }
-
-  @Override
   public String getRegion() {
     return region;
   }
@@ -82,7 +66,6 @@ public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecrets
     return factory.create(this);
   }
 
-  @Override
   public Optional<URI> getEndpointOverride() {
     return endpointOverride;
   }

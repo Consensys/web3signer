@@ -42,4 +42,6 @@ public interface Eth1Config {
   ChainIdProvider getChainId();
 
   AzureKeyVaultParameters getAzureKeyVaultConfig();
+
+  long getAwsKmsClientCacheSize();
 }

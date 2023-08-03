@@ -55,6 +55,7 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlMapperFactory;
 import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureHttpClientFactory;
+import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.util.ArrayList;
@@ -181,6 +182,9 @@ public class Eth1Runner extends Runner {
       final AzureKeyVaultFactory azureKeyVaultFactory,
       final AzureKeyVaultSignerFactory azureSignerFactory) {
     final HashicorpConnectionFactory hashicorpConnectionFactory = new HashicorpConnectionFactory();
+    final boolean applySha3Hash = true;
+    final AwsKmsSignerFactory awsKmsSignerFactory =
+        new AwsKmsSignerFactory(eth1Config.getAwsKmsClientCacheSize(), applySha3Hash);
     try (final InterlockKeyProvider interlockKeyProvider = new InterlockKeyProvider(vertx);
         final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
             new YubiHsmOpaqueDataProvider()) {
@@ -194,6 +198,7 @@ public class Eth1Runner extends Runner {
               yubiHsmOpaqueDataProvider,
               EthSecpArtifactSigner::new,
               azureKeyVaultFactory,
+              awsKmsSignerFactory,
               true);
 
       return new SignerLoader(baseConfig.keystoreParallelProcessingEnabled())

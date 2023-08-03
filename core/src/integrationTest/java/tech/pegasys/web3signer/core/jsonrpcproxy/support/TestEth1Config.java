@@ -96,4 +96,9 @@ public class TestEth1Config implements Eth1Config {
   public AzureKeyVaultParameters getAzureKeyVaultConfig() {
     return new DefaultAzureKeyVaultParameters("", "", "", "");
   }
+
+  @Override
+  public long getAwsKmsClientCacheSize() {
+    return 1;
+  }
 }

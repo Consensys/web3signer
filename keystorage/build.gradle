@@ -31,7 +31,7 @@ testFixturesJar {
 }
 
 dependencies {
-
+  implementation project(":common")
   implementation 'com.azure:azure-identity'
   implementation 'com.azure:azure-security-keyvault-keys'
   implementation 'com.azure:azure-security-keyvault-secrets'
@@ -49,6 +49,7 @@ dependencies {
   implementation 'org.web3j:core'
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:secretsmanager'
+  implementation 'software.amazon.awssdk:kms'
   runtimeOnly 'software.amazon.awssdk:sts'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'
