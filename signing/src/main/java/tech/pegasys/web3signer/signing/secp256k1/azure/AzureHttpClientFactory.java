@@ -24,9 +24,9 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.jetbrains.annotations.VisibleForTesting;
 
 public class AzureHttpClientFactory {
-  private final int CONNECTION_POOL_SIZE_LIMIT = 10;
+  private final int CLIENT_CACHE_SIZE = 10;
   private final Cache<URI, AzureHttpClient> httpClientMap =
-      Caffeine.newBuilder().maximumSize(CONNECTION_POOL_SIZE_LIMIT).build();
+      Caffeine.newBuilder().maximumSize(CLIENT_CACHE_SIZE).build();
 
   public AzureHttpClient getOrCreateHttpClient(AzureHttpClientParameters connectionParameters) {
 
@@ -47,7 +47,7 @@ public class AzureHttpClientFactory {
   }
 
   @VisibleForTesting
-  protected Cache<URI, AzureHttpClient> getConnectionPool() {
+  protected Cache<URI, AzureHttpClient> getHttpClientMap() {
     return httpClientMap;
   }
 }

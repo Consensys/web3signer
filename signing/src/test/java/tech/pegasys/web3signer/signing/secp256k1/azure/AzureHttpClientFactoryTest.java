@@ -38,19 +38,19 @@ public class AzureHttpClientFactoryTest {
             .build();
     final AzureHttpClient conn1 = azureConnFactory.getOrCreateHttpClient(azureConnParams);
     // assert a new client has been created
-    assertThat(azureConnFactory.getConnectionPool().asMap().size()).isEqualTo(1);
+    assertThat(azureConnFactory.getHttpClientMap().asMap().size()).isEqualTo(1);
 
     final AzureHttpClient conn2 = azureConnFactory.getOrCreateHttpClient(azureConnParams);
 
     // assert a client1 and 2 are the same
-    assertThat(conn1).isEqualTo(conn2);
+    assertThat(conn1).isSameAs(conn2);
 
     // assert no new clients have been created
-    assertThat(azureConnFactory.getConnectionPool().asMap().size()).isEqualTo(1);
+    assertThat(azureConnFactory.getHttpClientMap().asMap().size()).isEqualTo(1);
 
     azureConnFactory.getOrCreateHttpClient(azureConnParams2);
     // new client created for a different vault
-    assertThat(azureConnFactory.getConnectionPool().asMap().size()).isEqualTo(2);
+    assertThat(azureConnFactory.getHttpClientMap().asMap().size()).isEqualTo(2);
   }
 
   @ParameterizedTest
@@ -67,8 +67,8 @@ public class AzureHttpClientFactoryTest {
       azureConnFactory.getOrCreateHttpClient(azureConnParams);
     }
     // call clean up to ensure cache is synchronously cleaned up
-    azureConnFactory.getConnectionPool().cleanUp();
+    azureConnFactory.getHttpClientMap().cleanUp();
 
-    assertThat(azureConnFactory.getConnectionPool().asMap().size()).isEqualTo(10);
+    assertThat(azureConnFactory.getHttpClientMap().asMap().size()).isEqualTo(10);
   }
 }
