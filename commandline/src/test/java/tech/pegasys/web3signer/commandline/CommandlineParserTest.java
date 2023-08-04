@@ -25,11 +25,11 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
 
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 
 import java.io.PrintWriter;

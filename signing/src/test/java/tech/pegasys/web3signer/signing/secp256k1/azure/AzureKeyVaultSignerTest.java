@@ -62,7 +62,8 @@ public class AzureKeyVaultSignerTest {
             AZURE_KEY_VAULT_NAME, KEY_NAME, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID);
 
     final Signer azureNonHashedDataSigner =
-        new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory()).createSigner(config);
+        new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory(), new AzureHttpClientFactory())
+            .createSigner(config);
     final BigInteger publicKey =
         Numeric.toBigInt(EthPublicKeyUtils.toByteArray(azureNonHashedDataSigner.getPublicKey()));
 
@@ -94,7 +95,7 @@ public class AzureKeyVaultSignerTest {
             AZURE_TENANT_ID);
 
     final AzureKeyVaultSignerFactory factory =
-        new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory());
+        new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory(), new AzureHttpClientFactory());
     Assertions.assertThatExceptionOfType(SignerInitializationException.class)
         .isThrownBy(() -> factory.createSigner(config))
         .withMessage(UNSUPPORTED_CURVE_NAME);

@@ -38,6 +38,9 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-net'
   implementation 'com.google.guava:guava'
   implementation 'org.bouncycastle:bcprov-jdk18on'
+  implementation 'com.github.ben-manes.caffeine:caffeine:3.1.5'
+  implementation 'software.amazon.awssdk:auth'
+  implementation 'software.amazon.awssdk:kms'
 
   runtimeOnly 'com.squareup.okhttp3:okhttp'
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
@@ -60,4 +63,6 @@ dependencies {
   testFixturesImplementation 'tech.pegasys.signers.internal:bls-keystore'
   testFixturesImplementation 'software.amazon.awssdk:auth'
   testFixturesImplementation 'software.amazon.awssdk:secretsmanager'
+  testFixturesImplementation 'software.amazon.awssdk:kms'
+  testFixturesImplementation project(":common")
 }

@@ -16,6 +16,7 @@ import tech.pegasys.web3signer.core.FilecoinRunner;
 import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.signing.filecoin.FilecoinNetwork;
 
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Option;
@@ -28,6 +29,7 @@ import picocli.CommandLine.Option;
 public class FilecoinSubCommand extends ModeSubCommand {
 
   public static final String COMMAND_NAME = "filecoin";
+  @CommandLine.Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
 
   @Option(
       names = {"--network"},
@@ -36,9 +38,11 @@ public class FilecoinSubCommand extends ModeSubCommand {
       arity = "1")
   private final FilecoinNetwork network = FilecoinNetwork.MAINNET;
 
+  private long awsKmsClientCacheSize = 1;
+
   @Override
   public Runner createRunner() {
-    return new FilecoinRunner(config, network);
+    return new FilecoinRunner(config, network, awsKmsClientCacheSize);
   }
 
   @Override
@@ -49,5 +53,19 @@ public class FilecoinSubCommand extends ModeSubCommand {
   @Override
   protected void validateArgs() {
     // no special validation required
+  }
+
+  @CommandLine.Option(
+      names = {"--aws-kms-client-cache-size"},
+      paramLabel = "<LONG>",
+      defaultValue = "1",
+      description =
+          "AWS Kms Client cache size. Should be set based on different set of credentials and region (default: ${DEFAULT-VALUE})")
+  public void setAwsKmsClientCacheSize(long awsKmsClientCacheSize) {
+    if (awsKmsClientCacheSize < 1) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(), "--aws-kms-client-cache-size must be positive");
+    }
+    this.awsKmsClientCacheSize = awsKmsClientCacheSize;
   }
 }
