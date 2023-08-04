@@ -3,6 +3,7 @@
 ## Next release
 
 ### Breaking Changes
+- Use Java 17 for build and runtime. Remove Java 11 variant of docker image. zip/tar.gz distributions will require Java 17 or above to run Web3Signer.
 - Eth2 Azure command line option --azure-secrets-tags is now deprecated and is replaced with --azure-tags. The --azure-secrets-tags option will be removed in a future release.
 
 ### Features Added
@@ -14,7 +15,8 @@
 - Add eth_sendTransaction RPC method under the eth1 subcommand [#835](https://github.com/Consensys/web3signer/pull/835)
 - Add EIP-1559 support for eth1 public transactions for eth_sendTransaction and eth_signTransaction [#836](https://github.com/Consensys/web3signer/pull/836)
 - Add Azure bulk loading for secp256k1 keys in eth1 mode [#850](https://github.com/Consensys/web3signer/pull/850)
-- Added Gnosis configuration for the 🦉 CAPELLA 🦉 network fork due at epoch 648704, UTC Tue 01/08/2023, 11:34:20
+- Added Gnosis configuration for the 🦉 CAPELLA 🦉 network fork due at epoch 648704, UTC Tue 01/08/2023, 11:34:20 [#865](https://github.com/Consensys/web3signer/pull/865)
+- Java 17 for build and runtime. [#870](https://github.com/Consensys/web3signer/pull/870)
 
 ### Bugs fixed
 - Support long name aliases in environment variables and YAML configuration [#825](https://github.com/Consensys/web3signer/pull/825)

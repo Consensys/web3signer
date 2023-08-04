@@ -77,7 +77,7 @@ dependencyManagement {
       entry 'junit-jupiter-params'
     }
 
-    dependency 'org.mock-server:mockserver-netty:5.11.2'
+    dependency 'org.mock-server:mockserver-netty:5.15.0'
 
     dependencySet(group: 'org.mockito', version: '4.2.0') {
       entry 'mockito-core'
