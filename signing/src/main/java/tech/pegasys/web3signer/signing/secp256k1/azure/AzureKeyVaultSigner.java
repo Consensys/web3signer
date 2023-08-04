@@ -12,22 +12,23 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
+import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.constructAzureKeyVaultUrl;
+
+import tech.pegasys.web3signer.keystorage.azure.AzureHttpClient;
+import tech.pegasys.web3signer.keystorage.azure.AzureHttpClientParameters;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
-import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
-import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
-import tech.pegasys.web3signer.signing.secp256k1.common.SignerInitializationException;
 import tech.pegasys.web3signer.signing.secp256k1.util.Eth1SignatureUtil;
 
+import java.net.http.HttpRequest;
 import java.security.interfaces.ECPublicKey;
+import java.util.Map;
 
-import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
+import com.azure.core.util.Base64Url;
 import com.azure.security.keyvault.keys.cryptography.models.SignResult;
 import com.azure.security.keyvault.keys.cryptography.models.SignatureAlgorithm;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.crypto.Hash;
 
@@ -35,20 +36,20 @@ public class AzureKeyVaultSigner implements Signer {
 
   public static final String INACCESSIBLE_KEY_ERROR = "Failed to authenticate to vault.";
 
-  private static final Logger LOG = LogManager.getLogger();
-
   private final AzureConfig config;
   private final ECPublicKey publicKey;
   private final SignatureAlgorithm signingAlgo;
-  private final AzureKeyVaultFactory azureKeyVaultFactory;
   private final boolean needsToHash; // Apply Hash.sha3(data) before signing
+  private final AzureHttpClientFactory azureHttpClientFactory;
+  private final AzureKeyVault vault;
 
   AzureKeyVaultSigner(
       final AzureConfig config,
       final Bytes publicKey,
       final boolean needsToHash,
       final boolean useDeprecatedSignatureAlgorithm,
-      final AzureKeyVaultFactory azureKeyVaultFactory) {
+      final AzureKeyVault azureKeyVault,
+      final AzureHttpClientFactory azureHttpClientFactory) {
     this.config = config;
     this.publicKey = EthPublicKeyUtils.createPublicKey(publicKey);
     this.needsToHash = needsToHash;
@@ -56,30 +57,21 @@ public class AzureKeyVaultSigner implements Signer {
         useDeprecatedSignatureAlgorithm
             ? SignatureAlgorithm.fromString("ECDSA256")
             : SignatureAlgorithm.ES256K;
-    this.azureKeyVaultFactory = azureKeyVaultFactory;
+    this.azureHttpClientFactory = azureHttpClientFactory;
+    this.vault = azureKeyVault;
   }
 
   @Override
   public Signature sign(byte[] data) {
-    final AzureKeyVault vault;
-    try {
-      vault =
-          azureKeyVaultFactory.createAzureKeyVault(
-              config.getClientId(),
-              config.getClientSecret(),
-              config.getKeyVaultName(),
-              config.getTenantId(),
-              AzureAuthenticationMode.CLIENT_SECRET);
-    } catch (final Exception e) {
-      LOG.error("Failed to connect to vault", e);
-      throw new SignerInitializationException(INACCESSIBLE_KEY_ERROR, e);
-    }
-
-    final CryptographyClient cryptoClient =
-        vault.fetchKey(config.getKeyName(), config.getKeyVersion());
 
     final byte[] dataToSign = needsToHash ? Hash.sha3(data) : data;
-    final SignResult result = cryptoClient.sign(signingAlgo, dataToSign);
+
+    // TODO - We can use the sign method from the azure library again once they fix the issue with
+    // the SECP256K1 for java 17
+    // final CryptographyClient cryptoClient =
+    // vault.fetchKey(config.getKeyName(), config.getKeyVersion());
+    // final SignResult result = cryptoClient.sign(signingAlgo, dataToSign);
+    final SignResult result = signViaRestApi(vault, config, signingAlgo, dataToSign);
 
     final byte[] signature = result.getSignature();
 
@@ -89,6 +81,40 @@ public class AzureKeyVaultSigner implements Signer {
     }
 
     return Eth1SignatureUtil.deriveSignatureFromP1363Encoded(dataToSign, publicKey, signature);
+  }
+
+  private SignResult signViaRestApi(
+      final AzureKeyVault vault,
+      final AzureConfig azureConfig,
+      final SignatureAlgorithm signingAlgo,
+      final byte[] dataToSign) {
+    final String vaultName = config.getKeyVaultName();
+
+    final AzureHttpClientParameters connectionParameters =
+        AzureHttpClientParameters.newBuilder()
+            .withServerHost(constructAzureKeyVaultUrl(vaultName))
+            .build();
+
+    final AzureHttpClient azureHttpClient =
+        azureHttpClientFactory.getOrCreateHttpClient(connectionParameters);
+
+    // Assemble httpRequest
+    final HttpRequest httpRequest =
+        vault.getRemoteSigningHttpRequest(
+            dataToSign,
+            signingAlgo,
+            vaultName,
+            azureConfig.getKeyName(),
+            azureConfig.getKeyVersion());
+
+    // execute
+    final Map<String, Object> response = azureHttpClient.signViaHttpRequest(httpRequest);
+
+    // retrieve the results
+    final Base64Url signatureBytes = new Base64Url(response.get("value").toString());
+    final String kid = response.get("kid").toString();
+
+    return new SignResult(signatureBytes.decodedBytes(), signingAlgo, kid);
   }
 
   @Override

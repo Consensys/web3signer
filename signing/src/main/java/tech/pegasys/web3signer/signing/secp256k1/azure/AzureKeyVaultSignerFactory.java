@@ -38,9 +38,13 @@ public class AzureKeyVaultSignerFactory {
   private static final Set<String> SUPPORTED_CURVE_NAMES = Set.of(DEPRECATED_CURVE_NAME, "P-256K");
   private static final Logger LOG = LogManager.getLogger();
   private final AzureKeyVaultFactory azureKeyVaultFactory;
+  private final AzureHttpClientFactory azureHttpClientFactory;
 
-  public AzureKeyVaultSignerFactory(final AzureKeyVaultFactory azureKeyVaultFactory) {
+  public AzureKeyVaultSignerFactory(
+      final AzureKeyVaultFactory azureKeyVaultFactory,
+      final AzureHttpClientFactory azureHttpClientFactory) {
     this.azureKeyVaultFactory = azureKeyVaultFactory;
+    this.azureHttpClientFactory = azureHttpClientFactory;
   }
 
   public Signer createSigner(final AzureConfig config) {
@@ -77,7 +81,8 @@ public class AzureKeyVaultSignerFactory {
     final Bytes rawPublicKey =
         Bytes.concatenate(Bytes.wrap(jsonWebKey.getX()), Bytes.wrap(jsonWebKey.getY()));
     final boolean useDeprecatedCurveName = DEPRECATED_CURVE_NAME.equals(curveName);
+
     return new AzureKeyVaultSigner(
-        config, rawPublicKey, true, useDeprecatedCurveName, azureKeyVaultFactory);
+        config, rawPublicKey, true, useDeprecatedCurveName, vault, azureHttpClientFactory);
   }
 }
