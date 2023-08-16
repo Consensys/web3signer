@@ -1,6 +1,6 @@
 # Changelog
 
-## Next release
+## 23.8.0
 
 ### Breaking Changes
 - Use Java 17 for build and runtime. Remove Java 11 variant of docker image. zip/tar.gz distributions will require Java 17 or above to run Web3Signer.
@@ -17,7 +17,8 @@
 - Add Azure bulk loading for secp256k1 keys in eth1 mode [#850](https://github.com/Consensys/web3signer/pull/850)
 - Added Gnosis configuration for the 🦉 CAPELLA 🦉 network fork due at epoch 648704, UTC Tue 01/08/2023, 11:34:20 [#865](https://github.com/Consensys/web3signer/pull/865)
 - Java 17 for build and runtime. [#870](https://github.com/Consensys/web3signer/pull/870)
-- Add support for [Lukso](https://lukso.network/) network
+- Update internal teku library to 23.8.0 [#876](https://github.com/Consensys/web3signer/pull/876)
+- Add support for [Lukso network](https://lukso.network/) `--network=lukso`
 
 ### Bugs fixed
 - Support long name aliases in environment variables and YAML configuration [#825](https://github.com/Consensys/web3signer/pull/825)
