@@ -12,11 +12,11 @@
  */
 package tech.pegasys.web3signer.signing;
 
-import tech.pegasys.signers.bls.keystore.KeyStore;
-import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
-import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.teku.bls.keystore.KeyStore;
+import tech.pegasys.teku.bls.keystore.KeyStoreValidationException;
+import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
 import java.io.IOException;

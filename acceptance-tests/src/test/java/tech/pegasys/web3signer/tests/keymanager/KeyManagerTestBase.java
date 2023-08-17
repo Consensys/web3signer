@@ -18,13 +18,13 @@ import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.tests.keymanager.SlashingProtectionDataChoice.WITHOUT_SLASHING_PROTECTION_DATA;
 
-import tech.pegasys.signers.bls.keystore.KeyStore;
-import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
-import tech.pegasys.signers.bls.keystore.model.KdfFunction;
-import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.teku.bls.keystore.KeyStore;
+import tech.pegasys.teku.bls.keystore.KeyStoreLoader;
+import tech.pegasys.teku.bls.keystore.model.KdfFunction;
+import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.dsl.signer.Signer;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
@@ -125,7 +125,7 @@ public class KeyManagerTestBase extends AcceptanceTestBase {
       throws URISyntaxException {
     final Path keystoreFilePath =
         Path.of(new File(Resources.getResource(keystoreFile).toURI()).getAbsolutePath());
-    final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFilePath);
+    final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFilePath.toUri());
     final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
     return createKeystoreYamlFile(signerKeystoreDirectory, privateKey.toHexString());
   }

@@ -12,12 +12,12 @@
  */
 package tech.pegasys.web3signer.signing.bulkloading;
 
-import tech.pegasys.signers.bls.keystore.KeyStore;
-import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
-import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
-import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.teku.bls.keystore.KeyStore;
+import tech.pegasys.teku.bls.keystore.KeyStoreLoader;
+import tech.pegasys.teku.bls.keystore.KeyStoreValidationException;
+import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
@@ -86,7 +86,7 @@ public class BlsKeystoreBulkLoader {
       final Path keystoreFile, final PasswordRetriever passwordRetriever) {
     try {
       LOG.debug("Loading keystore {}", keystoreFile);
-      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
+      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile.toUri());
       final String key = FilenameUtils.removeExtension(keystoreFile.getFileName().toString());
       final String password = passwordRetriever.retrievePassword(key);
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
