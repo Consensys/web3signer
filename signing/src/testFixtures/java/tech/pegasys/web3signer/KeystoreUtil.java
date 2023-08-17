@@ -12,16 +12,16 @@
  */
 package tech.pegasys.web3signer;
 
-import static tech.pegasys.signers.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
+import static tech.pegasys.teku.bls.keystore.model.Pbkdf2PseudoRandomFunction.HMAC_SHA256;
 
-import tech.pegasys.signers.bls.keystore.KeyStore;
-import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
-import tech.pegasys.signers.bls.keystore.model.Cipher;
-import tech.pegasys.signers.bls.keystore.model.CipherFunction;
-import tech.pegasys.signers.bls.keystore.model.KdfParam;
-import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
-import tech.pegasys.signers.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.teku.bls.keystore.KeyStore;
+import tech.pegasys.teku.bls.keystore.KeyStoreLoader;
+import tech.pegasys.teku.bls.keystore.model.Cipher;
+import tech.pegasys.teku.bls.keystore.model.CipherFunction;
+import tech.pegasys.teku.bls.keystore.model.KdfParam;
+import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
+import tech.pegasys.teku.bls.keystore.model.Pbkdf2Param;
 
 import java.io.IOException;
 import java.nio.file.Files;

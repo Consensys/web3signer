@@ -94,6 +94,9 @@ dependencyManagement {
       entry ('bls') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
+      entry ('bls-keystore') {
+        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
+      }
       entry ('spec') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
@@ -106,12 +109,6 @@ dependencyManagement {
     }
 
     dependency 'tech.pegasys:jblst:0.3.8'
-
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '2.2.10') {
-      entry ('bls-keystore') {
-        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
-      }
-    }
 
     dependency 'io.rest-assured:rest-assured:4.4.0'
     dependency 'org.zeroturnaround:zt-exec:1.12'

@@ -12,12 +12,12 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata;
 
-import tech.pegasys.signers.bls.keystore.KeyStore;
-import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
-import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
-import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.teku.bls.keystore.KeyStore;
+import tech.pegasys.teku.bls.keystore.KeyStoreLoader;
+import tech.pegasys.teku.bls.keystore.KeyStoreValidationException;
+import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManager;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
@@ -140,7 +140,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     final Path keystorePasswordFile =
         makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystorePasswordFile());
     try {
-      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
+      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile.toUri());
       final String password = loadPassword(keystorePasswordFile);
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
