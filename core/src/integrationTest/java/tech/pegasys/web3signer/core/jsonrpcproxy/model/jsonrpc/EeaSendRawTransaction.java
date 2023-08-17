@@ -17,6 +17,7 @@ import static tech.pegasys.web3signer.core.jsonrpcproxy.IntegrationTestBase.DEFA
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import com.google.common.io.BaseEncoding;
@@ -66,7 +67,8 @@ public class EeaSendRawTransaction {
 
     final byte[] signedTransaction =
         PrivateTransactionEncoder.signMessage(rawTransaction, chainId, credentials);
-    final String value = "0x" + BaseEncoding.base16().encode(signedTransaction).toLowerCase();
+    final String value =
+        "0x" + BaseEncoding.base16().encode(signedTransaction).toLowerCase(Locale.ROOT);
     return request(value);
   }
 

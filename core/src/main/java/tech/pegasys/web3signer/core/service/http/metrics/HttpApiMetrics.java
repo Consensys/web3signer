@@ -16,6 +16,8 @@ import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.KeyType;
 
+import java.util.Locale;
+
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
@@ -32,17 +34,17 @@ public class HttpApiMetrics {
     malformedRequestCounter =
         metricsSystem.createCounter(
             Web3SignerMetricCategory.HTTP,
-            keyType.name().toLowerCase() + "_malformed_request_count",
+            keyType.name().toLowerCase(Locale.ROOT) + "_malformed_request_count",
             "Number of requests received which had illegally formatted body.");
     signingTimer =
         metricsSystem.createTimer(
             Web3SignerMetricCategory.SIGNING,
-            keyType.name().toLowerCase() + "_signing_duration",
+            keyType.name().toLowerCase(Locale.ROOT) + "_signing_duration",
             "Duration of a signing event");
     missingSignerCounter =
         metricsSystem.createCounter(
             Web3SignerMetricCategory.SIGNING,
-            keyType.name().toLowerCase() + "_missing_identifier_count",
+            keyType.name().toLowerCase(Locale.ROOT) + "_missing_identifier_count",
             "Number of signing operations requested, for keys which are not available");
     metricsSystem.createIntegerGauge(
         Web3SignerMetricCategory.SIGNING,

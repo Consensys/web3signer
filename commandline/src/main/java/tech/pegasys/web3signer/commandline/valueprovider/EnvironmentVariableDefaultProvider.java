@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.commandline.valueprovider;
 
 import static tech.pegasys.web3signer.commandline.valueprovider.PrefixUtil.stripPrefix;
 
+import java.util.Locale;
 import java.util.Map;
 
 import picocli.CommandLine.IDefaultValueProvider;
@@ -32,10 +33,10 @@ public class EnvironmentVariableDefaultProvider implements IDefaultValueProvider
     if (argSpec.isOption()) {
       final OptionSpec optionSpec = (OptionSpec) argSpec;
       final String qualifiedPrefix =
-          optionSpec.command().qualifiedName("_").replace("-", "_").toUpperCase();
+          optionSpec.command().qualifiedName("_").replace("-", "_").toUpperCase(Locale.ROOT);
 
       for (final String alias : optionSpec.names()) {
-        final String key = stripPrefix(alias).replace("-", "_").toUpperCase();
+        final String key = stripPrefix(alias).replace("-", "_").toUpperCase(Locale.ROOT);
         final String qualifiedKey = qualifiedPrefix + "_" + key;
         final String value = environment.get(qualifiedKey);
         if (value != null) {

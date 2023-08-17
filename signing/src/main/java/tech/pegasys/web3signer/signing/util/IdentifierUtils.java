@@ -12,10 +12,12 @@
  */
 package tech.pegasys.web3signer.signing.util;
 
+import java.util.Locale;
+
 public class IdentifierUtils {
 
   public static String normaliseIdentifier(final String signerIdentifier) {
-    final String lowerCaseIdentifier = signerIdentifier.toLowerCase();
+    final String lowerCaseIdentifier = signerIdentifier.toLowerCase(Locale.ROOT);
     return lowerCaseIdentifier.startsWith("0x") ? lowerCaseIdentifier : "0x" + lowerCaseIdentifier;
   }
 }

@@ -19,6 +19,7 @@ import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
@@ -43,7 +44,7 @@ public class Eth2SigningRequestBody {
   @JsonCreator
   public Eth2SigningRequestBody(
       @JsonProperty(value = "type", required = true) final ArtifactType type,
-      @JsonProperty("signingRoot") final Bytes signingRoot,
+      @JsonProperty("signing_root") @JsonAlias("signingRoot") final Bytes signingRoot,
       @JsonProperty("fork_info") final ForkInfo forkInfo,
       @JsonProperty("block") final BeaconBlock block,
       @JsonProperty("beacon_block") final BlockRequest blockRequest,
@@ -100,7 +101,8 @@ public class Eth2SigningRequestBody {
     return attestation;
   }
 
-  @JsonProperty("signingRoot")
+  @JsonProperty("signing_root")
+  @JsonAlias("signingRoot")
   public Bytes getSigningRoot() {
     return signingRoot;
   }
