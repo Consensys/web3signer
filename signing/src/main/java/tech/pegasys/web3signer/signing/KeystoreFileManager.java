@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -104,7 +105,9 @@ public class KeystoreFileManager {
           fileStream
               .filter(
                   path ->
-                      FilenameUtils.getExtension(path.toString()).toLowerCase().endsWith("yaml"))
+                      FilenameUtils.getExtension(path.toString())
+                          .toLowerCase(Locale.ROOT)
+                          .endsWith("yaml"))
               .map(
                   path -> {
                     try {

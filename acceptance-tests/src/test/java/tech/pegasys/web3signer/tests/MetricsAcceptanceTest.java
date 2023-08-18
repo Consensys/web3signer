@@ -30,6 +30,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -60,8 +61,8 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final List<String> metricsOfInterest =
         List.of(
-            "filecoin_" + SECP256K1.name().toLowerCase() + "_signing_request_count",
-            "filecoin_" + BLS.name().toLowerCase() + "_signing_request_count",
+            "filecoin_" + SECP256K1.name().toLowerCase(Locale.ROOT) + "_signing_request_count",
+            "filecoin_" + BLS.name().toLowerCase(Locale.ROOT) + "_signing_request_count",
             "filecoin_total_request_count",
             "filecoin_wallet_has_count",
             "filecoin_wallet_list_count",
@@ -144,8 +145,8 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final List<String> metricsOfInterest =
         List.of(
-            "signing_" + SECP256K1.name().toLowerCase() + "_signing_duration_count",
-            "signing_" + SECP256K1.name().toLowerCase() + "_missing_identifier_count");
+            "signing_" + SECP256K1.name().toLowerCase(Locale.ROOT) + "_signing_duration_count",
+            "signing_" + SECP256K1.name().toLowerCase(Locale.ROOT) + "_missing_identifier_count");
     final Set<String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
@@ -157,8 +158,10 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     assertThat(metricsAfterSign)
         .containsOnly(
-            "signing_" + SECP256K1.name().toLowerCase() + "_signing_duration_count 1.0",
-            "signing_" + SECP256K1.name().toLowerCase() + "_missing_identifier_count 0.0");
+            "signing_" + SECP256K1.name().toLowerCase(Locale.ROOT) + "_signing_duration_count 1.0",
+            "signing_"
+                + SECP256K1.name().toLowerCase(Locale.ROOT)
+                + "_missing_identifier_count 0.0");
   }
 
   @Test
@@ -184,8 +187,8 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final List<String> metricsOfInterest =
         List.of(
-            "signing_" + BLS.name().toLowerCase() + "_signing_duration_count",
-            "signing_" + BLS.name().toLowerCase() + "_missing_identifier_count");
+            "signing_" + BLS.name().toLowerCase(Locale.ROOT) + "_signing_duration_count",
+            "signing_" + BLS.name().toLowerCase(Locale.ROOT) + "_missing_identifier_count");
     final Set<String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).allMatch(s -> s.endsWith("0.0"));
@@ -197,7 +200,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     assertThat(metricsAfterSign)
         .containsOnly(
-            "signing_" + BLS.name().toLowerCase() + "_signing_duration_count 1.0",
-            "signing_" + BLS.name().toLowerCase() + "_missing_identifier_count 0.0");
+            "signing_" + BLS.name().toLowerCase(Locale.ROOT) + "_signing_duration_count 1.0",
+            "signing_" + BLS.name().toLowerCase(Locale.ROOT) + "_missing_identifier_count 0.0");
   }
 }

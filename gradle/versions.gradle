@@ -16,7 +16,7 @@ dependencyManagement {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2'
 
-    dependencySet(group: 'com.google.errorprone', version: '2.17.0') {
+    dependencySet(group: 'com.google.errorprone', version: '2.21.1') {
       entry 'error_prone_annotation'
       entry 'error_prone_check_api'
       entry 'error_prone_core'

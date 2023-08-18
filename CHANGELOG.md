@@ -5,7 +5,8 @@
 ### Breaking Changes
 - Use Java 17 for build and runtime. Remove Java 11 variant of docker image. zip/tar.gz distributions will require Java 17 or above to run Web3Signer.
 - Eth2 Azure command line option --azure-secrets-tags is now deprecated and is replaced with --azure-tags. The --azure-secrets-tags option will be removed in a future release.
-
+- Eth2 Signing request body: deprecating `signingRoot` in favor of `signing_root` property. `signingRoot` will be removed in a future release.
+- 
 ### Features Added
 - Add support for SECP256K1 remote signing using AWS Key Management Service. [#501](https://github.com/Consensys/web3signer/issues/501)
 - Azure bulk mode support for loading multiline (`\n` delimited, up to 200) keys per secret.
@@ -19,6 +20,7 @@
 - Java 17 for build and runtime. [#870](https://github.com/Consensys/web3signer/pull/870)
 - Update internal teku library to 23.8.0 [#876](https://github.com/Consensys/web3signer/pull/876)
 - Add support for [Lukso network](https://lukso.network/) `--network=lukso`
+- Deprecate `signingRoot` while currently supporting both `signingRoot` and `signing_root` in Eth2 signing request body.  
 
 ### Bugs fixed
 - Support long name aliases in environment variables and YAML configuration [#825](https://github.com/Consensys/web3signer/pull/825)

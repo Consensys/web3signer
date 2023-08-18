@@ -28,6 +28,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -236,7 +237,8 @@ public class SignerLoader {
   private boolean matchesFileExtension(final String validFileExtension, final Path filename) {
     final boolean isHidden = filename.toFile().isHidden();
     final String extension = FilenameUtils.getExtension(filename.toString());
-    return !isHidden && extension.toLowerCase().endsWith(validFileExtension.toLowerCase());
+    return !isHidden
+        && extension.toLowerCase(Locale.ROOT).endsWith(validFileExtension.toLowerCase(Locale.ROOT));
   }
 
   private void renderException(final Throwable t, final String filename) {
