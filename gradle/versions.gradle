@@ -228,7 +228,7 @@ dependencyManagement {
       |    |    |    |    |    \--- org.apache.tuweni:tuweni-units:2.3.1 (*)
       |    |    |    |    +--- io.grpc:grpc-netty:1.47.0
      */
-    dependencySet(group: 'io.grpc', version: '1.56.0') {
+    dependencySet(group: 'io.grpc', version: '1.57.2') {
       entry 'grpc-all'
       entry 'grpc-core'
       entry 'grpc-netty'
