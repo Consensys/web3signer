@@ -253,6 +253,16 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Long.toString(signerConfig.getCapellaForkEpoch().get()));
     }
 
+    if (signerConfig.getDenebForkEpoch().isPresent()) {
+      params.add("--Xnetwork-deneb-fork-epoch");
+      params.add(Long.toString(signerConfig.getDenebForkEpoch().get()));
+    }
+
+    if (signerConfig.getTrustedSetup().isPresent()) {
+      params.add("--Xtrusted-setup");
+      params.add(signerConfig.getTrustedSetup().get());
+    }
+
     if (signerConfig.getNetwork().isPresent()) {
       params.add("--network");
       params.add(signerConfig.getNetwork().get());

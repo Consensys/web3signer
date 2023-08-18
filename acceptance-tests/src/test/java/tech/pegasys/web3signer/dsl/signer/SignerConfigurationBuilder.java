@@ -69,6 +69,7 @@ public class SignerConfigurationBuilder {
   private Long altairForkEpoch = null;
   private Long bellatrixForkEpoch = null;
   private Long capellaForkEpoch = null;
+  private Long denebForkEpoch = null;
   private String network = null;
   private boolean keyManagerApiEnabled = false;
   private KeystoresParameters keystoresParameters;
@@ -77,6 +78,7 @@ public class SignerConfigurationBuilder {
   private ClientTlsOptions downstreamTlsOptions;
 
   private ChainIdProvider chainIdProvider = new ConfigurationChainId(DEFAULT_CHAIN_ID);
+  private String trustedSetup;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -255,6 +257,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withDenebForkEpoch(final long denebForkEpoch) {
+    this.denebForkEpoch = denebForkEpoch;
+    return this;
+  }
+
   public SignerConfigurationBuilder withNetwork(final String network) {
     this.network = network;
     return this;
@@ -294,6 +301,11 @@ public class SignerConfigurationBuilder {
 
   public SignerConfigurationBuilder withChainIdProvider(final ChainIdProvider chainIdProvider) {
     this.chainIdProvider = chainIdProvider;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withTrustedSetup(final String trustedSetup) {
+    this.trustedSetup = trustedSetup;
     return this;
   }
 
@@ -337,11 +349,13 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(altairForkEpoch),
         Optional.ofNullable(bellatrixForkEpoch),
         Optional.ofNullable(capellaForkEpoch),
+        Optional.ofNullable(denebForkEpoch),
         Optional.ofNullable(network),
         keyManagerApiEnabled,
         Optional.ofNullable(watermarkRepairParameters),
         downstreamHttpPort,
         Optional.ofNullable(downstreamTlsOptions),
-        chainIdProvider);
+        chainIdProvider,
+        Optional.ofNullable(trustedSetup));
   }
 }
