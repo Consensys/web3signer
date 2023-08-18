@@ -1,6 +1,6 @@
 # Changelog
 
-## 23.8.0
+## Next Release
 
 ### Breaking Changes
 - Use Java 17 for build and runtime. Remove Java 11 variant of docker image. zip/tar.gz distributions will require Java 17 or above to run Web3Signer.
