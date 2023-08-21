@@ -43,7 +43,7 @@ import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
-import tech.pegasys.web3signer.signing.bulkloading.AWSBulkLoadingArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.bulkloading.BlsAwsBulkLoader;
 import tech.pegasys.web3signer.signing.bulkloading.BlsKeystoreBulkLoader;
 import tech.pegasys.web3signer.signing.config.AwsParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
@@ -340,11 +340,9 @@ public class Eth2Runner extends Runner {
 
     if (awsParameters.isEnabled()) {
       LOG.info("Bulk loading keys from AWS Secrets Manager ... ");
-      final AWSBulkLoadingArtifactSignerProvider awsBulkLoadingArtifactSignerProvider =
-          new AWSBulkLoadingArtifactSignerProvider();
+      final BlsAwsBulkLoader blsAwsBulkLoader = new BlsAwsBulkLoader();
 
-      final MappedResults<ArtifactSigner> awsResult =
-          awsBulkLoadingArtifactSignerProvider.load(awsParameters);
+      final MappedResults<ArtifactSigner> awsResult = blsAwsBulkLoader.load(awsParameters);
       LOG.info(
           "Keys loaded from AWS Secrets Manager: [{}], with error count: [{}]",
           awsResult.getValues().size(),

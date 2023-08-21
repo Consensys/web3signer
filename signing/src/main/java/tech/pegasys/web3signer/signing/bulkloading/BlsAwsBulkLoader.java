@@ -26,7 +26,7 @@ import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class AWSBulkLoadingArtifactSignerProvider {
+public class BlsAwsBulkLoader {
 
   public MappedResults<ArtifactSigner> load(final AwsParameters parameters) {
     try (final AwsSecretsManagerProvider awsSecretsManagerProvider =
