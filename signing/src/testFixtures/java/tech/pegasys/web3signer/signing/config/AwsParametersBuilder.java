@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-public final class AwsSecretsManagerParametersBuilder {
+public final class AwsParametersBuilder {
   private AwsAuthenticationMode authenticationMode = AwsAuthenticationMode.SPECIFIED;
   private String accessKeyId;
   private String secretAccessKey;
@@ -31,63 +31,59 @@ public final class AwsSecretsManagerParametersBuilder {
 
   private Optional<URI> endpointURI = Optional.empty();
 
-  private AwsSecretsManagerParametersBuilder() {}
+  private AwsParametersBuilder() {}
 
-  public static AwsSecretsManagerParametersBuilder anAwsSecretsManagerParameters() {
-    return new AwsSecretsManagerParametersBuilder();
+  public static AwsParametersBuilder anAwsSecretsManagerParameters() {
+    return new AwsParametersBuilder();
   }
 
-  public AwsSecretsManagerParametersBuilder withAuthenticationMode(
+  public AwsParametersBuilder withAuthenticationMode(
       final AwsAuthenticationMode authenticationMode) {
     this.authenticationMode = authenticationMode;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withAccessKeyId(final String accessKeyId) {
+  public AwsParametersBuilder withAccessKeyId(final String accessKeyId) {
     this.accessKeyId = accessKeyId;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withSecretAccessKey(final String secretAccessKey) {
+  public AwsParametersBuilder withSecretAccessKey(final String secretAccessKey) {
     this.secretAccessKey = secretAccessKey;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withRegion(final String region) {
+  public AwsParametersBuilder withRegion(final String region) {
     this.region = region;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withPrefixesFilter(
-      final Collection<String> prefixesFilter) {
+  public AwsParametersBuilder withPrefixesFilter(final Collection<String> prefixesFilter) {
     this.prefixesFilter = prefixesFilter;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withTagNamesFilter(
-      final Collection<String> tagNameFilters) {
+  public AwsParametersBuilder withTagNamesFilter(final Collection<String> tagNameFilters) {
     this.tagNamesFilter = tagNameFilters;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withTagValuesFilter(
-      final Collection<String> tagValuesFilter) {
+  public AwsParametersBuilder withTagValuesFilter(final Collection<String> tagValuesFilter) {
     this.tagValuesFilter = tagValuesFilter;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withCacheMaximumSize(final long cacheMaximumSize) {
+  public AwsParametersBuilder withCacheMaximumSize(final long cacheMaximumSize) {
     this.cacheMaximumSize = cacheMaximumSize;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withEndpointOverride(
-      final Optional<URI> endpointOverride) {
+  public AwsParametersBuilder withEndpointOverride(final Optional<URI> endpointOverride) {
     this.endpointURI = endpointOverride;
     return this;
   }
 
-  public AwsSecretsManagerParameters build() {
+  public AwsParameters build() {
     if (authenticationMode == AwsAuthenticationMode.SPECIFIED) {
       if (accessKeyId == null) {
         throw new IllegalArgumentException("accessKeyId is required");
@@ -102,7 +98,7 @@ public final class AwsSecretsManagerParametersBuilder {
       }
     }
 
-    return new TestAwsSecretsManagerParameters(
+    return new TestAwsParameters(
         authenticationMode,
         accessKeyId,
         secretAccessKey,
@@ -114,7 +110,7 @@ public final class AwsSecretsManagerParametersBuilder {
         endpointURI);
   }
 
-  private static class TestAwsSecretsManagerParameters implements AwsSecretsManagerParameters {
+  private static class TestAwsParameters implements AwsParameters {
     private final AwsAuthenticationMode authenticationMode;
     private final String accessKeyId;
     private final String secretAccessKey;
@@ -125,7 +121,7 @@ public final class AwsSecretsManagerParametersBuilder {
     private final long cacheMaximumSize;
     private final Optional<URI> endpointOverride;
 
-    TestAwsSecretsManagerParameters(
+    TestAwsParameters(
         final AwsAuthenticationMode authenticationMode,
         final String accessKeyId,
         final String secretAccessKey,

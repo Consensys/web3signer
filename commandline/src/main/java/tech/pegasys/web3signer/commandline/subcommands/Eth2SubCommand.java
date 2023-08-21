@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.commandline.subcommands;
 
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_REGION_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.CLIENT_SECRET;
 import static tech.pegasys.web3signer.signing.config.AzureAuthenticationMode.USER_ASSIGNED_MANAGED_IDENTITY;
 
@@ -25,7 +25,7 @@ import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.teku.spec.ForkSchedule;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
-import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
+import tech.pegasys.web3signer.commandline.PicoCliAwsParameters;
 import tech.pegasys.web3signer.commandline.PicoCliEth2AzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
@@ -144,7 +144,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliEth2AzureKeyVaultParameters azureKeyVaultParameters;
   @Mixin private PicoKeystoresParameters keystoreParameters;
-  @Mixin private PicoCliAwsSecretsManagerParameters awsSecretsManagerParameters;
+  @Mixin private PicoCliAwsParameters awsSecretsManagerParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
 
   public Eth2SubCommand() {
@@ -339,7 +339,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   }
 
   @VisibleForTesting
-  public PicoCliAwsSecretsManagerParameters getAwsSecretsManagerParameters() {
+  public PicoCliAwsParameters getAwsSecretsManagerParameters() {
     return awsSecretsManagerParameters;
   }
 

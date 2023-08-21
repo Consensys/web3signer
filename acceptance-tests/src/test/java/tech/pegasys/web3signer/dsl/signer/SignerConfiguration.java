@@ -16,7 +16,7 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -41,7 +41,7 @@ public class SignerConfiguration {
   private final List<String> metricsCategories;
   private final boolean metricsEnabled;
   private final Optional<AzureKeyVaultParameters> azureKeyVaultParameters;
-  private final Optional<AwsSecretsManagerParameters> awsSecretsManagerParameters;
+  private final Optional<AwsParameters> awsSecretsManagerParameters;
   private final Optional<KeystoresParameters> keystoresParameters;
   private final Optional<TlsOptions> serverTlsOptions;
   private final Optional<TlsCertificateDefinition> overriddenCaTrustStore;
@@ -88,7 +88,7 @@ public class SignerConfiguration {
       final List<String> metricsCategories,
       final boolean metricsEnabled,
       final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
-      final Optional<AwsSecretsManagerParameters> awsSecretsManagerParameters,
+      final Optional<AwsParameters> awsSecretsManagerParameters,
       final Optional<KeystoresParameters> keystoresParameters,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
@@ -218,7 +218,7 @@ public class SignerConfiguration {
     return azureKeyVaultParameters;
   }
 
-  public Optional<AwsSecretsManagerParameters> getAwsSecretsManagerParameters() {
+  public Optional<AwsParameters> getAwsSecretsManagerParameters() {
     return awsSecretsManagerParameters;
   }
 

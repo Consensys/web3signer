@@ -12,15 +12,15 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ENABLED_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_PREFIXES_FILTER_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_REGION_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_ENABLED_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_PREFIXES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -28,7 +28,7 @@ import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -276,31 +276,30 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     return params;
   }
 
-  private Collection<String> awsBulkLoadingOptions(
-      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
+  private Collection<String> awsBulkLoadingOptions(final AwsParameters awsParameters) {
     final List<String> params = new ArrayList<>();
 
-    params.add(AWS_SECRETS_ENABLED_OPTION + "=" + awsSecretsManagerParameters.isEnabled());
+    params.add(AWS_SECRETS_ENABLED_OPTION + "=" + awsParameters.isEnabled());
 
     params.add(AWS_SECRETS_AUTH_MODE_OPTION);
-    params.add(awsSecretsManagerParameters.getAuthenticationMode().name());
+    params.add(awsParameters.getAuthenticationMode().name());
 
-    if (awsSecretsManagerParameters.getAccessKeyId() != null) {
+    if (awsParameters.getAccessKeyId() != null) {
       params.add(AWS_SECRETS_ACCESS_KEY_ID_OPTION);
-      params.add(awsSecretsManagerParameters.getAccessKeyId());
+      params.add(awsParameters.getAccessKeyId());
     }
 
-    if (awsSecretsManagerParameters.getSecretAccessKey() != null) {
+    if (awsParameters.getSecretAccessKey() != null) {
       params.add(AWS_SECRETS_SECRET_ACCESS_KEY_OPTION);
-      params.add(awsSecretsManagerParameters.getSecretAccessKey());
+      params.add(awsParameters.getSecretAccessKey());
     }
 
-    if (awsSecretsManagerParameters.getRegion() != null) {
+    if (awsParameters.getRegion() != null) {
       params.add(AWS_SECRETS_REGION_OPTION);
-      params.add(awsSecretsManagerParameters.getRegion());
+      params.add(awsParameters.getRegion());
     }
 
-    awsSecretsManagerParameters
+    awsParameters
         .getEndpointOverride()
         .ifPresent(
             uri -> {
@@ -308,19 +307,19 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
               params.add(uri.toString());
             });
 
-    if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
+    if (!awsParameters.getPrefixesFilter().isEmpty()) {
       params.add(AWS_SECRETS_PREFIXES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getPrefixesFilter()));
+      params.add(String.join(",", awsParameters.getPrefixesFilter()));
     }
 
-    if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
+    if (!awsParameters.getTagNamesFilter().isEmpty()) {
       params.add(AWS_SECRETS_TAG_NAMES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getTagNamesFilter()));
+      params.add(String.join(",", awsParameters.getTagNamesFilter()));
     }
 
-    if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
+    if (!awsParameters.getTagValuesFilter().isEmpty()) {
       params.add(AWS_SECRETS_TAG_VALUES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getTagValuesFilter()));
+      params.add(String.join(",", awsParameters.getTagValuesFilter()));
     }
 
     return params;

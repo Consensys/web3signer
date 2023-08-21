@@ -19,8 +19,8 @@ import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
+import tech.pegasys.web3signer.signing.config.AwsParameters;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -28,7 +28,7 @@ import org.apache.tuweni.bytes.Bytes32;
 
 public class AWSBulkLoadingArtifactSignerProvider {
 
-  public MappedResults<ArtifactSigner> load(final AwsSecretsManagerParameters parameters) {
+  public MappedResults<ArtifactSigner> load(final AwsParameters parameters) {
     try (final AwsSecretsManagerProvider awsSecretsManagerProvider =
         new AwsSecretsManagerProvider(parameters.getCacheMaximumSize())) {
       final AwsSecretsManager awsSecretsManager =
