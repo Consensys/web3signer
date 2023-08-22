@@ -133,8 +133,11 @@ public class AwsKmsSignerTest {
             ENDPOINT_OVERRIDE);
     final long kmsClientCacheSize = 1;
     final boolean applySha3Hash = true;
+    final CachedAwsKmsClientFactory cachedAwsKmsClientFactory =
+        new CachedAwsKmsClientFactory(kmsClientCacheSize);
     final Signer signer =
-        new AwsKmsSignerFactory(kmsClientCacheSize, applySha3Hash).createSigner(awsKmsMetadata);
+        new AwsKmsSignerFactory(cachedAwsKmsClientFactory, applySha3Hash)
+            .createSigner(awsKmsMetadata);
     final BigInteger publicKey =
         Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
 

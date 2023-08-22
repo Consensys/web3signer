@@ -14,20 +14,30 @@ package tech.pegasys.web3signer.signing.secp256k1.aws;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
+
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyRequest;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyResponse;
+import software.amazon.awssdk.services.kms.model.KeyListEntry;
 import software.amazon.awssdk.services.kms.model.KeySpec;
 import software.amazon.awssdk.services.kms.model.MessageType;
 import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
@@ -40,6 +50,7 @@ import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
  * not implemented close method.
  */
 public class AwsKmsClient {
+  private static final Logger LOG = LogManager.getLogger();
   private static final Provider BC_PROVIDER = new BouncyCastleProvider();
   private final KmsClient kmsClient;
 
@@ -80,6 +91,41 @@ public class AwsKmsClient {
             .build();
 
     return kmsClient.sign(signRequest).signature().asByteArray();
+  }
+
+  public <R> MappedResults<R> mapKeyList(
+      final Collection<String> namePrefixes,
+      final Collection<String> tagKeys,
+      final Collection<String> tagValues,
+      final Function<KeyListEntry, R> mapper) {
+    final Set<R> result = ConcurrentHashMap.newKeySet();
+    final AtomicInteger errorCount = new AtomicInteger(0);
+
+    try {
+      kmsClient
+          .listKeysPaginator()
+          .iterator()
+          .forEachRemaining(
+              listKeysResponse ->
+                  listKeysResponse.keys().parallelStream()
+                      .forEach(
+                          keyListEntry -> {
+                            try {
+                              final R value = mapper.apply(keyListEntry);
+                              result.add(value);
+                            } catch (final Exception e) {
+                              LOG.warn(
+                                  "Failed to map keyListEntry '{}' to requested object type.",
+                                  keyListEntry.keyId());
+                              errorCount.incrementAndGet();
+                            }
+                          }));
+    } catch (Exception e) {
+      LOG.error("Unexpected error during Aws mapKeyList", e);
+      errorCount.incrementAndGet();
+    }
+
+    return MappedResults.newInstance(result, errorCount.intValue());
   }
 
   @VisibleForTesting
