@@ -62,10 +62,8 @@ public class BlsBlindedBlobcarSigningAcceptanceTest extends SigningAcceptanceTes
     final ContentType acceptMediaType = JSON;
     setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.DENEB);
 
-    // openapi
     final Eth2SigningRequestBody request = Eth2RequestUtils.createBlobSidecarRequest(isBlinded);
 
-    // send modified JSON containing signing_root or signingRoot
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, acceptMediaType);
     final Bytes signature = verifyAndGetSignatureResponse(response, acceptMediaType);
