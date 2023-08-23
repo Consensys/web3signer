@@ -343,15 +343,10 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   private void setupMinimalWeb3Signer(final ArtifactType artifactType) {
     switch (artifactType) {
-      case BLOCK_V2:
-      case SYNC_COMMITTEE_MESSAGE:
-      case SYNC_COMMITTEE_SELECTION_PROOF:
-      case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF:
-        setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.ALTAIR);
-        break;
-      default:
-        setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.PHASE0);
-        break;
+      case BLOCK_V2, SYNC_COMMITTEE_MESSAGE, SYNC_COMMITTEE_SELECTION_PROOF, SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF -> setupEth2Signer(
+          Eth2Network.MINIMAL, SpecMilestone.ALTAIR);
+      case BLOB_SIDECAR -> setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.DENEB);
+      default -> setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.PHASE0);
     }
   }
 
