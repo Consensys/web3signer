@@ -94,10 +94,10 @@ public class AwsKmsClient {
   }
 
   public <R> MappedResults<R> mapKeyList(
+      final Function<KeyListEntry, R> mapper,
       final Collection<String> namePrefixes,
       final Collection<String> tagKeys,
-      final Collection<String> tagValues,
-      final Function<KeyListEntry, R> mapper) {
+      final Collection<String> tagValues) {
     final Set<R> result = ConcurrentHashMap.newKeySet();
     final AtomicInteger errorCount = new AtomicInteger(0);
 
@@ -116,7 +116,8 @@ public class AwsKmsClient {
                             } catch (final Exception e) {
                               LOG.warn(
                                   "Failed to map keyListEntry '{}' to requested object type.",
-                                  keyListEntry.keyId());
+                                  keyListEntry.keyId(),
+                                  e);
                               errorCount.incrementAndGet();
                             }
                           }));

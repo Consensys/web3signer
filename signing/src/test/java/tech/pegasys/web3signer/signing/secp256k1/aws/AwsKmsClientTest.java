@@ -12,37 +12,30 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.aws;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
-import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
-import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
-import tech.pegasys.web3signer.signing.secp256k1.Signature;
-import tech.pegasys.web3signer.signing.secp256k1.Signer;
 
-import java.math.BigInteger;
-import java.net.URI;
-import java.security.SignatureException;
+import java.util.Collections;
 import java.util.Optional;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import org.web3j.crypto.Hash;
-import org.web3j.crypto.Sign;
-import org.web3j.utils.Numeric;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
+import software.amazon.awssdk.services.kms.model.KeyListEntry;
 import software.amazon.awssdk.services.kms.model.KeySpec;
 import software.amazon.awssdk.services.kms.model.KeyUsageType;
 import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledIfEnvironmentVariable(
     named = "RW_AWS_ACCESS_KEY_ID",
     matches = ".*",
@@ -59,20 +52,17 @@ import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
     named = "AWS_SECRET_ACCESS_KEY",
     matches = ".*",
     disabledReason = "AWS_SECRET_ACCESS_KEY env variable is required")
-public class AwsKmsSignerTest {
+@EnabledIfEnvironmentVariable(
+    named = "AWS_REGION",
+    matches = ".*",
+    disabledReason = "AWS_REGION env variable is required")
+public class AwsKmsClientTest {
   private static final String AWS_ACCESS_KEY_ID = System.getenv("AWS_ACCESS_KEY_ID");
   private static final String AWS_SECRET_ACCESS_KEY = System.getenv("AWS_SECRET_ACCESS_KEY");
-
+  private static final String AWS_REGION = System.getenv("AWS_REGION");
   private static final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
   private static final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
-
-  // optional.
-  private static final String AWS_REGION =
-      Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
   private static final String AWS_SESSION_TOKEN = System.getenv("AWS_SESSION_TOKEN");
-  private static final Optional<URI> ENDPOINT_OVERRIDE =
-      Optional.ofNullable(System.getenv("AWS_ENDPOINT_OVERRIDE")).map(URI::create);
-
   private static final AwsCredentials AWS_RW_CREDENTIALS =
       AwsCredentials.builder()
           .withAccessKeyId(RW_AWS_ACCESS_KEY_ID)
@@ -87,18 +77,22 @@ public class AwsKmsSignerTest {
           .withSessionToken(AWS_SESSION_TOKEN)
           .build();
 
-  private static final CachedAwsKmsClientFactory KMS_CLIENT_FACTORY =
-      new CachedAwsKmsClientFactory(1);
-  private static AwsKmsClient awsKMSClient;
+  private static AwsKmsClient awsRwKmsClient;
   private static String testKeyId;
 
   @BeforeAll
   static void init() {
-    AwsCredentialsProvider awsCredentialsProvider =
+    final AwsCredentialsProvider awsCredentialsProvider =
         AwsCredentialsProviderFactory.createAwsCredentialsProvider(
             AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_RW_CREDENTIALS));
-    awsKMSClient =
-        KMS_CLIENT_FACTORY.createKmsClient(awsCredentialsProvider, AWS_REGION, ENDPOINT_OVERRIDE);
+
+    final KmsClient kmsClient =
+        KmsClient.builder()
+            .credentialsProvider(awsCredentialsProvider)
+            .region(Region.of(AWS_REGION))
+            .build();
+
+    awsRwKmsClient = new AwsKmsClient(kmsClient);
 
     // create a test key
     final CreateKeyRequest web3SignerTestingKey =
@@ -107,55 +101,78 @@ public class AwsKmsSignerTest {
             .description("Web3Signer Testing Key")
             .keyUsage(KeyUsageType.SIGN_VERIFY)
             .build();
-    testKeyId = awsKMSClient.createKey(web3SignerTestingKey);
+    testKeyId = awsRwKmsClient.createKey(web3SignerTestingKey);
     assertThat(testKeyId).isNotEmpty();
   }
 
   @AfterAll
   static void cleanup() {
-    if (awsKMSClient == null) {
+    if (awsRwKmsClient == null) {
       return;
     }
     // delete key
     ScheduleKeyDeletionRequest deletionRequest =
         ScheduleKeyDeletionRequest.builder().keyId(testKeyId).pendingWindowInDays(7).build();
-    awsKMSClient.scheduleKeyDeletion(deletionRequest);
+    awsRwKmsClient.scheduleKeyDeletion(deletionRequest);
   }
 
   @Test
-  void awsSignatureCanBeVerified() throws SignatureException {
-    final AwsKmsMetadata awsKmsMetadata =
-        new AwsKmsMetadata(
-            AwsAuthenticationMode.SPECIFIED,
-            AWS_REGION,
-            Optional.of(AWS_CREDENTIALS),
-            testKeyId,
-            ENDPOINT_OVERRIDE);
-    final long kmsClientCacheSize = 1;
-    final boolean applySha3Hash = true;
-    final Signer signer =
-        new AwsKmsSignerFactory(kmsClientCacheSize, applySha3Hash).createSigner(awsKmsMetadata);
-    final BigInteger publicKey =
-        Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
+  void keyPropertiesCanBeMappedUsingCustomMappingFunction() {
+    final AwsCredentialsProvider awsCredentialsProvider =
+        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+            AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_CREDENTIALS));
+    final KmsClient kmsClient =
+        KmsClient.builder()
+            .credentialsProvider(awsCredentialsProvider)
+            .region(Region.of(AWS_REGION))
+            .build();
+    final AwsKmsClient awsKmsClient = new AwsKmsClient(kmsClient);
 
-    final byte[] dataToSign = "Hello".getBytes(UTF_8);
+    final MappedResults<String> result =
+        awsKmsClient.mapKeyList(
+            KeyListEntry::keyId,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyList());
 
-    for (int i = 0; i < 2; i++) {
-      final Signature signature = signer.sign(dataToSign);
-      // Use web3j library to recover the primary key from the signature
-      final BigInteger recoveredPublicKey = recoverPublicKeyFromSignature(signature, dataToSign);
-      assertThat(recoveredPublicKey).isEqualTo(publicKey);
-    }
+    final Optional<String> testKeyEntry =
+        result.getValues().stream().filter(e -> e.equals(testKeyId)).findAny();
+    Assertions.assertThat(testKeyEntry).isPresent();
+    Assertions.assertThat(testKeyEntry.get()).isEqualTo(testKeyId);
+    Assertions.assertThat(result.getErrorCount()).isZero();
   }
 
-  private static BigInteger recoverPublicKeyFromSignature(
-      final Signature signature, final byte[] dataToSign) throws SignatureException {
-    final Sign.SignatureData sigData =
-        new Sign.SignatureData(
-            signature.getV().toByteArray(),
-            Numeric.toBytesPadded(signature.getR(), 32),
-            Numeric.toBytesPadded(signature.getS(), 32));
+  @Test
+  void mapKeyPropertiesThrowsAwayObjectsWhichFailMapper() {
+    final AwsCredentialsProvider awsCredentialsProvider =
+        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+            AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_CREDENTIALS));
+    final KmsClient kmsClient =
+        KmsClient.builder()
+            .credentialsProvider(awsCredentialsProvider)
+            .region(Region.of(AWS_REGION))
+            .build();
+    final AwsKmsClient awsKmsClient = new AwsKmsClient(kmsClient);
 
-    return Sign.signedMessageHashToKey(Hash.sha3(dataToSign), sigData);
+    final MappedResults<String> result =
+        awsKmsClient.mapKeyList(
+            kl -> {
+              if (kl.keyId().equals(testKeyId)) {
+                throw new IllegalStateException("Failed mapper");
+              } else {
+                return kl.keyId();
+              }
+            },
+            Collections.emptyList(),
+            Collections.emptyList(),
+            Collections.emptyList());
+
+    final Optional<String> testKeyEntry =
+        result.getValues().stream().filter(e -> e.equals(testKeyId)).findAny();
+    Assertions.assertThat(testKeyEntry).isEmpty();
+    Assertions.assertThat(result.getErrorCount()).isOne();
   }
+
+  // TODO JF tests for tags mapKeyPropertiesUsingTags, mapKeyPropertiesWhenTagsDoesNotExist
+
 }

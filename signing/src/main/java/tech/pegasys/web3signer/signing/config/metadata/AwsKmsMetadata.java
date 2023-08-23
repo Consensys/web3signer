@@ -16,7 +16,6 @@ import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsParameters;
 
 import java.net.URI;
 import java.util.Optional;
@@ -24,7 +23,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = AwsKmsMetadataDeserializer.class)
-public class AwsKmsMetadata extends SigningMetadata implements AwsParameters {
+public class AwsKmsMetadata extends SigningMetadata {
   public static final String TYPE = "aws-kms";
   private final AwsAuthenticationMode authenticationMode;
   private final String region;
@@ -46,23 +45,8 @@ public class AwsKmsMetadata extends SigningMetadata implements AwsParameters {
     this.endpointOverride = endpointOverride;
   }
 
-  @Override
-  public boolean isEnabled() {
-    return true;
-  }
-
   public AwsAuthenticationMode getAuthenticationMode() {
     return this.authenticationMode;
-  }
-
-  @Override
-  public String getAccessKeyId() {
-    return null;
-  }
-
-  @Override
-  public String getSecretAccessKey() {
-    return null;
   }
 
   public Optional<AwsCredentials> getAwsCredentials() {
