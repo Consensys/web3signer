@@ -5,6 +5,9 @@
 ### Breaking Changes
 - Eth2 Signing request body: deprecating `signingRoot` in favor of `signing_root` property. `signingRoot` will be removed in a future release.
 
+### Features Added
+- Signing support for BlobSidecar and BlindedBlobsidecar in Deneb fork.
+
 ## 23.8.1
 
 ### Bugs fixed
