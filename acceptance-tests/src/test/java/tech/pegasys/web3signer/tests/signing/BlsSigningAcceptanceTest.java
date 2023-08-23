@@ -246,21 +246,22 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
     final Eth2SigningRequestBody requestWithMismatchedSigningRoot =
         new Eth2SigningRequestBody(
-            request.getType(),
+            request.type(),
             Bytes32.ZERO,
-            request.getForkInfo(),
-            request.getBlock(),
-            request.getBlockRequest(),
-            request.getAttestation(),
-            request.getAggregationSlot(),
-            request.getAggregateAndProof(),
-            request.getVoluntaryExit(),
-            request.getRandaoReveal(),
-            request.getDeposit(),
-            request.getSyncCommitteeMessage(),
-            request.getSyncAggregatorSelectionData(),
-            request.getContributionAndProof(),
-            request.getValidatorRegistration());
+            request.forkInfo(),
+            request.block(),
+            request.blockRequest(),
+            request.attestation(),
+            request.aggregationSlot(),
+            request.aggregateAndProof(),
+            request.voluntaryExit(),
+            request.randaoReveal(),
+            request.deposit(),
+            request.syncCommitteeMessage(),
+            request.syncAggregatorSelectionData(),
+            request.contributionAndProof(),
+            request.validatorRegistration(),
+            request.blindedBlobSidecar());
 
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), requestWithMismatchedSigningRoot);
@@ -284,21 +285,22 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final Eth2SigningRequestBody requestWithMismatchedSigningRoot =
         new Eth2SigningRequestBody(
-            request.getType(),
+            request.type(),
             null,
-            request.getForkInfo(),
-            request.getBlock(),
-            request.getBlockRequest(),
-            request.getAttestation(),
-            request.getAggregationSlot(),
-            request.getAggregateAndProof(),
-            request.getVoluntaryExit(),
-            request.getRandaoReveal(),
-            request.getDeposit(),
-            request.getSyncCommitteeMessage(),
-            request.getSyncAggregatorSelectionData(),
-            request.getContributionAndProof(),
-            request.getValidatorRegistration());
+            request.forkInfo(),
+            request.block(),
+            request.blockRequest(),
+            request.attestation(),
+            request.aggregationSlot(),
+            request.aggregateAndProof(),
+            request.voluntaryExit(),
+            request.randaoReveal(),
+            request.deposit(),
+            request.syncCommitteeMessage(),
+            request.syncAggregatorSelectionData(),
+            request.contributionAndProof(),
+            request.validatorRegistration(),
+            request.blindedBlobSidecar());
 
     final Response response =
         signer.eth2Sign(
@@ -335,8 +337,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, acceptMediaType);
     final Bytes signature =
         verifyAndGetSignatureResponse(response, expectedContentType(acceptMediaType));
-    final BLSSignature expectedSignature =
-        BLS.sign(KEY_PAIR.getSecretKey(), request.getSigningRoot());
+    final BLSSignature expectedSignature = BLS.sign(KEY_PAIR.getSecretKey(), request.signingRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 

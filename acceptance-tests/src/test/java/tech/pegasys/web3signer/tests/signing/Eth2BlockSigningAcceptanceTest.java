@@ -69,8 +69,7 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
-    final BLSSignature expectedSignature =
-        BLS.sign(KEY_PAIR.getSecretKey(), request.getSigningRoot());
+    final BLSSignature expectedSignature = BLS.sign(KEY_PAIR.getSecretKey(), request.signingRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
@@ -83,8 +82,7 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
-    final BLSSignature expectedSignature =
-        BLS.sign(KEY_PAIR.getSecretKey(), request.getSigningRoot());
+    final BLSSignature expectedSignature = BLS.sign(KEY_PAIR.getSecretKey(), request.signingRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
