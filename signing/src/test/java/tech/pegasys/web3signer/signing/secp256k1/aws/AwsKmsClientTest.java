@@ -76,7 +76,6 @@ public class AwsKmsClientTest {
   static void init() {
     awsKmsUtil =
         new AwsKmsUtil(
-            new CachedAwsKmsClientFactory(1),
             AWS_REGION,
             RW_AWS_ACCESS_KEY_ID,
             RW_AWS_SECRET_ACCESS_KEY,

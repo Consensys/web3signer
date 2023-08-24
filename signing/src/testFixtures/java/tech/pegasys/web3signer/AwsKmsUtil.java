@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsClient;
 import tech.pegasys.web3signer.signing.secp256k1.aws.CachedAwsKmsClientFactory;
 
 import java.net.URI;
+import java.security.interfaces.ECPublicKey;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,7 +37,6 @@ public class AwsKmsUtil {
   private final AwsKmsClient awsKMSClient;
 
   public AwsKmsUtil(
-      final CachedAwsKmsClientFactory cachedAwsKmsClientFactory,
       final String region,
       final String accessKeyId,
       final String secretAccessKey,
@@ -49,9 +49,9 @@ public class AwsKmsUtil {
     final AwsCredentialsProvider awsCredentialsProvider =
         AwsCredentialsProviderFactory.createAwsCredentialsProvider(
             AwsAuthenticationMode.SPECIFIED, Optional.of(awsCredentialsBuilder.build()));
-
+    final CachedAwsKmsClientFactory cachedAwsKmsClientFactory1 = new CachedAwsKmsClientFactory(1);
     awsKMSClient =
-        cachedAwsKmsClientFactory.createKmsClient(
+        cachedAwsKmsClientFactory1.createKmsClient(
             awsCredentialsProvider, region, awsEndpointOverride);
   }
 
@@ -74,5 +74,9 @@ public class AwsKmsUtil {
     final ScheduleKeyDeletionRequest deletionRequest =
         ScheduleKeyDeletionRequest.builder().keyId(keyId).pendingWindowInDays(7).build();
     awsKMSClient.scheduleKeyDeletion(deletionRequest);
+  }
+
+  public ECPublicKey publicKey(final String keyId) {
+    return awsKMSClient.getECPublicKey(keyId);
   }
 }
