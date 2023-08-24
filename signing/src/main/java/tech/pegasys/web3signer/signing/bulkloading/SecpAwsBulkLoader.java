@@ -56,10 +56,10 @@ public class SecpAwsBulkLoader {
         cachedAwsKmsClientFactory.createKmsClient(
             awsCredentialsProvider, parameters.getRegion(), parameters.getEndpointOverride());
     return kmsClient.mapKeyList(
+        kl -> createSigner(awsCredentials, parameters, kl.keyId()),
         parameters.getPrefixesFilter(),
         parameters.getTagNamesFilter(),
-        parameters.getTagValuesFilter(),
-        kl -> createSigner(awsCredentials, parameters, kl.keyId()));
+        parameters.getTagValuesFilter());
   }
 
   private EthSecpArtifactSigner createSigner(

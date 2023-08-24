@@ -12,14 +12,17 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.aws;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+import tech.pegasys.web3signer.AwsKmsUtil;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
+import tech.pegasys.web3signer.common.config.AwsCredentials.AwsCredentialsBuilder;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 
+import java.net.URI;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
@@ -30,11 +33,8 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.kms.KmsClient;
-import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
+import software.amazon.awssdk.services.kms.KmsClientBuilder;
 import software.amazon.awssdk.services.kms.model.KeyListEntry;
-import software.amazon.awssdk.services.kms.model.KeySpec;
-import software.amazon.awssdk.services.kms.model.KeyUsageType;
-import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
 
 @EnabledIfEnvironmentVariable(
     named = "RW_AWS_ACCESS_KEY_ID",
@@ -62,72 +62,58 @@ public class AwsKmsClientTest {
   private static final String AWS_REGION = System.getenv("AWS_REGION");
   private static final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
   private static final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
-  private static final String AWS_SESSION_TOKEN = System.getenv("AWS_SESSION_TOKEN");
-  private static final AwsCredentials AWS_RW_CREDENTIALS =
-      AwsCredentials.builder()
-          .withAccessKeyId(RW_AWS_ACCESS_KEY_ID)
-          .withSecretAccessKey(RW_AWS_SECRET_ACCESS_KEY)
-          .withSessionToken(AWS_SESSION_TOKEN)
-          .build();
+  private static final Optional<String> AWS_SESSION_TOKEN =
+      Optional.ofNullable(System.getenv("AWS_SESSION_TOKEN"));
+  private static final Optional<URI> ENDPOINT_OVERRIDE =
+      Optional.ofNullable(System.getenv("AWS_ENDPOINT_OVERRIDE")).map(URI::create);
 
-  private static final AwsCredentials AWS_CREDENTIALS =
-      AwsCredentials.builder()
-          .withAccessKeyId(AWS_ACCESS_KEY_ID)
-          .withSecretAccessKey(AWS_SECRET_ACCESS_KEY)
-          .withSessionToken(AWS_SESSION_TOKEN)
-          .build();
-
-  private static AwsKmsClient awsRwKmsClient;
   private static String testKeyId;
+  private static String testWithTagKeyId;
+  private static AwsKmsUtil awsKmsUtil;
+  private static AwsKmsClient awsKmsClient;
 
   @BeforeAll
   static void init() {
+    awsKmsUtil =
+        new AwsKmsUtil(
+            new CachedAwsKmsClientFactory(1),
+            AWS_REGION,
+            RW_AWS_ACCESS_KEY_ID,
+            RW_AWS_SECRET_ACCESS_KEY,
+            AWS_SESSION_TOKEN,
+            ENDPOINT_OVERRIDE);
+    testKeyId = awsKmsUtil.createKey(Collections.emptyMap());
+    testWithTagKeyId = awsKmsUtil.createKey(Map.of("tagKey", "tagValue"));
+
+    final AwsCredentialsBuilder awsCredentialsBuilder = AwsCredentials.builder();
+    awsCredentialsBuilder
+        .withAccessKeyId(AWS_ACCESS_KEY_ID)
+        .withSecretAccessKey(AWS_SECRET_ACCESS_KEY);
+    AWS_SESSION_TOKEN.ifPresent(awsCredentialsBuilder::withSessionToken);
+
     final AwsCredentialsProvider awsCredentialsProvider =
         AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-            AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_RW_CREDENTIALS));
+            AwsAuthenticationMode.SPECIFIED, Optional.of(awsCredentialsBuilder.build()));
 
-    final KmsClient kmsClient =
-        KmsClient.builder()
-            .credentialsProvider(awsCredentialsProvider)
-            .region(Region.of(AWS_REGION))
-            .build();
+    final KmsClientBuilder kmsClientBuilder = KmsClient.builder();
+    kmsClientBuilder.credentialsProvider(awsCredentialsProvider).region(Region.of(AWS_REGION));
+    ENDPOINT_OVERRIDE.ifPresent(kmsClientBuilder::endpointOverride);
 
-    awsRwKmsClient = new AwsKmsClient(kmsClient);
-
-    // create a test key
-    final CreateKeyRequest web3SignerTestingKey =
-        CreateKeyRequest.builder()
-            .keySpec(KeySpec.ECC_SECG_P256_K1)
-            .description("Web3Signer Testing Key")
-            .keyUsage(KeyUsageType.SIGN_VERIFY)
-            .build();
-    testKeyId = awsRwKmsClient.createKey(web3SignerTestingKey);
-    assertThat(testKeyId).isNotEmpty();
+    awsKmsClient = new AwsKmsClient(kmsClientBuilder.build());
   }
 
   @AfterAll
   static void cleanup() {
-    if (awsRwKmsClient == null) {
+    if (awsKmsUtil == null) {
       return;
     }
     // delete key
-    ScheduleKeyDeletionRequest deletionRequest =
-        ScheduleKeyDeletionRequest.builder().keyId(testKeyId).pendingWindowInDays(7).build();
-    awsRwKmsClient.scheduleKeyDeletion(deletionRequest);
+    awsKmsUtil.deleteKey(testKeyId);
+    awsKmsUtil.deleteKey(testWithTagKeyId);
   }
 
   @Test
   void keyPropertiesCanBeMappedUsingCustomMappingFunction() {
-    final AwsCredentialsProvider awsCredentialsProvider =
-        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-            AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_CREDENTIALS));
-    final KmsClient kmsClient =
-        KmsClient.builder()
-            .credentialsProvider(awsCredentialsProvider)
-            .region(Region.of(AWS_REGION))
-            .build();
-    final AwsKmsClient awsKmsClient = new AwsKmsClient(kmsClient);
-
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
             KeyListEntry::keyId,
@@ -144,16 +130,6 @@ public class AwsKmsClientTest {
 
   @Test
   void mapKeyPropertiesThrowsAwayObjectsWhichFailMapper() {
-    final AwsCredentialsProvider awsCredentialsProvider =
-        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-            AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_CREDENTIALS));
-    final KmsClient kmsClient =
-        KmsClient.builder()
-            .credentialsProvider(awsCredentialsProvider)
-            .region(Region.of(AWS_REGION))
-            .build();
-    final AwsKmsClient awsKmsClient = new AwsKmsClient(kmsClient);
-
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
             kl -> {
@@ -173,6 +149,63 @@ public class AwsKmsClientTest {
     Assertions.assertThat(result.getErrorCount()).isOne();
   }
 
-  // TODO JF tests for tags mapKeyPropertiesUsingTags, mapKeyPropertiesWhenTagsDoesNotExist
+  @Test
+  void mapKeyPropertiesUsingTagsKey() {
+    final MappedResults<String> result =
+        awsKmsClient.mapKeyList(
+            KeyListEntry::keyId,
+            Collections.emptyList(),
+            List.of("tagKey"),
+            Collections.emptyList());
 
+    final Optional<String> testKeyEntry =
+        result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
+    Assertions.assertThat(testKeyEntry).isPresent();
+    Assertions.assertThat(testKeyEntry.get()).isEqualTo(testWithTagKeyId);
+    Assertions.assertThat(result.getErrorCount()).isZero();
+  }
+
+  @Test
+  void mapKeyPropertiesUsingTagsValue() {
+    final MappedResults<String> result =
+        awsKmsClient.mapKeyList(
+            KeyListEntry::keyId,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            List.of("tagValue"));
+
+    final Optional<String> testKeyEntry =
+        result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
+    Assertions.assertThat(testKeyEntry).isPresent();
+    Assertions.assertThat(testKeyEntry.get()).isEqualTo(testWithTagKeyId);
+    Assertions.assertThat(result.getErrorCount()).isZero();
+  }
+
+  @Test
+  void mapKeyPropertiesUsingTagsKeyAndValue() {
+    final MappedResults<String> result =
+        awsKmsClient.mapKeyList(
+            KeyListEntry::keyId, Collections.emptyList(), List.of("tagKey"), List.of("tagValue"));
+
+    final Optional<String> testKeyEntry =
+        result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
+    Assertions.assertThat(testKeyEntry).isPresent();
+    Assertions.assertThat(testKeyEntry.get()).isEqualTo(testWithTagKeyId);
+    Assertions.assertThat(result.getErrorCount()).isZero();
+  }
+
+  @Test
+  void mapKeyPropertiesWhenTagDoesNotExist() {
+    final MappedResults<String> result =
+        awsKmsClient.mapKeyList(
+            KeyListEntry::keyId,
+            Collections.emptyList(),
+            List.of("unknownKey"),
+            List.of("unknownValue"));
+
+    final Optional<String> testKeyEntry =
+        result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
+    Assertions.assertThat(testKeyEntry).isEmpty();
+    Assertions.assertThat(result.getErrorCount()).isZero();
+  }
 }

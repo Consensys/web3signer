@@ -23,6 +23,7 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -39,10 +40,12 @@ import software.amazon.awssdk.services.kms.model.GetPublicKeyRequest;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyResponse;
 import software.amazon.awssdk.services.kms.model.KeyListEntry;
 import software.amazon.awssdk.services.kms.model.KeySpec;
+import software.amazon.awssdk.services.kms.model.ListResourceTagsRequest;
 import software.amazon.awssdk.services.kms.model.MessageType;
 import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
 import software.amazon.awssdk.services.kms.model.SignRequest;
 import software.amazon.awssdk.services.kms.model.SigningAlgorithmSpec;
+import software.amazon.awssdk.services.kms.model.Tag;
 
 /**
  * Wraps KmsClient to allow the same instance to be cached and re-used. It exposes the methods that
@@ -108,6 +111,9 @@ public class AwsKmsClient {
           .forEachRemaining(
               listKeysResponse ->
                   listKeysResponse.keys().parallelStream()
+                      .filter(
+                          keyListEntry ->
+                              keyListPredicate(keyListEntry.keyId(), tagKeys, tagValues))
                       .forEach(
                           keyListEntry -> {
                             try {
@@ -127,6 +133,25 @@ public class AwsKmsClient {
     }
 
     return MappedResults.newInstance(result, errorCount.intValue());
+  }
+
+  private boolean keyListPredicate(
+      final String keyId, final Collection<String> tagKeys, final Collection<String> tagValues) {
+    if (tagKeys.isEmpty() && tagValues.isEmpty())
+      return true; // we don't want to filter if user-supplied tags map is empty
+
+    final List<Tag> kmsTags =
+        kmsClient.listResourceTags(ListResourceTagsRequest.builder().keyId(keyId).build()).tags();
+    return matchesTag(kmsTags, tagKeys, Tag::tagKey)
+        && matchesTag(kmsTags, tagValues, Tag::tagValue);
+  }
+
+  private boolean matchesTag(
+      final List<Tag> kmsTags,
+      final Collection<String> tags,
+      final Function<Tag, String> tagProperty) {
+    return tags.isEmpty()
+        || kmsTags.stream().allMatch(tag -> tags.contains(tagProperty.apply(tag)));
   }
 
   @VisibleForTesting
