@@ -13,8 +13,8 @@
 package tech.pegasys.web3signer.dsl.utils;
 
 import static java.util.Collections.emptyList;
-import static tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlindedBlobSidecar.fromInternalBlindedBlobSidecar;
-import static tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlindedBlobSidecar.fromInternalBlobSidecar;
+import static tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlobSidecar.fromInternalBlindedBlobSidecar;
+import static tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlobSidecar.fromInternalBlobSidecar;
 import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.computeDomain;
 
 import tech.pegasys.teku.api.schema.AggregateAndProof;
@@ -436,26 +436,27 @@ public class Eth2RequestUtils {
         new tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo(
             tekuFork, tekuForkInfo.getGenesisValidatorsRoot());
     final Bytes signingRoot;
-    final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlindedBlobSidecar
-        blindedBlobSidecar;
+    final tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlobSidecar blobSidecar;
     if (isBlinded) {
+      // generate random blinded blobsidecar
       final BlindedBlobSidecar tekuBlindedBlobSidecar =
           new DataStructureUtil(spec).randomBlindedBlobSidecar();
       signingRoot =
           new SigningRootUtil(spec)
               .signingRootForBlindedBlobSidecar(tekuBlindedBlobSidecar, tekuForkInfo);
-      blindedBlobSidecar = fromInternalBlindedBlobSidecar(tekuBlindedBlobSidecar);
+      blobSidecar = fromInternalBlindedBlobSidecar(tekuBlindedBlobSidecar);
     } else {
+      // generate random blobsidecar
       final BlobSidecar tekuBlobSidecar = new DataStructureUtil(spec).randomBlobSidecar();
       signingRoot =
           new SigningRootUtil(spec).signingRootForBlobSidecar(tekuBlobSidecar, tekuForkInfo);
-      blindedBlobSidecar = fromInternalBlobSidecar(tekuBlobSidecar);
+      blobSidecar = fromInternalBlobSidecar(tekuBlobSidecar);
     }
     return Eth2SigningRequestBodyBuilder.anEth2SigningRequestBody()
         .withType(ArtifactType.BLOB_SIDECAR)
         .withSigningRoot(signingRoot)
         .withForkInfo(forkInfo)
-        .withBlindedBlobSidecar(blindedBlobSidecar)
+        .withBlobSidecar(blobSidecar)
         .build();
   }
 }

@@ -319,11 +319,10 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
             validatorRegistration.asInternalValidatorRegistration());
       case BLOB_SIDECAR:
         // handles both blinded/blob sidecar
-        final BlindedBlobSidecar blindedBlobSidecar = body.blindedBlobSidecar();
-        checkArgument(blindedBlobSidecar != null, "BlobSidecar is required");
+        final BlobSidecar blobSidecar = body.blobSidecar();
+        checkArgument(blobSidecar != null, "BlobSidecar is required");
         return signingRootUtil.signingRootForBlindedBlobSidecar(
-            blindedBlobSidecar.asInternalBlindedBlobSidecar(
-                eth2Spec.atSlot(blindedBlobSidecar.slot())),
+            blobSidecar.asInternalBlindedBlobSidecar(eth2Spec.atSlot(blobSidecar.slot())),
             body.forkInfo().asInternalForkInfo());
 
       default:

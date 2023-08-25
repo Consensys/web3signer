@@ -40,4 +40,4 @@ public record Eth2SigningRequestBody(
         SyncAggregatorSelectionData syncAggregatorSelectionData,
     @JsonProperty("contribution_and_proof") ContributionAndProof contributionAndProof,
     @JsonProperty("validator_registration") ValidatorRegistration validatorRegistration,
-    @JsonProperty("blob_sidecar") BlindedBlobSidecar blindedBlobSidecar) {}
+    @JsonProperty("blob_sidecar") BlobSidecar blobSidecar) {}

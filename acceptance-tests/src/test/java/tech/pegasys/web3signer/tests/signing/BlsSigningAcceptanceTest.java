@@ -261,7 +261,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.syncAggregatorSelectionData(),
             request.contributionAndProof(),
             request.validatorRegistration(),
-            request.blindedBlobSidecar());
+            request.blobSidecar());
 
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), requestWithMismatchedSigningRoot);
@@ -300,7 +300,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.syncAggregatorSelectionData(),
             request.contributionAndProof(),
             request.validatorRegistration(),
-            request.blindedBlobSidecar());
+            request.blobSidecar());
 
     final Response response =
         signer.eth2Sign(

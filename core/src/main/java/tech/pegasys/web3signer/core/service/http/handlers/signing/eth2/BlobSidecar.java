@@ -16,12 +16,25 @@ import tech.pegasys.teku.api.schema.KZGCommitment;
 import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.spec.SpecVersion;
 import tech.pegasys.teku.spec.datastructures.blobs.versions.deneb.BlindedBlobSidecarSchema;
-import tech.pegasys.teku.spec.datastructures.blobs.versions.deneb.BlobSidecar;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes32;
 
-public record BlindedBlobSidecar(
+/**
+ * Json representation of BlindedBlobSidecar and BlobSidecar. The blob_root is the "hash tree root"
+ * of BlobSidecar's blob
+ *
+ * @param blockRoot Block root
+ * @param index Index
+ * @param slot Slot
+ * @param blockParentRoot Block Parent Root
+ * @param proposerIndex Proposer Index
+ * @param blobRoot Blob Root.
+ * @param kzgCommitment KZG Commitment
+ * @param kzgProof KZG Proof
+ */
+public record BlobSidecar(
     @JsonProperty("block_root") Bytes32 blockRoot,
     @JsonProperty("index") UInt64 index,
     @JsonProperty("slot") UInt64 slot,
@@ -30,31 +43,6 @@ public record BlindedBlobSidecar(
     @JsonProperty("blob_root") Bytes32 blobRoot,
     @JsonProperty("kzg_commitment") KZGCommitment kzgCommitment,
     @JsonProperty("kzg_proof") KZGProof kzgProof) {
-
-  public static BlindedBlobSidecar fromInternalBlindedBlobSidecar(
-      tech.pegasys.teku.spec.datastructures.blobs.versions.deneb.BlindedBlobSidecar sidecar) {
-    return new BlindedBlobSidecar(
-        sidecar.getBlockRoot(),
-        sidecar.getIndex(),
-        sidecar.getSlot(),
-        sidecar.getBlockParentRoot(),
-        sidecar.getProposerIndex(),
-        sidecar.getBlobRoot(),
-        new KZGCommitment(sidecar.getKZGCommitment()),
-        new KZGProof(sidecar.getKZGProof()));
-  }
-
-  public static BlindedBlobSidecar fromInternalBlobSidecar(final BlobSidecar sidecar) {
-    return new BlindedBlobSidecar(
-        sidecar.getBlockRoot(),
-        sidecar.getIndex(),
-        sidecar.getSlot(),
-        sidecar.getBlockParentRoot(),
-        sidecar.getProposerIndex(),
-        sidecar.getBlob().hashTreeRoot(),
-        new KZGCommitment(sidecar.getKZGCommitment()),
-        new KZGProof(sidecar.getKZGProof()));
-  }
 
   public tech.pegasys.teku.spec.datastructures.blobs.versions.deneb.BlindedBlobSidecar
       asInternalBlindedBlobSidecar(final SpecVersion spec) {
@@ -70,5 +58,34 @@ public record BlindedBlobSidecar(
         blobRoot,
         kzgCommitment.asInternalKZGCommitment(),
         kzgProof.asInternalKZGProof());
+  }
+
+  @VisibleForTesting
+  public static BlobSidecar fromInternalBlindedBlobSidecar(
+      tech.pegasys.teku.spec.datastructures.blobs.versions.deneb.BlindedBlobSidecar sidecar) {
+    return new BlobSidecar(
+        sidecar.getBlockRoot(),
+        sidecar.getIndex(),
+        sidecar.getSlot(),
+        sidecar.getBlockParentRoot(),
+        sidecar.getProposerIndex(),
+        sidecar.getBlobRoot(),
+        new KZGCommitment(sidecar.getKZGCommitment()),
+        new KZGProof(sidecar.getKZGProof()));
+  }
+
+  @VisibleForTesting
+  public static BlobSidecar fromInternalBlobSidecar(
+      final tech.pegasys.teku.spec.datastructures.blobs.versions.deneb.BlobSidecar sidecar) {
+    return new BlobSidecar(
+        sidecar.getBlockRoot(),
+        sidecar.getIndex(),
+        sidecar.getSlot(),
+        sidecar.getBlockParentRoot(),
+        sidecar.getProposerIndex(),
+        // convert blob to hash tree root to make it assignable to W3S BlobSidecar
+        sidecar.getBlob().hashTreeRoot(),
+        new KZGCommitment(sidecar.getKZGCommitment()),
+        new KZGProof(sidecar.getKZGProof()));
   }
 }

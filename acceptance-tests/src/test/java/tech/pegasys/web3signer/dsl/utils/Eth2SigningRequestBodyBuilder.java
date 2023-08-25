@@ -19,7 +19,7 @@ import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregationSlot;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlindedBlobSidecar;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlobSidecar;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
@@ -47,7 +47,7 @@ public final class Eth2SigningRequestBodyBuilder {
   private SyncAggregatorSelectionData syncAggregatorSelectionData;
   private ContributionAndProof contributionAndProof;
   private ValidatorRegistration validatorRegistration;
-  private BlindedBlobSidecar blindedBlobSidecar;
+  private BlobSidecar blobSidecar;
 
   private Eth2SigningRequestBodyBuilder() {}
 
@@ -134,9 +134,8 @@ public final class Eth2SigningRequestBodyBuilder {
     return this;
   }
 
-  public Eth2SigningRequestBodyBuilder withBlindedBlobSidecar(
-      BlindedBlobSidecar blindedBlobSidecar) {
-    this.blindedBlobSidecar = blindedBlobSidecar;
+  public Eth2SigningRequestBodyBuilder withBlobSidecar(BlobSidecar blobSidecar) {
+    this.blobSidecar = blobSidecar;
     return this;
   }
 
@@ -157,6 +156,6 @@ public final class Eth2SigningRequestBodyBuilder {
         syncAggregatorSelectionData,
         contributionAndProof,
         validatorRegistration,
-        blindedBlobSidecar);
+        blobSidecar);
   }
 }
