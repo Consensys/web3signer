@@ -24,15 +24,6 @@ import org.apache.tuweni.bytes.Bytes32;
 /**
  * Json representation of BlindedBlobSidecar and BlobSidecar. The blob_root is the "hash tree root"
  * of BlobSidecar's blob
- *
- * @param blockRoot Block root
- * @param index Index
- * @param slot Slot
- * @param blockParentRoot Block Parent Root
- * @param proposerIndex Proposer Index
- * @param blobRoot Blob Root.
- * @param kzgCommitment KZG Commitment
- * @param kzgProof KZG Proof
  */
 public record BlobSidecar(
     @JsonProperty("block_root") Bytes32 blockRoot,
