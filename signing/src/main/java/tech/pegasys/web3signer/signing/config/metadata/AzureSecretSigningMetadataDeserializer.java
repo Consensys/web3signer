@@ -36,6 +36,7 @@ public class AzureSecretSigningMetadataDeserializer
   private static final String SECRET_NAME = "secretName";
   private static final String AUTH_MODE = "authenticationMode";
   private static final String KEY_TYPE = "keyType";
+  private static final String TIMEOUT = "timeout";
 
   @SuppressWarnings("Unused")
   public AzureSecretSigningMetadataDeserializer() {
@@ -55,6 +56,8 @@ public class AzureSecretSigningMetadataDeserializer
     String tenantId = null;
     String vaultName = null;
     String secretName = null;
+    long timeout = 60;
+
     AzureAuthenticationMode authenticationMode = null;
 
     final JsonNode node = parser.getCodec().readTree(parser);
@@ -94,10 +97,20 @@ public class AzureSecretSigningMetadataDeserializer
     if (node.get(CLIENT_SECRET) != null) {
       clientSecret = node.get(CLIENT_SECRET).asText();
     }
+    if (node.get(TIMEOUT) != null) {
+      timeout = node.get(TIMEOUT).asLong();
+    }
 
     final AzureSecretSigningMetadata azureSecretSigningMetadata =
         new AzureSecretSigningMetadata(
-            clientId, clientSecret, tenantId, vaultName, secretName, authenticationMode, keyType);
+            clientId,
+            clientSecret,
+            tenantId,
+            vaultName,
+            secretName,
+            authenticationMode,
+            keyType,
+            timeout);
 
     validate(parser, azureSecretSigningMetadata);
 

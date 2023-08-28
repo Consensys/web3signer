@@ -5,6 +5,9 @@
 ### Breaking Changes
 - Eth2 Signing request body: deprecating `signingRoot` in favor of `signing_root` property. `signingRoot` will be removed in a future release.
 
+### Features Added
+- Add `--azure-response-timeout` to allow request response timeout to be configurable, the field `timeout` is also accepted in the Azure metadata file. [#888](https://github.com/Consensys/web3signer/pull/888)
+
 ## 23.8.1
 
 ### Bugs fixed

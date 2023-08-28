@@ -58,7 +58,8 @@ public class AzureKeyVaultSignerFactory {
               config.getClientSecret(),
               config.getKeyVaultName(),
               config.getTenantId(),
-              AzureAuthenticationMode.CLIENT_SECRET);
+              AzureAuthenticationMode.CLIENT_SECRET,
+              config.getTimeout());
     } catch (final Exception e) {
       LOG.error("Failed to connect to vault", e);
       throw new SignerInitializationException(INACCESSIBLE_KEY_ERROR, e);

@@ -17,6 +17,7 @@ import tech.pegasys.web3signer.keystorage.common.SecretValueMapperUtil;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +32,9 @@ import com.azure.core.credential.AccessToken;
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.credential.TokenRequestContext;
 import com.azure.core.exception.ResourceNotFoundException;
+import com.azure.core.http.HttpClient;
 import com.azure.core.http.rest.PagedIterable;
+import com.azure.core.util.HttpClientOptions;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.identity.ManagedIdentityCredentialBuilder;
 import com.azure.security.keyvault.keys.KeyClient;
@@ -68,7 +71,8 @@ public class AzureKeyVault {
       final String clientSecret,
       final String tenantId,
       final String vaultName,
-      final ExecutorService executorService) {
+      final ExecutorService executorService,
+      final long timeout) {
     final TokenCredential tokenCredential =
         new ClientSecretCredentialBuilder()
             .clientId(clientId)
@@ -76,25 +80,39 @@ public class AzureKeyVault {
             .tenantId(tenantId)
             .executorService(executorService)
             .build();
-    return new AzureKeyVault(tokenCredential, vaultName);
+    return new AzureKeyVault(tokenCredential, vaultName, timeout);
   }
 
   public static AzureKeyVault createUsingManagedIdentity(
-      final Optional<String> clientId, final String vaultName) {
+      final Optional<String> clientId, final String vaultName, final long timeout) {
     final ManagedIdentityCredentialBuilder managedIdentityCredentialBuilder =
         new ManagedIdentityCredentialBuilder();
     clientId.ifPresent(managedIdentityCredentialBuilder::clientId);
-    return new AzureKeyVault(managedIdentityCredentialBuilder.build(), vaultName);
+    return new AzureKeyVault(managedIdentityCredentialBuilder.build(), vaultName, timeout);
   }
 
-  private AzureKeyVault(final TokenCredential tokenCredential, final String vaultName) {
+  private AzureKeyVault(
+      final TokenCredential tokenCredential, final String vaultName, final long timeout) {
     this.tokenCredential = tokenCredential;
     final String vaultUrl = constructAzureKeyVaultUrl(vaultName);
 
-    secretClient =
-        new SecretClientBuilder().vaultUrl(vaultUrl).credential(tokenCredential).buildClient();
+    final HttpClient customisedHttpClient =
+        HttpClient.createDefault(
+            new HttpClientOptions().setResponseTimeout(Duration.ofSeconds(timeout)));
 
-    keyClient = new KeyClientBuilder().vaultUrl(vaultUrl).credential(tokenCredential).buildClient();
+    secretClient =
+        new SecretClientBuilder()
+            .httpClient(customisedHttpClient)
+            .vaultUrl(vaultUrl)
+            .credential(tokenCredential)
+            .buildClient();
+
+    keyClient =
+        new KeyClientBuilder()
+            .httpClient(customisedHttpClient)
+            .vaultUrl(vaultUrl)
+            .credential(tokenCredential)
+            .buildClient();
   }
 
   public Optional<String> fetchSecret(final String secretName) {
