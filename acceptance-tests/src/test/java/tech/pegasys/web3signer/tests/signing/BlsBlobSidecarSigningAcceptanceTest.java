@@ -37,7 +37,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-public class BlsBlindedBlobcarSigningAcceptanceTest extends SigningAcceptanceTestBase {
+public class BlsBlobSidecarSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
@@ -47,7 +47,7 @@ public class BlsBlindedBlobcarSigningAcceptanceTest extends SigningAcceptanceTes
   private static final BLSKeyPair KEY_PAIR = new BLSKeyPair(KEY);
   private static final BLSPublicKey PUBLIC_KEY = KEY_PAIR.getPublicKey();
 
-  @ParameterizedTest(name = "#{index} - Blinded Blobsidecar Signing: {0}")
+  @ParameterizedTest(name = "#{index} - BlobSidecar Signing: (Is blinded: {0})")
   @ValueSource(booleans = {true, false})
   public void signBlobSidecarAndBlindedBlobSidecar(final boolean isBlinded)
       throws JsonProcessingException {
