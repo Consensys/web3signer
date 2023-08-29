@@ -40,10 +40,8 @@ public class SecpWalletBulkLoaderTest {
       final Path passwordFile =
           passwordDir.resolve(fileName.substring(0, fileName.lastIndexOf(".json")) + ".txt");
       Files.writeString(passwordFile, "test123");
-    }
 
-    // write files in wallet dir that will be ignored by bulk loading logic
-    for (int i = 0; i < 4; i++) {
+      // write files in wallet dir that will be ignored by bulk loading logic
       Files.writeString(walletDir.resolve(i + ".txt"), "ignored");
     }
   }
