@@ -30,6 +30,8 @@ public interface AwsParameters {
 
   String getRegion();
 
+  // TODO JF change the defaults to throw unsupported operation exceptions?
+
   default long getCacheMaximumSize() {
     return 1;
   }

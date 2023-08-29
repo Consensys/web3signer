@@ -24,7 +24,7 @@ import java.util.Optional;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-public class PicoCliAwsParameters implements AwsParameters {
+public class PicoCliSecretsMangerAwsParameters implements AwsParameters {
   public static final String AWS_SECRETS_ENABLED_OPTION = "--aws-secrets-enabled";
   public static final String AWS_SECRETS_AUTH_MODE_OPTION = "--aws-secrets-auth-mode";
   public static final String AWS_SECRETS_ACCESS_KEY_ID_OPTION = "--aws-secrets-access-key-id";

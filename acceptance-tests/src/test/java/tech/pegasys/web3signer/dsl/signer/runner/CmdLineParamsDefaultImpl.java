@@ -12,15 +12,15 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
-import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_AUTH_MODE_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_ENABLED_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_PREFIXES_FILTER_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_REGION_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
-import static tech.pegasys.web3signer.commandline.PicoCliAwsParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_ENABLED_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_PREFIXES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
