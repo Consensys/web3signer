@@ -47,6 +47,7 @@ import tech.pegasys.web3signer.signing.bulkloading.SecpAzureBulkLoader;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdapter;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
@@ -214,6 +215,7 @@ public class Eth1Runner extends Runner {
   private MappedResults<ArtifactSigner> bulkLoadSigners(
       final AzureKeyVaultFactory azureKeyVaultFactory,
       final AzureKeyVaultSignerFactory azureSignerFactory) {
+    MappedResults<ArtifactSigner> results = MappedResults.newSetInstance();
     final AzureKeyVaultParameters azureKeyVaultConfig = eth1Config.getAzureKeyVaultConfig();
     if (azureKeyVaultConfig.isAzureKeyVaultEnabled()) {
       LOG.info("Bulk loading keys from Azure key vault ... ");
@@ -234,10 +236,20 @@ public class Eth1Runner extends Runner {
           azureResult.getValues().size(),
           azureResult.getErrorCount());
       registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
-      return azureResult;
-    } else {
-      return MappedResults.newSetInstance();
+      results = MappedResults.merge(results, azureResult);
     }
+
+    // wallet bulk loading
+    final KeystoresParameters walletBulkloadingParameters =
+        eth1Config.getWalletBulkloadingParameters();
+    if (walletBulkloadingParameters.isEnabled()) {
+      LOG.info("Bulk loading keys v3 wallet files ... ");
+      // initialize secp bulk loader
+
+      // merge the results
+    }
+
+    return results;
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {
