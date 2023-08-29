@@ -23,6 +23,7 @@ public class AzureConfig {
   private final String tenantId;
   // empty string means latest in azure
   private static final String KEY_LATEST_VERSION = "";
+  private final long timeout;
 
   @JsonCreator
   public AzureConfig(
@@ -31,13 +32,15 @@ public class AzureConfig {
       final String keyVersion,
       final String clientId,
       final String clientSecret,
-      final String tenantId) {
+      final String tenantId,
+      final long timeout) {
     this.keyVaultName = keyVaultName;
     this.keyName = keyName;
     this.keyVersion = keyVersion;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.tenantId = tenantId;
+    this.timeout = timeout;
   }
 
   public AzureConfig(
@@ -45,8 +48,9 @@ public class AzureConfig {
       final String keyName,
       final String clientId,
       final String clientSecret,
-      final String tenantId) {
-    this(keyVaultName, keyName, KEY_LATEST_VERSION, clientId, clientSecret, tenantId);
+      final String tenantId,
+      final long timeout) {
+    this(keyVaultName, keyName, KEY_LATEST_VERSION, clientId, clientSecret, tenantId, timeout);
   }
 
   public String getKeyVaultName() {
@@ -71,5 +75,9 @@ public class AzureConfig {
 
   public String getTenantId() {
     return tenantId;
+  }
+
+  public long getTimeout() {
+    return timeout;
   }
 }

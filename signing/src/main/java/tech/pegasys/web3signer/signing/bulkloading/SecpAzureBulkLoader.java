@@ -46,6 +46,7 @@ public class SecpAzureBulkLoader {
                 keyName,
                 azureKeyVaultParameters.getClientId(),
                 azureKeyVaultParameters.getClientSecret(),
-                azureKeyVaultParameters.getTenantId())));
+                azureKeyVaultParameters.getTenantId(),
+                azureKeyVaultParameters.getTimeout())));
   }
 }
