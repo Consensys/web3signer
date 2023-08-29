@@ -37,7 +37,7 @@ public class SecpWalletBulkloader {
   public static MappedResults<ArtifactSigner> loadWalletsUsingPasswordFileOrDir(
       final Path walletsDirectory, final Path passwordsFileOrDirectory) {
     if (!Files.exists(passwordsFileOrDirectory)) {
-      LOG.error("Password file or directory doesn't exist. {}", passwordsFileOrDirectory);
+      LOG.error("Password file or directory doesn't exist.");
       return MappedResults.errorResult();
     }
 
@@ -62,8 +62,7 @@ public class SecpWalletBulkloader {
         return MappedResults.errorResult();
       }
     } else {
-      LOG.error(
-          "Expecting either regular password file or a directory. {}", passwordsFileOrDirectory);
+      LOG.error("Unexpected password file or directory.");
       return MappedResults.errorResult();
     }
 
