@@ -19,7 +19,7 @@ import java.nio.file.Path;
 
 import picocli.CommandLine.Option;
 
-public class PicoWalletBulkloadingParameters implements KeystoresParameters {
+public class PicoV3WalletBulkloadParameters implements KeystoresParameters {
   public static final String WALLETS_PATH = "--wallets-path";
   public static final String WALLETS_PASSWORDS_PATH = "--wallets-passwords-path";
   public static final String WALLETS_PASSWORD_FILE = "--wallets-password-file";
@@ -29,7 +29,7 @@ public class PicoWalletBulkloadingParameters implements KeystoresParameters {
       description =
           "The path to a directory storing v3 wallet files. Wallet files must use a .json file extension.",
       paramLabel = DefaultCommandValues.PATH_FORMAT_HELP)
-  private Path keystoresPath;
+  private Path walletsPath;
 
   @Option(
       names = {WALLETS_PASSWORDS_PATH},
@@ -38,7 +38,7 @@ public class PicoWalletBulkloadingParameters implements KeystoresParameters {
               + " Filename must match the corresponding wallet filename but with a .txt extension."
               + " This cannot be set if --wallets-password-file is also specified.",
       paramLabel = DefaultCommandValues.PATH_FORMAT_HELP)
-  private Path keystoresPasswordsPath;
+  private Path walletsPasswordsPath;
 
   @Option(
       names = {WALLETS_PASSWORD_FILE},
@@ -46,20 +46,20 @@ public class PicoWalletBulkloadingParameters implements KeystoresParameters {
           "The path to a file that contains the password that all wallets use."
               + " This cannot be set if --wallets-passwords-path is also specified.",
       paramLabel = DefaultCommandValues.PATH_FORMAT_HELP)
-  private Path keystoresPasswordFile;
+  private Path walletsPasswordFile;
 
   @Override
   public Path getKeystoresPath() {
-    return keystoresPath;
+    return walletsPath;
   }
 
   @Override
   public Path getKeystoresPasswordsPath() {
-    return keystoresPasswordsPath;
+    return walletsPasswordsPath;
   }
 
   @Override
   public Path getKeystoresPasswordFile() {
-    return keystoresPasswordFile;
+    return walletsPasswordFile;
   }
 }

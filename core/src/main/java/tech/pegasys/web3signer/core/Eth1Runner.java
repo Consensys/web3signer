@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_V3_WALLET_BULK_LOADING;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 import tech.pegasys.web3signer.core.config.BaseConfig;
@@ -44,6 +45,7 @@ import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.bulkloading.SecpAzureBulkLoader;
+import tech.pegasys.web3signer.signing.bulkloading.SecpWalletBulkloader;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
@@ -240,13 +242,21 @@ public class Eth1Runner extends Runner {
     }
 
     // wallet bulk loading
-    final KeystoresParameters walletBulkloadingParameters =
-        eth1Config.getWalletBulkloadingParameters();
-    if (walletBulkloadingParameters.isEnabled()) {
-      LOG.info("Bulk loading keys v3 wallet files ... ");
-      // initialize secp bulk loader
-
-      // merge the results
+    final KeystoresParameters v3WalletBLParams = eth1Config.getV3WalletBLParameters();
+    if (v3WalletBLParams.isEnabled()) {
+      LOG.info("Bulk loading v3 wallet files ... ");
+      final MappedResults<ArtifactSigner> walletResults =
+          SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(
+              v3WalletBLParams.getKeystoresPath(),
+              v3WalletBLParams.hasKeystoresPasswordFile()
+                  ? v3WalletBLParams.getKeystoresPasswordFile()
+                  : v3WalletBLParams.getKeystoresPasswordsPath());
+      LOG.info(
+          "Keys loaded from wallet files: [{}], with error count: [{}]",
+          walletResults.getValues().size(),
+          walletResults.getErrorCount());
+      registerSignerLoadingHealthCheck(KEYS_CHECK_V3_WALLET_BULK_LOADING, walletResults);
+      results = MappedResults.merge(results, walletResults);
     }
 
     return results;
