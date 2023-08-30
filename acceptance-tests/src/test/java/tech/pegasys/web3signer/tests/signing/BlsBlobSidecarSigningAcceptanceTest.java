@@ -19,7 +19,6 @@ import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
-import tech.pegasys.teku.bls.BLSSignature;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
@@ -30,12 +29,11 @@ import tech.pegasys.web3signer.signing.KeyType;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class BlsBlobSidecarSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
@@ -47,27 +45,24 @@ public class BlsBlobSidecarSigningAcceptanceTest extends SigningAcceptanceTestBa
   private static final BLSKeyPair KEY_PAIR = new BLSKeyPair(KEY);
   private static final BLSPublicKey PUBLIC_KEY = KEY_PAIR.getPublicKey();
 
-  @ParameterizedTest(name = "#{index} - BlobSidecar Signing: (Is blinded: {0})")
-  @ValueSource(booleans = {true, false})
-  public void signBlobSidecarAndBlindedBlobSidecar(final boolean isBlinded)
-      throws JsonProcessingException {
+  @BeforeEach
+  void init() {
     final String configFilename = PUBLIC_KEY.toString().substring(2);
     final Path keyConfigFile = testDirectory.resolve(configFilename + ".yaml");
     METADATA_FILE_HELPERS.createUnencryptedYamlFileAt(keyConfigFile, PRIVATE_KEY, KeyType.BLS);
 
-    signAndVerifySignature(isBlinded);
+    setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.DENEB);
   }
 
-  private void signAndVerifySignature(final boolean isBlinded) throws JsonProcessingException {
-    final ContentType acceptMediaType = JSON;
-    setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.DENEB);
+  @Test
+  public void signBlobSidecar() throws JsonProcessingException {
+    final Eth2SigningRequestBody request = Eth2RequestUtils.createBlobSidecarRequest();
 
-    final Eth2SigningRequestBody request = Eth2RequestUtils.createBlobSidecarRequest(isBlinded);
+    final Response response = signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, JSON);
+    final Bytes signature = verifyAndGetSignatureResponse(response, JSON);
 
-    final Response response =
-        signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, acceptMediaType);
-    final Bytes signature = verifyAndGetSignatureResponse(response, acceptMediaType);
-    final BLSSignature expectedSignature = BLS.sign(KEY_PAIR.getSecretKey(), request.signingRoot());
-    assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
+    final Bytes expectedSignature =
+        BLS.sign(KEY_PAIR.getSecretKey(), request.signingRoot()).toBytesCompressed();
+    assertThat(signature).isEqualTo(expectedSignature);
   }
 }

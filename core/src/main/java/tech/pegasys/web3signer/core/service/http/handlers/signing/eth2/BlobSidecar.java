@@ -52,20 +52,6 @@ public record BlobSidecar(
   }
 
   @VisibleForTesting
-  public static BlobSidecar fromInternalBlindedBlobSidecar(
-      tech.pegasys.teku.spec.datastructures.blobs.versions.deneb.BlindedBlobSidecar sidecar) {
-    return new BlobSidecar(
-        sidecar.getBlockRoot(),
-        sidecar.getIndex(),
-        sidecar.getSlot(),
-        sidecar.getBlockParentRoot(),
-        sidecar.getProposerIndex(),
-        sidecar.getBlobRoot(),
-        new KZGCommitment(sidecar.getKZGCommitment()),
-        new KZGProof(sidecar.getKZGProof()));
-  }
-
-  @VisibleForTesting
   public static BlobSidecar fromInternalBlobSidecar(
       final tech.pegasys.teku.spec.datastructures.blobs.versions.deneb.BlobSidecar sidecar) {
     return new BlobSidecar(
