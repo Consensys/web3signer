@@ -134,7 +134,7 @@ dependencyManagement {
     dependency 'com.azure:azure-core-http-netty:1.13.5'
 
     dependency 'com.zaxxer:HikariCP:5.0.1'
-    dependency 'org.postgresql:postgresql:42.6.0'
+    dependency 'org.postgresql:postgresql:42.5.3'
 
     dependencySet(group: 'org.jdbi', version: '3.36.0') {
       entry 'jdbi3-core'
