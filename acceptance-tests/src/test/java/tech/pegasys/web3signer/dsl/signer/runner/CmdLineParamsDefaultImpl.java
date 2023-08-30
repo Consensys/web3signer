@@ -22,6 +22,7 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
 
+import tech.pegasys.web3signer.commandline.config.PicoV3WalletBulkloadParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
@@ -38,6 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 
@@ -128,9 +130,27 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
         createAzureArgs(params);
       }
+
+      signerConfig.getWalletBulkloadParameters().ifPresent(setWalletBulkloadParameters(params));
     }
 
     return params;
+  }
+
+  private static Consumer<KeystoresParameters> setWalletBulkloadParameters(
+      final List<String> params) {
+    return keystoresParameters -> {
+      params.add(PicoV3WalletBulkloadParameters.WALLETS_PATH);
+      params.add(keystoresParameters.getKeystoresPath().toAbsolutePath().toString());
+      if (keystoresParameters.getKeystoresPasswordsPath() != null) {
+        params.add(PicoV3WalletBulkloadParameters.WALLETS_PASSWORDS_PATH);
+        params.add(keystoresParameters.getKeystoresPasswordsPath().toAbsolutePath().toString());
+      }
+      if (keystoresParameters.getKeystoresPasswordFile() != null) {
+        params.add(PicoV3WalletBulkloadParameters.WALLETS_PASSWORD_FILE);
+        params.add(keystoresParameters.getKeystoresPasswordFile().toAbsolutePath().toString());
+      }
+    };
   }
 
   @Override

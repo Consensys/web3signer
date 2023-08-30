@@ -76,6 +76,7 @@ public class SignerConfiguration {
   private Optional<ClientTlsOptions> downstreamTlsOptions;
   private final Duration startupTimeout;
   private final ChainIdProvider chainIdProvider;
+  private final Optional<KeystoresParameters> walletBulkloadParameters;
 
   public SignerConfiguration(
       final String hostname,
@@ -120,7 +121,8 @@ public class SignerConfiguration {
       final int downstreamHttpPort,
       final Optional<ClientTlsOptions> downstreamTlsOptions,
       final ChainIdProvider chainIdProvider,
-      final Optional<String> trustedSetup) {
+      final Optional<String> trustedSetup,
+      final Optional<KeystoresParameters> walletBulkloadParameters) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -164,6 +166,7 @@ public class SignerConfiguration {
     this.downstreamTlsOptions = downstreamTlsOptions;
     this.chainIdProvider = chainIdProvider;
     this.trustedSetup = trustedSetup;
+    this.walletBulkloadParameters = walletBulkloadParameters;
   }
 
   public String hostname() {
@@ -344,5 +347,9 @@ public class SignerConfiguration {
 
   public Optional<String> getTrustedSetup() {
     return trustedSetup;
+  }
+
+  public Optional<KeystoresParameters> getWalletBulkloadParameters() {
+    return walletBulkloadParameters;
   }
 }
