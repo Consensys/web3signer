@@ -18,19 +18,28 @@ import java.util.Map;
 
 public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
+  private static long AZURE_DEFAULT_TIMEOUT = 60;
+
   private final String keyVaultName;
   private final AzureAuthenticationMode authenticationMode;
   private final String clientId;
   private final String tenantId;
   private final String clientSecret;
   private final Map<String, String> tags = new HashMap<>();
+  private final long timeout;
 
   public DefaultAzureKeyVaultParameters(
       final String keyVaultName,
       final String clientId,
       final String tenantId,
       final String clientSecret) {
-    this(keyVaultName, clientId, tenantId, clientSecret, Collections.emptyMap());
+    this(
+        keyVaultName,
+        clientId,
+        tenantId,
+        clientSecret,
+        Collections.emptyMap(),
+        AZURE_DEFAULT_TIMEOUT);
   }
 
   public DefaultAzureKeyVaultParameters(
@@ -39,12 +48,23 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
       final String tenantId,
       final String clientSecret,
       final Map<String, String> tags) {
+    this(keyVaultName, clientId, tenantId, clientSecret, tags, AZURE_DEFAULT_TIMEOUT);
+  }
+
+  public DefaultAzureKeyVaultParameters(
+      final String keyVaultName,
+      final String clientId,
+      final String tenantId,
+      final String clientSecret,
+      final Map<String, String> tags,
+      final long timeout) {
     this.keyVaultName = keyVaultName;
     this.clientId = clientId;
     this.tenantId = tenantId;
     this.clientSecret = clientSecret;
     this.authenticationMode = AzureAuthenticationMode.CLIENT_SECRET;
     this.tags.putAll(tags);
+    this.timeout = timeout;
   }
 
   @Override
@@ -80,5 +100,10 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   @Override
   public Map<String, String> getTags() {
     return tags;
+  }
+
+  @Override
+  public long getTimeout() {
+    return timeout;
   }
 }

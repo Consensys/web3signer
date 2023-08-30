@@ -29,4 +29,6 @@ public interface AzureKeyVaultParameters {
   String getClientSecret();
 
   Map<String, String> getTags();
+
+  long getTimeout();
 }

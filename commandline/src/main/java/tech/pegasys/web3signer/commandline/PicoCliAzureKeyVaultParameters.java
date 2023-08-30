@@ -61,6 +61,12 @@ public abstract class PicoCliAzureKeyVaultParameters implements AzureKeyVaultPar
       paramLabel = "<CLIENT_SECRET>")
   private String clientSecret;
 
+  @Option(
+      names = {"--azure-response-timeout"},
+      description = "The response timeout to be used by the http client (in seconds)",
+      paramLabel = "<AZURE_RESPONSE_TIMEOUT>")
+  private long timeout = 60;
+
   @Override
   public boolean isAzureKeyVaultEnabled() {
     return azureKeyVaultEnabled;
@@ -89,5 +95,10 @@ public abstract class PicoCliAzureKeyVaultParameters implements AzureKeyVaultPar
   @Override
   public String getClientSecret() {
     return clientSecret;
+  }
+
+  @Override
+  public long getTimeout() {
+    return timeout;
   }
 }
