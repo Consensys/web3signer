@@ -42,6 +42,7 @@ import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.web3j.crypto.CipherException;
 import org.web3j.crypto.ECKeyPair;
@@ -75,12 +76,13 @@ public class SecpWalletBulkloadAcceptanceTest extends AcceptanceTestBase {
     }
   }
 
-  @ParameterizedTest
+  @ParameterizedTest(name = "{index} - Wallet bulk loading {0}. Cli options via config file: {1}")
   @MethodSource("buildWalletParameters")
-  void walletFilesAreBulkloaded(final KeystoresParameters walletBulkloadParameters)
-      throws Exception {
+  void walletFilesAreBulkloaded(
+      final KeystoresParameters walletBulkloadParameters, boolean useConfigFile) throws Exception {
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
+            .withUseConfigFile(useConfigFile)
             .withMode("eth1")
             .withWalletBulkloadParameters(walletBulkloadParameters);
 
@@ -106,16 +108,22 @@ public class SecpWalletBulkloadAcceptanceTest extends AcceptanceTestBase {
     assertThat(keysLoaded).isEqualTo(publicKeys.size());
   }
 
-  private static Stream<KeystoresParameters> buildWalletParameters() {
+  private static Stream<Arguments> buildWalletParameters() {
     // build wallet bulkloading parameters, one with password dir, other with password file
     final KeystoresParameters withPasswordDir =
         new DefaultKeystoresParameters(walletsDir, walletsPasswordDir, null);
 
     try (final Stream<Path> passwordFiles = Files.list(walletsPasswordDir)) {
+      // pick any password file as all files are using same password
       final Path passwordFile = passwordFiles.findAny().orElseThrow();
       final KeystoresParameters withPasswordFile =
           new DefaultKeystoresParameters(walletsDir, null, passwordFile);
-      return Stream.of(withPasswordDir, withPasswordFile);
+
+      return Stream.of(
+          Arguments.of(withPasswordDir, true),
+          Arguments.of(withPasswordFile, true),
+          Arguments.of(withPasswordDir, false),
+          Arguments.of(withPasswordFile, false));
     } catch (final IOException e) {
       throw new UncheckedIOException(e);
     }
