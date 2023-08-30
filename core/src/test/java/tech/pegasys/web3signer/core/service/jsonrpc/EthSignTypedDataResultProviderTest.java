@@ -57,19 +57,19 @@ import org.web3j.utils.Numeric;
 
 @ExtendWith(MockitoExtension.class)
 public class EthSignTypedDataResultProviderTest {
-  public static final String PRIVATE_KEY_STRING =
+  private static final String PRIVATE_KEY_STRING =
       "a392604efc2fad9c0b3da43b5f698a2e3f270f170d859912be0d54742275c5f6";
-  static final String PUBLIC_KEY_STRING =
+  private static final String PUBLIC_KEY_STRING =
       "0x506bc1dc099358e5137292f4efdd57e400f29ba5132aa5d12b18dac1c1f6aab"
           + "a645c0b7b58158babbfa6c6cd5a48aa7340a8749176b120e8516216787a13dc76";
 
-  static final String EIP712_valid_json =
+  private static final String EIP712_VALID_JSON =
       "{\"types\": {    \"EIP712Domain\": [      {\"name\": \"name\", \"type\": \"string\"},      {\"name\": \"version\", \"type\": \"string\"},      {\"name\": \"chainId\", \"type\": \"uint256\"},      {\"name\": \"verifyingContract\", \"type\": \"address\"}    ],    \"Person\": [      {\"name\": \"name\", \"type\": \"string\"},      {\"name\": \"wallet\", \"type\": \"address\"}    ]  },  \"domain\": {    \"name\": \"My Dapp\",    \"version\": \"1.0\",    \"chainId\": 1,    \"verifyingContract\": \"0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC\"  },  \"primaryType\": \"Person\",  \"message\": {    \"name\": \"John Doe\",    \"wallet\": \"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B\"  }}";
 
-  static final BigInteger PRIVATE_KEY = Numeric.toBigInt(PRIVATE_KEY_STRING);
-  static final BigInteger PUBLIC_KEY = Numeric.toBigInt(PUBLIC_KEY_STRING);
+  private static final BigInteger PRIVATE_KEY = Numeric.toBigInt(PRIVATE_KEY_STRING);
+  private static final BigInteger PUBLIC_KEY = Numeric.toBigInt(PUBLIC_KEY_STRING);
 
-  static final ECKeyPair KEY_PAIR = new ECKeyPair(PRIVATE_KEY, PUBLIC_KEY);
+  private static final ECKeyPair KEY_PAIR = new ECKeyPair(PRIVATE_KEY, PUBLIC_KEY);
 
   @Mock SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider;
 
@@ -100,7 +100,7 @@ public class EthSignTypedDataResultProviderTest {
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_signTypedData");
     request.setId(new JsonRpcRequestId(1));
     request.setParams(
-        List.of(getAddress(Keys.createEcKeyPair().getPublicKey()), EIP712_valid_json));
+        List.of(getAddress(Keys.createEcKeyPair().getPublicKey()), EIP712_VALID_JSON));
     final Throwable thrown = catchThrowable(() -> resultProvider.createResponseResult(request));
     assertThat(thrown).isInstanceOf(JsonRpcException.class);
     final JsonRpcException rpcException = (JsonRpcException) thrown;
@@ -108,7 +108,7 @@ public class EthSignTypedDataResultProviderTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {EIP712_valid_json})
+  @ValueSource(strings = {EIP712_VALID_JSON})
   public void returnsExpectedSignature(final String message) throws IOException {
 
     doAnswer(
