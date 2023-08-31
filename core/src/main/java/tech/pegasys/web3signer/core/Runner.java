@@ -77,6 +77,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public abstract class Runner implements Runnable, AutoCloseable {
   public static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
+  public static final String TEXT_PLAIN = HttpHeaderValues.TEXT_PLAIN.toString();
   public static final String HEALTHCHECK_PATH = "/healthcheck";
   public static final String UPCHECK_PATH = "/upcheck";
   public static final String RELOAD_PATH = "/reload";
@@ -253,7 +254,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
   private void registerUpcheckRoute(final Router router, final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.GET, UPCHECK_PATH)
-        .produces(JSON)
+        .produces(TEXT_PLAIN)
         .handler(new BlockingHandlerDecorator(new UpcheckHandler(), false))
         .failureHandler(errorHandler);
   }

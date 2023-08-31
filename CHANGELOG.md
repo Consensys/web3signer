@@ -9,6 +9,9 @@
 - Signing support for BlobSidecar and BlindedBlobSidecar in Deneb fork.
 - Add `--azure-response-timeout` to allow request response timeout to be configurable, the field `timeout` is also accepted in the Azure metadata file. [#888](https://github.com/Consensys/web3signer/pull/888)
 
+### Bugs fixed
+- Upcheck was using application/json accept headers instead text/plain accept headers
+
 ## 23.8.1
 
 ### Bugs fixed
