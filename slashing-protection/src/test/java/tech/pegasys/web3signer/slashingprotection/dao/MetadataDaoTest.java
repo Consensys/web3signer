@@ -21,6 +21,7 @@ import java.util.Optional;
 import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,10 +67,99 @@ public class MetadataDaoTest {
         .hasMessageContaining("duplicate key value violates unique constraint");
   }
 
+  @Test
+  public void findsExistingHighWatermark(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    updateHighWatermark(handle, 1, 2);
+
+    final Optional<HighWatermark> existingHighWatermark = metadataDao.findHighWatermark(handle);
+
+    assertThat(existingHighWatermark).isNotEmpty();
+    assertThat(existingHighWatermark)
+        .contains(new HighWatermark(UInt64.valueOf(2), UInt64.valueOf(1)));
+  }
+
+  @Test
+  public void returnsEmptyForNonExistingHighWatermark(final Handle handle) {
+    assertThat(metadataDao.findHighWatermark(handle)).isEmpty();
+  }
+
+  @Test
+  public void returnsEmptyForNonExistingHighWatermarkWhenGvrSet(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    assertThat(metadataDao.findHighWatermark(handle)).isEmpty();
+  }
+
+  @Test
+  public void insertsHighWatermark(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    HighWatermark highWatermark = new HighWatermark(UInt64.valueOf(2), UInt64.valueOf(1));
+
+    int updateCount = metadataDao.updateHighWatermark(handle, highWatermark);
+
+    assertThat(updateCount).isEqualTo(1);
+    final List<HighWatermark> highWatermarks =
+        handle
+            .createQuery(
+                "SELECT high_watermark_epoch as epoch, high_watermark_slot as slot FROM metadata")
+            .mapToBean(HighWatermark.class)
+            .list();
+    assertThat(highWatermarks.size()).isEqualTo(1);
+    assertThat(highWatermarks.get(0)).isEqualTo(highWatermark);
+  }
+
+  @Test
+  public void updatesHighWatermark(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    updateHighWatermark(handle, 1, 2);
+    HighWatermark highWatermark = createHighWatermark(3, 3);
+
+    int updateCount = metadataDao.updateHighWatermark(handle, highWatermark);
+
+    assertThat(updateCount).isEqualTo(1);
+    final List<HighWatermark> highWatermarks =
+        handle
+            .createQuery(
+                "SELECT high_watermark_epoch as epoch, high_watermark_slot as slot FROM metadata")
+            .mapToBean(HighWatermark.class)
+            .list();
+    assertThat(highWatermarks.size()).isEqualTo(1);
+    assertThat(highWatermarks.get(0)).isEqualTo(highWatermark);
+  }
+
+  @Test
+  public void updateHighWatermarkWhenNoGvrHasNoEffect(final Handle handle) {
+    int updateCount = metadataDao.updateHighWatermark(handle, createHighWatermark(1, 1));
+    assertThat(updateCount).isEqualTo(0);
+  }
+
+  @Test
+  public void deletesHighWatermark(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    updateHighWatermark(handle, 2, 2);
+    assertThat(metadataDao.findHighWatermark(handle)).isNotEmpty();
+
+    metadataDao.deleteHighWatermark(handle);
+
+    assertThat(metadataDao.findHighWatermark(handle)).isEmpty();
+  }
+
   private void insertGvr(final Handle handle, final Bytes genesisValidatorsRoot) {
     handle.execute(
         "INSERT INTO metadata (id, genesis_validators_root) VALUES (?, ?)",
         1,
         genesisValidatorsRoot);
+  }
+
+  private void updateHighWatermark(final Handle handle, final int epoch, final int slot) {
+    handle
+        .createUpdate("UPDATE metadata set high_watermark_epoch=:epoch, high_watermark_slot=:slot")
+        .bind("epoch", epoch)
+        .bind("slot", slot)
+        .execute();
+  }
+
+  private HighWatermark createHighWatermark(final int epoch, final int slot) {
+    return new HighWatermark(UInt64.valueOf(epoch), UInt64.valueOf(slot));
   }
 }
