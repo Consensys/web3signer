@@ -12,6 +12,13 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_ENABLED_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_SECRET_ACCESS_KEY_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_TAG_NAMES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_TAG_VALUES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_AUTH_MODE_OPTION;
@@ -116,8 +123,8 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       }
 
       signerConfig
-          .getAwsSecretsManagerParameters()
-          .ifPresent(awsParams -> params.addAll(awsBulkLoadingOptions(awsParams)));
+          .getAwsParameters()
+          .ifPresent(awsParams -> params.addAll(awsSecretsManagerBulkLoadingOptions(awsParams)));
     } else if (signerConfig.getMode().equals("eth1")) {
       params.add("--downstream-http-port");
       params.add(Integer.toString(signerConfig.getDownstreamHttpPort()));
@@ -128,6 +135,9 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
         createAzureArgs(params);
       }
+      signerConfig
+          .getAwsParameters()
+          .ifPresent(awsParams -> params.addAll(awsKmsBulkLoadingOptions(awsParams)));
     }
 
     return params;
@@ -276,7 +286,8 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     return params;
   }
 
-  private Collection<String> awsBulkLoadingOptions(final AwsParameters awsParameters) {
+  private Collection<String> awsSecretsManagerBulkLoadingOptions(
+      final AwsParameters awsParameters) {
     final List<String> params = new ArrayList<>();
 
     params.add(AWS_SECRETS_ENABLED_OPTION + "=" + awsParameters.isEnabled());
@@ -319,6 +330,50 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
 
     if (!awsParameters.getTagValuesFilter().isEmpty()) {
       params.add(AWS_SECRETS_TAG_VALUES_FILTER_OPTION);
+      params.add(String.join(",", awsParameters.getTagValuesFilter()));
+    }
+
+    return params;
+  }
+
+  private Collection<String> awsKmsBulkLoadingOptions(final AwsParameters awsParameters) {
+    final List<String> params = new ArrayList<>();
+
+    params.add(AWS_KMS_ENABLED_OPTION + "=" + awsParameters.isEnabled());
+
+    params.add(AWS_KMS_AUTH_MODE_OPTION);
+    params.add(awsParameters.getAuthenticationMode().name());
+
+    if (awsParameters.getAccessKeyId() != null) {
+      params.add(AWS_KMS_ACCESS_KEY_ID_OPTION);
+      params.add(awsParameters.getAccessKeyId());
+    }
+
+    if (awsParameters.getSecretAccessKey() != null) {
+      params.add(AWS_KMS_SECRET_ACCESS_KEY_OPTION);
+      params.add(awsParameters.getSecretAccessKey());
+    }
+
+    if (awsParameters.getRegion() != null) {
+      params.add(AWS_KMS_REGION_OPTION);
+      params.add(awsParameters.getRegion());
+    }
+
+    awsParameters
+        .getEndpointOverride()
+        .ifPresent(
+            uri -> {
+              params.add(AWS_ENDPOINT_OVERRIDE_OPTION);
+              params.add(uri.toString());
+            });
+
+    if (!awsParameters.getTagNamesFilter().isEmpty()) {
+      params.add(AWS_KMS_TAG_NAMES_FILTER_OPTION);
+      params.add(String.join(",", awsParameters.getTagNamesFilter()));
+    }
+
+    if (!awsParameters.getTagValuesFilter().isEmpty()) {
+      params.add(AWS_KMS_TAG_VALUES_FILTER_OPTION);
       params.add(String.join(",", awsParameters.getTagValuesFilter()));
     }
 

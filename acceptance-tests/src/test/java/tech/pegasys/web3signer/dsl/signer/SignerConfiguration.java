@@ -218,7 +218,7 @@ public class SignerConfiguration {
     return azureKeyVaultParameters;
   }
 
-  public Optional<AwsParameters> getAwsSecretsManagerParameters() {
+  public Optional<AwsParameters> getAwsParameters() {
     return awsSecretsManagerParameters;
   }
 

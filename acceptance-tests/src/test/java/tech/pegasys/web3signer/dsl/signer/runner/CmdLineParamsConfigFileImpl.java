@@ -12,6 +12,13 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_ENABLED_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_SECRET_ACCESS_KEY_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_TAG_NAMES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliKmsAwsParameters.AWS_KMS_TAG_VALUES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliSecretsMangerAwsParameters.AWS_SECRETS_AUTH_MODE_OPTION;
@@ -139,8 +146,9 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       }
 
       signerConfig
-          .getAwsSecretsManagerParameters()
-          .ifPresent(awsParams -> yamlConfig.append(awsBulkLoadingOptions(awsParams)));
+          .getAwsParameters()
+          .ifPresent(
+              awsParams -> yamlConfig.append(awsSecretsManagerBulkLoadingOptions(awsParams)));
 
       final CommandArgs subCommandArgs = createSubCommandArgs();
       params.addAll(subCommandArgs.params);
@@ -152,6 +160,10 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       yamlConfig.append(
           String.format(YAML_NUMERIC_FMT, "eth1.chain-id", signerConfig.getChainIdProvider().id()));
       yamlConfig.append(createDownstreamTlsArgs());
+
+      signerConfig
+          .getAwsParameters()
+          .ifPresent(awsParams -> yamlConfig.append(awsKmsBulkLoadingOptions(awsParams)));
     }
 
     signerConfig
@@ -441,7 +453,7 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     return yamlConfig.toString();
   }
 
-  private String awsBulkLoadingOptions(final AwsParameters awsParameters) {
+  private String awsSecretsManagerBulkLoadingOptions(final AwsParameters awsParameters) {
     final StringBuilder yamlConfig = new StringBuilder();
 
     yamlConfig.append(
@@ -512,6 +524,74 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                     String.format(
                         YAML_STRING_FMT,
                         "eth2." + AWS_ENDPOINT_OVERRIDE_OPTION.substring(2),
+                        uri)));
+
+    return yamlConfig.toString();
+  }
+
+  private String awsKmsBulkLoadingOptions(final AwsParameters awsParameters) {
+    final StringBuilder yamlConfig = new StringBuilder();
+
+    yamlConfig.append(
+        String.format(
+            YAML_BOOLEAN_FMT,
+            "eth1." + AWS_KMS_ENABLED_OPTION.substring(2),
+            awsParameters.isEnabled()));
+
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth1." + AWS_KMS_AUTH_MODE_OPTION.substring(2),
+            awsParameters.getAuthenticationMode().name()));
+
+    if (awsParameters.getAccessKeyId() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1." + AWS_KMS_ACCESS_KEY_ID_OPTION.substring(2),
+              awsParameters.getAccessKeyId()));
+    }
+
+    if (awsParameters.getSecretAccessKey() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1." + AWS_KMS_SECRET_ACCESS_KEY_OPTION.substring(2),
+              awsParameters.getSecretAccessKey()));
+    }
+
+    if (awsParameters.getRegion() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1." + AWS_KMS_REGION_OPTION.substring(2),
+              awsParameters.getRegion()));
+    }
+
+    if (!awsParameters.getTagNamesFilter().isEmpty()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1." + AWS_KMS_TAG_NAMES_FILTER_OPTION.substring(2),
+              String.join(",", awsParameters.getTagNamesFilter())));
+    }
+
+    if (!awsParameters.getTagValuesFilter().isEmpty()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1." + AWS_KMS_TAG_VALUES_FILTER_OPTION.substring(2),
+              String.join(",", awsParameters.getTagValuesFilter())));
+    }
+
+    awsParameters
+        .getEndpointOverride()
+        .ifPresent(
+            uri ->
+                yamlConfig.append(
+                    String.format(
+                        YAML_STRING_FMT,
+                        "eth1." + AWS_ENDPOINT_OVERRIDE_OPTION.substring(2),
                         uri)));
 
     return yamlConfig.toString();

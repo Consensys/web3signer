@@ -101,7 +101,7 @@ public class TestEth1Config implements Eth1Config {
 
   @Override
   public AwsParameters getAwsParameters() {
-    return AwsParametersBuilder.anAwsSecretsManagerParameters().build();
+    return AwsParametersBuilder.anAwsParameters().build();
   }
 
   @Override

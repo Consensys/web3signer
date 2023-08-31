@@ -49,9 +49,9 @@ public class AwsKmsUtil {
     final AwsCredentialsProvider awsCredentialsProvider =
         AwsCredentialsProviderFactory.createAwsCredentialsProvider(
             AwsAuthenticationMode.SPECIFIED, Optional.of(awsCredentialsBuilder.build()));
-    final CachedAwsKmsClientFactory cachedAwsKmsClientFactory1 = new CachedAwsKmsClientFactory(1);
+    final CachedAwsKmsClientFactory cachedAwsKmsClientFactory = new CachedAwsKmsClientFactory(1);
     awsKMSClient =
-        cachedAwsKmsClientFactory1.createKmsClient(
+        cachedAwsKmsClientFactory.createKmsClient(
             awsCredentialsProvider, region, awsEndpointOverride);
   }
 

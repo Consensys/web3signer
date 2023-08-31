@@ -33,7 +33,7 @@ public final class AwsParametersBuilder {
 
   private AwsParametersBuilder() {}
 
-  public static AwsParametersBuilder anAwsSecretsManagerParameters() {
+  public static AwsParametersBuilder anAwsParameters() {
     return new AwsParametersBuilder();
   }
 

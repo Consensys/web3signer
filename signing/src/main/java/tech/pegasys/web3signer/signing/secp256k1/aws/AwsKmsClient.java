@@ -36,10 +36,13 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
+import software.amazon.awssdk.services.kms.model.DescribeKeyRequest;
+import software.amazon.awssdk.services.kms.model.DescribeKeyResponse;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyRequest;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyResponse;
 import software.amazon.awssdk.services.kms.model.KeyListEntry;
 import software.amazon.awssdk.services.kms.model.KeySpec;
+import software.amazon.awssdk.services.kms.model.KeyState;
 import software.amazon.awssdk.services.kms.model.ListResourceTagsRequest;
 import software.amazon.awssdk.services.kms.model.MessageType;
 import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
@@ -114,6 +117,7 @@ public class AwsKmsClient {
                       .filter(
                           keyListEntry ->
                               keyListPredicate(keyListEntry.keyId(), tagKeys, tagValues))
+                      .filter(this::isKeyEnabled)
                       .forEach(
                           keyListEntry -> {
                             try {
@@ -133,6 +137,12 @@ public class AwsKmsClient {
     }
 
     return MappedResults.newInstance(result, errorCount.intValue());
+  }
+
+  private boolean isKeyEnabled(final KeyListEntry keyListEntry) {
+    final DescribeKeyResponse describeKeyResponse =
+        kmsClient.describeKey(DescribeKeyRequest.builder().keyId(keyListEntry.keyId()).build());
+    return describeKeyResponse.keyMetadata().keyState() == KeyState.ENABLED;
   }
 
   private boolean keyListPredicate(

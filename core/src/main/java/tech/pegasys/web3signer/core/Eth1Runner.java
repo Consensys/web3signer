@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core;
 
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AWS_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
@@ -257,7 +258,7 @@ public class Eth1Runner extends Runner {
           "Keys loaded from AWS: [{}], with error count: [{}]",
           awsResult.getValues().size(),
           awsResult.getErrorCount());
-      registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, awsResult);
+      registerSignerLoadingHealthCheck(KEYS_CHECK_AWS_BULK_LOADING, awsResult);
       return awsResult;
     }
 

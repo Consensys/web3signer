@@ -121,7 +121,7 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
   @Test
   void largeNumberOfKeysAreLoadedSuccessfully() {
     final AwsParameters awsParameters =
-        AwsParametersBuilder.anAwsSecretsManagerParameters()
+        AwsParametersBuilder.anAwsParameters()
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion(AWS_REGION)
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
@@ -133,7 +133,7 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withMode("eth2")
-            .withAwsSecretsManagerParameters(awsParameters)
+            .withAwsParameters(awsParameters)
             .withStartupTimeout(STARTUP_TIMEOUT)
             .withLogLevel(Level.INFO);
 

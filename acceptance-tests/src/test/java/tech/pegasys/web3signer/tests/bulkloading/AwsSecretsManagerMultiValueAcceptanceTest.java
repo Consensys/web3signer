@@ -104,7 +104,7 @@ public class AwsSecretsManagerMultiValueAcceptanceTest extends AcceptanceTestBas
   @ValueSource(booleans = {true, false})
   void secretsAreLoadedFromAWSSecretsManagerAndReportedByPublicApi(final boolean useConfigFile) {
     final AwsParameters awsParameters =
-        AwsParametersBuilder.anAwsSecretsManagerParameters()
+        AwsParametersBuilder.anAwsParameters()
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion(AWS_REGION)
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
@@ -118,7 +118,7 @@ public class AwsSecretsManagerMultiValueAcceptanceTest extends AcceptanceTestBas
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
             .withMode("eth2")
-            .withAwsSecretsManagerParameters(awsParameters);
+            .withAwsParameters(awsParameters);
 
     startSigner(configBuilder.build());
 

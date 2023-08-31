@@ -141,8 +141,7 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withAwsSecretsManagerParameters(
-      final AwsParameters awsParameters) {
+  public SignerConfigurationBuilder withAwsParameters(final AwsParameters awsParameters) {
     this.awsParameters = awsParameters;
     return this;
   }

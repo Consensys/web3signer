@@ -27,10 +27,9 @@ public class PicoCliKmsAwsParameters implements AwsParameters {
   public static final String AWS_KMS_ENABLED_OPTION = "--aws-kms-enabled";
   public static final String AWS_KMS_AUTH_MODE_OPTION = "--aws-kms-auth-mode";
   public static final String AWS_KMS_ACCESS_KEY_ID_OPTION = "--aws-kms-access-key-id";
-  public static final String AWS_KMS_SECRET_ACCESS_KEY_OPTION = "--aws-secrets-secret-access-key";
+  public static final String AWS_KMS_SECRET_ACCESS_KEY_OPTION = "--aws-kms-secret-access-key";
   public static final String AWS_KMS_REGION_OPTION = "--aws-kms-region";
   public static final String AWS_ENDPOINT_OVERRIDE_OPTION = "--aws-endpoint-override";
-  public static final String AWS_KMS_PREFIXES_FILTER_OPTION = "--aws-kms-prefixes-filter";
   public static final String AWS_KMS_TAG_NAMES_FILTER_OPTION = "--aws-kms-tag-names-filter";
   public static final String AWS_KMS_TAG_VALUES_FILTER_OPTION = "--aws-kms-tag-values-filter";
   public static final String AWS_CONNECTION_CACHE_SIZE_OPTION = "--aws-connection-cache-size";
