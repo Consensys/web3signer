@@ -17,7 +17,6 @@ import tech.pegasys.web3signer.common.config.AwsCredentials;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
-import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 import tech.pegasys.web3signer.signing.config.AwsParameters;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsClient;
@@ -25,8 +24,6 @@ import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
 import tech.pegasys.web3signer.signing.secp256k1.aws.CachedAwsKmsClientFactory;
 
 import java.util.Optional;
-
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
 public class SecpAwsBulkLoader {
   private final CachedAwsKmsClientFactory cachedAwsKmsClientFactory;
@@ -49,12 +46,12 @@ public class SecpAwsBulkLoader {
                     .build())
             : Optional.empty();
 
-    final AwsCredentialsProvider awsCredentialsProvider =
-        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-            parameters.getAuthenticationMode(), awsCredentials);
     final AwsKmsClient kmsClient =
         cachedAwsKmsClientFactory.createKmsClient(
-            awsCredentialsProvider, parameters.getRegion(), parameters.getEndpointOverride());
+            parameters.getAuthenticationMode(),
+            awsCredentials,
+            parameters.getRegion(),
+            parameters.getEndpointOverride());
     return kmsClient.mapKeyList(
         kl -> createSigner(awsCredentials, parameters, kl.keyId()),
         parameters.getPrefixesFilter(),

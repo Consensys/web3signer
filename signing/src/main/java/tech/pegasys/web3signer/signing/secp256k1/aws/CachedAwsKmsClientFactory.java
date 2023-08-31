@@ -14,6 +14,10 @@ package tech.pegasys.web3signer.signing.secp256k1.aws;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.common.config.AwsCredentials;
+import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
+
 import java.net.URI;
 import java.util.Optional;
 
@@ -45,10 +49,14 @@ public class CachedAwsKmsClientFactory {
                 new CacheLoader<>() {
                   @Override
                   public AwsKmsClient load(final AwsKmsClientKey key) {
+                    final AwsCredentialsProvider awsCredentialsProvider =
+                        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
+                            key.getAwsAuthenticationMode(), key.getAwsCredentials());
+
                     final KmsClientBuilder kmsClientBuilder = KmsClient.builder();
                     key.getEndpointOverride().ifPresent(kmsClientBuilder::endpointOverride);
                     kmsClientBuilder
-                        .credentialsProvider(key.getAwsCredentialsProvider())
+                        .credentialsProvider(awsCredentialsProvider)
                         .region(Region.of(key.getRegion()));
 
                     return new AwsKmsClient(kmsClientBuilder.build());
@@ -57,10 +65,11 @@ public class CachedAwsKmsClientFactory {
   }
 
   public AwsKmsClient createKmsClient(
-      final AwsCredentialsProvider awsCredentialsProvider,
+      final AwsAuthenticationMode awsAuthenticationMode,
+      final Optional<AwsCredentials> awsCredentials,
       final String region,
       final Optional<URI> endpointOverride) {
     return cache.getUnchecked(
-        new AwsKmsClientKey(awsCredentialsProvider, region, endpointOverride));
+        new AwsKmsClientKey(awsAuthenticationMode, awsCredentials, region, endpointOverride));
   }
 }

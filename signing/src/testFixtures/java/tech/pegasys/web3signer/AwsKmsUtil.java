@@ -15,7 +15,6 @@ package tech.pegasys.web3signer;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
 import tech.pegasys.web3signer.common.config.AwsCredentials.AwsCredentialsBuilder;
-import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsClient;
 import tech.pegasys.web3signer.signing.secp256k1.aws.CachedAwsKmsClientFactory;
 
@@ -25,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
 import software.amazon.awssdk.services.kms.model.KeySpec;
 import software.amazon.awssdk.services.kms.model.KeyUsageType;
@@ -46,13 +44,13 @@ public class AwsKmsUtil {
     awsCredentialsBuilder.withAccessKeyId(accessKeyId).withSecretAccessKey(secretAccessKey);
     sessionToken.ifPresent(awsCredentialsBuilder::withSessionToken);
 
-    final AwsCredentialsProvider awsCredentialsProvider =
-        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-            AwsAuthenticationMode.SPECIFIED, Optional.of(awsCredentialsBuilder.build()));
     final CachedAwsKmsClientFactory cachedAwsKmsClientFactory = new CachedAwsKmsClientFactory(1);
     awsKMSClient =
         cachedAwsKmsClientFactory.createKmsClient(
-            awsCredentialsProvider, region, awsEndpointOverride);
+            AwsAuthenticationMode.SPECIFIED,
+            Optional.of(awsCredentialsBuilder.build()),
+            region,
+            awsEndpointOverride);
   }
 
   public String createKey(final Map<String, String> tags) {

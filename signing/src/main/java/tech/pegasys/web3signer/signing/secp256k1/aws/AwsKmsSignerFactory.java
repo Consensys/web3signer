@@ -14,13 +14,10 @@ package tech.pegasys.web3signer.signing.secp256k1.aws;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
 
 import java.security.interfaces.ECPublicKey;
-
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
 /** A Signer factory that create an instance of `Signer` type backed by AWS KMS. */
 public class AwsKmsSignerFactory {
@@ -44,13 +41,10 @@ public class AwsKmsSignerFactory {
   public Signer createSigner(final AwsKmsMetadata awsKmsMetadata) {
     checkArgument(awsKmsMetadata != null, "awsKmsMetadata must not be null");
 
-    final AwsCredentialsProvider awsCredentialsProvider =
-        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-            awsKmsMetadata.getAuthenticationMode(), awsKmsMetadata.getAwsCredentials());
-
     final AwsKmsClient kmsClient =
         cachedAwsKmsClientFactory.createKmsClient(
-            awsCredentialsProvider,
+            awsKmsMetadata.getAuthenticationMode(),
+            awsKmsMetadata.getAwsCredentials(),
             awsKmsMetadata.getRegion(),
             awsKmsMetadata.getEndpointOverride());
 
