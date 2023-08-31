@@ -55,9 +55,13 @@ public class CachedAwsKmsClientFactory {
 
                     final KmsClientBuilder kmsClientBuilder = KmsClient.builder();
                     key.getEndpointOverride().ifPresent(kmsClientBuilder::endpointOverride);
+                    final String region =
+                        key.getAwsAuthenticationMode() == AwsAuthenticationMode.SPECIFIED
+                            ? key.getRegion()
+                            : System.getenv("AWS_REGION");
                     kmsClientBuilder
                         .credentialsProvider(awsCredentialsProvider)
-                        .region(Region.of(key.getRegion()));
+                        .region(Region.of(region));
 
                     return new AwsKmsClient(kmsClientBuilder.build());
                   }

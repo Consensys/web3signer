@@ -208,7 +208,7 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
     startSigner(configBuilder.build());
 
     signer
-        .callApiPublicKeys(KeyType.BLS)
+        .callApiPublicKeys(KeyType.SECP256K1)
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
