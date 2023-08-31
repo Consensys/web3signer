@@ -36,7 +36,9 @@ public class PicoV3WalletBulkloadParameters implements KeystoresParameters {
       description =
           "The path to a directory with the corresponding password files for the wallet files."
               + " Filename must match the corresponding wallet filename but with a .txt extension."
-              + " This cannot be set if --wallets-password-file is also specified.",
+              + " This cannot be set if "
+              + WALLETS_PASSWORD_FILE
+              + " is also specified.",
       paramLabel = DefaultCommandValues.PATH_FORMAT_HELP)
   private Path walletsPasswordsPath;
 
@@ -44,7 +46,9 @@ public class PicoV3WalletBulkloadParameters implements KeystoresParameters {
       names = {WALLETS_PASSWORD_FILE},
       description =
           "The path to a file that contains the password that all wallets use."
-              + " This cannot be set if --wallets-passwords-path is also specified.",
+              + " This cannot be set if "
+              + WALLETS_PASSWORDS_PATH
+              + " is also specified.",
       paramLabel = DefaultCommandValues.PATH_FORMAT_HELP)
   private Path walletsPasswordFile;
 
