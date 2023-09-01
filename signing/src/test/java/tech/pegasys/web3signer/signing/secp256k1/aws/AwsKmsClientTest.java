@@ -115,9 +115,7 @@ public class AwsKmsClientTest {
   void keyPropertiesCanBeMappedUsingCustomMappingFunction() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
-            KeyListEntry::keyId,
-                Collections.emptyList(),
-            Collections.emptyList());
+            KeyListEntry::keyId, Collections.emptyList(), Collections.emptyList());
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testKeyId)).findAny();
@@ -137,7 +135,7 @@ public class AwsKmsClientTest {
                 return kl.keyId();
               }
             },
-                Collections.emptyList(),
+            Collections.emptyList(),
             Collections.emptyList());
 
     final Optional<String> testKeyEntry =
@@ -149,10 +147,7 @@ public class AwsKmsClientTest {
   @Test
   void mapKeyPropertiesUsingTagsKey() {
     final MappedResults<String> result =
-        awsKmsClient.mapKeyList(
-            KeyListEntry::keyId,
-                List.of("tagKey"),
-            Collections.emptyList());
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("tagKey"), Collections.emptyList());
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
@@ -164,10 +159,7 @@ public class AwsKmsClientTest {
   @Test
   void mapKeyPropertiesUsingTagsValue() {
     final MappedResults<String> result =
-        awsKmsClient.mapKeyList(
-            KeyListEntry::keyId,
-                Collections.emptyList(),
-            List.of("tagValue"));
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, Collections.emptyList(), List.of("tagValue"));
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
@@ -179,8 +171,7 @@ public class AwsKmsClientTest {
   @Test
   void mapKeyPropertiesUsingTagsKeyAndValue() {
     final MappedResults<String> result =
-        awsKmsClient.mapKeyList(
-            KeyListEntry::keyId, List.of("tagKey"), List.of("tagValue"));
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("tagKey"), List.of("tagValue"));
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
@@ -193,9 +184,7 @@ public class AwsKmsClientTest {
   void mapKeyPropertiesWhenTagDoesNotExist() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
-            KeyListEntry::keyId,
-                List.of("unknownKey"),
-            List.of("unknownValue"));
+            KeyListEntry::keyId, List.of("unknownKey"), List.of("unknownValue"));
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
