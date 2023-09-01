@@ -116,8 +116,7 @@ public class AwsKmsClientTest {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
             KeyListEntry::keyId,
-            Collections.emptyList(),
-            Collections.emptyList(),
+                Collections.emptyList(),
             Collections.emptyList());
 
     final Optional<String> testKeyEntry =
@@ -138,8 +137,7 @@ public class AwsKmsClientTest {
                 return kl.keyId();
               }
             },
-            Collections.emptyList(),
-            Collections.emptyList(),
+                Collections.emptyList(),
             Collections.emptyList());
 
     final Optional<String> testKeyEntry =
@@ -153,8 +151,7 @@ public class AwsKmsClientTest {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
             KeyListEntry::keyId,
-            Collections.emptyList(),
-            List.of("tagKey"),
+                List.of("tagKey"),
             Collections.emptyList());
 
     final Optional<String> testKeyEntry =
@@ -169,8 +166,7 @@ public class AwsKmsClientTest {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
             KeyListEntry::keyId,
-            Collections.emptyList(),
-            Collections.emptyList(),
+                Collections.emptyList(),
             List.of("tagValue"));
 
     final Optional<String> testKeyEntry =
@@ -184,7 +180,7 @@ public class AwsKmsClientTest {
   void mapKeyPropertiesUsingTagsKeyAndValue() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
-            KeyListEntry::keyId, Collections.emptyList(), List.of("tagKey"), List.of("tagValue"));
+            KeyListEntry::keyId, List.of("tagKey"), List.of("tagValue"));
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
@@ -198,8 +194,7 @@ public class AwsKmsClientTest {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
             KeyListEntry::keyId,
-            Collections.emptyList(),
-            List.of("unknownKey"),
+                List.of("unknownKey"),
             List.of("unknownValue"));
 
     final Optional<String> testKeyEntry =

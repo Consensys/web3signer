@@ -101,7 +101,6 @@ public class AwsKmsClient {
 
   public <R> MappedResults<R> mapKeyList(
       final Function<KeyListEntry, R> mapper,
-      final Collection<String> namePrefixes,
       final Collection<String> tagKeys,
       final Collection<String> tagValues) {
     final Set<R> result = ConcurrentHashMap.newKeySet();
