@@ -37,10 +37,11 @@ import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
 import software.amazon.awssdk.services.kms.model.DescribeKeyRequest;
-import software.amazon.awssdk.services.kms.model.DescribeKeyResponse;
+import software.amazon.awssdk.services.kms.model.DisableKeyRequest;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyRequest;
 import software.amazon.awssdk.services.kms.model.GetPublicKeyResponse;
 import software.amazon.awssdk.services.kms.model.KeyListEntry;
+import software.amazon.awssdk.services.kms.model.KeyMetadata;
 import software.amazon.awssdk.services.kms.model.KeySpec;
 import software.amazon.awssdk.services.kms.model.KeyState;
 import software.amazon.awssdk.services.kms.model.ListResourceTagsRequest;
@@ -116,7 +117,7 @@ public class AwsKmsClient {
                       .filter(
                           keyListEntry ->
                               keyListPredicate(keyListEntry.keyId(), tagKeys, tagValues))
-                      .filter(this::isKeyEnabled)
+                      .filter(this::isEnabledSecp256k1Key)
                       .forEach(
                           keyListEntry -> {
                             try {
@@ -138,10 +139,14 @@ public class AwsKmsClient {
     return MappedResults.newInstance(result, errorCount.intValue());
   }
 
-  private boolean isKeyEnabled(final KeyListEntry keyListEntry) {
-    final DescribeKeyResponse describeKeyResponse =
-        kmsClient.describeKey(DescribeKeyRequest.builder().keyId(keyListEntry.keyId()).build());
-    return describeKeyResponse.keyMetadata().keyState() == KeyState.ENABLED;
+  private boolean isEnabledSecp256k1Key(final KeyListEntry keyListEntry) {
+    final KeyMetadata keyMetadata =
+        kmsClient
+            .describeKey(DescribeKeyRequest.builder().keyId(keyListEntry.keyId()).build())
+            .keyMetadata();
+    final boolean isEnabled = keyMetadata.keyState() == KeyState.ENABLED;
+    final boolean isSecp256k1 = keyMetadata.keySpec() == KeySpec.ECC_SECG_P256_K1;
+    return isEnabled && isSecp256k1;
   }
 
   private boolean keyListPredicate(
@@ -171,5 +176,10 @@ public class AwsKmsClient {
   @VisibleForTesting
   public void scheduleKeyDeletion(ScheduleKeyDeletionRequest deletionRequest) {
     kmsClient.scheduleKeyDeletion(deletionRequest);
+  }
+
+  @VisibleForTesting
+  public void disableKey(final DisableKeyRequest disableKeyRequest) {
+    kmsClient.disableKey(disableKeyRequest);
   }
 }

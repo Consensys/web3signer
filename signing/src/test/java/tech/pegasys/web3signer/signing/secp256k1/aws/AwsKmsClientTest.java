@@ -35,6 +35,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.KmsClientBuilder;
 import software.amazon.awssdk.services.kms.model.KeyListEntry;
+import software.amazon.awssdk.services.kms.model.KeySpec;
 
 @EnabledIfEnvironmentVariable(
     named = "RW_AWS_ACCESS_KEY_ID",
@@ -69,6 +70,8 @@ public class AwsKmsClientTest {
 
   private static String testKeyId;
   private static String testWithTagKeyId;
+  private static String testWithDisabledKeyId;
+  private static String testWithNistSecpKeyId;
   private static AwsKmsUtil awsKmsUtil;
   private static AwsKmsClient awsKmsClient;
 
@@ -82,7 +85,10 @@ public class AwsKmsClientTest {
             AWS_SESSION_TOKEN,
             ENDPOINT_OVERRIDE);
     testKeyId = awsKmsUtil.createKey(Collections.emptyMap());
-    testWithTagKeyId = awsKmsUtil.createKey(Map.of("tagKey", "tagValue"));
+    testWithTagKeyId = awsKmsUtil.createKey(Map.of("name", "tagged"));
+    testWithDisabledKeyId = awsKmsUtil.createKey(Map.of("name", "disabled"));
+    awsKmsUtil.disableKey(testWithDisabledKeyId);
+    testWithNistSecpKeyId = awsKmsUtil.createKey(Map.of("name", "nist"), KeySpec.ECC_NIST_P256);
 
     final AwsCredentialsBuilder awsCredentialsBuilder = AwsCredentials.builder();
     awsCredentialsBuilder
@@ -147,7 +153,7 @@ public class AwsKmsClientTest {
   @Test
   void mapKeyPropertiesUsingTagsKey() {
     final MappedResults<String> result =
-        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("tagKey"), Collections.emptyList());
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), Collections.emptyList());
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
@@ -159,7 +165,7 @@ public class AwsKmsClientTest {
   @Test
   void mapKeyPropertiesUsingTagsValue() {
     final MappedResults<String> result =
-        awsKmsClient.mapKeyList(KeyListEntry::keyId, Collections.emptyList(), List.of("tagValue"));
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, Collections.emptyList(), List.of("tagged"));
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
@@ -171,7 +177,7 @@ public class AwsKmsClientTest {
   @Test
   void mapKeyPropertiesUsingTagsKeyAndValue() {
     final MappedResults<String> result =
-        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("tagKey"), List.of("tagValue"));
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), List.of("tagged"));
 
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
@@ -189,6 +195,28 @@ public class AwsKmsClientTest {
     final Optional<String> testKeyEntry =
         result.getValues().stream().filter(e -> e.equals(testWithTagKeyId)).findAny();
     Assertions.assertThat(testKeyEntry).isEmpty();
+    Assertions.assertThat(result.getErrorCount()).isZero();
+  }
+
+  @Test
+  void mapKeyPropertiesIgnoresDisabledKeys() {
+    final MappedResults<String> result =
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), List.of("disabled"));
+
+    final Optional<String> disableTestKeyEntry =
+        result.getValues().stream().filter(e -> e.equals(testWithDisabledKeyId)).findAny();
+    Assertions.assertThat(disableTestKeyEntry).isEmpty();
+    Assertions.assertThat(result.getErrorCount()).isZero();
+  }
+
+  @Test
+  void mapKeyPropertiesIgnoresNonSecpKeys() {
+    final MappedResults<String> result =
+        awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), List.of("nist"));
+
+    final Optional<String> disableTestKeyEntry =
+        result.getValues().stream().filter(e -> e.equals(testWithNistSecpKeyId)).findAny();
+    Assertions.assertThat(disableTestKeyEntry).isEmpty();
     Assertions.assertThat(result.getErrorCount()).isZero();
   }
 }

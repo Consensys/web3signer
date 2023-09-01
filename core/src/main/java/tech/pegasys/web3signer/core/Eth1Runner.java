@@ -227,42 +227,51 @@ public class Eth1Runner extends Runner {
       final AzureKeyVaultSignerFactory azureSignerFactory,
       final CachedAwsKmsClientFactory cachedAwsKmsClientFactory,
       final AwsKmsSignerFactory awsKmsSignerFactory) {
-    final AzureKeyVaultParameters azureKeyVaultConfig = eth1Config.getAzureKeyVaultConfig();
-    if (azureKeyVaultConfig.isAzureKeyVaultEnabled()) {
-      LOG.info("Bulk loading keys from Azure key vault ... ");
-      final AzureKeyVault azureKeyVault =
-          azureKeyVaultFactory.createAzureKeyVault(
-              azureKeyVaultConfig.getClientId(),
-              azureKeyVaultConfig.getClientSecret(),
-              azureKeyVaultConfig.getKeyVaultName(),
-              azureKeyVaultConfig.getTenantId(),
-              azureKeyVaultConfig.getAuthenticationMode());
-      final SecpAzureBulkLoader secpAzureBulkLoader =
-          new SecpAzureBulkLoader(azureKeyVault, azureSignerFactory);
-      final MappedResults<ArtifactSigner> azureResult =
-          secpAzureBulkLoader.load(azureKeyVaultConfig);
-      LOG.info(
-          "Keys loaded from Azure: [{}], with error count: [{}]",
-          azureResult.getValues().size(),
-          azureResult.getErrorCount());
-      registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
-      return azureResult;
+    if (eth1Config.getAzureKeyVaultConfig().isAzureKeyVaultEnabled()) {
+      return bulkLoadAzureKeys(azureKeyVaultFactory, azureSignerFactory);
     }
     if (eth1Config.getAwsParameters().isEnabled()) {
-      LOG.info("Bulk loading keys from AWS KMS key vault ... ");
-      final SecpAwsBulkLoader secpAwsBulkLoader =
-          new SecpAwsBulkLoader(cachedAwsKmsClientFactory, awsKmsSignerFactory);
-      final MappedResults<ArtifactSigner> awsResult =
-          secpAwsBulkLoader.load(eth1Config.getAwsParameters());
-      LOG.info(
-          "Keys loaded from AWS: [{}], with error count: [{}]",
-          awsResult.getValues().size(),
-          awsResult.getErrorCount());
-      registerSignerLoadingHealthCheck(KEYS_CHECK_AWS_BULK_LOADING, awsResult);
-      return awsResult;
+      return bulkLoadAwsKeys(cachedAwsKmsClientFactory, awsKmsSignerFactory);
     }
-
     return MappedResults.newSetInstance();
+  }
+
+  private MappedResults<ArtifactSigner> bulkLoadAzureKeys(
+      AzureKeyVaultFactory azureKeyVaultFactory, AzureKeyVaultSignerFactory azureSignerFactory) {
+    LOG.info("Bulk loading keys from Azure key vault ... ");
+    final AzureKeyVaultParameters azureKeyVaultConfig = eth1Config.getAzureKeyVaultConfig();
+    final AzureKeyVault azureKeyVault =
+        azureKeyVaultFactory.createAzureKeyVault(
+            azureKeyVaultConfig.getClientId(),
+            azureKeyVaultConfig.getClientSecret(),
+            azureKeyVaultConfig.getKeyVaultName(),
+            azureKeyVaultConfig.getTenantId(),
+            azureKeyVaultConfig.getAuthenticationMode());
+    final SecpAzureBulkLoader secpAzureBulkLoader =
+        new SecpAzureBulkLoader(azureKeyVault, azureSignerFactory);
+    final MappedResults<ArtifactSigner> azureResult = secpAzureBulkLoader.load(azureKeyVaultConfig);
+    LOG.info(
+        "Keys loaded from Azure: [{}], with error count: [{}]",
+        azureResult.getValues().size(),
+        azureResult.getErrorCount());
+    registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
+    return azureResult;
+  }
+
+  private MappedResults<ArtifactSigner> bulkLoadAwsKeys(
+      CachedAwsKmsClientFactory cachedAwsKmsClientFactory,
+      AwsKmsSignerFactory awsKmsSignerFactory) {
+    LOG.info("Bulk loading keys from AWS KMS key vault ... ");
+    final SecpAwsBulkLoader secpAwsBulkLoader =
+        new SecpAwsBulkLoader(cachedAwsKmsClientFactory, awsKmsSignerFactory);
+    final MappedResults<ArtifactSigner> awsResult =
+        secpAwsBulkLoader.load(eth1Config.getAwsParameters());
+    LOG.info(
+        "Keys loaded from AWS: [{}], with error count: [{}]",
+        awsResult.getValues().size(),
+        awsResult.getErrorCount());
+    registerSignerLoadingHealthCheck(KEYS_CHECK_AWS_BULK_LOADING, awsResult);
+    return awsResult;
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {

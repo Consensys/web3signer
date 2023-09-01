@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
+import software.amazon.awssdk.services.kms.model.DisableKeyRequest;
 import software.amazon.awssdk.services.kms.model.KeySpec;
 import software.amazon.awssdk.services.kms.model.KeyUsageType;
 import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
@@ -53,25 +54,35 @@ public class AwsKmsUtil {
             awsEndpointOverride);
   }
 
-  public String createKey(final Map<String, String> tags) {
+  public String createKey(final Map<String, String> tags, final KeySpec keySpec) {
+    final CreateKeyRequest.Builder keyRequestBuilder =
+        CreateKeyRequest.builder()
+            .keySpec(keySpec)
+            .description("Web3Signer Testing Key")
+            .keyUsage(KeyUsageType.SIGN_VERIFY);
     final List<Tag> awsTags =
         tags.entrySet().stream()
             .map(e -> Tag.builder().tagKey(e.getKey()).tagValue(e.getValue()).build())
             .toList();
-    final CreateKeyRequest web3SignerTestingKey =
-        CreateKeyRequest.builder()
-            .keySpec(KeySpec.ECC_SECG_P256_K1)
-            .description("Web3Signer Testing Key")
-            .keyUsage(KeyUsageType.SIGN_VERIFY)
-            .tags(awsTags)
-            .build();
-    return awsKMSClient.createKey(web3SignerTestingKey);
+    if (!awsTags.isEmpty()) {
+      keyRequestBuilder.tags(awsTags);
+    }
+    return awsKMSClient.createKey(keyRequestBuilder.build());
+  }
+
+  public String createKey(final Map<String, String> tags) {
+    return createKey(tags, KeySpec.ECC_SECG_P256_K1);
   }
 
   public void deleteKey(final String keyId) {
     final ScheduleKeyDeletionRequest deletionRequest =
         ScheduleKeyDeletionRequest.builder().keyId(keyId).pendingWindowInDays(7).build();
     awsKMSClient.scheduleKeyDeletion(deletionRequest);
+  }
+
+  public void disableKey(final String keyId) {
+    final DisableKeyRequest disableKeyRequest = DisableKeyRequest.builder().keyId(keyId).build();
+    awsKMSClient.disableKey(disableKeyRequest);
   }
 
   public ECPublicKey publicKey(final String keyId) {
