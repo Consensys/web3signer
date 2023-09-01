@@ -40,6 +40,16 @@ public class MetadataDaoTest {
   }
 
   @Test
+  public void findsExistingGvrAfterHighWatermarkIsSet(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    updateHighWatermark(handle, 1, 2);
+
+    final Optional<Bytes32> existingGvr = metadataDao.findGenesisValidatorsRoot(handle);
+    assertThat(existingGvr).isNotEmpty();
+    assertThat(existingGvr).contains(Bytes32.leftPad(Bytes.of(3)));
+  }
+
+  @Test
   public void returnsEmptyForNonExistingGvrInDb(final Handle handle) {
     assertThat(metadataDao.findGenesisValidatorsRoot(handle)).isEmpty();
   }
@@ -134,6 +144,40 @@ public class MetadataDaoTest {
   }
 
   @Test
+  public void updateHighWatermarkFailsWhenNotGreaterThanMaxLowWatermarkSlot(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    insertLowWatermarks(handle);
+    HighWatermark highWatermark = createHighWatermark(13, 999);
+    assertThatThrownBy(() -> metadataDao.updateHighWatermark(handle, highWatermark))
+        .hasMessageContaining(
+            "high_watermark_slot must be greater than max slot in low_watermarks table");
+  }
+
+  @Test
+  public void updateHighWatermarkFailsWhenNotGreaterThanMaxLowWatermarkTargetEpoch(
+      final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    insertLowWatermarks(handle);
+    HighWatermark highWatermark = createHighWatermark(999, 12);
+
+    assertThatThrownBy(() -> metadataDao.updateHighWatermark(handle, highWatermark))
+        .hasMessageContaining(
+            "high_watermark_epoch must be greater than max epoch in low_watermarks table");
+  }
+
+  @Test
+  public void updateHighWatermarkFailsWhenNotGreaterThanMaxLowWatermarkSourceEpoch(
+      final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    insertLowWatermarks(handle);
+    HighWatermark highWatermark = createHighWatermark(999, 11);
+
+    assertThatThrownBy(() -> metadataDao.updateHighWatermark(handle, highWatermark))
+        .hasMessageContaining(
+            "high_watermark_epoch must be greater than max epoch in low_watermarks table");
+  }
+
+  @Test
   public void deletesHighWatermark(final Handle handle) {
     insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
     updateHighWatermark(handle, 2, 2);
@@ -151,6 +195,23 @@ public class MetadataDaoTest {
         genesisValidatorsRoot);
   }
 
+  private void insertLowWatermarks(Handle handle) {
+    handle.execute("INSERT INTO validators (public_key, enabled) VALUES (?, ?)", Bytes.of(1), true);
+    handle.execute("INSERT INTO validators (public_key, enabled) VALUES (?, ?)", Bytes.of(2), true);
+    handle.execute(
+        "INSERT INTO low_watermarks (validator_id, slot, target_epoch, source_epoch) VALUES (?, ?, ?, ?)",
+        1,
+        3,
+        2,
+        1);
+    handle.execute(
+        "INSERT INTO low_watermarks (validator_id, slot, target_epoch, source_epoch) VALUES (?, ?, ?, ?)",
+        2,
+        13,
+        12,
+        11);
+  }
+
   private void updateHighWatermark(final Handle handle, final int epoch, final int slot) {
     handle
         .createUpdate("UPDATE metadata set high_watermark_epoch=:epoch, high_watermark_slot=:slot")
@@ -159,7 +220,7 @@ public class MetadataDaoTest {
         .execute();
   }
 
-  private HighWatermark createHighWatermark(final int epoch, final int slot) {
-    return new HighWatermark(UInt64.valueOf(epoch), UInt64.valueOf(slot));
+  private HighWatermark createHighWatermark(final int slot, final int epoch) {
+    return new HighWatermark(UInt64.valueOf(slot), UInt64.valueOf(epoch));
   }
 }
