@@ -16,8 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.web3j.crypto.WalletUtils.generateWalletFile;
-import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_V3_WALLET_BULK_LOADING;
-import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckDataPropertyValue;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_V3_KEYSTORES_BULK_LOADING;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealtcheckKeysLoaded;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckErrorCount;
 
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultKeystoresParameters;
@@ -48,14 +49,14 @@ import org.web3j.crypto.CipherException;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Keys;
 
-public class SecpWalletBulkloadAcceptanceTest extends AcceptanceTestBase {
-  @TempDir private static Path walletsDir;
-  @TempDir private static Path walletsPasswordDir;
+public class SecpV3KeystoresBulkLoadAcceptanceTest extends AcceptanceTestBase {
+  @TempDir private static Path keystoresDir;
+  @TempDir private static Path keystoresPasswordDir;
 
   private static List<String> publicKeys;
 
   @BeforeAll
-  static void initV3Wallets() throws IOException, GeneralSecurityException, CipherException {
+  static void initV3Keystores() throws IOException, GeneralSecurityException, CipherException {
     publicKeys = new ArrayList<>();
     for (int i = 0; i < 4; i++) {
       final ECKeyPair ecKeyPair = Keys.createEcKeyPair();
@@ -64,27 +65,29 @@ public class SecpWalletBulkloadAcceptanceTest extends AcceptanceTestBase {
           IdentifierUtils.normaliseIdentifier(EthPublicKeyUtils.toHexString(ecPublicKey));
       publicKeys.add(publicKeyHex);
 
-      // generate v3 wallet
+      // generate v3 keystores
       final boolean useFullScrypt = false;
       final String fileName =
-          generateWalletFile("test123", ecKeyPair, walletsDir.toFile(), useFullScrypt);
+          generateWalletFile("test123", ecKeyPair, keystoresDir.toFile(), useFullScrypt);
 
       // write corresponding password
       final Path passwordFile =
-          walletsPasswordDir.resolve(fileName.substring(0, fileName.lastIndexOf(".json")) + ".txt");
+          keystoresPasswordDir.resolve(
+              fileName.substring(0, fileName.lastIndexOf(".json")) + ".txt");
       Files.writeString(passwordFile, "test123");
     }
   }
 
-  @ParameterizedTest(name = "{index} - Wallet bulk loading {0}. Cli options via config file: {1}")
+  @ParameterizedTest(
+      name = "{index} - v3 Keystores bulk loading {0}. Cli options via config file: {1}")
   @MethodSource("buildWalletParameters")
-  void walletFilesAreBulkloaded(
-      final KeystoresParameters walletBulkloadParameters, boolean useConfigFile) throws Exception {
+  void v3KeystoresAreBulkLoaded(
+      final KeystoresParameters v3KeystoresParameters, boolean useConfigFile) {
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
             .withMode("eth1")
-            .withV3KeystoresBulkloadParameters(walletBulkloadParameters);
+            .withV3KeystoresBulkloadParameters(v3KeystoresParameters);
 
     startSigner(configBuilder.build());
 
@@ -103,21 +106,23 @@ public class SecpWalletBulkloadAcceptanceTest extends AcceptanceTestBase {
         .body("status", equalTo("UP"));
 
     final String jsonBody = healthcheckResponse.body().asString();
-    final int keysLoaded =
-        getHealthcheckDataPropertyValue(jsonBody, KEYS_CHECK_V3_WALLET_BULK_LOADING, "keys-loaded");
+    final int keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_V3_KEYSTORES_BULK_LOADING);
+    final int errorCount = getHealthcheckErrorCount(jsonBody, KEYS_CHECK_V3_KEYSTORES_BULK_LOADING);
+
     assertThat(keysLoaded).isEqualTo(publicKeys.size());
+    assertThat(errorCount).isZero();
   }
 
   private static Stream<Arguments> buildWalletParameters() {
     // build wallet bulkloading parameters, one with password dir, other with password file
     final KeystoresParameters withPasswordDir =
-        new DefaultKeystoresParameters(walletsDir, walletsPasswordDir, null);
+        new DefaultKeystoresParameters(keystoresDir, keystoresPasswordDir, null);
 
-    try (final Stream<Path> passwordFiles = Files.list(walletsPasswordDir)) {
+    try (final Stream<Path> passwordFiles = Files.list(keystoresPasswordDir)) {
       // pick any password file as all files are using same password
       final Path passwordFile = passwordFiles.findAny().orElseThrow();
       final KeystoresParameters withPasswordFile =
-          new DefaultKeystoresParameters(walletsDir, null, passwordFile);
+          new DefaultKeystoresParameters(keystoresDir, null, passwordFile);
 
       return Stream.of(
           Arguments.of(withPasswordDir, true),

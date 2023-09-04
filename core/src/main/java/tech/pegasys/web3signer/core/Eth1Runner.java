@@ -13,7 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
-import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_V3_WALLET_BULK_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_V3_KEYSTORES_BULK_LOADING;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 import tech.pegasys.web3signer.core.config.BaseConfig;
@@ -265,7 +265,7 @@ public class Eth1Runner extends Runner {
         "Keys loaded from v3 keystores files: [{}], with error count: [{}]",
         walletResults.getValues().size(),
         walletResults.getErrorCount());
-    registerSignerLoadingHealthCheck(KEYS_CHECK_V3_WALLET_BULK_LOADING, walletResults);
+    registerSignerLoadingHealthCheck(KEYS_CHECK_V3_KEYSTORES_BULK_LOADING, walletResults);
     return walletResults;
   }
 
