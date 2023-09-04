@@ -118,7 +118,7 @@ public class AwsKmsClientTest {
   }
 
   @Test
-  void keyPropertiesCanBeMappedUsingCustomMappingFunction() {
+  void keyListCanBeMappedUsingCustomMappingFunction() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
             KeyListEntry::keyId, Collections.emptyList(), Collections.emptyList());
@@ -131,7 +131,7 @@ public class AwsKmsClientTest {
   }
 
   @Test
-  void mapKeyPropertiesThrowsAwayObjectsWhichFailMapper() {
+  void mapKeyListThrowsAwayObjectsWhichFailMapper() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
             kl -> {
@@ -151,7 +151,7 @@ public class AwsKmsClientTest {
   }
 
   @Test
-  void mapKeyPropertiesUsingTagsKey() {
+  void mapKeyListUsingTagsKey() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), Collections.emptyList());
 
@@ -163,7 +163,7 @@ public class AwsKmsClientTest {
   }
 
   @Test
-  void mapKeyPropertiesUsingTagsValue() {
+  void mapKeyListUsingTagsValue() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(KeyListEntry::keyId, Collections.emptyList(), List.of("tagged"));
 
@@ -175,7 +175,7 @@ public class AwsKmsClientTest {
   }
 
   @Test
-  void mapKeyPropertiesUsingTagsKeyAndValue() {
+  void mapKeyListUsingTagsKeyAndValue() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), List.of("tagged"));
 
@@ -187,7 +187,7 @@ public class AwsKmsClientTest {
   }
 
   @Test
-  void mapKeyPropertiesWhenTagDoesNotExist() {
+  void mapKeyListWhenTagDoesNotExist() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(
             KeyListEntry::keyId, List.of("unknownKey"), List.of("unknownValue"));
@@ -199,7 +199,7 @@ public class AwsKmsClientTest {
   }
 
   @Test
-  void mapKeyPropertiesIgnoresDisabledKeys() {
+  void mapKeyListIgnoresDisabledKeys() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), List.of("disabled"));
 
@@ -210,7 +210,7 @@ public class AwsKmsClientTest {
   }
 
   @Test
-  void mapKeyPropertiesIgnoresNonSecpKeys() {
+  void mapKeyListIgnoresNonSecpKeys() {
     final MappedResults<String> result =
         awsKmsClient.mapKeyList(KeyListEntry::keyId, List.of("name"), List.of("nist"));
 

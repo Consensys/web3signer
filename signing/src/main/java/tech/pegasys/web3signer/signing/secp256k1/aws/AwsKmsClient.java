@@ -144,7 +144,7 @@ public class AwsKmsClient {
       final AtomicInteger errorCount) {
     try {
       return isEnabledSecp256k1Key(keyListEntry)
-          && keyListPredicate(keyListEntry.keyId(), tagKeys, tagValues);
+          && keyMatchesTags(keyListEntry.keyId(), tagKeys, tagValues);
     } catch (Exception e) {
       LOG.error("Unexpected error during Aws mapKeyList", e);
       errorCount.incrementAndGet();
@@ -162,7 +162,7 @@ public class AwsKmsClient {
     return isEnabled && isSecp256k1;
   }
 
-  private boolean keyListPredicate(
+  private boolean keyMatchesTags(
       final String keyId, final Collection<String> tagKeys, final Collection<String> tagValues) {
     if (tagKeys.isEmpty() && tagValues.isEmpty())
       return true; // we don't want to filter if user-supplied tags map is empty

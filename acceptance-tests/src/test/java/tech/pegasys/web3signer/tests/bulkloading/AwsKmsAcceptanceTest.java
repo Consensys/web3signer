@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 ConsenSys AG.
+ * Copyright 2023 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -179,10 +179,12 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
   private static int getAwsBulkLoadingData(String healthCheckJsonBody, String dataKey) {
     final JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
     return jsonObject.getJsonArray("checks").stream()
-        .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
-        .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
-        .filter(o -> "aws-bulk-loading".equals(((JsonObject) o).getString("id")))
-        .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
+        .map(JsonObject.class::cast)
+        .filter(check -> "keys-check".equals(check.getString("id")))
+        .flatMap(check -> check.getJsonArray("checks").stream())
+        .map(JsonObject.class::cast)
+        .filter(check -> "aws-bulk-loading".equals(check.getString("id")))
+        .mapToInt(check -> check.getJsonObject("data").getInteger(dataKey))
         .findFirst()
         .orElse(-1);
   }
