@@ -80,7 +80,7 @@ public class SignerConfigurationBuilder {
   private ChainIdProvider chainIdProvider = new ConfigurationChainId(DEFAULT_CHAIN_ID);
   private String trustedSetup;
 
-  private KeystoresParameters walletBulkloadParameters;
+  private KeystoresParameters v3KeystoresBulkloadParameters;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -311,9 +311,9 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withWalletBulkloadParameters(
-      final KeystoresParameters walletBulkloadParameters) {
-    this.walletBulkloadParameters = walletBulkloadParameters;
+  public SignerConfigurationBuilder withV3KeystoresBulkloadParameters(
+      final KeystoresParameters v3KeystoresBulkloadParameters) {
+    this.v3KeystoresBulkloadParameters = v3KeystoresBulkloadParameters;
     return this;
   }
 
@@ -365,6 +365,6 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(downstreamTlsOptions),
         chainIdProvider,
         Optional.ofNullable(trustedSetup),
-        Optional.ofNullable(walletBulkloadParameters));
+        Optional.ofNullable(v3KeystoresBulkloadParameters));
   }
 }

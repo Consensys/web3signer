@@ -16,13 +16,13 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.HOST_FORM
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.LONG_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PATH_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PORT_FORMAT_HELP;
-import static tech.pegasys.web3signer.commandline.config.PicoV3WalletBulkloadParameters.WALLETS_PASSWORDS_PATH;
-import static tech.pegasys.web3signer.commandline.config.PicoV3WalletBulkloadParameters.WALLETS_PASSWORD_FILE;
 import static tech.pegasys.web3signer.commandline.util.RequiredOptionsUtil.checkIfRequiredOptionsAreInitialized;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORDS_PATH;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
 
 import tech.pegasys.web3signer.commandline.PicoCliEth1AzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.annotations.RequiredOption;
-import tech.pegasys.web3signer.commandline.config.PicoV3WalletBulkloadParameters;
+import tech.pegasys.web3signer.commandline.config.PicoV3KeystoresBulkloadParameters;
 import tech.pegasys.web3signer.commandline.config.client.PicoCliClientTlsOptions;
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.Runner;
@@ -150,7 +150,7 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
 
   @CommandLine.Mixin private PicoCliEth1AzureKeyVaultParameters azureKeyVaultParameters;
 
-  @CommandLine.Mixin private PicoV3WalletBulkloadParameters picoV3WalletBulkloadParameters;
+  @CommandLine.Mixin private PicoV3KeystoresBulkloadParameters picoV3KeystoresBulkloadParameters;
 
   @Override
   public Runner createRunner() {
@@ -165,22 +165,23 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
   @Override
   protected void validateArgs() {
     checkIfRequiredOptionsAreInitialized(this);
-    validateWalletBulkloadingParameters();
+    validateV3KeystoresBulkloadingParameters();
   }
 
-  private void validateWalletBulkloadingParameters() {
-    if (!picoV3WalletBulkloadParameters.isEnabled()) {
+  private void validateV3KeystoresBulkloadingParameters() {
+    if (!picoV3KeystoresBulkloadParameters.isEnabled()) {
       return;
     }
 
     final boolean validOptionSelected =
-        picoV3WalletBulkloadParameters.hasKeystoresPasswordFile()
-            ^ picoV3WalletBulkloadParameters.hasKeystoresPasswordsPath();
+        picoV3KeystoresBulkloadParameters.hasKeystoresPasswordFile()
+            ^ picoV3KeystoresBulkloadParameters.hasKeystoresPasswordsPath();
     if (!validOptionSelected) {
       throw new CommandLine.ParameterException(
           spec.commandLine(),
           String.format(
-              "Either %s or %s must be specified", WALLETS_PASSWORD_FILE, WALLETS_PASSWORDS_PATH));
+              "Either %s or %s must be specified",
+              KEYSTORES_PASSWORD_FILE, KEYSTORES_PASSWORDS_PATH));
     }
   }
 
@@ -260,6 +261,6 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
 
   @Override
   public KeystoresParameters getV3WalletBLParameters() {
-    return picoV3WalletBulkloadParameters;
+    return picoV3KeystoresBulkloadParameters;
   }
 }

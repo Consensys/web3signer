@@ -21,9 +21,9 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
-import static tech.pegasys.web3signer.commandline.config.PicoV3WalletBulkloadParameters.WALLETS_PASSWORDS_PATH;
-import static tech.pegasys.web3signer.commandline.config.PicoV3WalletBulkloadParameters.WALLETS_PASSWORD_FILE;
-import static tech.pegasys.web3signer.commandline.config.PicoV3WalletBulkloadParameters.WALLETS_PATH;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORDS_PATH;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PATH;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -157,7 +157,9 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
           String.format(YAML_NUMERIC_FMT, "eth1.chain-id", signerConfig.getChainIdProvider().id()));
       yamlConfig.append(createDownstreamTlsArgs());
 
-      signerConfig.getWalletBulkloadParameters().ifPresent(setWalletBulkloadParameters(yamlConfig));
+      signerConfig
+          .getV3KeystoresBulkloadParameters()
+          .ifPresent(setV3KeystoresBulkloadParameters(yamlConfig));
     }
 
     signerConfig
@@ -181,27 +183,27 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     return params;
   }
 
-  private Consumer<? super KeystoresParameters> setWalletBulkloadParameters(
+  private Consumer<? super KeystoresParameters> setV3KeystoresBulkloadParameters(
       final StringBuilder yamlConfig) {
     return keystoresParameters -> {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
-              WALLETS_PATH.replace("--", "eth1."),
+              KEYSTORES_PATH.replace("--", "eth1."),
               keystoresParameters.getKeystoresPath().toAbsolutePath()));
 
       if (keystoresParameters.getKeystoresPasswordsPath() != null) {
         yamlConfig.append(
             String.format(
                 YAML_STRING_FMT,
-                WALLETS_PASSWORDS_PATH.replace("--", "eth1."),
+                KEYSTORES_PASSWORDS_PATH.replace("--", "eth1."),
                 keystoresParameters.getKeystoresPasswordsPath().toAbsolutePath()));
       }
       if (keystoresParameters.getKeystoresPasswordFile() != null) {
         yamlConfig.append(
             String.format(
                 YAML_STRING_FMT,
-                WALLETS_PASSWORD_FILE.replace("--", "eth1."),
+                KEYSTORES_PASSWORD_FILE.replace("--", "eth1."),
                 keystoresParameters.getKeystoresPasswordFile().toAbsolutePath()));
       }
     };

@@ -84,7 +84,7 @@ public class SecpWalletBulkloadAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
             .withMode("eth1")
-            .withWalletBulkloadParameters(walletBulkloadParameters);
+            .withV3KeystoresBulkloadParameters(walletBulkloadParameters);
 
     startSigner(configBuilder.build());
 
