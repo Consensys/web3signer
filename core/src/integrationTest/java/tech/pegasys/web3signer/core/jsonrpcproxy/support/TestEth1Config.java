@@ -105,7 +105,7 @@ public class TestEth1Config implements Eth1Config {
   }
 
   @Override
-  public KeystoresParameters getV3WalletBLParameters() {
+  public KeystoresParameters getV3KeystoresBulkLoadParameters() {
     return new KeystoresParameters() {
       @Override
       public Path getKeystoresPath() {

@@ -46,5 +46,5 @@ public interface Eth1Config {
 
   long getAwsKmsClientCacheSize();
 
-  KeystoresParameters getV3WalletBLParameters();
+  KeystoresParameters getV3KeystoresBulkLoadParameters();
 }

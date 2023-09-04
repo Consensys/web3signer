@@ -249,7 +249,7 @@ public class Eth1Runner extends Runner {
   }
 
   private MappedResults<ArtifactSigner> bulkloadV3Keystores() {
-    final KeystoresParameters v3WalletBLParams = eth1Config.getV3WalletBLParameters();
+    final KeystoresParameters v3WalletBLParams = eth1Config.getV3KeystoresBulkLoadParameters();
     if (!v3WalletBLParams.isEnabled()) {
       return MappedResults.newInstance(Collections.emptyList(), 0);
     }

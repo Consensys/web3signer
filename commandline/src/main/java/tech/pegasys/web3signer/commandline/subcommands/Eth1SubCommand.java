@@ -260,7 +260,7 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
   }
 
   @Override
-  public KeystoresParameters getV3WalletBLParameters() {
+  public KeystoresParameters getV3KeystoresBulkLoadParameters() {
     return picoV3KeystoresBulkloadParameters;
   }
 }
