@@ -114,10 +114,10 @@ public class AwsKmsClient {
           .forEachRemaining(
               listKeysResponse ->
                   listKeysResponse.keys().parallelStream()
+                      .filter(this::isEnabledSecp256k1Key)
                       .filter(
                           keyListEntry ->
                               keyListPredicate(keyListEntry.keyId(), tagKeys, tagValues))
-                      .filter(this::isEnabledSecp256k1Key)
                       .forEach(
                           keyListEntry -> {
                             try {
