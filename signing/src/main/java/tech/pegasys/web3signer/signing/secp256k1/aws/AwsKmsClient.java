@@ -114,10 +114,8 @@ public class AwsKmsClient {
           .forEachRemaining(
               listKeysResponse ->
                   listKeysResponse.keys().parallelStream()
-                      .filter(this::isEnabledSecp256k1Key)
                       .filter(
-                          keyListEntry ->
-                              keyListPredicate(keyListEntry.keyId(), tagKeys, tagValues))
+                          keyListEntry -> filterKeys(keyListEntry, tagKeys, tagValues, errorCount))
                       .forEach(
                           keyListEntry -> {
                             try {
@@ -137,6 +135,21 @@ public class AwsKmsClient {
     }
 
     return MappedResults.newInstance(result, errorCount.intValue());
+  }
+
+  private boolean filterKeys(
+      final KeyListEntry keyListEntry,
+      final Collection<String> tagKeys,
+      final Collection<String> tagValues,
+      final AtomicInteger errorCount) {
+    try {
+      return isEnabledSecp256k1Key(keyListEntry)
+          && keyListPredicate(keyListEntry.keyId(), tagKeys, tagValues);
+    } catch (Exception e) {
+      LOG.error("Unexpected error during Aws mapKeyList", e);
+      errorCount.incrementAndGet();
+      return false;
+    }
   }
 
   private boolean isEnabledSecp256k1Key(final KeyListEntry keyListEntry) {
