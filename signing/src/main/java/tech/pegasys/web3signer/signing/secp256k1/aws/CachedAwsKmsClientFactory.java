@@ -26,6 +26,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.services.kms.KmsClient;
 import software.amazon.awssdk.services.kms.KmsClientBuilder;
 
@@ -55,13 +56,11 @@ public class CachedAwsKmsClientFactory {
 
                     final KmsClientBuilder kmsClientBuilder = KmsClient.builder();
                     key.getEndpointOverride().ifPresent(kmsClientBuilder::endpointOverride);
-                    final String region =
+                    final Region region =
                         key.getAwsAuthenticationMode() == AwsAuthenticationMode.SPECIFIED
-                            ? key.getRegion()
-                            : System.getenv("AWS_REGION");
-                    kmsClientBuilder
-                        .credentialsProvider(awsCredentialsProvider)
-                        .region(Region.of(region));
+                            ? Region.of(key.getRegion())
+                            : DefaultAwsRegionProviderChain.builder().build().getRegion();
+                    kmsClientBuilder.credentialsProvider(awsCredentialsProvider).region(region);
 
                     return new AwsKmsClient(kmsClientBuilder.build());
                   }
