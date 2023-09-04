@@ -113,9 +113,9 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
     assertThat(artifacts.getSignedAttestations()).hasSize(1);
     final SignedAttestation attestation = artifacts.getSignedAttestations().get(0);
     assertThat(attestation.getSourceEpoch().toLong())
-        .isEqualTo(request.getAttestation().source.epoch.longValue());
+        .isEqualTo(request.attestation().source.epoch.longValue());
     assertThat(attestation.getTargetEpoch().toLong())
-        .isEqualTo(request.getAttestation().target.epoch.longValue());
+        .isEqualTo(request.attestation().target.epoch.longValue());
     assertThat(attestation.getSigningRoot()).isNotNull();
   }
 }

@@ -154,7 +154,7 @@ public class KeyLoadAndSignAcceptanceTest extends SigningAcceptanceTestBase {
         new JsonObject(ETH_2_INTERFACE_OBJECT_MAPPER.writeValueAsString(blockRequest));
     final String body = jsonObject.put("unknownField", "someValue").toString();
     final String expectedSignature =
-        BLS.sign(BLS_KEY_PAIR.getSecretKey(), blockRequest.getSigningRoot()).toString();
+        BLS.sign(BLS_KEY_PAIR.getSecretKey(), blockRequest.signingRoot()).toString();
 
     given()
         .baseUri(signer.getUrl())
