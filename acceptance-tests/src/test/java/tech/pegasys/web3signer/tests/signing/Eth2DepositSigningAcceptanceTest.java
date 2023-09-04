@@ -24,6 +24,7 @@ import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
+import tech.pegasys.web3signer.dsl.utils.Eth2SigningRequestBodyBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 
 import java.io.IOException;
@@ -102,22 +103,10 @@ public class Eth2DepositSigningAcceptanceTest extends SigningAcceptanceTestBase 
             UInt64.valueOf(depositData.get("amount")),
             Bytes4.fromHexString(depositData.get("fork_version")));
     final Eth2SigningRequestBody requestBody =
-        new Eth2SigningRequestBody(
-            ArtifactType.DEPOSIT,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            depositMessage,
-            null,
-            null,
-            null,
-            null);
+        Eth2SigningRequestBodyBuilder.anEth2SigningRequestBody()
+            .withType(ArtifactType.DEPOSIT)
+            .withDeposit(depositMessage)
+            .build();
 
     final Response response = signer.eth2Sign(publicKey, requestBody, TEXT);
 

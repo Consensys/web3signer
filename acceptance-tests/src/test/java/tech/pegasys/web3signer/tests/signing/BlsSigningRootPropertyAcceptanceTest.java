@@ -83,8 +83,7 @@ public class BlsSigningRootPropertyAcceptanceTest extends SigningAcceptanceTestB
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), modifiedJsonBody, acceptMediaType);
     final Bytes signature =
         verifyAndGetSignatureResponse(response, expectedContentType(acceptMediaType));
-    final BLSSignature expectedSignature =
-        BLS.sign(KEY_PAIR.getSecretKey(), request.getSigningRoot());
+    final BLSSignature expectedSignature = BLS.sign(KEY_PAIR.getSecretKey(), request.signingRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 

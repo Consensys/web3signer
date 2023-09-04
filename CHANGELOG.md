@@ -3,9 +3,26 @@
 ## Next Release
 
 ### Breaking Changes
+- Eth2 Signing request body: deprecating `signingRoot` in favor of `signing_root` property. `signingRoot` will be removed in a future release.
+
+### Features Added
+- Signing support for BlobSidecar and BlindedBlobSidecar in Deneb fork.
+- Add `--azure-response-timeout` to allow request response timeout to be configurable, the field `timeout` is also accepted in the Azure metadata file. [#888](https://github.com/Consensys/web3signer/pull/888)
+
+### Bugs fixed
+- Upcheck was using application/json accept headers instead text/plain accept headers
+
+## 23.8.1
+
+### Bugs fixed
+- Update grpc library to version 1.57.2 to fix CVE-2023-33953
+
+## 23.8.0
+
+### Breaking Changes
 - Use Java 17 for build and runtime. Remove Java 11 variant of docker image. zip/tar.gz distributions will require Java 17 or above to run Web3Signer.
 - Eth2 Azure command line option --azure-secrets-tags is now deprecated and is replaced with --azure-tags. The --azure-secrets-tags option will be removed in a future release.
-- Eth2 Signing request body: deprecating `signingRoot` in favor of `signing_root` property. `signingRoot` will be removed in a future release.
+
 - 
 ### Features Added
 - Add support for SECP256K1 remote signing using AWS Key Management Service. [#501](https://github.com/Consensys/web3signer/issues/501)

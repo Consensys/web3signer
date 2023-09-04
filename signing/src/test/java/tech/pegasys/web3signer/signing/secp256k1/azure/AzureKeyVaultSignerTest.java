@@ -43,6 +43,7 @@ public class AzureKeyVaultSignerTest {
 
   private static final String KEY_NAME = "TestKey2"; // uses curve name P-256K
   private static final String UNSUPPORTED_CURVE_KEY_NAME = "TestKeyP521";
+  private static final long AZURE_DEFAULT_TIMEOUT = 60;
 
   @BeforeAll
   static void preChecks() {
@@ -59,7 +60,12 @@ public class AzureKeyVaultSignerTest {
   void azureSignerCanSign() throws SignatureException {
     final AzureConfig config =
         new AzureConfig(
-            AZURE_KEY_VAULT_NAME, KEY_NAME, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID);
+            AZURE_KEY_VAULT_NAME,
+            KEY_NAME,
+            AZURE_CLIENT_ID,
+            AZURE_CLIENT_SECRET,
+            AZURE_TENANT_ID,
+            AZURE_DEFAULT_TIMEOUT);
 
     final Signer azureNonHashedDataSigner =
         new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory(), new AzureHttpClientFactory())
@@ -92,7 +98,8 @@ public class AzureKeyVaultSignerTest {
             "",
             AZURE_CLIENT_ID,
             AZURE_CLIENT_SECRET,
-            AZURE_TENANT_ID);
+            AZURE_TENANT_ID,
+            AZURE_DEFAULT_TIMEOUT);
 
     final AzureKeyVaultSignerFactory factory =
         new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory(), new AzureHttpClientFactory());
