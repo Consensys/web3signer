@@ -62,6 +62,7 @@ import tech.pegasys.web3signer.signing.secp256k1.azure.AzureHttpClientFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -241,25 +242,31 @@ public class Eth1Runner extends Runner {
       results = MappedResults.merge(results, azureResult);
     }
 
-    // wallet bulk loading
-    final KeystoresParameters v3WalletBLParams = eth1Config.getV3WalletBLParameters();
-    if (v3WalletBLParams.isEnabled()) {
-      LOG.info("Bulk loading v3 wallet files ... ");
-      final MappedResults<ArtifactSigner> walletResults =
-          SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(
-              v3WalletBLParams.getKeystoresPath(),
-              v3WalletBLParams.hasKeystoresPasswordFile()
-                  ? v3WalletBLParams.getKeystoresPasswordFile()
-                  : v3WalletBLParams.getKeystoresPasswordsPath());
-      LOG.info(
-          "Keys loaded from wallet files: [{}], with error count: [{}]",
-          walletResults.getValues().size(),
-          walletResults.getErrorCount());
-      registerSignerLoadingHealthCheck(KEYS_CHECK_V3_WALLET_BULK_LOADING, walletResults);
-      results = MappedResults.merge(results, walletResults);
-    }
+    // v3 bulk loading
+    results = MappedResults.merge(results, bulkloadV3Keystores());
 
     return results;
+  }
+
+  private MappedResults<ArtifactSigner> bulkloadV3Keystores() {
+    final KeystoresParameters v3WalletBLParams = eth1Config.getV3WalletBLParameters();
+    if (!v3WalletBLParams.isEnabled()) {
+      return MappedResults.newInstance(Collections.emptyList(), 0);
+    }
+
+    LOG.info("Bulk loading v3 keystore files ... ");
+    final MappedResults<ArtifactSigner> walletResults =
+        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(
+            v3WalletBLParams.getKeystoresPath(),
+            v3WalletBLParams.hasKeystoresPasswordFile()
+                ? v3WalletBLParams.getKeystoresPasswordFile()
+                : v3WalletBLParams.getKeystoresPasswordsPath());
+    LOG.info(
+        "Keys loaded from v3 keystores files: [{}], with error count: [{}]",
+        walletResults.getValues().size(),
+        walletResults.getErrorCount());
+    registerSignerLoadingHealthCheck(KEYS_CHECK_V3_WALLET_BULK_LOADING, walletResults);
+    return walletResults;
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {
