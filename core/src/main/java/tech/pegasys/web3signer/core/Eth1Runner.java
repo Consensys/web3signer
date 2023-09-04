@@ -45,7 +45,7 @@ import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.bulkloading.SecpAzureBulkLoader;
-import tech.pegasys.web3signer.signing.bulkloading.SecpWalletBulkloader;
+import tech.pegasys.web3signer.signing.bulkloading.SecpV3KeystoresBulkLoader;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
@@ -256,7 +256,7 @@ public class Eth1Runner extends Runner {
 
     LOG.info("Bulk loading v3 keystore files ... ");
     final MappedResults<ArtifactSigner> walletResults =
-        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
             v3WalletBLParams.getKeystoresPath(),
             v3WalletBLParams.hasKeystoresPasswordFile()
                 ? v3WalletBLParams.getKeystoresPasswordFile()

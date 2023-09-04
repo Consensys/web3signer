@@ -27,66 +27,67 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.web3j.crypto.WalletUtils;
 
-public class SecpWalletBulkLoaderTest {
+public class SecpV3KeystoresBulkLoaderTest {
 
-  @TempDir Path walletDir;
+  @TempDir Path keystoreDir;
   @TempDir Path passwordDir;
 
   @BeforeEach
-  void initWalletAndPasswordFiles() throws Exception {
+  void initV3KeystoresAndPasswordFiles() throws Exception {
     for (int i = 0; i < 4; i++) {
-      final String fileName = WalletUtils.generateLightNewWalletFile("test123", walletDir.toFile());
+      final String fileName =
+          WalletUtils.generateLightNewWalletFile("test123", keystoreDir.toFile());
 
       final Path passwordFile =
           passwordDir.resolve(fileName.substring(0, fileName.lastIndexOf(".json")) + ".txt");
       Files.writeString(passwordFile, "test123");
 
       // write files in wallet dir that will be ignored by bulk loading logic
-      Files.writeString(walletDir.resolve(i + ".txt"), "ignored");
+      Files.writeString(keystoreDir.resolve(i + ".txt"), "ignored");
     }
   }
 
   @Test
-  void loadSecpWalletWithPasswordFilesFromDir() {
+  void loadSecpV3KeystoresWithPasswordFilesFromDir() {
     final MappedResults<ArtifactSigner> results =
-        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(walletDir, passwordDir);
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(keystoreDir, passwordDir);
 
     assertThat(results.getValues()).hasSize(4);
     assertThat(results.getErrorCount()).isZero();
   }
 
   @Test
-  void loadSecpWalletWithPasswordFile() throws IOException {
+  void loadSecpV3KeystoresWithPasswordFile() throws IOException {
     final Path passwordFile;
     try (Stream<Path> passwordFiles = Files.list(passwordDir)) {
       passwordFile = passwordFiles.findAny().orElseThrow();
     }
 
     final MappedResults<ArtifactSigner> results =
-        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(walletDir, passwordFile);
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(keystoreDir, passwordFile);
 
     assertThat(results.getValues()).hasSize(4);
     assertThat(results.getErrorCount()).isZero();
   }
 
   @Test
-  void emptyResultsWhenWalletDirIsEmpty(@TempDir Path emptyWalletDir) throws IOException {
+  void emptyResultsWhenKeystoresDirIsEmpty(@TempDir Path emptyDir) throws IOException {
     final Path passwordFile;
     try (Stream<Path> passwordFiles = Files.list(passwordDir)) {
       passwordFile = passwordFiles.findAny().orElseThrow();
     }
 
     final MappedResults<ArtifactSigner> results =
-        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(emptyWalletDir, passwordFile);
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(emptyDir, passwordFile);
 
     assertThat(results.getValues()).isEmpty();
     assertThat(results.getErrorCount()).isZero();
   }
 
   @Test
-  void errorResultsWhenWalletFileIsInvalid() throws IOException {
+  void errorResultsWhenV3KeystoreFileIsInvalid() throws IOException {
     for (int i = 0; i < 4; i++) {
-      Files.writeString(walletDir.resolve(i + ".json"), "invalid content");
+      Files.writeString(keystoreDir.resolve(i + ".json"), "invalid content");
     }
 
     final Path passwordFile;
@@ -95,7 +96,7 @@ public class SecpWalletBulkLoaderTest {
     }
 
     final MappedResults<ArtifactSigner> results =
-        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(walletDir, passwordFile);
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(keystoreDir, passwordFile);
 
     assertThat(results.getValues()).hasSize(4);
     assertThat(results.getErrorCount()).isEqualTo(4);
@@ -106,7 +107,7 @@ public class SecpWalletBulkLoaderTest {
     Path passwordFile = Files.writeString(passwordDir.resolve("password.txt"), "invalid");
 
     final MappedResults<ArtifactSigner> results =
-        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(walletDir, passwordFile);
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(keystoreDir, passwordFile);
 
     assertThat(results.getValues()).isEmpty();
     assertThat(results.getErrorCount()).isEqualTo(4);
@@ -117,7 +118,7 @@ public class SecpWalletBulkLoaderTest {
     Path passwordFile = passwordDir.resolve("password.txt");
 
     final MappedResults<ArtifactSigner> results =
-        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(walletDir, passwordFile);
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(keystoreDir, passwordFile);
 
     assertThat(results.getValues()).isEmpty();
     assertThat(results.getErrorCount()).isEqualTo(1);
@@ -131,7 +132,7 @@ public class SecpWalletBulkLoaderTest {
     }
 
     final MappedResults<ArtifactSigner> results =
-        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(walletDir, passwordDir);
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(keystoreDir, passwordDir);
 
     assertThat(results.getValues()).hasSize(3);
     assertThat(results.getErrorCount()).isEqualTo(1);
@@ -140,7 +141,8 @@ public class SecpWalletBulkLoaderTest {
   @Test
   void errorResultsWhenPasswordDirIsEmpty(@TempDir Path emptyPasswordDir) {
     final MappedResults<ArtifactSigner> results =
-        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(walletDir, emptyPasswordDir);
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
+            keystoreDir, emptyPasswordDir);
 
     assertThat(results.getValues()).isEmpty();
     assertThat(results.getErrorCount()).isEqualTo(4);
@@ -149,8 +151,8 @@ public class SecpWalletBulkLoaderTest {
   @Test
   void errorResultsWhenPasswordDirIsMissing() {
     final MappedResults<ArtifactSigner> results =
-        SecpWalletBulkloader.loadWalletsUsingPasswordFileOrDir(
-            walletDir, passwordDir.resolve("/invalid"));
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
+            keystoreDir, passwordDir.resolve("/invalid"));
 
     assertThat(results.getValues()).isEmpty();
     assertThat(results.getErrorCount()).isEqualTo(1);

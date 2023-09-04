@@ -31,60 +31,61 @@ import org.web3j.crypto.CipherException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.WalletUtils;
 
-public class SecpWalletBulkloader {
+public class SecpV3KeystoresBulkLoader {
   private static final Logger LOG = LogManager.getLogger();
 
-  public static MappedResults<ArtifactSigner> loadWalletsUsingPasswordFileOrDir(
-      final Path walletsDirectory, final Path passwordsFileOrDirectory) {
-    if (!Files.exists(passwordsFileOrDirectory)) {
+  public static MappedResults<ArtifactSigner> loadV3KeystoresUsingPasswordFileOrDir(
+      final Path keystoresPath, final Path pwrdFileOrDirPath) {
+    if (!Files.exists(pwrdFileOrDirPath)) {
       LOG.error("Password file or directory doesn't exist.");
       return MappedResults.errorResult();
     }
 
-    final List<Path> walletFiles;
+    final List<Path> keystoresFiles;
     try {
-      walletFiles = JsonFilesUtil.loadJsonExtPaths(walletsDirectory);
+      keystoresFiles = JsonFilesUtil.loadJsonExtPaths(keystoresPath);
     } catch (final IOException e) {
-      LOG.error("Error listing v3 wallet paths {}", walletsDirectory);
+      LOG.error("Error listing v3 keystores paths {}", keystoresPath);
       return MappedResults.errorResult();
     }
 
     final PasswordReader passwordReader;
-    if (Files.isDirectory(passwordsFileOrDirectory)) {
-      passwordReader =
-          passwordFile -> Files.readString(passwordsFileOrDirectory.resolve(passwordFile));
-    } else if (Files.isRegularFile(passwordsFileOrDirectory)) {
+    if (Files.isDirectory(pwrdFileOrDirPath)) {
+      passwordReader = passwordFile -> Files.readString(pwrdFileOrDirPath.resolve(passwordFile));
+    } else if (Files.isRegularFile(pwrdFileOrDirPath)) {
       try {
-        final String password = Files.readString(passwordsFileOrDirectory);
+        final String password = Files.readString(pwrdFileOrDirPath);
         passwordReader = passwordFile -> password;
       } catch (final IOException e) {
         LOG.error("Unable to read password file.", e);
         return MappedResults.errorResult();
       }
     } else {
-      LOG.error("Unexpected password file or directory.");
+      LOG.error(
+          "Unexpected path. Expecting it to be a regular file or directory. {}", pwrdFileOrDirPath);
       return MappedResults.errorResult();
     }
 
-    return walletFiles.parallelStream()
-        .map(walletFile -> createSecpArtifactSigner(walletFile, passwordReader))
+    return keystoresFiles.parallelStream()
+        .map(keystoreFile -> createSecpArtifactSigner(keystoreFile, passwordReader))
         .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
   private static MappedResults<ArtifactSigner> createSecpArtifactSigner(
-      final Path wallet, final PasswordReader passwordReader) {
+      final Path v3KeystorePath, final PasswordReader passwordReader) {
     try {
       final String fileNameWithoutExt =
-          FilenameUtils.removeExtension(wallet.getFileName().toString());
+          FilenameUtils.removeExtension(v3KeystorePath.getFileName().toString());
 
       final String password = passwordReader.readPassword(fileNameWithoutExt + ".txt");
 
-      final Credentials credentials = WalletUtils.loadCredentials(password, wallet.toFile());
+      final Credentials credentials =
+          WalletUtils.loadCredentials(password, v3KeystorePath.toFile());
       final EthSecpArtifactSigner artifactSigner =
           new EthSecpArtifactSigner(new CredentialSigner(credentials));
       return MappedResults.newInstance(Set.of(artifactSigner), 0);
     } catch (final IOException | CipherException | RuntimeException e) {
-      LOG.error("v3 Wallet could not be loaded {}", wallet, e);
+      LOG.error("Error loading v3 keystore {}", v3KeystorePath, e);
       return MappedResults.errorResult();
     }
   }
