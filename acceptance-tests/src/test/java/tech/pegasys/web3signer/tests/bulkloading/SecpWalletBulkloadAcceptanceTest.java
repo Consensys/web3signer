@@ -17,7 +17,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.web3j.crypto.WalletUtils.generateWalletFile;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_V3_WALLET_BULK_LOADING;
-import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthCheckKeysCheckData;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckDataPropertyValue;
 
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultKeystoresParameters;
@@ -104,7 +104,7 @@ public class SecpWalletBulkloadAcceptanceTest extends AcceptanceTestBase {
 
     final String jsonBody = healthcheckResponse.body().asString();
     final int keysLoaded =
-        getHealthCheckKeysCheckData(jsonBody, KEYS_CHECK_V3_WALLET_BULK_LOADING, "keys-loaded");
+        getHealthcheckDataPropertyValue(jsonBody, KEYS_CHECK_V3_WALLET_BULK_LOADING, "keys-loaded");
     assertThat(keysLoaded).isEqualTo(publicKeys.size());
   }
 
