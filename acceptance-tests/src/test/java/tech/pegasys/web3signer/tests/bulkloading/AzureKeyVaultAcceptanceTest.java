@@ -16,6 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealtcheckKeysLoaded;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckErrorCount;
 
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.signing.KeyType;
@@ -26,9 +29,9 @@ import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import io.vertx.core.json.JsonObject;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -61,7 +64,8 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
   @ParameterizedTest
   @EnumSource(KeyType.class)
-  void ensureSecretsInKeyVaultAreLoadedAndReportedViaPublicKeysApi(final KeyType keyType) {
+  void ensureSecretsInKeyVaultAreLoadedAndReportedViaPublicKeysApi(final KeyType keyType)
+      throws JsonProcessingException {
     final AzureKeyVaultParameters azureParams =
         new DefaultAzureKeyVaultParameters(VAULT_NAME, CLIENT_ID, TENANT_ID, CLIENT_SECRET);
 
@@ -90,7 +94,7 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
     final int expectedKeyLoaded = keyType == KeyType.BLS ? 202 : 2;
 
     final String jsonBody = healthcheckResponse.body().asString();
-    final int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
+    final int keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_AZURE_BULK_LOADING);
     assertThat(keysLoaded).isEqualTo(expectedKeyLoaded);
   }
 
@@ -126,8 +130,8 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
 
     // keys loaded should be 1 as well.
     final String jsonBody = healthcheckResponse.body().asString();
-    final int keysLoaded = getAzureBulkLoadingData(jsonBody, "keys-loaded");
-    final int errorCount = getAzureBulkLoadingData(jsonBody, "error-count");
+    final int keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_AZURE_BULK_LOADING);
+    final int errorCount = getHealthcheckErrorCount(jsonBody, KEYS_CHECK_AZURE_BULK_LOADING);
     assertThat(keysLoaded).isOne();
     assertThat(errorCount).isZero();
   }
@@ -138,17 +142,6 @@ public class AzureKeyVaultAcceptanceTest extends AcceptanceTestBase {
         Arguments.arguments(KeyType.BLS, true),
         Arguments.arguments(KeyType.SECP256K1, false),
         Arguments.arguments(KeyType.SECP256K1, true));
-  }
-
-  private static int getAzureBulkLoadingData(String healthCheckJsonBody, String dataKey) {
-    final JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
-    return jsonObject.getJsonArray("checks").stream()
-        .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
-        .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
-        .filter(o -> "azure-bulk-loading".equals(((JsonObject) o).getString("id")))
-        .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
-        .findFirst()
-        .orElse(-1);
   }
 
   @ParameterizedTest
