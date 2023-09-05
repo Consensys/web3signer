@@ -13,7 +13,7 @@
 package tech.pegasys.web3signer.commandline;
 
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
-import tech.pegasys.web3signer.signing.config.AwsParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 
 import java.net.URI;
 import java.util.Collection;
@@ -23,7 +23,7 @@ import java.util.Optional;
 
 import picocli.CommandLine.Option;
 
-public class PicoCliAwsKmsParameters implements AwsParameters {
+public class PicoCliAwsKmsParameters implements AwsVaultParameters {
   public static final String AWS_KMS_ENABLED_OPTION = "--aws-kms-enabled";
   public static final String AWS_KMS_AUTH_MODE_OPTION = "--aws-kms-auth-mode";
   public static final String AWS_KMS_ACCESS_KEY_ID_OPTION = "--aws-kms-access-key-id";

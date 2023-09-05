@@ -21,8 +21,8 @@ import tech.pegasys.web3signer.AwsKmsUtil;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsParameters;
 import tech.pegasys.web3signer.signing.config.AwsParametersBuilder;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
@@ -107,7 +107,7 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
   @ParameterizedTest(name = "{index} - Using config file: {0}")
   @ValueSource(booleans = {true, false})
   void keysAreLoadedFromAwsKmsAndReportedByPublicApi(final boolean useConfigFile) {
-    final AwsParameters awsParameters =
+    final AwsVaultParameters awsVaultParameters =
         AwsParametersBuilder.anAwsParameters()
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion(AWS_REGION)
@@ -122,7 +122,7 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
             .withMode("eth1")
-            .withAwsParameters(awsParameters);
+            .withAwsParameters(awsVaultParameters);
 
     startSigner(configBuilder.build());
 
@@ -148,7 +148,7 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
   @Test
   void healthCheckErrorCountWhenInvalidCredentialsAreUsed() {
     final boolean useConfigFile = false;
-    final AwsParameters invalidCredsParams =
+    final AwsVaultParameters invalidCredsParams =
         AwsParametersBuilder.anAwsParameters()
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion("us-east-2")
@@ -193,7 +193,7 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
   @ValueSource(booleans = {true, false})
   void keysAreLoadedFromAwsKmsWithEnvironmentAuthModeAndReportedByPublicApi(
       final boolean useConfigFile) {
-    final AwsParameters awsParameters =
+    final AwsVaultParameters awsVaultParameters =
         AwsParametersBuilder.anAwsParameters()
             .withAuthenticationMode(AwsAuthenticationMode.ENVIRONMENT)
             .withTagNamesFilter(List.of("TagName2", "TagName3"))
@@ -205,7 +205,7 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
             .withMode("eth1")
-            .withAwsParameters(awsParameters);
+            .withAwsParameters(awsVaultParameters);
 
     startSigner(configBuilder.build());
 

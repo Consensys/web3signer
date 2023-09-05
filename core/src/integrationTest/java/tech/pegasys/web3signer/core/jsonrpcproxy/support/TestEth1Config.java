@@ -16,8 +16,8 @@ import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
-import tech.pegasys.web3signer.signing.config.AwsParameters;
 import tech.pegasys.web3signer.signing.config.AwsParametersBuilder;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultAzureKeyVaultParameters;
 
@@ -100,7 +100,7 @@ public class TestEth1Config implements Eth1Config {
   }
 
   @Override
-  public AwsParameters getAwsParameters() {
+  public AwsVaultParameters getAwsParameters() {
     return AwsParametersBuilder.anAwsParameters().build();
   }
 

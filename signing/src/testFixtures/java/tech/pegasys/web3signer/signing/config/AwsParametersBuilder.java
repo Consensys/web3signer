@@ -83,7 +83,7 @@ public final class AwsParametersBuilder {
     return this;
   }
 
-  public AwsParameters build() {
+  public AwsVaultParameters build() {
     if (authenticationMode == AwsAuthenticationMode.SPECIFIED) {
       if (accessKeyId == null) {
         throw new IllegalArgumentException("accessKeyId is required");
@@ -98,7 +98,7 @@ public final class AwsParametersBuilder {
       }
     }
 
-    return new TestAwsParameters(
+    return new TestAwsVaultParameters(
         authenticationMode,
         accessKeyId,
         secretAccessKey,
@@ -110,7 +110,7 @@ public final class AwsParametersBuilder {
         endpointURI);
   }
 
-  private static class TestAwsParameters implements AwsParameters {
+  private static class TestAwsVaultParameters implements AwsVaultParameters {
     private final AwsAuthenticationMode authenticationMode;
     private final String accessKeyId;
     private final String secretAccessKey;
@@ -121,7 +121,7 @@ public final class AwsParametersBuilder {
     private final long cacheMaximumSize;
     private final Optional<URI> endpointOverride;
 
-    TestAwsParameters(
+    TestAwsVaultParameters(
         final AwsAuthenticationMode authenticationMode,
         final String accessKeyId,
         final String secretAccessKey,

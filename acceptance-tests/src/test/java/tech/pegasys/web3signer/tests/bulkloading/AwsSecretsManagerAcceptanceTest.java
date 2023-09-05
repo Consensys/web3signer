@@ -21,8 +21,8 @@ import tech.pegasys.web3signer.AwsSecretsManagerUtil;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsParameters;
 import tech.pegasys.web3signer.signing.config.AwsParametersBuilder;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.net.URI;
@@ -102,7 +102,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   @ParameterizedTest(name = "{index} - Using config file: {0}")
   @ValueSource(booleans = {true, false})
   void secretsAreLoadedFromAWSSecretsManagerAndReportedByPublicApi(final boolean useConfigFile) {
-    final AwsParameters awsParameters =
+    final AwsVaultParameters awsVaultParameters =
         AwsParametersBuilder.anAwsParameters()
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion(AWS_REGION)
@@ -118,7 +118,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
             .withMode("eth2")
-            .withAwsParameters(awsParameters);
+            .withAwsParameters(awsVaultParameters);
 
     startSigner(configBuilder.build());
 
@@ -144,7 +144,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   @Test
   void healthCheckErrorCountWhenInvalidCredentialsAreUsed() {
     final boolean useConfigFile = false;
-    final AwsParameters invalidCredsParams =
+    final AwsVaultParameters invalidCredsParams =
         AwsParametersBuilder.anAwsParameters()
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion("us-east-2")
@@ -189,7 +189,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   @ValueSource(booleans = {true, false})
   void secretsAreLoadedFromAWSSecretsManagerWithEnvironmentAuthModeAndReportedByPublicApi(
       final boolean useConfigFile) {
-    final AwsParameters awsParameters =
+    final AwsVaultParameters awsVaultParameters =
         AwsParametersBuilder.anAwsParameters()
             .withAuthenticationMode(AwsAuthenticationMode.ENVIRONMENT)
             .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
@@ -202,7 +202,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
             .withMode("eth2")
-            .withAwsParameters(awsParameters);
+            .withAwsParameters(awsVaultParameters);
 
     startSigner(configBuilder.build());
 

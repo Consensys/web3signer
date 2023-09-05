@@ -13,7 +13,7 @@
 package tech.pegasys.web3signer.commandline;
 
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
-import tech.pegasys.web3signer.signing.config.AwsParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 
 import java.net.URI;
 import java.util.Collection;
@@ -24,7 +24,7 @@ import java.util.Optional;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-public class PicoCliAwsSecretsManagerParameters implements AwsParameters {
+public class PicoCliAwsSecretsManagerParameters implements AwsVaultParameters {
   public static final String AWS_SECRETS_ENABLED_OPTION = "--aws-secrets-enabled";
   public static final String AWS_SECRETS_AUTH_MODE_OPTION = "--aws-secrets-auth-mode";
   public static final String AWS_SECRETS_ACCESS_KEY_ID_OPTION = "--aws-secrets-access-key-id";

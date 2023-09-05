@@ -17,7 +17,7 @@ import tech.pegasys.web3signer.common.config.AwsCredentials;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
-import tech.pegasys.web3signer.signing.config.AwsParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsClient;
 import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsSignerFactory;
@@ -36,7 +36,7 @@ public class SecpAwsBulkLoader {
     this.awsKmsSignerFactory = awsKmsSignerFactory;
   }
 
-  public MappedResults<ArtifactSigner> load(final AwsParameters parameters) {
+  public MappedResults<ArtifactSigner> load(final AwsVaultParameters parameters) {
     final Optional<AwsCredentials> awsCredentials =
         parameters.getAuthenticationMode() == AwsAuthenticationMode.SPECIFIED
             ? Optional.of(
@@ -60,15 +60,15 @@ public class SecpAwsBulkLoader {
 
   private EthSecpArtifactSigner createSigner(
       final Optional<AwsCredentials> awsCredentials,
-      final AwsParameters awsParameters,
+      final AwsVaultParameters awsVaultParameters,
       final String keyId) {
     return new EthSecpArtifactSigner(
         awsKmsSignerFactory.createSigner(
             new AwsKmsMetadata(
-                awsParameters.getAuthenticationMode(),
-                awsParameters.getRegion(),
+                awsVaultParameters.getAuthenticationMode(),
+                awsVaultParameters.getRegion(),
                 awsCredentials,
                 keyId,
-                awsParameters.getEndpointOverride())));
+                awsVaultParameters.getEndpointOverride())));
   }
 }

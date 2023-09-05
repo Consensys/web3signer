@@ -21,8 +21,8 @@ import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsParameters;
 import tech.pegasys.web3signer.signing.config.AwsParametersBuilder;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.net.URI;
@@ -103,7 +103,7 @@ public class AwsSecretsManagerMultiValueAcceptanceTest extends AcceptanceTestBas
   @ParameterizedTest(name = "{index} -> use config file: {0}")
   @ValueSource(booleans = {true, false})
   void secretsAreLoadedFromAWSSecretsManagerAndReportedByPublicApi(final boolean useConfigFile) {
-    final AwsParameters awsParameters =
+    final AwsVaultParameters awsVaultParameters =
         AwsParametersBuilder.anAwsParameters()
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion(AWS_REGION)
@@ -118,7 +118,7 @@ public class AwsSecretsManagerMultiValueAcceptanceTest extends AcceptanceTestBas
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
             .withMode("eth2")
-            .withAwsParameters(awsParameters);
+            .withAwsParameters(awsVaultParameters);
 
     startSigner(configBuilder.build());
 

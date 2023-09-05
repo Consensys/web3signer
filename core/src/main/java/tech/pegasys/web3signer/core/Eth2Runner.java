@@ -45,7 +45,7 @@ import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.bulkloading.BlsAwsBulkLoader;
 import tech.pegasys.web3signer.signing.bulkloading.BlsKeystoreBulkLoader;
-import tech.pegasys.web3signer.signing.config.AwsParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
@@ -94,7 +94,7 @@ public class Eth2Runner extends Runner {
 
   private final Optional<SlashingProtectionContext> slashingProtectionContext;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
-  private final AwsParameters awsParameters;
+  private final AwsVaultParameters awsVaultParameters;
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
   private final KeystoresParameters keystoresParameters;
@@ -106,7 +106,7 @@ public class Eth2Runner extends Runner {
       final SlashingProtectionParameters slashingProtectionParameters,
       final AzureKeyVaultParameters azureKeyVaultParameters,
       final KeystoresParameters keystoresParameters,
-      final AwsParameters awsParameters,
+      final AwsVaultParameters awsVaultParameters,
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled) {
     super(baseConfig);
@@ -117,7 +117,7 @@ public class Eth2Runner extends Runner {
     this.keystoresParameters = keystoresParameters;
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
-    this.awsParameters = awsParameters;
+    this.awsVaultParameters = awsVaultParameters;
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -272,7 +272,7 @@ public class Eth2Runner extends Runner {
         final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider =
             new YubiHsmOpaqueDataProvider();
         final AwsSecretsManagerProvider awsSecretsManagerProvider =
-            new AwsSecretsManagerProvider(awsParameters.getCacheMaximumSize()); ) {
+            new AwsSecretsManagerProvider(awsVaultParameters.getCacheMaximumSize()); ) {
       final AbstractArtifactSignerFactory artifactSignerFactory =
           new BlsArtifactSignerFactory(
               baseConfig.getKeyConfigPath(),
@@ -338,11 +338,11 @@ public class Eth2Runner extends Runner {
       results = MappedResults.merge(results, keystoreSignersResult);
     }
 
-    if (awsParameters.isEnabled()) {
+    if (awsVaultParameters.isEnabled()) {
       LOG.info("Bulk loading keys from AWS Secrets Manager ... ");
       final BlsAwsBulkLoader blsAwsBulkLoader = new BlsAwsBulkLoader();
 
-      final MappedResults<ArtifactSigner> awsResult = blsAwsBulkLoader.load(awsParameters);
+      final MappedResults<ArtifactSigner> awsResult = blsAwsBulkLoader.load(awsVaultParameters);
       LOG.info(
           "Keys loaded from AWS Secrets Manager: [{}], with error count: [{}]",
           awsResult.getValues().size(),
