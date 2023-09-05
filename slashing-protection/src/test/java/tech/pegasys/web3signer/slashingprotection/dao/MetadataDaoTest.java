@@ -29,6 +29,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @ExtendWith(DatabaseSetupExtension.class)
 public class MetadataDaoTest {
   private final MetadataDao metadataDao = new MetadataDao();
+  private static final UInt64 MAX_LOW_WATERMARK_SLOT = UInt64.valueOf(13);
+  private static final UInt64 MAX_LOW_WATERMARK_SOURCE_EPOCH = UInt64.valueOf(11);
+  private static final UInt64 MAX_LOW_WATERMARK_TARGET_EPOCH = UInt64.valueOf(12);
 
   @Test
   public void findsExistingGvrInDb(final Handle handle) {
@@ -147,7 +150,8 @@ public class MetadataDaoTest {
   public void updateHighWatermarkFailsWhenNotGreaterThanMaxLowWatermarkSlot(final Handle handle) {
     insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
     insertLowWatermarks(handle);
-    HighWatermark highWatermark = createHighWatermark(13, 999);
+    // high watermark == max low watermark
+    HighWatermark highWatermark = createHighWatermark(MAX_LOW_WATERMARK_SLOT, UInt64.MAX_VALUE);
     assertThatThrownBy(() -> metadataDao.updateHighWatermark(handle, highWatermark))
         .hasMessageContaining(
             "high_watermark_slot must be greater than max slot in low_watermarks table");
@@ -158,7 +162,9 @@ public class MetadataDaoTest {
       final Handle handle) {
     insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
     insertLowWatermarks(handle);
-    HighWatermark highWatermark = createHighWatermark(999, 12);
+    // high watermark == max low watermark
+    HighWatermark highWatermark =
+        createHighWatermark(UInt64.MAX_VALUE, MAX_LOW_WATERMARK_TARGET_EPOCH);
 
     assertThatThrownBy(() -> metadataDao.updateHighWatermark(handle, highWatermark))
         .hasMessageContaining(
@@ -170,7 +176,9 @@ public class MetadataDaoTest {
       final Handle handle) {
     insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
     insertLowWatermarks(handle);
-    HighWatermark highWatermark = createHighWatermark(999, 11);
+    // high watermark == max low watermark
+    HighWatermark highWatermark =
+        createHighWatermark(UInt64.MAX_VALUE, MAX_LOW_WATERMARK_SOURCE_EPOCH);
 
     assertThatThrownBy(() -> metadataDao.updateHighWatermark(handle, highWatermark))
         .hasMessageContaining(
@@ -207,9 +215,9 @@ public class MetadataDaoTest {
     handle.execute(
         "INSERT INTO low_watermarks (validator_id, slot, target_epoch, source_epoch) VALUES (?, ?, ?, ?)",
         2,
-        13,
-        12,
-        11);
+        MAX_LOW_WATERMARK_SLOT,
+        MAX_LOW_WATERMARK_TARGET_EPOCH,
+        MAX_LOW_WATERMARK_SOURCE_EPOCH);
   }
 
   private void updateHighWatermark(final Handle handle, final int epoch, final int slot) {
@@ -222,5 +230,9 @@ public class MetadataDaoTest {
 
   private HighWatermark createHighWatermark(final int slot, final int epoch) {
     return new HighWatermark(UInt64.valueOf(slot), UInt64.valueOf(epoch));
+  }
+
+  private HighWatermark createHighWatermark(final UInt64 slot, final UInt64 epoch) {
+    return new HighWatermark(slot, epoch);
   }
 }

@@ -16,6 +16,8 @@ import static db.DatabaseUtil.PASSWORD;
 import static db.DatabaseUtil.USERNAME;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.web3signer.slashingprotection.dao.HighWatermark;
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
@@ -116,6 +118,30 @@ public class PruningIntegrationTest extends IntegrationTestBase {
     assertThat(fetchAttestations(1)).hasSize(2);
     assertThat(fetchBlocks(1)).hasSize(2);
     assertThat(getWatermark(1).getSlot()).isEqualTo(UInt64.valueOf(8));
+  }
+
+  @Test
+  void lowWatermarkCanMoveToEqualHighWatermark() {
+    // in the extreme case where we only keep 1 epoch, the low watermark may move to match the high
+    // watermark
+    final SlashingProtectionContext slashingProtectionContext =
+        SlashingProtectionContextFactory.create(
+            new TestSlashingProtectionParameters(databaseUrl, USERNAME, PASSWORD, 1, 1));
+    insertValidatorAndCreateSlashingData(
+        slashingProtectionContext.getRegisteredValidators(), 10, 10, 1);
+    MetadataDao metadataDao = new MetadataDao();
+    jdbi.useTransaction(
+        h -> {
+          lowWatermarkDao.updateSlotWatermarkFor(h, 1, UInt64.valueOf(8));
+          lowWatermarkDao.updateEpochWatermarksFor(h, 1, UInt64.valueOf(8), UInt64.valueOf(8));
+          metadataDao.updateHighWatermark(
+              h, new HighWatermark(UInt64.valueOf(9), UInt64.valueOf(9)));
+        });
+    slashingProtectionContext.getPruner().prune();
+
+    assertThat(fetchAttestations(1)).hasSize(1);
+    assertThat(fetchBlocks(1)).hasSize(1);
+    assertThat(getWatermark(1).getSlot()).isEqualTo(UInt64.valueOf(9));
   }
 
   @Test
