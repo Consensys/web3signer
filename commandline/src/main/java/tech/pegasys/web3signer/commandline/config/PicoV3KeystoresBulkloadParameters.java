@@ -20,21 +20,19 @@ import java.nio.file.Path;
 
 import picocli.CommandLine.Option;
 
-public class PicoKeystoresParameters implements KeystoresParameters {
-
+public class PicoV3KeystoresBulkloadParameters implements KeystoresParameters {
   @Option(
       names = {KEYSTORES_PATH},
       description =
-          "The path to a directory storing v4 keystores. Keystore files must use a .json file extension.",
+          "The path to a directory storing v3 keystore files. Keystore files must use a .json file extension.",
       paramLabel = PATH_FORMAT_HELP)
   private Path keystoresPath;
 
   @Option(
       names = {KEYSTORES_PASSWORDS_PATH},
       description =
-          "The path to a directory with the corresponding password files for the v4 keystores."
-              + " Filename must match the corresponding keystore filename but with a .txt extension."
-              + " This cannot be set if "
+          "The path to a directory with the corresponding password files for the v3 keystore files. "
+              + "Filename must match the corresponding wallet filename but with a .txt extension. This cannot be set if "
               + KEYSTORES_PASSWORD_FILE
               + " is also specified.",
       paramLabel = PATH_FORMAT_HELP)
@@ -43,8 +41,7 @@ public class PicoKeystoresParameters implements KeystoresParameters {
   @Option(
       names = {KEYSTORES_PASSWORD_FILE},
       description =
-          "The path to a file that contains the password that all keystores use."
-              + " This cannot be set if "
+          "The path to a file that contains the password that all keystores use. This cannot be set if "
               + KEYSTORES_PASSWORDS_PATH
               + " is also specified.",
       paramLabel = PATH_FORMAT_HELP)

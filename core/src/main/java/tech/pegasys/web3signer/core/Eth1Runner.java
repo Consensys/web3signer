@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core;
 
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AWS_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_V3_KEYSTORES_BULK_LOADING;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
 import tech.pegasys.web3signer.core.config.BaseConfig;
@@ -46,9 +47,11 @@ import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.bulkloading.SecpAwsBulkLoader;
 import tech.pegasys.web3signer.signing.bulkloading.SecpAzureBulkLoader;
+import tech.pegasys.web3signer.signing.bulkloading.SecpV3KeystoresBulkLoader;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdapter;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.Secp256k1ArtifactSignerFactory;
@@ -62,6 +65,7 @@ import tech.pegasys.web3signer.signing.secp256k1.azure.AzureHttpClientFactory;
 import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -223,40 +227,45 @@ public class Eth1Runner extends Runner {
   }
 
   private MappedResults<ArtifactSigner> bulkLoadSigners(
-      final AzureKeyVaultFactory azureKeyVaultFactory,
-      final AzureKeyVaultSignerFactory azureSignerFactory,
-      final CachedAwsKmsClientFactory cachedAwsKmsClientFactory,
-      final AwsKmsSignerFactory awsKmsSignerFactory) {
+          final AzureKeyVaultFactory azureKeyVaultFactory,
+          final AzureKeyVaultSignerFactory azureSignerFactory,
+          final CachedAwsKmsClientFactory cachedAwsKmsClientFactory,
+          final AwsKmsSignerFactory awsKmsSignerFactory) {
+    MappedResults<ArtifactSigner> results = MappedResults.newSetInstance();
     if (eth1Config.getAzureKeyVaultConfig().isAzureKeyVaultEnabled()) {
-      return bulkLoadAzureKeys(azureKeyVaultFactory, azureSignerFactory);
+      results = MappedResults.merge(results, bulkLoadAzureKeys(azureKeyVaultFactory, azureSignerFactory));
     }
     if (eth1Config.getAwsParameters().isEnabled()) {
-      return bulkLoadAwsKeys(cachedAwsKmsClientFactory, awsKmsSignerFactory);
+      results = MappedResults.merge(results, bulkLoadAwsKeys(cachedAwsKmsClientFactory, awsKmsSignerFactory));
     }
-    return MappedResults.newSetInstance();
+
+    // v3 bulk loading
+    results = MappedResults.merge(results, bulkloadV3Keystores());
+
+    return results;
   }
 
   private MappedResults<ArtifactSigner> bulkLoadAzureKeys(
-      AzureKeyVaultFactory azureKeyVaultFactory, AzureKeyVaultSignerFactory azureSignerFactory) {
-    LOG.info("Bulk loading keys from Azure key vault ... ");
-    final AzureKeyVaultParameters azureKeyVaultConfig = eth1Config.getAzureKeyVaultConfig();
-    final AzureKeyVault azureKeyVault =
-        azureKeyVaultFactory.createAzureKeyVault(
-            azureKeyVaultConfig.getClientId(),
-            azureKeyVaultConfig.getClientSecret(),
-            azureKeyVaultConfig.getKeyVaultName(),
-            azureKeyVaultConfig.getTenantId(),
-            azureKeyVaultConfig.getAuthenticationMode(),
-            azureKeyVaultConfig.getTimeout());
-    final SecpAzureBulkLoader secpAzureBulkLoader =
-        new SecpAzureBulkLoader(azureKeyVault, azureSignerFactory);
-    final MappedResults<ArtifactSigner> azureResult = secpAzureBulkLoader.load(azureKeyVaultConfig);
-    LOG.info(
-        "Keys loaded from Azure: [{}], with error count: [{}]",
-        azureResult.getValues().size(),
-        azureResult.getErrorCount());
-    registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
-    return azureResult;
+            AzureKeyVaultFactory azureKeyVaultFactory, AzureKeyVaultSignerFactory azureSignerFactory) {
+        LOG.info("Bulk loading keys from Azure key vault ... ");
+        final AzureKeyVaultParameters azureKeyVaultConfig = eth1Config.getAzureKeyVaultConfig();
+        final AzureKeyVault azureKeyVault =
+                azureKeyVaultFactory.createAzureKeyVault(
+                        azureKeyVaultConfig.getClientId(),
+                        azureKeyVaultConfig.getClientSecret(),
+                        azureKeyVaultConfig.getKeyVaultName(),
+                        azureKeyVaultConfig.getTenantId(),
+                        azureKeyVaultConfig.getAuthenticationMode(),
+                        azureKeyVaultConfig.getTimeout());
+        final SecpAzureBulkLoader secpAzureBulkLoader =
+                new SecpAzureBulkLoader(azureKeyVault, azureSignerFactory);
+        final MappedResults<ArtifactSigner> azureResult = secpAzureBulkLoader.load(azureKeyVaultConfig);
+        LOG.info(
+                "Keys loaded from Azure: [{}], with error count: [{}]",
+                azureResult.getValues().size(),
+                azureResult.getErrorCount());
+        registerSignerLoadingHealthCheck(KEYS_CHECK_AZURE_BULK_LOADING, azureResult);
+        return azureResult;
   }
 
   private MappedResults<ArtifactSigner> bulkLoadAwsKeys(
@@ -273,6 +282,27 @@ public class Eth1Runner extends Runner {
         awsResult.getErrorCount());
     registerSignerLoadingHealthCheck(KEYS_CHECK_AWS_BULK_LOADING, awsResult);
     return awsResult;
+  }
+
+  private MappedResults<ArtifactSigner> bulkloadV3Keystores() {
+    final KeystoresParameters v3WalletBLParams = eth1Config.getV3KeystoresBulkLoadParameters();
+    if (!v3WalletBLParams.isEnabled()) {
+      return MappedResults.newInstance(Collections.emptyList(), 0);
+    }
+
+    LOG.info("Bulk loading v3 keystore files ... ");
+    final MappedResults<ArtifactSigner> walletResults =
+        SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
+            v3WalletBLParams.getKeystoresPath(),
+            v3WalletBLParams.hasKeystoresPasswordFile()
+                ? v3WalletBLParams.getKeystoresPasswordFile()
+                : v3WalletBLParams.getKeystoresPasswordsPath());
+    LOG.info(
+        "Keys loaded from v3 keystores files: [{}], with error count: [{}]",
+        walletResults.getValues().size(),
+        walletResults.getErrorCount());
+    registerSignerLoadingHealthCheck(KEYS_CHECK_V3_KEYSTORES_BULK_LOADING, walletResults);
+    return walletResults;
   }
 
   private String formatSecpSignature(final SecpArtifactSignature signature) {

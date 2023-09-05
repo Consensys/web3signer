@@ -8,6 +8,7 @@
 ### Features Added
 - Signing support for BlobSidecar and BlindedBlobSidecar in Deneb fork.
 - Add `--azure-response-timeout` to allow request response timeout to be configurable, the field `timeout` is also accepted in the Azure metadata file. [#888](https://github.com/Consensys/web3signer/pull/888)
+- Bulk load Ethereum v3 wallet files in eth1 mode. 
 - Aws bulk loading for secp256k1 keys in eth1 mode [#889](https://github.com/Consensys/web3signer/pull/889)
 
 ### Bugs fixed

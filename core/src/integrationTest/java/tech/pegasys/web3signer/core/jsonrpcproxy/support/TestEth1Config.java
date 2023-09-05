@@ -20,7 +20,9 @@ import tech.pegasys.web3signer.signing.config.AwsParametersBuilder;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultAzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
 
@@ -107,5 +109,25 @@ public class TestEth1Config implements Eth1Config {
   @Override
   public long getAwsKmsClientCacheSize() {
     return 1;
+  }
+
+  @Override
+  public KeystoresParameters getV3KeystoresBulkLoadParameters() {
+    return new KeystoresParameters() {
+      @Override
+      public Path getKeystoresPath() {
+        return null;
+      }
+
+      @Override
+      public Path getKeystoresPasswordsPath() {
+        return null;
+      }
+
+      @Override
+      public Path getKeystoresPasswordFile() {
+        return null;
+      }
+    };
   }
 }
