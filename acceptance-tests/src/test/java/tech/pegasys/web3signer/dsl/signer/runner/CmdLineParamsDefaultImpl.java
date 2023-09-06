@@ -21,6 +21,9 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORDS_PATH;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PATH;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -38,6 +41,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 
@@ -128,9 +132,29 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
         createAzureArgs(params);
       }
+
+      signerConfig
+          .getV3KeystoresBulkloadParameters()
+          .ifPresent(setV3KeystoresBulkloadParameters(params));
     }
 
     return params;
+  }
+
+  private static Consumer<KeystoresParameters> setV3KeystoresBulkloadParameters(
+      final List<String> params) {
+    return keystoresParameters -> {
+      params.add(KEYSTORES_PATH);
+      params.add(keystoresParameters.getKeystoresPath().toAbsolutePath().toString());
+      if (keystoresParameters.getKeystoresPasswordsPath() != null) {
+        params.add(KEYSTORES_PASSWORDS_PATH);
+        params.add(keystoresParameters.getKeystoresPasswordsPath().toAbsolutePath().toString());
+      }
+      if (keystoresParameters.getKeystoresPasswordFile() != null) {
+        params.add(KEYSTORES_PASSWORD_FILE);
+        params.add(keystoresParameters.getKeystoresPasswordFile().toAbsolutePath().toString());
+      }
+    };
   }
 
   @Override

@@ -15,6 +15,9 @@ package tech.pegasys.web3signer.signing.config;
 import java.nio.file.Path;
 
 public interface KeystoresParameters {
+  String KEYSTORES_PATH = "--keystores-path";
+  String KEYSTORES_PASSWORDS_PATH = "--keystores-passwords-path";
+  String KEYSTORES_PASSWORD_FILE = "--keystores-password-file";
 
   Path getKeystoresPath();
 
