@@ -34,6 +34,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.PassThroughHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.RequestMapper;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignTransactionResultProvider;
+import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthSignTypedDataResultProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.InternalResponseHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.SendTransactionHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
@@ -306,6 +307,10 @@ public class Eth1Runner extends Runner {
     requestMapper.addHandler(
         "eth_sign",
         new InternalResponseHandler<>(responseFactory, new EthSignResultProvider(secpSigner)));
+    requestMapper.addHandler(
+        "eth_signTypedData",
+        new InternalResponseHandler<>(
+            responseFactory, new EthSignTypedDataResultProvider(secpSigner)));
     requestMapper.addHandler(
         "eth_signTransaction",
         new InternalResponseHandler<>(

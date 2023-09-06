@@ -85,12 +85,12 @@ dependencyManagement {
       entry 'mockito-junit-jupiter'
     }
 
-    dependency 'org.hyperledger.besu:plugin-api:22.10.3'
-    dependency 'org.hyperledger.besu.internal:metrics-core:22.10.3'
+    dependency 'org.hyperledger.besu:plugin-api:23.7.2'
+    dependency 'org.hyperledger.besu.internal:metrics-core:23.7.2'
 
     dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.9'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.8.0') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.9.0') {
       entry ('bls') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
@@ -112,7 +112,7 @@ dependencyManagement {
 
     dependency 'io.rest-assured:rest-assured:4.4.0'
     dependency 'org.zeroturnaround:zt-exec:1.12'
-    dependencySet(group: 'org.web3j', version: '4.9.5') {
+    dependencySet(group: 'org.web3j', version: '4.10.2') {
       entry 'besu'
       entry ('core') {
         exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
