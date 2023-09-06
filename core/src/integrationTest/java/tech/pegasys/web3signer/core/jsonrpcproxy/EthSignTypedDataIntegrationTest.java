@@ -35,8 +35,53 @@ import org.web3j.protocol.core.Request;
 
 public class EthSignTypedDataIntegrationTest extends IntegrationTestBase {
 
+  // Json taken and validated using https://metamask.github.io/test-dapp/#signTypedDataV4
   private static final String eip712Json =
-      "{\"types\": {    \"EIP712Domain\": [      {\"name\": \"name\", \"type\": \"string\"},      {\"name\": \"version\", \"type\": \"string\"},      {\"name\": \"chainId\", \"type\": \"uint256\"},      {\"name\": \"verifyingContract\", \"type\": \"address\"}    ],    \"Person\": [      {\"name\": \"name\", \"type\": \"string\"},      {\"name\": \"wallet\", \"type\": \"address\"}    ]  },  \"domain\": {    \"name\": \"My Dapp\",    \"version\": \"1.0\",    \"chainId\": 1,    \"verifyingContract\": \"0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC\"  },  \"primaryType\": \"Person\",  \"message\": {    \"name\": \"John Doe\",    \"wallet\": \"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B\"  }}";
+      """
+          {
+            "types": {
+              "EIP712Domain": [
+                {
+                  "name": "name",
+                  "type": "string"
+                },
+                {
+                  "name": "version",
+                  "type": "string"
+                },
+                {
+                  "name": "chainId",
+                  "type": "uint256"
+                },
+                {
+                  "name": "verifyingContract",
+                  "type": "address"
+                }
+              ],
+              "Person": [
+                {
+                  "name": "name",
+                  "type": "string"
+                },
+                {
+                  "name": "wallet",
+                  "type": "address"
+                }
+              ]
+            },
+            "domain": {
+              "name": "My Dapp",
+              "version": "1.0",
+              "chainId": 1,
+              "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+            },
+            "primaryType": "Person",
+            "message": {
+              "name": "John Doe",
+              "wallet": "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+            }
+          }
+          """;
 
   @Test
   void ethSignTypedDataSignsDataWhenAnUnlockedAccountIsPassed() {
