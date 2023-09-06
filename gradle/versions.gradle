@@ -85,8 +85,8 @@ dependencyManagement {
       entry 'mockito-junit-jupiter'
     }
 
-    dependency 'org.hyperledger.besu:plugin-api:22.10.3'
-    dependency 'org.hyperledger.besu.internal:metrics-core:22.10.3'
+    dependency 'org.hyperledger.besu:plugin-api:23.7.2'
+    dependency 'org.hyperledger.besu.internal:metrics-core:23.7.2'
 
     dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.9'
 
