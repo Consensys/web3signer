@@ -1,0 +1,622 @@
+components:
+  schemas:
+    Signing:
+      type: "object"
+      properties:
+        fork_info:
+          type: object
+          properties:
+            fork:
+              $ref: '#/components/schemas/Fork'
+              description: Fork information
+            genesis_validators_root:
+              type: "string"
+              description: Genesis Validators Root in hex string format.
+              example: '0x04700007fabc8282644aed6d1c7c9e21d38a03a0c4ba193f3afe428824b3a673'
+          required:
+            - fork
+            - genesis_validators_root
+        signingRoot:
+          type: "string"
+          description: 'signing root for optional verification if field present'
+          example: '0xaa2e0c465c1a45d7b6637fcce4ad6ceb71fc12064b548078d619a411f0de8adc'
+      required:
+        - fork_info
+    SigningResponse:
+      type: "object"
+      properties:
+        signature:
+          type: "string"
+          description: "Hex encoded string of signature"
+          example: '0xb3baa751d0a9132cfe93e4e3d5ff9075111100e3789dca219ade5a24d27e19d16b3353149da1833e9b691bb38634e8dc04469be7032132906c927d7e1a49b414730612877bc6b2810c8f202daf793d1ab0d6b5cb21d52f9e52e883859887a5d9'
+    AggregationSlotSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: "object"
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'AGGREGATION_SLOT'
+            aggregation_slot:
+              type: "object"
+              properties:
+                slot:
+                  type: string
+                  format: "uint64"
+          required:
+            - type
+            - aggregation_slot
+    AggregateAndProofSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'AGGREGATE_AND_PROOF'
+            aggregate_and_proof:
+              $ref: "#/components/schemas/AggregateAndProof"
+          required:
+            - type
+            - aggregate_and_proof
+    AttestationSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'ATTESTATION'
+            attestation:
+              $ref: "#/components/schemas/AttestationData"
+          required:
+            - type
+            - attestation
+    BlockSigning:
+      description: '** DEPRECATED ** See BeaconBlockSigning.'
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'BLOCK'
+            block:
+              $ref: "#/components/schemas/BeaconBlock"
+          required:
+            - type
+            - block
+    DepositSigning:
+      type: object
+      properties:
+        type:
+          type: "string"
+          description: 'Signing Request type'
+          example: 'DEPOSIT'
+        signingRoot:
+          description: 'signing root for optional verification if field present'
+          type: "string"
+        deposit:
+          type: object
+          properties:
+            pubkey:
+              type: "string"
+            withdrawal_credentials:
+              type: "string"
+            amount:
+              type: "string"
+            genesis_fork_version:
+              type: "string"
+              description: Bytes4 hexadecimal
+      required:
+        - type
+        - deposit
+    RandaoRevealSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'RANDAO_REVEAL'
+            randao_reveal:
+              $ref: "#/components/schemas/RandaoReveal"
+          required:
+            - type
+            - randao_reveal
+    VoluntaryExitSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'VOLUNTARY_EXIT'
+            voluntary_exit:
+              $ref: "#/components/schemas/VoluntaryExit"
+          required:
+            - type
+            - voluntary_exit
+    SyncCommitteeMessageSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'SYNC_COMMITTEE_MESSAGE'
+            sync_committee_message:
+              $ref: "#/components/schemas/SyncCommitteeMessage"
+          required:
+            - type
+            - sync_committee_message
+    SyncCommitteeSelectionProofSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'SYNC_COMMITTEE_SELECTION_PROOF'
+            sync_aggregator_selection_data:
+              $ref: "#/components/schemas/SyncAggregatorSelectionData"
+          required:
+            - type
+            - sync_aggregator_selection_data
+    SyncCommitteeContributionAndProofSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF'
+            contribution_and_proof:
+              $ref: "#/components/schemas/ContributionAndProof"
+          required:
+            - type
+            - contribution_and_proof
+    ValidatorRegistrationSigning:
+      allOf:
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'VALIDATOR_REGISTRATION'
+            signingRoot:
+              description: 'signing root for optional verification if field present'
+              type: "string"
+            validator_registration:
+              "$ref": "#/components/schemas/ValidatorRegistration"
+          required:
+            - type
+            - validator_registration
+    RandaoReveal:
+      type: "object"
+      properties:
+        epoch:
+          type: string
+          format: "uint64"
+    AttestationData:
+      type: "object"
+      properties:
+        slot:
+          type: "string"
+          format: "uint64"
+        index:
+          type: "string"
+          format: "uint64"
+        beacon_block_root:
+          type: "string"
+        source:
+          $ref: "#/components/schemas/Checkpoint"
+        target:
+          $ref: "#/components/schemas/Checkpoint"
+    Checkpoint:
+      type: "object"
+      properties:
+        epoch:
+          type: "string"
+        root:
+          type: "string"
+    Fork:
+      type: "object"
+      properties:
+        previous_version:
+          pattern: "^0x[a-fA-F0-9]{8}$"
+          type: "string"
+          description: 'Previous version of fork'
+          example: '0x00000001'
+        current_version:
+          pattern: "^0x[a-fA-F0-9]{8}$"
+          type: "string"
+          description: 'Current version of fork'
+          example: '0x00000001'
+        epoch:
+          type: "string"
+          description: 'Epoch value in String format'
+          format: "uint64"
+          example: '1'
+    BeaconBlock:
+      type: "object"
+      properties:
+        slot:
+          type: "string"
+          format: "uint64"
+        proposer_index:
+          type: "string"
+          format: "uint64"
+        parent_root:
+          type: "string"
+        state_root:
+          type: "string"
+        body:
+          $ref: "#/components/schemas/BeaconBlockBody"
+    BeaconBlockBody:
+      type: "object"
+      properties:
+        randao_reveal:
+          type: "string"
+        eth1_data:
+          "$ref": "#/components/schemas/Eth1Data"
+        graffiti:
+          type: "string"
+          description: "Bytes32 hexadecimal"
+        proposer_slashings:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ProposerSlashing"
+        attester_slashings:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/AttesterSlashing"
+        attestations:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Attestation"
+        deposits:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Deposit"
+        voluntary_exits:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/SignedVoluntaryExit"
+    Eth1Data:
+      type: "object"
+      properties:
+        deposit_root:
+          type: "string"
+        deposit_count:
+          type: "string"
+          format: "uint64"
+        block_hash:
+          type: "string"
+    ProposerSlashing:
+      type: "object"
+      properties:
+        signed_header_1:
+          "$ref": "#/components/schemas/SignedBeaconBlockHeader"
+        signed_header_2:
+          "$ref": "#/components/schemas/SignedBeaconBlockHeader"
+    AttesterSlashing:
+      type: "object"
+      properties:
+        attestation_1:
+          "$ref": "#/components/schemas/IndexedAttestation"
+        attestation_2:
+          "$ref": "#/components/schemas/IndexedAttestation"
+    Attestation:
+      type: "object"
+      properties:
+        aggregation_bits:
+          type: "string"
+        data:
+          $ref: "#/components/schemas/AttestationData"
+        signature:
+          type: "string"
+    Deposit:
+      type: "object"
+      properties:
+        proof:
+          type: "array"
+          items:
+            type: "string"
+        data:
+          $ref: "#/components/schemas/DepositData"
+    SignedVoluntaryExit:
+      type: "object"
+      properties:
+        message:
+          $ref: "#/components/schemas/VoluntaryExit"
+        signature:
+          type: "string"
+    SignedBeaconBlockHeader:
+      type: "object"
+      properties:
+        message:
+          $ref: "#/components/schemas/BeaconBlockHeader"
+        signature:
+          type: "string"
+    IndexedAttestation:
+      type: object
+      properties:
+        attesting_indices:
+          type: array
+          items:
+            type: string
+            format: uint64
+        data:
+          "$ref": "#/components/schemas/AttestationData"
+        signature:
+          type: string
+    DepositData:
+      type: "object"
+      properties:
+        pubkey:
+          type: "string"
+        withdrawal_credentials:
+          type: "string"
+        amount:
+          type: "string"
+        signature:
+          type: "string"
+    VoluntaryExit:
+      type: object
+      properties:
+        epoch:
+          type: string
+          format: uint64
+        validator_index:
+          type: string
+          format: uint64
+    BeaconBlockHeader:
+      type: object
+      properties:
+        slot:
+          type: string
+          format: uint64
+        proposer_index:
+          type: string
+          format: uint64
+        parent_root:
+          type: string
+          description: Bytes32 hexadecimal
+        state_root:
+          type: string
+          description: Bytes32 hexadecimal
+        body_root:
+          type: string
+          description: Bytes32 hexadecimal
+    AggregateAndProof:
+      type: object
+      properties:
+        aggregator_index:
+          type: string
+          format: uint64
+        aggregate:
+          "$ref": "#/components/schemas/Attestation"
+        selection_proof:
+          type: string
+          description: Bytes96 hexadecimal
+    SyncCommitteeMessage:
+      type: object
+      properties:
+        beacon_block_root:
+          type: string
+          description: Bytes32 hexadecimal
+        slot:
+          type: string
+          format: uint64
+    SyncAggregatorSelectionData:
+      type: object
+      properties:
+        slot:
+          type: string
+          format: uint64
+        subcommittee_index:
+          type: string
+          format: uint64
+    ContributionAndProof:
+      type: object
+      properties:
+        aggregator_index:
+          type: string
+          format: uint64
+        selection_proof:
+          type: string
+          description: Bytes96 hexadecimal
+        contribution:
+          "$ref": "#/components/schemas/SyncCommitteeContribution"
+    SyncCommitteeContribution:
+      type: object
+      properties:
+        slot:
+          type: string
+          format: uint64
+        beacon_block_root:
+          type: string
+          description: Bytes32 hexadecimal
+        subcommittee_index:
+          type: string
+          format: uint64
+        aggregation_bits:
+          type: string
+          description: SSZ hexadecimal
+        signature:
+          type: string
+          description: Bytes96 hexadecimal
+    ValidatorRegistration:
+      type: object
+      properties:
+        fee_recipient:
+          type: string
+          description: Bytes20 hexadecimal
+        gas_limit:
+          type: string
+          format: uint64
+        timestamp:
+          type: string
+          format: uint64
+        pubkey:
+          type: string
+    BeaconBlockSigning:
+      allOf:
+        - $ref: '#/components/schemas/Signing'
+        - $ref: '#/components/schemas/BeaconBlockRequest'
+        - type: object
+          properties:
+            type:
+              type: "string"
+              description: Signing Request type
+              example: 'BLOCK_V2'
+    BeaconBlockRequest:
+      type: object
+      properties:
+        beacon_block:
+          oneOf:
+            - $ref: '#/components/schemas/BlockRequestPhase0'
+            - $ref: '#/components/schemas/BlockRequestAltair'
+            - $ref: '#/components/schemas/BlockRequestBellatrix'
+            - $ref: '#/components/schemas/BlockRequestCapella'
+            - $ref: '#/components/schemas/BlockRequestDeneb'
+          discriminator:
+            propertyName: version
+            mapping:
+              PHASE0: '#/components/schemas/BlockRequestPhase0'
+              ALTAIR: '#/components/schemas/BlockRequestAltair'
+              BELLATRIX: '#/components/schemas/BlockRequestBellatrix'
+              CAPELLA: '#/components/schemas/BlockRequestCapella'
+              DENEB: '#/components/schemas/BlockRequestDeneb'
+      required:
+        - beacon_block
+    BlockRequestPhase0:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - PHASE0
+          description: 'version to identify block request type.'
+        block:
+          $ref: "#/components/schemas/BeaconBlock"
+      required:
+        - version
+        - block
+    BlockRequestAltair:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - ALTAIR
+          description: 'version to identify block request type.'
+        block:
+          $ref: "#/components/schemas/BeaconBlockAltair"
+      required:
+        - version
+        - block
+    BlockRequestBellatrix:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - BELLATRIX
+          description: 'version to identify block request type.'
+        block_header:
+          $ref: "#/components/schemas/BeaconBlockHeader"
+      required:
+        - version
+        - block_header
+    BlockRequestCapella:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - CAPELLA
+          description: 'version to identify block request type.'
+        block_header:
+          $ref: "#/components/schemas/BeaconBlockHeader"
+      required:
+        - version
+        - block_header
+    BlockRequestDeneb:
+      type: object
+      properties:
+        version:
+          type: string
+          enum:
+            - DENEB
+          description: 'version to identify block request type.'
+        block_header:
+          $ref: "#/components/schemas/BeaconBlockHeader"
+      required:
+        - version
+        - block_header
+    BeaconBlockAltair:
+      type: "object"
+      properties:
+        slot:
+          type: "string"
+          format: "uint64"
+        proposer_index:
+          type: "string"
+          format: "uint64"
+        parent_root:
+          type: "string"
+        state_root:
+          type: "string"
+        body:
+          $ref: "#/components/schemas/BeaconBlockBodyAltair"
+    BeaconBlockBodyAltair:
+      allOf:
+        - $ref: "#/components/schemas/BeaconBlockBody"
+        - type: object
+          properties:
+            sync_aggregate:
+              $ref: "#/components/schemas/SyncAggregate"
+    SyncAggregate:
+      type: object
+      properties:
+        sync_committee_bits:
+          type: string
+          description: SSZ hexadecimal
+        sync_committee_signature:
+          type: string
+          description: Bytes96 hexadecimal
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          description: 'health status'
+        checks:
+          type: array
+          description: 'list of status checks'
+          items:
+            properties:
+              id:
+                type: string
+                description: 'status id'
+              status:
+                type: string
+                description: 'health status'
+        outcome:
+          type: string
+          description: 'the overall outcome of health check'
+
+externalDocs:
+  description: 'Web3Signer User Documentation'
+  url: 'https://docs.web3signer.consensys.net/'
