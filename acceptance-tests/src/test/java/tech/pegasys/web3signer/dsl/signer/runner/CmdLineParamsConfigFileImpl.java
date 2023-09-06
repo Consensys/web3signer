@@ -21,6 +21,9 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORDS_PATH;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PATH;
 
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
@@ -39,6 +42,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -152,6 +156,10 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       yamlConfig.append(
           String.format(YAML_NUMERIC_FMT, "eth1.chain-id", signerConfig.getChainIdProvider().id()));
       yamlConfig.append(createDownstreamTlsArgs());
+
+      signerConfig
+          .getV3KeystoresBulkloadParameters()
+          .ifPresent(setV3KeystoresBulkloadParameters(yamlConfig));
     }
 
     signerConfig
@@ -173,6 +181,32 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     }
 
     return params;
+  }
+
+  private Consumer<? super KeystoresParameters> setV3KeystoresBulkloadParameters(
+      final StringBuilder yamlConfig) {
+    return keystoresParameters -> {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              KEYSTORES_PATH.replace("--", "eth1."),
+              keystoresParameters.getKeystoresPath().toAbsolutePath()));
+
+      if (keystoresParameters.getKeystoresPasswordsPath() != null) {
+        yamlConfig.append(
+            String.format(
+                YAML_STRING_FMT,
+                KEYSTORES_PASSWORDS_PATH.replace("--", "eth1."),
+                keystoresParameters.getKeystoresPasswordsPath().toAbsolutePath()));
+      }
+      if (keystoresParameters.getKeystoresPasswordFile() != null) {
+        yamlConfig.append(
+            String.format(
+                YAML_STRING_FMT,
+                KEYSTORES_PASSWORD_FILE.replace("--", "eth1."),
+                keystoresParameters.getKeystoresPasswordFile().toAbsolutePath()));
+      }
+    };
   }
 
   private String azureBulkLoadingOptions(

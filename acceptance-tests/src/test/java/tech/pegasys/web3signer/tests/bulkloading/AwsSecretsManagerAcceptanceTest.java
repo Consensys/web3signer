@@ -15,6 +15,10 @@ package tech.pegasys.web3signer.tests.bulkloading;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AWS_BULK_LOADING;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealtcheckKeysLoaded;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckErrorCount;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckStatusValue;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.AwsSecretsManagerUtil;
@@ -33,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.restassured.http.ContentType;
-import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
@@ -123,7 +126,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
     startSigner(configBuilder.build());
 
     final String healthCheckJsonBody = signer.healthcheck().body().asString();
-    int keysLoaded = getAwsBulkLoadingData(healthCheckJsonBody, "keys-loaded");
+    int keysLoaded = getHealtcheckKeysLoaded(healthCheckJsonBody, KEYS_CHECK_AWS_BULK_LOADING);
 
     assertThat(keysLoaded).isEqualTo(2);
 
@@ -164,25 +167,12 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
 
     final String healthCheckJsonBody = signer.healthcheck().body().asString();
 
-    int keysLoaded = getAwsBulkLoadingData(healthCheckJsonBody, "keys-loaded");
-    int errorCount = getAwsBulkLoadingData(healthCheckJsonBody, "error-count");
+    int keysLoaded = getHealtcheckKeysLoaded(healthCheckJsonBody, KEYS_CHECK_AWS_BULK_LOADING);
+    int errorCount = getHealthcheckErrorCount(healthCheckJsonBody, KEYS_CHECK_AWS_BULK_LOADING);
 
     assertThat(keysLoaded).isEqualTo(0);
     assertThat(errorCount).isEqualTo(1);
-    assertThat(new JsonObject(healthCheckJsonBody).getString("status")).isEqualTo("DOWN");
-  }
-
-  private static int getAwsBulkLoadingData(String healthCheckJsonBody, String dataKey) {
-    JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
-    int keysLoaded =
-        jsonObject.getJsonArray("checks").stream()
-            .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
-            .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
-            .filter(o -> "aws-bulk-loading".equals(((JsonObject) o).getString("id")))
-            .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
-            .findFirst()
-            .orElse(-1);
-    return keysLoaded;
+    assertThat(getHealthcheckStatusValue(healthCheckJsonBody)).isEqualTo("DOWN");
   }
 
   @ParameterizedTest(name = "{index} - Using config file: {0}")

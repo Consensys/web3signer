@@ -80,6 +80,8 @@ public class SignerConfigurationBuilder {
   private ChainIdProvider chainIdProvider = new ConfigurationChainId(DEFAULT_CHAIN_ID);
   private String trustedSetup;
 
+  private KeystoresParameters v3KeystoresBulkloadParameters;
+
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
     return this;
@@ -309,6 +311,12 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withV3KeystoresBulkloadParameters(
+      final KeystoresParameters v3KeystoresBulkloadParameters) {
+    this.v3KeystoresBulkloadParameters = v3KeystoresBulkloadParameters;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -356,6 +364,7 @@ public class SignerConfigurationBuilder {
         downstreamHttpPort,
         Optional.ofNullable(downstreamTlsOptions),
         chainIdProvider,
-        Optional.ofNullable(trustedSetup));
+        Optional.ofNullable(trustedSetup),
+        Optional.ofNullable(v3KeystoresBulkloadParameters));
   }
 }

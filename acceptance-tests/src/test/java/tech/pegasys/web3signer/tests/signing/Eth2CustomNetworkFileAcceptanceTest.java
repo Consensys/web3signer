@@ -89,7 +89,7 @@ public class Eth2CustomNetworkFileAcceptanceTest extends SigningAcceptanceTestBa
           createBlockV2SigningRequest(spec, forkAndSpecMilestone);
       final Bytes signingRootSignature = sendSignRequestAndReceiveSignature(request);
       final Bytes expectedSigningRootSignature =
-          calculateSigningRootSignature(request.getSigningRoot());
+          calculateSigningRootSignature(request.signingRoot());
 
       assertThat(signingRootSignature).isEqualTo(expectedSigningRootSignature);
     }
