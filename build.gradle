@@ -37,7 +37,7 @@ plugins {
   id 'io.spring.dependency-management' version '1.0.11.RELEASE'
   id 'me.champeau.gradle.jmh' version '0.5.3' apply false
   id 'net.ltgt.errorprone' version '2.0.2'
-  id 'org.ajoberstar.grgit' version '4.1.1'
+  id 'org.ajoberstar.grgit' version '5.2.0'
 }
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
@@ -47,7 +47,6 @@ if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
 
 rootProject.version = calculatePublishVersion()
 def specificVersion = calculateVersion()
-def isDevelopBuild = rootProject.version.contains('develop')
 
 group = 'tech.pegasys.web3signer'
 
@@ -506,21 +505,29 @@ task testDocker {
   }
 }
 
+def dockerTagPrefixes(String dockerBuildVersion) {
+  def versionPrefixes = [dockerBuildVersion]
+  if (project.hasProperty('branch') && project.property('branch') == 'master') {
+    versionPrefixes.add('develop')
+  }
+
+  // add `latest` tag for non-develop and non-rc versions
+  if (!rootProject.version.contains('develop') && !rootProject.version.toLowerCase().contains('-rc')) {
+    versionPrefixes.add('latest')
+    // when docker build version is x.y.[a,b..] we would also like to use tag x.y
+    versionPrefixes.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
+  }
+
+  return versionPrefixes
+}
+
 task uploadDocker {
   dependsOn([distDocker])
   def dockerBuildVersion = "${rootProject.version}".replace('+', '-')
   def architecture = System.getenv('architecture')
   def platform = System.getenv('platform')
 
-  def versionPrefixes = [dockerBuildVersion]
-  if (project.hasProperty('branch') && project.property('branch') == 'master') {
-    versionPrefixes.add('develop')
-  }
-
-  if (!isDevelopBuild) {
-    versionPrefixes.add('latest')
-    versionPrefixes.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
-  }
+  def versionPrefixes = dockerTagPrefixes(dockerBuildVersion)
 
   doLast {
     for (def variant in dockerJdkVariants) {
@@ -557,17 +564,8 @@ task uploadDocker {
 
 task manifestDocker {
   def dockerBuildVersion = "${rootProject.version}".replace('+', '-')
-  def versionPrefixes = [dockerBuildVersion]
+  def versionPrefixes = dockerTagPrefixes(dockerBuildVersion)
   def platforms = ["arm64", "amd64"]
-
-  if (project.hasProperty('branch') && project.property('branch') == 'master') {
-    versionPrefixes.add('develop')
-  }
-
-  if (!isDevelopBuild) {
-    versionPrefixes.add('latest')
-    versionPrefixes.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
-  }
 
   doLast {
     for (def variant in dockerJdkVariants) {
