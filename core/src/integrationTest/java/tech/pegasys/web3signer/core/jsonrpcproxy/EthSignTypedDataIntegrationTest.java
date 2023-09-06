@@ -35,7 +35,8 @@ import org.web3j.protocol.core.Request;
 
 public class EthSignTypedDataIntegrationTest extends IntegrationTestBase {
 
-  private static final String eip712Json = """
+  private static final String eip712Json =
+      """
           {
             "domain": {
               "name": "Ether Mail",
@@ -101,6 +102,7 @@ public class EthSignTypedDataIntegrationTest extends IntegrationTestBase {
             }
           }
           """;
+
   @Test
   void ethSignTypedDataSignsDataWhenAnUnlockedAccountIsPassed() {
     final Request<?, EthSignTypedData> requestBody =
