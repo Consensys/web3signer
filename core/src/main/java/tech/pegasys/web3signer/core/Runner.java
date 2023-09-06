@@ -255,7 +255,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
     router
         .route(HttpMethod.GET, UPCHECK_PATH)
         .produces(TEXT_PLAIN)
-        .handler(new BlockingHandlerDecorator(new UpcheckHandler(), false))
+        .handler(new UpcheckHandler())
         .failureHandler(errorHandler);
   }
 
