@@ -17,9 +17,12 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.LONG_FORM
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PATH_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PORT_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.util.RequiredOptionsUtil.checkIfRequiredOptionsAreInitialized;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORDS_PATH;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
 
 import tech.pegasys.web3signer.commandline.PicoCliEth1AzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.annotations.RequiredOption;
+import tech.pegasys.web3signer.commandline.config.PicoV3KeystoresBulkloadParameters;
 import tech.pegasys.web3signer.commandline.config.client.PicoCliClientTlsOptions;
 import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.Runner;
@@ -28,6 +31,7 @@ import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -146,6 +150,8 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
 
   @CommandLine.Mixin private PicoCliEth1AzureKeyVaultParameters azureKeyVaultParameters;
 
+  @CommandLine.Mixin private PicoV3KeystoresBulkloadParameters picoV3KeystoresBulkloadParameters;
+
   @Override
   public Runner createRunner() {
     return new Eth1Runner(config, this);
@@ -159,6 +165,24 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
   @Override
   protected void validateArgs() {
     checkIfRequiredOptionsAreInitialized(this);
+    validateV3KeystoresBulkloadingParameters();
+  }
+
+  private void validateV3KeystoresBulkloadingParameters() {
+    if (!picoV3KeystoresBulkloadParameters.isEnabled()) {
+      return;
+    }
+
+    final boolean validOptionSelected =
+        picoV3KeystoresBulkloadParameters.hasKeystoresPasswordFile()
+            ^ picoV3KeystoresBulkloadParameters.hasKeystoresPasswordsPath();
+    if (!validOptionSelected) {
+      throw new CommandLine.ParameterException(
+          spec.commandLine(),
+          String.format(
+              "Either %s or %s must be specified",
+              KEYSTORES_PASSWORD_FILE, KEYSTORES_PASSWORDS_PATH));
+    }
   }
 
   @Override
@@ -233,5 +257,10 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
   @Override
   public long getAwsKmsClientCacheSize() {
     return awsKmsClientCacheSize;
+  }
+
+  @Override
+  public KeystoresParameters getV3KeystoresBulkLoadParameters() {
+    return picoV3KeystoresBulkloadParameters;
   }
 }

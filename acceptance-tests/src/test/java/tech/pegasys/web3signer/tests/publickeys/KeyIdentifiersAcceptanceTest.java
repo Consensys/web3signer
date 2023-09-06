@@ -20,6 +20,10 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.collection.IsIn.in;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_CONFIG_FILE_LOADING;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealtcheckKeysLoaded;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckErrorCount;
+import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckStatusValue;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
 
@@ -32,7 +36,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 import io.restassured.response.Response;
-import io.vertx.core.json.JsonObject;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tuweni.bytes.Bytes32;
 import org.awaitility.Awaitility;
@@ -84,9 +87,9 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     initAndStartSigner(calculateMode(keyType));
 
     final String jsonBody = signer.healthcheck().body().asString();
-    int keysLoaded = getConfigFilesLoadingHealthCheckData(jsonBody, "keys-loaded");
-    int errorCount = getConfigFilesLoadingHealthCheckData(jsonBody, "error-count");
-    assertThat(new JsonObject(jsonBody).getString("status")).isEqualTo("DOWN");
+    int keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_CONFIG_FILE_LOADING);
+    int errorCount = getHealthcheckErrorCount(jsonBody, KEYS_CHECK_CONFIG_FILE_LOADING);
+    assertThat(getHealthcheckStatusValue(jsonBody)).isEqualTo("DOWN");
     assertThat(keysLoaded).isEqualTo(keys.length);
     assertThat(errorCount).isEqualTo(invalidKeys.length);
   }
@@ -122,9 +125,9 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     initAndStartSigner(calculateMode(keyType));
 
     final String jsonBody = signer.healthcheck().body().asString();
-    int keysLoaded = getConfigFilesLoadingHealthCheckData(jsonBody, "keys-loaded");
+    int keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_CONFIG_FILE_LOADING);
     assertThat(keysLoaded).isEqualTo(keys.length);
-    assertThat(new JsonObject(jsonBody).getString("status")).isEqualTo("UP");
+    assertThat(getHealthcheckStatusValue(jsonBody)).isEqualTo("UP");
 
     final String[] additionalKeys = createKeys(keyType, true, prvKeys[1]);
     signer.callReload().then().statusCode(200);
@@ -137,9 +140,9 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
             containsInAnyOrder(ArrayUtils.addAll(keys, additionalKeys)));
 
     // only new keys loaded (from config-files-loading) should show up in healthcheck.
-    keysLoaded = getConfigFilesLoadingHealthCheckData(jsonBody, "keys-loaded");
+    keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_CONFIG_FILE_LOADING);
     assertThat(keysLoaded).isEqualTo(1);
-    assertThat(new JsonObject(jsonBody).getString("status")).isEqualTo("UP");
+    assertThat(getHealthcheckStatusValue(jsonBody)).isEqualTo("UP");
   }
 
   @ParameterizedTest
@@ -177,23 +180,9 @@ public class KeyIdentifiersAcceptanceTest extends KeyIdentifiersAcceptanceTestBa
     initAndStartSigner(calculateMode(keyType));
 
     final String jsonBody = signer.healthcheck().body().asString();
-    int keysLoaded = getConfigFilesLoadingHealthCheckData(jsonBody, "keys-loaded");
+    int keysLoaded = getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_CONFIG_FILE_LOADING);
     assertThat(keysLoaded).isEqualTo(keys.length);
-    assertThat(new JsonObject(jsonBody).getString("status")).isEqualTo("UP");
-  }
-
-  private static int getConfigFilesLoadingHealthCheckData(
-      String healthCheckJsonBody, String dataKey) {
-    JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
-    int keysLoaded =
-        jsonObject.getJsonArray("checks").stream()
-            .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
-            .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
-            .filter(o -> "config-files-loading".equals(((JsonObject) o).getString("id")))
-            .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
-            .findFirst()
-            .orElse(-1);
-    return keysLoaded;
+    assertThat(getHealthcheckStatusValue(jsonBody)).isEqualTo("UP");
   }
 
   @ParameterizedTest

@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.signing;
+package tech.pegasys.web3signer.signing.bulkloading;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,7 +18,7 @@ import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.KeystoreUtil;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
-import tech.pegasys.web3signer.signing.bulkloading.BlsKeystoreBulkLoader;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
 
 import java.io.IOException;
 import java.nio.file.Files;
