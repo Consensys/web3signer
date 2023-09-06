@@ -52,6 +52,7 @@ dependencies {
   testImplementation 'tech.pegasys.teku.internal:networks'
   testImplementation 'tech.pegasys.teku.internal:json'
   testImplementation 'tech.pegasys.teku.internal:jackson'
+  // Use test fixtures from Teku 23.8.0 as latest version doesn't include any test fixtures
   testImplementation (group: 'tech.pegasys.teku.internal', name: 'spec', classifier: 'test-fixtures', version: '23.8.0')
   testImplementation (group: 'tech.pegasys.teku.internal', name: 'bls', classifier: 'test-fixtures', version: '23.8.0')
   testImplementation 'tech.pegasys.teku.internal:serializer'
