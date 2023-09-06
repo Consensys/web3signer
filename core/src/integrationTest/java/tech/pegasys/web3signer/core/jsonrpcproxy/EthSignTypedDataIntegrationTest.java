@@ -35,9 +35,72 @@ import org.web3j.protocol.core.Request;
 
 public class EthSignTypedDataIntegrationTest extends IntegrationTestBase {
 
-  private static final String eip712Json =
-      "{\"types\": {    \"EIP712Domain\": [      {\"name\": \"name\", \"type\": \"string\"},      {\"name\": \"version\", \"type\": \"string\"},      {\"name\": \"chainId\", \"type\": \"uint256\"},      {\"name\": \"verifyingContract\", \"type\": \"address\"}    ],    \"Person\": [      {\"name\": \"name\", \"type\": \"string\"},      {\"name\": \"wallet\", \"type\": \"address\"}    ]  },  \"domain\": {    \"name\": \"My Dapp\",    \"version\": \"1.0\",    \"chainId\": 1,    \"verifyingContract\": \"0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC\"  },  \"primaryType\": \"Person\",  \"message\": {    \"name\": \"John Doe\",    \"wallet\": \"0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B\"  }}";
-
+  private static final String eip712Json = """
+          {
+            "domain": {
+              "name": "Ether Mail",
+              "version": "1",
+              "chainId": 1,
+              "verifyingContract": "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"
+            },
+            "message": {
+              "from": {
+                "name": "Cow",
+                "wallet": "0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826"
+              },
+              "to": {
+                "name": "Bob",
+                "wallet": "0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB"
+              },
+              "contents": "Hello, Bob!"
+            },
+            "primaryType": "Mail",
+            "types": {
+              "EIP712Domain": [
+                {
+                  "name": "name",
+                  "type": "string"
+                },
+                {
+                  "name": "version",
+                  "type": "string"
+                },
+                {
+                  "name": "chainId",
+                  "type": "uint256"
+                },
+                {
+                  "name": "verifyingContract",
+                  "type": "address"
+                }
+              ],
+              "Mail": [
+                {
+                  "name": "from",
+                  "type": "Person"
+                },
+                {
+                  "name": "to",
+                  "type": "Person"
+                },
+                {
+                  "name": "contents",
+                  "type": "string"
+                }
+              ],
+              "Person": [
+                {
+                  "name": "name",
+                  "type": "string"
+                },
+                {
+                  "name": "wallet",
+                  "type": "address"
+                }
+              ]
+            }
+          }
+          """;
   @Test
   void ethSignTypedDataSignsDataWhenAnUnlockedAccountIsPassed() {
     final Request<?, EthSignTypedData> requestBody =
@@ -53,7 +116,7 @@ public class EthSignTypedDataIntegrationTest extends IntegrationTestBase {
     final JsonRpcSuccessResponse responseBody =
         new JsonRpcSuccessResponse(
             requestBody.getId(),
-            "0x11cb46f70ad43da86e15ca7c6bb28356859a5f4ba430b44dbf1e65726d467be6072be9d1e5b40bd5b7abe8888eb91a69f0e6d56a8a094718ed8080baf02d61c31c");
+            "0x590dc3b33e5055bfc5f4c2da5aa1f890340faefd2ba287cef9c019198f0391d95f85ff5f65471e1f50b541b81e720e353cd3cdaa41b9e08a5e1cd7134cb909711c");
 
     sendPostRequestAndVerifyResponse(
         request.web3Signer(Json.encode(requestBody)),
