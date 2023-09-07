@@ -19,8 +19,8 @@ import tech.pegasys.web3signer.AwsSecretsManagerUtil;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsParametersBuilder;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParametersBuilder;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.net.URI;
@@ -121,7 +121,7 @@ public class AwsSecretsManagerPerformanceAcceptanceTest extends AcceptanceTestBa
   @Test
   void largeNumberOfKeysAreLoadedSuccessfully() {
     final AwsVaultParameters awsVaultParameters =
-        AwsParametersBuilder.anAwsParameters()
+        AwsVaultParametersBuilder.anAwsParameters()
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion(AWS_REGION)
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)

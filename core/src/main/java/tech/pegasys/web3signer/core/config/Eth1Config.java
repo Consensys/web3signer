@@ -45,7 +45,7 @@ public interface Eth1Config {
 
   AzureKeyVaultParameters getAzureKeyVaultConfig();
 
-  AwsVaultParameters getAwsParameters();
+  AwsVaultParameters getAwsVaultParameters();
 
   long getAwsKmsClientCacheSize();
 

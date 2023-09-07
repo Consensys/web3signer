@@ -18,7 +18,8 @@ import java.util.Map;
 
 public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
-  private static long AZURE_DEFAULT_TIMEOUT = 60;
+  private static final long AZURE_DEFAULT_TIMEOUT = 60;
+  private static final boolean AZURE_DEFAULT_ENABLED = true;
 
   private final String keyVaultName;
   private final AzureAuthenticationMode authenticationMode;
@@ -27,6 +28,7 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   private final String clientSecret;
   private final Map<String, String> tags = new HashMap<>();
   private final long timeout;
+  private final boolean enabled;
 
   public DefaultAzureKeyVaultParameters(
       final String keyVaultName,
@@ -39,7 +41,8 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
         tenantId,
         clientSecret,
         Collections.emptyMap(),
-        AZURE_DEFAULT_TIMEOUT);
+        AZURE_DEFAULT_TIMEOUT,
+        AZURE_DEFAULT_ENABLED);
   }
 
   public DefaultAzureKeyVaultParameters(
@@ -48,7 +51,14 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
       final String tenantId,
       final String clientSecret,
       final Map<String, String> tags) {
-    this(keyVaultName, clientId, tenantId, clientSecret, tags, AZURE_DEFAULT_TIMEOUT);
+    this(
+        keyVaultName,
+        clientId,
+        tenantId,
+        clientSecret,
+        tags,
+        AZURE_DEFAULT_TIMEOUT,
+        AZURE_DEFAULT_ENABLED);
   }
 
   public DefaultAzureKeyVaultParameters(
@@ -57,7 +67,8 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
       final String tenantId,
       final String clientSecret,
       final Map<String, String> tags,
-      final long timeout) {
+      final long timeout,
+      final boolean enabled) {
     this.keyVaultName = keyVaultName;
     this.clientId = clientId;
     this.tenantId = tenantId;
@@ -65,6 +76,7 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
     this.authenticationMode = AzureAuthenticationMode.CLIENT_SECRET;
     this.tags.putAll(tags);
     this.timeout = timeout;
+    this.enabled = enabled;
   }
 
   @Override
@@ -89,7 +101,7 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
   @Override
   public boolean isAzureKeyVaultEnabled() {
-    return true;
+    return enabled;
   }
 
   @Override

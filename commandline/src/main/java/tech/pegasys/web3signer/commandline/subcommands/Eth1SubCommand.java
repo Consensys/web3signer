@@ -245,7 +245,7 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
   }
 
   @Override
-  public AwsVaultParameters getAwsParameters() {
+  public AwsVaultParameters getAwsVaultParameters() {
     return awsParameters;
   }
 

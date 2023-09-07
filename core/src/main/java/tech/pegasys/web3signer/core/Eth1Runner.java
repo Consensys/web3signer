@@ -236,7 +236,7 @@ public class Eth1Runner extends Runner {
       results =
           MappedResults.merge(results, bulkLoadAzureKeys(azureKeyVaultFactory, azureSignerFactory));
     }
-    if (eth1Config.getAwsParameters().isEnabled()) {
+    if (eth1Config.getAwsVaultParameters().isEnabled()) {
       results =
           MappedResults.merge(
               results, bulkLoadAwsKeys(cachedAwsKmsClientFactory, awsKmsSignerFactory));
@@ -278,7 +278,7 @@ public class Eth1Runner extends Runner {
     final SecpAwsBulkLoader secpAwsBulkLoader =
         new SecpAwsBulkLoader(cachedAwsKmsClientFactory, awsKmsSignerFactory);
     final MappedResults<ArtifactSigner> awsResult =
-        secpAwsBulkLoader.load(eth1Config.getAwsParameters());
+        secpAwsBulkLoader.load(eth1Config.getAwsVaultParameters());
     LOG.info(
         "Keys loaded from AWS: [{}], with error count: [{}]",
         awsResult.getValues().size(),
