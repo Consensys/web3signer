@@ -154,7 +154,8 @@ public class InterchangeV5Importer {
       throws JsonProcessingException {
 
     final BlockImporter blockImporter =
-        new BlockImporter(validator, handle, JSON_MAPPER, lowWatermarkDao, signedBlocksDao);
+        new BlockImporter(
+            validator, handle, JSON_MAPPER, lowWatermarkDao, metadataDao, signedBlocksDao);
     blockImporter.importFrom(signedBlocksNode);
   }
 
@@ -164,7 +165,7 @@ public class InterchangeV5Importer {
 
     final AttestationImporter attestationImporter =
         new AttestationImporter(
-            validator, handle, JSON_MAPPER, lowWatermarkDao, signedAttestationsDao);
+            validator, handle, JSON_MAPPER, lowWatermarkDao, metadataDao, signedAttestationsDao);
 
     attestationImporter.importFrom(signedAttestationNode);
   }

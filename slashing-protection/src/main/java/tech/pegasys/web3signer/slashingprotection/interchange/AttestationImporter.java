@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -36,6 +37,7 @@ public class AttestationImporter {
   private final OptionalMinValueTracker minSourceTracker = new OptionalMinValueTracker();
   private final OptionalMinValueTracker minTargetTracker = new OptionalMinValueTracker();
   private final LowWatermarkDao lowWatermarkDao;
+  private final MetadataDao metadataDao;
   private final SignedAttestationsDao signedAttestationsDao;
   private final Validator validator;
   private final Handle handle;
@@ -46,11 +48,13 @@ public class AttestationImporter {
       final Handle handle,
       final ObjectMapper mapper,
       final LowWatermarkDao lowWatermarkDao,
+      final MetadataDao metadataDao,
       final SignedAttestationsDao signedAttestationsDao) {
     this.validator = validator;
     this.handle = handle;
     this.mapper = mapper;
     this.lowWatermarkDao = lowWatermarkDao;
+    this.metadataDao = metadataDao;
     this.signedAttestationsDao = signedAttestationsDao;
   }
 
@@ -68,7 +72,8 @@ public class AttestationImporter {
               jsonAttestation.getTargetEpoch(),
               validator.getId(),
               signedAttestationsDao,
-              lowWatermarkDao);
+              lowWatermarkDao,
+              metadataDao);
 
       final String attestationIdentifierString =
           String.format("Attestation with index %d for validator %s", i, validator.getPublicKey());

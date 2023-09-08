@@ -57,4 +57,9 @@ public class HighWatermark {
   public int hashCode() {
     return Objects.hash(slot, epoch);
   }
+
+  @Override
+  public String toString() {
+    return "HighWatermark{" + "slot=" + slot + ", epoch=" + epoch + '}';
+  }
 }

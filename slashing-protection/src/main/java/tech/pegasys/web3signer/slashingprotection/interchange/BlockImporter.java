@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.slashingprotection.interchange;
 
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.Validator;
@@ -35,6 +36,7 @@ public class BlockImporter {
 
   private final OptionalMinValueTracker minSlotTracker = new OptionalMinValueTracker();
   private final LowWatermarkDao lowWatermarkDao;
+  private final MetadataDao metadataDao;
   private final SignedBlocksDao signedBlocksDao;
   private final Validator validator;
   private final Handle handle;
@@ -45,11 +47,13 @@ public class BlockImporter {
       final Handle handle,
       final ObjectMapper mapper,
       final LowWatermarkDao lowWatermarkDao,
+      final MetadataDao metadataDao,
       final SignedBlocksDao signedBlocksDao) {
     this.validator = validator;
     this.handle = handle;
     this.mapper = mapper;
     this.lowWatermarkDao = lowWatermarkDao;
+    this.metadataDao = metadataDao;
     this.signedBlocksDao = signedBlocksDao;
   }
 
@@ -64,7 +68,8 @@ public class BlockImporter {
               jsonBlock.getSlot(),
               validator.getId(),
               signedBlocksDao,
-              lowWatermarkDao);
+              lowWatermarkDao,
+              metadataDao);
 
       final String blockIdentifierString =
           String.format("Block with index %d for validator %s", i, validator.getPublicKey());
