@@ -16,6 +16,7 @@ import static org.jdbi.v3.core.transaction.TransactionIsolationLevel.READ_COMMIT
 import static tech.pegasys.web3signer.slashingprotection.DbLocker.lockForValidator;
 
 import tech.pegasys.web3signer.slashingprotection.DbLocker.LockType;
+import tech.pegasys.web3signer.slashingprotection.dao.HighWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
@@ -272,6 +273,11 @@ public class DbSlashingProtection implements SlashingProtection {
           lockForValidator(handle, LockType.BLOCK, validatorId);
           validatorsDao.setEnabled(handle, validatorId, enabled);
         });
+  }
+
+  @Override
+  public Optional<HighWatermark> getHighWatermark() {
+    return jdbi.inTransaction(READ_COMMITTED, metadataDao::findHighWatermark);
   }
 
   private boolean isEnabled(final Handle handle, final int validatorId) {

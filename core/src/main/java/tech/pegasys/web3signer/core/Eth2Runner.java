@@ -25,6 +25,7 @@ import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
+import tech.pegasys.web3signer.core.service.http.handlers.HighWatermarkHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresHandler;
@@ -90,6 +91,7 @@ public class Eth2Runner extends Runner {
   public static final String KEYSTORES_PATH = "/eth/v1/keystores";
   public static final String PUBLIC_KEYS_PATH = "/api/v1/eth2/publicKeys";
   public static final String SIGN_PATH = "/api/v1/eth2/sign/:identifier";
+  public static final String HIGH_WATERMARK_PATH = "/api/v1/eth2/highWatermark";
   private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<SlashingProtectionContext> slashingProtectionContext;
@@ -170,6 +172,13 @@ public class Eth2Runner extends Runner {
         .failureHandler(errorHandler);
 
     addReloadHandler(router, List.of(blsSignerProvider), errorHandler);
+
+    slashingProtectionContext.ifPresent(
+        protectionContext ->
+            router
+                .route(HttpMethod.GET, HIGH_WATERMARK_PATH)
+                .handler(new HighWatermarkHandler(protectionContext.getSlashingProtection()))
+                .failureHandler(errorHandler));
 
     if (isKeyManagerApiEnabled) {
       router
