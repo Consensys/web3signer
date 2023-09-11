@@ -166,7 +166,7 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
-  public void blockCanSignWhenSlotIsAtOrBeyondHighWatermark() {
+  public void blockCanSignWhenSlotIsBelowHighWatermark() {
     final SignedBlock signedBlock = new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT);
     when(metadataDao.findHighWatermark(any()))
         .thenReturn(Optional.of(new HighWatermark(SLOT.add(1L), null)));
