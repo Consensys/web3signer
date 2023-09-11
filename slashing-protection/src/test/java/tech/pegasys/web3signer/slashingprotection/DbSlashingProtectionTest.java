@@ -166,6 +166,17 @@ public class DbSlashingProtectionTest {
   }
 
   @Test
+  public void blockCanSignWhenSlotIsAtOrBeyondHighWatermark() {
+    final SignedBlock signedBlock = new SignedBlock(VALIDATOR_ID, SLOT, SIGNING_ROOT);
+    when(metadataDao.findHighWatermark(any()))
+        .thenReturn(Optional.of(new HighWatermark(SLOT.add(1L), null)));
+
+    assertThat(dbSlashingProtection.maySignBlock(PUBLIC_KEY1, SIGNING_ROOT, SLOT, GVR)).isTrue();
+
+    verify(signedBlocksDao).insertBlockProposal(any(), refEq(signedBlock));
+  }
+
+  @Test
   public void blockCannotSignWhenNoRegisteredValidator(final Jdbi jdbi) {
     final DbSlashingProtection dbSlashingProtection =
         new DbSlashingProtection(
@@ -296,6 +307,36 @@ public class DbSlashingProtectionTest {
         .isFalse();
 
     verify(signedAttestationsDao, never()).insertAttestation(any(), refEq(attestation));
+  }
+
+  @Test
+  public void attestationCanSignWhenSourceIsBelowHighWatermark() {
+    final SignedAttestation attestation =
+        new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, SOURCE_EPOCH, SIGNING_ROOT);
+    when(metadataDao.findHighWatermark(any()))
+        .thenReturn(Optional.of(new HighWatermark(null, SOURCE_EPOCH.add(1L))));
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, SOURCE_EPOCH, GVR))
+        .isTrue();
+
+    verify(signedAttestationsDao).insertAttestation(any(), refEq(attestation));
+  }
+
+  @Test
+  public void attestationCanSignWhenTargetIsBelowHighWatermark() {
+    final SignedAttestation attestation =
+        new SignedAttestation(VALIDATOR_ID, SOURCE_EPOCH, TARGET_EPOCH, SIGNING_ROOT);
+    when(metadataDao.findHighWatermark(any()))
+        .thenReturn(Optional.of(new HighWatermark(null, TARGET_EPOCH.add(1L))));
+
+    assertThat(
+            dbSlashingProtection.maySignAttestation(
+                PUBLIC_KEY1, SIGNING_ROOT, SOURCE_EPOCH, TARGET_EPOCH, GVR))
+        .isTrue();
+
+    verify(signedAttestationsDao).insertAttestation(any(), refEq(attestation));
   }
 
   @Test
