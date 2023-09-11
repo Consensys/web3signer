@@ -52,6 +52,7 @@ public class DbSlashingProtection implements SlashingProtection {
   private final SignedAttestationsDao signedAttestationsDao;
   private final InterchangeManager interchangeManager;
   private final LowWatermarkDao lowWatermarkDao;
+  private final MetadataDao metadataDao;
   private final GenesisValidatorRootValidator gvrValidator;
   private final RegisteredValidators registeredValidators;
 
@@ -68,6 +69,7 @@ public class DbSlashingProtection implements SlashingProtection {
     this.signedBlocksDao = signedBlocksDao;
     this.signedAttestationsDao = signedAttestationsDao;
     this.lowWatermarkDao = lowWatermarkDao;
+    this.metadataDao = metadataDao;
     this.registeredValidators = registeredValidators;
     this.gvrValidator = new GenesisValidatorRootValidator(jdbi, metadataDao);
     this.interchangeManager =
@@ -175,13 +177,15 @@ public class DbSlashingProtection implements SlashingProtection {
                   targetEpoch,
                   validatorId,
                   signedAttestationsDao,
-                  lowWatermarkDao);
+                  lowWatermarkDao,
+                  metadataDao);
 
           if (attestationValidator.sourceGreaterThanTargetEpoch()) {
             return false;
           }
 
-          if (attestationValidator.hasSourceOlderThanWatermark()
+          if (attestationValidator.hasEpochAtOrBeyondHighWatermark()
+              || attestationValidator.hasSourceOlderThanWatermark()
               || attestationValidator.hasTargetOlderThanWatermark()
               || attestationValidator.directlyConflictsWithExistingEntry()
               || attestationValidator.isSurroundedByExistingAttestation()
@@ -220,9 +224,16 @@ public class DbSlashingProtection implements SlashingProtection {
 
           final BlockValidator blockValidator =
               new BlockValidator(
-                  h, signingRoot, blockSlot, validatorId, signedBlocksDao, lowWatermarkDao);
+                  h,
+                  signingRoot,
+                  blockSlot,
+                  validatorId,
+                  signedBlocksDao,
+                  lowWatermarkDao,
+                  metadataDao);
 
-          if (blockValidator.isOlderThanWatermark()
+          if (blockValidator.isAtOrBeyondHighWatermark()
+              || blockValidator.isOlderThanWatermark()
               || blockValidator.directlyConflictsWithExistingEntry()) {
             return false;
           }
