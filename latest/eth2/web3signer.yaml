@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: 'Web3Signer ETH2 Api'
   description: 'Sign Eth2 Artifacts'
-  version: '23.9.0+6-ga383c328'
+  version: '23.9.0+7-gb4a725da'
   license:
     name: 'Apache 2.0'
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
@@ -16,6 +16,8 @@ paths:
     $ref: './signing/paths/sign.yaml'
   /api/v1/eth2/publicKeys:
     $ref: './signing/paths/public_keys.yaml'
+  /api/v1/eth2/highWatermark:
+    $ref: './signing/paths/high_watermark.yaml'
   /reload:
     $ref: './signing/paths/reload.yaml'
   /upcheck:
