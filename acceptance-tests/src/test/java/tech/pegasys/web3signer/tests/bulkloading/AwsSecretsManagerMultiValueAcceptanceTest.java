@@ -105,6 +105,7 @@ public class AwsSecretsManagerMultiValueAcceptanceTest extends AcceptanceTestBas
   void secretsAreLoadedFromAWSSecretsManagerAndReportedByPublicApi(final boolean useConfigFile) {
     final AwsVaultParameters awsVaultParameters =
         AwsVaultParametersBuilder.anAwsParameters()
+            .withEnabled(true)
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion(AWS_REGION)
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
