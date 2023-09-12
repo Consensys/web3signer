@@ -2,14 +2,18 @@
 
 ## Next Release
 
-### Breaking Changes
-- Eth2 Signing request body: deprecating `signingRoot` in favor of `signing_root` property. `signingRoot` will be removed in a future release.
+### Features Added
+- Aws bulk loading for secp256k1 keys in eth1 mode [#889](https://github.com/Consensys/web3signer/pull/889)
+
+## 23.9.0
 
 ### Features Added
 - Signing support for BlobSidecar and BlindedBlobSidecar in Deneb fork.
 - Add `--azure-response-timeout` to allow request response timeout to be configurable, the field `timeout` is also accepted in the Azure metadata file. [#888](https://github.com/Consensys/web3signer/pull/888)
-- Bulk load Ethereum v3 wallet files in eth1 mode. 
-- Aws bulk loading for secp256k1 keys in eth1 mode [#889](https://github.com/Consensys/web3signer/pull/889)
+- Bulk load Ethereum v3 wallet files in eth1 mode.
+- Eth2 Signing request body now supports both `signingRoot` and the `signing_root` property
+- Add network configuration for Holesky testnet
+- Add `eth_signTypedData` RPC method under the eth1 subcommand. [#893](https://github.com/Consensys/web3signer/pull/893)
 
 ### Bugs fixed
 - Upcheck was using application/json accept headers instead text/plain accept headers

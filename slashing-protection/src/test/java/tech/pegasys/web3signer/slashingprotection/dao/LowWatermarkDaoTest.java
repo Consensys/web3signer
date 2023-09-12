@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.statement.UnableToExecuteStatementException;
@@ -200,7 +201,99 @@ public class LowWatermarkDaoTest {
     assertThat(watermark.get().getTargetEpoch()).isEqualTo(UInt64.valueOf(5));
   }
 
+  @Test
+  public void canCreateLowWatermarkSlotIfLessThanOrEqualToHighWatermarkSlot(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    UInt64 slot = UInt64.valueOf(2);
+    updateHighWatermark(handle, UInt64.MAX_VALUE, slot);
+
+    assertThat(lowWatermarkDao.findLowWatermarkForValidator(handle, 1)).isEmpty();
+
+    lowWatermarkDao.updateSlotWatermarkFor(handle, 1, slot);
+
+    Optional<SigningWatermark> watermark = lowWatermarkDao.findLowWatermarkForValidator(handle, 1);
+    assertThat(watermark).isNotEmpty();
+    assertThat(watermark.get().getSlot()).isEqualTo(UInt64.valueOf(2));
+  }
+
+  @Test
+  public void canCreateLowWatermarkSourceEpochIfLessThanOrEqualToHighWatermarkEpoch(
+      final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    UInt64 sourceEpoch = UInt64.valueOf(2);
+    UInt64 targetEpoch = UInt64.valueOf(2);
+    updateHighWatermark(handle, sourceEpoch, UInt64.MAX_VALUE);
+
+    lowWatermarkDao.updateEpochWatermarksFor(handle, 1, sourceEpoch, targetEpoch);
+
+    Optional<SigningWatermark> watermark = lowWatermarkDao.findLowWatermarkForValidator(handle, 1);
+    assertThat(watermark.get().getSourceEpoch()).isEqualTo(sourceEpoch);
+  }
+
+  @Test
+  public void canCreateLowWatermarkTargetEpochIfLessThanOrEqualToHighWatermarkEpoch(
+      final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    UInt64 sourceEpoch = UInt64.valueOf(2);
+    UInt64 targetEpoch = UInt64.valueOf(3);
+    updateHighWatermark(handle, targetEpoch, UInt64.MAX_VALUE);
+
+    lowWatermarkDao.updateEpochWatermarksFor(handle, 1, sourceEpoch, targetEpoch);
+
+    Optional<SigningWatermark> watermark = lowWatermarkDao.findLowWatermarkForValidator(handle, 1);
+    assertThat(watermark.get().getTargetEpoch()).isEqualTo(targetEpoch);
+  }
+
+  @Test
+  public void cannotCreateLowWatermarkSlotIfGreaterThanHighWatermarkSlot(final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    UInt64 slot = UInt64.valueOf(3);
+
+    updateHighWatermark(handle, UInt64.MAX_VALUE, slot.subtract(1L));
+
+    assertThatThrownBy(() -> lowWatermarkDao.updateSlotWatermarkFor(handle, 1, slot))
+        .hasMessageContaining(
+            "low_watermark slot must be less than or equal to high_watermark_slot in the metadata table");
+  }
+
+  @Test
+  public void cannotCreateLowWatermarkSourceEpochIfGreaterThanHighWatermarkEpoch(
+      final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    UInt64 sourceEpoch = UInt64.valueOf(3);
+    UInt64 targetEpoch = UInt64.valueOf(3);
+    updateHighWatermark(handle, sourceEpoch.subtract(1L), UInt64.MAX_VALUE);
+
+    assertThatThrownBy(
+            () -> lowWatermarkDao.updateEpochWatermarksFor(handle, 1, sourceEpoch, targetEpoch))
+        .hasMessageContaining(
+            "low_watermark source epoch must be less than or equal to high_watermark_epoch in the metadata table");
+  }
+
+  @Test
+  public void cannotCreateLowWatermarkTargetEpochIfGreaterThanHighWatermarkEpoch(
+      final Handle handle) {
+    insertValidator(handle, Bytes.of(100), 1);
+    UInt64 sourceEpoch = UInt64.valueOf(2);
+    UInt64 targetEpoch = UInt64.valueOf(3);
+    updateHighWatermark(handle, targetEpoch.subtract(1L), UInt64.MAX_VALUE);
+
+    assertThatThrownBy(
+            () -> lowWatermarkDao.updateEpochWatermarksFor(handle, 1, sourceEpoch, targetEpoch))
+        .hasMessageContaining(
+            "low_watermark target epoch must be less than or equal to high_watermark_epoch in the metadata table");
+  }
+
   private void insertValidator(final Handle handle, final Bytes publicKey, final int validatorId) {
     handle.execute("INSERT INTO validators (id, public_key) VALUES (?, ?)", validatorId, publicKey);
+  }
+
+  private void updateHighWatermark(final Handle handle, final UInt64 epoch, final UInt64 slot) {
+    handle.execute(
+        "INSERT INTO metadata (id, genesis_validators_root, high_watermark_epoch, high_watermark_slot) VALUES (?, ?, ?, ?)",
+        1,
+        Bytes32.leftPad(Bytes.of(3)),
+        epoch,
+        slot);
   }
 }

@@ -12,7 +12,9 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import tech.pegasys.web3signer.slashingprotection.dao.HighWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestation;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedAttestationsDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
@@ -40,6 +42,7 @@ public class AttestationValidator {
   private final int validatorId;
   private final SignedAttestationsDao signedAttestationsDao;
   private final LowWatermarkDao lowWatermarkDao;
+  private final MetadataDao metadataDao;
 
   private final Supplier<Optional<SigningWatermark>> watermarkSupplier;
 
@@ -51,7 +54,8 @@ public class AttestationValidator {
       final UInt64 targetEpoch,
       final int validatorId,
       final SignedAttestationsDao signedAttestationsDao,
-      final LowWatermarkDao lowWatermarkDao) {
+      final LowWatermarkDao lowWatermarkDao,
+      final MetadataDao metadataDao) {
     this.handle = handle;
     this.publicKey = publicKey;
     this.signingRoot = signingRoot;
@@ -60,6 +64,7 @@ public class AttestationValidator {
     this.validatorId = validatorId;
     this.signedAttestationsDao = signedAttestationsDao;
     this.lowWatermarkDao = lowWatermarkDao;
+    this.metadataDao = metadataDao;
 
     watermarkSupplier =
         Suppliers.memoize(() -> lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId));
@@ -124,6 +129,24 @@ public class AttestationValidator {
           "Attestation target epoch {} is below minimum existing attestation target epoch {}",
           targetEpoch,
           minimumTargetEpoch.get());
+      return true;
+    }
+    return false;
+  }
+
+  public boolean hasEpochAtOrBeyondHighWatermark() {
+    final Optional<HighWatermark> highWatermark = metadataDao.findHighWatermark(handle);
+    if (highWatermark
+        .map(
+            h ->
+                sourceEpoch.compareTo(h.getEpoch()) >= 0
+                    || targetEpoch.compareTo(h.getEpoch()) >= 0)
+        .orElse(false)) {
+      LOG.warn(
+          "Attestation source {} or target {} is at or beyond high watermark {}",
+          sourceEpoch,
+          targetEpoch,
+          highWatermark.get());
       return true;
     }
     return false;
