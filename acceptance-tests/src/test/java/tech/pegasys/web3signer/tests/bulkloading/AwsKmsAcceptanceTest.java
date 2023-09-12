@@ -109,6 +109,7 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
   void keysAreLoadedFromAwsKmsAndReportedByPublicApi(final boolean useConfigFile) {
     final AwsVaultParameters awsVaultParameters =
         AwsVaultParametersBuilder.anAwsParameters()
+            .withEnabled(true)
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion(AWS_REGION)
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
@@ -150,6 +151,7 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
     final boolean useConfigFile = false;
     final AwsVaultParameters invalidCredsParams =
         AwsVaultParametersBuilder.anAwsParameters()
+            .withEnabled(true)
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion("us-east-2")
             .withAccessKeyId("invalid")
@@ -195,6 +197,7 @@ public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
       final boolean useConfigFile) {
     final AwsVaultParameters awsVaultParameters =
         AwsVaultParametersBuilder.anAwsParameters()
+            .withEnabled(true)
             .withAuthenticationMode(AwsAuthenticationMode.ENVIRONMENT)
             .withTagNamesFilter(List.of("TagName2", "TagName3"))
             .withTagValuesFilter(List.of("TagValue0", "TagValue2", "TagValue3"))
