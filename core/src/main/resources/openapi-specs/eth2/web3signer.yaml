@@ -16,6 +16,8 @@ paths:
     $ref: './signing/paths/sign.yaml'
   /api/v1/eth2/publicKeys:
     $ref: './signing/paths/public_keys.yaml'
+  /api/v1/eth2/highWatermark:
+    $ref: './signing/paths/high_watermark.yaml'
   /reload:
     $ref: './signing/paths/reload.yaml'
   /upcheck:

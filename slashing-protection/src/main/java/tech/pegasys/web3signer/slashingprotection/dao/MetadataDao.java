@@ -43,7 +43,7 @@ public class MetadataDao {
             "SELECT high_watermark_epoch as epoch, high_watermark_slot as slot FROM metadata WHERE id = ?")
         .bind(0, METADATA_ROW_ID)
         .mapToBean(HighWatermark.class)
-        .filter(h -> h.getEpoch() != null && h.getSlot() != null)
+        .filter(h -> h.getEpoch() != null || h.getSlot() != null)
         .findFirst();
   }
 

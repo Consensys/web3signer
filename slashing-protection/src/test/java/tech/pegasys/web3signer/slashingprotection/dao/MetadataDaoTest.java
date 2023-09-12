@@ -93,6 +93,26 @@ public class MetadataDaoTest {
   }
 
   @Test
+  public void findsExistingHighWatermarkWithOnlyEpoch(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    updateHighWatermark(handle, 1, null);
+
+    final Optional<HighWatermark> existingHighWatermark = metadataDao.findHighWatermark(handle);
+
+    assertThat(existingHighWatermark).contains(new HighWatermark(null, UInt64.valueOf(1)));
+  }
+
+  @Test
+  public void findsExistingHighWatermarkWithOnlySlot(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    updateHighWatermark(handle, null, 2);
+
+    final Optional<HighWatermark> existingHighWatermark = metadataDao.findHighWatermark(handle);
+
+    assertThat(existingHighWatermark).contains(new HighWatermark(UInt64.valueOf(2), null));
+  }
+
+  @Test
   public void returnsEmptyForNonExistingHighWatermark(final Handle handle) {
     assertThat(metadataDao.findHighWatermark(handle)).isEmpty();
   }
@@ -110,15 +130,27 @@ public class MetadataDaoTest {
 
     int updateCount = metadataDao.updateHighWatermark(handle, highWatermark);
 
-    assertThat(updateCount).isEqualTo(1);
-    final List<HighWatermark> highWatermarks =
-        handle
-            .createQuery(
-                "SELECT high_watermark_epoch as epoch, high_watermark_slot as slot FROM metadata")
-            .mapToBean(HighWatermark.class)
-            .list();
-    assertThat(highWatermarks.size()).isEqualTo(1);
-    assertThat(highWatermarks.get(0)).isEqualTo(highWatermark);
+    assertHighWatermarkUpdatedSuccessfully(handle, updateCount, highWatermark);
+  }
+
+  @Test
+  public void insertsOnlyEpochHighWatermark(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    HighWatermark highWatermark = new HighWatermark(null, UInt64.valueOf(1));
+
+    int updateCount = metadataDao.updateHighWatermark(handle, highWatermark);
+
+    assertHighWatermarkUpdatedSuccessfully(handle, updateCount, highWatermark);
+  }
+
+  @Test
+  public void insertsOnlySlotHighWatermark(final Handle handle) {
+    insertGvr(handle, Bytes32.leftPad(Bytes.of(3)));
+    HighWatermark highWatermark = new HighWatermark(UInt64.valueOf(1), null);
+
+    int updateCount = metadataDao.updateHighWatermark(handle, highWatermark);
+
+    assertHighWatermarkUpdatedSuccessfully(handle, updateCount, highWatermark);
   }
 
   @Test
@@ -129,6 +161,11 @@ public class MetadataDaoTest {
 
     int updateCount = metadataDao.updateHighWatermark(handle, highWatermark);
 
+    assertHighWatermarkUpdatedSuccessfully(handle, updateCount, highWatermark);
+  }
+
+  private void assertHighWatermarkUpdatedSuccessfully(
+      Handle handle, int updateCount, HighWatermark highWatermark) {
     assertThat(updateCount).isEqualTo(1);
     final List<HighWatermark> highWatermarks =
         handle
@@ -220,7 +257,7 @@ public class MetadataDaoTest {
         MAX_LOW_WATERMARK_SOURCE_EPOCH);
   }
 
-  private void updateHighWatermark(final Handle handle, final int epoch, final int slot) {
+  private void updateHighWatermark(final Handle handle, final Integer epoch, final Integer slot) {
     handle
         .createUpdate("UPDATE metadata set high_watermark_epoch=:epoch, high_watermark_slot=:slot")
         .bind("epoch", epoch)
