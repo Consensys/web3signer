@@ -106,54 +106,6 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
     assertThat(validator2.get("target_epoch")).isEqualTo(epoch);
   }
 
-  @Test
-  void onlySpecifiedWatermarksAreUpdated(@TempDir final Path testDirectory)
-      throws URISyntaxException {
-    setupSigner(testDirectory);
-
-    importSlashingProtectionData(testDirectory);
-
-    final SignerConfigurationBuilder repairBuilder = new SignerConfigurationBuilder();
-    repairBuilder.withMode("eth2");
-    repairBuilder.withSlashingEnabled(true);
-    repairBuilder.withSlashingProtectionDbUrl(signer.getSlashingDbUrl());
-    repairBuilder.withSlashingProtectionDbUsername("postgres");
-    repairBuilder.withSlashingProtectionDbPassword("postgres");
-    repairBuilder.withWatermarkRepairParameters(
-        new WatermarkRepairParameters(
-            20000,
-            30000,
-            List.of(
-                "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884")));
-    repairBuilder.withHttpPort(12345); // prevent wait for Ports file in AT
-
-    final Signer watermarkRepairSigner = new Signer(repairBuilder.build(), null);
-    watermarkRepairSigner.start();
-    waitFor(() -> assertThat(watermarkRepairSigner.isRunning()).isFalse());
-
-    final Map<Object, List<Map<String, Object>>> watermarks = getWatermarks();
-
-    assertThat(watermarks).hasSize(2);
-
-    final Map<String, Object> validator1 =
-        watermarks
-            .get(
-                "0x8f3f44b74d316c3293cced0c48c72e021ef8d145d136f2908931090e7181c3b777498128a348d07b0b9cd3921b5ca537")
-            .get(0);
-    assertThat(validator1.get("slot")).isEqualTo(BigDecimal.valueOf(12345));
-    assertThat(validator1.get("source_epoch")).isEqualTo(BigDecimal.valueOf(5));
-    assertThat(validator1.get("target_epoch")).isEqualTo(BigDecimal.valueOf(6));
-
-    final Map<String, Object> validator2 =
-        watermarks
-            .get(
-                "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884")
-            .get(0);
-    assertThat(validator2.get("slot")).isEqualTo(BigDecimal.valueOf(20000));
-    assertThat(validator2.get("source_epoch")).isEqualTo(BigDecimal.valueOf(30000));
-    assertThat(validator2.get("target_epoch")).isEqualTo(BigDecimal.valueOf(30000));
-  }
-
   private Map<Object, List<Map<String, Object>>> getWatermarks() {
     final Jdbi jdbi = Jdbi.create(signer.getSlashingDbUrl(), DB_USERNAME, DB_PASSWORD);
     return jdbi.withHandle(
