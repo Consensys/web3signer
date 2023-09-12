@@ -20,6 +20,7 @@ import static tech.pegasys.web3signer.commandline.util.RequiredOptionsUtil.check
 import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORDS_PATH;
 import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
 
+import tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters;
 import tech.pegasys.web3signer.commandline.PicoCliEth1AzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.annotations.RequiredOption;
 import tech.pegasys.web3signer.commandline.config.PicoV3KeystoresBulkloadParameters;
@@ -30,6 +31,7 @@ import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -152,6 +154,8 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
 
   @CommandLine.Mixin private PicoV3KeystoresBulkloadParameters picoV3KeystoresBulkloadParameters;
 
+  @CommandLine.Mixin private PicoCliAwsKmsParameters awsParameters;
+
   @Override
   public Runner createRunner() {
     return new Eth1Runner(config, this);
@@ -238,6 +242,11 @@ public class Eth1SubCommand extends ModeSubCommand implements Eth1Config {
   @Override
   public AzureKeyVaultParameters getAzureKeyVaultConfig() {
     return azureKeyVaultParameters;
+  }
+
+  @Override
+  public AwsVaultParameters getAwsVaultParameters() {
+    return awsParameters;
   }
 
   @CommandLine.Option(
