@@ -107,6 +107,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   void secretsAreLoadedFromAWSSecretsManagerAndReportedByPublicApi(final boolean useConfigFile) {
     final AwsVaultParameters awsVaultParameters =
         AwsVaultParametersBuilder.anAwsParameters()
+            .withEnabled(true)
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion(AWS_REGION)
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
@@ -149,6 +150,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
     final boolean useConfigFile = false;
     final AwsVaultParameters invalidCredsParams =
         AwsVaultParametersBuilder.anAwsParameters()
+            .withEnabled(true)
             .withAuthenticationMode(AwsAuthenticationMode.SPECIFIED)
             .withRegion("us-east-2")
             .withAccessKeyId("invalid")
@@ -181,6 +183,7 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
       final boolean useConfigFile) {
     final AwsVaultParameters awsVaultParameters =
         AwsVaultParametersBuilder.anAwsParameters()
+            .withEnabled(true)
             .withAuthenticationMode(AwsAuthenticationMode.ENVIRONMENT)
             .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
             .withTagNamesFilter(List.of("TagName2", "TagName3"))
