@@ -12,32 +12,39 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.aws;
 
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
+import tech.pegasys.web3signer.common.config.AwsCredentials;
+
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
 
-import software.amazon.awssdk.auth.credentials.AwsCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-
 /** This class acts as a key to identify Aws KmsClient from the cache. */
 final class AwsKmsClientKey {
-  private final AwsCredentialsProvider awsCredentialsProvider;
-  private final AwsCredentials awsCredentials;
+
+  private final Optional<AwsCredentials> awsCredentials;
+  private final AwsAuthenticationMode awsAuthenticationMode;
   private final String region;
   private final Optional<URI> endpointOverride;
 
   AwsKmsClientKey(
-      final AwsCredentialsProvider awsCredentialsProvider,
+      final AwsAuthenticationMode awsAuthenticationMode,
+      final Optional<tech.pegasys.web3signer.common.config.AwsCredentials> awsCredentials,
       final String region,
       final Optional<URI> endpointOverride) {
-    this.awsCredentialsProvider = awsCredentialsProvider;
-    this.awsCredentials = awsCredentialsProvider.resolveCredentials();
+    this.awsAuthenticationMode = awsAuthenticationMode;
+    this.awsCredentials = awsCredentials;
+
     this.region = region;
     this.endpointOverride = endpointOverride;
   }
 
-  public AwsCredentialsProvider getAwsCredentialsProvider() {
-    return awsCredentialsProvider;
+  public Optional<AwsCredentials> getAwsCredentials() {
+    return awsCredentials;
+  }
+
+  public AwsAuthenticationMode getAwsAuthenticationMode() {
+    return awsAuthenticationMode;
   }
 
   public String getRegion() {
@@ -54,12 +61,13 @@ final class AwsKmsClientKey {
     if (o == null || getClass() != o.getClass()) return false;
     AwsKmsClientKey that = (AwsKmsClientKey) o;
     return Objects.equals(awsCredentials, that.awsCredentials)
+        && awsAuthenticationMode == that.awsAuthenticationMode
         && Objects.equals(region, that.region)
         && Objects.equals(endpointOverride, that.endpointOverride);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(awsCredentials, region, endpointOverride);
+    return Objects.hash(awsCredentials, awsAuthenticationMode, region, endpointOverride);
   }
 }

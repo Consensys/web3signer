@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 ConsenSys AG.
+ * Copyright 2023 ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,28 +15,27 @@ package tech.pegasys.web3signer.tests.bulkloading;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
-import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AWS_BULK_LOADING;
-import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealtcheckKeysLoaded;
-import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckErrorCount;
-import static tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil.getHealthcheckStatusValue;
+import static org.hamcrest.core.IsEqual.equalTo;
 
-import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.web3signer.AwsSecretsManagerUtil;
+import tech.pegasys.web3signer.AwsKmsUtil;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AwsVaultParametersBuilder;
+import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.net.URI;
-import java.security.SecureRandom;
+import java.security.interfaces.ECPublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
@@ -68,7 +67,7 @@ import org.junit.jupiter.params.provider.ValueSource;
     matches = ".*",
     disabledReason = "AWS_REGION env variable is required")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS) // same instance is shared across test methods
-public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
+public class AwsKmsAcceptanceTest extends AcceptanceTestBase {
   private static final Logger LOG = LogManager.getLogger();
   private static final String RW_AWS_ACCESS_KEY_ID = System.getenv("RW_AWS_ACCESS_KEY_ID");
   private static final String RW_AWS_SECRET_ACCESS_KEY = System.getenv("RW_AWS_SECRET_ACCESS_KEY");
@@ -82,29 +81,32 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
       System.getenv("AWS_ENDPOINT_OVERRIDE") != null
           ? Optional.of(URI.create(System.getenv("AWS_ENDPOINT_OVERRIDE")))
           : Optional.empty();
-  private AwsSecretsManagerUtil awsSecretsManagerUtil;
-  private final List<BLSKeyPair> blsKeyPairs = new ArrayList<>();
+  private AwsKmsUtil awsSecretsManagerUtil;
+
+  public record Key(String keyId, String publicKey) {}
+
+  private final List<Key> keys = new ArrayList<>();
 
   @BeforeAll
   void setupAwsResources() {
     awsSecretsManagerUtil =
-        new AwsSecretsManagerUtil(
-            AWS_REGION, RW_AWS_ACCESS_KEY_ID, RW_AWS_SECRET_ACCESS_KEY, awsEndpointOverride);
-    final SecureRandom secureRandom = new SecureRandom();
+        new AwsKmsUtil(
+            AWS_REGION,
+            RW_AWS_ACCESS_KEY_ID,
+            RW_AWS_SECRET_ACCESS_KEY,
+            Optional.empty(),
+            awsEndpointOverride);
 
     for (int i = 0; i < 4; i++) {
-      final BLSKeyPair blsKeyPair = BLSKeyPair.random(secureRandom);
-      awsSecretsManagerUtil.createSecret(
-          blsKeyPair.getPublicKey().toString(),
-          blsKeyPair.getSecretKey().toBytes().toHexString(),
-          Map.of("TagName" + i, "TagValue" + i));
-      blsKeyPairs.add(blsKeyPair);
+      final String keyId = awsSecretsManagerUtil.createKey(Map.of("TagName" + i, "TagValue" + i));
+      final ECPublicKey publicKey = awsSecretsManagerUtil.publicKey(keyId);
+      keys.add(new Key(keyId, EthPublicKeyUtils.toHexString(publicKey)));
     }
   }
 
   @ParameterizedTest(name = "{index} - Using config file: {0}")
   @ValueSource(booleans = {true, false})
-  void secretsAreLoadedFromAWSSecretsManagerAndReportedByPublicApi(final boolean useConfigFile) {
+  void keysAreLoadedFromAwsKmsAndReportedByPublicApi(final boolean useConfigFile) {
     final AwsVaultParameters awsVaultParameters =
         AwsVaultParametersBuilder.anAwsParameters()
             .withEnabled(true)
@@ -112,7 +114,6 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
             .withRegion(AWS_REGION)
             .withAccessKeyId(RO_AWS_ACCESS_KEY_ID)
             .withSecretAccessKey(RO_AWS_SECRET_ACCESS_KEY)
-            .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
             .withTagNamesFilter(List.of("TagName0", "TagName1"))
             .withTagValuesFilter(List.of("TagValue0", "TagValue1", "TagValue2"))
             .withEndpointOverride(awsEndpointOverride)
@@ -121,28 +122,28 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
-            .withMode("eth2")
+            .withMode("eth1")
             .withAwsParameters(awsVaultParameters);
 
     startSigner(configBuilder.build());
 
-    final String healthCheckJsonBody = signer.healthcheck().body().asString();
-    int keysLoaded = getHealtcheckKeysLoaded(healthCheckJsonBody, KEYS_CHECK_AWS_BULK_LOADING);
-
-    assertThat(keysLoaded).isEqualTo(2);
-
-    signer
-        .callApiPublicKeys(KeyType.BLS)
+    final Response response = signer.callApiPublicKeys(KeyType.SECP256K1);
+    response
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body(
-            "",
-            containsInAnyOrder(
-                blsKeyPairs.get(0).getPublicKey().toString(),
-                blsKeyPairs.get(1).getPublicKey().toString()),
-            "",
-            hasSize(2));
+        .body("", containsInAnyOrder(keys.get(0).publicKey(), keys.get(1).publicKey()));
+
+    final Response healthcheckResponse = signer.healthcheck();
+    healthcheckResponse
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body("status", equalTo("UP"));
+
+    final String jsonBody = healthcheckResponse.body().asString();
+    final int keysLoaded = getAwsBulkLoadingData(jsonBody, "keys-loaded");
+    assertThat(keysLoaded).isEqualTo(2);
   }
 
   @Test
@@ -162,30 +163,42 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
-            .withMode("eth2")
+            .withMode("eth1")
             .withAwsParameters(invalidCredsParams);
 
     startSigner(configBuilder.build());
 
     final String healthCheckJsonBody = signer.healthcheck().body().asString();
 
-    int keysLoaded = getHealtcheckKeysLoaded(healthCheckJsonBody, KEYS_CHECK_AWS_BULK_LOADING);
-    int errorCount = getHealthcheckErrorCount(healthCheckJsonBody, KEYS_CHECK_AWS_BULK_LOADING);
+    int keysLoaded = getAwsBulkLoadingData(healthCheckJsonBody, "keys-loaded");
+    int errorCount = getAwsBulkLoadingData(healthCheckJsonBody, "error-count");
 
     assertThat(keysLoaded).isEqualTo(0);
     assertThat(errorCount).isEqualTo(1);
-    assertThat(getHealthcheckStatusValue(healthCheckJsonBody)).isEqualTo("DOWN");
+    assertThat(new JsonObject(healthCheckJsonBody).getString("status")).isEqualTo("DOWN");
+  }
+
+  private static int getAwsBulkLoadingData(String healthCheckJsonBody, String dataKey) {
+    final JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
+    return jsonObject.getJsonArray("checks").stream()
+        .map(JsonObject.class::cast)
+        .filter(check -> "keys-check".equals(check.getString("id")))
+        .flatMap(check -> check.getJsonArray("checks").stream())
+        .map(JsonObject.class::cast)
+        .filter(check -> "aws-bulk-loading".equals(check.getString("id")))
+        .mapToInt(check -> check.getJsonObject("data").getInteger(dataKey))
+        .findFirst()
+        .orElse(-1);
   }
 
   @ParameterizedTest(name = "{index} - Using config file: {0}")
   @ValueSource(booleans = {true, false})
-  void secretsAreLoadedFromAWSSecretsManagerWithEnvironmentAuthModeAndReportedByPublicApi(
+  void keysAreLoadedFromAwsKmsWithEnvironmentAuthModeAndReportedByPublicApi(
       final boolean useConfigFile) {
     final AwsVaultParameters awsVaultParameters =
         AwsVaultParametersBuilder.anAwsParameters()
             .withEnabled(true)
             .withAuthenticationMode(AwsAuthenticationMode.ENVIRONMENT)
-            .withPrefixesFilter(List.of(awsSecretsManagerUtil.getSecretsManagerPrefix()))
             .withTagNamesFilter(List.of("TagName2", "TagName3"))
             .withTagValuesFilter(List.of("TagValue0", "TagValue2", "TagValue3"))
             .withEndpointOverride(awsEndpointOverride)
@@ -194,21 +207,19 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
     final SignerConfigurationBuilder configBuilder =
         new SignerConfigurationBuilder()
             .withUseConfigFile(useConfigFile)
-            .withMode("eth2")
+            .withMode("eth1")
             .withAwsParameters(awsVaultParameters);
 
     startSigner(configBuilder.build());
 
     signer
-        .callApiPublicKeys(KeyType.BLS)
+        .callApiPublicKeys(KeyType.SECP256K1)
         .then()
         .statusCode(200)
         .contentType(ContentType.JSON)
         .body(
             "",
-            containsInAnyOrder(
-                blsKeyPairs.get(2).getPublicKey().toString(),
-                blsKeyPairs.get(3).getPublicKey().toString()),
+            containsInAnyOrder(keys.get(2).publicKey(), keys.get(3).publicKey()),
             "",
             hasSize(2));
   }
@@ -216,20 +227,14 @@ public class AwsSecretsManagerAcceptanceTest extends AcceptanceTestBase {
   @AfterAll
   void cleanUpAwsResources() {
     if (awsSecretsManagerUtil != null) {
-      blsKeyPairs.forEach(
-          keyPair -> {
-            final String secretName = keyPair.getPublicKey().toString();
+      keys.forEach(
+          key -> {
             try {
-              awsSecretsManagerUtil.deleteSecret(secretName);
+              awsSecretsManagerUtil.deleteKey(key.keyId());
             } catch (final RuntimeException e) {
-              LOG.warn(
-                  "Unexpected error while deleting key {}{}: {}",
-                  awsSecretsManagerUtil.getSecretsManagerPrefix(),
-                  secretName,
-                  e.getMessage());
+              LOG.warn("Unexpected error while deleting key {}: {}", key.keyId(), e.getMessage());
             }
           });
-      awsSecretsManagerUtil.close();
     }
   }
 }

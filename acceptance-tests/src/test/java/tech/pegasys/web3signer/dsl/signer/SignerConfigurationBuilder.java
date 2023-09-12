@@ -20,7 +20,7 @@ import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -50,7 +50,7 @@ public class SignerConfigurationBuilder {
   private Path slashingProtectionDbPoolConfigurationFile = null;
   private String mode;
   private AzureKeyVaultParameters azureKeyVaultParameters;
-  private AwsSecretsManagerParameters awsSecretsManagerParameters;
+  private AwsVaultParameters awsVaultParameters;
   private Map<String, String> web3SignerEnvironment;
   private Duration startupTimeout =
       Boolean.getBoolean("debugSubProcess") ? Duration.ofHours(1) : Duration.ofSeconds(30);
@@ -143,9 +143,8 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withAwsSecretsManagerParameters(
-      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
-    this.awsSecretsManagerParameters = awsSecretsManagerParameters;
+  public SignerConfigurationBuilder withAwsParameters(final AwsVaultParameters awsVaultParameters) {
+    this.awsVaultParameters = awsVaultParameters;
     return this;
   }
 
@@ -332,7 +331,7 @@ public class SignerConfigurationBuilder {
         metricsCategories,
         metricsEnabled,
         Optional.ofNullable(azureKeyVaultParameters),
-        Optional.ofNullable(awsSecretsManagerParameters),
+        Optional.ofNullable(awsVaultParameters),
         Optional.ofNullable(keystoresParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),

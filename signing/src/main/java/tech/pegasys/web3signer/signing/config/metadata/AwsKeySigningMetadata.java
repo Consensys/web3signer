@@ -15,7 +15,7 @@ package tech.pegasys.web3signer.signing.config.metadata;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 
 import java.net.URI;
 import java.util.Optional;
@@ -23,7 +23,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @JsonDeserialize(using = AwsKeySigningMetadataDeserializer.class)
-public class AwsKeySigningMetadata extends SigningMetadata implements AwsSecretsManagerParameters {
+public class AwsKeySigningMetadata extends SigningMetadata implements AwsVaultParameters {
   public static final String TYPE = "aws-secret";
   private final AwsAuthenticationMode authenticationMode;
   private final String region;

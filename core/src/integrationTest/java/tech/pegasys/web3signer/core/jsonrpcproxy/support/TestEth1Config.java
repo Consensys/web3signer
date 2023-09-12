@@ -16,12 +16,15 @@ import tech.pegasys.web3signer.core.config.Eth1Config;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParametersBuilder;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Optional;
 
 public class TestEth1Config implements Eth1Config {
@@ -96,7 +99,17 @@ public class TestEth1Config implements Eth1Config {
 
   @Override
   public AzureKeyVaultParameters getAzureKeyVaultConfig() {
-    return new DefaultAzureKeyVaultParameters("", "", "", "");
+    return new DefaultAzureKeyVaultParameters("", "", "", "", Collections.emptyMap(), 60, false);
+  }
+
+  @Override
+  public AwsVaultParameters getAwsVaultParameters() {
+    return AwsVaultParametersBuilder.anAwsParameters()
+        .withAccessKeyId("")
+        .withSecretAccessKey("")
+        .withRegion("")
+        .withEnabled(false)
+        .build();
   }
 
   @Override

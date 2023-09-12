@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-public final class AwsSecretsManagerParametersBuilder {
+public final class AwsVaultParametersBuilder {
   private AwsAuthenticationMode authenticationMode = AwsAuthenticationMode.SPECIFIED;
   private String accessKeyId;
   private String secretAccessKey;
@@ -30,64 +30,66 @@ public final class AwsSecretsManagerParametersBuilder {
   private long cacheMaximumSize = 1;
 
   private Optional<URI> endpointURI = Optional.empty();
+  private boolean enabled;
 
-  private AwsSecretsManagerParametersBuilder() {}
+  private AwsVaultParametersBuilder() {}
 
-  public static AwsSecretsManagerParametersBuilder anAwsSecretsManagerParameters() {
-    return new AwsSecretsManagerParametersBuilder();
+  public static AwsVaultParametersBuilder anAwsParameters() {
+    return new AwsVaultParametersBuilder();
   }
 
-  public AwsSecretsManagerParametersBuilder withAuthenticationMode(
+  public AwsVaultParametersBuilder withAuthenticationMode(
       final AwsAuthenticationMode authenticationMode) {
     this.authenticationMode = authenticationMode;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withAccessKeyId(final String accessKeyId) {
+  public AwsVaultParametersBuilder withAccessKeyId(final String accessKeyId) {
     this.accessKeyId = accessKeyId;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withSecretAccessKey(final String secretAccessKey) {
+  public AwsVaultParametersBuilder withSecretAccessKey(final String secretAccessKey) {
     this.secretAccessKey = secretAccessKey;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withRegion(final String region) {
+  public AwsVaultParametersBuilder withRegion(final String region) {
     this.region = region;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withPrefixesFilter(
-      final Collection<String> prefixesFilter) {
+  public AwsVaultParametersBuilder withPrefixesFilter(final Collection<String> prefixesFilter) {
     this.prefixesFilter = prefixesFilter;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withTagNamesFilter(
-      final Collection<String> tagNameFilters) {
+  public AwsVaultParametersBuilder withTagNamesFilter(final Collection<String> tagNameFilters) {
     this.tagNamesFilter = tagNameFilters;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withTagValuesFilter(
-      final Collection<String> tagValuesFilter) {
+  public AwsVaultParametersBuilder withTagValuesFilter(final Collection<String> tagValuesFilter) {
     this.tagValuesFilter = tagValuesFilter;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withCacheMaximumSize(final long cacheMaximumSize) {
+  public AwsVaultParametersBuilder withCacheMaximumSize(final long cacheMaximumSize) {
     this.cacheMaximumSize = cacheMaximumSize;
     return this;
   }
 
-  public AwsSecretsManagerParametersBuilder withEndpointOverride(
-      final Optional<URI> endpointOverride) {
+  public AwsVaultParametersBuilder withEndpointOverride(final Optional<URI> endpointOverride) {
     this.endpointURI = endpointOverride;
     return this;
   }
 
-  public AwsSecretsManagerParameters build() {
+  public AwsVaultParametersBuilder withEnabled(final boolean enabled) {
+    this.enabled = enabled;
+    return this;
+  }
+
+  public AwsVaultParameters build() {
     if (authenticationMode == AwsAuthenticationMode.SPECIFIED) {
       if (accessKeyId == null) {
         throw new IllegalArgumentException("accessKeyId is required");
@@ -102,7 +104,7 @@ public final class AwsSecretsManagerParametersBuilder {
       }
     }
 
-    return new TestAwsSecretsManagerParameters(
+    return new TestAwsVaultParameters(
         authenticationMode,
         accessKeyId,
         secretAccessKey,
@@ -111,10 +113,11 @@ public final class AwsSecretsManagerParametersBuilder {
         tagNamesFilter,
         tagValuesFilter,
         cacheMaximumSize,
-        endpointURI);
+        endpointURI,
+        enabled);
   }
 
-  private static class TestAwsSecretsManagerParameters implements AwsSecretsManagerParameters {
+  private static class TestAwsVaultParameters implements AwsVaultParameters {
     private final AwsAuthenticationMode authenticationMode;
     private final String accessKeyId;
     private final String secretAccessKey;
@@ -124,8 +127,9 @@ public final class AwsSecretsManagerParametersBuilder {
     private final Collection<String> tagValuesFilter;
     private final long cacheMaximumSize;
     private final Optional<URI> endpointOverride;
+    private final boolean enabled;
 
-    TestAwsSecretsManagerParameters(
+    TestAwsVaultParameters(
         final AwsAuthenticationMode authenticationMode,
         final String accessKeyId,
         final String secretAccessKey,
@@ -134,7 +138,8 @@ public final class AwsSecretsManagerParametersBuilder {
         final Collection<String> tagNamesFilter,
         final Collection<String> tagValuesFilter,
         final long cacheMaximumSize,
-        final Optional<URI> endpointOverride) {
+        final Optional<URI> endpointOverride,
+        final boolean enabled) {
       this.authenticationMode = authenticationMode;
       this.accessKeyId = accessKeyId;
       this.secretAccessKey = secretAccessKey;
@@ -144,11 +149,12 @@ public final class AwsSecretsManagerParametersBuilder {
       this.tagValuesFilter = tagValuesFilter;
       this.cacheMaximumSize = cacheMaximumSize;
       this.endpointOverride = endpointOverride;
+      this.enabled = enabled;
     }
 
     @Override
     public boolean isEnabled() {
-      return true;
+      return enabled;
     }
 
     @Override

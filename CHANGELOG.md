@@ -1,11 +1,13 @@
 # Changelog
 
-## 23.9.1
+## Next Release
 
 ### Breaking Changes
 - Remove --validator-ids option from watermark-repair subcommand [#909](https://github.com/Consensys/web3signer/pull/909)
 
----
+### Features Added
+- Aws bulk loading for secp256k1 keys in eth1 mode [#889](https://github.com/Consensys/web3signer/pull/889)
+
 ## 23.9.0
 
 ### Features Added
