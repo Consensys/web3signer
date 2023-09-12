@@ -15,9 +15,9 @@ package tech.pegasys.web3signer.signing.secp256k1.aws;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.web3signer.AwsKmsUtil;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.common.config.AwsCredentials;
-import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
@@ -26,6 +26,7 @@ import tech.pegasys.web3signer.signing.secp256k1.Signer;
 import java.math.BigInteger;
 import java.net.URI;
 import java.security.SignatureException;
+import java.util.Collections;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterAll;
@@ -36,11 +37,6 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.web3j.crypto.Hash;
 import org.web3j.crypto.Sign;
 import org.web3j.utils.Numeric;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
-import software.amazon.awssdk.services.kms.model.KeySpec;
-import software.amazon.awssdk.services.kms.model.KeyUsageType;
-import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledIfEnvironmentVariable(
@@ -73,13 +69,6 @@ public class AwsKmsSignerTest {
   private static final Optional<URI> ENDPOINT_OVERRIDE =
       Optional.ofNullable(System.getenv("AWS_ENDPOINT_OVERRIDE")).map(URI::create);
 
-  private static final AwsCredentials AWS_RW_CREDENTIALS =
-      AwsCredentials.builder()
-          .withAccessKeyId(RW_AWS_ACCESS_KEY_ID)
-          .withSecretAccessKey(RW_AWS_SECRET_ACCESS_KEY)
-          .withSessionToken(AWS_SESSION_TOKEN)
-          .build();
-
   private static final AwsCredentials AWS_CREDENTIALS =
       AwsCredentials.builder()
           .withAccessKeyId(AWS_ACCESS_KEY_ID)
@@ -87,39 +76,28 @@ public class AwsKmsSignerTest {
           .withSessionToken(AWS_SESSION_TOKEN)
           .build();
 
-  private static final CachedAwsKmsClientFactory KMS_CLIENT_FACTORY =
-      new CachedAwsKmsClientFactory(1);
-  private static AwsKmsClient awsKMSClient;
   private static String testKeyId;
+  private static AwsKmsUtil awsKmsUtil;
 
   @BeforeAll
   static void init() {
-    AwsCredentialsProvider awsCredentialsProvider =
-        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-            AwsAuthenticationMode.SPECIFIED, Optional.of(AWS_RW_CREDENTIALS));
-    awsKMSClient =
-        KMS_CLIENT_FACTORY.createKmsClient(awsCredentialsProvider, AWS_REGION, ENDPOINT_OVERRIDE);
-
-    // create a test key
-    final CreateKeyRequest web3SignerTestingKey =
-        CreateKeyRequest.builder()
-            .keySpec(KeySpec.ECC_SECG_P256_K1)
-            .description("Web3Signer Testing Key")
-            .keyUsage(KeyUsageType.SIGN_VERIFY)
-            .build();
-    testKeyId = awsKMSClient.createKey(web3SignerTestingKey);
+    awsKmsUtil =
+        new AwsKmsUtil(
+            AWS_REGION,
+            RW_AWS_ACCESS_KEY_ID,
+            RW_AWS_SECRET_ACCESS_KEY,
+            Optional.ofNullable(AWS_SESSION_TOKEN),
+            ENDPOINT_OVERRIDE);
+    testKeyId = awsKmsUtil.createKey(Collections.emptyMap());
     assertThat(testKeyId).isNotEmpty();
   }
 
   @AfterAll
   static void cleanup() {
-    if (awsKMSClient == null) {
+    if (awsKmsUtil == null) {
       return;
     }
-    // delete key
-    ScheduleKeyDeletionRequest deletionRequest =
-        ScheduleKeyDeletionRequest.builder().keyId(testKeyId).pendingWindowInDays(7).build();
-    awsKMSClient.scheduleKeyDeletion(deletionRequest);
+    awsKmsUtil.deleteKey(testKeyId);
   }
 
   @Test
@@ -133,8 +111,11 @@ public class AwsKmsSignerTest {
             ENDPOINT_OVERRIDE);
     final long kmsClientCacheSize = 1;
     final boolean applySha3Hash = true;
+    final CachedAwsKmsClientFactory cachedAwsKmsClientFactory =
+        new CachedAwsKmsClientFactory(kmsClientCacheSize);
     final Signer signer =
-        new AwsKmsSignerFactory(kmsClientCacheSize, applySha3Hash).createSigner(awsKmsMetadata);
+        new AwsKmsSignerFactory(cachedAwsKmsClientFactory, applySha3Hash)
+            .createSigner(awsKmsMetadata);
     final BigInteger publicKey =
         Numeric.toBigInt(EthPublicKeyUtils.toByteArray(signer.getPublicKey()));
 

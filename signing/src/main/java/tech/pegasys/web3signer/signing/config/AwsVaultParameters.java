@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-public interface AwsSecretsManagerParameters {
+public interface AwsVaultParameters {
   boolean isEnabled();
 
   AwsAuthenticationMode getAuthenticationMode();

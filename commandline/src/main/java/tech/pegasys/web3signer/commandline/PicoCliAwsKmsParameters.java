@@ -21,57 +21,53 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
-public class PicoCliAwsSecretsManagerParameters implements AwsVaultParameters {
-  public static final String AWS_SECRETS_ENABLED_OPTION = "--aws-secrets-enabled";
-  public static final String AWS_SECRETS_AUTH_MODE_OPTION = "--aws-secrets-auth-mode";
-  public static final String AWS_SECRETS_ACCESS_KEY_ID_OPTION = "--aws-secrets-access-key-id";
-  public static final String AWS_SECRETS_SECRET_ACCESS_KEY_OPTION =
-      "--aws-secrets-secret-access-key";
-  public static final String AWS_SECRETS_REGION_OPTION = "--aws-secrets-region";
+public class PicoCliAwsKmsParameters implements AwsVaultParameters {
+  public static final String AWS_KMS_ENABLED_OPTION = "--aws-kms-enabled";
+  public static final String AWS_KMS_AUTH_MODE_OPTION = "--aws-kms-auth-mode";
+  public static final String AWS_KMS_ACCESS_KEY_ID_OPTION = "--aws-kms-access-key-id";
+  public static final String AWS_KMS_SECRET_ACCESS_KEY_OPTION = "--aws-kms-secret-access-key";
+  public static final String AWS_KMS_REGION_OPTION = "--aws-kms-region";
   public static final String AWS_ENDPOINT_OVERRIDE_OPTION = "--aws-endpoint-override";
-  public static final String AWS_SECRETS_PREFIXES_FILTER_OPTION = "--aws-secrets-prefixes-filter";
-  public static final String AWS_SECRETS_TAG_NAMES_FILTER_OPTION = "--aws-secrets-tag-names-filter";
-  public static final String AWS_SECRETS_TAG_VALUES_FILTER_OPTION =
-      "--aws-secrets-tag-values-filter";
+  public static final String AWS_KMS_TAG_NAMES_FILTER_OPTION = "--aws-kms-tag-names-filter";
+  public static final String AWS_KMS_TAG_VALUES_FILTER_OPTION = "--aws-kms-tag-values-filter";
   public static final String AWS_CONNECTION_CACHE_SIZE_OPTION = "--aws-connection-cache-size";
 
   @Option(
-      names = AWS_SECRETS_ENABLED_OPTION,
+      names = AWS_KMS_ENABLED_OPTION,
       description =
-          "Set to true to enable bulk loading from the AWS Secrets Manager service."
+          "Set to true to enable bulk loading from the AWS KMS service."
               + " (Default: ${DEFAULT-VALUE})",
       paramLabel = "<BOOL>")
-  private boolean awsSecretsManagerEnabled = false;
+  private boolean awsKmsManagerEnabled = false;
 
   @Option(
-      names = AWS_SECRETS_AUTH_MODE_OPTION,
+      names = AWS_KMS_AUTH_MODE_OPTION,
       description =
-          "Authentication mode for AWS Secrets Manager service. Valid Values: [${COMPLETION-CANDIDATES}]"
+          "Authentication mode for AWS KMS service. Valid Values: [${COMPLETION-CANDIDATES}]"
               + " (Default: ${DEFAULT-VALUE})",
       paramLabel = "<AUTHENTICATION_MODE>")
   private AwsAuthenticationMode authenticationMode = AwsAuthenticationMode.SPECIFIED;
 
   @Option(
-      names = {AWS_SECRETS_ACCESS_KEY_ID_OPTION},
+      names = {AWS_KMS_ACCESS_KEY_ID_OPTION},
       description =
-          "AWS Access Key Id to authenticate Aws Secrets Manager. Required for SPECIFIED authentication mode.",
+          "AWS Access Key Id to authenticate Aws KMS. Required for SPECIFIED authentication mode.",
       paramLabel = "<ACCESS_KEY_ID>")
   private String accessKeyId;
 
   @Option(
-      names = {AWS_SECRETS_SECRET_ACCESS_KEY_OPTION},
+      names = {AWS_KMS_SECRET_ACCESS_KEY_OPTION},
       description =
-          "AWS Secret Access Key to authenticate Aws Secrets Manager. Required for SPECIFIED authentication mode.",
+          "AWS Secret Access Key to authenticate Aws KMS. Required for SPECIFIED authentication mode.",
       paramLabel = "<SECRET_ACCESS_KEY>")
   private String secretAccessKey;
 
   @Option(
-      names = {AWS_SECRETS_REGION_OPTION},
+      names = {AWS_KMS_REGION_OPTION},
       description =
-          "AWS region where Secrets Manager service is available. Required for SPECIFIED authentication mode.",
+          "AWS region where KMS is available. Required for SPECIFIED authentication mode.",
       paramLabel = "<Region>")
   private String region;
 
@@ -82,39 +78,31 @@ public class PicoCliAwsSecretsManagerParameters implements AwsVaultParameters {
   private Optional<URI> endpointOverride;
 
   @Option(
-      names = AWS_SECRETS_PREFIXES_FILTER_OPTION,
+      names = AWS_KMS_TAG_NAMES_FILTER_OPTION,
       description =
-          "Optional comma-separated list of secret name prefixes filter to apply while fetching secrets from AWS secrets manager."
-              + " Applied as AND operation with other filters.",
-      split = ",")
-  private List<String> prefixesFilter = Collections.emptyList();
-
-  @Option(
-      names = AWS_SECRETS_TAG_NAMES_FILTER_OPTION,
-      description =
-          "Optional comma-separated list of tag names filter to apply while fetching secrets from AWS secrets manager."
+          "Optional comma-separated list of tag names filter to apply while fetching key ids from AWS KMS."
               + " Applied as AND operation with other filters.",
       split = ",")
   private List<String> tagNamesFilter = Collections.emptyList();
 
   @Option(
-      names = AWS_SECRETS_TAG_VALUES_FILTER_OPTION,
+      names = AWS_KMS_TAG_VALUES_FILTER_OPTION,
       description =
-          "Optional comma-separated list of tag values filter to apply while fetching secrets from AWS secrets manager."
+          "Optional comma-separated list of tag values filter to apply while fetching key ids from AWS KMS."
               + " Applied as AND operation with other filters.",
       split = ",")
   private List<String> tagValuesFilter = Collections.emptyList();
 
-  @CommandLine.Option(
+  @Option(
       names = {AWS_CONNECTION_CACHE_SIZE_OPTION},
       paramLabel = "<LONG>",
       description =
-          "Maximum number of connections to cache to the AWS Secrets Manager (default: ${DEFAULT-VALUE})")
+          "Maximum number of connections to cache to the AWS KMS (default: ${DEFAULT-VALUE})")
   private long cacheMaximumSize = 1;
 
   @Override
   public boolean isEnabled() {
-    return awsSecretsManagerEnabled;
+    return awsKmsManagerEnabled;
   }
 
   @Override
@@ -140,11 +128,6 @@ public class PicoCliAwsSecretsManagerParameters implements AwsVaultParameters {
   @Override
   public long getCacheMaximumSize() {
     return cacheMaximumSize;
-  }
-
-  @Override
-  public Collection<String> getPrefixesFilter() {
-    return prefixesFilter;
   }
 
   @Override

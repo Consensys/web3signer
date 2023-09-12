@@ -17,16 +17,12 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.web3j.crypto.Sign.signedMessageToKey;
 
-import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
-import tech.pegasys.web3signer.common.config.AwsCredentials;
+import tech.pegasys.web3signer.AwsKmsUtil;
 import tech.pegasys.web3signer.dsl.HashicorpSigningParams;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.keystore.hashicorp.dsl.HashicorpNode;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
-import tech.pegasys.web3signer.signing.secp256k1.aws.AwsKmsClient;
-import tech.pegasys.web3signer.signing.secp256k1.aws.CachedAwsKmsClientFactory;
 
 import java.io.File;
 import java.math.BigInteger;
@@ -35,6 +31,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.SignatureException;
 import java.security.interfaces.ECPublicKey;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -46,11 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 import org.web3j.crypto.Sign.SignatureData;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.services.kms.model.CreateKeyRequest;
-import software.amazon.awssdk.services.kms.model.KeySpec;
-import software.amazon.awssdk.services.kms.model.KeyUsageType;
-import software.amazon.awssdk.services.kms.model.ScheduleKeyDeletionRequest;
 
 public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
@@ -153,7 +145,14 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Optional<URI> awsEndpointOverride =
         Optional.ofNullable(System.getenv("AWS_ENDPOINT_OVERRIDE")).map(URI::create);
 
-    final Map.Entry<String, ECPublicKey> remoteAWSKMSKey = createRemoteAWSKMSKey();
+    final AwsKmsUtil awsKmsUtil =
+        new AwsKmsUtil(
+            region,
+            System.getenv("RW_AWS_ACCESS_KEY_ID"),
+            System.getenv("RW_AWS_SECRET_ACCESS_KEY"),
+            Optional.ofNullable(System.getenv("AWS_SESSION_TOKEN")),
+            awsEndpointOverride);
+    final Map.Entry<String, ECPublicKey> remoteAWSKMSKey = createRemoteAWSKMSKey(awsKmsUtil);
     final String awsKeyId = remoteAWSKMSKey.getKey();
     final ECPublicKey ecPublicKey = remoteAWSKMSKey.getValue();
 
@@ -170,7 +169,7 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
       signAndVerifySignature(EthPublicKeyUtils.toHexString(ecPublicKey));
 
     } finally {
-      markAwsKeyForDeletion(region, awsEndpointOverride, awsKeyId);
+      awsKmsUtil.deleteKey(awsKeyId);
     }
   }
 
@@ -206,52 +205,10 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     }
   }
 
-  private static Map.Entry<String, ECPublicKey> createRemoteAWSKMSKey() {
-    final String region = Optional.ofNullable(System.getenv("AWS_REGION")).orElse("us-east-2");
-    final Optional<URI> awsEndpointOverride =
-        System.getenv("AWS_ENDPOINT_OVERRIDE") != null
-            ? Optional.of(URI.create(System.getenv("AWS_ENDPOINT_OVERRIDE")))
-            : Optional.empty();
+  private static Map.Entry<String, ECPublicKey> createRemoteAWSKMSKey(final AwsKmsUtil awsKmsUtil) {
+    final String testKeyId = awsKmsUtil.createKey(Collections.emptyMap());
 
-    final AwsCredentialsProvider rwAwsCredentialsProvider =
-        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-            AwsAuthenticationMode.SPECIFIED, Optional.of(getAwsCredentialsFromEnvVar()));
-    final AwsKmsClient rwKmsClient =
-        new CachedAwsKmsClientFactory(1)
-            .createKmsClient(rwAwsCredentialsProvider, region, awsEndpointOverride);
-    // create a test key
-    final CreateKeyRequest web3SignerTestingKey =
-        CreateKeyRequest.builder()
-            .keySpec(KeySpec.ECC_SECG_P256_K1)
-            .description("Web3Signer Testing Key")
-            .keyUsage(KeyUsageType.SIGN_VERIFY)
-            .build();
-
-    final String testKeyId = rwKmsClient.createKey(web3SignerTestingKey);
-    final ECPublicKey ecPublicKey = rwKmsClient.getECPublicKey(testKeyId);
+    final ECPublicKey ecPublicKey = awsKmsUtil.publicKey(testKeyId);
     return Maps.immutableEntry(testKeyId, ecPublicKey);
-  }
-
-  private static void markAwsKeyForDeletion(
-      String region, Optional<URI> awsEndpointOverride, String awsKeyId) {
-    // mark aws key for deletion
-    ScheduleKeyDeletionRequest deletionRequest =
-        ScheduleKeyDeletionRequest.builder().keyId(awsKeyId).pendingWindowInDays(7).build();
-    final AwsCredentialsProvider rwAwsCredentialsProvider =
-        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-            AwsAuthenticationMode.SPECIFIED, Optional.of(getAwsCredentialsFromEnvVar()));
-
-    final AwsKmsClient rwKmsClient =
-        new CachedAwsKmsClientFactory(1)
-            .createKmsClient(rwAwsCredentialsProvider, region, awsEndpointOverride);
-    rwKmsClient.scheduleKeyDeletion(deletionRequest);
-  }
-
-  private static AwsCredentials getAwsCredentialsFromEnvVar() {
-    return AwsCredentials.builder()
-        .withAccessKeyId(System.getenv("RW_AWS_ACCESS_KEY_ID"))
-        .withSecretAccessKey(System.getenv("RW_AWS_SECRET_ACCESS_KEY"))
-        .withSessionToken(System.getenv("AWS_SESSION_TOKEN"))
-        .build();
   }
 }

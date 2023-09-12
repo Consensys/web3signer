@@ -14,45 +14,37 @@ package tech.pegasys.web3signer.signing.secp256k1.aws;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import tech.pegasys.web3signer.signing.config.AwsCredentialsProviderFactory;
 import tech.pegasys.web3signer.signing.config.metadata.AwsKmsMetadata;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
 
 import java.security.interfaces.ECPublicKey;
 
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-
 /** A Signer factory that create an instance of `Signer` type backed by AWS KMS. */
 public class AwsKmsSignerFactory {
 
-  private final CachedAwsKmsClientFactory factory;
-
+  private final CachedAwsKmsClientFactory cachedAwsKmsClientFactory;
   private final boolean applySha3Hash;
 
   /**
    * Construct AwsKmsSignerFactory
    *
-   * @param kmsClientCacheSize The cache size of AWS kms clients. This size should be set based on
-   *     the number of credentials/region used. If same set of credentials/region used to access
-   *     kms, set to 1.
+   * @param cachedAwsKmsClientFactory The cached AWS KMS client factory used to provide cached AWS
+   *     KMS clients.
    * @param applySha3Hash Set to true for eth1 signing. Set false for filecoin signing.
    */
-  public AwsKmsSignerFactory(final long kmsClientCacheSize, final boolean applySha3Hash) {
-    checkArgument(kmsClientCacheSize > 0, "Kms client cache Size must be positive.");
-    factory = new CachedAwsKmsClientFactory(kmsClientCacheSize);
+  public AwsKmsSignerFactory(
+      final CachedAwsKmsClientFactory cachedAwsKmsClientFactory, final boolean applySha3Hash) {
+    this.cachedAwsKmsClientFactory = cachedAwsKmsClientFactory;
     this.applySha3Hash = applySha3Hash;
   }
 
   public Signer createSigner(final AwsKmsMetadata awsKmsMetadata) {
     checkArgument(awsKmsMetadata != null, "awsKmsMetadata must not be null");
 
-    final AwsCredentialsProvider awsCredentialsProvider =
-        AwsCredentialsProviderFactory.createAwsCredentialsProvider(
-            awsKmsMetadata.getAuthenticationMode(), awsKmsMetadata.getAwsCredentials());
-
     final AwsKmsClient kmsClient =
-        factory.createKmsClient(
-            awsCredentialsProvider,
+        cachedAwsKmsClientFactory.createKmsClient(
+            awsKmsMetadata.getAuthenticationMode(),
+            awsKmsMetadata.getAwsCredentials(),
             awsKmsMetadata.getRegion(),
             awsKmsMetadata.getEndpointOverride());
 

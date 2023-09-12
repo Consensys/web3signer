@@ -12,6 +12,13 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_ENABLED_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_SECRET_ACCESS_KEY_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_TAG_NAMES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_TAG_VALUES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
@@ -31,7 +38,7 @@ import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -120,8 +127,8 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       }
 
       signerConfig
-          .getAwsSecretsManagerParameters()
-          .ifPresent(awsParams -> params.addAll(awsBulkLoadingOptions(awsParams)));
+          .getAwsParameters()
+          .ifPresent(awsParams -> params.addAll(awsSecretsManagerBulkLoadingOptions(awsParams)));
     } else if (signerConfig.getMode().equals("eth1")) {
       params.add("--downstream-http-port");
       params.add(Integer.toString(signerConfig.getDownstreamHttpPort()));
@@ -136,6 +143,9 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       signerConfig
           .getV3KeystoresBulkloadParameters()
           .ifPresent(setV3KeystoresBulkloadParameters(params));
+      signerConfig
+          .getAwsParameters()
+          .ifPresent(awsParams -> params.addAll(awsKmsBulkLoadingOptions(awsParams)));
     }
 
     return params;
@@ -300,31 +310,31 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     return params;
   }
 
-  private Collection<String> awsBulkLoadingOptions(
-      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
+  private Collection<String> awsSecretsManagerBulkLoadingOptions(
+      final AwsVaultParameters awsVaultParameters) {
     final List<String> params = new ArrayList<>();
 
-    params.add(AWS_SECRETS_ENABLED_OPTION + "=" + awsSecretsManagerParameters.isEnabled());
+    params.add(AWS_SECRETS_ENABLED_OPTION + "=" + awsVaultParameters.isEnabled());
 
     params.add(AWS_SECRETS_AUTH_MODE_OPTION);
-    params.add(awsSecretsManagerParameters.getAuthenticationMode().name());
+    params.add(awsVaultParameters.getAuthenticationMode().name());
 
-    if (awsSecretsManagerParameters.getAccessKeyId() != null) {
+    if (awsVaultParameters.getAccessKeyId() != null) {
       params.add(AWS_SECRETS_ACCESS_KEY_ID_OPTION);
-      params.add(awsSecretsManagerParameters.getAccessKeyId());
+      params.add(awsVaultParameters.getAccessKeyId());
     }
 
-    if (awsSecretsManagerParameters.getSecretAccessKey() != null) {
+    if (awsVaultParameters.getSecretAccessKey() != null) {
       params.add(AWS_SECRETS_SECRET_ACCESS_KEY_OPTION);
-      params.add(awsSecretsManagerParameters.getSecretAccessKey());
+      params.add(awsVaultParameters.getSecretAccessKey());
     }
 
-    if (awsSecretsManagerParameters.getRegion() != null) {
+    if (awsVaultParameters.getRegion() != null) {
       params.add(AWS_SECRETS_REGION_OPTION);
-      params.add(awsSecretsManagerParameters.getRegion());
+      params.add(awsVaultParameters.getRegion());
     }
 
-    awsSecretsManagerParameters
+    awsVaultParameters
         .getEndpointOverride()
         .ifPresent(
             uri -> {
@@ -332,19 +342,63 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
               params.add(uri.toString());
             });
 
-    if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
+    if (!awsVaultParameters.getPrefixesFilter().isEmpty()) {
       params.add(AWS_SECRETS_PREFIXES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getPrefixesFilter()));
+      params.add(String.join(",", awsVaultParameters.getPrefixesFilter()));
     }
 
-    if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
+    if (!awsVaultParameters.getTagNamesFilter().isEmpty()) {
       params.add(AWS_SECRETS_TAG_NAMES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getTagNamesFilter()));
+      params.add(String.join(",", awsVaultParameters.getTagNamesFilter()));
     }
 
-    if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
+    if (!awsVaultParameters.getTagValuesFilter().isEmpty()) {
       params.add(AWS_SECRETS_TAG_VALUES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getTagValuesFilter()));
+      params.add(String.join(",", awsVaultParameters.getTagValuesFilter()));
+    }
+
+    return params;
+  }
+
+  private Collection<String> awsKmsBulkLoadingOptions(final AwsVaultParameters awsVaultParameters) {
+    final List<String> params = new ArrayList<>();
+
+    params.add(AWS_KMS_ENABLED_OPTION + "=" + awsVaultParameters.isEnabled());
+
+    params.add(AWS_KMS_AUTH_MODE_OPTION);
+    params.add(awsVaultParameters.getAuthenticationMode().name());
+
+    if (awsVaultParameters.getAccessKeyId() != null) {
+      params.add(AWS_KMS_ACCESS_KEY_ID_OPTION);
+      params.add(awsVaultParameters.getAccessKeyId());
+    }
+
+    if (awsVaultParameters.getSecretAccessKey() != null) {
+      params.add(AWS_KMS_SECRET_ACCESS_KEY_OPTION);
+      params.add(awsVaultParameters.getSecretAccessKey());
+    }
+
+    if (awsVaultParameters.getRegion() != null) {
+      params.add(AWS_KMS_REGION_OPTION);
+      params.add(awsVaultParameters.getRegion());
+    }
+
+    awsVaultParameters
+        .getEndpointOverride()
+        .ifPresent(
+            uri -> {
+              params.add(AWS_ENDPOINT_OVERRIDE_OPTION);
+              params.add(uri.toString());
+            });
+
+    if (!awsVaultParameters.getTagNamesFilter().isEmpty()) {
+      params.add(AWS_KMS_TAG_NAMES_FILTER_OPTION);
+      params.add(String.join(",", awsVaultParameters.getTagNamesFilter()));
+    }
+
+    if (!awsVaultParameters.getTagValuesFilter().isEmpty()) {
+      params.add(AWS_KMS_TAG_VALUES_FILTER_OPTION);
+      params.add(String.join(",", awsVaultParameters.getTagValuesFilter()));
     }
 
     return params;
