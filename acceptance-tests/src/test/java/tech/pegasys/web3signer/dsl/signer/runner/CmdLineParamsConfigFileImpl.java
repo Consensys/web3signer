@@ -50,7 +50,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 
@@ -280,9 +279,6 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               YAML_NUMERIC_FMT,
               "eth2.watermark-repair.epoch",
               watermarkRepairParameters.getEpoch()));
-      yamlConfig.append(
-          formatStringList(
-              "eth2.watermark-repair.validator-ids", watermarkRepairParameters.getValidators()));
     }
 
     return new CommandArgs(params, yamlConfig.toString());
@@ -629,14 +625,6 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                         uri)));
 
     return yamlConfig.toString();
-  }
-
-  private String formatStringList(final String key, final List<String> stringList) {
-    return stringList.isEmpty()
-        ? String.format("%s: []%n", key)
-        : String.format(
-            "%s: [\"%s\"]%n",
-            key, stringList.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")));
   }
 
   private static class CommandArgs {
