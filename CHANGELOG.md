@@ -1,5 +1,11 @@
 # Changelog
 
+## 23.9.1
+
+### Breaking Changes
+- Remove --validator-ids option from watermark-repair subcommand [#909](https://github.com/Consensys/web3signer/pull/909)
+
+---
 ## 23.9.0
 
 ### Features Added
