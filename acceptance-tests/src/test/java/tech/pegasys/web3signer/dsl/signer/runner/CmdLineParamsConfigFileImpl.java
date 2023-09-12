@@ -268,9 +268,6 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               YAML_NUMERIC_FMT,
               "eth2.watermark-repair.epoch",
               watermarkRepairParameters.getEpoch()));
-      yamlConfig.append(
-          formatStringList(
-              "eth2.watermark-repair.validator-ids", watermarkRepairParameters.getValidators()));
     }
 
     return new CommandArgs(params, yamlConfig.toString());

@@ -392,10 +392,6 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Long.toString(watermarkRepairParameters.getEpoch()));
       params.add("--slot");
       params.add(Long.toString(watermarkRepairParameters.getSlot()));
-      if (!watermarkRepairParameters.getValidators().isEmpty()) {
-        params.add(
-            "--validator-ids" + "=" + String.join(",", watermarkRepairParameters.getValidators()));
-      }
     }
 
     return params;
