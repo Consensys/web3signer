@@ -271,14 +271,29 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       params.add("watermark-repair"); // sub-sub command
       final WatermarkRepairParameters watermarkRepairParameters =
           signerConfig.getWatermarkRepairParameters().get();
-      yamlConfig.append(
-          String.format(
-              YAML_NUMERIC_FMT, "eth2.watermark-repair.slot", watermarkRepairParameters.getSlot()));
-      yamlConfig.append(
-          String.format(
-              YAML_NUMERIC_FMT,
-              "eth2.watermark-repair.epoch",
-              watermarkRepairParameters.getEpoch()));
+      if (watermarkRepairParameters.isRemoveHighWatermark()) {
+        yamlConfig.append(
+            String.format(
+                YAML_BOOLEAN_FMT,
+                "eth2.watermark-repair.remove-high-watermark",
+                watermarkRepairParameters.isRemoveHighWatermark()));
+      } else {
+        yamlConfig.append(
+            String.format(
+                YAML_NUMERIC_FMT,
+                "eth2.watermark-repair.slot",
+                watermarkRepairParameters.getSlot()));
+        yamlConfig.append(
+            String.format(
+                YAML_NUMERIC_FMT,
+                "eth2.watermark-repair.epoch",
+                watermarkRepairParameters.getEpoch()));
+        yamlConfig.append(
+            String.format(
+                YAML_BOOLEAN_FMT,
+                "eth2.watermark-repair.set-high-watermark",
+                watermarkRepairParameters.isSetHighWatermark()));
+      }
     }
 
     return new CommandArgs(params, yamlConfig.toString());
