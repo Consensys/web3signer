@@ -185,7 +185,7 @@ dependencyManagement {
     dependency 'com.squareup.okio:okio:3.4.0'
 
     // addressing CVE-2022-41881, CVE-2022-41915, CVE-2023-34462
-    dependencySet(group: 'io.netty', version: '4.1.95.Final') {
+    dependencySet(group: 'io.netty', version: '4.1.97.Final') {
       entry 'netty-all'
       entry 'netty-handler'
       entry 'netty-resolver-dns'
@@ -237,5 +237,12 @@ dependencyManagement {
 
     // used in tests to assert log message
     dependency 'de.neuland-bfi:assertj-logging-log4j:0.5.0'
+
+    // addresses CVE-2023-4759
+    /*
+         +--- com.google.errorprone:error_prone_check_api:2.11.0
+          |    +--- io.github.java-diff-utils:java-diff-utils:4.0
+     */
+    dependency 'io.github.java-diff-utils:java-diff-utils:4.12'
   }
 }
