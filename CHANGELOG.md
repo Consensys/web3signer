@@ -9,7 +9,7 @@
 - Aws bulk loading for secp256k1 keys in eth1 mode [#889](https://github.com/Consensys/web3signer/pull/889)
 - Add High Watermark functionality [#696](https://github.com/Consensys/web3signer/issues/696) 
   - Update `watermark-repair` subcommand with new options `--set-high-watermark`, `--remove-high-watermark` [#912](https://github.com/Consensys/web3signer/pull/912)
-  - Add GET `/highWatermark` to eth2 endpoints [908](https://github.com/Consensys/web3signer/pull/908)
+  - Add GET `/highWatermark` to eth2 endpoints [#908](https://github.com/Consensys/web3signer/pull/908)
 
 ## 23.9.0
 
