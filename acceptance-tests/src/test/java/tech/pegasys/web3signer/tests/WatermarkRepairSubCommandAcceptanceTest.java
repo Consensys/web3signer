@@ -115,6 +115,7 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
        3. Signing beyond high watermark is prevented
        4. Resetting high watermark to lower value fails due to low watermark conflict
        5. Removing high watermark allows slashing import
+       6. Can sign beyond previously removed high watermark
     */
 
     setupSigner(testDirectory);
@@ -152,6 +153,7 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
             watermarks.get(
                 "0x98d083489b3b06b8740da2dfec5cc3c01b2086363fe023a9d7dc1f907633b1ff11f7b99b19e0533e969862270061d884"))
         .isNull();
+    assertThatAllSignaturesAreFrom(validator1);
 
     // signing beyond high watermark is prevented
     Eth2SigningRequestBody blockRequest =
@@ -208,6 +210,13 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
     assertThat(validator2.get("slot")).isEqualTo(BigDecimal.valueOf(19999));
     assertThat(validator2.get("source_epoch")).isEqualTo(BigDecimal.valueOf(6));
     assertThat(validator2.get("target_epoch")).isEqualTo(BigDecimal.valueOf(7));
+
+    // signing beyond previously set high watermark is allowed
+    signer.eth2Sign(keyPair.getPublicKey().toHexString(), blockRequest).then().statusCode(200);
+    signer
+        .eth2Sign(keyPair.getPublicKey().toHexString(), attestationRequest)
+        .then()
+        .statusCode(200);
   }
 
   private SignerConfigurationBuilder commandConfig() {
@@ -273,5 +282,26 @@ public class WatermarkRepairSubCommandAcceptanceTest extends AcceptanceTestBase 
         .contentType(ContentType.JSON)
         .body("slot", equalTo(String.valueOf(highWatermarkSlot)))
         .body("epoch", equalTo(String.valueOf(highWatermarkEpoch)));
+  }
+
+  private void assertThatAllSignaturesAreFrom(Map<String, Object> validator1) {
+    final Jdbi jdbi = Jdbi.create(signer.getSlashingDbUrl(), DB_USERNAME, DB_PASSWORD);
+
+    final List<Map<String, Object>> signedBlocks =
+        jdbi.withHandle(h -> h.select("SELECT * from signed_blocks").mapToMap().list());
+    assertThat(signedBlocks).hasSize(1);
+    assertThat(signedBlocks.get(0).get("validator_id")).isEqualTo(validator1.get("validator_id"));
+    assertThat(signedBlocks.get(0).get("slot"))
+        .isEqualTo(new BigDecimal(validator1.get("slot").toString()));
+
+    final List<Map<String, Object>> signedAttestations =
+        jdbi.withHandle(h -> h.select("SELECT * from signed_attestations").mapToMap().list());
+    assertThat(signedAttestations).hasSize(1);
+    assertThat(signedAttestations.get(0).get("validator_id"))
+        .isEqualTo(validator1.get("validator_id"));
+    assertThat(signedAttestations.get(0).get("source_epoch"))
+        .isEqualTo(new BigDecimal(validator1.get("source_epoch").toString()));
+    assertThat(signedAttestations.get(0).get("target_epoch"))
+        .isEqualTo(new BigDecimal(validator1.get("target_epoch").toString()));
   }
 }
