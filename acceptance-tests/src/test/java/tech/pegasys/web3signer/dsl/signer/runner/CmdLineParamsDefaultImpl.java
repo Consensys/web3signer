@@ -442,10 +442,17 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       final WatermarkRepairParameters watermarkRepairParameters =
           signerConfig.getWatermarkRepairParameters().get();
       params.add("watermark-repair");
-      params.add("--epoch");
-      params.add(Long.toString(watermarkRepairParameters.getEpoch()));
-      params.add("--slot");
-      params.add(Long.toString(watermarkRepairParameters.getSlot()));
+      if (watermarkRepairParameters.isRemoveHighWatermark()) {
+        params.add("--remove-high-watermark=true");
+      } else {
+        params.add("--epoch");
+        params.add(Long.toString(watermarkRepairParameters.getEpoch()));
+        params.add("--slot");
+        params.add(Long.toString(watermarkRepairParameters.getSlot()));
+        if (watermarkRepairParameters.isSetHighWatermark()) {
+          params.add("--set-high-watermark=true");
+        }
+      }
     }
 
     return params;
