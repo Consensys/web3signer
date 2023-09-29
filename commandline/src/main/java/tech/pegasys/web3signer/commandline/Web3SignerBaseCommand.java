@@ -203,6 +203,12 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       hidden = true)
   private boolean keystoreParallelProcessingEnabled = true;
 
+  @Option(
+      names = "--Xworker-pool-size",
+      description = "Configure the work pool size used for processing requests",
+      hidden = true)
+  private int workerPoolSize = 20;
+
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
   @Override
@@ -308,6 +314,11 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   @Override
+  public int getWorkerPoolSize() {
+    return workerPoolSize;
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -325,6 +336,7 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
         .add("metricsHostAllowList", metricsHostAllowList)
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
+        .add("workerPoolSize", workerPoolSize)
         .toString();
   }
 

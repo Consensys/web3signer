@@ -62,4 +62,6 @@ public interface BaseConfig {
   Boolean isAccessLogsEnabled();
 
   boolean keystoreParallelProcessingEnabled();
+
+  int getWorkerPoolSize();
 }
