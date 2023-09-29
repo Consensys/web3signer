@@ -216,6 +216,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
     return new VertxOptions()
+        .setWorkerPoolSize(baseConfig.getWorkerPoolSize())
         .setMetricsOptions(
             new MetricsOptions()
                 .setEnabled(true)
