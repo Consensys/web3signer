@@ -88,7 +88,7 @@ dependencyManagement {
     dependency 'org.hyperledger.besu:plugin-api:23.7.2'
     dependency 'org.hyperledger.besu.internal:metrics-core:23.7.2'
 
-    dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.9'
+    dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.10'
 
     dependencySet(group: 'tech.pegasys.teku.internal', version: '23.9.1') {
       entry ('bls') {

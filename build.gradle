@@ -372,6 +372,8 @@ applicationDefaultJvmArgs = [
   "--add-opens",
   "java.base/java.nio=ALL-UNNAMED",
   "-Dio.netty.tryReflectionSetAccessible=true",
+  "--add-exports",
+  "jdk.crypto.cryptoki/sun.security.pkcs11.wrapper=ALL-UNNAMED",
 ]
 
 run {
