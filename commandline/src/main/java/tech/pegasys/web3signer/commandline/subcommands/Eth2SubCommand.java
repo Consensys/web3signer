@@ -27,6 +27,7 @@ import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliEth2AzureKeyVaultParameters;
+import tech.pegasys.web3signer.commandline.PicoCliGcpSecretManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
@@ -145,6 +146,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Mixin private PicoCliEth2AzureKeyVaultParameters azureKeyVaultParameters;
   @Mixin private PicoKeystoresParameters keystoreParameters;
   @Mixin private PicoCliAwsSecretsManagerParameters awsSecretsManagerParameters;
+  @Mixin private PicoCliGcpSecretManagerParameters gcpSecretManagerParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
 
   public Eth2SubCommand() {
@@ -161,6 +163,7 @@ public class Eth2SubCommand extends ModeSubCommand {
         azureKeyVaultParameters,
         keystoreParameters,
         awsSecretsManagerParameters,
+        gcpSecretManagerParameters,
         eth2Spec,
         isKeyManagerApiEnabled);
   }
@@ -236,6 +239,23 @@ public class Eth2SubCommand extends ModeSubCommand {
     validateAzureParameters();
     validateKeystoreParameters(keystoreParameters);
     validateAwsSecretsManageParameters();
+    validateGcpSecretManagerParameters();
+  }
+
+  private void validateGcpSecretManagerParameters() {
+    if (gcpSecretManagerParameters.isEnabled()) {
+      final List<String> specifiedAuthModeMissingFields =
+          missingGcpSecretManagerParametersForSpecified();
+      if (!specifiedAuthModeMissingFields.isEmpty()) {
+        final String errorMsg =
+            String.format(
+                "%s=%s, but the following parameters were missing [%s].",
+                PicoCliGcpSecretManagerParameters.GCP_SECRETS_ENABLED_OPTION,
+                PicoCliGcpSecretManagerParameters.GCP_PROJECT_ID_OPTION,
+                String.join(", ", specifiedAuthModeMissingFields));
+        throw new ParameterException(commandSpec.commandLine(), errorMsg);
+      }
+    }
   }
 
   private void validateAzureParameters() {
@@ -300,6 +320,14 @@ public class Eth2SubCommand extends ModeSubCommand {
         throw new ParameterException(commandSpec.commandLine(), errorMsg);
       }
     }
+  }
+
+  private List<String> missingGcpSecretManagerParametersForSpecified() {
+    final List<String> missingFields = Lists.newArrayList();
+    if (gcpSecretManagerParameters.getProjectId() == null) {
+      missingFields.add(PicoCliGcpSecretManagerParameters.GCP_PROJECT_ID_OPTION);
+    }
+    return missingFields;
   }
 
   private List<String> missingAwsSecretsManagerParametersForSpecified() {
