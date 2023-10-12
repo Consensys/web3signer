@@ -251,7 +251,7 @@ public class Eth2SubCommand extends ModeSubCommand {
             String.format(
                 "%s=%s, but the following parameters were missing [%s].",
                 PicoCliGcpSecretManagerParameters.GCP_SECRETS_ENABLED_OPTION,
-                PicoCliGcpSecretManagerParameters.GCP_PROJECT_ID_OPTION,
+                true,
                 String.join(", ", specifiedAuthModeMissingFields));
         throw new ParameterException(commandSpec.commandLine(), errorMsg);
       }
