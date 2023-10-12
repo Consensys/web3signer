@@ -41,7 +41,7 @@ dependencies {
   implementation 'com.github.ben-manes.caffeine:caffeine:3.1.5'
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:kms'
-  implementation platform('com.google.cloud:libraries-bom:26.12.0')
+  implementation platform('com.google.cloud:libraries-bom:26.24.0')
   implementation 'com.google.cloud:google-cloud-secretmanager'
 
   runtimeOnly 'com.squareup.okhttp3:okhttp'
