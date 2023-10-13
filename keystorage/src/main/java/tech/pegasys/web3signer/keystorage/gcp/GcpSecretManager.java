@@ -34,7 +34,6 @@ import com.google.cloud.secretmanager.v1.SecretPayload;
 import com.google.protobuf.ByteString;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 
 public class GcpSecretManager implements Closeable {
 
@@ -99,20 +98,19 @@ public class GcpSecretManager implements Closeable {
   }
 
   private Iterable<Secret> listSecrets(String projectId, Optional<String> filter) {
-    ListSecretsRequest request = listSecretsRequest(projectId, filter);
+    final ListSecretsRequest request = listSecretsRequest(projectId, filter);
     return secretManagerServiceClient.listSecrets(request).iterateAll();
   }
 
-  @NotNull
   private static ListSecretsRequest listSecretsRequest(String projectId, Optional<String> filter) {
-    ListSecretsRequest.Builder builder = ListSecretsRequest.newBuilder();
+    final ListSecretsRequest.Builder builder = ListSecretsRequest.newBuilder();
     builder.setParent(ProjectName.of(projectId).toString());
     filter.ifPresent(builder::setFilter);
     return builder.build();
   }
 
   private Optional<String> fetchStringSecret(String secretName) {
-    AccessSecretVersionResponse accessSecretVersionResponse = fetchSecret(secretName);
+    final AccessSecretVersionResponse accessSecretVersionResponse = fetchSecret(secretName);
     if (accessSecretVersionResponse.hasPayload()) {
       SecretPayload payload = accessSecretVersionResponse.getPayload();
       ByteString payloadData = payload.getData();
@@ -123,7 +121,7 @@ public class GcpSecretManager implements Closeable {
   }
 
   private AccessSecretVersionResponse fetchSecret(String secretName) {
-    AccessSecretVersionRequest accessSecretVersionRequest =
+    final AccessSecretVersionRequest accessSecretVersionRequest =
         AccessSecretVersionRequest.newBuilder().setName(secretName + "/versions/latest").build();
     return secretManagerServiceClient.accessSecretVersion(accessSecretVersionRequest);
   }
