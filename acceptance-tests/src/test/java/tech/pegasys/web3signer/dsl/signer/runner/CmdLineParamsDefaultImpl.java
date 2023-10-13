@@ -32,6 +32,7 @@ import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTOR
 import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
 import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PATH;
 
+import tech.pegasys.web3signer.commandline.PicoCliGcpSecretManagerParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
@@ -40,6 +41,7 @@ import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
@@ -129,6 +131,9 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       signerConfig
           .getAwsParameters()
           .ifPresent(awsParams -> params.addAll(awsSecretsManagerBulkLoadingOptions(awsParams)));
+      signerConfig
+          .getGcpParameters()
+          .ifPresent(gcpParams -> params.addAll(gcpSecretManagerBulkLoadingOptions(gcpParams)));
     } else if (signerConfig.getMode().equals("eth1")) {
       params.add("--downstream-http-port");
       params.add(Integer.toString(signerConfig.getDownstreamHttpPort()));
@@ -307,6 +312,28 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Boolean.toString(signerConfig.isKeyManagerApiEnabled()));
     }
 
+    return params;
+  }
+
+  private Collection<String> gcpSecretManagerBulkLoadingOptions(
+      final GcpSecretManagerParameters gcpSecretManagerParameters) {
+    final List<String> params = new ArrayList<>();
+    params.add(
+        PicoCliGcpSecretManagerParameters.GCP_SECRETS_ENABLED_OPTION
+            + "="
+            + gcpSecretManagerParameters.isEnabled());
+    if (gcpSecretManagerParameters.getProjectId() != null) {
+      params.add(
+          PicoCliGcpSecretManagerParameters.GCP_PROJECT_ID_OPTION
+              + "="
+              + gcpSecretManagerParameters.getProjectId());
+    }
+    if (gcpSecretManagerParameters.getFilter().isPresent()) {
+      params.add(
+          PicoCliGcpSecretManagerParameters.GCP_SECRETS_FILTER_OPTION
+              + "="
+              + gcpSecretManagerParameters.getFilter().get());
+    }
     return params;
   }
 

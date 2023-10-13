@@ -65,5 +65,6 @@ dependencies {
   testFixturesImplementation 'software.amazon.awssdk:auth'
   testFixturesImplementation 'software.amazon.awssdk:secretsmanager'
   testFixturesImplementation 'software.amazon.awssdk:kms'
+  testFixturesImplementation 'com.google.cloud:google-cloud-secretmanager'
   testFixturesImplementation project(":common")
 }
