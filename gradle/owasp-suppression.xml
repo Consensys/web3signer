@@ -13,6 +13,13 @@
         <packageUrl regex="true">^pkg:maven/io\.netty/netty*@*.*$</packageUrl>
         <vulnerabilityName>CVE-2023-4586</vulnerabilityName>
      </suppress>
+    <suppress until="2023-12-16">
+        <notes><![CDATA[
+        Suppress CVE-2023-36415 as this should only be applicable on version up to but excluding 1.10.2.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.azure/azure\-identity@1\.10\.[2-9]$</packageUrl>
+        <vulnerabilityName>CVE-2023-36415</vulnerabilityName>
+    </suppress>
     <suppress>
         <notes><![CDATA[
         Suppress CVE-2023-35116 as this is not considered a CVE according to discussion in https://github.com/FasterXML/jackson-databind/issues/3972
