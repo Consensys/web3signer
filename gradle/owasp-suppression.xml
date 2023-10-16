@@ -15,7 +15,7 @@
      </suppress>
     <suppress>
         <notes><![CDATA[
-        Suppress CVE-2023-36415 as this should only be applicable on version excluding 1.10.2.
+        Suppress CVE-2023-36415 as this should only be applicable on version up to but excluding 1.10.2.
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/com\.azure/azure\-identity@1\.10\.[2-9]$</packageUrl>
         <vulnerabilityName>CVE-2023-36415</vulnerabilityName>
