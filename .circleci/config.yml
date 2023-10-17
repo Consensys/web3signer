@@ -325,9 +325,9 @@ jobs:
           shell: /bin/sh
           command: |
             docker pull consensys/web3signer:develop
-            docker run --rm -it consensys/web3signer:develop --version
-            docker save consensys/web3signer:develop -o $HOME/web3signer-develop.tar
-            $HOME/bin/trivy image --exit-code 1 --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m --input $HOME/web3signer-develop.tar
+            docker images
+            $HOME/bin/trivy image --reset
+            $HOME/bin/trivy image consensys/web3signer:develop --debug --exit-code 1 --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m
       - notify
  
   publishOpenApiSpec:
