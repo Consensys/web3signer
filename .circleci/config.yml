@@ -313,6 +313,8 @@ jobs:
     executor: trivy_executor
     steps:
       - prepare
+      - setup_remote_docker:
+          version: 20.10.24
       - run:
           name: Install trivy
           command: |
@@ -322,7 +324,7 @@ jobs:
           name: Scan develop image with trivy
           shell: /bin/sh
           command: |
-            docker images
+            docker pull docker.io/consensys/web3signer:develop 
             $HOME/bin/trivy image --exit-code 1 --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m "docker.io/consensys/web3signer:develop"
       - notify
  
