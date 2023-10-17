@@ -316,13 +316,13 @@ jobs:
       - run:
           name: Install trivy
           command: |
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $HOME/bin
       # remove the test files and only use the folder names
       - run:
           name: Scan develop image with trivy
           shell: /bin/sh
           command: |
-            trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m "consensys/web3signer:develop"
+            $HOME/bin/trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m "consensys/web3signer:develop"
       - notify
  
   publishOpenApiSpec:
