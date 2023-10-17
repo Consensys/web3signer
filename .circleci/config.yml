@@ -326,7 +326,7 @@ jobs:
           command: |
             docker pull docker.io/consensys/web3signer:develop
             docker manifest inspect consensys/web3signer:develop
-            $HOME/bin/trivy image --clear-cache --exit-code 1 --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m "docker.io/consensys/web3signer:develop"
+            $HOME/bin/trivy image --exit-code 1 --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m "docker.io/consensys/web3signer:develop"
       - notify
  
   publishOpenApiSpec:
