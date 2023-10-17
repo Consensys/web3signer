@@ -322,6 +322,7 @@ jobs:
           name: Scan develop image with trivy
           shell: /bin/sh
           command: |
+            docker images
             $HOME/bin/trivy image --exit-code 1 --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m "docker.io/consensys/web3signer:develop"
       - notify
  
