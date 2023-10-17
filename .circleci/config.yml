@@ -72,7 +72,7 @@ executors:
 
   trivy_executor:
     docker:
-      - image: docker:stable-git
+      - image: cimg/base:current
         auth:
           <<: *docker-auth
     resource_class: small
@@ -313,24 +313,16 @@ jobs:
     executor: trivy_executor
     steps:
       - prepare
-      - setup_remote_docker:
-          docker_layer_caching: false
       - run:
           name: Install trivy
           command: |
-            apk add --update-cache --upgrade curl bash
             curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
       # remove the test files and only use the folder names
       - run:
-          name: Scan with trivy
+          name: Scan develop image with trivy
           shell: /bin/sh
           command: |
-            rm -rf docker/test*
-            for FILE in $(ls docker)
-            do
-              docker pull -q "consensys/web3signer:develop-$FILE"
-              trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m "consensys/web3signer:develop-$FILE" 
-            done
+            trivy -q image --exit-code 1 --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m "consensys/web3signer:develop"
       - notify
  
   publishOpenApiSpec:
@@ -382,6 +374,7 @@ workflows:
           filters:
             tags: &filters-release-tags
               only: /^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?/
+      - dockerScan
       - acceptanceTests:
           requires:
             - build
