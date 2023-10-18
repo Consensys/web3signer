@@ -313,20 +313,16 @@ jobs:
     executor: trivy_executor
     steps:
       - prepare
-      - setup_remote_docker:
-          version: 20.10.24
       - run:
           name: Install trivy
-          command: |
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $HOME/bin
-      # remove the test files and only use the folder names
+          command: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $HOME/bin
+      # scan both develop-arm64 and develop-amd64 images using remote src.
       - run:
-          name: Scan develop image with trivy
+          name: Scan with trivy
           shell: /bin/sh
           command: |
-            docker pull consensys/web3signer:develop
-            $HOME/bin/trivy image --reset
-            $HOME/bin/trivy image consensys/web3signer:develop --trace --image-src docker --exit-code 1 --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m
+            $HOME/bin/trivy image consensys/web3signer:develop-arm64 --image-src remote --exit-code 1 --quiet --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m
+            $HOME/bin/trivy image consensys/web3signer:develop-amd64 --image-src remote --exit-code 1 --quiet --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m
       - notify
  
   publishOpenApiSpec:
