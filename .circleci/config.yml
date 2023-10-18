@@ -64,7 +64,6 @@ executors:
   machine_executor_amd64:
     machine:
       image: ubuntu-2204:current # https://circleci.com/developer/machine/image/ubuntu-2204
-      docker_layer_caching: true
     working_directory: ~/project
     environment:
       architecture: "amd64"
