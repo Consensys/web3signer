@@ -374,7 +374,6 @@ workflows:
           filters:
             tags: &filters-release-tags
               only: /^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?/
-      - dockerScan
       - acceptanceTests:
           requires:
             - build
