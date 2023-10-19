@@ -192,6 +192,10 @@ dependencyManagement {
       entry 'netty-handler-proxy'
       entry 'netty-resolver-dns'
       entry 'netty-transport'
+      entry 'netty-transport-classes-epoll'
+      entry 'netty-transport-classes-kqueue'
+      entry 'netty-transport-native-epoll'
+      entry 'netty-transport-native-kqueue'
       entry 'netty-resolver-dns-native-macos'
     }
 
