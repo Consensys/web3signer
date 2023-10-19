@@ -1,5 +1,10 @@
 # Changelog
 
+## Next version
+
+### Bugs fixed
+- Update netty to fix CVE-2023-44487
+
 ## 23.9.1
 
 ### Breaking Changes
