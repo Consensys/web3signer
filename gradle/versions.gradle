@@ -187,7 +187,9 @@ dependencyManagement {
     // addressing CVE-2023-44487
     dependencySet(group: 'io.netty', version: '4.1.100.Final') {
       entry 'netty-all'
+      entry 'netty-codec-http2'
       entry 'netty-handler'
+      entry 'netty-handler-proxy'
       entry 'netty-resolver-dns'
       entry 'netty-transport'
       entry 'netty-resolver-dns-native-macos'
