@@ -184,8 +184,8 @@ dependencyManagement {
     // addresses CVE-2023-3635
     dependency 'com.squareup.okio:okio:3.4.0'
 
-    // addressing CVE-2022-41881, CVE-2022-41915, CVE-2023-34462
-    dependencySet(group: 'io.netty', version: '4.1.97.Final') {
+    // addressing CVE-2023-44487
+    dependencySet(group: 'io.netty', version: '4.1.100.Final') {
       entry 'netty-all'
       entry 'netty-handler'
       entry 'netty-resolver-dns'
