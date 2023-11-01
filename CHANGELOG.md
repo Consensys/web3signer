@@ -5,6 +5,9 @@
 ### Bugs fixed
 - Update netty to fix CVE-2023-44487
 
+### Features Added
+- Removed need for KZG trusted setup file and associated --Xtrusted-setup command line argument
+
 ## 23.9.1
 
 ### Breaking Changes
