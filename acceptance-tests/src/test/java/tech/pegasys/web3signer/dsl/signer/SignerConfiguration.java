@@ -72,7 +72,6 @@ public class SignerConfiguration {
   private final Optional<Long> denebForkEpoch;
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
-  private final Optional<String> trustedSetup;
   private Optional<WatermarkRepairParameters> watermarkRepairParameters;
   private int downstreamHttpPort;
   private Optional<ClientTlsOptions> downstreamTlsOptions;
@@ -124,7 +123,6 @@ public class SignerConfiguration {
       final int downstreamHttpPort,
       final Optional<ClientTlsOptions> downstreamTlsOptions,
       final ChainIdProvider chainIdProvider,
-      final Optional<String> trustedSetup,
       final Optional<KeystoresParameters> v3KeystoresBulkloadParameters) {
     this.hostname = hostname;
     this.logLevel = logLevel;
@@ -169,7 +167,6 @@ public class SignerConfiguration {
     this.downstreamHttpPort = downstreamHttpPort;
     this.downstreamTlsOptions = downstreamTlsOptions;
     this.chainIdProvider = chainIdProvider;
-    this.trustedSetup = trustedSetup;
     this.v3KeystoresBulkloadParameters = v3KeystoresBulkloadParameters;
   }
 
@@ -351,10 +348,6 @@ public class SignerConfiguration {
 
   public ChainIdProvider getChainIdProvider() {
     return chainIdProvider;
-  }
-
-  public Optional<String> getTrustedSetup() {
-    return trustedSetup;
   }
 
   public Optional<KeystoresParameters> getV3KeystoresBulkloadParameters() {

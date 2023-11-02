@@ -127,15 +127,6 @@ public class Eth2SubCommand extends ModeSubCommand {
   private UInt64 denebForkEpoch;
 
   @CommandLine.Option(
-      names = {"--Xtrusted-setup"},
-      hidden = true,
-      paramLabel = "<STRING>",
-      description =
-          "The trusted setup which is needed for KZG commitments. Only required when creating a custom network. This value should be a file or URL pointing to a trusted setup.",
-      arity = "1")
-  private String trustedSetup = null; // Depends on network configuration
-
-  @CommandLine.Option(
       names = {"--key-manager-api-enabled", "--enable-key-manager-api"},
       paramLabel = "<BOOL>",
       description = "Enable the key manager API to manage key stores (default: ${DEFAULT-VALUE}).",
@@ -193,7 +184,7 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   private Eth2NetworkConfiguration createEth2NetworkConfig() {
     Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
-    builder.applyNetworkDefaults(network);
+    builder.applyNetworkDefaults(network).kzgNoop(true);
     if (altairForkEpoch != null) {
       builder.altairForkEpoch(altairForkEpoch);
     }
@@ -205,9 +196,6 @@ public class Eth2SubCommand extends ModeSubCommand {
     }
     if (denebForkEpoch != null) {
       builder.denebForkEpoch(denebForkEpoch);
-    }
-    if (trustedSetup != null) {
-      builder.trustedSetup(trustedSetup);
     }
     return builder.build();
   }

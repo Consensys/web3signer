@@ -489,12 +489,6 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               signerConfig.getDenebForkEpoch().get()));
     }
 
-    if (signerConfig.getTrustedSetup().isPresent()) {
-      yamlConfig.append(
-          String.format(
-              YAML_STRING_FMT, "eth2.Xtrusted-setup", signerConfig.getTrustedSetup().get()));
-    }
-
     if (signerConfig.getNetwork().isPresent()) {
       yamlConfig.append(
           String.format(YAML_STRING_FMT, "eth2.network", signerConfig.getNetwork().get()));

@@ -80,7 +80,6 @@ public class SignerConfigurationBuilder {
   private ClientTlsOptions downstreamTlsOptions;
 
   private ChainIdProvider chainIdProvider = new ConfigurationChainId(DEFAULT_CHAIN_ID);
-  private String trustedSetup;
 
   private KeystoresParameters v3KeystoresBulkloadParameters;
 
@@ -313,11 +312,6 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withTrustedSetup(final String trustedSetup) {
-    this.trustedSetup = trustedSetup;
-    return this;
-  }
-
   public SignerConfigurationBuilder withV3KeystoresBulkloadParameters(
       final KeystoresParameters v3KeystoresBulkloadParameters) {
     this.v3KeystoresBulkloadParameters = v3KeystoresBulkloadParameters;
@@ -372,7 +366,6 @@ public class SignerConfigurationBuilder {
         downstreamHttpPort,
         Optional.ofNullable(downstreamTlsOptions),
         chainIdProvider,
-        Optional.ofNullable(trustedSetup),
         Optional.ofNullable(v3KeystoresBulkloadParameters));
   }
 }

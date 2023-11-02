@@ -166,6 +166,12 @@ allprojects {
     skipProjects = [
       ':acceptance-tests'
     ]
+    analyzers {
+      retirejs {
+        enabled = false
+      }
+      assemblyEnabled = false
+    }
   }
 
   tasks.withType(JavaCompile) {
