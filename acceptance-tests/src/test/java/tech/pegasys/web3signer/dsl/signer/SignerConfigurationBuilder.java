@@ -22,6 +22,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.Configurati
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
@@ -51,6 +52,7 @@ public class SignerConfigurationBuilder {
   private String mode;
   private AzureKeyVaultParameters azureKeyVaultParameters;
   private AwsVaultParameters awsVaultParameters;
+  private GcpSecretManagerParameters gcpSecretManagerParameters;
   private Map<String, String> web3SignerEnvironment;
   private Duration startupTimeout =
       Boolean.getBoolean("debugSubProcess") ? Duration.ofHours(1) : Duration.ofSeconds(30);
@@ -144,6 +146,12 @@ public class SignerConfigurationBuilder {
 
   public SignerConfigurationBuilder withAwsParameters(final AwsVaultParameters awsVaultParameters) {
     this.awsVaultParameters = awsVaultParameters;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withGcpParameters(
+      final GcpSecretManagerParameters gcpSecretManagerParameters) {
+    this.gcpSecretManagerParameters = gcpSecretManagerParameters;
     return this;
   }
 
@@ -326,6 +334,7 @@ public class SignerConfigurationBuilder {
         metricsEnabled,
         Optional.ofNullable(azureKeyVaultParameters),
         Optional.ofNullable(awsVaultParameters),
+        Optional.ofNullable(gcpSecretManagerParameters),
         Optional.ofNullable(keystoresParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),

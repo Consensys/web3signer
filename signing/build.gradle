@@ -41,6 +41,7 @@ dependencies {
   implementation 'com.github.ben-manes.caffeine:caffeine:3.1.5'
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:kms'
+  implementation 'com.google.cloud:google-cloud-secretmanager'
 
   runtimeOnly 'com.squareup.okhttp3:okhttp'
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
@@ -64,5 +65,6 @@ dependencies {
   testFixturesImplementation 'software.amazon.awssdk:auth'
   testFixturesImplementation 'software.amazon.awssdk:secretsmanager'
   testFixturesImplementation 'software.amazon.awssdk:kms'
+  testFixturesImplementation 'com.google.cloud:google-cloud-secretmanager'
   testFixturesImplementation project(":common")
 }
