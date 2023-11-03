@@ -224,6 +224,10 @@ jobs:
           name: Acceptance Tests
           no_output_timeout: 20m
           command: |
+            if [ -n "$GCP_SERVICE_KEY" ]; then
+              echo "$GCP_SERVICE_KEY" | base64 --decode > $HOME/gcp_service_key.json
+              export GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp_service_key.json
+            fi
             ./gradlew --no-daemon clean installDist
             ./gradlew --no-daemon --parallel acceptanceTest
       - notify
