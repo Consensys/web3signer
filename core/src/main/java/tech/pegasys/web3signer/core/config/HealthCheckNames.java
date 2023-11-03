@@ -17,6 +17,7 @@ public interface HealthCheckNames {
   String SLASHING_PROTECTION_DB = "slashing-protection-db-health-check";
   String KEYS_CHECK_UNEXPECTED = "keys-check/unexpected";
   String KEYS_CHECK_AWS_BULK_LOADING = "keys-check/aws-bulk-loading";
+  String KEYS_CHECK_GCP_BULK_LOADING = "keys-check/gcp-bulk-loading";
   String KEYS_CHECK_AZURE_BULK_LOADING = "keys-check/azure-bulk-loading";
   String KEYS_CHECK_KEYSTORE_BULK_LOADING = "keys-check/keystores-bulk-loading";
   String KEYS_CHECK_CONFIG_FILE_LOADING = "keys-check/config-files-loading";

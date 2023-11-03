@@ -50,6 +50,7 @@ dependencies {
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:secretsmanager'
   implementation 'software.amazon.awssdk:kms'
+  implementation 'com.google.cloud:google-cloud-secretmanager'
   runtimeOnly 'software.amazon.awssdk:sts'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'

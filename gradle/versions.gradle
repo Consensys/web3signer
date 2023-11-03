@@ -144,6 +144,7 @@ dependencyManagement {
 
     dependency 'org.flywaydb:flyway-core:6.1.1'
 
+    dependency 'com.google.cloud:google-cloud-secretmanager:2.29.0'
     dependency 'io.zonky.test.postgres:embedded-postgres-binaries-bom:11.19.0'
     dependency 'io.zonky.test:embedded-postgres:2.0.3'
 
@@ -221,6 +222,18 @@ dependencyManagement {
       entry 'grpc-core'
       entry 'grpc-netty'
       entry 'grpc-stub'
+      entry 'grpc-alts'
+      entry 'grpc-api'
+      entry 'grpc-auth'
+      entry 'grpc-context'
+      entry 'grpc-googleapis'
+      entry 'grpc-grpclb'
+      entry 'grpc-inprocess'
+      entry 'grpc-netty-shaded'
+      entry 'grpc-protobuf'
+      entry 'grpc-protobuf-lite'
+      entry 'grpc-services'
+      entry 'grpc-xds'
     }
 
     // used in tests to assert log message

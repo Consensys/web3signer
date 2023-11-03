@@ -32,6 +32,7 @@ import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTOR
 import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
 import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PATH;
 
+import tech.pegasys.web3signer.commandline.PicoCliGcpSecretManagerParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
@@ -40,6 +41,7 @@ import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.io.IOException;
@@ -152,6 +154,9 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
           .getAwsParameters()
           .ifPresent(
               awsParams -> yamlConfig.append(awsSecretsManagerBulkLoadingOptions(awsParams)));
+      signerConfig
+          .getGcpParameters()
+          .ifPresent(gcpParameters -> yamlConfig.append(gcpBulkLoadingOptions(gcpParameters)));
 
       final CommandArgs subCommandArgs = createSubCommandArgs();
       params.addAll(subCommandArgs.params);
@@ -565,6 +570,31 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
                         "eth2." + AWS_ENDPOINT_OVERRIDE_OPTION.substring(2),
                         uri)));
 
+    return yamlConfig.toString();
+  }
+
+  private String gcpBulkLoadingOptions(
+      final GcpSecretManagerParameters gcpSecretManagerParameters) {
+    final StringBuilder yamlConfig = new StringBuilder();
+    yamlConfig.append(
+        String.format(
+            YAML_BOOLEAN_FMT,
+            "eth2." + PicoCliGcpSecretManagerParameters.GCP_SECRETS_ENABLED_OPTION.substring(2),
+            gcpSecretManagerParameters.isEnabled()));
+    if (gcpSecretManagerParameters.getProjectId() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + PicoCliGcpSecretManagerParameters.GCP_PROJECT_ID_OPTION.substring(2),
+              gcpSecretManagerParameters.getProjectId()));
+    }
+    if (gcpSecretManagerParameters.getFilter().isPresent()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + PicoCliGcpSecretManagerParameters.GCP_SECRETS_FILTER_OPTION.substring(2),
+              gcpSecretManagerParameters.getFilter().get()));
+    }
     return yamlConfig.toString();
   }
 

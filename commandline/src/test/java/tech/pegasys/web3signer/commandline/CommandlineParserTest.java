@@ -421,6 +421,23 @@ class CommandlineParserTest {
   }
 
   @Test
+  void gcpSpecifiedProjectIdFailsToParseWithoutRequiredParameters() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        String.format(
+            "eth2 --slashing-protection-enabled=false %s=true",
+            PicoCliGcpSecretManagerParameters.GCP_SECRETS_ENABLED_OPTION);
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: --gcp-secrets-enabled=true, but the following parameters were missing [--gcp-project-id].");
+  }
+
+  @Test
   void awsSpecifiedAuthModeFailsToParseWithoutRequiredParameters() {
     String cmdline = validBaseCommandOptions();
     cmdline +=

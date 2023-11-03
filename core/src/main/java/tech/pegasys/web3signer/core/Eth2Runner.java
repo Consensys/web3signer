@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.core;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AWS_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_CONFIG_FILE_LOADING;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_GCP_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_KEYSTORE_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.SLASHING_PROTECTION_DB;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
@@ -45,11 +46,13 @@ import tech.pegasys.web3signer.signing.FileValidatorManager;
 import tech.pegasys.web3signer.signing.KeystoreFileManager;
 import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.bulkloading.BlsAwsBulkLoader;
+import tech.pegasys.web3signer.signing.bulkloading.BlsGcpBulkLoader;
 import tech.pegasys.web3signer.signing.bulkloading.BlsKeystoreBulkLoader;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.signing.config.SignerLoader;
 import tech.pegasys.web3signer.signing.config.metadata.AbstractArtifactSignerFactory;
@@ -97,6 +100,7 @@ public class Eth2Runner extends Runner {
   private final Optional<SlashingProtectionContext> slashingProtectionContext;
   private final AzureKeyVaultParameters azureKeyVaultParameters;
   private final AwsVaultParameters awsVaultParameters;
+  private final GcpSecretManagerParameters gcpSecretManagerParameters;
   private final SlashingProtectionParameters slashingProtectionParameters;
   private final boolean pruningEnabled;
   private final KeystoresParameters keystoresParameters;
@@ -109,6 +113,7 @@ public class Eth2Runner extends Runner {
       final AzureKeyVaultParameters azureKeyVaultParameters,
       final KeystoresParameters keystoresParameters,
       final AwsVaultParameters awsVaultParameters,
+      final GcpSecretManagerParameters gcpSecretManagerParameters,
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled) {
     super(baseConfig);
@@ -120,6 +125,7 @@ public class Eth2Runner extends Runner {
     this.eth2Spec = eth2Spec;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
     this.awsVaultParameters = awsVaultParameters;
+    this.gcpSecretManagerParameters = gcpSecretManagerParameters;
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -358,6 +364,19 @@ public class Eth2Runner extends Runner {
           awsResult.getErrorCount());
       registerSignerLoadingHealthCheck(KEYS_CHECK_AWS_BULK_LOADING, awsResult);
       results = MappedResults.merge(results, awsResult);
+    }
+
+    if (gcpSecretManagerParameters.isEnabled()) {
+      LOG.info("Bulk loading keys from GCP Secret Manager ... ");
+      final BlsGcpBulkLoader blsGcpBulkLoader = new BlsGcpBulkLoader();
+      final MappedResults<ArtifactSigner> gcpResult =
+          blsGcpBulkLoader.load(gcpSecretManagerParameters);
+      LOG.info(
+          "Keys loaded from GCP Secret Manager: [{}], with error count: [{}]",
+          gcpResult.getValues().size(),
+          gcpResult.getErrorCount());
+      registerSignerLoadingHealthCheck(KEYS_CHECK_GCP_BULK_LOADING, gcpResult);
+      results = MappedResults.merge(results, gcpResult);
     }
 
     return results;
