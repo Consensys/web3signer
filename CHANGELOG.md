@@ -6,6 +6,7 @@
 - Update netty to fix CVE-2023-44487
 
 ### Features Added
+- Google Cloud Secret Manager bulk loading support for BLS keys in eth2 mode via PR [#928](https://github.com/Consensys/web3signer/pull/928) contributed by [Sergie Kisel](https://github.com/skisel-bt).
 - Removed need for KZG trusted setup file and associated --Xtrusted-setup command line argument
 
 ## 23.9.1
