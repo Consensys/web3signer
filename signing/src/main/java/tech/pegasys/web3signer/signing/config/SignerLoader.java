@@ -31,12 +31,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -71,7 +73,7 @@ public class SignerLoader {
     LOG.info(
         "Signer configuration metadata files read in memory {} in {}",
         configFileContent.getContentMap().size(),
-        calculateTimeTaken(start));
+        calculateTimeTaken(start).orElse("unknown duration"));
 
     final Instant conversionStartInstant = Instant.now();
     // Step 1: convert yaml file content to list of SigningMetadata
@@ -95,7 +97,7 @@ public class SignerLoader {
         "Total Artifact Signer loaded via configuration files: {}\nError count {}\nTime Taken: {}.",
         artifactSigners.getValues().size(),
         artifactSigners.getErrorCount(),
-        calculateTimeTaken(conversionStartInstant));
+        calculateTimeTaken(conversionStartInstant).orElse("unknown duration"));
 
     return artifactSigners;
   }
@@ -119,8 +121,15 @@ public class SignerLoader {
     return MappedResults.newInstance(signingMetadataList, errorCount.get());
   }
 
-  private static String calculateTimeTaken(final Instant start) {
-    return DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
+  @VisibleForTesting
+  static Optional<String> calculateTimeTaken(final Instant start) {
+    final Instant now = Instant.now();
+    final long timeTaken = Duration.between(start, now).toMillis();
+    if (timeTaken < 0) {
+      LOG.warn("System Clock returned time in past. Start: {}, Now: {}.", start, now);
+      return Optional.empty();
+    }
+    return Optional.of(DurationFormatUtils.formatDurationHMS(timeTaken));
   }
 
   private ConfigFileContent getNewOrModifiedConfigFilesContents(
