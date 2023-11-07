@@ -43,6 +43,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.VisibleForTesting;
 
 public class SignerLoader {
 
@@ -120,7 +121,8 @@ public class SignerLoader {
     return MappedResults.newInstance(signingMetadataList, errorCount.get());
   }
 
-  private static Optional<String> calculateTimeTaken(final Instant start) {
+  @VisibleForTesting
+  static Optional<String> calculateTimeTaken(final Instant start) {
     final Instant now = Instant.now();
     final long timeTaken = Duration.between(start, now).toMillis();
     if (timeTaken < 0) {
