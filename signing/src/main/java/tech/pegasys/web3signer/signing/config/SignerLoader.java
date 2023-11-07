@@ -120,7 +120,12 @@ public class SignerLoader {
   }
 
   private static String calculateTimeTaken(final Instant start) {
-    return DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
+    final Instant now = Instant.now();
+    final long timeTaken = Duration.between(start, now).toMillis();
+    if (timeTaken < 0) {
+      LOG.warn("System Clock returned time in past. Start: {}, Now: {}.", start, now);
+    }
+    return DurationFormatUtils.formatDurationHMS(Math.abs(timeTaken));
   }
 
   private ConfigFileContent getNewOrModifiedConfigFilesContents(
