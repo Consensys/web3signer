@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -71,7 +72,7 @@ public class SignerLoader {
     LOG.info(
         "Signer configuration metadata files read in memory {} in {}",
         configFileContent.getContentMap().size(),
-        calculateTimeTaken(start));
+        calculateTimeTaken(start).orElse("unknown duration"));
 
     final Instant conversionStartInstant = Instant.now();
     // Step 1: convert yaml file content to list of SigningMetadata
@@ -95,7 +96,7 @@ public class SignerLoader {
         "Total Artifact Signer loaded via configuration files: {}\nError count {}\nTime Taken: {}.",
         artifactSigners.getValues().size(),
         artifactSigners.getErrorCount(),
-        calculateTimeTaken(conversionStartInstant));
+        calculateTimeTaken(conversionStartInstant).orElse("unknown duration"));
 
     return artifactSigners;
   }
@@ -119,13 +120,14 @@ public class SignerLoader {
     return MappedResults.newInstance(signingMetadataList, errorCount.get());
   }
 
-  private static String calculateTimeTaken(final Instant start) {
+  private static Optional<String> calculateTimeTaken(final Instant start) {
     final Instant now = Instant.now();
     final long timeTaken = Duration.between(start, now).toMillis();
     if (timeTaken < 0) {
       LOG.warn("System Clock returned time in past. Start: {}, Now: {}.", start, now);
+      return Optional.empty();
     }
-    return DurationFormatUtils.formatDurationHMS(Math.abs(timeTaken));
+    return Optional.of(DurationFormatUtils.formatDurationHMS(timeTaken));
   }
 
   private ConfigFileContent getNewOrModifiedConfigFilesContents(
