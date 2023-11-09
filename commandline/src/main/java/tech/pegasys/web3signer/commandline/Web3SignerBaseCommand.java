@@ -323,8 +323,9 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
 
   @Override
   public int getVertxWorkerPoolSize() {
-    if (vertxWorkerPoolSize == null && deprecatedWorkerPoolSize == null) {
-      return VERTX_WORKER_POOL_SIZE_DEFAULT;
+    // both values are not allowed on cli, they will be verified in validateArgs() ...
+    if (vertxWorkerPoolSize != null && deprecatedWorkerPoolSize != null) {
+      return -1;
     }
 
     if (vertxWorkerPoolSize != null) {
@@ -335,7 +336,6 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       return deprecatedWorkerPoolSize;
     }
 
-    // both values are not allowed on cli, they will be verified in validateArgs() ...
     return VERTX_WORKER_POOL_SIZE_DEFAULT;
   }
 
