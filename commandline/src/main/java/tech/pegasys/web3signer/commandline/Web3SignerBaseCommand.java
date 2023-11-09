@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.commandline;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.FILE_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.HOST_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.INTEGER_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PORT_FORMAT_HELP;
 import static tech.pegasys.web3signer.common.Web3SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
@@ -204,10 +205,15 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   private boolean keystoreParallelProcessingEnabled = true;
 
   @Option(
-      names = "--Xworker-pool-size",
-      description = "Configure the work pool size used for processing requests",
-      hidden = true)
-  private int workerPoolSize = 20;
+      names = "--vertx-worker-pool-size",
+      description =
+          "Configure the Vert.x worker pool size used for processing requests. (default: ${DEFAULT-VALUE})",
+      paramLabel = INTEGER_FORMAT_HELP)
+  private int vertxWorkerPoolSize = 20;
+
+  @Deprecated
+  @Option(names = "--Xworker-pool-size", hidden = true)
+  private Integer deprecatedWorkerPoolSize = null;
 
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
@@ -314,8 +320,11 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   @Override
-  public int getWorkerPoolSize() {
-    return workerPoolSize;
+  public int getVertxWorkerPoolSize() {
+    if (deprecatedWorkerPoolSize != null) {
+      return deprecatedWorkerPoolSize;
+    }
+    return vertxWorkerPoolSize;
   }
 
   @Override
@@ -336,7 +345,7 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
         .add("metricsHostAllowList", metricsHostAllowList)
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
-        .add("workerPoolSize", workerPoolSize)
+        .add("vertxWorkerPoolSize", vertxWorkerPoolSize)
         .toString();
   }
 

@@ -63,5 +63,5 @@ public interface BaseConfig {
 
   boolean keystoreParallelProcessingEnabled();
 
-  int getWorkerPoolSize();
+  int getVertxWorkerPoolSize();
 }

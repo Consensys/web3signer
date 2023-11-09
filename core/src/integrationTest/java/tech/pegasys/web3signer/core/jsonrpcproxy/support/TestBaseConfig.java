@@ -138,7 +138,7 @@ public class TestBaseConfig implements BaseConfig {
   }
 
   @Override
-  public int getWorkerPoolSize() {
+  public int getVertxWorkerPoolSize() {
     return 20;
   }
 }
