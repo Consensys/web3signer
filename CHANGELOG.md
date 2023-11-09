@@ -8,7 +8,7 @@
 ### Features Added
 - Google Cloud Secret Manager bulk loading support for BLS keys in eth2 mode via PR [#928](https://github.com/Consensys/web3signer/pull/928) contributed by [Sergey Kisel](https://github.com/skisel-bt).
 - Removed hidden option `--Xtrusted-setup` as Web3Signer does not need KZG trusted setup file anymore.
-- Make Vert.x worker pool size configurable using cli option `--vertx-worker-pool-size` (deprecated alias: `--Xworker-pool-size`). [#920](https://github.com/Consensys/web3signer/pull/920)
+- Make Vert.x worker pool size configurable using cli option `--vertx-worker-pool-size` (replaces the now deprecated: `--Xworker-pool-size`). [#920](https://github.com/Consensys/web3signer/pull/920)
 
 ## 23.9.1
 
