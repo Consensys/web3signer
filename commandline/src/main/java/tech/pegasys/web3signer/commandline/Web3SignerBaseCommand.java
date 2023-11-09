@@ -66,7 +66,7 @@ import picocli.CommandLine.Spec;
     subcommands = {HelpCommand.class},
     footer = "Web3Signer is licensed under the Apache License 2.0")
 public class Web3SignerBaseCommand implements BaseConfig, Runnable {
-
+  private static final int VERTX_WORKER_POOL_SIZE_DEFAULT = 20;
   @Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
   public static final String KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME =
       "--key-store-config-file-max-size";
@@ -207,9 +207,11 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   @Option(
       names = "--vertx-worker-pool-size",
       description =
-          "Configure the Vert.x worker pool size used for processing requests. (default: ${DEFAULT-VALUE})",
+          "Configure the Vert.x worker pool size used for processing requests. (default: "
+              + VERTX_WORKER_POOL_SIZE_DEFAULT
+              + ")",
       paramLabel = INTEGER_FORMAT_HELP)
-  private int vertxWorkerPoolSize = 20;
+  private Integer vertxWorkerPoolSize = null;
 
   @Deprecated
   @Option(names = "--Xworker-pool-size", hidden = true)
@@ -321,10 +323,20 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
 
   @Override
   public int getVertxWorkerPoolSize() {
+    if (vertxWorkerPoolSize == null && deprecatedWorkerPoolSize == null) {
+      return VERTX_WORKER_POOL_SIZE_DEFAULT;
+    }
+
+    if (vertxWorkerPoolSize != null) {
+      return vertxWorkerPoolSize;
+    }
+
     if (deprecatedWorkerPoolSize != null) {
       return deprecatedWorkerPoolSize;
     }
-    return vertxWorkerPoolSize;
+
+    // both values are not allowed on cli, they will be verified in validateArgs() ...
+    return VERTX_WORKER_POOL_SIZE_DEFAULT;
   }
 
   @Override
@@ -373,6 +385,12 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
           spec.commandLine(),
           "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
               + "time.  Please refer to CLI reference for more details about this constraint.");
+    }
+
+    if (vertxWorkerPoolSize != null && deprecatedWorkerPoolSize != null) {
+      throw new CommandLine.MutuallyExclusiveArgsException(
+          spec.commandLine(),
+          "--vertx-worker-pool-size option and --Xworker-pool-size option can't be used at the same time.");
     }
   }
 
