@@ -1,6 +1,8 @@
 # Changelog
 
 ## 23.11.0
+### Upcoming Breaking Changes
+- `--Xworker-pool-size` cli option will be removed in a future release.
 
 ### Bugs fixed
 - Update netty to fix CVE-2023-44487
