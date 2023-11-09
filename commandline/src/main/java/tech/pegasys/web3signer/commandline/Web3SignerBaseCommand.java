@@ -204,13 +204,16 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       hidden = true)
   private boolean keystoreParallelProcessingEnabled = true;
 
-  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
-      names = {"--vertx-worker-pool-size", "--Xworker-pool-size"},
+      names = "--vertx-worker-pool-size",
       description =
           "Configure the Vert.x worker pool size used for processing requests. (default: ${DEFAULT-VALUE})",
       paramLabel = INTEGER_FORMAT_HELP)
   private int vertxWorkerPoolSize = 20;
+
+  @Deprecated
+  @Option(names = "--Xworker-pool-size", hidden = true)
+  private Integer deprecatedWorkerPoolSize = null;
 
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
@@ -318,6 +321,9 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
 
   @Override
   public int getVertxWorkerPoolSize() {
+    if (deprecatedWorkerPoolSize != null) {
+      return deprecatedWorkerPoolSize;
+    }
     return vertxWorkerPoolSize;
   }
 
