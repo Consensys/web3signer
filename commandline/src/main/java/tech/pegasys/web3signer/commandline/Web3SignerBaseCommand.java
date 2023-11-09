@@ -204,6 +204,7 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       hidden = true)
   private boolean keystoreParallelProcessingEnabled = true;
 
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @Option(
       names = {"--vertx-worker-pool-size", "--Xworker-pool-size"},
       description =
