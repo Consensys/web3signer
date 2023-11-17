@@ -1,5 +1,14 @@
 # Changelog
 
+## Next release
+### Upcoming Breaking Changes
+- `--Xworker-pool-size` cli option will be removed in a future release. This option has been replaced with `--vertx-worker-pool-size`.
+
+### Bugs fixed
+- Update reactor-netty-http to fix CVE-2023-34062
+
+### Features Added
+
 ## 23.11.0
 ### Upcoming Breaking Changes
 - `--Xworker-pool-size` cli option will be removed in a future release. This option has been replaced with `--vertx-worker-pool-size`.
