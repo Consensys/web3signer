@@ -131,7 +131,6 @@ dependencyManagement {
       entry 'azure-security-keyvault-keys'
     }
     dependency 'com.azure:azure-identity:1.10.4'
-    dependency 'com.azure:azure-core-http-netty:1.13.9'
 
     dependency 'com.zaxxer:HikariCP:5.0.1'
     dependency 'org.postgresql:postgresql:42.5.3'
@@ -190,12 +189,13 @@ dependencyManagement {
       entry 'netty-resolver-dns-native-macos'
     }
 
-    /* io.projectreactor.netty:reactor-netty-http:1.0.18 // CVE-2022-31684
-       \--- com.azure:azure-core-http-netty:1.12.0
-         +--- com.azure:azure-security-keyvault-secrets:4.3.6 (requested com.azure:azure-core-http-netty:1.11.6)
-     |    \--- tech.pegasys.signers.internal:keystorage-azure:2.2.3 (requested com.azure:azure-security-keyvault-secrets:4.4.2)
+    /* io.projectreactor.netty:reactor-netty-http:1.0.38 -> 1.0.39 // CVE-2023-34062
+       \--- com.azure:azure-core-http-netty:1.13.10
+            +--- com.azure:azure-security-keyvault-keys:4.7.1 (requested com.azure:azure-core-http-netty:1.13.9)
+            +--- com.azure:azure-identity:1.11.0
+            \--- com.azure:azure-security-keyvault-secrets:4.7.1 (requested com.azure:azure-core-http-netty:1.13.9)
      */
-    dependency 'io.projectreactor.netty:reactor-netty-http:1.0.26'
+    dependency 'io.projectreactor.netty:reactor-netty-http:1.0.39'
 
     // manual overriding of commons-net to avoid CVE-2021-37533
     /* commons-net:commons-net:3.8.0
