@@ -96,7 +96,6 @@ public class Eth1Runner extends Runner {
   public Eth1Runner(final BaseConfig baseConfig, final Eth1Config eth1Config) {
     super(baseConfig);
     this.eth1Config = eth1Config;
-    this.chainId = eth1Config.getChainId().id();
   }
 
   @Override
@@ -337,11 +336,6 @@ public class Eth1Runner extends Runner {
         new TransactionFactory(chainId, jsonDecoder, transmitterFactory);
     final SendTransactionHandler sendTransactionHandler =
         new SendTransactionHandler(chainId, transactionFactory, transmitterFactory, secpSigner);
-
-    final TransactionFactory transactionFactory =
-        new TransactionFactory(chainId, jsonDecoder, transmitterFactory);
-    final SendTransactionHandler sendTransactionHandler =
-        new SendTransactionHandler(chainId, signerProvider, transactionFactory, transmitterFactory);
 
     final RequestMapper requestMapper = new RequestMapper(defaultHandler);
     requestMapper.addHandler(
