@@ -12,12 +12,12 @@
  */
 package tech.pegasys.web3signer.signing.config.metadata;
 
-import tech.pegasys.signers.bls.keystore.KeyStore;
-import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
-import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
-import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.teku.bls.keystore.KeyStore;
+import tech.pegasys.teku.bls.keystore.KeyStoreLoader;
+import tech.pegasys.teku.bls.keystore.KeyStoreValidationException;
+import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.common.Web3SignerMetricCategory;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManager;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
@@ -25,6 +25,7 @@ import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AwsSecretsManagerFactory;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
@@ -51,8 +52,14 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
       final InterlockKeyProvider interlockKeyProvider,
       final YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider,
       final AwsSecretsManagerProvider awsSecretsManagerProvider,
-      final Function<BlsArtifactSignerArgs, ArtifactSigner> signerFactory) {
-    super(connectionFactory, configsDirectory, interlockKeyProvider, yubiHsmOpaqueDataProvider);
+      final Function<BlsArtifactSignerArgs, ArtifactSigner> signerFactory,
+      final AzureKeyVaultFactory azureKeyVaultFactory) {
+    super(
+        connectionFactory,
+        configsDirectory,
+        interlockKeyProvider,
+        yubiHsmOpaqueDataProvider,
+        azureKeyVaultFactory);
     privateKeyRetrievalTimer =
         metricsSystem.createLabelledTimer(
             Web3SignerMetricCategory.SIGNING,
@@ -133,7 +140,7 @@ public class BlsArtifactSignerFactory extends AbstractArtifactSignerFactory {
     final Path keystorePasswordFile =
         makeRelativePathAbsolute(fileKeyStoreMetadata.getKeystorePasswordFile());
     try {
-      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
+      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile.toUri());
       final String password = loadPassword(keystorePasswordFile);
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));

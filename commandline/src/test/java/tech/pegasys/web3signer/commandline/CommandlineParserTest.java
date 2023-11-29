@@ -25,11 +25,11 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
 
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 
 import java.io.PrintWriter;
@@ -421,6 +421,23 @@ class CommandlineParserTest {
   }
 
   @Test
+  void gcpSpecifiedProjectIdFailsToParseWithoutRequiredParameters() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        String.format(
+            "eth2 --slashing-protection-enabled=false %s=true",
+            PicoCliGcpSecretManagerParameters.GCP_SECRETS_ENABLED_OPTION);
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: --gcp-secrets-enabled=true, but the following parameters were missing [--gcp-project-id].");
+  }
+
+  @Test
   void awsSpecifiedAuthModeFailsToParseWithoutRequiredParameters() {
     String cmdline = validBaseCommandOptions();
     cmdline +=
@@ -540,6 +557,60 @@ class CommandlineParserTest {
         .contains("v1", "v2", "v3");
   }
 
+  @Test
+  void vertxWorkerPoolSizeWithWorkerPoolSizeFailsToParse() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        "--vertx-worker-pool-size=30 --Xworker-pool-size=40 eth2 --slashing-protection-enabled=false";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: --vertx-worker-pool-size option and --Xworker-pool-size option can't be used at the same time.");
+  }
+
+  @Test
+  void vertxWorkerPoolSizeDefaultParsesSuccessfully() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "eth2 --slashing-protection-enabled=false";
+
+    MockEth2SubCommand mockEth2SubCommand = new MockEth2SubCommand();
+    parser.registerSubCommands(mockEth2SubCommand);
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isZero();
+    assertThat(mockEth2SubCommand.getConfig().getVertxWorkerPoolSize()).isEqualTo(20);
+  }
+
+  @Test
+  void vertxWorkerPoolSizeDeprecatedParsesSuccessfully() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--Xworker-pool-size=40 eth2 --slashing-protection-enabled=false";
+
+    MockEth2SubCommand mockEth2SubCommand = new MockEth2SubCommand();
+    parser.registerSubCommands(mockEth2SubCommand);
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isZero();
+    assertThat(mockEth2SubCommand.getConfig().getVertxWorkerPoolSize()).isEqualTo(40);
+  }
+
+  @Test
+  void vertxWorkerPoolSizeParsesSuccessfully() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "--vertx-worker-pool-size=40 eth2 --slashing-protection-enabled=false";
+
+    MockEth2SubCommand mockEth2SubCommand = new MockEth2SubCommand();
+    parser.registerSubCommands(mockEth2SubCommand);
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isZero();
+    assertThat(mockEth2SubCommand.getConfig().getVertxWorkerPoolSize()).isEqualTo(40);
+  }
+
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(
       final String paramToRemove, final Supplier<T> actualValueGetter, final T expectedValue) {
 
@@ -555,6 +626,10 @@ class CommandlineParserTest {
     @Override
     public Runner createRunner() {
       return new NoOpRunner(config);
+    }
+
+    public BaseConfig getConfig() {
+      return config;
     }
   }
 

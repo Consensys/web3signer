@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.commandline;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.CONFIG_FILE_OPTION_NAME;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.FILE_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.HOST_FORMAT_HELP;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.INTEGER_FORMAT_HELP;
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PORT_FORMAT_HELP;
 import static tech.pegasys.web3signer.common.Web3SignerMetricCategory.DEFAULT_METRIC_CATEGORIES;
 
@@ -65,7 +66,7 @@ import picocli.CommandLine.Spec;
     subcommands = {HelpCommand.class},
     footer = "Web3Signer is licensed under the Apache License 2.0")
 public class Web3SignerBaseCommand implements BaseConfig, Runnable {
-
+  private static final int VERTX_WORKER_POOL_SIZE_DEFAULT = 20;
   @Spec private CommandLine.Model.CommandSpec spec; // injected by picocli
   public static final String KEY_STORE_CONFIG_FILE_SIZE_OPTION_NAME =
       "--key-store-config-file-max-size";
@@ -203,6 +204,19 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       hidden = true)
   private boolean keystoreParallelProcessingEnabled = true;
 
+  @Option(
+      names = "--vertx-worker-pool-size",
+      description =
+          "Configure the Vert.x worker pool size used for processing requests. (default: "
+              + VERTX_WORKER_POOL_SIZE_DEFAULT
+              + ")",
+      paramLabel = INTEGER_FORMAT_HELP)
+  private Integer vertxWorkerPoolSize = null;
+
+  @Deprecated
+  @Option(names = "--Xworker-pool-size", hidden = true)
+  private Integer deprecatedWorkerPoolSize = null;
+
   @CommandLine.Mixin private PicoCliTlsServerOptions picoCliTlsServerOptions;
 
   @Override
@@ -308,6 +322,24 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   @Override
+  public int getVertxWorkerPoolSize() {
+    // both values are not allowed on cli, they will be verified in validateArgs() ...
+    if (vertxWorkerPoolSize != null && deprecatedWorkerPoolSize != null) {
+      return -1;
+    }
+
+    if (vertxWorkerPoolSize != null) {
+      return vertxWorkerPoolSize;
+    }
+
+    if (deprecatedWorkerPoolSize != null) {
+      return deprecatedWorkerPoolSize;
+    }
+
+    return VERTX_WORKER_POOL_SIZE_DEFAULT;
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -325,6 +357,7 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
         .add("metricsHostAllowList", metricsHostAllowList)
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
+        .add("vertxWorkerPoolSize", vertxWorkerPoolSize)
         .toString();
   }
 
@@ -352,6 +385,12 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
           spec.commandLine(),
           "--metrics-enabled option and --metrics-push-enabled option can't be used at the same "
               + "time.  Please refer to CLI reference for more details about this constraint.");
+    }
+
+    if (vertxWorkerPoolSize != null && deprecatedWorkerPoolSize != null) {
+      throw new CommandLine.MutuallyExclusiveArgsException(
+          spec.commandLine(),
+          "--vertx-worker-pool-size option and --Xworker-pool-size option can't be used at the same time.");
     }
   }
 

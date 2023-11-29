@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public class AzureConfig {
@@ -23,6 +21,9 @@ public class AzureConfig {
   private final String clientId;
   private final String clientSecret;
   private final String tenantId;
+  // empty string means latest in azure
+  private static final String KEY_LATEST_VERSION = "";
+  private final long timeout;
 
   @JsonCreator
   public AzureConfig(
@@ -31,13 +32,25 @@ public class AzureConfig {
       final String keyVersion,
       final String clientId,
       final String clientSecret,
-      final String tenantId) {
+      final String tenantId,
+      final long timeout) {
     this.keyVaultName = keyVaultName;
     this.keyName = keyName;
     this.keyVersion = keyVersion;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.tenantId = tenantId;
+    this.timeout = timeout;
+  }
+
+  public AzureConfig(
+      final String keyVaultName,
+      final String keyName,
+      final String clientId,
+      final String clientSecret,
+      final String tenantId,
+      final long timeout) {
+    this(keyVaultName, keyName, KEY_LATEST_VERSION, clientId, clientSecret, tenantId, timeout);
   }
 
   public String getKeyVaultName() {
@@ -64,54 +77,7 @@ public class AzureConfig {
     return tenantId;
   }
 
-  public static class AzureConfigBuilder {
-
-    private String keyVaultName;
-    private String keyName;
-    private String keyVersion;
-    private String clientId;
-    private String clientSecret;
-    private String tenantId;
-
-    public AzureConfigBuilder withKeyVaultName(final String keyVaultName) {
-      this.keyVaultName = keyVaultName;
-      return this;
-    }
-
-    public AzureConfigBuilder withKeyName(final String keyName) {
-      this.keyName = keyName;
-      return this;
-    }
-
-    public AzureConfigBuilder withKeyVersion(final String keyVersion) {
-      this.keyVersion = keyVersion;
-      return this;
-    }
-
-    public AzureConfigBuilder withClientId(final String clientId) {
-      this.clientId = clientId;
-      return this;
-    }
-
-    public AzureConfigBuilder withClientSecret(final String clientSecret) {
-      this.clientSecret = clientSecret;
-      return this;
-    }
-
-    public AzureConfigBuilder withTenantId(final String tenantId) {
-      this.tenantId = tenantId;
-      return this;
-    }
-
-    public AzureConfig build() {
-      checkNotNull(keyVaultName, "Key Vault Name was not set.");
-      checkNotNull(keyName, "Key Name was not set.");
-      checkNotNull(keyVersion, "Key Version was not set.");
-      checkNotNull(clientId, "Client Id was not set.");
-      checkNotNull(clientSecret, "Client Secret was not set.");
-      checkNotNull(tenantId, "Tenant Id was not set.");
-
-      return new AzureConfig(keyVaultName, keyName, keyVersion, clientId, clientSecret, tenantId);
-    }
+  public long getTimeout() {
+    return timeout;
   }
 }

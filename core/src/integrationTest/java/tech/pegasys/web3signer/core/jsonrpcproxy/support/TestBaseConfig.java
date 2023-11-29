@@ -136,4 +136,9 @@ public class TestBaseConfig implements BaseConfig {
   public boolean keystoreParallelProcessingEnabled() {
     return true;
   }
+
+  @Override
+  public int getVertxWorkerPoolSize() {
+    return 20;
+  }
 }

@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.service.http;
 
 import tech.pegasys.teku.api.schema.BLSPubKey;
 import tech.pegasys.teku.api.schema.BLSSignature;
+import tech.pegasys.teku.api.schema.KZGCommitment;
 import tech.pegasys.teku.infrastructure.bytes.Bytes20;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.Bytes32Deserializer;
@@ -30,13 +31,18 @@ import tech.pegasys.teku.provider.BLSPubKeyDeserializer;
 import tech.pegasys.teku.provider.BLSPubKeySerializer;
 import tech.pegasys.teku.provider.BLSSignatureDeserializer;
 import tech.pegasys.teku.provider.BLSSignatureSerializer;
+import tech.pegasys.teku.provider.KZGCommitmentDeserializer;
+import tech.pegasys.teku.provider.KZGCommitmentSerializer;
 import tech.pegasys.teku.provider.SszBitvectorSerializer;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Deserializer;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Serialiser;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.KZGProof;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.BlockRequestDeserializer;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.KZGProofDeserializer;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.KZGProofSerializer;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule.Bytes32Serializer;
 
@@ -98,6 +104,11 @@ public class SigningObjectMapperFactory {
     module.addDeserializer(Bytes20.class, new SigningMetadataModule.Bytes20Deserializer());
     module.addSerializer(Bytes20.class, new SigningMetadataModule.Bytes20Serializer());
 
+    module.addSerializer(KZGCommitment.class, new KZGCommitmentSerializer());
+    module.addDeserializer(KZGCommitment.class, new KZGCommitmentDeserializer());
+
+    module.addSerializer(KZGProof.class, new KZGProofSerializer());
+    module.addDeserializer(KZGProof.class, new KZGProofDeserializer());
     return module;
   }
 

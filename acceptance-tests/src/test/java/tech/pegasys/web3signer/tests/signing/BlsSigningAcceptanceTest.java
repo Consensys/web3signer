@@ -18,12 +18,12 @@ import static io.restassured.http.ContentType.TEXT;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.signers.bls.keystore.model.KdfFunction;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.bls.BLSSignature;
+import tech.pegasys.teku.bls.keystore.model.KdfFunction;
 import tech.pegasys.teku.spec.SpecMilestone;
 import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.AwsSecretsManagerUtil;
@@ -246,21 +246,22 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Eth2SigningRequestBody request = Eth2RequestUtils.createCannedRequest(artifactType);
     final Eth2SigningRequestBody requestWithMismatchedSigningRoot =
         new Eth2SigningRequestBody(
-            request.getType(),
+            request.type(),
             Bytes32.ZERO,
-            request.getForkInfo(),
-            request.getBlock(),
-            request.getBlockRequest(),
-            request.getAttestation(),
-            request.getAggregationSlot(),
-            request.getAggregateAndProof(),
-            request.getVoluntaryExit(),
-            request.getRandaoReveal(),
-            request.getDeposit(),
-            request.getSyncCommitteeMessage(),
-            request.getSyncAggregatorSelectionData(),
-            request.getContributionAndProof(),
-            request.getValidatorRegistration());
+            request.forkInfo(),
+            request.block(),
+            request.blockRequest(),
+            request.attestation(),
+            request.aggregationSlot(),
+            request.aggregateAndProof(),
+            request.voluntaryExit(),
+            request.randaoReveal(),
+            request.deposit(),
+            request.syncCommitteeMessage(),
+            request.syncAggregatorSelectionData(),
+            request.contributionAndProof(),
+            request.validatorRegistration(),
+            request.blobSidecar());
 
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), requestWithMismatchedSigningRoot);
@@ -284,21 +285,22 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
     final Eth2SigningRequestBody requestWithMismatchedSigningRoot =
         new Eth2SigningRequestBody(
-            request.getType(),
+            request.type(),
             null,
-            request.getForkInfo(),
-            request.getBlock(),
-            request.getBlockRequest(),
-            request.getAttestation(),
-            request.getAggregationSlot(),
-            request.getAggregateAndProof(),
-            request.getVoluntaryExit(),
-            request.getRandaoReveal(),
-            request.getDeposit(),
-            request.getSyncCommitteeMessage(),
-            request.getSyncAggregatorSelectionData(),
-            request.getContributionAndProof(),
-            request.getValidatorRegistration());
+            request.forkInfo(),
+            request.block(),
+            request.blockRequest(),
+            request.attestation(),
+            request.aggregationSlot(),
+            request.aggregateAndProof(),
+            request.voluntaryExit(),
+            request.randaoReveal(),
+            request.deposit(),
+            request.syncCommitteeMessage(),
+            request.syncAggregatorSelectionData(),
+            request.contributionAndProof(),
+            request.validatorRegistration(),
+            request.blobSidecar());
 
     final Response response =
         signer.eth2Sign(
@@ -335,22 +337,16 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, acceptMediaType);
     final Bytes signature =
         verifyAndGetSignatureResponse(response, expectedContentType(acceptMediaType));
-    final BLSSignature expectedSignature =
-        BLS.sign(KEY_PAIR.getSecretKey(), request.getSigningRoot());
+    final BLSSignature expectedSignature = BLS.sign(KEY_PAIR.getSecretKey(), request.signingRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
   private void setupMinimalWeb3Signer(final ArtifactType artifactType) {
     switch (artifactType) {
-      case BLOCK_V2:
-      case SYNC_COMMITTEE_MESSAGE:
-      case SYNC_COMMITTEE_SELECTION_PROOF:
-      case SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF:
-        setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.ALTAIR);
-        break;
-      default:
-        setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.PHASE0);
-        break;
+      case BLOCK_V2, SYNC_COMMITTEE_MESSAGE, SYNC_COMMITTEE_SELECTION_PROOF, SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF -> setupEth2Signer(
+          Eth2Network.MINIMAL, SpecMilestone.ALTAIR);
+      case BLOB_SIDECAR -> setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.DENEB);
+      default -> setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.PHASE0);
     }
   }
 

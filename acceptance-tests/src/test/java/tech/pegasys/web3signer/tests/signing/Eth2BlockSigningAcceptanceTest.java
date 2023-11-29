@@ -59,7 +59,7 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
   @ParameterizedTest(name = "#{index} - Sign and verify BlockV2 Signature for spec {0}")
   @EnumSource(
       value = SpecMilestone.class,
-      names = {"PHASE0", "ALTAIR", "BELLATRIX", "CAPELLA"})
+      names = {"PHASE0", "ALTAIR", "BELLATRIX", "CAPELLA", "DENEB"})
   void signAndVerifyBlockV2Signature(final SpecMilestone specMilestone) throws Exception {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);
 
@@ -69,8 +69,7 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
-    final BLSSignature expectedSignature =
-        BLS.sign(KEY_PAIR.getSecretKey(), request.getSigningRoot());
+    final BLSSignature expectedSignature = BLS.sign(KEY_PAIR.getSecretKey(), request.signingRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
@@ -83,8 +82,7 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
-    final BLSSignature expectedSignature =
-        BLS.sign(KEY_PAIR.getSecretKey(), request.getSigningRoot());
+    final BLSSignature expectedSignature = BLS.sign(KEY_PAIR.getSecretKey(), request.signingRoot());
     assertThat(signature).isEqualTo(expectedSignature.toBytesCompressed());
   }
 
@@ -92,7 +90,7 @@ public class Eth2BlockSigningAcceptanceTest extends SigningAcceptanceTestBase {
       name = "#{index} - Empty block request for spec {0} should return bad request status")
   @EnumSource(
       value = SpecMilestone.class,
-      names = {"PHASE0", "ALTAIR", "BELLATRIX", "CAPELLA"})
+      names = {"PHASE0", "ALTAIR", "BELLATRIX", "CAPELLA", "DENEB"})
   void emptyBlockRequestReturnsBadRequestStatus(final SpecMilestone specMilestone)
       throws JsonProcessingException {
     final Eth2BlockSigningRequestUtil util = new Eth2BlockSigningRequestUtil(specMilestone);

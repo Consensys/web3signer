@@ -28,8 +28,8 @@ dependencies {
   implementation 'org.hyperledger.besu.internal:metrics-core'
   implementation 'org.hyperledger.besu:plugin-api'
   implementation 'org.web3j:core'
-  implementation 'tech.pegasys.signers.internal:bls-keystore'
   implementation 'tech.pegasys.teku.internal:bls'
+  implementation 'tech.pegasys.teku.internal:bls-keystore'
   implementation 'tech.pegasys.teku.internal:serializer'
   implementation 'tech.pegasys.teku.internal:jackson'
   implementation 'tech.pegasys.teku.internal:spec'
@@ -38,6 +38,10 @@ dependencies {
   implementation 'org.apache.tuweni:tuweni-net'
   implementation 'com.google.guava:guava'
   implementation 'org.bouncycastle:bcprov-jdk18on'
+  implementation 'com.github.ben-manes.caffeine:caffeine:3.1.5'
+  implementation 'software.amazon.awssdk:auth'
+  implementation 'software.amazon.awssdk:kms'
+  implementation 'com.google.cloud:google-cloud-secretmanager'
 
   runtimeOnly 'com.squareup.okhttp3:okhttp'
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
@@ -57,7 +61,10 @@ dependencies {
   testFixturesImplementation 'org.apache.logging.log4j:log4j-api'
   testFixturesImplementation 'org.apache.logging.log4j:log4j-core'
   testFixturesImplementation 'org.apache.tuweni:tuweni-bytes'
-  testFixturesImplementation 'tech.pegasys.signers.internal:bls-keystore'
+  testFixturesImplementation 'tech.pegasys.teku.internal:bls-keystore'
   testFixturesImplementation 'software.amazon.awssdk:auth'
   testFixturesImplementation 'software.amazon.awssdk:secretsmanager'
+  testFixturesImplementation 'software.amazon.awssdk:kms'
+  testFixturesImplementation 'com.google.cloud:google-cloud-secretmanager'
+  testFixturesImplementation project(":common")
 }

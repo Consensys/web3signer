@@ -15,12 +15,9 @@ package tech.pegasys.web3signer.commandline;
 import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
 
-import java.util.Collections;
-import java.util.Map;
-
 import picocli.CommandLine.Option;
 
-public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
+public abstract class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
   @Option(
       names = {"--azure-vault-enabled"},
@@ -65,12 +62,10 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
   private String clientSecret;
 
   @Option(
-      names = {"--azure-secrets-tags"},
-      description =
-          "Specify optional tags to filter the secrets. "
-              + "For example --azure-secrets-tags ENV=prod --azure-secrets-tags=CLIENT=A.",
-      paramLabel = "<TAG_NAME=TAG_VALUE>")
-  private Map<String, String> tags = Collections.emptyMap();
+      names = {"--azure-response-timeout"},
+      description = "The response timeout to be used by the http client (in seconds)",
+      paramLabel = "<AZURE_RESPONSE_TIMEOUT>")
+  private long timeout = 60;
 
   @Override
   public boolean isAzureKeyVaultEnabled() {
@@ -103,7 +98,7 @@ public class PicoCliAzureKeyVaultParameters implements AzureKeyVaultParameters {
   }
 
   @Override
-  public Map<String, String> getTags() {
-    return tags;
+  public long getTimeout() {
+    return timeout;
   }
 }

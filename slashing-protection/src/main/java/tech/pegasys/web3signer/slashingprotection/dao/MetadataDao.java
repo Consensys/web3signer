@@ -36,4 +36,32 @@ public class MetadataDao {
         .bind(1, genesisValidatorsRoot)
         .execute();
   }
+
+  public Optional<HighWatermark> findHighWatermark(Handle handle) {
+    return handle
+        .createQuery(
+            "SELECT high_watermark_epoch as epoch, high_watermark_slot as slot FROM metadata WHERE id = ?")
+        .bind(0, METADATA_ROW_ID)
+        .mapToBean(HighWatermark.class)
+        .filter(h -> h.getEpoch() != null || h.getSlot() != null)
+        .findFirst();
+  }
+
+  public int updateHighWatermark(final Handle handle, final HighWatermark highWatermark) {
+    return handle
+        .createUpdate(
+            "UPDATE metadata set high_watermark_epoch=:epoch, high_watermark_slot=:slot WHERE id =:id")
+        .bind("id", METADATA_ROW_ID)
+        .bind("epoch", highWatermark.getEpoch())
+        .bind("slot", highWatermark.getSlot())
+        .execute();
+  }
+
+  public void deleteHighWatermark(final Handle handle) {
+    handle
+        .createUpdate(
+            "UPDATE metadata set high_watermark_epoch=NULL, high_watermark_slot=NULL WHERE id =:id")
+        .bind("id", METADATA_ROW_ID)
+        .execute();
+  }
 }

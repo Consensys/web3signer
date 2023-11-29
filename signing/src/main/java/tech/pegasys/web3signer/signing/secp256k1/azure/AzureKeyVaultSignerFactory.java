@@ -13,9 +13,10 @@
 package tech.pegasys.web3signer.signing.secp256k1.azure;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static tech.pegasys.web3signer.keystorage.azure.AzureKeyVault.createUsingClientSecretCredentials;
 
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
+import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
 import tech.pegasys.web3signer.signing.secp256k1.common.SignerInitializationException;
 
@@ -36,15 +37,14 @@ public class AzureKeyVaultSignerFactory {
   private static final String DEPRECATED_CURVE_NAME = "SECP256K1";
   private static final Set<String> SUPPORTED_CURVE_NAMES = Set.of(DEPRECATED_CURVE_NAME, "P-256K");
   private static final Logger LOG = LogManager.getLogger();
+  private final AzureKeyVaultFactory azureKeyVaultFactory;
+  private final AzureHttpClientFactory azureHttpClientFactory;
 
-  private final boolean needsToHash;
-
-  public AzureKeyVaultSignerFactory() {
-    this(true);
-  }
-
-  public AzureKeyVaultSignerFactory(final boolean needsToHash) {
-    this.needsToHash = needsToHash;
+  public AzureKeyVaultSignerFactory(
+      final AzureKeyVaultFactory azureKeyVaultFactory,
+      final AzureHttpClientFactory azureHttpClientFactory) {
+    this.azureKeyVaultFactory = azureKeyVaultFactory;
+    this.azureHttpClientFactory = azureHttpClientFactory;
   }
 
   public Signer createSigner(final AzureConfig config) {
@@ -53,11 +53,13 @@ public class AzureKeyVaultSignerFactory {
     final AzureKeyVault vault;
     try {
       vault =
-          createUsingClientSecretCredentials(
+          azureKeyVaultFactory.createAzureKeyVault(
               config.getClientId(),
               config.getClientSecret(),
+              config.getKeyVaultName(),
               config.getTenantId(),
-              config.getKeyVaultName());
+              AzureAuthenticationMode.CLIENT_SECRET,
+              config.getTimeout());
     } catch (final Exception e) {
       LOG.error("Failed to connect to vault", e);
       throw new SignerInitializationException(INACCESSIBLE_KEY_ERROR, e);
@@ -80,6 +82,8 @@ public class AzureKeyVaultSignerFactory {
     final Bytes rawPublicKey =
         Bytes.concatenate(Bytes.wrap(jsonWebKey.getX()), Bytes.wrap(jsonWebKey.getY()));
     final boolean useDeprecatedCurveName = DEPRECATED_CURVE_NAME.equals(curveName);
-    return new AzureKeyVaultSigner(config, rawPublicKey, needsToHash, useDeprecatedCurveName);
+
+    return new AzureKeyVaultSigner(
+        config, rawPublicKey, true, useDeprecatedCurveName, vault, azureHttpClientFactory);
   }
 }

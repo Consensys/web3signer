@@ -12,7 +12,9 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import tech.pegasys.web3signer.slashingprotection.dao.HighWatermark;
 import tech.pegasys.web3signer.slashingprotection.dao.LowWatermarkDao;
+import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlock;
 import tech.pegasys.web3signer.slashingprotection.dao.SignedBlocksDao;
 import tech.pegasys.web3signer.slashingprotection.dao.SigningWatermark;
@@ -37,6 +39,7 @@ public class BlockValidator {
   private final int validatorId;
   private final SignedBlocksDao signedBlocksDao;
   private final LowWatermarkDao lowWatermarkDao;
+  private final MetadataDao metadataDao;
 
   private final Supplier<Optional<SigningWatermark>> watermarkSupplier;
 
@@ -46,13 +49,15 @@ public class BlockValidator {
       final UInt64 blockSlot,
       final int validatorId,
       final SignedBlocksDao signedBlocksDao,
-      final LowWatermarkDao lowWatermarkDao) {
+      final LowWatermarkDao lowWatermarkDao,
+      final MetadataDao metadataDao) {
     this.handle = handle;
     this.signingRoot = signingRoot;
     this.blockSlot = blockSlot;
     this.validatorId = validatorId;
     this.signedBlocksDao = signedBlocksDao;
     this.lowWatermarkDao = lowWatermarkDao;
+    this.metadataDao = metadataDao;
     watermarkSupplier =
         Suppliers.memoize(() -> lowWatermarkDao.findLowWatermarkForValidator(handle, validatorId));
   }
@@ -74,6 +79,15 @@ public class BlockValidator {
     if (minimumSlot.map(slot -> blockSlot.compareTo(slot) < 0).orElse(false)) {
       LOG.warn(
           "Block slot {} is below minimum existing block slot {}", blockSlot, minimumSlot.get());
+      return true;
+    }
+    return false;
+  }
+
+  public boolean isAtOrBeyondHighWatermark() {
+    final Optional<HighWatermark> highWatermark = metadataDao.findHighWatermark(handle);
+    if (highWatermark.map(h -> blockSlot.compareTo(h.getSlot()) >= 0).orElse(false)) {
+      LOG.warn("Block slot {} is at or beyond high watermark {}", blockSlot, highWatermark.get());
       return true;
     }
     return false;

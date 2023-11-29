@@ -48,7 +48,8 @@ public class WatermarkUpdatesIntegrationTestBase extends IntegrationTestBase {
 
     assertThat(findAllBlocks()).hasSize(1);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(new SigningWatermark(VALIDATOR_ID, blockSlot, null, null));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, blockSlot, null, null));
   }
 
   @Test
@@ -60,24 +61,24 @@ public class WatermarkUpdatesIntegrationTestBase extends IntegrationTestBase {
         .maySignBlock(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(3), GVR);
     assertThat(findAllBlocks()).hasSize(1);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
 
     slashingProtectionContext
         .getSlashingProtection()
         .maySignBlock(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(4), GVR);
     assertThat(findAllBlocks()).hasSize(2);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
 
     slashingProtectionContext
         .getSlashingProtection()
         .maySignBlock(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(5), GVR);
     assertThat(findAllBlocks()).hasSize(3);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, UInt64.valueOf(3), null, null));
   }
 
   @Test
@@ -88,8 +89,8 @@ public class WatermarkUpdatesIntegrationTestBase extends IntegrationTestBase {
         .getSlashingProtection()
         .maySignAttestation(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(3), UInt64.valueOf(4), GVR);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
   }
 
   @Test
@@ -103,7 +104,7 @@ public class WatermarkUpdatesIntegrationTestBase extends IntegrationTestBase {
         .getSlashingProtection()
         .maySignAttestation(PUBLIC_KEY, Bytes.of(100), UInt64.valueOf(4), UInt64.valueOf(5), GVR);
     assertThat(getWatermark(VALIDATOR_ID))
-        .isEqualToComparingFieldByField(
-            new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
+        .usingRecursiveComparison()
+        .isEqualTo(new SigningWatermark(VALIDATOR_ID, null, UInt64.valueOf(3), UInt64.valueOf(4)));
   }
 }

@@ -25,6 +25,7 @@ public class AzureKeySigningMetadata extends SigningMetadata {
   private final String tenantId;
   private final String vaultName;
   private final String keyName;
+  private final long timeout;
 
   @JsonCreator
   public AzureKeySigningMetadata(
@@ -33,13 +34,15 @@ public class AzureKeySigningMetadata extends SigningMetadata {
       @JsonProperty("tenantId") final String tenantId,
       @JsonProperty("vaultName") final String vaultName,
       @JsonProperty("keyName") final String keyName,
-      @JsonProperty(value = "keyType") final KeyType keyType) {
+      @JsonProperty(value = "keyType") final KeyType keyType,
+      @JsonProperty(value = "timeout") final long timeout) {
     super(TYPE, keyType != null ? keyType : KeyType.SECP256K1);
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.tenantId = tenantId;
     this.vaultName = vaultName;
     this.keyName = keyName;
+    this.timeout = (timeout != 0) ? timeout : 60;
   }
 
   public String getClientId() {
@@ -60,6 +63,10 @@ public class AzureKeySigningMetadata extends SigningMetadata {
 
   public String getKeyName() {
     return keyName;
+  }
+
+  public long getTimeout() {
+    return timeout;
   }
 
   @Override

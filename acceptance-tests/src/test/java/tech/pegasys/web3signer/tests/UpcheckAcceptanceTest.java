@@ -28,6 +28,7 @@ public class UpcheckAcceptanceTest extends AcceptanceTestBase {
 
     given()
         .baseUri(signer.getUrl())
+        .accept(ContentType.TEXT)
         .get("/upcheck")
         .then()
         .statusCode(200)

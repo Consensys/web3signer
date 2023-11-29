@@ -16,7 +16,7 @@ dependencyManagement {
     dependency 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2'
 
-    dependencySet(group: 'com.google.errorprone', version: '2.17.0') {
+    dependencySet(group: 'com.google.errorprone', version: '2.21.1') {
       entry 'error_prone_annotation'
       entry 'error_prone_check_api'
       entry 'error_prone_core'
@@ -33,7 +33,7 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.6.2'
 
-    dependencySet(group: 'io.vertx', version: '4.4.1') {
+    dependencySet(group: 'io.vertx', version: '4.4.4') {
       entry 'vertx-codegen'
       entry ('vertx-core') {
         exclude group: 'io.netty', name: 'netty-handler'
@@ -77,7 +77,7 @@ dependencyManagement {
       entry 'junit-jupiter-params'
     }
 
-    dependency 'org.mock-server:mockserver-netty:5.11.2'
+    dependency 'org.mock-server:mockserver-netty:5.15.0'
 
     dependencySet(group: 'org.mockito', version: '4.2.0') {
       entry 'mockito-core'
@@ -85,13 +85,16 @@ dependencyManagement {
       entry 'mockito-junit-jupiter'
     }
 
-    dependency 'org.hyperledger.besu:plugin-api:22.10.3'
-    dependency 'org.hyperledger.besu.internal:metrics-core:22.10.3'
+    dependency 'org.hyperledger.besu:plugin-api:23.10.1'
+    dependency 'org.hyperledger.besu.internal:metrics-core:23.10.1'
 
-    dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.9'
+    dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.10'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.6.0') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '23.10.0') {
       entry ('bls') {
+        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
+      }
+      entry ('bls-keystore') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
       entry ('spec') {
@@ -107,15 +110,9 @@ dependencyManagement {
 
     dependency 'tech.pegasys:jblst:0.3.8'
 
-    dependencySet(group: 'tech.pegasys.signers.internal', version: '2.2.10') {
-      entry ('bls-keystore') {
-        exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
-      }
-    }
-
     dependency 'io.rest-assured:rest-assured:4.4.0'
     dependency 'org.zeroturnaround:zt-exec:1.12'
-    dependencySet(group: 'org.web3j', version: '4.9.5') {
+    dependencySet(group: 'org.web3j', version: '4.10.2') {
       entry 'besu'
       entry ('core') {
         exclude group: 'com.github.jnr', name: 'jnr-unixsocket'
@@ -129,11 +126,11 @@ dependencyManagement {
     dependency 'com.github.arteam:simple-json-rpc-server:1.3'
     dependency 'com.github.arteam:simple-json-rpc-client:1.3'
 
-    dependencySet(group: 'com.azure', version: '4.6.0') {
+    dependencySet(group: 'com.azure', version: '4.7.1') {
       entry 'azure-security-keyvault-secrets'
       entry 'azure-security-keyvault-keys'
     }
-    dependency 'com.azure:azure-identity:1.8.1'
+    dependency 'com.azure:azure-identity:1.10.4'
 
     dependency 'com.zaxxer:HikariCP:5.0.1'
     dependency 'org.postgresql:postgresql:42.5.3'
@@ -146,48 +143,59 @@ dependencyManagement {
 
     dependency 'org.flywaydb:flyway-core:6.1.1'
 
+    dependency 'com.google.cloud:google-cloud-secretmanager:2.29.0'
     dependency 'io.zonky.test.postgres:embedded-postgres-binaries-bom:11.19.0'
     dependency 'io.zonky.test:embedded-postgres:2.0.3'
 
     dependency 'com.github.ipld:java-cid:1.3.3'
     dependency 'net.jodah:failsafe:2.4.4'
 
-    dependencySet(group: 'software.amazon.awssdk', version: '2.20.12') {
+    dependencySet(group: 'software.amazon.awssdk', version: '2.20.101') {
       entry 'bom'
       entry 'auth'
       entry 'secretsmanager'
       entry 'sts'
+      entry 'kms'
     }
 
     dependency 'io.rest-assured:rest-assured:4.4.0'
 
-    // explicit declaring to override older versions with vulnerabilities
-    dependencySet(group: 'com.google.protobuf', version: '3.21.12') {
-      /*
-        com.google.protobuf:protobuf-java*:3.11.4 -> 3.19.4 // CVE-2022-3171
-        \--- io.jaegertracing:jaeger-proto:0.7.0
-          \--- org.hyperledger.besu.internal:metrics-core:22.7.6
-      */
-      entry 'protobuf-java'
-      entry 'protobuf-java-util'
-    }
     /*
       com.squareup.okhttp3:logging-interceptor:4.9.0 // CVE-2021-0341
       \--- org.web3j:core:4.9.2
      */
-    dependency 'com.squareup.okhttp3:logging-interceptor:4.10.0'
+    dependency 'com.squareup.okhttp3:logging-interceptor:4.11.0'
 
-    // addressing CVE-2022-41881, CVE-2022-41915
-    dependency 'io.netty:netty-all:4.1.94.Final'
-    // CVE-2023-34462
-    dependency 'io.netty:netty-handler:4.1.94.Final'
+    dependencySet(group: 'com.squareup.okhttp3', version: '4.11.0') {
+      entry 'okhttp'
+      entry 'mockwebserver'
+    }
 
-    /* io.projectreactor.netty:reactor-netty-http:1.0.18 // CVE-2022-31684
-       \--- com.azure:azure-core-http-netty:1.12.0
-         +--- com.azure:azure-security-keyvault-secrets:4.3.6 (requested com.azure:azure-core-http-netty:1.11.6)
-     |    \--- tech.pegasys.signers.internal:keystorage-azure:2.2.3 (requested com.azure:azure-security-keyvault-secrets:4.4.2)
+    // addresses CVE-2023-3635
+    dependency 'com.squareup.okio:okio:3.4.0'
+
+    // addressing CVE-2023-44487
+    dependencySet(group: 'io.netty', version: '4.1.100.Final') {
+      entry 'netty-all'
+      entry 'netty-codec-http2'
+      entry 'netty-handler'
+      entry 'netty-handler-proxy'
+      entry 'netty-resolver-dns'
+      entry 'netty-transport'
+      entry 'netty-transport-classes-epoll'
+      entry 'netty-transport-classes-kqueue'
+      entry 'netty-transport-native-epoll'
+      entry 'netty-transport-native-kqueue'
+      entry 'netty-resolver-dns-native-macos'
+    }
+
+    /* io.projectreactor.netty:reactor-netty-http:1.0.38 -> 1.0.39 // CVE-2023-34062
+       \--- com.azure:azure-core-http-netty:1.13.10
+            +--- com.azure:azure-security-keyvault-keys:4.7.1 (requested com.azure:azure-core-http-netty:1.13.9)
+            +--- com.azure:azure-identity:1.11.0
+            \--- com.azure:azure-security-keyvault-secrets:4.7.1 (requested com.azure:azure-core-http-netty:1.13.9)
      */
-    dependency 'io.projectreactor.netty:reactor-netty-http:1.0.26'
+    dependency 'io.projectreactor.netty:reactor-netty-http:1.0.39'
 
     // manual overriding of commons-net to avoid CVE-2021-37533
     /* commons-net:commons-net:3.8.0
@@ -207,24 +215,35 @@ dependencyManagement {
     dependency 'net.minidev:json-smart:2.4.10'
     dependency 'com.nimbusds:nimbus-jose-jwt:9.31'
 
-    // manually overriding of io.grpc to avoid CVE-2023-32732, we can't update to latest besu metrics-core until
-    // we have Java 17 support in Web3Signer
-    /*
-      +--- org.hyperledger.besu.internal:metrics-core -> 22.10.3
-      |    |    |    |    +--- org.hyperledger.besu:plugin-api:22.10.3
-      |    |    |    |    |    +--- org.apache.commons:commons-lang3:3.12.0
-      |    |    |    |    |    +--- org.apache.tuweni:tuweni-bytes:2.3.1 (*)
-      |    |    |    |    |    \--- org.apache.tuweni:tuweni-units:2.3.1 (*)
-      |    |    |    |    +--- io.grpc:grpc-netty:1.47.0
-     */
-    dependencySet(group: 'io.grpc', version: '1.56.0') {
+    // besu 23.10.1 uses grpc 1.53.0 so vulnerable to
+    // CVE-2023-32731, CVE-2023-33953, CVE-2023-44487, CVE-2023-4785
+    dependencySet(group: 'io.grpc', version: '1.59.0') {
       entry 'grpc-all'
       entry 'grpc-core'
       entry 'grpc-netty'
       entry 'grpc-stub'
+      entry 'grpc-alts'
+      entry 'grpc-api'
+      entry 'grpc-auth'
+      entry 'grpc-context'
+      entry 'grpc-googleapis'
+      entry 'grpc-grpclb'
+      entry 'grpc-inprocess'
+      entry 'grpc-netty-shaded'
+      entry 'grpc-protobuf'
+      entry 'grpc-protobuf-lite'
+      entry 'grpc-services'
+      entry 'grpc-xds'
     }
 
     // used in tests to assert log message
     dependency 'de.neuland-bfi:assertj-logging-log4j:0.5.0'
+
+    // addresses CVE-2023-4759
+    /*
+         +--- com.google.errorprone:error_prone_check_api:2.11.0
+          |    +--- io.github.java-diff-utils:java-diff-utils:4.0
+     */
+    dependency 'io.github.java-diff-utils:java-diff-utils:4.12'
   }
 }

@@ -12,6 +12,13 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_ENABLED_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_SECRET_ACCESS_KEY_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_TAG_NAMES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_TAG_VALUES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
@@ -21,15 +28,20 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORDS_PATH;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PATH;
 
+import tech.pegasys.web3signer.commandline.PicoCliGcpSecretManagerParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
@@ -38,6 +50,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
 
@@ -99,26 +112,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.addAll(createEth2Args());
 
       if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
-        final AzureKeyVaultParameters azureParams = signerConfig.getAzureKeyVaultParameters().get();
-        params.add("--azure-vault-enabled=true");
-        params.add("--azure-vault-auth-mode");
-        params.add(azureParams.getAuthenticationMode().name());
-        params.add("--azure-vault-name");
-        params.add(azureParams.getKeyVaultName());
-        params.add("--azure-client-id");
-        params.add(azureParams.getClientId());
-        params.add("--azure-client-secret");
-        params.add(azureParams.getClientSecret());
-        params.add("--azure-tenant-id");
-        params.add(azureParams.getTenantId());
-
-        azureParams
-            .getTags()
-            .forEach(
-                (tagName, tagValue) -> {
-                  params.add("--azure-secrets-tags");
-                  params.add(tagName + "=" + tagValue);
-                });
+        createAzureArgs(params);
       }
       if (signerConfig.getKeystoresParameters().isPresent()) {
         final KeystoresParameters keystoresParameters = signerConfig.getKeystoresParameters().get();
@@ -135,17 +129,47 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       }
 
       signerConfig
-          .getAwsSecretsManagerParameters()
-          .ifPresent(awsParams -> params.addAll(awsBulkLoadingOptions(awsParams)));
+          .getAwsParameters()
+          .ifPresent(awsParams -> params.addAll(awsSecretsManagerBulkLoadingOptions(awsParams)));
+      signerConfig
+          .getGcpParameters()
+          .ifPresent(gcpParams -> params.addAll(gcpSecretManagerBulkLoadingOptions(gcpParams)));
     } else if (signerConfig.getMode().equals("eth1")) {
       params.add("--downstream-http-port");
       params.add(Integer.toString(signerConfig.getDownstreamHttpPort()));
       params.add("--chain-id");
       params.add(Long.toString(signerConfig.getChainIdProvider().id()));
       params.addAll(createDownstreamTlsArgs());
+
+      if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
+        createAzureArgs(params);
+      }
+
+      signerConfig
+          .getV3KeystoresBulkloadParameters()
+          .ifPresent(setV3KeystoresBulkloadParameters(params));
+      signerConfig
+          .getAwsParameters()
+          .ifPresent(awsParams -> params.addAll(awsKmsBulkLoadingOptions(awsParams)));
     }
 
     return params;
+  }
+
+  private static Consumer<KeystoresParameters> setV3KeystoresBulkloadParameters(
+      final List<String> params) {
+    return keystoresParameters -> {
+      params.add(KEYSTORES_PATH);
+      params.add(keystoresParameters.getKeystoresPath().toAbsolutePath().toString());
+      if (keystoresParameters.getKeystoresPasswordsPath() != null) {
+        params.add(KEYSTORES_PASSWORDS_PATH);
+        params.add(keystoresParameters.getKeystoresPasswordsPath().toAbsolutePath().toString());
+      }
+      if (keystoresParameters.getKeystoresPasswordFile() != null) {
+        params.add(KEYSTORES_PASSWORD_FILE);
+        params.add(keystoresParameters.getKeystoresPasswordFile().toAbsolutePath().toString());
+      }
+    };
   }
 
   @Override
@@ -268,6 +292,11 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       params.add(Long.toString(signerConfig.getCapellaForkEpoch().get()));
     }
 
+    if (signerConfig.getDenebForkEpoch().isPresent()) {
+      params.add("--Xnetwork-deneb-fork-epoch");
+      params.add(Long.toString(signerConfig.getDenebForkEpoch().get()));
+    }
+
     if (signerConfig.getNetwork().isPresent()) {
       params.add("--network");
       params.add(signerConfig.getNetwork().get());
@@ -281,31 +310,53 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     return params;
   }
 
-  private Collection<String> awsBulkLoadingOptions(
-      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
+  private Collection<String> gcpSecretManagerBulkLoadingOptions(
+      final GcpSecretManagerParameters gcpSecretManagerParameters) {
+    final List<String> params = new ArrayList<>();
+    params.add(
+        PicoCliGcpSecretManagerParameters.GCP_SECRETS_ENABLED_OPTION
+            + "="
+            + gcpSecretManagerParameters.isEnabled());
+    if (gcpSecretManagerParameters.getProjectId() != null) {
+      params.add(
+          PicoCliGcpSecretManagerParameters.GCP_PROJECT_ID_OPTION
+              + "="
+              + gcpSecretManagerParameters.getProjectId());
+    }
+    if (gcpSecretManagerParameters.getFilter().isPresent()) {
+      params.add(
+          PicoCliGcpSecretManagerParameters.GCP_SECRETS_FILTER_OPTION
+              + "="
+              + gcpSecretManagerParameters.getFilter().get());
+    }
+    return params;
+  }
+
+  private Collection<String> awsSecretsManagerBulkLoadingOptions(
+      final AwsVaultParameters awsVaultParameters) {
     final List<String> params = new ArrayList<>();
 
-    params.add(AWS_SECRETS_ENABLED_OPTION + "=" + awsSecretsManagerParameters.isEnabled());
+    params.add(AWS_SECRETS_ENABLED_OPTION + "=" + awsVaultParameters.isEnabled());
 
     params.add(AWS_SECRETS_AUTH_MODE_OPTION);
-    params.add(awsSecretsManagerParameters.getAuthenticationMode().name());
+    params.add(awsVaultParameters.getAuthenticationMode().name());
 
-    if (awsSecretsManagerParameters.getAccessKeyId() != null) {
+    if (awsVaultParameters.getAccessKeyId() != null) {
       params.add(AWS_SECRETS_ACCESS_KEY_ID_OPTION);
-      params.add(awsSecretsManagerParameters.getAccessKeyId());
+      params.add(awsVaultParameters.getAccessKeyId());
     }
 
-    if (awsSecretsManagerParameters.getSecretAccessKey() != null) {
+    if (awsVaultParameters.getSecretAccessKey() != null) {
       params.add(AWS_SECRETS_SECRET_ACCESS_KEY_OPTION);
-      params.add(awsSecretsManagerParameters.getSecretAccessKey());
+      params.add(awsVaultParameters.getSecretAccessKey());
     }
 
-    if (awsSecretsManagerParameters.getRegion() != null) {
+    if (awsVaultParameters.getRegion() != null) {
       params.add(AWS_SECRETS_REGION_OPTION);
-      params.add(awsSecretsManagerParameters.getRegion());
+      params.add(awsVaultParameters.getRegion());
     }
 
-    awsSecretsManagerParameters
+    awsVaultParameters
         .getEndpointOverride()
         .ifPresent(
             uri -> {
@@ -313,22 +364,89 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
               params.add(uri.toString());
             });
 
-    if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
+    if (!awsVaultParameters.getPrefixesFilter().isEmpty()) {
       params.add(AWS_SECRETS_PREFIXES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getPrefixesFilter()));
+      params.add(String.join(",", awsVaultParameters.getPrefixesFilter()));
     }
 
-    if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
+    if (!awsVaultParameters.getTagNamesFilter().isEmpty()) {
       params.add(AWS_SECRETS_TAG_NAMES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getTagNamesFilter()));
+      params.add(String.join(",", awsVaultParameters.getTagNamesFilter()));
     }
 
-    if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
+    if (!awsVaultParameters.getTagValuesFilter().isEmpty()) {
       params.add(AWS_SECRETS_TAG_VALUES_FILTER_OPTION);
-      params.add(String.join(",", awsSecretsManagerParameters.getTagValuesFilter()));
+      params.add(String.join(",", awsVaultParameters.getTagValuesFilter()));
     }
 
     return params;
+  }
+
+  private Collection<String> awsKmsBulkLoadingOptions(final AwsVaultParameters awsVaultParameters) {
+    final List<String> params = new ArrayList<>();
+
+    params.add(AWS_KMS_ENABLED_OPTION + "=" + awsVaultParameters.isEnabled());
+
+    params.add(AWS_KMS_AUTH_MODE_OPTION);
+    params.add(awsVaultParameters.getAuthenticationMode().name());
+
+    if (awsVaultParameters.getAccessKeyId() != null) {
+      params.add(AWS_KMS_ACCESS_KEY_ID_OPTION);
+      params.add(awsVaultParameters.getAccessKeyId());
+    }
+
+    if (awsVaultParameters.getSecretAccessKey() != null) {
+      params.add(AWS_KMS_SECRET_ACCESS_KEY_OPTION);
+      params.add(awsVaultParameters.getSecretAccessKey());
+    }
+
+    if (awsVaultParameters.getRegion() != null) {
+      params.add(AWS_KMS_REGION_OPTION);
+      params.add(awsVaultParameters.getRegion());
+    }
+
+    awsVaultParameters
+        .getEndpointOverride()
+        .ifPresent(
+            uri -> {
+              params.add(AWS_ENDPOINT_OVERRIDE_OPTION);
+              params.add(uri.toString());
+            });
+
+    if (!awsVaultParameters.getTagNamesFilter().isEmpty()) {
+      params.add(AWS_KMS_TAG_NAMES_FILTER_OPTION);
+      params.add(String.join(",", awsVaultParameters.getTagNamesFilter()));
+    }
+
+    if (!awsVaultParameters.getTagValuesFilter().isEmpty()) {
+      params.add(AWS_KMS_TAG_VALUES_FILTER_OPTION);
+      params.add(String.join(",", awsVaultParameters.getTagValuesFilter()));
+    }
+
+    return params;
+  }
+
+  private void createAzureArgs(final List<String> params) {
+    final AzureKeyVaultParameters azureParams = signerConfig.getAzureKeyVaultParameters().get();
+    params.add("--azure-vault-enabled=true");
+    params.add("--azure-vault-auth-mode");
+    params.add(azureParams.getAuthenticationMode().name());
+    params.add("--azure-vault-name");
+    params.add(azureParams.getKeyVaultName());
+    params.add("--azure-client-id");
+    params.add(azureParams.getClientId());
+    params.add("--azure-client-secret");
+    params.add(azureParams.getClientSecret());
+    params.add("--azure-tenant-id");
+    params.add(azureParams.getTenantId());
+
+    azureParams
+        .getTags()
+        .forEach(
+            (tagName, tagValue) -> {
+              params.add("--azure-tags");
+              params.add(tagName + "=" + tagValue);
+            });
   }
 
   private List<String> createSubCommandArgs() {
@@ -346,13 +464,16 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       final WatermarkRepairParameters watermarkRepairParameters =
           signerConfig.getWatermarkRepairParameters().get();
       params.add("watermark-repair");
-      params.add("--epoch");
-      params.add(Long.toString(watermarkRepairParameters.getEpoch()));
-      params.add("--slot");
-      params.add(Long.toString(watermarkRepairParameters.getSlot()));
-      if (!watermarkRepairParameters.getValidators().isEmpty()) {
-        params.add(
-            "--validator-ids" + "=" + String.join(",", watermarkRepairParameters.getValidators()));
+      if (watermarkRepairParameters.isRemoveHighWatermark()) {
+        params.add("--remove-high-watermark=true");
+      } else {
+        params.add("--epoch");
+        params.add(Long.toString(watermarkRepairParameters.getEpoch()));
+        params.add("--slot");
+        params.add(Long.toString(watermarkRepairParameters.getSlot()));
+        if (watermarkRepairParameters.isSetHighWatermark()) {
+          params.add("--set-high-watermark=true");
+        }
       }
     }
 

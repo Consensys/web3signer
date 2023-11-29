@@ -55,6 +55,15 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
+  protected void setupEth2Signer(final Path networkConfigFile, final SpecMilestone specMilestone) {
+    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
+    builder.withKeyStoreDirectory(testDirectory).withMode("eth2").withNetwork(networkConfigFile);
+
+    setForkEpochs(specMilestone, builder);
+
+    startSigner(builder.build());
+  }
+
   protected void setupEth2SignerWithCustomNetworkConfig(final Path networkConfigFile) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory).withMode("eth2").withNetwork(networkConfigFile);
@@ -83,6 +92,12 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
         builder.withAltairForkEpoch(0L);
         builder.withBellatrixForkEpoch(0L);
         builder.withCapellaForkEpoch(0L);
+        break;
+      case DENEB:
+        builder.withAltairForkEpoch(0L);
+        builder.withBellatrixForkEpoch(0L);
+        builder.withCapellaForkEpoch(0L);
+        builder.withDenebForkEpoch(0L);
         break;
       default:
         throw new IllegalStateException(

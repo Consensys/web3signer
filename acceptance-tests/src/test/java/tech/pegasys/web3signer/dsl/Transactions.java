@@ -57,7 +57,7 @@ public class Transactions {
       waitFor(() -> assertThat(eth.getTransactionReceipt(hash).isPresent()).isTrue());
     } catch (final ConditionTimeoutException e) {
       LOG.error("Timed out waiting for a block containing the transaction receipt hash: " + hash);
-      throw new RuntimeException("No receipt found for hash: " + hash);
+      throw new RuntimeException("No receipt found for hash: " + hash, e);
     }
   }
 
@@ -66,7 +66,7 @@ public class Transactions {
       return eth.getTransactionReceipt(hash);
     } catch (IOException e) {
       LOG.error("IOException with message: " + e.getMessage());
-      throw new RuntimeException("No tx receipt found for hash: " + hash);
+      throw new RuntimeException("No tx receipt found for hash: " + hash, e);
     }
   }
 }

@@ -55,7 +55,6 @@ public class BesuNode {
 
   private final BesuNodeConfig besuNodeConfig;
 
-  @SuppressWarnings("unused")
   private final String[] args;
 
   private final Map<String, String> environment;

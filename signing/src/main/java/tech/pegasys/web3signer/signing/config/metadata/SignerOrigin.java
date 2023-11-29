@@ -16,6 +16,7 @@ public enum SignerOrigin {
   AZURE,
   HASHICORP,
   AWS,
+  GCP,
   INTERLOCK,
   YUBI_HSM,
   FILE_KEYSTORE,

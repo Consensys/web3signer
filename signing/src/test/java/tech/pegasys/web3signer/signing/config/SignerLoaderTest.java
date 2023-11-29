@@ -36,10 +36,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,6 +69,7 @@ class SignerLoaderTest {
   @Mock private InterlockKeyProvider interlockKeyProvider;
   @Mock private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
   @Mock private AwsSecretsManagerProvider awsSecretsManagerProvider;
+  @Mock private AzureKeyVaultFactory azureKeyVaultFactory;
   @Mock private LabelledMetric<OperationTimer> privateKeyRetrievalTimer;
   @Mock private OperationTimer operationTimer;
 
@@ -98,7 +102,8 @@ class SignerLoaderTest {
             interlockKeyProvider,
             yubiHsmOpaqueDataProvider,
             awsSecretsManagerProvider,
-            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()));
+            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin(), args.getPath()),
+            azureKeyVaultFactory);
 
     signerParser =
         new YamlSignerParser(
@@ -289,6 +294,20 @@ class SignerLoaderTest {
     assertThat(reloadedArtifactSigner).hasSize(1);
     assertThat(reloadedArtifactSigner.stream().findFirst().get().getIdentifier())
         .isEqualTo(blsKeyPair3.getPublicKey().toHexString());
+  }
+
+  @Test
+  void calculateTimeTakenWithFutureTimeShouldReturnEmpty() {
+    final Optional<String> timeTaken =
+        SignerLoader.calculateTimeTaken(Instant.now().plus(5, ChronoUnit.MINUTES));
+    assertThat(timeTaken).isEmpty();
+  }
+
+  @Test
+  void calculateTimeTakenWithPastTimeShouldReturnValue() {
+    final Optional<String> timeTaken =
+        SignerLoader.calculateTimeTaken(Instant.now().minus(5, ChronoUnit.MINUTES));
+    assertThat(timeTaken).isNotEmpty();
   }
 
   private Path createFileInConfigsDirectory(final String fileName, final String privateKeyHex)

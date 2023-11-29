@@ -45,4 +45,10 @@ public class DefaultKeystoresParameters implements KeystoresParameters {
   public Path getKeystoresPasswordFile() {
     return keystoresPasswordFile;
   }
+
+  @Override
+  public String toString() {
+    return "KeystoresParameters with "
+        + (keystoresPasswordsPath != null ? "password path" : "password file");
+  }
 }

@@ -19,134 +19,25 @@ import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 
-public class Eth2SigningRequestBody {
-  private final ArtifactType type;
-  private final Bytes signingRoot;
-  private final ForkInfo forkInfo;
-  private final BeaconBlock beaconBlock; // phase 0
-  private final BlockRequest blockRequest; // altair and onward
-  private final AttestationData attestation;
-  private final AggregationSlot aggregationSlot;
-  private final AggregateAndProof aggregateAndProof;
-  private final VoluntaryExit voluntaryExit;
-  private final RandaoReveal randaoReveal;
-  private final DepositMessage deposit;
-  private final SyncCommitteeMessage syncCommitteeMessage;
-  private final SyncAggregatorSelectionData syncAggregatorSelectionData;
-  private final ContributionAndProof contributionAndProof;
-  private final ValidatorRegistration validatorRegistration;
-
-  @JsonCreator
-  public Eth2SigningRequestBody(
-      @JsonProperty(value = "type", required = true) final ArtifactType type,
-      @JsonProperty("signingRoot") final Bytes signingRoot,
-      @JsonProperty("fork_info") final ForkInfo forkInfo,
-      @JsonProperty("block") final BeaconBlock block,
-      @JsonProperty("beacon_block") final BlockRequest blockRequest,
-      @JsonProperty("attestation") final AttestationData attestation,
-      @JsonProperty("aggregation_slot") final AggregationSlot aggregationSlot,
-      @JsonProperty("aggregate_and_proof") final AggregateAndProof aggregateAndProof,
-      @JsonProperty("voluntary_exit") final VoluntaryExit voluntaryExit,
-      @JsonProperty("randao_reveal") final RandaoReveal randaoReveal,
-      @JsonProperty("deposit") final DepositMessage deposit,
-      @JsonProperty("sync_committee_message") final SyncCommitteeMessage syncCommitteeMessage,
-      @JsonProperty("sync_aggregator_selection_data")
-          final SyncAggregatorSelectionData syncAggregatorSelectionData,
-      @JsonProperty("contribution_and_proof") final ContributionAndProof contributionAndProof,
-      @JsonProperty("validator_registration") final ValidatorRegistration validatorRegistration) {
-    this.type = type;
-    this.signingRoot = signingRoot;
-    this.forkInfo = forkInfo;
-    this.beaconBlock = block;
-    this.blockRequest = blockRequest;
-    this.attestation = attestation;
-    this.aggregationSlot = aggregationSlot;
-    this.aggregateAndProof = aggregateAndProof;
-    this.voluntaryExit = voluntaryExit;
-    this.randaoReveal = randaoReveal;
-    this.deposit = deposit;
-    this.syncCommitteeMessage = syncCommitteeMessage;
-    this.syncAggregatorSelectionData = syncAggregatorSelectionData;
-    this.contributionAndProof = contributionAndProof;
-    this.validatorRegistration = validatorRegistration;
-  }
-
-  @JsonProperty("type")
-  public ArtifactType getType() {
-    return type;
-  }
-
-  @JsonProperty("fork_info")
-  public ForkInfo getForkInfo() {
-    return forkInfo;
-  }
-
-  @JsonProperty("block")
-  public BeaconBlock getBlock() {
-    return beaconBlock;
-  }
-
-  @JsonProperty("beacon_block")
-  public BlockRequest getBlockRequest() {
-    return blockRequest;
-  }
-
-  @JsonProperty("attestation")
-  public AttestationData getAttestation() {
-    return attestation;
-  }
-
-  @JsonProperty("signingRoot")
-  public Bytes getSigningRoot() {
-    return signingRoot;
-  }
-
-  @JsonProperty("aggregation_slot")
-  public AggregationSlot getAggregationSlot() {
-    return aggregationSlot;
-  }
-
-  @JsonProperty("aggregate_and_proof")
-  public AggregateAndProof getAggregateAndProof() {
-    return aggregateAndProof;
-  }
-
-  @JsonProperty("voluntary_exit")
-  public VoluntaryExit getVoluntaryExit() {
-    return voluntaryExit;
-  }
-
-  @JsonProperty("randao_reveal")
-  public RandaoReveal getRandaoReveal() {
-    return randaoReveal;
-  }
-
-  @JsonProperty("deposit")
-  public DepositMessage getDeposit() {
-    return deposit;
-  }
-
-  @JsonProperty("sync_committee_message")
-  public SyncCommitteeMessage getSyncCommitteeMessage() {
-    return syncCommitteeMessage;
-  }
-
-  @JsonProperty("sync_aggregator_selection_data")
-  public SyncAggregatorSelectionData getSyncAggregatorSelectionData() {
-    return syncAggregatorSelectionData;
-  }
-
-  @JsonProperty("contribution_and_proof")
-  public ContributionAndProof getContributionAndProof() {
-    return contributionAndProof;
-  }
-
-  @JsonProperty("validator_registration")
-  public ValidatorRegistration getValidatorRegistration() {
-    return validatorRegistration;
-  }
-}
+public record Eth2SigningRequestBody(
+    @JsonProperty(value = "type", required = true) ArtifactType type,
+    @JsonProperty("signing_root") @JsonAlias("signingRoot") Bytes signingRoot,
+    @JsonProperty("fork_info") ForkInfo forkInfo,
+    @JsonProperty("block") BeaconBlock block,
+    @JsonProperty("beacon_block") BlockRequest blockRequest,
+    @JsonProperty("attestation") AttestationData attestation,
+    @JsonProperty("aggregation_slot") AggregationSlot aggregationSlot,
+    @JsonProperty("aggregate_and_proof") AggregateAndProof aggregateAndProof,
+    @JsonProperty("voluntary_exit") VoluntaryExit voluntaryExit,
+    @JsonProperty("randao_reveal") RandaoReveal randaoReveal,
+    @JsonProperty("deposit") DepositMessage deposit,
+    @JsonProperty("sync_committee_message") SyncCommitteeMessage syncCommitteeMessage,
+    @JsonProperty("sync_aggregator_selection_data")
+        SyncAggregatorSelectionData syncAggregatorSelectionData,
+    @JsonProperty("contribution_and_proof") ContributionAndProof contributionAndProof,
+    @JsonProperty("validator_registration") ValidatorRegistration validatorRegistration,
+    @JsonProperty("blob_sidecar") BlobSidecar blobSidecar) {}

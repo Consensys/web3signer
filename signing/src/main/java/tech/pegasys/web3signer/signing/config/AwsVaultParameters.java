@@ -12,12 +12,14 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
+
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 
-public interface AwsSecretsManagerParameters {
+public interface AwsVaultParameters {
   boolean isEnabled();
 
   AwsAuthenticationMode getAuthenticationMode();

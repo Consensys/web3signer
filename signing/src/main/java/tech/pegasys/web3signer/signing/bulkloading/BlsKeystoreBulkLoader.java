@@ -10,24 +10,25 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.signing;
+package tech.pegasys.web3signer.signing.bulkloading;
 
-import tech.pegasys.signers.bls.keystore.KeyStore;
-import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
-import tech.pegasys.signers.bls.keystore.KeyStoreValidationException;
-import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
+import tech.pegasys.teku.bls.keystore.KeyStore;
+import tech.pegasys.teku.bls.keystore.KeyStoreLoader;
+import tech.pegasys.teku.bls.keystore.KeyStoreValidationException;
+import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
+import tech.pegasys.web3signer.signing.secp256k1.util.JsonFilesUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
@@ -42,7 +43,7 @@ public class BlsKeystoreBulkLoader {
       final Path keystoresDirectory, final Path passwordsDirectory) {
     final List<Path> keystoreFiles;
     try {
-      keystoreFiles = keystoreFiles(keystoresDirectory);
+      keystoreFiles = JsonFilesUtil.loadJsonExtPaths(keystoresDirectory);
     } catch (final IOException e) {
       LOG.error("Error reading keystore files", e);
       return MappedResults.errorResult();
@@ -53,7 +54,8 @@ public class BlsKeystoreBulkLoader {
             keystoreFile ->
                 createSignerForKeystore(
                     keystoreFile,
-                    key -> Files.readString(passwordsDirectory.resolve(key + ".txt"))))
+                    keystorePassword ->
+                        Files.readString(passwordsDirectory.resolve(keystorePassword))))
         .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
@@ -61,7 +63,7 @@ public class BlsKeystoreBulkLoader {
       final Path keystoresDirectory, final Path passwordFile) {
     final List<Path> keystoreFiles;
     try {
-      keystoreFiles = keystoreFiles(keystoresDirectory);
+      keystoreFiles = JsonFilesUtil.loadJsonExtPaths(keystoresDirectory);
     } catch (final IOException e) {
       LOG.error("Error reading keystore files", e);
       return MappedResults.errorResult();
@@ -76,17 +78,18 @@ public class BlsKeystoreBulkLoader {
     }
 
     return keystoreFiles.parallelStream()
-        .map(keystoreFile -> createSignerForKeystore(keystoreFile, key -> password))
+        .map(keystoreFile -> createSignerForKeystore(keystoreFile, keystorePassword -> password))
         .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
   private MappedResults<ArtifactSigner> createSignerForKeystore(
-      final Path keystoreFile, final PasswordRetriever passwordRetriever) {
+      final Path keystoreFile, final PasswordReader passwordReader) {
     try {
       LOG.debug("Loading keystore {}", keystoreFile);
-      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile);
-      final String key = FilenameUtils.removeExtension(keystoreFile.getFileName().toString());
-      final String password = passwordRetriever.retrievePassword(key);
+      final KeyStoreData keyStoreData = KeyStoreLoader.loadFromFile(keystoreFile.toUri());
+      final String fileNameWithoutExt =
+          FilenameUtils.removeExtension(keystoreFile.getFileName().toString());
+      final String password = passwordReader.readPassword(fileNameWithoutExt + ".txt");
       final Bytes privateKey = KeyStore.decrypt(password, keyStoreData);
       final BLSKeyPair keyPair = new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.wrap(privateKey)));
       final BlsArtifactSigner artifactSigner =
@@ -95,19 +98,6 @@ public class BlsKeystoreBulkLoader {
     } catch (final KeyStoreValidationException | IOException e) {
       LOG.error("Keystore could not be loaded {}", keystoreFile, e);
       return MappedResults.errorResult();
-    }
-  }
-
-  @FunctionalInterface
-  private interface PasswordRetriever {
-    String retrievePassword(final String key) throws IOException;
-  }
-
-  private List<Path> keystoreFiles(final Path keystoresPath) throws IOException {
-    try (final Stream<Path> fileStream = Files.list(keystoresPath)) {
-      return fileStream
-          .filter(path -> FilenameUtils.getExtension(path.toString()).equalsIgnoreCase("json"))
-          .collect(Collectors.toList());
     }
   }
 }

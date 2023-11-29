@@ -12,7 +12,8 @@
  */
 package tech.pegasys.web3signer.commandline.config;
 
-import tech.pegasys.web3signer.commandline.DefaultCommandValues;
+import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PATH_FORMAT_HELP;
+
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
@@ -22,27 +23,31 @@ import picocli.CommandLine.Option;
 public class PicoKeystoresParameters implements KeystoresParameters {
 
   @Option(
-      names = {"--keystores-path"},
+      names = {KEYSTORES_PATH},
       description =
-          "The path to a directory storing Eth2 keystores. Keystore files must use a .json file extension.",
-      paramLabel = DefaultCommandValues.PATH_FORMAT_HELP)
+          "The path to a directory storing v4 keystores. Keystore files must use a .json file extension.",
+      paramLabel = PATH_FORMAT_HELP)
   private Path keystoresPath;
 
   @Option(
-      names = {"--keystores-passwords-path"},
+      names = {KEYSTORES_PASSWORDS_PATH},
       description =
-          "The path to a directory with the corresponding password files for the keystores."
+          "The path to a directory with the corresponding password files for the v4 keystores."
               + " Filename must match the corresponding keystore filename but with a .txt extension."
-              + " This cannot be set if --keystores-password-file is also specified.",
-      paramLabel = DefaultCommandValues.PATH_FORMAT_HELP)
+              + " This cannot be set if "
+              + KEYSTORES_PASSWORD_FILE
+              + " is also specified.",
+      paramLabel = PATH_FORMAT_HELP)
   private Path keystoresPasswordsPath;
 
   @Option(
-      names = {"--keystores-password-file"},
+      names = {KEYSTORES_PASSWORD_FILE},
       description =
           "The path to a file that contains the password that all keystores use."
-              + " This cannot be set if --keystores-passwords-path is also specified.",
-      paramLabel = DefaultCommandValues.PATH_FORMAT_HELP)
+              + " This cannot be set if "
+              + KEYSTORES_PASSWORDS_PATH
+              + " is also specified.",
+      paramLabel = PATH_FORMAT_HELP)
   private Path keystoresPasswordFile;
 
   @Override

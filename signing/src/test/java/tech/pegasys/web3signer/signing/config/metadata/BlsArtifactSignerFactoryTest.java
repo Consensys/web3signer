@@ -16,21 +16,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 
-import tech.pegasys.signers.bls.keystore.KeyStore;
-import tech.pegasys.signers.bls.keystore.KeyStoreLoader;
-import tech.pegasys.signers.bls.keystore.model.Cipher;
-import tech.pegasys.signers.bls.keystore.model.CipherFunction;
-import tech.pegasys.signers.bls.keystore.model.KdfParam;
-import tech.pegasys.signers.bls.keystore.model.KeyStoreData;
-import tech.pegasys.signers.bls.keystore.model.SCryptParam;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
+import tech.pegasys.teku.bls.keystore.KeyStore;
+import tech.pegasys.teku.bls.keystore.KeyStoreLoader;
+import tech.pegasys.teku.bls.keystore.model.Cipher;
+import tech.pegasys.teku.bls.keystore.model.CipherFunction;
+import tech.pegasys.teku.bls.keystore.model.KdfParam;
+import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
+import tech.pegasys.teku.bls.keystore.model.SCryptParam;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.metadata.interlock.InterlockKeyProvider;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 
@@ -65,6 +66,7 @@ class BlsArtifactSignerFactoryTest {
   private InterlockKeyProvider interlockKeyProvider;
   private YubiHsmOpaqueDataProvider yubiHsmOpaqueDataProvider;
   private AwsSecretsManagerProvider awsSecretsManagerProvider;
+  private AzureKeyVaultFactory azureKeyVaultFactory;
 
   @BeforeAll
   static void setupKeystoreFiles() throws IOException {
@@ -85,6 +87,7 @@ class BlsArtifactSignerFactoryTest {
     interlockKeyProvider = new InterlockKeyProvider(vertx);
     yubiHsmOpaqueDataProvider = new YubiHsmOpaqueDataProvider();
     awsSecretsManagerProvider = new AwsSecretsManagerProvider(100);
+    azureKeyVaultFactory = new AzureKeyVaultFactory();
 
     artifactSignerFactory =
         new BlsArtifactSignerFactory(
@@ -94,7 +97,8 @@ class BlsArtifactSignerFactoryTest {
             interlockKeyProvider,
             yubiHsmOpaqueDataProvider,
             awsSecretsManagerProvider,
-            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin()));
+            (args) -> new BlsArtifactSigner(args.getKeyPair(), args.getOrigin()),
+            azureKeyVaultFactory);
   }
 
   @AfterEach
@@ -144,7 +148,8 @@ class BlsArtifactSignerFactoryTest {
 
     assertThatThrownBy(() -> artifactSignerFactory.create(fileKeyStoreMetadata))
         .isInstanceOf(SigningMetadataException.class)
-        .hasMessage("KeyStore file not found: " + nonExistingKeystoreFile);
+        .hasMessageStartingWith("KeyStore file not found")
+        .hasMessageContaining(nonExistingKeystoreFile.toString());
   }
 
   @Test

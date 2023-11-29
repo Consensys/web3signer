@@ -10,10 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.dsl.utils;
-
-import tech.pegasys.web3signer.signing.config.AzureAuthenticationMode;
-import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+package tech.pegasys.web3signer.signing.config;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,19 +18,31 @@ import java.util.Map;
 
 public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
+  private static final long AZURE_DEFAULT_TIMEOUT = 60;
+  private static final boolean AZURE_DEFAULT_ENABLED = true;
+
   private final String keyVaultName;
   private final AzureAuthenticationMode authenticationMode;
   private final String clientId;
   private final String tenantId;
   private final String clientSecret;
   private final Map<String, String> tags = new HashMap<>();
+  private final long timeout;
+  private final boolean enabled;
 
   public DefaultAzureKeyVaultParameters(
       final String keyVaultName,
       final String clientId,
       final String tenantId,
       final String clientSecret) {
-    this(keyVaultName, clientId, tenantId, clientSecret, Collections.emptyMap());
+    this(
+        keyVaultName,
+        clientId,
+        tenantId,
+        clientSecret,
+        Collections.emptyMap(),
+        AZURE_DEFAULT_TIMEOUT,
+        AZURE_DEFAULT_ENABLED);
   }
 
   public DefaultAzureKeyVaultParameters(
@@ -42,12 +51,32 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
       final String tenantId,
       final String clientSecret,
       final Map<String, String> tags) {
+    this(
+        keyVaultName,
+        clientId,
+        tenantId,
+        clientSecret,
+        tags,
+        AZURE_DEFAULT_TIMEOUT,
+        AZURE_DEFAULT_ENABLED);
+  }
+
+  public DefaultAzureKeyVaultParameters(
+      final String keyVaultName,
+      final String clientId,
+      final String tenantId,
+      final String clientSecret,
+      final Map<String, String> tags,
+      final long timeout,
+      final boolean enabled) {
     this.keyVaultName = keyVaultName;
     this.clientId = clientId;
     this.tenantId = tenantId;
     this.clientSecret = clientSecret;
     this.authenticationMode = AzureAuthenticationMode.CLIENT_SECRET;
     this.tags.putAll(tags);
+    this.timeout = timeout;
+    this.enabled = enabled;
   }
 
   @Override
@@ -72,7 +101,7 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
 
   @Override
   public boolean isAzureKeyVaultEnabled() {
-    return true;
+    return enabled;
   }
 
   @Override
@@ -83,5 +112,10 @@ public class DefaultAzureKeyVaultParameters implements AzureKeyVaultParameters {
   @Override
   public Map<String, String> getTags() {
     return tags;
+  }
+
+  @Override
+  public long getTimeout() {
+    return timeout;
   }
 }

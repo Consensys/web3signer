@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.NonceProvider;
 
 import java.util.List;
+import java.util.Locale;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
@@ -44,7 +45,7 @@ public class TransactionFactory {
   }
 
   public Transaction createTransaction(final RoutingContext context, final JsonRpcRequest request) {
-    final String method = request.getMethod().toLowerCase();
+    final String method = request.getMethod().toLowerCase(Locale.ROOT);
     final VertxNonceRequestTransmitter nonceRequestTransmitter =
         new VertxNonceRequestTransmitter(context.request().headers(), decoder, transmitterFactory);
 

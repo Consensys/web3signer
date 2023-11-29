@@ -38,12 +38,12 @@ import tech.pegasys.web3signer.core.jsonrpcproxy.model.response.Web3SignerRespon
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.MetadataFileHelper;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.MockServer;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.RestAssuredConverter;
+import tech.pegasys.web3signer.core.jsonrpcproxy.support.SingleSignerProvider;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestBaseConfig;
 import tech.pegasys.web3signer.core.jsonrpcproxy.support.TestEth1Config;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ConfigurationChainId;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.secp256k1.Signer;
-import tech.pegasys.web3signer.signing.secp256k1.SingleSignerProvider;
 import tech.pegasys.web3signer.signing.secp256k1.filebased.FileBasedSignerFactory;
 
 import java.io.File;
@@ -110,6 +110,11 @@ public class IntegrationTestBase {
   public static final long DEFAULT_CHAIN_ID = 9;
   public static final int DEFAULT_ID = 77;
   static final String MALFORMED_JSON = "{Bad Json: {{{}";
+
+  @BeforeAll
+  private static void setupWeb3Signer() throws Exception {
+    setupWeb3Signer(DEFAULT_CHAIN_ID);
+  }
 
   static void setupWeb3Signer(final long chainId) throws Exception {
     setupWeb3Signer(chainId, "");

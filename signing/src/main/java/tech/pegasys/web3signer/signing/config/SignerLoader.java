@@ -28,15 +28,17 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -47,7 +49,6 @@ public class SignerLoader {
 
   private static final Logger LOG = LogManager.getLogger();
   private static final long FILES_PROCESSED_TO_REPORT = 10;
-  private static final int MAX_FORK_JOIN_THREADS = 5;
   // enable or disable parallel streams to convert and load private keys from metadata files
   private final boolean useParallelStreams;
 
@@ -72,7 +73,7 @@ public class SignerLoader {
     LOG.info(
         "Signer configuration metadata files read in memory {} in {}",
         configFileContent.getContentMap().size(),
-        calculateTimeTaken(start));
+        calculateTimeTaken(start).orElse("unknown duration"));
 
     final Instant conversionStartInstant = Instant.now();
     // Step 1: convert yaml file content to list of SigningMetadata
@@ -96,7 +97,7 @@ public class SignerLoader {
         "Total Artifact Signer loaded via configuration files: {}\nError count {}\nTime Taken: {}.",
         artifactSigners.getValues().size(),
         artifactSigners.getErrorCount(),
-        calculateTimeTaken(conversionStartInstant));
+        calculateTimeTaken(conversionStartInstant).orElse("unknown duration"));
 
     return artifactSigners;
   }
@@ -120,8 +121,15 @@ public class SignerLoader {
     return MappedResults.newInstance(signingMetadataList, errorCount.get());
   }
 
-  private static String calculateTimeTaken(final Instant start) {
-    return DurationFormatUtils.formatDurationHMS(Duration.between(start, Instant.now()).toMillis());
+  @VisibleForTesting
+  static Optional<String> calculateTimeTaken(final Instant start) {
+    final Instant now = Instant.now();
+    final long timeTaken = Duration.between(start, now).toMillis();
+    if (timeTaken < 0) {
+      LOG.warn("System Clock returned time in past. Start: {}, Now: {}.", start, now);
+      return Optional.empty();
+    }
+    return Optional.of(DurationFormatUtils.formatDurationHMS(timeTaken));
   }
 
   private ConfigFileContent getNewOrModifiedConfigFilesContents(
@@ -195,25 +203,15 @@ public class SignerLoader {
         "Converting signing metadata to Artifact Signer using {} streams ...",
         useParallelStreams ? "parallel" : "sequential");
 
-    // use custom fork-join pool instead of common. Limit number of threads to avoid Azure bug
-    ForkJoinPool forkJoinPool = null;
     try {
       if (useParallelStreams) {
-        forkJoinPool = new ForkJoinPool(numberOfThreads());
-        return forkJoinPool
-            .submit(
-                () -> mapToArtifactSigner(signingMetadataCollection.parallelStream(), signerParser))
-            .get();
+        return mapToArtifactSigner(signingMetadataCollection.parallelStream(), signerParser);
       } else {
         return mapToArtifactSigner(signingMetadataCollection.stream(), signerParser);
       }
     } catch (final Exception e) {
       LOG.error("Unexpected error in processing configuration files: {}", e.getMessage(), e);
       return MappedResults.errorResult();
-    } finally {
-      if (forkJoinPool != null) {
-        forkJoinPool.shutdown();
-      }
     }
   }
 
@@ -248,7 +246,8 @@ public class SignerLoader {
   private boolean matchesFileExtension(final String validFileExtension, final Path filename) {
     final boolean isHidden = filename.toFile().isHidden();
     final String extension = FilenameUtils.getExtension(filename.toString());
-    return !isHidden && extension.toLowerCase().endsWith(validFileExtension.toLowerCase());
+    return !isHidden
+        && extension.toLowerCase(Locale.ROOT).endsWith(validFileExtension.toLowerCase(Locale.ROOT));
   }
 
   private void renderException(final Throwable t, final String filename) {
@@ -257,17 +256,5 @@ public class SignerLoader {
         filename,
         ExceptionUtils.getRootCauseMessage(t));
     LOG.debug(ExceptionUtils.getStackTrace(t));
-  }
-
-  private int numberOfThreads() {
-    // try to allocate between 1-5 threads (based on processor cores) to process files in parallel
-    int defaultNumberOfThreads = Runtime.getRuntime().availableProcessors() / 2;
-
-    if (defaultNumberOfThreads >= MAX_FORK_JOIN_THREADS) {
-      return MAX_FORK_JOIN_THREADS;
-    } else if (defaultNumberOfThreads < 1) {
-      return 1;
-    }
-    return defaultNumberOfThreads;
   }
 }

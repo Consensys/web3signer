@@ -164,7 +164,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
         .statusCode(200)
         .body("data.status", hasItem("imported"));
     // Sign with it
-    final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
+    final Eth2SigningRequestBody request = createAttestationRequest(7, 8, UInt64.ZERO);
     signer.eth2Sign(PUBLIC_KEY, request).then().assertThat().statusCode(200);
   }
 
@@ -194,7 +194,7 @@ public class ImportKeystoresAcceptanceTest extends KeyManagerTestBase {
     validateApiResponse(callListKeys(), "data.validating_pubkey", hasItem(PUBLIC_KEY));
 
     // Sign with it
-    final Eth2SigningRequestBody request = createAttestationRequest(5, 6, UInt64.ZERO);
+    final Eth2SigningRequestBody request = createAttestationRequest(7, 8, UInt64.ZERO);
     signer.eth2Sign(PUBLIC_KEY, request).then().assertThat().statusCode(200);
   }
 

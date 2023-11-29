@@ -51,6 +51,11 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
     return signerProvider.getSigner(identifier).map(signer -> formatSignature(signer.sign(data)));
   }
 
+  @SuppressWarnings("unchecked")
+  public Optional<T> signAndGetArtifactSignature(final String identifier, final Bytes data) {
+    return signerProvider.getSigner(identifier).map(signer -> (T) signer.sign(data));
+  }
+
   /**
    * Converts hex string to bytes
    *
@@ -80,5 +85,15 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
     } else {
       throw new IllegalStateException("Invalid signature type");
     }
+  }
+
+  /**
+   * Checks whether a signer for the passed identifier is present
+   *
+   * @param identifier The identifier for which to sign data.
+   * @return true is there's a signer for the corresponding identifier, otherwise false
+   */
+  public boolean isSignerAvailable(final String identifier) {
+    return signerProvider.getSigner(identifier).isPresent();
   }
 }

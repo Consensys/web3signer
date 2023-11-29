@@ -25,15 +25,19 @@ import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
 import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.ReloadHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.web3signer.core.util.FileUtil;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.StringJoiner;
@@ -71,8 +75,9 @@ import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
-public abstract class Runner implements Runnable {
+public abstract class Runner implements Runnable, AutoCloseable {
   public static final String JSON = HttpHeaderValues.APPLICATION_JSON.toString();
+  public static final String TEXT_PLAIN = HttpHeaderValues.TEXT_PLAIN.toString();
   public static final String HEALTHCHECK_PATH = "/healthcheck";
   public static final String UPCHECK_PATH = "/upcheck";
   public static final String RELOAD_PATH = "/reload";
@@ -82,6 +87,7 @@ public abstract class Runner implements Runnable {
   protected final BaseConfig baseConfig;
 
   private HealthCheckHandler healthCheckHandler;
+  private final List<Closeable> closeables = new ArrayList<>();
 
   protected Runner(final BaseConfig baseConfig) {
     this.baseConfig = baseConfig;
@@ -168,8 +174,6 @@ public abstract class Runner implements Runnable {
 
       persistPortInformation(
           httpServer.actualPort(), metricsService.flatMap(MetricsService::getPort));
-    } catch (final InitializationException e) {
-      throw e;
     } catch (final Throwable e) {
       if (artifactSignerProvider != null) {
         artifactSignerProvider.close();
@@ -177,6 +181,7 @@ public abstract class Runner implements Runnable {
       vertx.close();
       metricsService.ifPresent(MetricsService::stop);
       LOG.error("Failed to initialise application", e);
+      throw new InitializationException(e);
     }
   }
 
@@ -211,6 +216,7 @@ public abstract class Runner implements Runnable {
 
   private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
     return new VertxOptions()
+        .setWorkerPoolSize(baseConfig.getVertxWorkerPoolSize())
         .setMetricsOptions(
             new MetricsOptions()
                 .setEnabled(true)
@@ -237,24 +243,20 @@ public abstract class Runner implements Runnable {
 
   protected void addReloadHandler(
       final Router router,
-      final ArtifactSignerProvider artifactSignerProvider,
+      final List<ArtifactSignerProvider> orderedArtifactSignerProviders,
       final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.POST, RELOAD_PATH)
         .produces(JSON)
-        .handler(
-            routingContext -> {
-              artifactSignerProvider.load();
-              routingContext.response().setStatusCode(200).end();
-            })
+        .handler(new ReloadHandler(orderedArtifactSignerProviders))
         .failureHandler(errorHandler);
   }
 
   private void registerUpcheckRoute(final Router router, final LogErrorHandler errorHandler) {
     router
         .route(HttpMethod.GET, UPCHECK_PATH)
-        .produces(JSON)
-        .handler(new BlockingHandlerDecorator(new UpcheckHandler(), false))
+        .produces(TEXT_PLAIN)
+        .handler(new UpcheckHandler())
         .failureHandler(errorHandler);
   }
 
@@ -395,6 +397,21 @@ public abstract class Runner implements Runnable {
           .filter(s -> !s.isEmpty())
           .forEach(stringJoiner::add);
       return stringJoiner.toString();
+    }
+  }
+
+  protected void registerClose(final Closeable closeable) {
+    closeables.add(closeable);
+  }
+
+  @Override
+  public void close() throws Exception {
+    for (Closeable closeable : closeables) {
+      try {
+        closeable.close();
+      } catch (Exception e) {
+        LOG.error("Failed to close Runner resource", e);
+      }
     }
   }
 }

@@ -16,8 +16,9 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
@@ -41,7 +42,8 @@ public class SignerConfiguration {
   private final List<String> metricsCategories;
   private final boolean metricsEnabled;
   private final Optional<AzureKeyVaultParameters> azureKeyVaultParameters;
-  private final Optional<AwsSecretsManagerParameters> awsSecretsManagerParameters;
+  private final Optional<AwsVaultParameters> awsSecretsManagerParameters;
+  private final Optional<GcpSecretManagerParameters> gcpSecretManagerParameters;
   private final Optional<KeystoresParameters> keystoresParameters;
   private final Optional<TlsOptions> serverTlsOptions;
   private final Optional<TlsCertificateDefinition> overriddenCaTrustStore;
@@ -67,6 +69,7 @@ public class SignerConfiguration {
 
   private final Optional<Long> bellatrixForkEpoch;
   private final Optional<Long> capellaForkEpoch;
+  private final Optional<Long> denebForkEpoch;
   private final Optional<String> network;
   private final boolean keyManagerApiEnabled;
   private Optional<WatermarkRepairParameters> watermarkRepairParameters;
@@ -74,6 +77,7 @@ public class SignerConfiguration {
   private Optional<ClientTlsOptions> downstreamTlsOptions;
   private final Duration startupTimeout;
   private final ChainIdProvider chainIdProvider;
+  private final Optional<KeystoresParameters> v3KeystoresBulkloadParameters;
 
   public SignerConfiguration(
       final String hostname,
@@ -86,7 +90,8 @@ public class SignerConfiguration {
       final List<String> metricsCategories,
       final boolean metricsEnabled,
       final Optional<AzureKeyVaultParameters> azureKeyVaultParameters,
-      final Optional<AwsSecretsManagerParameters> awsSecretsManagerParameters,
+      final Optional<AwsVaultParameters> awsSecretsManagerParameters,
+      final Optional<GcpSecretManagerParameters> gcpSecretManagerParameters,
       final Optional<KeystoresParameters> keystoresParameters,
       final Optional<TlsOptions> serverTlsOptions,
       final Optional<TlsCertificateDefinition> overriddenCaTrustStore,
@@ -111,12 +116,14 @@ public class SignerConfiguration {
       final Optional<Long> altairForkEpoch,
       final Optional<Long> bellatrixForkEpoch,
       final Optional<Long> capellaForkEpoch,
+      final Optional<Long> denebForkEpoch,
       final Optional<String> network,
       final boolean keyManagerApiEnabled,
       final Optional<WatermarkRepairParameters> watermarkRepairParameters,
       final int downstreamHttpPort,
       final Optional<ClientTlsOptions> downstreamTlsOptions,
-      final ChainIdProvider chainIdProvider) {
+      final ChainIdProvider chainIdProvider,
+      final Optional<KeystoresParameters> v3KeystoresBulkloadParameters) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -128,6 +135,7 @@ public class SignerConfiguration {
     this.metricsEnabled = metricsEnabled;
     this.azureKeyVaultParameters = azureKeyVaultParameters;
     this.awsSecretsManagerParameters = awsSecretsManagerParameters;
+    this.gcpSecretManagerParameters = gcpSecretManagerParameters;
     this.keystoresParameters = keystoresParameters;
     this.serverTlsOptions = serverTlsOptions;
     this.overriddenCaTrustStore = overriddenCaTrustStore;
@@ -152,12 +160,14 @@ public class SignerConfiguration {
     this.altairForkEpoch = altairForkEpoch;
     this.bellatrixForkEpoch = bellatrixForkEpoch;
     this.capellaForkEpoch = capellaForkEpoch;
+    this.denebForkEpoch = denebForkEpoch;
     this.network = network;
     this.keyManagerApiEnabled = keyManagerApiEnabled;
     this.watermarkRepairParameters = watermarkRepairParameters;
     this.downstreamHttpPort = downstreamHttpPort;
     this.downstreamTlsOptions = downstreamTlsOptions;
     this.chainIdProvider = chainIdProvider;
+    this.v3KeystoresBulkloadParameters = v3KeystoresBulkloadParameters;
   }
 
   public String hostname() {
@@ -212,8 +222,12 @@ public class SignerConfiguration {
     return azureKeyVaultParameters;
   }
 
-  public Optional<AwsSecretsManagerParameters> getAwsSecretsManagerParameters() {
+  public Optional<AwsVaultParameters> getAwsParameters() {
     return awsSecretsManagerParameters;
+  }
+
+  public Optional<GcpSecretManagerParameters> getGcpParameters() {
+    return gcpSecretManagerParameters;
   }
 
   public Optional<KeystoresParameters> getKeystoresParameters() {
@@ -300,6 +314,10 @@ public class SignerConfiguration {
     return capellaForkEpoch;
   }
 
+  public Optional<Long> getDenebForkEpoch() {
+    return denebForkEpoch;
+  }
+
   public Optional<String> getNetwork() {
     return network;
   }
@@ -330,5 +348,9 @@ public class SignerConfiguration {
 
   public ChainIdProvider getChainIdProvider() {
     return chainIdProvider;
+  }
+
+  public Optional<KeystoresParameters> getV3KeystoresBulkloadParameters() {
+    return v3KeystoresBulkloadParameters;
   }
 }

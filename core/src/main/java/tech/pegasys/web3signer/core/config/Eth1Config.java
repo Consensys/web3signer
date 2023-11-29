@@ -14,6 +14,9 @@ package tech.pegasys.web3signer.core.config;
 
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
+import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -39,4 +42,12 @@ public interface Eth1Config {
   Optional<ClientTlsOptions> getClientTlsOptions();
 
   ChainIdProvider getChainId();
+
+  AzureKeyVaultParameters getAzureKeyVaultConfig();
+
+  AwsVaultParameters getAwsVaultParameters();
+
+  long getAwsKmsClientCacheSize();
+
+  KeystoresParameters getV3KeystoresBulkLoadParameters();
 }

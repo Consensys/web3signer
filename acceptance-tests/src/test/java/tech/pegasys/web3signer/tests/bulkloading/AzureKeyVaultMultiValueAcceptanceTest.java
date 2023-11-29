@@ -15,15 +15,17 @@ package tech.pegasys.web3signer.tests.bulkloading;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_AZURE_BULK_LOADING;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
-import tech.pegasys.web3signer.dsl.utils.DefaultAzureKeyVaultParameters;
+import tech.pegasys.web3signer.dsl.utils.HealthCheckResultUtil;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.DefaultAzureKeyVaultParameters;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.util.List;
@@ -32,18 +34,14 @@ import java.util.stream.Collectors;
 
 import com.azure.core.credential.TokenCredential;
 import com.azure.core.exception.ResourceNotFoundException;
-import com.azure.core.util.polling.SyncPoller;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
-import com.azure.security.keyvault.secrets.models.DeletedSecret;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
 import com.azure.security.keyvault.secrets.models.SecretProperties;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -72,7 +70,7 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
   private static final String VAULT_NAME = System.getenv("AZURE_KEY_VAULT_NAME");
 
   private static final Map<String, String> TAG_FILTER = Map.of("ENV", "MULTILINE-TEST");
-  private static final String SECRET_NAME = "TEST-MULTILINE-KEY";
+  private static final String SECRET_NAME = "ACCTEST-MULTILINE-KEY";
 
   private static List<BLSKeyPair> multiValueKeys;
 
@@ -80,15 +78,6 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
   static void setup() {
     multiValueKeys = findAndCreateAzureMultiValueKeysIfNotExist();
     assertThat(multiValueKeys).hasSize(200);
-  }
-
-  @AfterAll
-  static void cleanupAzureResources() {
-    final SecretClient azureSecretClient = buildAzureSecretClient();
-    final SyncPoller<DeletedSecret, Void> deletedSecretVoidSyncPoller =
-        azureSecretClient.beginDeleteSecret(SECRET_NAME);
-    deletedSecretVoidSyncPoller.poll();
-    deletedSecretVoidSyncPoller.waitForCompletion();
   }
 
   @Test
@@ -127,20 +116,9 @@ public class AzureKeyVaultMultiValueAcceptanceTest extends AcceptanceTestBase {
 
     // keys loaded reported in healthcheck response should total of be multiline keys
     final String jsonBody = healthcheckResponse.body().asString();
-    int keysLoaded = getHealthCheckAzureBulkLoadKeysCountStat(jsonBody, "keys-loaded");
+    int keysLoaded =
+        HealthCheckResultUtil.getHealtcheckKeysLoaded(jsonBody, KEYS_CHECK_AZURE_BULK_LOADING);
     assertThat(keysLoaded).isEqualTo(publicKeys.size());
-  }
-
-  private static int getHealthCheckAzureBulkLoadKeysCountStat(
-      String healthCheckJsonBody, String dataKey) {
-    JsonObject jsonObject = new JsonObject(healthCheckJsonBody);
-    return jsonObject.getJsonArray("checks").stream()
-        .filter(o -> "keys-check".equals(((JsonObject) o).getString("id")))
-        .flatMap(o -> ((JsonObject) o).getJsonArray("checks").stream())
-        .filter(o -> "azure-bulk-loading".equals(((JsonObject) o).getString("id")))
-        .mapToInt(o -> ((JsonObject) ((JsonObject) o).getValue("data")).getInteger(dataKey))
-        .findFirst()
-        .orElse(-1);
   }
 
   private static List<BLSKeyPair> findAndCreateAzureMultiValueKeysIfNotExist() {

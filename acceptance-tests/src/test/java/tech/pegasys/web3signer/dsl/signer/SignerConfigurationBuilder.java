@@ -18,8 +18,9 @@ import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProvider;
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.nio.file.Path;
@@ -48,7 +49,8 @@ public class SignerConfigurationBuilder {
   private Path slashingProtectionDbPoolConfigurationFile = null;
   private String mode;
   private AzureKeyVaultParameters azureKeyVaultParameters;
-  private AwsSecretsManagerParameters awsSecretsManagerParameters;
+  private AwsVaultParameters awsVaultParameters;
+  private GcpSecretManagerParameters gcpSecretManagerParameters;
   private Map<String, String> web3SignerEnvironment;
   private Duration startupTimeout =
       Boolean.getBoolean("debugSubProcess") ? Duration.ofHours(1) : Duration.ofSeconds(30);
@@ -67,6 +69,7 @@ public class SignerConfigurationBuilder {
   private Long altairForkEpoch = null;
   private Long bellatrixForkEpoch = null;
   private Long capellaForkEpoch = null;
+  private Long denebForkEpoch = null;
   private String network = null;
   private boolean keyManagerApiEnabled = false;
   private KeystoresParameters keystoresParameters;
@@ -75,6 +78,8 @@ public class SignerConfigurationBuilder {
   private ClientTlsOptions downstreamTlsOptions;
 
   private ChainIdProvider chainIdProvider;
+
+  private KeystoresParameters v3KeystoresBulkloadParameters;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -137,9 +142,14 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withAwsSecretsManagerParameters(
-      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
-    this.awsSecretsManagerParameters = awsSecretsManagerParameters;
+  public SignerConfigurationBuilder withAwsParameters(final AwsVaultParameters awsVaultParameters) {
+    this.awsVaultParameters = awsVaultParameters;
+    return this;
+  }
+
+  public SignerConfigurationBuilder withGcpParameters(
+      final GcpSecretManagerParameters gcpSecretManagerParameters) {
+    this.gcpSecretManagerParameters = gcpSecretManagerParameters;
     return this;
   }
 
@@ -253,6 +263,11 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withDenebForkEpoch(final long denebForkEpoch) {
+    this.denebForkEpoch = denebForkEpoch;
+    return this;
+  }
+
   public SignerConfigurationBuilder withNetwork(final String network) {
     this.network = network;
     return this;
@@ -295,6 +310,12 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withV3KeystoresBulkloadParameters(
+      final KeystoresParameters v3KeystoresBulkloadParameters) {
+    this.v3KeystoresBulkloadParameters = v3KeystoresBulkloadParameters;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -310,7 +331,8 @@ public class SignerConfigurationBuilder {
         metricsCategories,
         metricsEnabled,
         Optional.ofNullable(azureKeyVaultParameters),
-        Optional.ofNullable(awsSecretsManagerParameters),
+        Optional.ofNullable(awsVaultParameters),
+        Optional.ofNullable(gcpSecretManagerParameters),
         Optional.ofNullable(keystoresParameters),
         Optional.ofNullable(serverTlsOptions),
         Optional.ofNullable(overriddenCaTrustStore),
@@ -335,11 +357,13 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(altairForkEpoch),
         Optional.ofNullable(bellatrixForkEpoch),
         Optional.ofNullable(capellaForkEpoch),
+        Optional.ofNullable(denebForkEpoch),
         Optional.ofNullable(network),
         keyManagerApiEnabled,
         Optional.ofNullable(watermarkRepairParameters),
         downstreamHttpPort,
         Optional.ofNullable(downstreamTlsOptions),
-        chainIdProvider);
+        chainIdProvider,
+        Optional.ofNullable(v3KeystoresBulkloadParameters));
   }
 }

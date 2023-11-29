@@ -31,7 +31,7 @@ testFixturesJar {
 }
 
 dependencies {
-
+  implementation project(":common")
   implementation 'com.azure:azure-identity'
   implementation 'com.azure:azure-security-keyvault-keys'
   implementation 'com.azure:azure-security-keyvault-secrets'
@@ -46,8 +46,11 @@ dependencies {
   implementation 'org.bouncycastle:bcpkix-jdk18on'
   implementation 'org.bouncycastle:bcprov-jdk18on'
   implementation 'org.xipki.iaik:sunpkcs11-wrapper'
+  implementation 'org.web3j:core'
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:secretsmanager'
+  implementation 'software.amazon.awssdk:kms'
+  implementation 'com.google.cloud:google-cloud-secretmanager'
   runtimeOnly 'software.amazon.awssdk:sts'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-core'

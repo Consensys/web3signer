@@ -12,6 +12,13 @@
  */
 package tech.pegasys.web3signer.dsl.signer.runner;
 
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_ACCESS_KEY_ID_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_AUTH_MODE_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_ENABLED_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_REGION_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_SECRET_ACCESS_KEY_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_TAG_NAMES_FILTER_OPTION;
+import static tech.pegasys.web3signer.commandline.PicoCliAwsKmsParameters.AWS_KMS_TAG_VALUES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_ENDPOINT_OVERRIDE_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_ACCESS_KEY_ID_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_AUTH_MODE_OPTION;
@@ -21,15 +28,20 @@ import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParame
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_SECRET_ACCESS_KEY_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_NAMES_FILTER_OPTION;
 import static tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters.AWS_SECRETS_TAG_VALUES_FILTER_OPTION;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORDS_PATH;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PASSWORD_FILE;
+import static tech.pegasys.web3signer.signing.config.KeystoresParameters.KEYSTORES_PATH;
 
+import tech.pegasys.web3signer.commandline.PicoCliGcpSecretManagerParameters;
 import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.config.client.ClientTlsOptions;
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
-import tech.pegasys.web3signer.signing.config.AwsSecretsManagerParameters;
+import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import java.io.IOException;
@@ -39,7 +51,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import org.apache.commons.io.FileUtils;
 
@@ -115,33 +127,6 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     if (signerConfig.getMode().equals("eth2")) {
       yamlConfig.append(createEth2SlashingProtectionArgs());
 
-      if (signerConfig.getAzureKeyVaultParameters().isPresent()) {
-        final AzureKeyVaultParameters azureParams = signerConfig.getAzureKeyVaultParameters().get();
-        yamlConfig.append(
-            String.format(YAML_BOOLEAN_FMT, "eth2.azure-vault-enabled", Boolean.TRUE));
-        yamlConfig.append(
-            String.format(
-                YAML_STRING_FMT,
-                "eth2.azure-vault-auth-mode",
-                azureParams.getAuthenticationMode().name()));
-        yamlConfig.append(
-            String.format(YAML_STRING_FMT, "eth2.azure-vault-name", azureParams.getKeyVaultName()));
-        yamlConfig.append(
-            String.format(YAML_STRING_FMT, "eth2.azure-client-id", azureParams.getClientId()));
-        yamlConfig.append(
-            String.format(
-                YAML_STRING_FMT, "eth2.azure-client-secret", azureParams.getClientSecret()));
-        yamlConfig.append(
-            String.format(YAML_STRING_FMT, "eth2.azure-tenant-id", azureParams.getTenantId()));
-
-        azureParams
-            .getTags()
-            .forEach(
-                (tagName, tagValue) ->
-                    yamlConfig.append(
-                        String.format(
-                            YAML_STRING_FMT, "eth2.azure-secrets-tags", tagName + "=" + tagValue)));
-      }
       if (signerConfig.getKeystoresParameters().isPresent()) {
         final KeystoresParameters keystoresParameters = signerConfig.getKeystoresParameters().get();
         yamlConfig.append(
@@ -166,8 +151,12 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       }
 
       signerConfig
-          .getAwsSecretsManagerParameters()
-          .ifPresent(awsParams -> yamlConfig.append(awsBulkLoadingOptions(awsParams)));
+          .getAwsParameters()
+          .ifPresent(
+              awsParams -> yamlConfig.append(awsSecretsManagerBulkLoadingOptions(awsParams)));
+      signerConfig
+          .getGcpParameters()
+          .ifPresent(gcpParameters -> yamlConfig.append(gcpBulkLoadingOptions(gcpParameters)));
 
       final CommandArgs subCommandArgs = createSubCommandArgs();
       params.addAll(subCommandArgs.params);
@@ -179,7 +168,21 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       yamlConfig.append(
           String.format(YAML_NUMERIC_FMT, "eth1.chain-id", signerConfig.getChainIdProvider().id()));
       yamlConfig.append(createDownstreamTlsArgs());
+
+      signerConfig
+          .getV3KeystoresBulkloadParameters()
+          .ifPresent(setV3KeystoresBulkloadParameters(yamlConfig));
+
+      signerConfig
+          .getAwsParameters()
+          .ifPresent(awsParams -> yamlConfig.append(awsKmsBulkLoadingOptions(awsParams)));
     }
+
+    signerConfig
+        .getAzureKeyVaultParameters()
+        .ifPresent(
+            azureParams ->
+                yamlConfig.append(azureBulkLoadingOptions(signerConfig.getMode(), azureParams)));
 
     // create temporary config file
     try {
@@ -194,6 +197,61 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     }
 
     return params;
+  }
+
+  private Consumer<? super KeystoresParameters> setV3KeystoresBulkloadParameters(
+      final StringBuilder yamlConfig) {
+    return keystoresParameters -> {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              KEYSTORES_PATH.replace("--", "eth1."),
+              keystoresParameters.getKeystoresPath().toAbsolutePath()));
+
+      if (keystoresParameters.getKeystoresPasswordsPath() != null) {
+        yamlConfig.append(
+            String.format(
+                YAML_STRING_FMT,
+                KEYSTORES_PASSWORDS_PATH.replace("--", "eth1."),
+                keystoresParameters.getKeystoresPasswordsPath().toAbsolutePath()));
+      }
+      if (keystoresParameters.getKeystoresPasswordFile() != null) {
+        yamlConfig.append(
+            String.format(
+                YAML_STRING_FMT,
+                KEYSTORES_PASSWORD_FILE.replace("--", "eth1."),
+                keystoresParameters.getKeystoresPasswordFile().toAbsolutePath()));
+      }
+    };
+  }
+
+  private String azureBulkLoadingOptions(
+      final String mode, final AzureKeyVaultParameters azureParams) {
+    final StringBuilder yamlConfig = new StringBuilder();
+    yamlConfig.append(String.format(YAML_BOOLEAN_FMT, mode + ".azure-vault-enabled", Boolean.TRUE));
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            mode + ".azure-vault-auth-mode",
+            azureParams.getAuthenticationMode().name()));
+    yamlConfig.append(
+        String.format(YAML_STRING_FMT, mode + ".azure-vault-name", azureParams.getKeyVaultName()));
+    yamlConfig.append(
+        String.format(YAML_STRING_FMT, mode + ".azure-client-id", azureParams.getClientId()));
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT, mode + ".azure-client-secret", azureParams.getClientSecret()));
+    yamlConfig.append(
+        String.format(YAML_STRING_FMT, mode + ".azure-tenant-id", azureParams.getTenantId()));
+
+    azureParams
+        .getTags()
+        .forEach(
+            (tagName, tagValue) ->
+                yamlConfig.append(
+                    String.format(
+                        YAML_STRING_FMT, mode + ".azure-tags", tagName + "=" + tagValue)));
+    return yamlConfig.toString();
   }
 
   private CommandArgs createSubCommandArgs() {
@@ -218,17 +276,29 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       params.add("watermark-repair"); // sub-sub command
       final WatermarkRepairParameters watermarkRepairParameters =
           signerConfig.getWatermarkRepairParameters().get();
-      yamlConfig.append(
-          String.format(
-              YAML_NUMERIC_FMT, "eth2.watermark-repair.slot", watermarkRepairParameters.getSlot()));
-      yamlConfig.append(
-          String.format(
-              YAML_NUMERIC_FMT,
-              "eth2.watermark-repair.epoch",
-              watermarkRepairParameters.getEpoch()));
-      yamlConfig.append(
-          formatStringList(
-              "eth2.watermark-repair.validator-ids", watermarkRepairParameters.getValidators()));
+      if (watermarkRepairParameters.isRemoveHighWatermark()) {
+        yamlConfig.append(
+            String.format(
+                YAML_BOOLEAN_FMT,
+                "eth2.watermark-repair.remove-high-watermark",
+                watermarkRepairParameters.isRemoveHighWatermark()));
+      } else {
+        yamlConfig.append(
+            String.format(
+                YAML_NUMERIC_FMT,
+                "eth2.watermark-repair.slot",
+                watermarkRepairParameters.getSlot()));
+        yamlConfig.append(
+            String.format(
+                YAML_NUMERIC_FMT,
+                "eth2.watermark-repair.epoch",
+                watermarkRepairParameters.getEpoch()));
+        yamlConfig.append(
+            String.format(
+                YAML_BOOLEAN_FMT,
+                "eth2.watermark-repair.set-high-watermark",
+                watermarkRepairParameters.isSetHighWatermark()));
+      }
     }
 
     return new CommandArgs(params, yamlConfig.toString());
@@ -411,6 +481,14 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               signerConfig.getCapellaForkEpoch().get()));
     }
 
+    if (signerConfig.getDenebForkEpoch().isPresent()) {
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT,
+              "eth2.Xnetwork-deneb-fork-epoch",
+              signerConfig.getDenebForkEpoch().get()));
+    }
+
     if (signerConfig.getNetwork().isPresent()) {
       yamlConfig.append(
           String.format(YAML_STRING_FMT, "eth2.network", signerConfig.getNetwork().get()));
@@ -419,71 +497,70 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     return yamlConfig.toString();
   }
 
-  private String awsBulkLoadingOptions(
-      final AwsSecretsManagerParameters awsSecretsManagerParameters) {
+  private String awsSecretsManagerBulkLoadingOptions(final AwsVaultParameters awsVaultParameters) {
     final StringBuilder yamlConfig = new StringBuilder();
 
     yamlConfig.append(
         String.format(
             YAML_BOOLEAN_FMT,
             "eth2." + AWS_SECRETS_ENABLED_OPTION.substring(2),
-            awsSecretsManagerParameters.isEnabled()));
+            awsVaultParameters.isEnabled()));
 
     yamlConfig.append(
         String.format(
             YAML_STRING_FMT,
             "eth2." + AWS_SECRETS_AUTH_MODE_OPTION.substring(2),
-            awsSecretsManagerParameters.getAuthenticationMode().name()));
+            awsVaultParameters.getAuthenticationMode().name()));
 
-    if (awsSecretsManagerParameters.getAccessKeyId() != null) {
+    if (awsVaultParameters.getAccessKeyId() != null) {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
               "eth2." + AWS_SECRETS_ACCESS_KEY_ID_OPTION.substring(2),
-              awsSecretsManagerParameters.getAccessKeyId()));
+              awsVaultParameters.getAccessKeyId()));
     }
 
-    if (awsSecretsManagerParameters.getSecretAccessKey() != null) {
+    if (awsVaultParameters.getSecretAccessKey() != null) {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
               "eth2." + AWS_SECRETS_SECRET_ACCESS_KEY_OPTION.substring(2),
-              awsSecretsManagerParameters.getSecretAccessKey()));
+              awsVaultParameters.getSecretAccessKey()));
     }
 
-    if (awsSecretsManagerParameters.getRegion() != null) {
+    if (awsVaultParameters.getRegion() != null) {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
               "eth2." + AWS_SECRETS_REGION_OPTION.substring(2),
-              awsSecretsManagerParameters.getRegion()));
+              awsVaultParameters.getRegion()));
     }
 
-    if (!awsSecretsManagerParameters.getPrefixesFilter().isEmpty()) {
+    if (!awsVaultParameters.getPrefixesFilter().isEmpty()) {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
               "eth2." + AWS_SECRETS_PREFIXES_FILTER_OPTION.substring(2),
-              String.join(",", awsSecretsManagerParameters.getPrefixesFilter())));
+              String.join(",", awsVaultParameters.getPrefixesFilter())));
     }
 
-    if (!awsSecretsManagerParameters.getTagNamesFilter().isEmpty()) {
+    if (!awsVaultParameters.getTagNamesFilter().isEmpty()) {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
               "eth2." + AWS_SECRETS_TAG_NAMES_FILTER_OPTION.substring(2),
-              String.join(",", awsSecretsManagerParameters.getTagNamesFilter())));
+              String.join(",", awsVaultParameters.getTagNamesFilter())));
     }
 
-    if (!awsSecretsManagerParameters.getTagValuesFilter().isEmpty()) {
+    if (!awsVaultParameters.getTagValuesFilter().isEmpty()) {
       yamlConfig.append(
           String.format(
               YAML_STRING_FMT,
               "eth2." + AWS_SECRETS_TAG_VALUES_FILTER_OPTION.substring(2),
-              String.join(",", awsSecretsManagerParameters.getTagValuesFilter())));
+              String.join(",", awsVaultParameters.getTagValuesFilter())));
     }
 
-    awsSecretsManagerParameters
+    awsVaultParameters
         .getEndpointOverride()
         .ifPresent(
             uri ->
@@ -496,12 +573,97 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     return yamlConfig.toString();
   }
 
-  private String formatStringList(final String key, final List<String> stringList) {
-    return stringList.isEmpty()
-        ? String.format("%s: []%n", key)
-        : String.format(
-            "%s: [\"%s\"]%n",
-            key, stringList.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",")));
+  private String gcpBulkLoadingOptions(
+      final GcpSecretManagerParameters gcpSecretManagerParameters) {
+    final StringBuilder yamlConfig = new StringBuilder();
+    yamlConfig.append(
+        String.format(
+            YAML_BOOLEAN_FMT,
+            "eth2." + PicoCliGcpSecretManagerParameters.GCP_SECRETS_ENABLED_OPTION.substring(2),
+            gcpSecretManagerParameters.isEnabled()));
+    if (gcpSecretManagerParameters.getProjectId() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + PicoCliGcpSecretManagerParameters.GCP_PROJECT_ID_OPTION.substring(2),
+              gcpSecretManagerParameters.getProjectId()));
+    }
+    if (gcpSecretManagerParameters.getFilter().isPresent()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth2." + PicoCliGcpSecretManagerParameters.GCP_SECRETS_FILTER_OPTION.substring(2),
+              gcpSecretManagerParameters.getFilter().get()));
+    }
+    return yamlConfig.toString();
+  }
+
+  private String awsKmsBulkLoadingOptions(final AwsVaultParameters awsVaultParameters) {
+    final StringBuilder yamlConfig = new StringBuilder();
+
+    yamlConfig.append(
+        String.format(
+            YAML_BOOLEAN_FMT,
+            "eth1." + AWS_KMS_ENABLED_OPTION.substring(2),
+            awsVaultParameters.isEnabled()));
+
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth1." + AWS_KMS_AUTH_MODE_OPTION.substring(2),
+            awsVaultParameters.getAuthenticationMode().name()));
+
+    if (awsVaultParameters.getAccessKeyId() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1." + AWS_KMS_ACCESS_KEY_ID_OPTION.substring(2),
+              awsVaultParameters.getAccessKeyId()));
+    }
+
+    if (awsVaultParameters.getSecretAccessKey() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1." + AWS_KMS_SECRET_ACCESS_KEY_OPTION.substring(2),
+              awsVaultParameters.getSecretAccessKey()));
+    }
+
+    if (awsVaultParameters.getRegion() != null) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1." + AWS_KMS_REGION_OPTION.substring(2),
+              awsVaultParameters.getRegion()));
+    }
+
+    if (!awsVaultParameters.getTagNamesFilter().isEmpty()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1." + AWS_KMS_TAG_NAMES_FILTER_OPTION.substring(2),
+              String.join(",", awsVaultParameters.getTagNamesFilter())));
+    }
+
+    if (!awsVaultParameters.getTagValuesFilter().isEmpty()) {
+      yamlConfig.append(
+          String.format(
+              YAML_STRING_FMT,
+              "eth1." + AWS_KMS_TAG_VALUES_FILTER_OPTION.substring(2),
+              String.join(",", awsVaultParameters.getTagValuesFilter())));
+    }
+
+    awsVaultParameters
+        .getEndpointOverride()
+        .ifPresent(
+            uri ->
+                yamlConfig.append(
+                    String.format(
+                        YAML_STRING_FMT,
+                        "eth1." + AWS_ENDPOINT_OVERRIDE_OPTION.substring(2),
+                        uri)));
+
+    return yamlConfig.toString();
   }
 
   private static class CommandArgs {

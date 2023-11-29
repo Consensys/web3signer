@@ -75,6 +75,7 @@ public class Eth2BlockSigningRequestUtil {
         return createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlock()));
       case BELLATRIX:
       case CAPELLA:
+      case DENEB:
         return createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlockHeader()));
       default:
         throw new IllegalStateException(
@@ -83,22 +84,12 @@ public class Eth2BlockSigningRequestUtil {
   }
 
   public Eth2SigningRequestBody createBlockV2Request(final BlockRequest blockRequest) {
-    return new Eth2SigningRequestBody(
-        ArtifactType.BLOCK_V2,
-        signingRoot,
-        forkInfo,
-        null,
-        blockRequest,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null);
+    return Eth2SigningRequestBodyBuilder.anEth2SigningRequestBody()
+        .withType(ArtifactType.BLOCK_V2)
+        .withSigningRoot(signingRoot)
+        .withForkInfo(forkInfo)
+        .withBlockRequest(blockRequest)
+        .build();
   }
 
   public Eth2SigningRequestBody createLegacyBlockRequest() {
@@ -107,22 +98,12 @@ public class Eth2BlockSigningRequestUtil {
           "Only PHASE0 spec is supported to create legacy BLOCK type signing request");
     }
 
-    return new Eth2SigningRequestBody(
-        ArtifactType.BLOCK,
-        signingRoot,
-        forkInfo,
-        getBeaconBlock(),
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null);
+    return Eth2SigningRequestBodyBuilder.anEth2SigningRequestBody()
+        .withType(ArtifactType.BLOCK)
+        .withSigningRoot(signingRoot)
+        .withForkInfo(forkInfo)
+        .withBlock(getBeaconBlock())
+        .build();
   }
 
   private BeaconBlockHeader getBeaconBlockHeader() {
