@@ -13,8 +13,8 @@
 
 dependencyManagement {
   dependencies {
-    dependency 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
-    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2'
+    dependency 'com.fasterxml.jackson.core:jackson-databind:2.16.0'
+    dependency 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.16.0'
 
     dependencySet(group: 'com.google.errorprone', version: '2.21.1') {
       entry 'error_prone_annotation'
@@ -85,8 +85,8 @@ dependencyManagement {
       entry 'mockito-junit-jupiter'
     }
 
-    dependency 'org.hyperledger.besu:plugin-api:23.10.1'
-    dependency 'org.hyperledger.besu.internal:metrics-core:23.10.1'
+    dependency 'org.hyperledger.besu:plugin-api:23.10.2'
+    dependency 'org.hyperledger.besu.internal:metrics-core:23.10.2'
 
     dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.10'
 
@@ -175,7 +175,7 @@ dependencyManagement {
     dependency 'com.squareup.okio:okio:3.4.0'
 
     // addressing CVE-2023-44487
-    dependencySet(group: 'io.netty', version: '4.1.100.Final') {
+    dependencySet(group: 'io.netty', version: '4.1.101.Final') {
       entry 'netty-all'
       entry 'netty-codec-http2'
       entry 'netty-handler'
@@ -217,7 +217,7 @@ dependencyManagement {
 
     // besu 23.10.1 uses grpc 1.53.0 so vulnerable to
     // CVE-2023-32731, CVE-2023-33953, CVE-2023-44487, CVE-2023-4785
-    dependencySet(group: 'io.grpc', version: '1.59.0') {
+    dependencySet(group: 'io.grpc', version: '1.59.1') {
       entry 'grpc-all'
       entry 'grpc-core'
       entry 'grpc-netty'
