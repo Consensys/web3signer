@@ -186,6 +186,7 @@ jobs:
           destination: distributions
       - run:
           name: Dependency vulnerability scan
+          no_output_timeout: 40m
           command: |
             ./gradlew --no-daemon -Dorg.gradle.parallel=false dependencyCheckAggregate -DnvdApiDelay=6000
       - run:
