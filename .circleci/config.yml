@@ -188,7 +188,7 @@ jobs:
           name: Dependency vulnerability scan
           no_output_timeout: 40m
           command: |
-            ./gradlew --no-daemon -Dorg.gradle.parallel=false dependencyCheckAggregate -DnvdApiKey=${NVD_API_KEY} -DnvdDelay=6000
+            ./gradlew --no-daemon -Dorg.gradle.parallel=false dependencyCheckAggregate -Dnvd.ApiKey=${NVD_API_KEY} -Dnvd.Delay=6000
       - run:
           name: Test
           no_output_timeout: 20m
