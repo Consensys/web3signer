@@ -158,7 +158,7 @@ allprojects {
 
   dependencyCheck {
     nvd {
-      apikey = System.getenv("NVD_API_KEY")  ?: "aaabbbccc"
+      apiKey = System.getenv("NVD_API_KEY")  ?: "aaabbbccc"
       delay = 16000
     }
     failBuildOnCVSS = 7 // Fail on high CVSS severity
