@@ -1,6 +1,7 @@
 # Changelog
 
-## Next release
+## 24.1.0
+
 ### Upcoming Breaking Changes
 - `--Xworker-pool-size` cli option will be removed in a future release. This option has been replaced with `--vertx-worker-pool-size`.
 
@@ -8,6 +9,7 @@
 - Update reactor-netty-http to fix CVE-2023-34062
 
 ### Features Added
+- Add Deneb configuration for Goerli [#960](https://github.com/Consensys/web3signer/pull/960)
 
 ## 23.11.0
 ### Upcoming Breaking Changes

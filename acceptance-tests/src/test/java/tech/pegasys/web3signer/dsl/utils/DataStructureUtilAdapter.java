@@ -106,7 +106,7 @@ public class DataStructureUtilAdapter {
               }
               if (builder.supportsKzgCommitments()) {
                 builder.blobKzgCommitments(
-                    SafeFuture.completedFuture(util.randomSszKzgCommitmentList()));
+                    SafeFuture.completedFuture(util.randomBlobKzgCommitments()));
               }
             })
         .join();

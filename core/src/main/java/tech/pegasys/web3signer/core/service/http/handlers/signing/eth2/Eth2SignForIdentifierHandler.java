@@ -317,13 +317,6 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         checkArgument(validatorRegistration != null, "ValidatorRegistration is required");
         return signingRootUtil.signingRootForValidatorRegistration(
             validatorRegistration.asInternalValidatorRegistration());
-      case BLOB_SIDECAR:
-        // handles both blinded/blob sidecar
-        final BlobSidecar blobSidecar = body.blobSidecar();
-        checkArgument(blobSidecar != null, "BlobSidecar is required");
-        return signingRootUtil.signingRootForBlindedBlobSidecar(
-            blobSidecar.asInternalBlindedBlobSidecar(eth2Spec.atSlot(blobSidecar.slot())),
-            body.forkInfo().asInternalForkInfo());
 
       default:
         throw new IllegalStateException("Signing root unimplemented for type " + body.type());
