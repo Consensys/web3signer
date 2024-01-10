@@ -2,6 +2,8 @@
 
 ## 24.1.0
 
+This is an optional release for mainnet Ethereum and it includes the updated network configuration for the Goerli Deneb fork.
+
 ### Upcoming Breaking Changes
 - `--Xworker-pool-size` cli option will be removed in a future release. This option has been replaced with `--vertx-worker-pool-size`.
 

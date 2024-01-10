@@ -25,7 +25,6 @@ import java.io.File;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.util.List;
 
 import com.google.common.io.Resources;
 import org.junit.jupiter.api.AfterEach;
@@ -44,10 +43,7 @@ public class Eth1RpcAcceptanceTestBase extends AcceptanceTestBase {
   protected Path keyFileTempDir;
 
   protected void startBesu() {
-    final BesuNodeConfig besuNodeConfig =
-        BesuNodeConfigBuilder.aBesuNodeConfig()
-            .withAdditionalCommandLineArgs(List.of("--tx-pool-limit-by-account-percentage=1"))
-            .build();
+    final BesuNodeConfig besuNodeConfig = BesuNodeConfigBuilder.aBesuNodeConfig().build();
 
     besu = BesuNodeFactory.create(besuNodeConfig);
     besu.start();
