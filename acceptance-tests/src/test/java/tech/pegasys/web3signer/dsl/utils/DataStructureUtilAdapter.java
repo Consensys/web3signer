@@ -104,6 +104,10 @@ public class DataStructureUtilAdapter {
                 builder.blsToExecutionChanges(
                     randomSignedBlsToExecutionChangesList(spec.atSlot(slotNum)));
               }
+              if (builder.supportsKzgCommitments()) {
+                builder.blobKzgCommitments(
+                    SafeFuture.completedFuture(util.randomBlobKzgCommitments()));
+              }
             })
         .join();
   }
