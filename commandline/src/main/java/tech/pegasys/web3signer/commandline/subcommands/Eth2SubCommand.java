@@ -184,7 +184,7 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   private Eth2NetworkConfiguration createEth2NetworkConfig() {
     Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
-    builder.applyNetworkDefaults(network).kzgNoop(true);
+    builder.applyNetworkDefaults(network);
     if (altairForkEpoch != null) {
       builder.altairForkEpoch(altairForkEpoch);
     }

@@ -260,8 +260,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.syncCommitteeMessage(),
             request.syncAggregatorSelectionData(),
             request.contributionAndProof(),
-            request.validatorRegistration(),
-            request.blobSidecar());
+            request.validatorRegistration());
 
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), requestWithMismatchedSigningRoot);
@@ -299,8 +298,7 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
             request.syncCommitteeMessage(),
             request.syncAggregatorSelectionData(),
             request.contributionAndProof(),
-            request.validatorRegistration(),
-            request.blobSidecar());
+            request.validatorRegistration());
 
     final Response response =
         signer.eth2Sign(
@@ -345,7 +343,6 @@ public class BlsSigningAcceptanceTest extends SigningAcceptanceTestBase {
     switch (artifactType) {
       case BLOCK_V2, SYNC_COMMITTEE_MESSAGE, SYNC_COMMITTEE_SELECTION_PROOF, SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF -> setupEth2Signer(
           Eth2Network.MINIMAL, SpecMilestone.ALTAIR);
-      case BLOB_SIDECAR -> setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.DENEB);
       default -> setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.PHASE0);
     }
   }
