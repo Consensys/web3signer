@@ -1,5 +1,9 @@
 # Changelog
 
+## 24.1.1
+
+This is an optional release for mainnet Ethereum and it includes the updated network configuration for the Sepolia, Holesky and Chiado Deneb forks.
+
 ## 24.1.0
 
 This is an optional release for mainnet Ethereum and it includes the updated network configuration for the Goerli Deneb fork.
