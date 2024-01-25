@@ -1,0 +1,13 @@
+post:
+  tags:
+    - 'Reload Signer Keys'
+  summary: 'Reload signer keys asynchronously'
+  description: |
+    Reloads signer keys asynchronously. This is used after adding new keys to a current set of validators.
+    The call reloads the keys and makes Web3signer aware of the change. Not used by validator clients.
+  operationId: 'RELOAD'
+  responses:
+    '200':
+      description: 'Call is successful'
+    '500':
+      description: 'Internal Web3Signer server error'

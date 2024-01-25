@@ -1,0 +1,24 @@
+get:
+  tags:
+    - 'High Watermark'
+  summary: 'The High Watermark epoch and slot applicable to all validators'
+  description: 'Returns the uint64 epoch and slot of the high watermark. Signing of attestations or blocks are only allowed when they are lower than this high watermark. If no high watermark is set, an empty JSON object will be returned.'
+  operationId: 'HIGH_WATERMARK'
+  responses:
+    '200':
+      description: 'high watermark'
+      content:
+        application/json:
+          schema:
+            type: "object"
+            properties:
+              epoch:
+                type: "string"
+                format: "uint64"
+              slot:
+                type: "string"
+                format: "uint64"
+    '400':
+      description: 'Bad request format'
+    '500':
+      description: 'Internal Web3Signer server error'
