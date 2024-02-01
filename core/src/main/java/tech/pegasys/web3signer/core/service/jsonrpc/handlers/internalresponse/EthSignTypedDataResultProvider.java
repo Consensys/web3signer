@@ -58,7 +58,7 @@ public class EthSignTypedDataResultProvider implements ResultProvider<String> {
     try {
       dataEncoder = new StructuredDataEncoder(jsonData);
     } catch (IOException e) {
-      throw new RuntimeException("Exception thrown while enconding the json provided");
+      throw new RuntimeException("Exception thrown while encoding the json provided");
     }
     final Bytes structuredData = Bytes.of(dataEncoder.getStructuredData());
     return transactionSignerProvider
