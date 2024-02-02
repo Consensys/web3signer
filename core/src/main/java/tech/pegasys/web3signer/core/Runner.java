@@ -42,8 +42,10 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
@@ -174,6 +176,8 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
       persistPortInformation(
           httpServer.actualPort(), metricsService.flatMap(MetricsService::getPort));
+
+      closeables.add(() -> shutdownVertx(vertx));
     } catch (final Throwable e) {
       if (artifactSignerProvider != null) {
         artifactSignerProvider.close();
@@ -182,6 +186,16 @@ public abstract class Runner implements Runnable, AutoCloseable {
       metricsService.ifPresent(MetricsService::stop);
       LOG.error("Failed to initialise application", e);
       throw new InitializationException(e);
+    }
+  }
+
+  private void shutdownVertx(final Vertx vertx) {
+    final CountDownLatch vertxShutdownLatch = new CountDownLatch(1);
+    vertx.close((res) -> vertxShutdownLatch.countDown());
+    try {
+      vertxShutdownLatch.await();
+    } catch (InterruptedException e) {
+      throw new IllegalStateException("Interrupted while waiting for Vertx to stop", e);
     }
   }
 
