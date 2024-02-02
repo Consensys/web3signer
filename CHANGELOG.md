@@ -1,5 +1,10 @@
 # Changelog
 
+## Next version
+
+### Bugs fixed
+- Ensure that Web3Signer stops the http server when a sigterm is received
+
 ## 24.1.1
 
 This is an optional release for mainnet Ethereum and it includes the updated network configuration for the Sepolia, Holesky and Chiado Deneb forks.
