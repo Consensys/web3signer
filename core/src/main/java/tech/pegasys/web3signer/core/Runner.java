@@ -45,7 +45,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.vertx.core.Handler;
@@ -182,7 +181,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
       if (artifactSignerProvider != null) {
         artifactSignerProvider.close();
       }
-      vertx.close();
+      shutdownVertx(vertx);
       metricsService.ifPresent(MetricsService::stop);
       LOG.error("Failed to initialise application", e);
       throw new InitializationException(e);
