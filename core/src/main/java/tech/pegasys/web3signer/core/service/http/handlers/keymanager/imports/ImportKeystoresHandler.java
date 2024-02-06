@@ -14,6 +14,8 @@ package tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
+import static tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoreStatus.DUPLICATE;
+import static tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoreStatus.IMPORTED;
 import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_JSON_EXTENSION;
 import static tech.pegasys.web3signer.signing.KeystoreFileManager.KEYSTORE_PASSWORD_EXTENSION;
 import static tech.pegasys.web3signer.signing.KeystoreFileManager.METADATA_YAML_EXTENSION;
@@ -36,6 +38,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,7 +49,6 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 
 public class ImportKeystoresHandler implements Handler<RoutingContext> {
 
@@ -110,12 +112,8 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     // extract pubkeys to import first
     final List<String> pubkeysToImport;
     try {
-      pubkeysToImport =
-          parsedBody.getKeystores().stream()
-              .map(json -> new JsonObject(json).getString("pubkey"))
-              .map(IdentifierUtils::normaliseIdentifier)
-              .collect(Collectors.toList());
-    } catch (Exception e) {
+      pubkeysToImport = parsedBody.getKeystores().stream().map(this::getNormalizedPubKey).toList();
+    } catch (final Exception e) {
       context.fail(BAD_REQUEST, e);
       return;
     }
@@ -128,9 +126,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
 
     // filter out already loaded keys for slashing data import
     final List<String> nonLoadedPubkeys =
-        pubkeysToImport.stream()
-            .filter(key -> !existingPubkeys.contains(key))
-            .collect(Collectors.toList());
+        pubkeysToImport.stream().filter(key -> !existingPubkeys.contains(key)).toList();
 
     // read slashing protection data if present and import data matching non-loaded keys to import
     // only
@@ -141,34 +137,62 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
             new ByteArrayInputStream(
                 parsedBody.getSlashingProtection().getBytes(StandardCharsets.UTF_8));
         slashingProtection.get().importDataWithFilter(slashingProtectionData, nonLoadedPubkeys);
-      } catch (Exception e) {
+      } catch (final Exception e) {
         context.fail(BAD_REQUEST, e);
         return;
       }
     }
 
-    final List<ImportKeystoreResult> results = new ArrayList<>();
+    final List<ImportKeystoreData> duplicateData = new ArrayList<>();
+    final List<ImportKeystoreData> toBeImportedData = new ArrayList<>();
     for (int i = 0; i < parsedBody.getKeystores().size(); i++) {
-      final String pubkey = pubkeysToImport.get(i);
-      try {
-        final String jsonKeystoreData = parsedBody.getKeystores().get(i);
-        final String password = parsedBody.getPasswords().get(i);
-
-        if (existingPubkeys.contains(pubkey)) {
-          // keystore already loaded
-          results.add(new ImportKeystoreResult(ImportKeystoreStatus.DUPLICATE, null));
-        } else {
-          validatorManager.addValidator(Bytes.fromHexString(pubkey), jsonKeystoreData, password);
-          results.add(new ImportKeystoreResult(ImportKeystoreStatus.IMPORTED, null));
-        }
-      } catch (final Exception e) {
-        // cleanup the current key being processed and continue
-        removeSignersAndCleanupImportedKeystoreFiles(List.of(pubkey));
-        results.add(
-            new ImportKeystoreResult(
-                ImportKeystoreStatus.ERROR, "Error importing keystore: " + e.getMessage()));
+      final String jsonKeystoreData = parsedBody.getKeystores().get(i);
+      final String password = parsedBody.getPasswords().get(i);
+      final String pubkey = getNormalizedPubKey(jsonKeystoreData);
+      if (existingPubkeys.contains(pubkey)) {
+        // keystore already loaded
+        duplicateData.add(
+            new ImportKeystoreData(
+                i, pubkey, jsonKeystoreData, password, new ImportKeystoreResult(DUPLICATE)));
+      } else {
+        toBeImportedData.add(
+            new ImportKeystoreData(
+                i, pubkey, jsonKeystoreData, password, new ImportKeystoreResult(IMPORTED)));
       }
     }
+
+    // process TO_BE_IMPORTED in parallel and add to validator manager. Change status to ERROR if
+    // any error happens.
+    final List<ImportKeystoreData> importedData =
+        toBeImportedData.parallelStream()
+            .peek(
+                data -> {
+                  try {
+                    validatorManager.addValidator(
+                        data.getPubKeyBytes(), data.getKeystoreJson(), data.getPassword());
+                  } catch (final Exception e) {
+                    data.setImportKeystoreResult(
+                        new ImportKeystoreResult(
+                            ImportKeystoreStatus.ERROR,
+                            "Error importing keystore: " + e.getMessage()));
+                  }
+                })
+            .toList();
+
+    // clean out any error results
+    removeSignersAndCleanupImportedKeystoreFiles(
+        importedData.stream()
+            .filter(
+                data -> data.getImportKeystoreResult().getStatus() == ImportKeystoreStatus.ERROR)
+            .map(ImportKeystoreData::getPubKey)
+            .toList());
+
+    // merge duplicate and imported data and sort
+    final List<ImportKeystoreResult> results =
+        Stream.concat(duplicateData.stream(), importedData.stream())
+            .sorted()
+            .map(ImportKeystoreData::getImportKeystoreResult)
+            .toList();
 
     try {
       context
@@ -180,6 +204,10 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       removeSignersAndCleanupImportedKeystoreFiles(nonLoadedPubkeys);
       context.fail(SERVER_ERROR, e);
     }
+  }
+
+  private String getNormalizedPubKey(final String json) {
+    return IdentifierUtils.normaliseIdentifier(new JsonObject(json).getString("pubkey"));
   }
 
   private ImportKeystoresRequestBody parseRequestBody(final RequestBody requestBody)

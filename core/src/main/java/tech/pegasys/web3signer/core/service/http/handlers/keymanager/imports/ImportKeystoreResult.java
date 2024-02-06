@@ -27,6 +27,10 @@ public class ImportKeystoreResult {
     this.message = message;
   }
 
+  public ImportKeystoreResult(final ImportKeystoreStatus status) {
+    this(status, null);
+  }
+
   @JsonProperty("status")
   public ImportKeystoreStatus getStatus() {
     return status;
