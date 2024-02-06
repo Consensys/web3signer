@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports;
 
+import java.util.Objects;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** Keep the index of the keystore import json and password */
@@ -68,5 +70,18 @@ public class ImportKeystoreData implements Comparable<ImportKeystoreData> {
   @Override
   public int compareTo(final ImportKeystoreData other) {
     return Integer.compare(this.index, other.index);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ImportKeystoreData that = (ImportKeystoreData) o;
+    return index == that.index;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(index);
   }
 }
