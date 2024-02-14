@@ -31,14 +31,13 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,6 +48,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class ImportKeystoresHandler implements Handler<RoutingContext> {
 
@@ -80,6 +80,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
   public void handle(final RoutingContext context) {
     // API spec - https://github.com/ethereum/keymanager-APIs/tree/master/flows#import
     final ImportKeystoresRequestBody parsedBody;
+    // step 0: Parse and verify the request body
     try {
       parsedBody = parseRequestBody(context.body());
     } catch (final IllegalArgumentException | JsonProcessingException e) {
@@ -87,13 +88,13 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       return;
     }
 
-    // check that keystores have matching passwords
+    // step 1: verify if keystores/passwords list length is same
     if (parsedBody.getKeystores().size() != parsedBody.getPasswords().size()) {
       context.fail(BAD_REQUEST);
       return;
     }
 
-    // no keystores passed in, nothing to do, return 200 and empty response.
+    // step 2: no keystores passed in, nothing to do, return 200 and empty response.
     if (parsedBody.getKeystores().isEmpty()) {
       try {
         context
@@ -103,110 +104,151 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
             .end(
                 objectMapper.writeValueAsString(
                     new ImportKeystoresResponse(Collections.emptyList())));
-      } catch (JsonProcessingException e) {
+      } catch (final JsonProcessingException e) {
         context.fail(SERVER_ERROR, e);
       }
       return;
     }
 
-    // extract pubkeys to import first
-    final List<String> pubkeysToImport;
-    try {
-      pubkeysToImport = parsedBody.getKeystores().stream().map(this::getNormalizedPubKey).toList();
-    } catch (final Exception e) {
-      context.fail(BAD_REQUEST, e);
-      return;
-    }
-
-    // load existing keys
-    final Set<String> existingPubkeys =
+    // load "active" keys
+    final Set<String> activePubKeys =
         artifactSignerProvider.availableIdentifiers().stream()
             .map(IdentifierUtils::normaliseIdentifier)
             .collect(Collectors.toSet());
 
-    // filter out already loaded keys for slashing data import
-    final List<String> nonLoadedPubkeys =
-        pubkeysToImport.stream().filter(key -> !existingPubkeys.contains(key)).toList();
+    // map incoming keystores either as duplicate or to be imported
+    final List<ImportKeystoreData> importKeystoreDataList =
+        getKeystoreDataToProcess(parsedBody, activePubKeys);
 
-    // read slashing protection data if present and import data matching non-loaded keys to import
-    // only
+    // Step 3: import slashing protection data for all to-be-IMPORTED keys
+    final List<String> importedPubKeys = getToBeImportedPubKeys(importKeystoreDataList);
+
     if (slashingProtection.isPresent()
         && !StringUtils.isEmpty(parsedBody.getSlashingProtection())) {
       try {
         final InputStream slashingProtectionData =
             new ByteArrayInputStream(
                 parsedBody.getSlashingProtection().getBytes(StandardCharsets.UTF_8));
-        slashingProtection.get().importDataWithFilter(slashingProtectionData, nonLoadedPubkeys);
+        slashingProtection.get().importDataWithFilter(slashingProtectionData, importedPubKeys);
       } catch (final Exception e) {
+        // since we haven't written any keys to the file system, we don't need to clean up
         context.fail(BAD_REQUEST, e);
         return;
       }
     }
 
-    final List<ImportKeystoreData> duplicateData = new ArrayList<>();
-    final List<ImportKeystoreData> toBeImportedData = new ArrayList<>();
-    for (int i = 0; i < parsedBody.getKeystores().size(); i++) {
-      final String jsonKeystoreData = parsedBody.getKeystores().get(i);
-      final String password = parsedBody.getPasswords().get(i);
-      final String pubkey = getNormalizedPubKey(jsonKeystoreData);
-      if (existingPubkeys.contains(pubkey)) {
-        // keystore already loaded
-        duplicateData.add(
-            new ImportKeystoreData(
-                i, pubkey, jsonKeystoreData, password, new ImportKeystoreResult(DUPLICATE)));
-      } else {
-        toBeImportedData.add(
-            new ImportKeystoreData(
-                i, pubkey, jsonKeystoreData, password, new ImportKeystoreResult(IMPORTED)));
-      }
-    }
+    // must return status 200 from onward here ...
 
-    // process TO_BE_IMPORTED in parallel and add to validator manager. Change status to ERROR if
-    // any error happens.
-    final List<ImportKeystoreData> importedData =
-        toBeImportedData.parallelStream()
-            .peek(
-                data -> {
-                  try {
-                    validatorManager.addValidator(
-                        data.getPubKeyBytes(), data.getKeystoreJson(), data.getPassword());
-                  } catch (final Exception e) {
-                    data.setImportKeystoreResult(
-                        new ImportKeystoreResult(
-                            ImportKeystoreStatus.ERROR,
-                            "Error importing keystore: " + e.getMessage()));
-                  }
-                })
-            .toList();
+    // step 4: add validators to be imported in parallel stream
+    importValidators(importKeystoreDataList);
 
-    // clean out any error results
-    removeSignersAndCleanupImportedKeystoreFiles(
-        importedData.stream()
-            .filter(
-                data -> data.getImportKeystoreResult().getStatus() == ImportKeystoreStatus.ERROR)
-            .map(ImportKeystoreData::getPubKey)
-            .toList());
-
-    // merge duplicate and imported data and sort
-    final List<ImportKeystoreResult> results =
-        Stream.concat(duplicateData.stream(), importedData.stream())
-            .sorted()
-            .map(ImportKeystoreData::getImportKeystoreResult)
-            .toList();
-
+    // final step, send sorted results ...
     try {
+      final List<ImportKeystoreResult> results = getKeystoreResults(importKeystoreDataList);
       context
           .response()
           .putHeader(CONTENT_TYPE, JSON_UTF_8)
           .setStatusCode(SUCCESS)
           .end(objectMapper.writeValueAsString(new ImportKeystoresResponse(results)));
     } catch (final Exception e) {
-      removeSignersAndCleanupImportedKeystoreFiles(nonLoadedPubkeys);
+      // critical bug, clean out imported keystores files ...
+      removeSignersAndCleanupImportedKeystoreFiles(importedPubKeys);
       context.fail(SERVER_ERROR, e);
     }
   }
 
-  private String getNormalizedPubKey(final String json) {
+  /**
+   * Import validators in parallel stream
+   *
+   * @param importKeystoreDataList List of keystore data to import
+   */
+  private void importValidators(final List<ImportKeystoreData> importKeystoreDataList) {
+    final List<ImportKeystoreData> toBeImported =
+        importKeystoreDataList.stream().filter(ImportKeystoresHandler::imported).toList();
+    toBeImported.parallelStream()
+        .forEach(
+            data -> {
+              try {
+                final Bytes pubKeyBytes = Bytes.fromHexString(data.getPubKey());
+                validatorManager.addValidator(
+                    pubKeyBytes, data.getKeystoreJson(), data.getPassword());
+              } catch (final Exception e) {
+                // modify the result to error status
+                data.setImportKeystoreResult(
+                    new ImportKeystoreResult(
+                        ImportKeystoreStatus.ERROR, "Error importing keystore: " + e.getMessage()));
+              }
+            });
+
+    // clean out failed validators
+    removeSignersAndCleanupImportedKeystoreFiles(getFailedValidators(importKeystoreDataList));
+  }
+
+  /**
+   * Get the results of the keystore import
+   *
+   * @param importKeystoreDataList Import Keystore Data
+   * @return Import Keystore Results in sorted order
+   */
+  private static List<ImportKeystoreResult> getKeystoreResults(
+      List<ImportKeystoreData> importKeystoreDataList) {
+    return importKeystoreDataList.stream()
+        .sorted()
+        .map(ImportKeystoreData::getImportKeystoreResult)
+        .toList();
+  }
+
+  private List<ImportKeystoreData> getKeystoreDataToProcess(
+      final ImportKeystoresRequestBody requestBody, final Set<String> activePubKeys) {
+    return IntStream.range(0, requestBody.getKeystores().size())
+        .mapToObj(
+            i -> {
+              final String jsonKeystoreData = requestBody.getKeystores().get(i);
+              final String password = requestBody.getPasswords().get(i);
+              final String pubkey;
+              try {
+                pubkey = parseAndNormalizePubKey(jsonKeystoreData);
+              } catch (final Exception e) {
+                final ImportKeystoreResult errorResult =
+                    new ImportKeystoreResult(
+                        ImportKeystoreStatus.ERROR, "Error parsing pubkey: " + e.getMessage());
+                return new ImportKeystoreData(i, null, errorResult);
+              }
+              if (activePubKeys.contains(pubkey)) {
+                return new ImportKeystoreData(i, pubkey, new ImportKeystoreResult(DUPLICATE));
+              }
+
+              return new ImportKeystoreData(
+                  i, pubkey, jsonKeystoreData, password, new ImportKeystoreResult(IMPORTED));
+            })
+        .toList();
+  }
+
+  private static List<String> getToBeImportedPubKeys(
+      List<ImportKeystoreData> importKeystoreDataList) {
+    return importKeystoreDataList.stream()
+        .filter(ImportKeystoresHandler::imported)
+        .map(ImportKeystoreData::getPubKey)
+        .toList();
+  }
+
+  private static List<String> getFailedValidators(List<ImportKeystoreData> importKeystoreDataList) {
+    return importKeystoreDataList.stream()
+        .filter(ImportKeystoresHandler::failed)
+        .map(ImportKeystoreData::getPubKey)
+        .toList();
+  }
+
+  private static boolean imported(ImportKeystoreData data) {
+    return data.getImportKeystoreResult().getStatus() == IMPORTED;
+  }
+
+  private static boolean failed(ImportKeystoreData data) {
+    return data.getImportKeystoreResult().getStatus() == ImportKeystoreStatus.ERROR
+        & data.getPubKey() != null;
+  }
+
+  private static String parseAndNormalizePubKey(final String json) {
     return IdentifierUtils.normaliseIdentifier(new JsonObject(json).getString("pubkey"));
   }
 

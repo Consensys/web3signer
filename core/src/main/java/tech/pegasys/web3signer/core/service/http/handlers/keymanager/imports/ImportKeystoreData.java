@@ -14,16 +14,18 @@ package tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports;
 
 import java.util.Objects;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /** Keep the index of the keystore import json and password */
 public class ImportKeystoreData implements Comparable<ImportKeystoreData> {
   private final int index;
   private final String pubKey;
-  private final Bytes pubKeyBytes;
   private final String keystoreJson;
   private final String password;
   private ImportKeystoreResult importKeystoreResult;
+
+  public ImportKeystoreData(
+      final int index, final String pubKey, final ImportKeystoreResult importKeystoreResult) {
+    this(index, pubKey, null, null, importKeystoreResult);
+  }
 
   public ImportKeystoreData(
       final int index,
@@ -33,7 +35,6 @@ public class ImportKeystoreData implements Comparable<ImportKeystoreData> {
       final ImportKeystoreResult importKeystoreResult) {
     this.index = index;
     this.pubKey = pubKey;
-    this.pubKeyBytes = Bytes.fromHexString(pubKey);
     this.keystoreJson = keystoreJson;
     this.password = password;
     this.importKeystoreResult = importKeystoreResult;
@@ -45,10 +46,6 @@ public class ImportKeystoreData implements Comparable<ImportKeystoreData> {
 
   public String getPubKey() {
     return pubKey;
-  }
-
-  public Bytes getPubKeyBytes() {
-    return pubKeyBytes;
   }
 
   public String getKeystoreJson() {
