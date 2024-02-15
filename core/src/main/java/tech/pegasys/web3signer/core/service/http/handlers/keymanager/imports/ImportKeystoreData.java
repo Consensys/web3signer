@@ -12,73 +12,16 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports;
 
-import java.util.Objects;
-
-/** Keep the index of the keystore import json and password */
-public class ImportKeystoreData implements Comparable<ImportKeystoreData> {
-  private final int index;
-  private final String pubKey;
-  private final String keystoreJson;
-  private final String password;
-  private ImportKeystoreResult importKeystoreResult;
-
-  public ImportKeystoreData(
-      final int index, final String pubKey, final ImportKeystoreResult importKeystoreResult) {
-    this(index, pubKey, null, null, importKeystoreResult);
-  }
-
-  public ImportKeystoreData(
-      final int index,
-      String pubKey,
-      final String keystoreJson,
-      final String password,
-      final ImportKeystoreResult importKeystoreResult) {
-    this.index = index;
-    this.pubKey = pubKey;
-    this.keystoreJson = keystoreJson;
-    this.password = password;
-    this.importKeystoreResult = importKeystoreResult;
-  }
-
-  public int getIndex() {
-    return index;
-  }
-
-  public String getPubKey() {
-    return pubKey;
-  }
-
-  public String getKeystoreJson() {
-    return keystoreJson;
-  }
-
-  public String getPassword() {
-    return password;
-  }
-
-  public void setImportKeystoreResult(ImportKeystoreResult importKeystoreResult) {
-    this.importKeystoreResult = importKeystoreResult;
-  }
-
-  public ImportKeystoreResult getImportKeystoreResult() {
-    return importKeystoreResult;
-  }
+public record ImportKeystoreData(
+    int index,
+    String pubKey,
+    String keystoreJson,
+    String password,
+    ImportKeystoreResult importKeystoreResult)
+    implements Comparable<ImportKeystoreData> {
 
   @Override
-  public int compareTo(final ImportKeystoreData other) {
+  public int compareTo(ImportKeystoreData other) {
     return Integer.compare(this.index, other.index);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    ImportKeystoreData that = (ImportKeystoreData) o;
-    return index == that.index;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(index);
   }
 }

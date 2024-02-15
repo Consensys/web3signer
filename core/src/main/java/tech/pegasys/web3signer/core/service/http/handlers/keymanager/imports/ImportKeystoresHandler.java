@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -96,17 +95,11 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
 
     // step 2: no keystores passed in, nothing to do, return 200 and empty response.
     if (parsedBody.getKeystores().isEmpty()) {
-      try {
-        context
-            .response()
-            .putHeader(CONTENT_TYPE, JSON_UTF_8)
-            .setStatusCode(SUCCESS)
-            .end(
-                objectMapper.writeValueAsString(
-                    new ImportKeystoresResponse(Collections.emptyList())));
-      } catch (final JsonProcessingException e) {
-        context.fail(SERVER_ERROR, e);
-      }
+      context
+          .response()
+          .putHeader(CONTENT_TYPE, JSON_UTF_8)
+          .setStatusCode(SUCCESS)
+          .end("{\"data\": []}");
       return;
     }
 
@@ -137,7 +130,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       }
     }
 
-    // must return status 200 from onward here ...
+    // must return status 200 from here onward ...
 
     // step 4: add validators to be imported in parallel stream
     importValidators(importKeystoreDataList);
@@ -169,14 +162,13 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
         .forEach(
             data -> {
               try {
-                final Bytes pubKeyBytes = Bytes.fromHexString(data.getPubKey());
-                validatorManager.addValidator(
-                    pubKeyBytes, data.getKeystoreJson(), data.getPassword());
+                final Bytes pubKeyBytes = Bytes.fromHexString(data.pubKey());
+                validatorManager.addValidator(pubKeyBytes, data.keystoreJson(), data.password());
               } catch (final Exception e) {
                 // modify the result to error status
-                data.setImportKeystoreResult(
-                    new ImportKeystoreResult(
-                        ImportKeystoreStatus.ERROR, "Error importing keystore: " + e.getMessage()));
+                data.importKeystoreResult().setStatus(ImportKeystoreStatus.ERROR);
+                data.importKeystoreResult()
+                    .setMessage("Error importing keystore: " + e.getMessage());
               }
             });
 
@@ -191,10 +183,10 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
    * @return Import Keystore Results in sorted order
    */
   private static List<ImportKeystoreResult> getKeystoreResults(
-      List<ImportKeystoreData> importKeystoreDataList) {
+      final List<ImportKeystoreData> importKeystoreDataList) {
     return importKeystoreDataList.stream()
         .sorted()
-        .map(ImportKeystoreData::getImportKeystoreResult)
+        .map(ImportKeystoreData::importKeystoreResult)
         .toList();
   }
 
@@ -212,14 +204,15 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
                 final ImportKeystoreResult errorResult =
                     new ImportKeystoreResult(
                         ImportKeystoreStatus.ERROR, "Error parsing pubkey: " + e.getMessage());
-                return new ImportKeystoreData(i, null, errorResult);
+                return new ImportKeystoreData(i, null, null, null, errorResult);
               }
               if (activePubKeys.contains(pubkey)) {
-                return new ImportKeystoreData(i, pubkey, new ImportKeystoreResult(DUPLICATE));
+                return new ImportKeystoreData(
+                    i, pubkey, null, null, new ImportKeystoreResult(DUPLICATE, null));
               }
 
               return new ImportKeystoreData(
-                  i, pubkey, jsonKeystoreData, password, new ImportKeystoreResult(IMPORTED));
+                  i, pubkey, jsonKeystoreData, password, new ImportKeystoreResult(IMPORTED, null));
             })
         .toList();
   }
@@ -228,24 +221,24 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       List<ImportKeystoreData> importKeystoreDataList) {
     return importKeystoreDataList.stream()
         .filter(ImportKeystoresHandler::imported)
-        .map(ImportKeystoreData::getPubKey)
+        .map(ImportKeystoreData::pubKey)
         .toList();
   }
 
   private static List<String> getFailedValidators(List<ImportKeystoreData> importKeystoreDataList) {
     return importKeystoreDataList.stream()
         .filter(ImportKeystoresHandler::failed)
-        .map(ImportKeystoreData::getPubKey)
+        .map(ImportKeystoreData::pubKey)
         .toList();
   }
 
   private static boolean imported(ImportKeystoreData data) {
-    return data.getImportKeystoreResult().getStatus() == IMPORTED;
+    return data.importKeystoreResult().getStatus() == IMPORTED;
   }
 
   private static boolean failed(ImportKeystoreData data) {
-    return data.getImportKeystoreResult().getStatus() == ImportKeystoreStatus.ERROR
-        & data.getPubKey() != null;
+    return data.importKeystoreResult().getStatus() == ImportKeystoreStatus.ERROR
+        && data.pubKey() != null;
   }
 
   private static String parseAndNormalizePubKey(final String json) {
