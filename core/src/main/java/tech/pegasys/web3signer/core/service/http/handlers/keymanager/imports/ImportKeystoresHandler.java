@@ -103,18 +103,18 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
       return;
     }
 
-    // load "active" keys
-    final Set<String> activePubKeys =
+    // "active" keys which are already loaded by Web3Signer before this import call.
+    final Set<String> existingPubKeys =
         artifactSignerProvider.availableIdentifiers().stream()
             .map(IdentifierUtils::normaliseIdentifier)
             .collect(Collectors.toSet());
 
     // map incoming keystores either as duplicate or to be imported
     final List<ImportKeystoreData> importKeystoreDataList =
-        getKeystoreDataToProcess(parsedBody, activePubKeys);
+        getKeystoreDataToProcess(parsedBody, existingPubKeys);
 
     // Step 3: import slashing protection data for all to-be-IMPORTED keys
-    final List<String> importedPubKeys = getToBeImportedPubKeys(importKeystoreDataList);
+    final List<String> pubKeysToBeImported = getPubKeysToBeImported(importKeystoreDataList);
 
     if (slashingProtection.isPresent()
         && !StringUtils.isEmpty(parsedBody.getSlashingProtection())) {
@@ -122,7 +122,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
         final InputStream slashingProtectionData =
             new ByteArrayInputStream(
                 parsedBody.getSlashingProtection().getBytes(StandardCharsets.UTF_8));
-        slashingProtection.get().importDataWithFilter(slashingProtectionData, importedPubKeys);
+        slashingProtection.get().importDataWithFilter(slashingProtectionData, pubKeysToBeImported);
       } catch (final Exception e) {
         // since we haven't written any keys to the file system, we don't need to clean up
         context.fail(BAD_REQUEST, e);
@@ -132,12 +132,12 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
 
     // must return status 200 from here onward ...
 
-    // step 4: add validators to be imported in parallel stream
+    // step 4: add validators to be imported
     importValidators(importKeystoreDataList);
 
     // final step, send sorted results ...
     try {
-      final List<ImportKeystoreResult> results = getKeystoreResults(importKeystoreDataList);
+      final List<ImportKeystoreResult> results = getImportKeystoreResults(importKeystoreDataList);
       context
           .response()
           .putHeader(CONTENT_TYPE, JSON_UTF_8)
@@ -145,20 +145,15 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
           .end(objectMapper.writeValueAsString(new ImportKeystoresResponse(results)));
     } catch (final Exception e) {
       // critical bug, clean out imported keystores files ...
-      removeSignersAndCleanupImportedKeystoreFiles(importedPubKeys);
+      removeSignersAndCleanupImportedKeystoreFiles(pubKeysToBeImported);
       context.fail(SERVER_ERROR, e);
     }
   }
 
-  /**
-   * Import validators in parallel stream
-   *
-   * @param importKeystoreDataList List of keystore data to import
-   */
   private void importValidators(final List<ImportKeystoreData> importKeystoreDataList) {
-    final List<ImportKeystoreData> toBeImported =
-        importKeystoreDataList.stream().filter(ImportKeystoresHandler::imported).toList();
-    toBeImported.parallelStream()
+    importKeystoreDataList.stream()
+        .filter(ImportKeystoresHandler::imported)
+        .parallel()
         .forEach(
             data -> {
               try {
@@ -176,13 +171,7 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
     removeSignersAndCleanupImportedKeystoreFiles(getFailedValidators(importKeystoreDataList));
   }
 
-  /**
-   * Get the results of the keystore import
-   *
-   * @param importKeystoreDataList Import Keystore Data
-   * @return Import Keystore Results in sorted order
-   */
-  private static List<ImportKeystoreResult> getKeystoreResults(
+  private static List<ImportKeystoreResult> getImportKeystoreResults(
       final List<ImportKeystoreData> importKeystoreDataList) {
     return importKeystoreDataList.stream()
         .sorted()
@@ -217,8 +206,8 @@ public class ImportKeystoresHandler implements Handler<RoutingContext> {
         .toList();
   }
 
-  private static List<String> getToBeImportedPubKeys(
-      List<ImportKeystoreData> importKeystoreDataList) {
+  private static List<String> getPubKeysToBeImported(
+      final List<ImportKeystoreData> importKeystoreDataList) {
     return importKeystoreDataList.stream()
         .filter(ImportKeystoresHandler::imported)
         .map(ImportKeystoreData::pubKey)
