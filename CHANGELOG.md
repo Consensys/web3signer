@@ -2,7 +2,7 @@
 
 ## Next version
 
-### New Features and Improvements
+### Features Added
 - Improve Key Manager API import operation to use parallel processing instead of serial processing.
 
 ### Bugs fixed
