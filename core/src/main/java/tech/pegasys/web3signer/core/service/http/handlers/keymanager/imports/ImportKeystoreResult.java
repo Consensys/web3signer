@@ -16,8 +16,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ImportKeystoreResult {
-  private final ImportKeystoreStatus status;
-  private final String message;
+  private ImportKeystoreStatus status;
+  private String message;
 
   @JsonCreator
   public ImportKeystoreResult(
@@ -35,5 +35,13 @@ public class ImportKeystoreResult {
   @JsonProperty("message")
   public String getMessage() {
     return message;
+  }
+
+  public void setStatus(final ImportKeystoreStatus status) {
+    this.status = status;
+  }
+
+  public void setMessage(final String message) {
+    this.message = message;
   }
 }

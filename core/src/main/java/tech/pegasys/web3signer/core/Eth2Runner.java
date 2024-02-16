@@ -199,16 +199,14 @@ public class Eth2Runner extends Runner {
 
       router
           .route(HttpMethod.POST, KEYSTORES_PATH)
-          .handler(
-              new BlockingHandlerDecorator(
-                  new ImportKeystoresHandler(
-                      objectMapper,
-                      baseConfig.getKeyConfigPath(),
-                      slashingProtectionContext.map(
-                          SlashingProtectionContext::getSlashingProtection),
-                      blsSignerProvider,
-                      validatorManager),
-                  false))
+          .blockingHandler(
+              new ImportKeystoresHandler(
+                  objectMapper,
+                  baseConfig.getKeyConfigPath(),
+                  slashingProtectionContext.map(SlashingProtectionContext::getSlashingProtection),
+                  blsSignerProvider,
+                  validatorManager),
+              false)
           .failureHandler(errorHandler);
 
       router
