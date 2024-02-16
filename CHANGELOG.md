@@ -1,6 +1,14 @@
 # Changelog
 
-## Next version
+## 24.2.0
+
+This is a required update for Mainnet users containing the configuration for the Deneb upgrade on March 13th. This update is required for Gnosis Deneb network upgrade on March 11th. For all other networks, this update is optional.
+
+### Upcoming Breaking Changes
+- `--Xworker-pool-size` cli option will be removed in a future release. This option has been replaced with `--vertx-worker-pool-size`
+
+### Features Added
+- Add Deneb configuration for Mainnet [#971](https://github.com/Consensys/web3signer/pull/971)
 
 ### Bugs fixed
 - Ensure that Web3Signer stops the http server when a sigterm is received
