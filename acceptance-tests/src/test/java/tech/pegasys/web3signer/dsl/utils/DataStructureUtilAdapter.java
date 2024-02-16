@@ -97,17 +97,16 @@ public class DataStructureUtilAdapter {
                 builder.syncAggregate(util.randomSyncAggregateIfRequiredBySchema(schema));
               }
               if (builder.supportsExecutionPayload()) {
-                builder.executionPayload(
-                    SafeFuture.completedFuture(randomExecutionPayload(spec.atSlot(slotNum))));
+                builder.executionPayload(randomExecutionPayload(spec.atSlot(slotNum)));
               }
               if (builder.supportsBlsToExecutionChanges()) {
                 builder.blsToExecutionChanges(
                     randomSignedBlsToExecutionChangesList(spec.atSlot(slotNum)));
               }
               if (builder.supportsKzgCommitments()) {
-                builder.blobKzgCommitments(
-                    SafeFuture.completedFuture(util.randomBlobKzgCommitments()));
+                builder.blobKzgCommitments(util.randomBlobKzgCommitments());
               }
+              return SafeFuture.completedFuture(builder).toVoid();
             })
         .join();
   }
