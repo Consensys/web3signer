@@ -2,6 +2,9 @@
 
 ## Next version
 
+### Features Added
+- Improve Key Manager API import operation to use parallel processing instead of serial processing.
+
 ### Bugs fixed
 - Ensure that Web3Signer stops the http server when a sigterm is received
 
