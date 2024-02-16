@@ -11,9 +11,6 @@ This is a required update for Mainnet users containing the configuration for the
 - Add Deneb configuration for Mainnet [#971](https://github.com/Consensys/web3signer/pull/971)
 - Improve Key Manager API import operation to use parallel processing instead of serial processing
 
-### Features Added
-- Improve Key Manager API import operation to use parallel processing instead of serial processing.
-
 ### Bugs fixed
 - Ensure that Web3Signer stops the http server when a sigterm is received
 
