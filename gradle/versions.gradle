@@ -90,7 +90,7 @@ dependencyManagement {
 
     dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.10'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '24.1.1') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '24.2.0') {
       entry ('bls') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
