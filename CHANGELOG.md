@@ -2,10 +2,6 @@
 
 ## Next Version
 
-### Upcoming Breaking Changes
-
-### Features Added
-
 ### Bugs fixed
 - Update postgresql to fix CVE-2024-1597
 
