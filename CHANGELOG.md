@@ -1,5 +1,10 @@
 # Changelog
 
+## Next Version
+
+### Bugs fixed
+- Update postgresql to fix CVE-2024-1597
+
 ## 24.2.0
 
 This is a required update for Mainnet users containing the configuration for the Deneb upgrade on March 13th. This update is required for Gnosis Deneb network upgrade on March 11th. For all other networks, this update is optional.
