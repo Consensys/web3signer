@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
@@ -22,6 +23,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
@@ -62,6 +66,36 @@ class GenesisValidatorRootValidatorTest {
     // verify database interactions
     verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
     verify(metadataDao, times(1)).insertGenesisValidatorsRoot(any(), eq(gvr));
+  }
+
+  @Test
+  void verifyCachedGVRReturnsTrueFromMultipleThreads(final Jdbi jdbi) throws InterruptedException {
+    var gvrValidator = new GenesisValidatorRootValidator(jdbi, metadataDao);
+    var gvr = Bytes32.leftPad(Bytes.of(3));
+
+    var numberOfThreads = 10;
+    var executorService = Executors.newFixedThreadPool(numberOfThreads);
+    var allCachedGVRMatches = new AtomicBoolean(true);
+    for (int i = 0; i < numberOfThreads; i++) {
+      executorService.submit(
+          () -> {
+            boolean gvrMatches = gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr);
+            if (!gvrMatches) {
+              allCachedGVRMatches.set(false);
+            }
+          });
+    }
+
+    // Shutdown the executor service, no new tasks will be accepted
+    executorService.shutdown();
+
+    // wait for all threads to finish
+    var successfulTerminate = executorService.awaitTermination(1, MINUTES);
+    assertThat(successfulTerminate).isTrue();
+
+    assertThat(allCachedGVRMatches).isTrue();
+    verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
+    verify(metadataDao, times(1)).insertGenesisValidatorsRoot(any(), any());
   }
 
   @Test
