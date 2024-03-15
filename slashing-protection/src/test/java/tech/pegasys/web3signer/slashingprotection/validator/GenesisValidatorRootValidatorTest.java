@@ -97,8 +97,9 @@ class GenesisValidatorRootValidatorTest {
     latch.await(); // Wait for all threads to finish
     executorService.shutdown(); // Shutdown the executor service
 
-    // Assert that all threads returned true
     assertThat(allTrue.get()).isTrue();
+    verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
+    verify(metadataDao, times(1)).insertGenesisValidatorsRoot(any(), any());
   }
 
   @Test
