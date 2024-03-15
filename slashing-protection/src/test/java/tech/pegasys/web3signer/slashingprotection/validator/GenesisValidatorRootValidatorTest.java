@@ -23,6 +23,11 @@ import static org.mockito.Mockito.verify;
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import db.DatabaseSetupExtension;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -62,6 +67,38 @@ class GenesisValidatorRootValidatorTest {
     // verify database interactions
     verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
     verify(metadataDao, times(1)).insertGenesisValidatorsRoot(any(), eq(gvr));
+  }
+
+  @Test
+  void verifyCachedGVRReturnsTrueFromMultipleThreads(final Jdbi jdbi) throws InterruptedException {
+    final GenesisValidatorRootValidator gvrValidator =
+        new GenesisValidatorRootValidator(jdbi, metadataDao);
+    final Bytes32 gvr = Bytes32.leftPad(Bytes.of(3));
+
+    final int numberOfThreads = 10;
+    final ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
+    final CountDownLatch latch = new CountDownLatch(numberOfThreads);
+    final AtomicBoolean allTrue = new AtomicBoolean(true); // To keep track of the result
+
+    for (int i = 0; i < numberOfThreads; i++) {
+      executorService.submit(
+          () -> {
+            try {
+              // If any thread returns false, set allTrue to false
+              if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr)) {
+                allTrue.set(false);
+              }
+            } finally {
+              latch.countDown(); // Ensure the latch is counted down even if an exception is thrown
+            }
+          });
+    }
+
+    latch.await(); // Wait for all threads to finish
+    executorService.shutdown(); // Shutdown the executor service
+
+    // Assert that all threads returned true
+    assertThat(allTrue.get()).isTrue();
   }
 
   @Test
