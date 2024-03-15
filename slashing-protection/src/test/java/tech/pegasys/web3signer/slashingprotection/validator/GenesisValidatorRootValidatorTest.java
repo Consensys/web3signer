@@ -90,7 +90,7 @@ class GenesisValidatorRootValidatorTest {
     executorService.shutdown();
 
     // wait for all threads to finish
-    var successfulTerminate = executorService.awaitTermination(5, MINUTES);
+    var successfulTerminate = executorService.awaitTermination(1, MINUTES);
     assertThat(successfulTerminate).isTrue();
 
     assertThat(allCachedGVRMatches).isTrue();
