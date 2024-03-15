@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.slashingprotection.validator;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,8 +24,6 @@ import static org.mockito.Mockito.verify;
 
 import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -71,33 +70,30 @@ class GenesisValidatorRootValidatorTest {
 
   @Test
   void verifyCachedGVRReturnsTrueFromMultipleThreads(final Jdbi jdbi) throws InterruptedException {
-    final GenesisValidatorRootValidator gvrValidator =
-        new GenesisValidatorRootValidator(jdbi, metadataDao);
-    final Bytes32 gvr = Bytes32.leftPad(Bytes.of(3));
+    var gvrValidator = new GenesisValidatorRootValidator(jdbi, metadataDao);
+    var gvr = Bytes32.leftPad(Bytes.of(3));
 
-    final int numberOfThreads = 10;
-    final ExecutorService executorService = Executors.newFixedThreadPool(numberOfThreads);
-    final CountDownLatch latch = new CountDownLatch(numberOfThreads);
-    final AtomicBoolean allTrue = new AtomicBoolean(true); // To keep track of the result
-
+    var numberOfThreads = 10;
+    var executorService = Executors.newFixedThreadPool(numberOfThreads);
+    var allCachedGVRMatches = new AtomicBoolean(true);
     for (int i = 0; i < numberOfThreads; i++) {
       executorService.submit(
           () -> {
-            try {
-              // If any thread returns false, set allTrue to false
-              if (!gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr)) {
-                allTrue.set(false);
-              }
-            } finally {
-              latch.countDown(); // Ensure the latch is counted down even if an exception is thrown
+            boolean gvrMatches = gvrValidator.checkGenesisValidatorsRootAndInsertIfEmpty(gvr);
+            if (!gvrMatches) {
+              allCachedGVRMatches.set(false);
             }
           });
     }
 
-    latch.await(); // Wait for all threads to finish
-    executorService.shutdown(); // Shutdown the executor service
+    // Shutdown the executor service, no new tasks will be accepted
+    executorService.shutdown();
 
-    assertThat(allTrue.get()).isTrue();
+    // wait for all threads to finish
+    var successfulTerminate = executorService.awaitTermination(5, MINUTES);
+    assertThat(successfulTerminate).isTrue();
+
+    assertThat(allCachedGVRMatches).isTrue();
     verify(metadataDao, times(1)).findGenesisValidatorsRoot(any());
     verify(metadataDao, times(1)).insertGenesisValidatorsRoot(any(), any());
   }

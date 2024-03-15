@@ -18,8 +18,10 @@ import tech.pegasys.web3signer.slashingprotection.dao.MetadataDao;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ExecutionException;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import net.jodah.failsafe.Failsafe;
 import net.jodah.failsafe.FailsafeExecutor;
 import net.jodah.failsafe.RetryPolicy;
@@ -37,8 +39,7 @@ public class GenesisValidatorRootValidator {
   private final MetadataDao metadataDao;
   private final FailsafeExecutor<Object> failsafeExecutor;
 
-  private final AtomicReference<Bytes32> cachedGVRRef = new AtomicReference<>();
-  private final Object lockForCachedGVR = new Object();
+  private final Cache<String, Bytes32> gvrCache = CacheBuilder.newBuilder().maximumSize(1).build();
 
   public GenesisValidatorRootValidator(final Jdbi jdbi, final MetadataDao metadataDao) {
     this.jdbi = jdbi;
@@ -61,27 +62,20 @@ public class GenesisValidatorRootValidator {
   }
 
   private Bytes32 insertAndCacheGVR(final Bytes32 genesisValidatorsRoot) {
-    var cachedGVR = cachedGVRRef.get();
-    if (cachedGVR == null) {
-      LOG.debug("No cached GVR found, fetching from database");
-      synchronized (lockForCachedGVR) {
-        cachedGVR = cachedGVRRef.get();
-        if (cachedGVR != null) {
-          return cachedGVR;
-        }
-        // Fetched by the first thread that entered the sync block
-        cachedGVR =
-            failsafeExecutor.get(
+    try {
+      return gvrCache.get(
+          "gvr",
+          () -> {
+            LOG.debug("Cached GVR not found, fetching from database");
+            return failsafeExecutor.get(
                 () ->
                     jdbi.inTransaction(
                         READ_COMMITTED,
                         handle -> findAndInsertIfNotExists(handle, genesisValidatorsRoot)));
-        LOG.debug("Cached GVR set to {}", cachedGVR);
-        final boolean successfulSet = cachedGVRRef.compareAndSet(null, cachedGVR);
-        assert successfulSet : "Cached GVR unexpectedly was set by another thread.";
-      }
+          });
+    } catch (final ExecutionException e) {
+      throw new RuntimeException(e);
     }
-    return cachedGVR;
   }
 
   public boolean genesisValidatorRootExists() {
