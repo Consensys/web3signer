@@ -23,14 +23,10 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.MIMEHeader;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 /** A generic signing handler for a given identifier */
 public class GenericSignForIdentifierHandler implements Handler<RoutingContext> {
-  private static final Logger LOG = LogManager.getLogger();
-
   private final SignerForIdentifier<?> signerForIdentifier;
   public static final int NOT_FOUND = 404;
   public static final int BAD_REQUEST = 400;
