@@ -27,6 +27,8 @@ import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.ReloadHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.GenericSignForIdentifierHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.util.FileUtil;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
@@ -56,6 +58,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.healthchecks.HealthCheckHandler;
@@ -82,6 +85,8 @@ public abstract class Runner implements Runnable, AutoCloseable {
   public static final String HEALTHCHECK_PATH = "/healthcheck";
   public static final String UPCHECK_PATH = "/upcheck";
   public static final String RELOAD_PATH = "/reload";
+
+  public static final String GENERIC_SIGN_EXT_PATH = "/eth/v1/ext/sign/:identifier";
 
   private static final Logger LOG = LogManager.getLogger();
 
@@ -280,6 +285,29 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
   private void registerHttpHostAllowListHandler(final Router router) {
     router.route().handler(new HostAllowListHandler(baseConfig.getHttpHostAllowList()));
+  }
+
+  protected void addGenericSignHandler(
+      final Router router,
+      final LogErrorHandler errorHandler,
+      final SignerForIdentifier<?> signer) {
+    if (baseConfig.isGenericSigningExtensionEnabled()) {
+      router
+          .route(HttpMethod.POST, GENERIC_SIGN_EXT_PATH)
+          .blockingHandler(new GenericSignForIdentifierHandler(signer), false)
+          .failureHandler(errorHandler)
+          .failureHandler(
+              ctx -> {
+                final int statusCode = ctx.statusCode();
+                if (statusCode == 404) {
+                  ctx.response()
+                      .setStatusCode(statusCode)
+                      .end(new JsonObject().put("error", "Identifier not found.").encode());
+                } else {
+                  ctx.next(); // go to global failure handler
+                }
+              });
+    }
   }
 
   private HttpServer createServerAndWait(

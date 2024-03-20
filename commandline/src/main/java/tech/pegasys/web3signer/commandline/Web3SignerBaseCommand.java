@@ -221,7 +221,7 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       hidden = true)
   private boolean genericSigningExt = false;
 
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Option(names = "--Xworker-pool-size", hidden = true)
   private Integer deprecatedWorkerPoolSize = null;
 

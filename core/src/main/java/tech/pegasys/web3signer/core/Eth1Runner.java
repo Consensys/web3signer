@@ -127,6 +127,8 @@ public class Eth1Runner extends Runner {
     addReloadHandler(
         router, List.of(signerProvider, secpArtifactSignerProvider), context.getErrorHandler());
 
+    addGenericSignHandler(router, errorHandler, secpSigner);
+
     final DownstreamPathCalculator downstreamPathCalculator =
         new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
 

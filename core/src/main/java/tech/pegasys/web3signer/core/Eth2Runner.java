@@ -31,7 +31,6 @@ import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKeystoresHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.GenericSignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
@@ -95,7 +94,6 @@ public class Eth2Runner extends Runner {
   public static final String KEYSTORES_PATH = "/eth/v1/keystores";
   public static final String PUBLIC_KEYS_PATH = "/api/v1/eth2/publicKeys";
   public static final String SIGN_PATH = "/api/v1/eth2/sign/:identifier";
-  public static final String GENERIC_SIGN_EXT_PATH = "/eth/v1/ext/sign/:identifier";
   public static final String HIGH_WATERMARK_PATH = "/api/v1/eth2/highWatermark";
   private static final Logger LOG = LogManager.getLogger();
 
@@ -179,13 +177,6 @@ public class Eth2Runner extends Runner {
                 false))
         .failureHandler(errorHandler);
 
-    if (baseConfig.isGenericSigningExtensionEnabled()) {
-      router
-          .route(HttpMethod.POST, GENERIC_SIGN_EXT_PATH)
-          .blockingHandler(new GenericSignForIdentifierHandler(blsSigner), false)
-          .failureHandler(errorHandler);
-    }
-
     addReloadHandler(router, List.of(blsSignerProvider), errorHandler);
 
     slashingProtectionContext.ifPresent(
@@ -194,6 +185,8 @@ public class Eth2Runner extends Runner {
                 .route(HttpMethod.GET, HIGH_WATERMARK_PATH)
                 .handler(new HighWatermarkHandler(protectionContext.getSlashingProtection()))
                 .failureHandler(errorHandler));
+
+    addGenericSignHandler(router, errorHandler, blsSigner);
 
     if (isKeyManagerApiEnabled) {
       router

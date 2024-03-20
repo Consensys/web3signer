@@ -17,6 +17,7 @@ import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TE
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 
 import io.vertx.core.Handler;
@@ -47,15 +48,19 @@ public class GenericSignForIdentifierHandler implements Handler<RoutingContext> 
   }
 
   private void respondWithSignature(
-      final RoutingContext routingContext,
-      final String signature,
-      final String body) {
+      final RoutingContext routingContext, final String signature, final String body) {
     final String acceptableContentType =
         getAcceptableContentType(routingContext.parsedHeaders().accept());
     final String responseBody;
 
     if (acceptableContentType.equals(JSON_UTF_8)) {
-      responseBody = new JsonObject().put("payload", body).put("signature", signature).encode();
+      responseBody =
+          new JsonObject()
+              .put(
+                  "payload",
+                  Base64.getEncoder().encodeToString(body.getBytes(StandardCharsets.UTF_8)))
+              .put("signature", signature)
+              .encode();
     } else {
       responseBody = signature;
     }
