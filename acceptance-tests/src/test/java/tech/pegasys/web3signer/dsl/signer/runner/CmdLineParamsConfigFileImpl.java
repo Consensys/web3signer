@@ -122,6 +122,11 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
 
     yamlConfig.append(createServerTlsArgs());
 
+    if (signerConfig.isGenericSigningExtEnabled()) {
+      yamlConfig.append(
+          String.format(YAML_BOOLEAN_FMT, "Xgeneric-signing-ext-enabled", Boolean.TRUE));
+    }
+
     params.add(signerConfig.getMode()); // sub-command .. it can't go to config file
 
     if (signerConfig.getMode().equals("eth2")) {

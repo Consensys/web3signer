@@ -83,6 +83,8 @@ public class SignerConfigurationBuilder {
 
   private KeystoresParameters v3KeystoresBulkloadParameters;
 
+  private boolean genericSigningExtEnabled;
+
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
     return this;
@@ -318,6 +320,12 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withGenericSigningExtEnabled(
+      final boolean genericSigningExtEnabled) {
+    this.genericSigningExtEnabled = genericSigningExtEnabled;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -366,6 +374,7 @@ public class SignerConfigurationBuilder {
         downstreamHttpPort,
         Optional.ofNullable(downstreamTlsOptions),
         chainIdProvider,
-        Optional.ofNullable(v3KeystoresBulkloadParameters));
+        Optional.ofNullable(v3KeystoresBulkloadParameters),
+        genericSigningExtEnabled);
   }
 }

@@ -106,6 +106,10 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
 
     params.addAll(createServerTlsArgs());
 
+    if (signerConfig.isGenericSigningExtEnabled()) {
+      params.add("--Xgeneric-signing-ext-enabled=true");
+    }
+
     params.add(signerConfig.getMode());
 
     if (signerConfig.getMode().equals("eth2")) {
