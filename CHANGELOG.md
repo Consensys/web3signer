@@ -2,10 +2,14 @@
 
 ## Next Version
 
+### Features Added
+- Added endpoint `/eth/v1/ext/sign/:identifier` which is enabled using cli option `--Xgeneric-signing-ext-enabled=true`. This endpoint allows signing arbitrary data. [#982](https://github.com/Consensys/web3signer/pull/982)
+
 ### Bugs fixed
 - Update postgresql to fix CVE-2024-1597
 - Fix cached gvr to be thread-safe during first boot. [#978](https://github.com/Consensys/web3signer/issues/978)
 
+---
 ## 24.2.0
 
 This is a required update for Mainnet users containing the configuration for the Deneb upgrade on March 13th. This update is required for Gnosis Deneb network upgrade on March 11th. For all other networks, this update is optional.
