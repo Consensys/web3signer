@@ -27,8 +27,8 @@ import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.PublicKeysListHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.ReloadHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.GenericSignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SigningExtensionForIdentifierHandler;
 import tech.pegasys.web3signer.core.util.FileUtil;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
@@ -294,11 +294,16 @@ public abstract class Runner implements Runnable, AutoCloseable {
     if (baseConfig.isGenericSigningExtensionEnabled()) {
       router
           .route(HttpMethod.POST, GENERIC_SIGN_EXT_PATH)
-          .blockingHandler(new GenericSignForIdentifierHandler(signer), false)
+          .blockingHandler(new SigningExtensionForIdentifierHandler(signer), false)
           .failureHandler(errorHandler)
           .failureHandler(
               ctx -> {
                 final int statusCode = ctx.statusCode();
+                if (statusCode == 400) {
+                  ctx.response()
+                          .setStatusCode(statusCode)
+                          .end(new JsonObject().put("error", "Bad Request").encode());
+                }
                 if (statusCode == 404) {
                   ctx.response()
                       .setStatusCode(statusCode)
