@@ -16,9 +16,6 @@ import static io.restassured.http.ContentType.JSON;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.teku.spec.SpecMilestone.DENEB;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -41,8 +38,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-public class Eth2GenericSigningAcceptanceTest extends SigningAcceptanceTestBase {
+public class Eth2ExtensionSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   private static final String PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
@@ -98,17 +97,17 @@ public class Eth2GenericSigningAcceptanceTest extends SigningAcceptanceTestBase 
   @Test
   void invalidIdentifierCausesNotFound() throws Exception {
     SigningExtensionBody signingExtensionBody =
-            new SigningExtensionBody(
-                    SigningExtensionType.PROOF_OF_VALIDATION,
-                    "AT",
-                    String.valueOf(System.currentTimeMillis()),
-                    PUBLIC_KEY.toString());
+        new SigningExtensionBody(
+            SigningExtensionType.PROOF_OF_VALIDATION,
+            "AT",
+            String.valueOf(System.currentTimeMillis()),
+            "0x1234");
     String data = JSON_MAPPER.writeValueAsString(signingExtensionBody);
     final Response response = signer.signGenericData("0x1234", data, JSON);
     response.then().statusCode(404);
   }
 
-  @ParameterizedTest(name="{index} - Testing Invalid Body: {0}")
+  @ParameterizedTest(name = "{index} - Testing Invalid Body: {0}")
   @ValueSource(strings = {"", "invalid", "{}", "{\"data\": \"invalid\"}"})
   void invalidBodyCausesBadRequestStatusCode(final String data) {
     final Response response = signer.signGenericData(PUBLIC_KEY.toString(), data, JSON);

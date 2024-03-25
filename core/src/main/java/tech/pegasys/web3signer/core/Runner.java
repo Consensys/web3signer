@@ -301,8 +301,8 @@ public abstract class Runner implements Runnable, AutoCloseable {
                 final int statusCode = ctx.statusCode();
                 if (statusCode == 400) {
                   ctx.response()
-                          .setStatusCode(statusCode)
-                          .end(new JsonObject().put("error", "Bad Request").encode());
+                      .setStatusCode(statusCode)
+                      .end(new JsonObject().put("error", "Bad Request").encode());
                 }
                 if (statusCode == 404) {
                   ctx.response()
