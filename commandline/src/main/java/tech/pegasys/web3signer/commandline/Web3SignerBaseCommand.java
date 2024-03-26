@@ -214,8 +214,8 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   private Integer vertxWorkerPoolSize = null;
 
   @Option(
-      names = "--Xgeneric-signing-ext-enabled",
-      description = "Set to true to enable generic signing extension.",
+      names = "--Xsigning-ext-enabled",
+      description = "Set to true to enable signing extensions.",
       paramLabel = "<BOOL>",
       arity = "1",
       hidden = true)

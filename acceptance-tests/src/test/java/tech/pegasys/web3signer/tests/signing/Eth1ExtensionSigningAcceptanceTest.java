@@ -80,6 +80,7 @@ public class Eth1ExtensionSigningAcceptanceTest extends SigningAcceptanceTestBas
             String.valueOf(System.currentTimeMillis()),
             PUBLIC_KEY_HEX_STRING);
     final String data = JSON_MAPPER.writeValueAsString(signingExtensionBody);
+    System.out.println(JSON_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(signingExtensionBody));
     final Response response = signer.signGenericData(PUBLIC_KEY_HEX_STRING, data, JSON);
 
     final JsonObject jsonBody = verifyStatusAndGetBody(response);
