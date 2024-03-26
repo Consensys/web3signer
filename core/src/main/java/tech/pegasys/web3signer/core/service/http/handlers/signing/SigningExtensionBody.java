@@ -12,10 +12,12 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
-import java.nio.charset.StandardCharsets;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.BaseEncoding;
 
 public record SigningExtensionBody(
     @JsonProperty(value = "type", required = true) SigningExtensionType type,
@@ -23,9 +25,17 @@ public record SigningExtensionBody(
     @JsonProperty(value = "timestamp", required = true) String timestamp,
     @JsonProperty(value = "pubkey", required = true) String pubkey) {
 
-  public Bytes signingData() {
-    return Bytes.wrap(
-        String.format("ext%s%s%s%s", type, platform, timestamp, pubkey)
-            .getBytes(StandardCharsets.UTF_8));
+  public String signingDataBase64(final ObjectMapper jsonMapper) {
+    final String payloadBase64;
+    try {
+      payloadBase64 = BaseEncoding.base64().encode(jsonMapper.writeValueAsBytes(this));
+    } catch (final JsonProcessingException e) {
+      throw new IllegalStateException("Unexpected error serializing signing extension body", e);
+    }
+    return String.format("%s.%s", headerBase64(), payloadBase64);
+  }
+
+  private static String headerBase64() {
+    return BaseEncoding.base64().encode("{\"alg\": \"BLS\", \"typ\": \"BLS_SIG\"}".getBytes(UTF_8));
   }
 }

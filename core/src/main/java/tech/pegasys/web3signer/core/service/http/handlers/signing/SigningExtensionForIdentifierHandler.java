@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
@@ -22,10 +23,12 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.BaseEncoding;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.MIMEHeader;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.tuweni.bytes.Bytes;
 
 /** A Signing Extension to sign very specific messages for a given identifier */
 public class SigningExtensionForIdentifierHandler implements Handler<RoutingContext> {
@@ -52,28 +55,26 @@ public class SigningExtensionForIdentifierHandler implements Handler<RoutingCont
       return;
     }
 
+    final String dataToSign = signingExtensionRequest.signingDataBase64(JSON_MAPPER);
     signerForIdentifier
-        .sign(identifier, signingExtensionRequest.signingData())
+        .sign(identifier, Bytes.wrap(dataToSign.getBytes(UTF_8)))
         .ifPresentOrElse(
-            signature -> respondWithSignature(routingContext, signature, signingExtensionRequest),
+            blsSig -> respondWithSignature(routingContext, dataToSign, blsSig),
             () -> routingContext.fail(NOT_FOUND));
   }
 
   private void respondWithSignature(
-      final RoutingContext routingContext,
-      final String signature,
-      final SigningExtensionBody request) {
-    final String responseBody;
+      final RoutingContext routingContext, final String dataToSign, final String blsSig) {
+    final String blsSigBase64 = BaseEncoding.base64().encode(Bytes.fromHexString(blsSig).toArray());
+    final String response = String.format("%s.%s", dataToSign, blsSigBase64);
 
     if (hasJsonCompatibleAcceptableContentType(routingContext.parsedHeaders().accept())) {
-      responseBody = new JsonObject().put("message", request).put("signature", signature).encode();
       routingContext.response().putHeader("Content-Type", JSON_UTF_8);
+      routingContext.response().end(new JsonObject().put("signature", response).encode());
     } else {
-      responseBody = signature;
       routingContext.response().putHeader("Content-Type", TEXT_PLAIN_UTF_8);
+      routingContext.response().end(response);
     }
-
-    routingContext.response().end(responseBody);
   }
 
   private boolean hasJsonCompatibleAcceptableContentType(final List<MIMEHeader> mimeHeaders) {
