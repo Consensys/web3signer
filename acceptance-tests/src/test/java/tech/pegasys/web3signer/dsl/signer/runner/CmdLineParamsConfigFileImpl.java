@@ -158,6 +158,11 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
           .getGcpParameters()
           .ifPresent(gcpParameters -> yamlConfig.append(gcpBulkLoadingOptions(gcpParameters)));
 
+      if (signerConfig.isSigningExtEnabled()) {
+        yamlConfig.append(
+            String.format(YAML_BOOLEAN_FMT, "eth2.Xsigning-ext-enabled", Boolean.TRUE));
+      }
+
       final CommandArgs subCommandArgs = createSubCommandArgs();
       params.addAll(subCommandArgs.params);
       yamlConfig.append(subCommandArgs.yamlConfig);

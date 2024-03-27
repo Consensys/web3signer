@@ -134,6 +134,10 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       signerConfig
           .getGcpParameters()
           .ifPresent(gcpParams -> params.addAll(gcpSecretManagerBulkLoadingOptions(gcpParams)));
+
+      if (signerConfig.isSigningExtEnabled()) {
+        params.add("--Xsigning-ext-enabled=true");
+      }
     } else if (signerConfig.getMode().equals("eth1")) {
       params.add("--downstream-http-port");
       params.add(Integer.toString(signerConfig.getDownstreamHttpPort()));
