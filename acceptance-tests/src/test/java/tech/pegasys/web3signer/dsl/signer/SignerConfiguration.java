@@ -79,7 +79,7 @@ public class SignerConfiguration {
   private final ChainIdProvider chainIdProvider;
   private final Optional<KeystoresParameters> v3KeystoresBulkloadParameters;
 
-  private final boolean genericSigningExtEnabled;
+  private final boolean signingExtEnabled;
 
   public SignerConfiguration(
       final String hostname,
@@ -126,7 +126,7 @@ public class SignerConfiguration {
       final Optional<ClientTlsOptions> downstreamTlsOptions,
       final ChainIdProvider chainIdProvider,
       final Optional<KeystoresParameters> v3KeystoresBulkloadParameters,
-      final boolean genericSigningExtEnabled) {
+      final boolean signingExtEnabled) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -171,7 +171,7 @@ public class SignerConfiguration {
     this.downstreamTlsOptions = downstreamTlsOptions;
     this.chainIdProvider = chainIdProvider;
     this.v3KeystoresBulkloadParameters = v3KeystoresBulkloadParameters;
-    this.genericSigningExtEnabled = genericSigningExtEnabled;
+    this.signingExtEnabled = signingExtEnabled;
   }
 
   public String hostname() {
@@ -358,7 +358,7 @@ public class SignerConfiguration {
     return v3KeystoresBulkloadParameters;
   }
 
-  public boolean isGenericSigningExtEnabled() {
-    return genericSigningExtEnabled;
+  public boolean isSigningExtEnabled() {
+    return signingExtEnabled;
   }
 }

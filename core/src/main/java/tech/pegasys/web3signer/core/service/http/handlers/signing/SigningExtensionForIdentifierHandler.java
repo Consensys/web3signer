@@ -23,7 +23,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.BaseEncoding;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.MIMEHeader;
@@ -59,13 +58,13 @@ public class SigningExtensionForIdentifierHandler implements Handler<RoutingCont
     signerForIdentifier
         .sign(identifier, Bytes.wrap(dataToSign.getBytes(UTF_8)))
         .ifPresentOrElse(
-            blsSig -> respondWithSignature(routingContext, dataToSign, blsSig),
+            blsSigHex -> respondWithSignature(routingContext, dataToSign, blsSigHex),
             () -> routingContext.fail(NOT_FOUND));
   }
 
   private void respondWithSignature(
-      final RoutingContext routingContext, final String dataToSign, final String blsSig) {
-    final String blsSigBase64 = BaseEncoding.base64().encode(Bytes.fromHexString(blsSig).toArray());
+      final RoutingContext routingContext, final String dataToSign, final String blsSigHex) {
+    final String blsSigBase64 = Bytes.fromHexString(blsSigHex).toBase64String();
     final String response = String.format("%s.%s", dataToSign, blsSigBase64);
 
     if (hasJsonCompatibleAcceptableContentType(routingContext.parsedHeaders().accept())) {

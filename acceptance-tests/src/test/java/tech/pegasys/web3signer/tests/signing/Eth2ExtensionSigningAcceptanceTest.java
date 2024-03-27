@@ -13,9 +13,13 @@
 package tech.pegasys.web3signer.tests.signing;
 
 import static io.restassured.http.ContentType.JSON;
+import static io.restassured.http.ContentType.TEXT;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.teku.spec.SpecMilestone.DENEB;
 
+import io.restassured.http.ContentType;
+import org.junit.jupiter.params.provider.EnumSource;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -32,6 +36,7 @@ import tech.pegasys.web3signer.signing.KeyType;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.BaseEncoding;
 import io.restassured.response.Response;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
@@ -63,35 +68,60 @@ public class Eth2ExtensionSigningAcceptanceTest extends SigningAcceptanceTestBas
             .withKeyStoreDirectory(testDirectory)
             .withMode("eth2")
             .withNetwork(Eth2Network.MINIMAL.configName())
-            .withGenericSigningExtEnabled(true),
+            .withSigningExtEnabled(true),
         DENEB);
   }
 
-  @Test
-  void extensionSigningData() throws Exception {
+  @ParameterizedTest
+  @EnumSource(value = ContentType.class, names = {"ANY", "JSON", "TEXT"})
+  void extensionSigningData(ContentType acceptMediaType) throws Exception {
     SigningExtensionBody signingExtensionBody =
         new SigningExtensionBody(
             SigningExtensionType.PROOF_OF_VALIDATION,
             "AT",
             String.valueOf(System.currentTimeMillis()),
             PUBLIC_KEY.toString());
-    String data = JSON_MAPPER.writeValueAsString(signingExtensionBody);
+    var payload = JSON_MAPPER.writeValueAsString(signingExtensionBody);
 
-    final Response response = signer.signGenericData(PUBLIC_KEY.toString(), data, JSON);
+    var response = signer.signExtensionPayload(PUBLIC_KEY.toString(), payload, acceptMediaType);
+    response.then().statusCode(200);
 
-    final JsonObject jsonBody = verifyStatusAndGetBody(response);
+    String encodedSignature;
+    if (acceptMediaType == TEXT) {
+      response.then().contentType(TEXT);
+      encodedSignature = response.body().print();
+    } else {
+      response.then().contentType(JSON);
+      encodedSignature = new JsonObject(response.body().print()).getString("signature");
+    }
 
-    final Bytes signature = Bytes.fromHexString(jsonBody.getString("signature"));
-    assertThat(
-            BLS.verify(
-                PUBLIC_KEY,
-                signingExtensionBody.signingData(),
-                BLSSignature.fromBytesCompressed(signature)))
+    /*
+     Header = {"alg"="BLS", typ="BLS_SIG"}
+     Data_To_Sign = Base64(Header) + "." + Base64(payload)
+     signature = Data_To_Sign + "." + Base64(BLS.sign(Data_To_Sign))
+    */
+
+    final String headerBase64 = encodedSignature.substring(0, encodedSignature.indexOf('.'));
+    final String payloadBase64 =
+        encodedSignature.substring(
+            encodedSignature.indexOf('.') + 1, encodedSignature.lastIndexOf('.'));
+    final String blsSigBase64 = encodedSignature.substring(encodedSignature.lastIndexOf('.') + 1);
+
+    var headerDecoded =
+        new JsonObject(new String(BaseEncoding.base64().decode(headerBase64), UTF_8));
+    var payloadDecoded =
+        new JsonObject(new String(BaseEncoding.base64().decode(payloadBase64), UTF_8));
+    var blsSigDecoded = Bytes.fromBase64String(blsSigBase64);
+
+    assertThat(headerDecoded.getString("alg")).isEqualTo("BLS");
+    assertThat(headerDecoded.getString("typ")).isEqualTo("BLS_SIG");
+
+    assertThat(payloadDecoded.mapTo(SigningExtensionBody.class)).isEqualTo(signingExtensionBody);
+
+    var blsSignature = BLSSignature.fromBytesCompressed(blsSigDecoded);
+    final String dataSigned = headerBase64 + "." + payloadBase64;
+    assertThat(BLS.verify(PUBLIC_KEY, Bytes.wrap(dataSigned.getBytes(UTF_8)), blsSignature))
         .isTrue();
-
-    final SigningExtensionBody message =
-        jsonBody.getJsonObject("message").mapTo(SigningExtensionBody.class);
-    assertThat(message).isEqualTo(signingExtensionBody);
   }
 
   @Test
@@ -103,19 +133,28 @@ public class Eth2ExtensionSigningAcceptanceTest extends SigningAcceptanceTestBas
             String.valueOf(System.currentTimeMillis()),
             "0x1234");
     String data = JSON_MAPPER.writeValueAsString(signingExtensionBody);
-    final Response response = signer.signGenericData("0x1234", data, JSON);
+    final Response response = signer.signExtensionPayload("0x1234", data, JSON);
     response.then().statusCode(404);
   }
 
   @ParameterizedTest(name = "{index} - Testing Invalid Body: {0}")
   @ValueSource(strings = {"", "invalid", "{}", "{\"data\": \"invalid\"}"})
   void invalidBodyCausesBadRequestStatusCode(final String data) {
-    final Response response = signer.signGenericData(PUBLIC_KEY.toString(), data, JSON);
+    final Response response = signer.signExtensionPayload(PUBLIC_KEY.toString(), data, JSON);
     response.then().statusCode(400);
   }
 
-  private JsonObject verifyStatusAndGetBody(final Response response) {
-    response.then().statusCode(200).contentType(JSON);
-    return new JsonObject(response.body().print());
+  @Test
+  void invalidSignExtensionTypeCausesBadRequestStatusCode() throws Exception {
+    SigningExtensionBody signingExtensionBody =
+            new SigningExtensionBody(
+                    SigningExtensionType.PROOF_OF_VALIDATION,
+                    "AT",
+                    String.valueOf(System.currentTimeMillis()),
+                    PUBLIC_KEY.toString());
+    var payload = JSON_MAPPER.writeValueAsString(signingExtensionBody);
+    payload = payload.replace("PROOF_OF_VALIDATION", "INVALID_TYPE");
+    var response = signer.signExtensionPayload(PUBLIC_KEY.toString(), payload, JSON);
+    response.then().statusCode(400);
   }
 }

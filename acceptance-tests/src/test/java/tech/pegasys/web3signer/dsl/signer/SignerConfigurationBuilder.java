@@ -83,7 +83,7 @@ public class SignerConfigurationBuilder {
 
   private KeystoresParameters v3KeystoresBulkloadParameters;
 
-  private boolean genericSigningExtEnabled;
+  private boolean signingExtEnabled;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -320,9 +320,8 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
-  public SignerConfigurationBuilder withGenericSigningExtEnabled(
-      final boolean genericSigningExtEnabled) {
-    this.genericSigningExtEnabled = genericSigningExtEnabled;
+  public SignerConfigurationBuilder withSigningExtEnabled(final boolean signingExtEnabled) {
+    this.signingExtEnabled = signingExtEnabled;
     return this;
   }
 
@@ -375,6 +374,6 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(downstreamTlsOptions),
         chainIdProvider,
         Optional.ofNullable(v3KeystoresBulkloadParameters),
-        genericSigningExtEnabled);
+        signingExtEnabled);
   }
 }

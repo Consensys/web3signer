@@ -122,10 +122,6 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
 
     yamlConfig.append(createServerTlsArgs());
 
-    if (signerConfig.isGenericSigningExtEnabled()) {
-      yamlConfig.append(String.format(YAML_BOOLEAN_FMT, "Xsigning-ext-enabled", Boolean.TRUE));
-    }
-
     params.add(signerConfig.getMode()); // sub-command .. it can't go to config file
 
     if (signerConfig.getMode().equals("eth2")) {
@@ -161,6 +157,11 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
       signerConfig
           .getGcpParameters()
           .ifPresent(gcpParameters -> yamlConfig.append(gcpBulkLoadingOptions(gcpParameters)));
+
+      if (signerConfig.isSigningExtEnabled()) {
+        yamlConfig.append(
+            String.format(YAML_BOOLEAN_FMT, "eth2.Xsigning-ext-enabled", Boolean.TRUE));
+      }
 
       final CommandArgs subCommandArgs = createSubCommandArgs();
       params.addAll(subCommandArgs.params);

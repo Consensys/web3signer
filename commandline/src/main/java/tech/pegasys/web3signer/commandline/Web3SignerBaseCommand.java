@@ -213,14 +213,6 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
       paramLabel = INTEGER_FORMAT_HELP)
   private Integer vertxWorkerPoolSize = null;
 
-  @Option(
-      names = "--Xsigning-ext-enabled",
-      description = "Set to true to enable signing extensions.",
-      paramLabel = "<BOOL>",
-      arity = "1",
-      hidden = true)
-  private boolean genericSigningExt = false;
-
   @Deprecated(forRemoval = true)
   @Option(names = "--Xworker-pool-size", hidden = true)
   private Integer deprecatedWorkerPoolSize = null;
@@ -348,11 +340,6 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
   }
 
   @Override
-  public boolean isGenericSigningExtensionEnabled() {
-    return genericSigningExt;
-  }
-
-  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("configFile", configFile)
@@ -371,7 +358,6 @@ public class Web3SignerBaseCommand implements BaseConfig, Runnable {
         .add("picoCliTlsServerOptions", picoCliTlsServerOptions)
         .add("idleConnectionTimeoutSeconds", idleConnectionTimeoutSeconds)
         .add("vertxWorkerPoolSize", vertxWorkerPoolSize)
-        .add("genericSigningExt", genericSigningExt)
         .toString();
   }
 
