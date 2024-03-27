@@ -18,8 +18,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.teku.spec.SpecMilestone.DENEB;
 
-import io.restassured.http.ContentType;
-import org.junit.jupiter.params.provider.EnumSource;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -37,6 +35,7 @@ import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.BaseEncoding;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
@@ -44,6 +43,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 public class Eth2ExtensionSigningAcceptanceTest extends SigningAcceptanceTestBase {
@@ -73,7 +73,9 @@ public class Eth2ExtensionSigningAcceptanceTest extends SigningAcceptanceTestBas
   }
 
   @ParameterizedTest
-  @EnumSource(value = ContentType.class, names = {"ANY", "JSON", "TEXT"})
+  @EnumSource(
+      value = ContentType.class,
+      names = {"ANY", "JSON", "TEXT"})
   void extensionSigningData(ContentType acceptMediaType) throws Exception {
     SigningExtensionBody signingExtensionBody =
         new SigningExtensionBody(
@@ -147,11 +149,11 @@ public class Eth2ExtensionSigningAcceptanceTest extends SigningAcceptanceTestBas
   @Test
   void invalidSignExtensionTypeCausesBadRequestStatusCode() throws Exception {
     SigningExtensionBody signingExtensionBody =
-            new SigningExtensionBody(
-                    SigningExtensionType.PROOF_OF_VALIDATION,
-                    "AT",
-                    String.valueOf(System.currentTimeMillis()),
-                    PUBLIC_KEY.toString());
+        new SigningExtensionBody(
+            SigningExtensionType.PROOF_OF_VALIDATION,
+            "AT",
+            String.valueOf(System.currentTimeMillis()),
+            PUBLIC_KEY.toString());
     var payload = JSON_MAPPER.writeValueAsString(signingExtensionBody);
     payload = payload.replace("PROOF_OF_VALIDATION", "INVALID_TYPE");
     var response = signer.signExtensionPayload(PUBLIC_KEY.toString(), payload, JSON);
