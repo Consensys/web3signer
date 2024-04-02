@@ -3,7 +3,7 @@
 ## Next Version
 
 ### Features Added
-- Added endpoint `/eth/v1/ext/sign/:identifier` which is enabled using cli option `--Xsigning-ext-enabled=true`. This endpoint allows signing of additional data not covered by the remoting API specs. [#982](https://github.com/Consensys/web3signer/pull/982)
+- Added endpoint `/api/v1/eth2/ext/sign/:identifier` which is enabled using cli option `--Xsigning-ext-enabled=true`. This endpoint allows signing of additional data not covered by the remoting API specs. [#982](https://github.com/Consensys/web3signer/pull/982)
 
 ### Bugs fixed
 - Update Vert.x to 4.4.9 to fix CVE-2024-1023
