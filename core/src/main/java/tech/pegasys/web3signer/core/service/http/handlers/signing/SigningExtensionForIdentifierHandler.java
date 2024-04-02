@@ -65,14 +65,15 @@ public class SigningExtensionForIdentifierHandler implements Handler<RoutingCont
   private void respondWithSignature(
       final RoutingContext routingContext, final String dataToSign, final String blsSigHex) {
     final String blsSigBase64 = Bytes.fromHexString(blsSigHex).toBase64String();
-    final String response = String.format("%s.%s", dataToSign, blsSigBase64);
 
     if (hasJsonCompatibleAcceptableContentType(routingContext.parsedHeaders().accept())) {
       routingContext.response().putHeader("Content-Type", JSON_UTF_8);
-      routingContext.response().end(new JsonObject().put("signature", response).encode());
+      routingContext
+          .response()
+          .end(new JsonObject().put("data", dataToSign).put("signature", blsSigBase64).encode());
     } else {
       routingContext.response().putHeader("Content-Type", TEXT_PLAIN_UTF_8);
-      routingContext.response().end(response);
+      routingContext.response().end(dataToSign + "." + blsSigBase64);
     }
   }
 
