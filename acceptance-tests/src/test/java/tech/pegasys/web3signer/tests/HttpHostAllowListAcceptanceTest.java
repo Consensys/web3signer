@@ -13,14 +13,26 @@
 package tech.pegasys.web3signer.tests;
 
 import static io.restassured.RestAssured.given;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import tech.pegasys.web3signer.dsl.signer.SignerConfiguration;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.URI;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
   private static final String UPCHECK_ENDPOINT = "/upcheck";
@@ -79,5 +91,40 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
         .then()
         .assertThat()
         .statusCode(403);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"Host: \r\n", ""})
+  void httpEndpointWithoutHostHeaderRespondsWithForbiddenResponse(final String rawHeader)
+      throws Exception {
+    final SignerConfiguration signerConfiguration =
+        new SignerConfigurationBuilder()
+            .withHttpAllowHostList(Collections.singletonList("127.0.0.1"))
+            .withMode("eth2")
+            .build();
+    startSigner(signerConfiguration);
+
+    // raw request without Host header
+    final URI uri = URI.create(signer.getUrl());
+    try (Socket s = new Socket(InetAddress.getLoopbackAddress(), uri.getPort())) {
+      final PrintWriter out =
+          new PrintWriter(new OutputStreamWriter(s.getOutputStream(), UTF_8), true);
+      final String req =
+          "GET "
+              + UPCHECK_ENDPOINT
+              + " HTTP/1.1\r\n"
+              + "Connection: close\r\n" // signals server to close the connection
+              + rawHeader
+              + "\r\n"; // end of headers section
+      out.write(req);
+      out.flush();
+
+      final BufferedReader br =
+          new BufferedReader(new InputStreamReader(s.getInputStream(), UTF_8));
+      final String response = br.lines().collect(Collectors.joining("\n"));
+
+      assertThat(response).startsWith("HTTP/1.1 403 Forbidden");
+      assertThat(response).contains("{\"message\":\"Host not authorized.\"}");
+    }
   }
 }
