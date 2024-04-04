@@ -72,7 +72,7 @@ public class VertxRequestTransmitter implements RequestTransmitter {
         .onSuccess(
             request -> {
               request.response().onSuccess(this::handleResponse).onFailure(this::handleException);
-              request.setTimeout(httpRequestTimeout.toMillis());
+              request.idleTimeout(httpRequestTimeout.toMillis());
               request.exceptionHandler(this::handleException);
               headers.forEach(entry -> request.headers().add(entry.getKey(), entry.getValue()));
               request.setChunked(false);
@@ -85,7 +85,10 @@ public class VertxRequestTransmitter implements RequestTransmitter {
     LOG.error("Transmission failed", thrown);
     if (!responseHandled.getAndSet(true)) {
       vertx.executeBlocking(
-          future -> bodyHandler.handleFailure(thrown),
+          () -> {
+            bodyHandler.handleFailure(thrown);
+            return null;
+          },
           false,
           res -> {
             if (res.failed()) {
@@ -101,11 +104,13 @@ public class VertxRequestTransmitter implements RequestTransmitter {
     response.bodyHandler(
         body ->
             vertx.executeBlocking(
-                future ->
-                    bodyHandler.handleResponse(
-                        response.headers(),
-                        response.statusCode(),
-                        body.toString(StandardCharsets.UTF_8)),
+                () -> {
+                  bodyHandler.handleResponse(
+                      response.headers(),
+                      response.statusCode(),
+                      body.toString(StandardCharsets.UTF_8));
+                  return null;
+                },
                 false,
                 res -> {
                   if (res.failed()) {
