@@ -72,7 +72,7 @@ public class InterlockSessionFactoryImpl implements InterlockSessionFactory {
         new HttpClientOptions()
             .setDefaultHost(interlockURI.getHost())
             .setDefaultPort(port)
-            .setTryUseCompression(true)
+            .setDecompressionSupported(true)
             .setConnectTimeout((int) httpClientTimeout.toMillis())
             .setSsl(useSsl);
     if (useSsl) {

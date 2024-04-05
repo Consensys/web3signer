@@ -6,7 +6,7 @@
 - Added endpoint `/api/v1/eth2/ext/sign/:identifier` which is enabled using cli option `--Xsigning-ext-enabled=true`. This endpoint allows signing of additional data not covered by the remoting API specs. [#982](https://github.com/Consensys/web3signer/pull/982)
 
 ### Bugs fixed
-- Update Vert.x to 4.4.9 to fix CVE-2024-1023
+- Update Vert.x to 4.5.7 (which include fixes for CVE-2024-1023)
 - Update Postgresql JDBC driver to fix CVE-2024-1597
 - Fix cached gvr to be thread-safe during first boot. [#978](https://github.com/Consensys/web3signer/issues/978)
 

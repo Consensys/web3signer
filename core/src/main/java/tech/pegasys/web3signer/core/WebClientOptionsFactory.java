@@ -34,7 +34,7 @@ class WebClientOptionsFactory {
         new WebClientOptions()
             .setDefaultPort(eth1Config.getDownstreamHttpPort())
             .setDefaultHost(eth1Config.getDownstreamHttpHost())
-            .setTryUseCompression(true)
+            .setDecompressionSupported(true)
             .setProxyOptions(getProxyOptions(eth1Config).orElse(null));
 
     applyTlsOptions(clientOptions, eth1Config);
