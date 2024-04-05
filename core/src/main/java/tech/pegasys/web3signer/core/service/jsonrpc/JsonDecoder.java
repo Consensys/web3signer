@@ -13,10 +13,8 @@
 package tech.pegasys.web3signer.core.service.jsonrpc;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.buffer.ByteBufInputStream;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.DecodeException;
 
@@ -30,7 +28,7 @@ public class JsonDecoder {
 
   public <T> T decodeValue(final Buffer buf, final Class<T> clazz) throws DecodeException {
     try {
-      return mapper.readValue((InputStream) new ByteBufInputStream(buf.getByteBuf()), clazz);
+      return mapper.readValue(buf.getBytes(), clazz);
     } catch (IOException e) {
       throw new DecodeException("Failed to decode:" + e.getMessage(), e);
     }

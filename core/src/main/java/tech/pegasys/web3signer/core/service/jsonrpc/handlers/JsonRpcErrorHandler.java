@@ -24,6 +24,7 @@ import javax.net.ssl.SSLException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.core.Handler;
+import io.vertx.core.VertxException;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,7 +63,7 @@ public class JsonRpcErrorHandler implements Handler<RoutingContext> {
             requestId,
             statusCode,
             JsonRpcError.CONNECTION_TO_DOWNSTREAM_NODE_TIMED_OUT);
-      } else if (failure instanceof IllegalStateException
+      } else if ((failure instanceof IllegalStateException || failure instanceof VertxException)
           && statusCode == HttpResponseStatus.FORBIDDEN.code()) {
         // send status code and empty body
         context.response().setStatusCode(statusCode);
