@@ -105,7 +105,11 @@ public abstract class Runner implements Runnable, AutoCloseable {
     final MetricsSystem metricsSystem = MetricsSystemFactory.create(metricsConfiguration);
     Optional<MetricsService> metricsService = Optional.empty();
 
-    final Vertx vertx = Vertx.vertx(createVertxOptions(metricsSystem));
+    final Vertx vertx =
+        Vertx.builder()
+            .with(createVertxOptions())
+            .withMetrics(new VertxMetricsAdapterFactory(metricsSystem))
+            .build();
     final Router router = Router.router(vertx);
 
     final LogErrorHandler errorHandler = new LogErrorHandler();
@@ -227,13 +231,10 @@ public abstract class Runner implements Runnable, AutoCloseable {
         .labels(() -> 1, ApplicationInfo.version());
   }
 
-  private VertxOptions createVertxOptions(final MetricsSystem metricsSystem) {
+  private VertxOptions createVertxOptions() {
     return new VertxOptions()
         .setWorkerPoolSize(baseConfig.getVertxWorkerPoolSize())
-        .setMetricsOptions(
-            new MetricsOptions()
-                .setEnabled(true)
-                .setFactory(new VertxMetricsAdapterFactory(metricsSystem)));
+        .setMetricsOptions(new MetricsOptions().setEnabled(true));
   }
 
   protected abstract ArtifactSignerProvider createArtifactSignerProvider(
@@ -339,7 +340,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
           tlsConfig.getKeyStoreFile().toPath().toAbsolutePath().toString();
       final String password =
           FileUtil.readFirstLineFromFile(tlsConfig.getKeyStorePasswordFile().toPath());
-      result.setPfxKeyCertOptions(new PfxOptions().setPath(keyStorePathname).setPassword(password));
+      result.setKeyCertOptions(new PfxOptions().setPath(keyStorePathname).setPassword(password));
       return result;
     } catch (final NoSuchFileException e) {
       throw new InitializationException(
