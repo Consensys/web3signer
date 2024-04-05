@@ -106,9 +106,11 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
 
     // raw request without Host header
     final URI uri = URI.create(signer.getUrl());
-    try (Socket s = new Socket(InetAddress.getLoopbackAddress(), uri.getPort())) {
-      final PrintWriter out =
-          new PrintWriter(new OutputStreamWriter(s.getOutputStream(), UTF_8), true);
+    try (final Socket s = new Socket(InetAddress.getLoopbackAddress(), uri.getPort());
+        final PrintWriter writer =
+            new PrintWriter(new OutputStreamWriter(s.getOutputStream(), UTF_8), true);
+        final BufferedReader reader =
+            new BufferedReader(new InputStreamReader(s.getInputStream(), UTF_8))) {
       final String req =
           "GET "
               + UPCHECK_ENDPOINT
@@ -116,12 +118,10 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
               + "Connection: close\r\n" // signals server to close the connection
               + rawHeader
               + "\r\n"; // end of headers section
-      out.write(req);
-      out.flush();
+      writer.write(req);
+      writer.flush();
 
-      final BufferedReader br =
-          new BufferedReader(new InputStreamReader(s.getInputStream(), UTF_8));
-      final String response = br.lines().collect(Collectors.joining("\n"));
+      final String response = reader.lines().collect(Collectors.joining("\n"));
 
       assertThat(response).startsWith("HTTP/1.1 403 Forbidden");
       assertThat(response).contains("{\"message\":\"Host not authorized.\"}");
