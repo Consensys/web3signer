@@ -4,6 +4,7 @@
 
 ### Bugs fixed
 - Update Vert.x to 4.4.9 to fix CVE-2024-1023
+- Update Teku libraries to 24.3.1
 - Update Postgresql JDBC driver to fix CVE-2024-1597
 - Fix cached gvr to be thread-safe during first boot. [#978](https://github.com/Consensys/web3signer/issues/978)
 
