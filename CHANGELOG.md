@@ -3,6 +3,7 @@
 ## Next Version
 
 ### Bugs fixed
+- Update Teku libraries to 24.3.1
 - Update Vert.x to 4.5.7 (which include fixes for CVE-2024-1023)
 - Fix Host Allow List handler to handle empty host header
 - Update Postgresql JDBC driver to fix CVE-2024-1597
