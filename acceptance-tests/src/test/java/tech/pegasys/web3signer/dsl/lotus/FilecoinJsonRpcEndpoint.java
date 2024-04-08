@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.arteam.simplejsonrpc.client.JsonRpcClient;
 import com.google.common.net.MediaType;
-import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -122,7 +121,7 @@ public abstract class FilecoinJsonRpcEndpoint {
     AUTH_TOKEN.ifPresent(token -> post.setHeader("Authorization", "Bearer " + token));
     try (final CloseableHttpClient httpClient = HttpClients.createDefault();
         final CloseableHttpResponse httpResponse = httpClient.execute(post)) {
-      return EntityUtils.toString(httpResponse.getEntity(), Charsets.UTF_8);
+      return EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
     }
   }
 
