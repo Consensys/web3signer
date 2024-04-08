@@ -12,15 +12,12 @@
  */
 package tech.pegasys.web3signer.core.service.http;
 
-import static com.google.common.collect.Streams.stream;
-
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,15 +48,8 @@ public class HostAllowListHandler implements Handler<RoutingContext> {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(event.request().host());
-    final long hostPieces = stream(splitHostHeader).count();
-    if (hostPieces > 1) {
-      // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
-      if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
-        return Optional.empty();
-      }
-    }
-    return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
+    final HostAndPort hostAndPort = event.request().authority();
+    return Optional.ofNullable(hostAndPort).map(HostAndPort::host);
   }
 
   private boolean hostIsInAllowlist(final String hostHeader) {

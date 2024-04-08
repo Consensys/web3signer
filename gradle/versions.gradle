@@ -110,7 +110,7 @@ dependencyManagement {
 
     dependency 'tech.pegasys:jblst:0.3.8'
 
-    dependency 'io.rest-assured:rest-assured:4.4.0'
+    dependency 'io.rest-assured:rest-assured:5.4.0'
     dependency 'org.zeroturnaround:zt-exec:1.12'
     dependencySet(group: 'org.web3j', version: '4.10.2') {
       entry 'besu'
