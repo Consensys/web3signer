@@ -157,6 +157,9 @@ allprojects {
   }
 
   dependencyCheck {
+    nvd {
+      apiKey = System.getenv('NVD_API_KEY')
+    }
     failBuildOnCVSS = 7 // Fail on high CVSS severity
     suppressionFile = "${rootDir}/gradle/owasp-suppression.xml"
     skipConfigurations = [

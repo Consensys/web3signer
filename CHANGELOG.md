@@ -3,6 +3,8 @@
 ## Next Version
 
 ### Bugs fixed
+- Update transitive dependency threetenbp and google cloud secretmanager library to fix CVE-2024-23082, CVE-2024-23081
+- Update bouncycastle libraries to fix CVE-2024-29857, CVE-2024-30171, CVE-2024-30172
 - Update Teku libraries to 24.3.1
 - Update Vert.x to 4.5.7 (which include fixes for CVE-2024-1023)
 - Fix Host Allow List handler to handle empty host header
