@@ -143,7 +143,12 @@ dependencyManagement {
 
     dependency 'org.flywaydb:flyway-core:6.1.1'
 
-    dependency 'com.google.cloud:google-cloud-secretmanager:2.29.0'
+    dependency 'com.google.cloud:google-cloud-secretmanager:2.41.0'
+    /*
+      org.threeten:threetenbp:1.6.8 //CVE-2024-23082, CVE-2024-23081
+      \--- com.google.cloud:google-cloud-secretmanager:2.41.0
+     */
+    dependency 'org.threeten:threetenbp:1.6.9'
     dependency 'io.zonky.test.postgres:embedded-postgres-binaries-bom:11.19.0'
     dependency 'io.zonky.test:embedded-postgres:2.0.3'
 
