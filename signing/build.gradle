@@ -45,6 +45,7 @@ dependencies {
 
   runtimeOnly 'com.squareup.okhttp3:okhttp'
   runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl'
+  runtimeOnly 'commons-logging:commons-logging'
   runtimeOnly 'org.bouncycastle:bcpkix-jdk18on'
   runtimeOnly 'tech.pegasys:jblst'
 
