@@ -32,7 +32,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.Dele
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.SigningExtensionForIdentifierHandler;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SigningExtensionHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
@@ -411,7 +411,7 @@ public class Eth2Runner extends Runner {
 
     router
         .route(HttpMethod.POST, SIGN_EXT_PATH)
-        .blockingHandler(new SigningExtensionForIdentifierHandler(signer), false)
+        .blockingHandler(new SigningExtensionHandler(signer), false)
         .failureHandler(errorHandler)
         .failureHandler(
             ctx -> {

@@ -30,14 +30,14 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.tuweni.bytes.Bytes;
 
 /** A Signing Extension to sign very specific messages for a given identifier */
-public class SigningExtensionForIdentifierHandler implements Handler<RoutingContext> {
+public class SigningExtensionHandler implements Handler<RoutingContext> {
   public static final int NOT_FOUND = 404;
   public static final int BAD_REQUEST = 400;
   private static final ObjectMapper JSON_MAPPER = SigningObjectMapperFactory.createObjectMapper();
 
   private final SignerForIdentifier<?> signerForIdentifier;
 
-  public SigningExtensionForIdentifierHandler(final SignerForIdentifier<?> signerForIdentifier) {
+  public SigningExtensionHandler(final SignerForIdentifier<?> signerForIdentifier) {
     this.signerForIdentifier = signerForIdentifier;
   }
 
@@ -45,35 +45,29 @@ public class SigningExtensionForIdentifierHandler implements Handler<RoutingCont
   public void handle(final RoutingContext routingContext) {
     final String identifier = normaliseIdentifier(routingContext.pathParam("identifier"));
     final String body = routingContext.body().asString();
-    final SigningExtensionBody signingExtensionRequest;
-    // convert json to type
+
+    // validate that we have correct incoming json body
     try {
-      signingExtensionRequest = JSON_MAPPER.readValue(body, SigningExtensionBody.class);
+      JSON_MAPPER.readValue(body, ProofOfValidationBody.class);
     } catch (final JsonProcessingException | IllegalArgumentException e) {
       routingContext.fail(BAD_REQUEST);
       return;
     }
 
-    final String dataToSign = signingExtensionRequest.signingDataBase64(JSON_MAPPER);
     signerForIdentifier
-        .sign(identifier, Bytes.wrap(dataToSign.getBytes(UTF_8)))
+        .sign(identifier, Bytes.wrap(body.getBytes(UTF_8)))
         .ifPresentOrElse(
-            blsSigHex -> respondWithSignature(routingContext, dataToSign, blsSigHex),
+            blsSigHex -> respondWithSignature(routingContext, blsSigHex),
             () -> routingContext.fail(NOT_FOUND));
   }
 
-  private void respondWithSignature(
-      final RoutingContext routingContext, final String dataToSign, final String blsSigHex) {
-    final String blsSigBase64 = Bytes.fromHexString(blsSigHex).toBase64String();
-
+  private void respondWithSignature(final RoutingContext routingContext, final String blsSigHex) {
     if (hasJsonCompatibleAcceptableContentType(routingContext.parsedHeaders().accept())) {
       routingContext.response().putHeader("Content-Type", JSON_UTF_8);
-      routingContext
-          .response()
-          .end(new JsonObject().put("data", dataToSign).put("signature", blsSigBase64).encode());
+      routingContext.response().end(new JsonObject().put("signature", blsSigHex).encode());
     } else {
       routingContext.response().putHeader("Content-Type", TEXT_PLAIN_UTF_8);
-      routingContext.response().end(dataToSign + "." + blsSigBase64);
+      routingContext.response().end(blsSigHex);
     }
   }
 
