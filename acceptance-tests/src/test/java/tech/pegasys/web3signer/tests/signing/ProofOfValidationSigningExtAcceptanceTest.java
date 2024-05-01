@@ -136,4 +136,17 @@ public class ProofOfValidationSigningExtAcceptanceTest extends SigningAcceptance
 
     signer.signExtensionPayload(PUBLIC_KEY.toString(), payload, JSON).then().statusCode(400);
   }
+
+  @Test
+  void extraJsonFieldsCausesBadRequestStatusCode() throws Exception {
+    final ProofOfValidationBody proofOfValidationBody =
+        new ProofOfValidationBody(
+            SigningExtensionType.PROOF_OF_VALIDATION,
+            "AT",
+            String.valueOf(System.currentTimeMillis()));
+    var payload = JSON_MAPPER.writeValueAsString(proofOfValidationBody);
+    payload = payload.replace("}", ",\"extraField\": \"extraValue\"}");
+
+    signer.signExtensionPayload(PUBLIC_KEY.toString(), payload, JSON).then().statusCode(400);
+  }
 }

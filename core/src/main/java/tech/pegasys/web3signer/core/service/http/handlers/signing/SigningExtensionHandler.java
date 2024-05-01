@@ -22,6 +22,7 @@ import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
@@ -33,7 +34,11 @@ import org.apache.tuweni.bytes.Bytes;
 public class SigningExtensionHandler implements Handler<RoutingContext> {
   public static final int NOT_FOUND = 404;
   public static final int BAD_REQUEST = 400;
-  private static final ObjectMapper JSON_MAPPER = SigningObjectMapperFactory.createObjectMapper();
+  // custom copy of ObjectMapper that fails on unknown properties.
+  private static final ObjectMapper JSON_MAPPER =
+      SigningObjectMapperFactory.createObjectMapper()
+          .copy()
+          .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
   private final SignerForIdentifier<?> signerForIdentifier;
 
