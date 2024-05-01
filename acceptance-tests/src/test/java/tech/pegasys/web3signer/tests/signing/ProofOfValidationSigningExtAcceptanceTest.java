@@ -33,9 +33,9 @@ import tech.pegasys.web3signer.signing.KeyType;
 
 import java.nio.file.Path;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
-import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,25 +85,31 @@ public class ProofOfValidationSigningExtAcceptanceTest extends SigningAcceptance
     final var response =
         signer.signExtensionPayload(PUBLIC_KEY.toString(), payload, acceptMediaType);
 
-    final var hexEncodedSignature =
+    final var signatureResponse =
         switch (acceptMediaType) {
           case TEXT -> {
             response.then().statusCode(200).contentType(TEXT);
-            yield response.body().print();
+            yield new ProofOfValidationResponse(
+                Bytes.wrap(payload.getBytes(UTF_8)).toBase64String(), response.body().print());
           }
           case JSON, ANY -> {
             response.then().statusCode(200).contentType(JSON);
-            yield new JsonObject(response.body().print()).getString("signature");
+            yield JSON_MAPPER.readValue(response.asByteArray(), ProofOfValidationResponse.class);
           }
           default -> throw new IllegalStateException("Unexpected value: " + acceptMediaType);
         };
 
+    // assert that the signature is valid
     final var blsSignature =
-        BLSSignature.fromBytesCompressed(Bytes.fromHexString(hexEncodedSignature));
+        BLSSignature.fromBytesCompressed(Bytes.fromHexString(signatureResponse.signature));
 
     final var isValidBLSSig =
         BLS.verify(PUBLIC_KEY, Bytes.wrap(payload.getBytes(UTF_8)), blsSignature);
     assertThat(isValidBLSSig).isTrue();
+
+    // assert that Base64 encoded payload is correct
+    assertThat(signatureResponse.payload)
+        .isEqualTo(Bytes.wrap(payload.getBytes(UTF_8)).toBase64String());
   }
 
   @Test
@@ -149,4 +155,8 @@ public class ProofOfValidationSigningExtAcceptanceTest extends SigningAcceptance
 
     signer.signExtensionPayload(PUBLIC_KEY.toString(), payload, JSON).then().statusCode(400);
   }
+
+  record ProofOfValidationResponse(
+      @JsonProperty(value = "payload", required = true) String payload,
+      @JsonProperty(value = "signature", required = true) String signature) {}
 }

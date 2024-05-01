@@ -59,17 +59,25 @@ public class SigningExtensionHandler implements Handler<RoutingContext> {
       return;
     }
 
+    final Bytes payload = Bytes.wrap(body.getBytes(UTF_8));
     signerForIdentifier
-        .sign(identifier, Bytes.wrap(body.getBytes(UTF_8)))
+        .sign(identifier, payload)
         .ifPresentOrElse(
-            blsSigHex -> respondWithSignature(routingContext, blsSigHex),
+            blsSigHex -> respondWithSignature(routingContext, payload, blsSigHex),
             () -> routingContext.fail(NOT_FOUND));
   }
 
-  private void respondWithSignature(final RoutingContext routingContext, final String blsSigHex) {
+  private void respondWithSignature(
+      final RoutingContext routingContext, final Bytes payload, final String blsSigHex) {
     if (hasJsonCompatibleAcceptableContentType(routingContext.parsedHeaders().accept())) {
       routingContext.response().putHeader("Content-Type", JSON_UTF_8);
-      routingContext.response().end(new JsonObject().put("signature", blsSigHex).encode());
+      routingContext
+          .response()
+          .end(
+              new JsonObject()
+                  .put("payload", payload.toBase64String())
+                  .put("signature", blsSigHex)
+                  .encode());
     } else {
       routingContext.response().putHeader("Content-Type", TEXT_PLAIN_UTF_8);
       routingContext.response().end(blsSigHex);
