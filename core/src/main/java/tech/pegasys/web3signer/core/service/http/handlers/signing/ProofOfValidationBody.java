@@ -13,8 +13,9 @@
 package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.units.bigints.UInt64;
 
 public record ProofOfValidationBody(
     @JsonProperty(value = "type", required = true) SigningExtensionType type,
     @JsonProperty(value = "platform", required = true) String platform,
-    @JsonProperty(value = "timestamp", required = true) String timestamp) {}
+    @JsonProperty(value = "timestamp", required = true) UInt64 timestamp) {}

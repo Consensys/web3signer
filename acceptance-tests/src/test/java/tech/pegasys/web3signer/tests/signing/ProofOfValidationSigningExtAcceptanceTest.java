@@ -31,6 +31,7 @@ import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.MetadataFileHelpers;
 import tech.pegasys.web3signer.signing.KeyType;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -38,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.http.ContentType;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -79,7 +81,7 @@ public class ProofOfValidationSigningExtAcceptanceTest extends SigningAcceptance
         new ProofOfValidationBody(
             SigningExtensionType.PROOF_OF_VALIDATION,
             "AT",
-            String.valueOf(System.currentTimeMillis()));
+            UInt64.valueOf(System.currentTimeMillis()));
     final var payload = JSON_MAPPER.writeValueAsString(signingExtensionBody);
 
     final var response =
@@ -112,13 +114,46 @@ public class ProofOfValidationSigningExtAcceptanceTest extends SigningAcceptance
         .isEqualTo(Bytes.wrap(payload.getBytes(UTF_8)).toBase64String());
   }
 
+  @ParameterizedTest
+  @ValueSource(strings = {"1634025600000", "\"1634025600000\""})
+  void timestampAsStringAndNumberResultsInValidSignature(final String timestampValue)
+      throws IOException {
+    final var payloadFormat =
+        """
+        {
+          "type": "PROOF_OF_VALIDATION",
+          "platform": "AT",
+          "timestamp": %s
+        }
+        """;
+    final var payload = String.format(payloadFormat, timestampValue);
+
+    final var response = signer.signExtensionPayload(PUBLIC_KEY.toString(), payload, JSON);
+    response.then().statusCode(200).contentType(JSON);
+
+    final var signatureResponse =
+        JSON_MAPPER.readValue(response.asByteArray(), ProofOfValidationResponse.class);
+
+    // assert that the signature is valid
+    final var blsSignature =
+        BLSSignature.fromBytesCompressed(Bytes.fromHexString(signatureResponse.signature));
+
+    final var isValidBLSSig =
+        BLS.verify(PUBLIC_KEY, Bytes.wrap(payload.getBytes(UTF_8)), blsSignature);
+    assertThat(isValidBLSSig).isTrue();
+
+    // assert that Base64 encoded payload is correct
+    assertThat(signatureResponse.payload)
+        .isEqualTo(Bytes.wrap(payload.getBytes(UTF_8)).toBase64String());
+  }
+
   @Test
   void invalidIdentifierCausesNotFound() throws Exception {
     final ProofOfValidationBody proofOfValidationBody =
         new ProofOfValidationBody(
             SigningExtensionType.PROOF_OF_VALIDATION,
             "AT",
-            String.valueOf(System.currentTimeMillis()));
+            UInt64.valueOf(System.currentTimeMillis()));
     final String data = JSON_MAPPER.writeValueAsString(proofOfValidationBody);
 
     signer.signExtensionPayload("0x1234", data, JSON).then().statusCode(404);
@@ -136,7 +171,7 @@ public class ProofOfValidationSigningExtAcceptanceTest extends SigningAcceptance
         new ProofOfValidationBody(
             SigningExtensionType.PROOF_OF_VALIDATION,
             "AT",
-            String.valueOf(System.currentTimeMillis()));
+            UInt64.valueOf(System.currentTimeMillis()));
     var payload = JSON_MAPPER.writeValueAsString(proofOfValidationBody);
     payload = payload.replace("PROOF_OF_VALIDATION", "INVALID_TYPE");
 
@@ -149,7 +184,7 @@ public class ProofOfValidationSigningExtAcceptanceTest extends SigningAcceptance
         new ProofOfValidationBody(
             SigningExtensionType.PROOF_OF_VALIDATION,
             "AT",
-            String.valueOf(System.currentTimeMillis()));
+            UInt64.valueOf(System.currentTimeMillis()));
     var payload = JSON_MAPPER.writeValueAsString(proofOfValidationBody);
     payload = payload.replace("}", ",\"extraField\": \"extraValue\"}");
 
