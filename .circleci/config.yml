@@ -264,7 +264,8 @@ jobs:
           name: build and test Docker image
           command: |
             ./gradlew --no-daemon --parallel "-Pbranch=${CIRCLE_BRANCH}" testDocker
-
+      - store_artifacts:
+            path: docker/reports/01.xml
   publishDockerAmd64:
     executor: machine_executor_amd64
     steps:

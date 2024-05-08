@@ -24,6 +24,12 @@ eth2 \
 --slashing-protection-enabled=false \
 > ./reports/01.xml || i=`expr $i + 1`
 
+# Test if i >=1, then print out the error message
+if [ $i -ge 1 ]; then
+  echo "Dgoss Tests failed"
+  exit $i
+fi
+
 docker image rm ${DOCKER_TEST_IMAGE}
 
 # also check for security vulns with trivy
