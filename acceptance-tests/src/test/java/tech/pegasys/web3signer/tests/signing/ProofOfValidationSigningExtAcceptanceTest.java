@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.tests.signing;
 
 import static io.restassured.http.ContentType.JSON;
-import static io.restassured.http.ContentType.TEXT;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.teku.spec.SpecMilestone.DENEB;
@@ -76,7 +75,7 @@ public class ProofOfValidationSigningExtAcceptanceTest extends SigningAcceptance
   @EnumSource(
       value = ContentType.class,
       names = {"ANY", "JSON", "TEXT"})
-  void extensionSigningData(ContentType acceptMediaType) throws Exception {
+  void extensionSigningData(final ContentType acceptMediaType) throws Exception {
     final var signingExtensionBody =
         new ProofOfValidationBody(
             SigningExtensionType.PROOF_OF_VALIDATION,
@@ -87,19 +86,10 @@ public class ProofOfValidationSigningExtAcceptanceTest extends SigningAcceptance
     final var response =
         signer.signExtensionPayload(PUBLIC_KEY.toString(), payload, acceptMediaType);
 
+    response.then().statusCode(200).contentType(JSON);
+
     final var signatureResponse =
-        switch (acceptMediaType) {
-          case TEXT -> {
-            response.then().statusCode(200).contentType(TEXT);
-            yield new ProofOfValidationResponse(
-                Bytes.wrap(payload.getBytes(UTF_8)).toBase64String(), response.body().print());
-          }
-          case JSON, ANY -> {
-            response.then().statusCode(200).contentType(JSON);
-            yield JSON_MAPPER.readValue(response.asByteArray(), ProofOfValidationResponse.class);
-          }
-          default -> throw new IllegalStateException("Unexpected value: " + acceptMediaType);
-        };
+        JSON_MAPPER.readValue(response.asByteArray(), ProofOfValidationResponse.class);
 
     // assert that the signature is valid
     final var blsSignature =

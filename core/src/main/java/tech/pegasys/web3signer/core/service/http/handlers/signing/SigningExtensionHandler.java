@@ -14,19 +14,15 @@ package tech.pegasys.web3signer.core.service.http.handlers.signing;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
-import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
-
-import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.MIMEHeader;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -69,28 +65,13 @@ public class SigningExtensionHandler implements Handler<RoutingContext> {
 
   private void respondWithSignature(
       final RoutingContext routingContext, final Bytes payload, final String blsSigHex) {
-    if (hasJsonCompatibleAcceptableContentType(routingContext.parsedHeaders().accept())) {
-      routingContext.response().putHeader("Content-Type", JSON_UTF_8);
-      routingContext
-          .response()
-          .end(
-              new JsonObject()
-                  .put("payload", payload.toBase64String())
-                  .put("signature", blsSigHex)
-                  .encode());
-    } else {
-      routingContext.response().putHeader("Content-Type", TEXT_PLAIN_UTF_8);
-      routingContext.response().end(blsSigHex);
-    }
-  }
-
-  private boolean hasJsonCompatibleAcceptableContentType(final List<MIMEHeader> mimeHeaders) {
-    return mimeHeaders.stream().anyMatch(this::isMimeHeaderJsonCompatible);
-  }
-
-  private boolean isMimeHeaderJsonCompatible(final MIMEHeader mimeHeader) {
-    final String mimeType =
-        mimeHeader.value(); // Must use value() rather than component() to ensure header is parsed
-    return "application/json".equalsIgnoreCase(mimeType) || "*/*".equalsIgnoreCase(mimeType);
+    routingContext.response().putHeader("Content-Type", JSON_UTF_8);
+    routingContext
+        .response()
+        .end(
+            new JsonObject()
+                .put("payload", payload.toBase64String())
+                .put("signature", blsSigHex)
+                .encode());
   }
 }
