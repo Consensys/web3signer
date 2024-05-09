@@ -66,6 +66,8 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   public static final String ETH2_PUBLIC_KEYS = "/api/v1/eth2/publicKeys"; // bls keys
   public static final String RELOAD_ENDPOINT = "/reload";
 
+  public static final String SIGN_EXT_ENDPOINT = "/api/v1/eth2/ext/sign/{identifier}";
+
   public static final ObjectMapper ETH_2_INTERFACE_OBJECT_MAPPER =
       SigningObjectMapperFactory.createObjectMapper().setSerializationInclusion(Include.NON_NULL);
   private static final String METRICS_ENDPOINT = "/metrics";
@@ -173,6 +175,17 @@ public class Signer extends FilecoinJsonRpcEndpoint {
         .log()
         .all(true)
         .post(signPath(BLS));
+  }
+
+  public Response signExtensionPayload(
+      final String publicKey, final String payload, final ContentType acceptMediaType) {
+    return given()
+        .baseUri(getUrl())
+        .contentType(ContentType.JSON)
+        .accept(acceptMediaType)
+        .pathParam("identifier", publicKey)
+        .body(payload)
+        .post(SIGN_EXT_ENDPOINT);
   }
 
   public Response callApiPublicKeys(final KeyType keyType) {

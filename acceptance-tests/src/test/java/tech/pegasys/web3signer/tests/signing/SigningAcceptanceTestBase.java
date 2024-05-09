@@ -49,19 +49,13 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
         .withKeyStoreDirectory(testDirectory)
         .withMode("eth2")
         .withNetwork(eth2Network.configName());
-
-    setForkEpochs(specMilestone, builder);
-
-    startSigner(builder.build());
+    setForkEpochsAndStartSigner(builder, specMilestone);
   }
 
   protected void setupEth2Signer(final Path networkConfigFile, final SpecMilestone specMilestone) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder.withKeyStoreDirectory(testDirectory).withMode("eth2").withNetwork(networkConfigFile);
-
-    setForkEpochs(specMilestone, builder);
-
-    startSigner(builder.build());
+    setForkEpochsAndStartSigner(builder, specMilestone);
   }
 
   protected void setupEth2SignerWithCustomNetworkConfig(final Path networkConfigFile) {
@@ -70,6 +64,12 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
 
     // no need to set custom fork epochs as they are meant to be provided in networkConfigFile
 
+    startSigner(builder.build());
+  }
+
+  protected void setForkEpochsAndStartSigner(
+      final SignerConfigurationBuilder builder, final SpecMilestone specMilestone) {
+    setForkEpochs(specMilestone, builder);
     startSigner(builder.build());
   }
 

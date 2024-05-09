@@ -133,6 +133,14 @@ public class Eth2SubCommand extends ModeSubCommand {
       arity = "1")
   private boolean isKeyManagerApiEnabled = false;
 
+  @CommandLine.Option(
+      names = "--Xsigning-ext-enabled",
+      description = "Set to true to enable signing extensions.",
+      paramLabel = "<BOOL>",
+      arity = "1",
+      hidden = true)
+  private boolean signingExtEnabled = false;
+
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliEth2AzureKeyVaultParameters azureKeyVaultParameters;
   @Mixin private PicoKeystoresParameters keystoreParameters;
@@ -156,7 +164,8 @@ public class Eth2SubCommand extends ModeSubCommand {
         awsSecretsManagerParameters,
         gcpSecretManagerParameters,
         eth2Spec,
-        isKeyManagerApiEnabled);
+        isKeyManagerApiEnabled,
+        signingExtEnabled);
   }
 
   private void logNetworkSpecInformation() {

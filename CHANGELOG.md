@@ -2,6 +2,9 @@
 
 ## Next Version
 
+### Features Added
+- Added endpoint `/api/v1/eth2/ext/sign/:identifier` which is enabled using cli option `--Xsigning-ext-enabled=true`. This endpoint allows signing of additional data not covered by the remoting API specs. [#982](https://github.com/Consensys/web3signer/pull/982)
+
 ### Bugs fixed
 - Update transitive dependency threetenbp and google cloud secretmanager library to fix CVE-2024-23082, CVE-2024-23081
 - Update bouncycastle libraries to fix CVE-2024-29857, CVE-2024-30171, CVE-2024-30172
@@ -11,6 +14,7 @@
 - Update Postgresql JDBC driver to fix CVE-2024-1597
 - Fix cached gvr to be thread-safe during first boot. [#978](https://github.com/Consensys/web3signer/issues/978)
 
+---
 ## 24.2.0
 
 This is a required update for Mainnet users containing the configuration for the Deneb upgrade on March 13th. This update is required for Gnosis Deneb network upgrade on March 11th. For all other networks, this update is optional.

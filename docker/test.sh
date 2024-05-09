@@ -18,7 +18,7 @@ i=0
 # Test for normal startup with ports opened
 GOSS_FILES_PATH=tests/01 \
 bash tests/dgoss \
-run ${DOCKER_TEST_IMAGE} \
+run --sysctl net.ipv6.conf.all.disable_ipv6=1 ${DOCKER_TEST_IMAGE} \
 --http-listen-host=0.0.0.0 \
 eth2 \
 --slashing-protection-enabled=false \
@@ -29,4 +29,5 @@ docker image rm ${DOCKER_TEST_IMAGE}
 # also check for security vulns with trivy
 docker run aquasec/trivy image $DOCKER_IMAGE
 
+echo "test.sh Exit code: $i"
 exit $i

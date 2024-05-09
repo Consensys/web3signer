@@ -32,6 +32,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.Dele
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKeystoresHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.SigningExtensionHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
@@ -94,6 +95,7 @@ public class Eth2Runner extends Runner {
   public static final String KEYSTORES_PATH = "/eth/v1/keystores";
   public static final String PUBLIC_KEYS_PATH = "/api/v1/eth2/publicKeys";
   public static final String SIGN_PATH = "/api/v1/eth2/sign/:identifier";
+  public static final String SIGN_EXT_PATH = "/api/v1/eth2/ext/sign/:identifier";
   public static final String HIGH_WATERMARK_PATH = "/api/v1/eth2/highWatermark";
   private static final Logger LOG = LogManager.getLogger();
 
@@ -106,6 +108,7 @@ public class Eth2Runner extends Runner {
   private final KeystoresParameters keystoresParameters;
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
+  private final boolean signingExtEnabled;
 
   public Eth2Runner(
       final BaseConfig baseConfig,
@@ -115,7 +118,8 @@ public class Eth2Runner extends Runner {
       final AwsVaultParameters awsVaultParameters,
       final GcpSecretManagerParameters gcpSecretManagerParameters,
       final Spec eth2Spec,
-      final boolean isKeyManagerApiEnabled) {
+      final boolean isKeyManagerApiEnabled,
+      final boolean signingExtEnabled) {
     super(baseConfig);
     this.slashingProtectionContext = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
@@ -126,6 +130,7 @@ public class Eth2Runner extends Runner {
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
     this.awsVaultParameters = awsVaultParameters;
     this.gcpSecretManagerParameters = gcpSecretManagerParameters;
+    this.signingExtEnabled = signingExtEnabled;
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -185,6 +190,8 @@ public class Eth2Runner extends Runner {
                 .route(HttpMethod.GET, HIGH_WATERMARK_PATH)
                 .handler(new HighWatermarkHandler(protectionContext.getSlashingProtection()))
                 .failureHandler(errorHandler));
+
+    addSigningExtHandler(router, errorHandler, blsSigner);
 
     if (isKeyManagerApiEnabled) {
       router
@@ -392,6 +399,35 @@ public class Eth2Runner extends Runner {
           promise.complete(
               result.getErrorCount() > 0 ? Status.KO(statusJson) : Status.OK(statusJson));
         });
+  }
+
+  private void addSigningExtHandler(
+      final Router router,
+      final LogErrorHandler errorHandler,
+      final SignerForIdentifier<?> signer) {
+    if (!signingExtEnabled) {
+      return;
+    }
+
+    router
+        .route(HttpMethod.POST, SIGN_EXT_PATH)
+        .blockingHandler(new SigningExtensionHandler(signer), false)
+        .failureHandler(errorHandler)
+        .failureHandler(
+            ctx -> {
+              final int statusCode = ctx.statusCode();
+              if (statusCode == 400) {
+                ctx.response()
+                    .setStatusCode(statusCode)
+                    .end(new JsonObject().put("error", "Bad Request").encode());
+              } else if (statusCode == 404) {
+                ctx.response()
+                    .setStatusCode(statusCode)
+                    .end(new JsonObject().put("error", "Identifier not found.").encode());
+              } else {
+                ctx.next(); // go to global failure handler
+              }
+            });
   }
 
   @Override
