@@ -28,6 +28,7 @@ public class BLSTestUtil {
       Bytes32.fromHexString("0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
   static final BigInteger CURVE_ORDER_BI =
       CURVE_ORDER_BYTES.toUnsignedBigInteger(ByteOrder.BIG_ENDIAN);
+
   /**
    * BLS Key Pair based on seed value.
    *
