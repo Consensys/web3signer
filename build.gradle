@@ -99,12 +99,12 @@ allprojects {
   jacoco { toolVersion = '0.8.7' }
 
   task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
   }
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
   }
 
@@ -606,8 +606,8 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   classDirectories.from files(subprojects.sourceSets.main.output)
   executionData.from files(subprojects.jacocoTestReport.executionData) //how to exclude some package/classes com.test.**
   reports {
-    xml.enabled true
-    csv.enabled true
+    xml.required = true
+    csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
   onlyIf = { true }
