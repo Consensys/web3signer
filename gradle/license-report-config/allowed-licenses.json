@@ -178,6 +178,14 @@
     {
       "moduleName": "com.google.errorprone:error_prone_annotations",
       "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
+      "moduleName": "com.google.auth:google-auth-library-credentials",
+      "moduleLicense": "Apache License, Version 2.0"
+    },
+    {
+      "moduleName": "com.google.auth:google-auth-library-oauth2-http",
+      "moduleLicense": "Apache License, Version 2.0"
     }
   ]
 }
