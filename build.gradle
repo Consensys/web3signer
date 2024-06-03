@@ -96,7 +96,7 @@ allprojects {
 
   version = rootProject.version
 
-  jacoco { toolVersion = '0.8.8' }
+  jacoco { toolVersion = '0.8.11' }
 
   task sourcesJar(type: Jar, dependsOn: classes) {
     archiveClassifier = 'sources'
