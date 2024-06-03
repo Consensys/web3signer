@@ -368,12 +368,6 @@ workflows:
               <<: *filters-release-tags
           context:
             - protocols-signers
-      - performanceTests:
-          requires:
-            - build
-          filters:
-            tags:
-              <<: *filters-release-tags
       - publishOpenApiSpec:
           filters:
             branches:
