@@ -2,6 +2,9 @@
 
 ## Next Version
 
+### Breaking Changes
+- Use Java 21 for build and runtime. Remove Java 17 variant of docker image. zip/tar.gz distributions will require Java 21 or above to run Web3Signer.
+
 ### Features Added
 - Added endpoint `/api/v1/eth2/ext/sign/:identifier` which is enabled using cli option `--Xsigning-ext-enabled=true`. This endpoint allows signing of additional data not covered by the remoting API specs. [#982](https://github.com/Consensys/web3signer/pull/982)
 
