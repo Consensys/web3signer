@@ -120,9 +120,9 @@ task extractBesu(dependsOn: [
 def vaultBinary () {
   switch (osdetector.os) {
     case "windows":
-      return layout.buildDirectory.file("vault-bin/vault.exe").toString()
+      return layout.buildDirectory.file("vault-bin/vault.exe").get().toString()
     default:
-      return layout.buildDirectory.file("vault-bin/vault").toString()
+      return layout.buildDirectory.file("vault-bin/vault").get().toString()
   }
 }
 
