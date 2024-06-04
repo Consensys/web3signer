@@ -2,8 +2,14 @@
 
 ## Next Version
 
+### Upcoming Breaking Changes
+- This is the last Web3Signer release to use Java 17. Web3Signer will start mandating Java 21 for build and runtime after 
+this release. The Web3Signer docker image will also use Java 21, however, binary distributions (.tar.gz/.zip) will 
+require Java 21 to be available on the host machine.
+
 ### Features Added
-- Added endpoint `/api/v1/eth2/ext/sign/:identifier` which is enabled using cli option `--Xsigning-ext-enabled=true`. This endpoint allows signing of additional data not covered by the remoting API specs. [#982](https://github.com/Consensys/web3signer/pull/982)
+- Added endpoint `/api/v1/eth2/ext/sign/:identifier` which is enabled using cli option `--Xsigning-ext-enabled=true`. 
+This endpoint allows signing of additional data not covered by the remoting API specs. [#982](https://github.com/Consensys/web3signer/pull/982)
 
 ### Bugs fixed
 - Update transitive dependency threetenbp and google cloud secretmanager library to fix CVE-2024-23082, CVE-2024-23081
