@@ -1,6 +1,6 @@
 # Changelog
 
-## Next Version
+## 24.6.0
 
 ### Upcoming Breaking Changes
 - This is the last Web3Signer release to use Java 17. Web3Signer will start mandating Java 21 for build and runtime after 
