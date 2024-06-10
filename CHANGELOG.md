@@ -6,6 +6,7 @@
 - This is the last Web3Signer release to use Java 17. Web3Signer will start mandating Java 21 for build and runtime after 
 this release. The Web3Signer docker image will also use Java 21, however, binary distributions (.tar.gz/.zip) will 
 require Java 21 to be available on the host machine.
+- This is the last Web3Signer release to use the "filecoin" mode. The "filecoin" mode will be removed in a future release.
 
 ### Features Added
 - Added endpoint `/api/v1/eth2/ext/sign/:identifier` which is enabled using cli option `--Xsigning-ext-enabled=true`. 
