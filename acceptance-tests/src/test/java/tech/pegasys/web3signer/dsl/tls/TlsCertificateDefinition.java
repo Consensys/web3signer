@@ -75,7 +75,9 @@ public class TlsCertificateDefinition {
 
   @SuppressWarnings("JdkObsolete")
   public List<PrivateKey> keys()
-      throws KeyStoreException, NoSuchAlgorithmException, CertificateException,
+      throws KeyStoreException,
+          NoSuchAlgorithmException,
+          CertificateException,
           UnrecoverableKeyException {
     final List<PrivateKey> results = Lists.newArrayList();
 
