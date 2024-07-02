@@ -21,11 +21,12 @@ import java.text.SimpleDateFormat
 
 buildscript {
   repositories {
+    mavenCentral()
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
   }
   dependencies {
     classpath 'tech.pegasys.internal.license.reporter:license-reporter:1.0.1'
-    classpath 'org.owasp:dependency-check-gradle:9.0.10'
+    classpath 'org.owasp:dependency-check-gradle:10.0.0'
   }
 }
 

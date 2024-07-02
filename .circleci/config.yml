@@ -346,7 +346,9 @@ workflows:
               only:
                 - master
     jobs:
-      - build
+      - build:
+          context:
+            - protocols-signers
       - dockerScan
       - acceptanceTests:
           requires:
