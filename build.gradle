@@ -32,7 +32,7 @@ buildscript {
 
 plugins {
   id 'java-test-fixtures'
-  id 'com.diffplug.spotless' version '6.25.0'
+  id 'com.diffplug.spotless' version '7.0.0.BETA1'
   id 'com.github.ben-manes.versions' version '0.51.0'
   id 'com.github.jk1.dependency-license-report' version '2.7'
   id 'io.spring.dependency-management' version '1.1.5'
@@ -137,9 +137,9 @@ allprojects {
         exclude '**/build/**'
         exclude '.openapidoc/**'
       }
-      removeUnusedImports()
+      // removeUnusedImports() // conflicts with googleJavaFormat
       // See gradle.properties for exports/opens flags required by JDK 16 and Google Java Format plugin
-      googleJavaFormat('1.17.0')
+      googleJavaFormat('1.22.0')
       importOrder 'tech.pegasys', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
