@@ -18,10 +18,15 @@ dependencyManagement {
 
     dependencySet(group: 'com.google.errorprone', version: '2.28.0') {
       entry 'error_prone_annotation'
-      entry 'error_prone_check_api'
+      entry ('error_prone_check_api') {
+        // to avoid: CVE-2023-2976
+        exclude group: 'io.github.eisop:dataflow-errorprone', name: 'dataflow-errorprone'
+      }
       entry 'error_prone_core'
       entry 'error_prone_test_helpers'
     }
+    // fixes: CVE-2023-2976
+    dependency 'io.github.eisop:dataflow-errorprone:3.42.0-eisop4'
 
     dependency 'tech.pegasys.tools.epchecks:errorprone-checks:1.1.1'
 
