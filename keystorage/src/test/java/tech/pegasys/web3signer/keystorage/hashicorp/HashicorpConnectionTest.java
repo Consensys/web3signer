@@ -50,7 +50,7 @@ public class HashicorpConnectionTest {
     assertThatThrownBy(() -> connectionFactory.create(params))
         .isInstanceOf(HashicorpException.class)
         .hasMessage("Unable to initialise connection to hashicorp vault.")
-        .getCause()
+        .cause()
         .isInstanceOf(EOFException.class);
   }
 
@@ -74,7 +74,7 @@ public class HashicorpConnectionTest {
     assertThatThrownBy(() -> connectionFactory.create(params))
         .isInstanceOf(HashicorpException.class)
         .hasMessage("Unable to initialise connection to hashicorp vault.")
-        .getCause()
+        .cause()
         .isInstanceOf(IOException.class)
         .hasMessage("keystore password was incorrect");
   }
