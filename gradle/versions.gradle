@@ -91,7 +91,7 @@ dependencyManagement {
 
     dependency 'org.xipki.iaik:sunpkcs11-wrapper:1.4.10'
 
-    dependencySet(group: 'tech.pegasys.teku.internal', version: '24.3.1') {
+    dependencySet(group: 'tech.pegasys.teku.internal', version: '24.4.0') {
       entry ('bls') {
         exclude group: 'org.bouncycastle', name: 'bcprov-jdk15on'
       }
@@ -127,11 +127,9 @@ dependencyManagement {
     dependency 'com.github.arteam:simple-json-rpc-server:1.3'
     dependency 'com.github.arteam:simple-json-rpc-client:1.3'
 
-    dependencySet(group: 'com.azure', version: '4.8.0') {
-      entry 'azure-security-keyvault-secrets'
-      entry 'azure-security-keyvault-keys'
-    }
-    dependency 'com.azure:azure-identity:1.11.4'
+    dependency 'com.azure:azure-security-keyvault-secrets:4.8.3'
+    dependency 'com.azure:azure-security-keyvault-keys:4.8.4'
+    dependency 'com.azure:azure-identity:1.12.2'
 
     dependency 'com.zaxxer:HikariCP:5.0.1'
     dependency 'org.postgresql:postgresql:42.7.2'
@@ -144,12 +142,7 @@ dependencyManagement {
 
     dependency 'org.flywaydb:flyway-core:6.1.1'
 
-    dependency 'com.google.cloud:google-cloud-secretmanager:2.41.0'
-    /*
-      org.threeten:threetenbp:1.6.8 //CVE-2024-23082, CVE-2024-23081
-      \--- com.google.cloud:google-cloud-secretmanager:2.41.0
-     */
-    dependency 'org.threeten:threetenbp:1.6.9'
+    dependency 'com.google.cloud:google-cloud-secretmanager:2.45.0'
     dependency 'io.zonky.test.postgres:embedded-postgres-binaries-bom:11.19.0'
     dependency 'io.zonky.test:embedded-postgres:2.0.3'
 
@@ -228,27 +221,6 @@ dependencyManagement {
               +--- com.azure:azure-identity:1.11.1
      */
     dependency 'com.nimbusds:nimbus-jose-jwt:9.37.3'
-
-    // besu 23.10.1 uses grpc 1.53.0 so vulnerable to
-    // CVE-2023-32731, CVE-2023-33953, CVE-2023-44487, CVE-2023-4785
-    dependencySet(group: 'io.grpc', version: '1.59.1') {
-      entry 'grpc-all'
-      entry 'grpc-core'
-      entry 'grpc-netty'
-      entry 'grpc-stub'
-      entry 'grpc-alts'
-      entry 'grpc-api'
-      entry 'grpc-auth'
-      entry 'grpc-context'
-      entry 'grpc-googleapis'
-      entry 'grpc-grpclb'
-      entry 'grpc-inprocess'
-      entry 'grpc-netty-shaded'
-      entry 'grpc-protobuf'
-      entry 'grpc-protobuf-lite'
-      entry 'grpc-services'
-      entry 'grpc-xds'
-    }
 
     // used in tests to assert log message
     dependency 'de.neuland-bfi:assertj-logging-log4j:0.5.0'

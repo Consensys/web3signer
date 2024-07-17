@@ -346,7 +346,9 @@ workflows:
               only:
                 - master
     jobs:
-      - build
+      - build:
+          context:
+            - protocols-signers
       - dockerScan
       - acceptanceTests:
           requires:
@@ -360,6 +362,8 @@ workflows:
           filters:
             tags: &filters-release-tags
               only: /^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?/
+          context:
+            - protocols-signers
       - acceptanceTests:
           requires:
             - build
