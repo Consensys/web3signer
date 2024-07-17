@@ -31,8 +31,6 @@ import java.util.stream.Collectors;
 
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
   private static final String UPCHECK_ENDPOINT = "/upcheck";
@@ -93,10 +91,8 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
         .statusCode(403);
   }
 
-  @ParameterizedTest
-  @ValueSource(strings = {"Host: \r\n", ""})
-  void httpEndpointWithoutHostHeaderRespondsWithForbiddenResponse(final String rawHeader)
-      throws Exception {
+  @Test
+  void upcheckWithoutValueInHostHeaderRespondsWithForbiddenResponse() throws Exception {
     final SignerConfiguration signerConfiguration =
         new SignerConfigurationBuilder()
             .withHttpAllowHostList(Collections.singletonList("127.0.0.1"))
@@ -116,7 +112,7 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
               + UPCHECK_ENDPOINT
               + " HTTP/1.1\r\n"
               + "Connection: close\r\n" // signals server to close the connection
-              + rawHeader
+              + "Host: \r\n"
               + "\r\n"; // end of headers section
       writer.write(req);
       writer.flush();
@@ -125,6 +121,38 @@ public class HttpHostAllowListAcceptanceTest extends AcceptanceTestBase {
 
       assertThat(response).startsWith("HTTP/1.1 403 Forbidden");
       assertThat(response).contains("{\"message\":\"Host not authorized.\"}");
+    }
+  }
+
+  @Test
+  void upcheckWithoutHostHeaderRespondsWithBadRequest() throws Exception {
+    final SignerConfiguration signerConfiguration =
+        new SignerConfigurationBuilder()
+            .withHttpAllowHostList(Collections.singletonList("127.0.0.1"))
+            .withMode("eth2")
+            .build();
+    startSigner(signerConfiguration);
+
+    // raw request without Host header
+    final URI uri = URI.create(signer.getUrl());
+    try (final Socket s = new Socket(InetAddress.getLoopbackAddress(), uri.getPort());
+        final PrintWriter writer =
+            new PrintWriter(new OutputStreamWriter(s.getOutputStream(), UTF_8), true);
+        final BufferedReader reader =
+            new BufferedReader(new InputStreamReader(s.getInputStream(), UTF_8))) {
+      final String req =
+          "GET "
+              + UPCHECK_ENDPOINT
+              + " HTTP/1.1\r\n"
+              + "Connection: close\r\n" // signals server to close the connection
+              + "\r\n"; // end of headers section
+      writer.write(req);
+      writer.flush();
+
+      final String response = reader.lines().collect(Collectors.joining("\n"));
+
+      assertThat(response).startsWith("HTTP/1.1 400 Bad Request");
+      assertThat(response).contains("Bad Request");
     }
   }
 }

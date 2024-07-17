@@ -26,9 +26,24 @@ public class LogErrorHandler implements Handler<RoutingContext> {
   public void handle(final RoutingContext failureContext) {
 
     if (failureContext.failed()) {
-      LOG.error(
-          String.format("Failed request: %s", failureContext.request().absoluteURI()),
-          failureContext.failure());
+      String requestUri;
+      try {
+        requestUri = failureContext.request().absoluteURI();
+      } catch (final NullPointerException e) {
+        // absoluteURI can throw an NPE if host or port is missing
+        requestUri = "Error in calculating request URI";
+      }
+
+      if (failureContext.failure() != null) {
+        LOG.error(
+            "Failed request: {}. With {}",
+            requestUri,
+            failureContext.failure().getMessage(),
+            failureContext.failure());
+      } else {
+        LOG.error("Failed request: {}", requestUri);
+      }
+
       // Let the next matching route or error handler deal with the error, we only handle logging
       failureContext.next();
     } else {
