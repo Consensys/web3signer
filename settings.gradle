@@ -21,3 +21,9 @@ include 'keystorage'
 include 'signing'
 include 'slashing-protection'
 include 'slashing-protection:referencetests'
+
+dependencyResolutionManagement {
+  repositories {
+    mavenCentral()
+  }
+}
