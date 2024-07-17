@@ -137,7 +137,7 @@ allprojects {
         exclude '**/build/**'
         exclude '.openapidoc/**'
       }
-      // removeUnusedImports() // conflicts with googleJavaFormat
+      // removeUnusedImports() // conflicts with googleJavaFormat for 7.0.0.BETA1
       // See gradle.properties for exports/opens flags required by JDK 16 and Google Java Format plugin
       googleJavaFormat('1.22.0')
       importOrder 'tech.pegasys', 'java', ''
@@ -149,12 +149,6 @@ allprojects {
       target '*.gradle'
       greclipse().configFile(rootProject.file('gradle/formatter.properties'))
       endWithNewline()
-    }
-
-    // Below this line are currently only license header tasks
-    format 'groovy', {
-      target '**/*.groovy'
-      licenseHeaderFile "${rootDir}/gradle/spotless.java.license", 'import'
     }
   }
 
