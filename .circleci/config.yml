@@ -223,13 +223,6 @@ jobs:
       - capture_test_results
       - capture_test_reports
 
-  performanceTests:
-    executor: trivy_executor
-    steps:
-      - run:
-          name: Performance Tests
-          command: echo "Performance tests are currently disabled for Java 21"
-
   publish:
     executor: executor_med
     steps:
@@ -365,12 +358,6 @@ workflows:
               <<: *filters-release-tags
           context:
             - protocols-signers
-      - performanceTests:
-          requires:
-            - build
-          filters:
-            tags:
-              <<: *filters-release-tags
       - publishOpenApiSpec:
           filters:
             branches:
