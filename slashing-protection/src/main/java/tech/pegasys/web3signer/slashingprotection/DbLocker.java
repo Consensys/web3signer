@@ -18,8 +18,8 @@ public class DbLocker {
 
   public enum LockType {
     BLOCK(0),
-    ATTESTATION(1),
-    ;
+    ATTESTATION(1);
+
     private final int lockOrdinal;
 
     LockType(final int lockOrdinal) {
