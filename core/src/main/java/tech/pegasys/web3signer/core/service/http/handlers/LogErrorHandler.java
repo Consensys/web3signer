@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers;
 
+import java.util.Optional;
+
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
@@ -24,19 +26,12 @@ public class LogErrorHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(final RoutingContext failureContext) {
-
     if (failureContext.failed()) {
-      String requestUri;
-      try {
-        requestUri = failureContext.request().absoluteURI();
-      } catch (final NullPointerException e) {
-        // absoluteURI can throw an NPE if host or port is missing
-        requestUri = "Error in calculating request URI";
-      }
+      final String requestUri = getRequestUri(failureContext);
 
       if (failureContext.failure() != null) {
         LOG.error(
-            "Failed request: {}. With {}",
+            "Failed request: {} due to {}",
             requestUri,
             failureContext.failure().getMessage(),
             failureContext.failure());
@@ -48,6 +43,17 @@ public class LogErrorHandler implements Handler<RoutingContext> {
       failureContext.next();
     } else {
       LOG.warn("Error handler triggered without any propagated failure");
+    }
+  }
+
+  private static String getRequestUri(RoutingContext failureContext) {
+    final String unexpectedUriCalculationMessage =
+        "Vertx failed to calculate request URI due to malformed host header.";
+    try {
+      return Optional.ofNullable(failureContext.request().absoluteURI())
+          .orElse(unexpectedUriCalculationMessage);
+    } catch (final NullPointerException e) {
+      return unexpectedUriCalculationMessage;
     }
   }
 }
