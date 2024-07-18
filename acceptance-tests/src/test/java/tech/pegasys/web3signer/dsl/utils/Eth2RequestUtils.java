@@ -121,19 +121,22 @@ public class Eth2RequestUtils {
   private static Eth2SigningRequestBody createAggregateAndProof() {
     final ForkInfo forkInfo = forkInfo();
     final Bytes sszBytes = Bytes.of(0, 0, 1, 1);
+    final AttestationData attestationData =
+        new AttestationData(
+            UInt64.ZERO,
+            UInt64.ZERO,
+            Bytes32.fromHexString(
+                "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"),
+            new Checkpoint(UInt64.ZERO, Bytes32.ZERO),
+            new Checkpoint(
+                UInt64.ZERO,
+                Bytes32.fromHexString(
+                    "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd")));
     final Attestation attestation =
         new Attestation(
             sszBytes,
-            new AttestationData(
-                UInt64.ZERO,
-                UInt64.ZERO,
-                Bytes32.fromHexString(
-                    "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"),
-                new Checkpoint(UInt64.ZERO, Bytes32.ZERO),
-                new Checkpoint(
-                    UInt64.ZERO,
-                    Bytes32.fromHexString(
-                        "0x100814c335d0ced5014cfa9d2e375e6d9b4e197381f8ce8af0473200fdc917fd"))),
+            attestationData,
+            sszBytes, // committee_bits
             BLSSignature.fromHexString(
                 "0xa627242e4a5853708f4ebf923960fb8192f93f2233cd347e05239d86dd9fb66b721ceec1baeae6647f498c9126074f1101a87854d674b6eebc220fd8c3d8405bdfd8e286b707975d9e00a56ec6cbbf762f23607d490f0bbb16c3e0e483d51875"));
     final BLSSignature selectionProof =
