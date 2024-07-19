@@ -63,7 +63,7 @@ dependencies {
   testImplementation 'com.github.arteam:simple-json-rpc-server'
   testImplementation 'com.github.arteam:simple-json-rpc-client'
   testImplementation 'org.flywaydb:flyway-core'
-  testRuntimeOnly    'org.flywaydb:org.flywaydb:flyway-database-postgresql'
+  testRuntimeOnly    'org.flywaydb:flyway-database-postgresql'
   testImplementation 'io.rest-assured:rest-assured'
   testImplementation 'org.jdbi:jdbi3-core'
   testImplementation 'org.zeroturnaround:zt-exec'
