@@ -159,7 +159,7 @@ dependencyManagement {
       entry 'kms'
     }
 
-    dependency 'io.rest-assured:rest-assured:4.4.0'
+    dependency 'io.rest-assured:rest-assured:5.5.0'
 
     /*
       com.squareup.okhttp3:logging-interceptor:4.9.0 // CVE-2021-0341
