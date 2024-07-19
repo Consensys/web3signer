@@ -82,9 +82,9 @@ commands:
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
-            - deps-{{ checksum "build.gradle" }}-{{ .Branch }}-{{ .Revision }}
-            - deps-{{ checksum "build.gradle" }}
-            - deps-
+            - deps21-{{ checksum "build.gradle" }}-{{ .Branch }}-{{ .Revision }}
+            - deps21-{{ checksum "build.gradle" }}
+            - deps21-
   machine_java:
     description: "Install Java 21 on machine executors"
     steps:
@@ -193,7 +193,7 @@ jobs:
       - capture_test_reports
       - save_cache:
           name: Caching gradle dependencies
-          key: deps-{{ checksum "build.gradle" }}-{{ .Branch }}-{{ .Revision }}
+          key: deps21-{{ checksum "build.gradle" }}-{{ .Branch }}-{{ .Revision }}
           paths:
             - .gradle
             - ~/.gradle
