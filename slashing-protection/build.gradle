@@ -50,6 +50,8 @@ dependencies {
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 
+  testRuntimeOnly 'org.flywaydb:org.flywaydb:flyway-database-postgresql'
+
   testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testFixturesImplementation 'io.zonky.test:embedded-postgres'
   testFixturesImplementation 'org.apache.commons:commons-lang3'
@@ -70,4 +72,5 @@ dependencies {
   integrationTestImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
   integrationTestImplementation sourceSets.testFixtures.output
   integrationTestRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  integrationTestRuntimeOnly 'org.flywaydb:org.flywaydb:flyway-database-postgresql'
 }

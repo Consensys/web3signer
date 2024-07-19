@@ -142,6 +142,7 @@ dependencyManagement {
     }
 
     dependency 'org.flywaydb:flyway-core:10.16.0'
+    dependency 'org.flywaydb:flyway-database-postgresql:10.16.0'
 
     dependency 'com.google.cloud:google-cloud-secretmanager:2.46.0'
     dependency 'io.zonky.test.postgres:embedded-postgres-binaries-bom:11.22.1'
