@@ -144,11 +144,6 @@ allprojects {
       endWithNewline()
       licenseHeaderFile "${rootDir}/gradle/spotless.java.license"
     }
-    groovyGradle {
-      target '*.gradle'
-      greclipse().configFile(rootProject.file('gradle/formatter.properties'))
-      endWithNewline()
-    }
   }
 
   dependencyCheck {
