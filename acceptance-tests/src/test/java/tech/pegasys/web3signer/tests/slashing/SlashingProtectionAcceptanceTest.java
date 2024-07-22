@@ -85,7 +85,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
     final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
-    assertThat(signer.getMatchedMetrics(ETH2_SLASHINGPROTECTION_METRICS))
+    assertThat(signer.getMetricsMatching(ETH2_SLASHINGPROTECTION_METRICS))
         .containsAllEntriesOf(
             Map.of(
                 ETH_2_SLASHINGPROTECTION_PERMITTED_SIGNINGS,
@@ -96,7 +96,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
     final Response secondResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
 
-    assertThat(signer.getMatchedMetrics(ETH2_SLASHINGPROTECTION_METRICS))
+    assertThat(signer.getMetricsMatching(ETH2_SLASHINGPROTECTION_METRICS))
         .containsAllEntriesOf(
             Map.of(
                 ETH_2_SLASHINGPROTECTION_PERMITTED_SIGNINGS,
@@ -116,7 +116,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
         signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
 
-    assertThat(signer.getMatchedMetrics(ETH2_SLASHINGPROTECTION_METRICS))
+    assertThat(signer.getMetricsMatching(ETH2_SLASHINGPROTECTION_METRICS))
         .containsAllEntriesOf(
             Map.of(
                 ETH_2_SLASHINGPROTECTION_PERMITTED_SIGNINGS,
@@ -130,7 +130,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(SLASHING_PROTECTION_ENFORCED);
 
-    assertThat(signer.getMatchedMetrics(ETH2_SLASHINGPROTECTION_METRICS))
+    assertThat(signer.getMetricsMatching(ETH2_SLASHINGPROTECTION_METRICS))
         .containsAllEntriesOf(
             Map.of(
                 ETH_2_SLASHINGPROTECTION_PERMITTED_SIGNINGS,
@@ -189,7 +189,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
 
     final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
-    assertThat(signer.getMatchedMetrics(ETH2_SLASHINGPROTECTION_METRICS))
+    assertThat(signer.getMetricsMatching(ETH2_SLASHINGPROTECTION_METRICS))
         .containsAllEntriesOf(
             Map.of(
                 ETH_2_SLASHINGPROTECTION_PERMITTED_SIGNINGS,
@@ -199,7 +199,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
 
     final Response secondResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(secondResponse.getStatusCode()).isEqualTo(200);
-    assertThat(signer.getMatchedMetrics(ETH2_SLASHINGPROTECTION_METRICS))
+    assertThat(signer.getMetricsMatching(ETH2_SLASHINGPROTECTION_METRICS))
         .containsAllEntriesOf(
             Map.of(
                 ETH_2_SLASHINGPROTECTION_PERMITTED_SIGNINGS,
@@ -222,7 +222,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
     final Response initialResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), initialRequest);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
-    assertThat(signer.getMatchedMetrics(ETH2_SLASHINGPROTECTION_METRICS))
+    assertThat(signer.getMetricsMatching(ETH2_SLASHINGPROTECTION_METRICS))
         .containsAllEntriesOf(
             Map.of(
                 ETH_2_SLASHINGPROTECTION_PERMITTED_SIGNINGS,
@@ -239,7 +239,7 @@ public class SlashingProtectionAcceptanceTest extends AcceptanceTestBase {
     final Response secondResponse =
         signer.eth2Sign(keyPair.getPublicKey().toString(), secondRequest);
     assertThat(secondResponse.getStatusCode()).isEqualTo(SLASHING_PROTECTION_ENFORCED);
-    assertThat(signer.getMatchedMetrics(ETH2_SLASHINGPROTECTION_METRICS))
+    assertThat(signer.getMetricsMatching(ETH2_SLASHINGPROTECTION_METRICS))
         .containsAllEntriesOf(
             Map.of(
                 ETH_2_SLASHINGPROTECTION_PERMITTED_SIGNINGS,

@@ -74,7 +74,7 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
 
     final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
-    assertThat(signer.getMatchedMetrics(ETH2_SLASHINGPROTECTION_METRICS))
+    assertThat(signer.getMetricsMatching(ETH2_SLASHINGPROTECTION_METRICS))
         .containsAllEntriesOf(
             Map.of(
                 ETH_2_SLASHINGPROTECTION_PERMITTED_SIGNINGS,

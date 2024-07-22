@@ -70,12 +70,12 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
             "filecoin_wallet_list_count_total",
             "filecoin_wallet_sign_message_count_total");
 
-    final Map<String, String> initialMetrics = signer.getMatchedMetrics(metricsOfInterest);
+    final Map<String, String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).values().allMatch(s -> s.endsWith("0.0"));
 
     signer.walletHas("t01234");
-    final Map<String, String> metricsAfterWalletHas = signer.getMatchedMetrics(metricsOfInterest);
+    final Map<String, String> metricsAfterWalletHas = signer.getMetricsMatching(metricsOfInterest);
     assertThat(metricsAfterWalletHas)
         .containsAllEntriesOf(
             Map.of(
@@ -85,7 +85,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
                 "1.0"));
 
     signer.walletList();
-    final Map<String, String> metricsAfterWalletList = signer.getMatchedMetrics(metricsOfInterest);
+    final Map<String, String> metricsAfterWalletList = signer.getMetricsMatching(metricsOfInterest);
     assertThat(metricsAfterWalletList)
         .containsAllEntriesOf(
             Map.of(
@@ -99,7 +99,7 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
     } catch (final Exception e) {
       // it is known that the signing will fail.
     }
-    final Map<String, String> metricsAfterWalletSign = signer.getMatchedMetrics(metricsOfInterest);
+    final Map<String, String> metricsAfterWalletSign = signer.getMetricsMatching(metricsOfInterest);
     assertThat(metricsAfterWalletSign).containsEntry("filecoin_total_request_count_total", "3.0");
   }
 
@@ -116,14 +116,14 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
 
     final Set<String> metricsOfInterest = Set.of("signing_bls_missing_identifier_count_total");
 
-    final Map<String, String> initialMetrics = signer.getMatchedMetrics(metricsOfInterest);
+    final Map<String, String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).containsEntry("signing_bls_missing_identifier_count_total", "0.0");
 
     signer.eth2Sign(
         "12345",
         Eth2RequestUtils.createBlockRequest(UInt64.valueOf(1), Bytes32.fromHexString("0x1111")));
-    final Map<String, String> metricsAfterSign = signer.getMatchedMetrics(metricsOfInterest);
+    final Map<String, String> metricsAfterSign = signer.getMetricsMatching(metricsOfInterest);
     assertThat(metricsAfterSign).containsEntry("signing_bls_missing_identifier_count_total", "1.0");
   }
 
@@ -155,14 +155,14 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
             "signing_"
                 + SECP256K1.name().toLowerCase(Locale.ROOT)
                 + "_missing_identifier_count_total");
-    final Map<String, String> initialMetrics = signer.getMatchedMetrics(metricsOfInterest);
+    final Map<String, String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).values().allMatch(s -> s.endsWith("0.0"));
 
     signer.eth1Sign(
         Numeric.toHexStringWithPrefixZeroPadded(keyPair.getPublicKey(), 128),
         Bytes.fromHexString("1122"));
-    final Map<String, String> metricsAfterSign = signer.getMatchedMetrics(metricsOfInterest);
+    final Map<String, String> metricsAfterSign = signer.getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)
         .containsAllEntriesOf(
@@ -200,14 +200,14 @@ public class MetricsAcceptanceTest extends AcceptanceTestBase {
         Set.of(
             "signing_" + BLS.name().toLowerCase(Locale.ROOT) + "_signing_duration_count",
             "signing_" + BLS.name().toLowerCase(Locale.ROOT) + "_missing_identifier_count_total");
-    final Map<String, String> initialMetrics = signer.getMatchedMetrics(metricsOfInterest);
+    final Map<String, String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
     assertThat(initialMetrics).hasSize(metricsOfInterest.size());
     assertThat(initialMetrics).values().allMatch(s -> s.endsWith("0.0"));
 
     signer.eth2Sign(
         keyPair.getPublicKey().toBytesCompressed().toHexString(),
         Eth2RequestUtils.createBlockRequest(UInt64.valueOf(1), Bytes32.fromHexString("0x1111")));
-    final Map<String, String> metricsAfterSign = signer.getMatchedMetrics(metricsOfInterest);
+    final Map<String, String> metricsAfterSign = signer.getMetricsMatching(metricsOfInterest);
 
     assertThat(metricsAfterSign)
         .containsAllEntriesOf(

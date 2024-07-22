@@ -31,7 +31,6 @@ import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -204,19 +203,18 @@ public class Signer extends FilecoinJsonRpcEndpoint {
     return keyType == BLS ? ETH2_SIGN_ENDPOINT : ETH1_SIGN_ENDPOINT;
   }
 
-  public Map<String, String> getMatchedMetrics(final Set<String> metricsOfInterest) {
+  public Map<String, String> getMetricsMatching(final Set<String> metricsOfInterest) {
     final Response response =
         given().baseUri(getMetricsUrl()).contentType(ContentType.JSON).when().get(METRICS_ENDPOINT);
 
-    return convertToLines(response.getBody().asString()).stream()
+    return response
+        .getBody()
+        .asString()
+        .lines()
         .filter(line -> !line.startsWith("#")) // remove comments
         .map(Signer::splitMetrics)
         .filter(entry -> metricsOfInterest.contains(entry.getKey()))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-  }
-
-  private static List<String> convertToLines(final String responseBody) {
-    return Arrays.asList(responseBody.split("\\r?\\n"));
   }
 
   private static Map.Entry<String, String> splitMetrics(final String input) {
