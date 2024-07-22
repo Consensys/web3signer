@@ -30,8 +30,10 @@ import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
 import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
 import tech.pegasys.web3signer.signing.KeyType;
 
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,8 +41,6 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -204,16 +204,29 @@ public class Signer extends FilecoinJsonRpcEndpoint {
     return keyType == BLS ? ETH2_SIGN_ENDPOINT : ETH1_SIGN_ENDPOINT;
   }
 
-  public Set<String> getMetricsMatching(final List<String> metricsOfInterest) {
+  public Map<String, String> getMatchedMetrics(final Set<String> metricsOfInterest) {
     final Response response =
         given().baseUri(getMetricsUrl()).contentType(ContentType.JSON).when().get(METRICS_ENDPOINT);
 
-    final List<String> lines =
-        Arrays.asList(response.getBody().asString().split(String.format("%n")).clone());
+    return convertToLines(response.getBody().asString()).stream()
+        .filter(line -> !line.startsWith("#")) // remove comments
+        .map(Signer::splitMetrics)
+        .filter(entry -> metricsOfInterest.contains(entry.getKey()))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+  }
 
-    return lines.stream()
-        .filter(line -> metricsOfInterest.contains(Iterables.get(Splitter.on(' ').split(line), 0)))
-        .collect(Collectors.toSet());
+  private static List<String> convertToLines(final String responseBody) {
+    return Arrays.asList(responseBody.split("\\r?\\n"));
+  }
+
+  private static Map.Entry<String, String> splitMetrics(final String input) {
+    if (input == null || input.isEmpty()) {
+      return new AbstractMap.SimpleEntry<>("", "");
+    }
+    final String[] tokens = input.split("\\s+", 2); // Split into two parts: key and the rest
+    final String key = tokens.length > 0 ? tokens[0] : "";
+    final String value = tokens.length > 1 ? tokens[1] : "";
+    return new AbstractMap.SimpleEntry<>(key, value);
   }
 
   public String getSlashingDbUrl() {
