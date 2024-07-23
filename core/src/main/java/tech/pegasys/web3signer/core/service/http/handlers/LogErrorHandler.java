@@ -27,19 +27,7 @@ public class LogErrorHandler implements Handler<RoutingContext> {
   @Override
   public void handle(final RoutingContext failureContext) {
     if (failureContext.failed()) {
-      final String requestUri =
-          getRequestUri(failureContext)
-              .orElse("Vertx failed to calculate request URI due to malformed host header.");
-
-      if (failureContext.failure() != null) {
-        LOG.error(
-            "Failed request: {} due to {}",
-            requestUri,
-            failureContext.failure().getMessage(),
-            failureContext.failure());
-      } else {
-        LOG.error("Failed request: {}", requestUri);
-      }
+      LOG.error("Failed request: {}", getRequestUri(failureContext), failureContext.failure());
 
       // Let the next matching route or error handler deal with the error, we only handle logging
       failureContext.next();
@@ -48,12 +36,13 @@ public class LogErrorHandler implements Handler<RoutingContext> {
     }
   }
 
-  private static Optional<String> getRequestUri(final RoutingContext failureContext) {
+  private static String getRequestUri(final RoutingContext failureContext) {
     try {
-      return Optional.ofNullable(failureContext.request().absoluteURI());
+      return Optional.ofNullable(failureContext.request().absoluteURI()).orElse("[null uri]");
     } catch (final NullPointerException e) {
       // absoluteURI() can throw NPE when header host is malformed.
-      return Optional.empty();
+      LOG.warn("Vertx failed to calculate request URI due to malformed host header.");
+      return "[null uri]";
     }
   }
 }
