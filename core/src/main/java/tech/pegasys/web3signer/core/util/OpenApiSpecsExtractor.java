@@ -108,8 +108,7 @@ public class OpenApiSpecsExtractor {
               .entrySet()
               .forEach(discriminatorMapEntry -> modifyRefValue(yamlFile, discriminatorMapEntry));
         }
-      } else if (value instanceof List) {
-        List listItems = (List) value;
+      } else if (value instanceof List listItems) {
         for (Object listItem : listItems) {
           if (listItem instanceof Map) {
             fixRelativePathInOpenApiMap(yamlFile, (Map<String, Object>) listItem);

@@ -48,7 +48,9 @@ dependencies {
   testImplementation (testFixtures(project(":signing")))
 
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
-  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine:5.7.0'
+  testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+
+  testImplementation 'org.flywaydb:flyway-database-postgresql'
 
   testFixturesImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testFixturesImplementation 'io.zonky.test:embedded-postgres'
@@ -59,11 +61,13 @@ dependencies {
   testFixturesImplementation 'org.jdbi:jdbi3-core'
   testFixturesImplementation 'org.junit.jupiter:junit-jupiter-api'
   testFixturesImplementation enforcedPlatform('io.zonky.test.postgres:embedded-postgres-binaries-bom')
+  testFixturesImplementation 'org.flywaydb:flyway-database-postgresql'
 
   integrationTestImplementation 'io.zonky.test:embedded-postgres'
   integrationTestImplementation 'org.assertj:assertj-core'
   integrationTestImplementation 'org.awaitility:awaitility'
   integrationTestImplementation 'org.flywaydb:flyway-core'
+  integrationTestImplementation 'org.flywaydb:flyway-database-postgresql'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-api'
   integrationTestImplementation 'org.junit.jupiter:junit-jupiter-params'
   integrationTestImplementation 'org.mockito:mockito-junit-jupiter'

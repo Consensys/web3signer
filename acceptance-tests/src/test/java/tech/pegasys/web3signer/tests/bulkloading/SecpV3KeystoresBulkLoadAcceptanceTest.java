@@ -45,9 +45,9 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.web3j.crypto.CipherException;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Keys;
+import org.web3j.crypto.exception.CipherException;
 
 public class SecpV3KeystoresBulkLoadAcceptanceTest extends AcceptanceTestBase {
   @TempDir private static Path keystoresDir;

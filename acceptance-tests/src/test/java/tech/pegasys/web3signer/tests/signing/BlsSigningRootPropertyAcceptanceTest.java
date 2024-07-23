@@ -89,8 +89,11 @@ public class BlsSigningRootPropertyAcceptanceTest extends SigningAcceptanceTestB
 
   private void setupMinimalWeb3Signer(final ArtifactType artifactType) {
     switch (artifactType) {
-      case BLOCK_V2, SYNC_COMMITTEE_MESSAGE, SYNC_COMMITTEE_SELECTION_PROOF, SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF -> setupEth2Signer(
-          Eth2Network.MINIMAL, SpecMilestone.ALTAIR);
+      case BLOCK_V2,
+              SYNC_COMMITTEE_MESSAGE,
+              SYNC_COMMITTEE_SELECTION_PROOF,
+              SYNC_COMMITTEE_CONTRIBUTION_AND_PROOF ->
+          setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.ALTAIR);
       default -> setupEth2Signer(Eth2Network.MINIMAL, SpecMilestone.PHASE0);
     }
   }

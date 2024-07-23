@@ -12,6 +12,8 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers;
 
+import java.util.Optional;
+
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
@@ -24,15 +26,23 @@ public class LogErrorHandler implements Handler<RoutingContext> {
 
   @Override
   public void handle(final RoutingContext failureContext) {
-
     if (failureContext.failed()) {
-      LOG.error(
-          String.format("Failed request: %s", failureContext.request().absoluteURI()),
-          failureContext.failure());
+      LOG.error("Failed request: {}", getRequestUri(failureContext), failureContext.failure());
+
       // Let the next matching route or error handler deal with the error, we only handle logging
       failureContext.next();
     } else {
       LOG.warn("Error handler triggered without any propagated failure");
+    }
+  }
+
+  private static String getRequestUri(final RoutingContext failureContext) {
+    try {
+      return Optional.ofNullable(failureContext.request().absoluteURI()).orElse("[null uri]");
+    } catch (final NullPointerException e) {
+      // absoluteURI() can throw NPE when header host is malformed.
+      LOG.warn("Vertx failed to calculate request URI due to malformed host header.");
+      return "[null uri]";
     }
   }
 }

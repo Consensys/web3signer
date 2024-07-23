@@ -67,7 +67,6 @@ import io.restassured.config.HttpClientConfig;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import io.vertx.core.Vertx;
-import org.apache.http.params.CoreConnectionPNames;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
@@ -264,8 +263,8 @@ public class IntegrationTestBase {
                 RestAssured.config()
                     .httpClient(
                         HttpClientConfig.httpClientConfig()
-                            .setParam(CoreConnectionPNames.CONNECTION_TIMEOUT, timeoutInMilliSec)
-                            .setParam(CoreConnectionPNames.SO_TIMEOUT, timeoutInMilliSec))));
+                            .setParam("http.connection.timeout", timeoutInMilliSec)
+                            .setParam("http.socket.timeout", timeoutInMilliSec))));
 
     final Response response = requestSpec.post(path);
 

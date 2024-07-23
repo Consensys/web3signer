@@ -31,7 +31,7 @@ import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dsl.InterchangeV5Format;
@@ -46,12 +46,8 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
   private static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
   public static final String DB_USERNAME = "postgres";
   public static final String DB_PASSWORD = "postgres";
-  protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
 
-  final List<String> blockSlashingMetrics =
-      List.of(
-          "eth2_slashingprotection_permitted_signings",
-          "eth2_slashingprotection_prevented_signings");
+  protected final BLSKeyPair keyPair = BLSTestUtil.randomKeyPair(0);
 
   void setupSigner(final Path testDirectory, final boolean enableSlashing) {
     final SignerConfigurationBuilder builder =
@@ -78,8 +74,13 @@ public class SlashingExportAcceptanceTest extends AcceptanceTestBase {
 
     final Response initialResponse = signer.eth2Sign(keyPair.getPublicKey().toString(), request);
     assertThat(initialResponse.getStatusCode()).isEqualTo(200);
-    assertThat(signer.getMetricsMatching(blockSlashingMetrics))
-        .containsOnly(blockSlashingMetrics.get(0) + " 1.0", blockSlashingMetrics.get(1) + " 0.0");
+    assertThat(signer.getMetricsMatching(ETH2_SLASHINGPROTECTION_METRICS))
+        .containsAllEntriesOf(
+            Map.of(
+                ETH_2_SLASHINGPROTECTION_PERMITTED_SIGNINGS,
+                "1.0",
+                ETH_2_SLASHINGPROTECTION_PREVENTED_SIGNINGS,
+                "0.0"));
 
     final Path exportFile = testDirectory.resolve("dbExport.json");
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();

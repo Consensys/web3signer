@@ -21,28 +21,27 @@ import java.text.SimpleDateFormat
 
 buildscript {
   repositories {
-    mavenCentral()
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
   }
   dependencies {
-    classpath 'tech.pegasys.internal.license.reporter:license-reporter:1.0.1'
-    classpath 'org.owasp:dependency-check-gradle:10.0.2'
+    classpath 'tech.pegasys.internal.license.reporter:license-reporter:1.1.1'
   }
 }
 
 plugins {
+  id 'org.owasp.dependencycheck' version "10.0.3"
   id 'java-test-fixtures'
-  id 'com.diffplug.spotless' version '6.2.0'
-  id 'com.github.ben-manes.versions' version '0.27.0'
-  id 'com.github.jk1.dependency-license-report' version '2.0'
-  id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-  id 'me.champeau.gradle.jmh' version '0.5.3' apply false
-  id 'net.ltgt.errorprone' version '2.0.2'
-  id 'org.ajoberstar.grgit' version '5.2.0'
+  id 'com.diffplug.spotless' version '7.0.0.BETA1'
+  id 'com.github.ben-manes.versions' version '0.51.0' //`./gradlew dependencyUpdates` to report outdated dependencies
+  id 'com.github.jk1.dependency-license-report' version '2.8'
+  id 'io.spring.dependency-management' version '1.1.6'
+  id 'me.champeau.jmh' version '0.7.2' apply false
+  id 'net.ltgt.errorprone' version '4.0.1'
+  id 'org.ajoberstar.grgit' version '5.2.2'
 }
 
-if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-  throw new GradleException("Java 17 or later is required to build Web3Signer.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
+  throw new GradleException("Java 21 or later is required to build Web3Signer.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -97,20 +96,20 @@ allprojects {
 
   version = rootProject.version
 
-  jacoco { toolVersion = '0.8.7' }
+  jacoco { toolVersion = '0.8.11' }
 
   task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
   }
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
   }
 
-  sourceCompatibility = 17
-  targetCompatibility = 17
+  sourceCompatibility = 21
+  targetCompatibility = 21
 
   repositories {
     // mavenLocal() //for local testing only, uncomment while testing locally build signers.
@@ -135,25 +134,14 @@ allprojects {
         include '**/*.java'
         exclude '**/.gradle/**'
         exclude '**/build/**'
+        exclude '.openapidoc/**'
       }
-      removeUnusedImports()
       // See gradle.properties for exports/opens flags required by JDK 16 and Google Java Format plugin
-      googleJavaFormat('1.10.0')
+      googleJavaFormat('1.22.0')
       importOrder 'tech.pegasys', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
       licenseHeaderFile "${rootDir}/gradle/spotless.java.license"
-    }
-    groovyGradle {
-      target '*.gradle'
-      greclipse().configFile(rootProject.file('gradle/formatter.properties'))
-      endWithNewline()
-    }
-
-    // Below this line are currently only license header tasks
-    format 'groovy', {
-      target '**/*.groovy'
-      licenseHeaderFile "${rootDir}/gradle/spotless.java.license", 'import'
     }
   }
 
@@ -264,7 +252,6 @@ allprojects {
     options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
-
 }
 
 task deploy() {}
@@ -474,7 +461,7 @@ tasks.register("dockerDistUntar") {
 }
 
 def dockerImage = "consensys/web3signer"
-def dockerJdkVariants = ["jdk17",]
+def dockerJdkVariants = ["jdk21",]
 def dockerBuildDir = "build/docker-web3signer/"
 
 task distDocker  {
@@ -607,8 +594,8 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   classDirectories.from files(subprojects.sourceSets.main.output)
   executionData.from files(subprojects.jacocoTestReport.executionData) //how to exclude some package/classes com.test.**
   reports {
-    xml.enabled true
-    csv.enabled true
+    xml.required = true
+    csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
   onlyIf = { true }

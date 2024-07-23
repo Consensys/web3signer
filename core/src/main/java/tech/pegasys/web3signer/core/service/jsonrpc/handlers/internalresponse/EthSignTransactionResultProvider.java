@@ -90,9 +90,7 @@ public class EthSignTransactionResultProvider implements ResultProvider<String> 
   public <T> T fromRpcRequestToJsonParam(final Class<T> type, final JsonRpcRequest request) {
     final Object object;
     final Object params = request.getParams();
-    if (params instanceof List) {
-      @SuppressWarnings("unchecked")
-      final List<Object> paramList = (List<Object>) params;
+    if (params instanceof List<?> paramList) {
       if (paramList.size() != 1) {
         throw new IllegalArgumentException(
             type.getSimpleName()

@@ -8,6 +8,10 @@ this release. The Web3Signer docker image will also use Java 21, however, binary
 require Java 21 to be available on the host machine.
 - This is the last Web3Signer release to use the "filecoin" mode. The "filecoin" mode will be removed in a future release.
 
+### Breaking Changes
+- Use Java 21 for build and runtime. Remove Java 17 variant of docker image. zip/tar.gz distributions will require Java 21 or above to run Web3Signer.
+- The Web3Signer metrics are now compatible with OpenMetrics data model. This results in the names of counter metrics to append `_total` suffix. Users may need to update their dashboards to reflect these changes. 
+
 ### Features Added
 - Added endpoint `/api/v1/eth2/ext/sign/:identifier` which is enabled using cli option `--Xsigning-ext-enabled=true`. 
 This endpoint allows signing of additional data not covered by the remoting API specs. [#982](https://github.com/Consensys/web3signer/pull/982)

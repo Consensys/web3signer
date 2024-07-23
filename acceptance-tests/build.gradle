@@ -13,9 +13,8 @@ import groovy.text.SimpleTemplateEngine
  */
 
 plugins {
-  id "de.undercouch.download" version "4.1.0"
+  id "de.undercouch.download" version "5.6.0"
   id "com.google.osdetector" version "1.7.3"
-  id "io.gatling.gradle" version "3.9.3.1"
 }
 
 dependencies {
@@ -64,6 +63,7 @@ dependencies {
   testImplementation 'com.github.arteam:simple-json-rpc-server'
   testImplementation 'com.github.arteam:simple-json-rpc-client'
   testImplementation 'org.flywaydb:flyway-core'
+  testImplementation 'org.flywaydb:flyway-database-postgresql'
   testImplementation 'io.rest-assured:rest-assured'
   testImplementation 'org.jdbi:jdbi3-core'
   testImplementation 'org.zeroturnaround:zt-exec'
@@ -80,8 +80,6 @@ dependencies {
   testImplementation 'com.azure:azure-security-keyvault-keys'
   testImplementation 'com.azure:azure-security-keyvault-secrets'
 
-  gatlingImplementation configurations.getByName("testImplementation")
-
   implementation 'software.amazon.awssdk:auth'
   implementation 'software.amazon.awssdk:secretsmanager'
   implementation 'software.amazon.awssdk:kms'
@@ -90,7 +88,7 @@ dependencies {
 test.enabled = false
 
 task cleanBesuInstall(type: Delete) {
-  delete "$buildDir/besu"
+  delete layout.buildDirectory.dir("besu")
 }
 
 task downloadBesu(type: Download) {
@@ -98,7 +96,7 @@ task downloadBesu(type: Download) {
     // see gradle.properties for Besu URL
     return new SimpleTemplateEngine().createTemplate(besuDistroUrl).make(["besuVersion":"$besuVersion"]).toString()
   }
-  dest new File(buildDir, "besu-${besuVersion}.tar.gz")
+  dest layout.buildDirectory.file("downloads/besu-${besuVersion}.tar.gz")
   onlyIfModified true
   retries 3
 }
@@ -114,15 +112,15 @@ task extractBesu(dependsOn: [
     }
     includeEmptyDirs = false
   }
-  into "$buildDir/besu"
+  into layout.buildDirectory.dir("besu")
 }
 
 def vaultBinary () {
   switch (osdetector.os) {
     case "windows":
-      return new File(buildDir, "vault.exe").toString()
+      return layout.buildDirectory.file("vault-bin/vault.exe").get().toString()
     default:
-      return new File(buildDir, "vault").toString()
+      return layout.buildDirectory.file("vault-bin/vault").get().toString()
   }
 }
 
@@ -154,13 +152,13 @@ task downloadVault(type: Download) {
   src {
     return vaultDownloadUrl()
   }
-  dest new File(buildDir, "hashicorp.zip")
+  dest layout.buildDirectory.file("downloads/hashicorp.zip")
   onlyIfModified true
 }
 
 task extractVault(dependsOn: downloadVault, type: Copy) {
   from zipTree(downloadVault.dest)
-  into buildDir
+  into layout.buildDirectory.dir("vault-bin")
 }
 
 task acceptanceTest(dependsOn: [

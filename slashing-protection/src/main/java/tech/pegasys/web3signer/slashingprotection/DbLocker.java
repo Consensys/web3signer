@@ -17,13 +17,23 @@ import org.jdbi.v3.core.Handle;
 public class DbLocker {
 
   public enum LockType {
-    BLOCK,
-    ATTESTATION
+    BLOCK(0),
+    ATTESTATION(1);
+
+    private final int lockOrdinal;
+
+    LockType(final int lockOrdinal) {
+      this.lockOrdinal = lockOrdinal;
+    }
+
+    public int lockOrdinal() {
+      return lockOrdinal;
+    }
   }
 
   public static void lockForValidator(
       final Handle handle, final LockType lockType, final int validatorId) {
-    handle.execute("SELECT pg_advisory_xact_lock(?, ?)", lockType.ordinal(), validatorId);
+    handle.execute("SELECT pg_advisory_xact_lock(?, ?)", lockType.lockOrdinal(), validatorId);
   }
 
   public static void lockAllForValidator(final Handle handle, final int validatorId) {
