@@ -26,17 +26,17 @@ import tech.pegasys.teku.infrastructure.jackson.deserializers.bytes.DoubleSerial
 import tech.pegasys.teku.infrastructure.jackson.deserializers.uints.UInt64Deserializer;
 import tech.pegasys.teku.infrastructure.jackson.deserializers.uints.UInt64Serializer;
 import tech.pegasys.teku.infrastructure.ssz.collections.SszBitvector;
-import tech.pegasys.teku.provider.BLSPubKeyDeserializer;
-import tech.pegasys.teku.provider.BLSPubKeySerializer;
-import tech.pegasys.teku.provider.BLSSignatureDeserializer;
-import tech.pegasys.teku.provider.BLSSignatureSerializer;
-import tech.pegasys.teku.provider.SszBitvectorSerializer;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexDeserialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.HexSerialiser;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Deserializer;
 import tech.pegasys.web3signer.common.JacksonSerializers.StringUInt64Serialiser;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.json.BlockRequestDeserializer;
+import tech.pegasys.web3signer.core.service.http.serializers.BLSPubKeyDeserializer;
+import tech.pegasys.web3signer.core.service.http.serializers.BLSPubKeySerializer;
+import tech.pegasys.web3signer.core.service.http.serializers.BLSSignatureDeserializer;
+import tech.pegasys.web3signer.core.service.http.serializers.BLSSignatureSerializer;
+import tech.pegasys.web3signer.core.service.http.serializers.SszBitvectorSerializer;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule;
 import tech.pegasys.web3signer.signing.config.metadata.parser.SigningMetadataModule.Bytes32Serializer;
 
