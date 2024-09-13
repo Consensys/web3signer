@@ -34,7 +34,7 @@ dependencyManagement {
 
     dependency 'info.picocli:picocli:4.7.6'
 
-    dependencySet(group: 'io.vertx', version: '4.5.9') {
+    dependencySet(group: 'io.vertx', version: '4.5.10') {
       entry 'vertx-codegen'
       entry ('vertx-core') {
         exclude group: 'io.netty', name: 'netty-handler'
@@ -144,7 +144,7 @@ dependencyManagement {
     dependency 'org.flywaydb:flyway-core:10.16.0'
     dependency 'org.flywaydb:flyway-database-postgresql:10.16.0'
 
-    dependency 'com.google.cloud:google-cloud-secretmanager:2.46.0'
+    dependency 'com.google.cloud:google-cloud-secretmanager:2.48.0'
     dependency 'io.zonky.test.postgres:embedded-postgres-binaries-bom:11.22.1'
     dependency 'io.zonky.test:embedded-postgres:2.0.7'
 
