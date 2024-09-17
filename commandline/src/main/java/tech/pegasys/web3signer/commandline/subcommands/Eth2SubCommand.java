@@ -127,6 +127,15 @@ public class Eth2SubCommand extends ModeSubCommand {
   private UInt64 denebForkEpoch;
 
   @CommandLine.Option(
+      names = {"--Xnetwork-electra-fork-epoch"},
+      hidden = true,
+      paramLabel = "<epoch>",
+      description = "Override the Electra fork activation epoch.",
+      arity = "1",
+      converter = UInt64Converter.class)
+  private UInt64 electraForkEpoch;
+
+  @CommandLine.Option(
       names = {"--Xtrusted-setup"},
       hidden = true,
       paramLabel = "<STRING>",
@@ -214,6 +223,9 @@ public class Eth2SubCommand extends ModeSubCommand {
     }
     if (denebForkEpoch != null) {
       builder.denebForkEpoch(denebForkEpoch);
+    }
+    if (electraForkEpoch != null) {
+      builder.electraForkEpoch(electraForkEpoch);
     }
     if (trustedSetup != null) {
       builder.trustedSetup(trustedSetup);

@@ -99,6 +99,13 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
         builder.withCapellaForkEpoch(0L);
         builder.withDenebForkEpoch(0L);
         break;
+      case ELECTRA:
+        builder.withAltairForkEpoch(0L);
+        builder.withBellatrixForkEpoch(0L);
+        builder.withCapellaForkEpoch(0L);
+        builder.withDenebForkEpoch(0L);
+        builder.withElectraForkEpoch(0L);
+        break;
       default:
         throw new IllegalStateException(
             "Setting manual fork epoch is not yet implemented for " + specMilestone);

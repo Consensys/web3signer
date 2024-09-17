@@ -494,6 +494,14 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
               signerConfig.getDenebForkEpoch().get()));
     }
 
+    if (signerConfig.getElectraForkEpoch().isPresent()) {
+      yamlConfig.append(
+          String.format(
+              YAML_NUMERIC_FMT,
+              "eth2.Xnetwork-electra-fork-epoch",
+              signerConfig.getElectraForkEpoch().get()));
+    }
+
     if (signerConfig.getNetwork().isPresent()) {
       yamlConfig.append(
           String.format(YAML_STRING_FMT, "eth2.network", signerConfig.getNetwork().get()));
