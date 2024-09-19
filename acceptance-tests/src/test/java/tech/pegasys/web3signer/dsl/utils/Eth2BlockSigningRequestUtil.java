@@ -76,6 +76,7 @@ public class Eth2BlockSigningRequestUtil {
       case BELLATRIX:
       case CAPELLA:
       case DENEB:
+      case ELECTRA:
         return createBlockV2Request(new BlockRequest(specMilestone, getBeaconBlockHeader()));
       default:
         throw new IllegalStateException(

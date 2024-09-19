@@ -135,7 +135,10 @@ public class DataStructureUtilAdapter {
                     .transactions(util.randomExecutionPayloadTransactions())
                     .withdrawals(() -> randomExecutionPayloadWithdrawals(specVersion))
                     .excessBlobGas(util::randomUInt64)
-                    .blobGasUsed(util::randomUInt64));
+                    .blobGasUsed(util::randomUInt64)
+                    .depositRequests(util::randomExecutionPayloadDepositRequests)
+                    .withdrawalRequests(util::randomWithdrawalRequests)
+                    .consolidationRequests(util::randomConsolidationRequests));
   }
 
   private List<Withdrawal> randomExecutionPayloadWithdrawals(final SpecVersion specVersion) {
