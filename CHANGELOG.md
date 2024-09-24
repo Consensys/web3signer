@@ -167,7 +167,7 @@ experimental flag to disable parallel processing `--Xmetadata-files-parallel-pro
 
 ### Bugs Fixed
 - Update of Azure libraries (transitive via signers library) and manual override to fix CVE-2023-1370
-- Fix issue with some third party libraries not including logs in the web3signer logs due missing slf4j2 library
+- Fix issue with some third party libraries not including logs in the web3signer logs due to missing slf4j2 library
 
 ---
 ## 23.3.0
