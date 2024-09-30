@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.tests.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import tech.pegasys.teku.api.schema.Attestation;
 import tech.pegasys.teku.bls.BLS;
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSPublicKey;
@@ -65,6 +66,13 @@ public class Eth2AggregateAndProofSigningAcceptanceTest extends SigningAcceptanc
     setupEth2Signer(Eth2Network.MINIMAL, specMilestone);
 
     final Eth2SigningRequestBody request = util.createAggregateAndProofV2Request();
+    // assert that the Attestation in AggregateAndProofV2 is created correctly for the spec
+    final Attestation aggregate = request.aggregateAndProofV2().data().aggregate;
+    if (specMilestone.isGreaterThanOrEqualTo(SpecMilestone.ELECTRA)) {
+      assertThat(aggregate.committee_bits).isNotNull();
+    } else {
+      assertThat(aggregate.committee_bits).isNull();
+    }
     final Response response =
         signer.eth2Sign(KEY_PAIR.getPublicKey().toString(), request, ContentType.JSON);
     final Bytes signature = verifyAndGetSignatureResponse(response, ContentType.JSON);
