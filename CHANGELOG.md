@@ -4,7 +4,7 @@
 
 ### Features Added
 - Java 21 for build and runtime. [#995](https://github.com/Consensys/web3signer/pull/995)
-- Electra fork support. [#1020](https://github.com/Consensys/web3signer/pull/1020)
+- Electra fork support. [#1020](https://github.com/Consensys/web3signer/pull/1020) and [#1023](https://github.com/Consensys/web3signer/pull/1023)
 
 ---
 ## 24.6.0
