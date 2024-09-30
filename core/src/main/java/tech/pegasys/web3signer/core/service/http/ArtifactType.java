@@ -17,7 +17,9 @@ public enum ArtifactType {
   BLOCK_V2,
   ATTESTATION,
   AGGREGATION_SLOT,
+  @Deprecated(since = "1.2.0") // Deprecated in Remoting API Spec v1.2.0
   AGGREGATE_AND_PROOF,
+  AGGREGATE_AND_PROOF_V2,
   DEPOSIT,
   RANDAO_REVEAL,
   VOLUNTARY_EXIT,

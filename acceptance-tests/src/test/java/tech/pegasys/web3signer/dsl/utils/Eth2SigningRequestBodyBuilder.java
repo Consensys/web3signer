@@ -12,12 +12,12 @@
  */
 package tech.pegasys.web3signer.dsl.utils;
 
-import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
 import tech.pegasys.teku.api.schema.altair.ContributionAndProof;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
+import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregateAndProofV2;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.AggregationSlot;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.BlockRequest;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.DepositMessage;
@@ -38,7 +38,7 @@ public final class Eth2SigningRequestBodyBuilder {
   private BlockRequest blockRequest;
   private AttestationData attestation;
   private AggregationSlot aggregationSlot;
-  private AggregateAndProof aggregateAndProof;
+  private AggregateAndProofV2 aggregateAndProofV2;
   private VoluntaryExit voluntaryExit;
   private RandaoReveal randaoReveal;
   private DepositMessage deposit;
@@ -88,8 +88,9 @@ public final class Eth2SigningRequestBodyBuilder {
     return this;
   }
 
-  public Eth2SigningRequestBodyBuilder withAggregateAndProof(AggregateAndProof aggregateAndProof) {
-    this.aggregateAndProof = aggregateAndProof;
+  public Eth2SigningRequestBodyBuilder withAggregateAndProofV2(
+      AggregateAndProofV2 aggregateAndProofV2) {
+    this.aggregateAndProofV2 = aggregateAndProofV2;
     return this;
   }
 
@@ -141,7 +142,7 @@ public final class Eth2SigningRequestBodyBuilder {
         blockRequest,
         attestation,
         aggregationSlot,
-        aggregateAndProof,
+        aggregateAndProofV2,
         voluntaryExit,
         randaoReveal,
         deposit,
