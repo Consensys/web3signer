@@ -6,6 +6,9 @@
 - Java 21 for build and runtime. [#995](https://github.com/Consensys/web3signer/pull/995)
 - Electra fork support. [#1020](https://github.com/Consensys/web3signer/pull/1020)
 
+### Bugs fixed
+- Override protobuf-java to 3.25.5 which is a transitive dependency from google-cloud-secretmanager. It fixes CVE-2024-7254.
+
 ---
 ## 24.6.0
 
