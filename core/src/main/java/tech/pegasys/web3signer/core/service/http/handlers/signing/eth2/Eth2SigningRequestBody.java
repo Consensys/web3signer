@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.signing.eth2;
 
-import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.AttestationData;
 import tech.pegasys.teku.api.schema.BeaconBlock;
 import tech.pegasys.teku.api.schema.VoluntaryExit;
@@ -31,7 +30,7 @@ public record Eth2SigningRequestBody(
     @JsonProperty("beacon_block") BlockRequest blockRequest,
     @JsonProperty("attestation") AttestationData attestation,
     @JsonProperty("aggregation_slot") AggregationSlot aggregationSlot,
-    @JsonProperty("aggregate_and_proof") AggregateAndProof aggregateAndProof,
+    @JsonProperty("aggregate_and_proof") AggregateAndProofV2 aggregateAndProofV2,
     @JsonProperty("voluntary_exit") VoluntaryExit voluntaryExit,
     @JsonProperty("randao_reveal") RandaoReveal randaoReveal,
     @JsonProperty("deposit") DepositMessage deposit,
