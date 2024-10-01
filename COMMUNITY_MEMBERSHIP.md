@@ -66,7 +66,7 @@ issues and PRs assigned to them.
 
 ## Approver
 
-Code approvers are members that have signed an ICLA and have been granted
+Code approvers are members who have signed an ICLA and have been granted
 additional commit privileges. While members are expected to provided code
 reviews that focus on code quality and correctness, approval is focused on
 holistic acceptance of a contribution including: backwards / forwards
