@@ -99,6 +99,12 @@ public class EthTransaction implements Transaction {
   }
 
   @Override
+  public boolean isEip4844() {
+    return transactionJsonParameters.maxFeePerBlobGas().isPresent()
+        && transactionJsonParameters.versionedHashes().isPresent();
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("chainId", chainId)
@@ -110,7 +116,19 @@ public class EthTransaction implements Transaction {
   }
 
   protected RawTransaction createTransaction() {
-    if (isEip1559()) {
+    if (isEip4844()) {
+      return RawTransaction.createTransaction(
+          chainId,
+          nonce,
+          transactionJsonParameters.maxPriorityFeePerGas().orElseThrow(),
+          transactionJsonParameters.maxFeePerGas().orElseThrow(),
+          transactionJsonParameters.gas().orElse(DEFAULT_GAS),
+          transactionJsonParameters.receiver().orElse(DEFAULT_TO),
+          transactionJsonParameters.value().orElse(DEFAULT_VALUE),
+          transactionJsonParameters.data().orElse(DEFAULT_DATA),
+          transactionJsonParameters.maxFeePerBlobGas().orElseThrow(),
+          transactionJsonParameters.versionedHashes().orElseThrow());
+    } else if (isEip1559()) {
       return RawTransaction.createTransaction(
           chainId,
           nonce,

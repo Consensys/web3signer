@@ -98,6 +98,11 @@ public abstract class PrivateTransaction implements Transaction {
   }
 
   @Override
+  public boolean isEip4844() {
+    return false;
+  }
+
+  @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("chainId", chainId)
