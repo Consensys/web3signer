@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static tech.pegasys.web3signer.dsl.tls.TlsClientHelper.createRequestSpecification;
 import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
-import static tech.pegasys.web3signer.tests.AcceptanceTestBase.JSON_RPC_PATH;
 
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
@@ -25,7 +24,6 @@ import tech.pegasys.web3signer.dsl.Accounts;
 import tech.pegasys.web3signer.dsl.Eth;
 import tech.pegasys.web3signer.dsl.PublicContracts;
 import tech.pegasys.web3signer.dsl.Transactions;
-import tech.pegasys.web3signer.dsl.lotus.FilecoinJsonRpcEndpoint;
 import tech.pegasys.web3signer.dsl.signer.runner.Web3SignerRunner;
 import tech.pegasys.web3signer.dsl.tls.ClientTlsConfig;
 import tech.pegasys.web3signer.signing.KeyType;
@@ -54,7 +52,7 @@ import org.web3j.protocol.core.Ethereum;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
 import org.web3j.protocol.http.HttpService;
 
-public class Signer extends FilecoinJsonRpcEndpoint {
+public class Signer {
 
   private static final Logger LOG = LogManager.getLogger();
   public static final String ETH1_SIGN_ENDPOINT =
@@ -84,7 +82,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
   private Web3j jsonRpc;
 
   public Signer(final SignerConfiguration signerConfig, final ClientTlsConfig clientTlsConfig) {
-    super(JSON_RPC_PATH);
     this.signerConfig = signerConfig;
     this.runner = Web3SignerRunner.createRunner(signerConfig);
     this.hostname = signerConfig.hostname();
@@ -130,7 +127,6 @@ public class Signer extends FilecoinJsonRpcEndpoint {
     LOG.info("Signer is now responsive");
   }
 
-  @Override
   public String getUrl() {
     return String.format(urlFormatting, hostname, runner.httpPort());
   }

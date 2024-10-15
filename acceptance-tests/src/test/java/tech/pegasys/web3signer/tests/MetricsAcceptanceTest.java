@@ -38,70 +38,11 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Keys;
 import org.web3j.utils.Numeric;
 
 public class MetricsAcceptanceTest extends AcceptanceTestBase {
-
-  @ParameterizedTest
-  @ValueSource(booleans = {true, false})
-  void filecoinApisAreCounted(final boolean useConfigFile) {
-    final SignerConfiguration signerConfiguration =
-        new SignerConfigurationBuilder()
-            .withMetricsCategories("FILECOIN")
-            .withMetricsEnabled(true)
-            .withMode("filecoin")
-            .withUseConfigFile(useConfigFile)
-            .withChainIdProvider(new ConfigurationChainId(FILECOIN_CHAIN_ID))
-            .build();
-    startSigner(signerConfiguration);
-
-    final Set<String> metricsOfInterest =
-        Set.of(
-            "filecoin_"
-                + SECP256K1.name().toLowerCase(Locale.ROOT)
-                + "_signing_request_count_total",
-            "filecoin_" + BLS.name().toLowerCase(Locale.ROOT) + "_signing_request_count_total",
-            "filecoin_total_request_count_total",
-            "filecoin_wallet_has_count_total",
-            "filecoin_wallet_list_count_total",
-            "filecoin_wallet_sign_message_count_total");
-
-    final Map<String, String> initialMetrics = signer.getMetricsMatching(metricsOfInterest);
-    assertThat(initialMetrics).hasSize(metricsOfInterest.size());
-    assertThat(initialMetrics).values().allMatch(s -> s.endsWith("0.0"));
-
-    signer.walletHas("t01234");
-    final Map<String, String> metricsAfterWalletHas = signer.getMetricsMatching(metricsOfInterest);
-    assertThat(metricsAfterWalletHas)
-        .containsAllEntriesOf(
-            Map.of(
-                "filecoin_total_request_count_total",
-                "1.0",
-                "filecoin_wallet_has_count_total",
-                "1.0"));
-
-    signer.walletList();
-    final Map<String, String> metricsAfterWalletList = signer.getMetricsMatching(metricsOfInterest);
-    assertThat(metricsAfterWalletList)
-        .containsAllEntriesOf(
-            Map.of(
-                "filecoin_total_request_count_total",
-                "2.0",
-                "filecoin_wallet_has_count_total",
-                "1.0"));
-
-    try {
-      signer.walletSign("t01234", Bytes.fromHexString("0x1234"));
-    } catch (final Exception e) {
-      // it is known that the signing will fail.
-    }
-    final Map<String, String> metricsAfterWalletSign = signer.getMetricsMatching(metricsOfInterest);
-    assertThat(metricsAfterWalletSign).containsEntry("filecoin_total_request_count_total", "3.0");
-  }
 
   @Test
   void missingSignerMetricIncreasesWhenUnmatchedRequestReceived() throws JsonProcessingException {
