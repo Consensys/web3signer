@@ -65,6 +65,11 @@ public abstract class PrivateTransaction implements Transaction {
   }
 
   @Override
+  public byte[] rlpEncodeToSign() {
+    return rlpEncode(null);
+  }
+
+  @Override
   public boolean isNonceUserSpecified() {
     return transactionJsonParameters.nonce().isPresent();
   }

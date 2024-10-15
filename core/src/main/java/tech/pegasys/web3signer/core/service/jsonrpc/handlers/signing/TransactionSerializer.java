@@ -24,11 +24,14 @@ import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.secp256k1.Signature;
 
 import java.nio.ByteBuffer;
+import java.util.Base64;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.crypto.TransactionEncoder;
 import org.web3j.crypto.transaction.type.TransactionType;
+
+import javax.crypto.spec.PSource;
 
 public class TransactionSerializer {
 
@@ -79,9 +82,21 @@ public class TransactionSerializer {
         .array();
   }
 
+  private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+  public static String bytesToHex(byte[] bytes) {
+    char[] hexChars = new char[bytes.length * 2];
+    for (int j = 0; j < bytes.length; j++) {
+      int v = bytes[j] & 0xFF;
+      hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+      hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+    }
+    return new String(hexChars);
+  }
+
   private byte[] serializeEip4844(final Transaction transaction) {
-    byte[] bytesToSign = transaction.rlpEncode(null);
+    byte[] bytesToSign = transaction.rlpEncodeToSign();
     bytesToSign = prependEip4844TransactionType(bytesToSign);
+    System.out.println("signing eip4844 " +bytesToHex(bytesToSign));
 
     final SignatureData signatureData = sign(transaction.sender(), bytesToSign);
 

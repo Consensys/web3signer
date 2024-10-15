@@ -33,6 +33,7 @@ public interface Transaction {
   void updateFieldsIfRequired();
 
   byte[] rlpEncode(SignatureData signatureData);
+  byte[] rlpEncodeToSign();
 
   boolean isNonceUserSpecified();
 

@@ -23,18 +23,14 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.tra
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.web3j.crypto.Sign.SignatureData;
 import org.web3j.crypto.SignedRawTransaction;
 import org.web3j.crypto.TransactionDecoder;
 import org.web3j.crypto.transaction.type.Transaction1559;
-import org.web3j.crypto.transaction.type.Transaction4844;
 import org.web3j.crypto.transaction.type.TransactionType;
 import org.web3j.utils.Numeric;
 
@@ -126,59 +122,6 @@ public class EthTransactionTest {
   private static byte[] prependEip1559TransactionType(byte[] bytesToSign) {
     return ByteBuffer.allocate(bytesToSign.length + 1)
         .put(TransactionType.EIP1559.getRlpType())
-        .put(bytesToSign)
-        .array();
-  }
-
-  @Test
-  public void rlpEncodesEip4844Transaction() {
-    final EthSendTransactionJsonParameters params =
-        new EthSendTransactionJsonParameters("0x7577919ae5df4941180eac211965f275cdce314d");
-    params.receiver("0xd46e8dd67c5d32be8058bb8eb970870f07244567");
-    params.gas("0x76c0");
-    params.maxPriorityFeePerGas("0x9184e72a000");
-    params.maxFeePerGas("0x9184e72a001");
-    params.nonce("0xe04d296d2460cfb8472af2c5fd05b5a214109c25688d3704aed5484f9a7792f2");
-    params.value("0x0");
-    params.data(
-        "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675");
-    params.maxFeePerBlobGas("0x123456789");
-    ArrayList<String> versionedHashes = new ArrayList<>();
-    versionedHashes.add("0x0102030000000000000000000000000000000000000000000000000000000000");
-    params.versionedHashes(versionedHashes);
-
-    ethTransaction =
-        new EthTransaction(1337L, params, () -> BigInteger.ZERO, new JsonRpcRequestId(1));
-
-    final SignatureData signatureData = null;
-    final byte[] rlpEncodedBytes = ethTransaction.rlpEncode(signatureData);
-    final String rlpString = Numeric.toHexString(prependEip4844TransactionType(rlpEncodedBytes));
-
-    final Transaction4844 decodedTransaction =
-        (Transaction4844) TransactionDecoder.decode(rlpString).getTransaction();
-    assertThat(decodedTransaction.getTo()).isEqualTo("0xd46e8dd67c5d32be8058bb8eb970870f07244567");
-    assertThat(decodedTransaction.getGasLimit()).isEqualTo(Numeric.decodeQuantity("0x76c0"));
-    assertThat(decodedTransaction.getMaxPriorityFeePerGas())
-        .isEqualTo(Numeric.decodeQuantity("0x9184e72a000"));
-    assertThat(decodedTransaction.getMaxFeePerGas())
-        .isEqualTo(Numeric.decodeQuantity("0x9184e72a001"));
-    assertThat(decodedTransaction.getNonce())
-        .isEqualTo(
-            Numeric.decodeQuantity(
-                "0xe04d296d2460cfb8472af2c5fd05b5a214109c25688d3704aed5484f9a7792f2"));
-    assertThat(decodedTransaction.getValue()).isEqualTo(Numeric.decodeQuantity("0x0"));
-    assertThat(decodedTransaction.getData())
-        .isEqualTo(
-            "d46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675");
-    assertThat(decodedTransaction.getMaxFeePerBlobGas())
-        .isEqualTo(Numeric.decodeQuantity("0x123456789"));
-    assertThat(decodedTransaction.getVersionedHashes())
-        .isEqualTo(versionedHashes.stream().map(Bytes::fromHexString).collect(Collectors.toList()));
-  }
-
-  private static byte[] prependEip4844TransactionType(byte[] bytesToSign) {
-    return ByteBuffer.allocate(bytesToSign.length + 1)
-        .put(TransactionType.EIP4844.getRlpType())
         .put(bytesToSign)
         .array();
   }

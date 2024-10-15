@@ -40,6 +40,7 @@ public class EthSendTransactionJsonParameters {
   private BigInteger maxFeePerBlobGas;
   private List<Bytes> versionedHashes;
 
+
   @JsonCreator
   public EthSendTransactionJsonParameters(@JsonProperty("from") final String sender) {
     validateNotEmpty(sender);
