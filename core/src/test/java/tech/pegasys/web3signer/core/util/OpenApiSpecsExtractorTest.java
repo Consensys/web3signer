@@ -26,8 +26,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 class OpenApiSpecsExtractorTest {
 
   @ParameterizedTest
-  @ValueSource(
-      strings = {"eth1/web3signer.yaml", "eth2/web3signer.yaml", "filecoin/web3signer.yaml"})
+  @ValueSource(strings = {"eth1/web3signer.yaml", "eth2/web3signer.yaml"})
   void openapiSpecsAreExtractedAndLoaded(final String spec) throws Exception {
     final OpenApiSpecsExtractor openApiSpecsExtractor =
         new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()

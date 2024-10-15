@@ -52,7 +52,6 @@ class SwaggerUIRouteTest {
     assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui"));
     assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/"));
     assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/eth2/web3signer.yaml"));
-    assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/filecoin/web3signer.yaml"));
     assertThat(swaggerUIWebRoot).containsKey(Path.of("/swagger-ui/eth1/web3signer.yaml"));
   }
 }

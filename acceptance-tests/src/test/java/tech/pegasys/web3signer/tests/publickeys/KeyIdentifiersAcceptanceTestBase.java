@@ -53,15 +53,6 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
   protected static final String SECP_PUBLIC_KEY_1 =
       "0x24491715b7514b315d06b6be809173e7c8051a2cd1880d29f8af5efda30e0877e816820c91d46444afc4063742a1602648751df36e11b5c95037fab1d4dd93eb";
 
-  // These values were generated using go-address https://github.com/filecoin-project/go-address
-  // with above corresponding public keys
-  protected static final String SECP_FC_ADDRESS_1 = "f1yv62jzybqbktnamqrart5ovqtpuiizf33dv45ga";
-  protected static final String SECP_FC_ADDRESS_2 = "f1fg4ofyvbbqkobf7gdv4ggozuhen5johtimueabi";
-  protected static final String BLS_FC_ADDRESS_1 =
-      "f3tcoti4s2fp6d6fiql47v7sdud5bwyjpod3spssheexllzogfnphg4bwcnfrvw7uylj77uy46eqe36xecyo6a";
-  protected static final String BLS_FC_ADDRESS_2 =
-      "f3w3xgslow4fgr5clqa23ew6l4moiiyf6oqbglgkz47ula4xm7xxdkpi4kpmdbhqgts4k5n63qmjav6uulgb4q";
-
   protected static final MetadataFileHelpers METADATA_FILE_HELPERS = new MetadataFileHelpers();
 
   @TempDir Path testDirectory;
@@ -77,12 +68,6 @@ public class KeyIdentifiersAcceptanceTestBase extends AcceptanceTestBase {
     return keyType == BLS
         ? createBlsKeys(isValid, privateKeys)
         : createSecpKeys(isValid, privateKeys);
-  }
-
-  protected String[] filecoinAddresses(final KeyType keyType) {
-    return keyType == BLS
-        ? new String[] {BLS_FC_ADDRESS_1, BLS_FC_ADDRESS_2}
-        : new String[] {SECP_FC_ADDRESS_1, SECP_FC_ADDRESS_2};
   }
 
   protected String[] createBlsKeys(final boolean isValid, final String... privateKeys) {

@@ -189,8 +189,6 @@ jobs:
       - prepare
       - attach_workspace:
           at: ~/project
-      # Wait for FC-DevNet to be up
-      - run: sleep 5 && nc -vz localhost 7777
       - run:
           name: Acceptance Tests
           no_output_timeout: 20m
