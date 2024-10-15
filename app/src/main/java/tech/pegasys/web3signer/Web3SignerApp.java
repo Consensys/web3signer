@@ -18,7 +18,6 @@ import tech.pegasys.web3signer.commandline.CommandlineParser;
 import tech.pegasys.web3signer.commandline.Web3SignerBaseCommand;
 import tech.pegasys.web3signer.commandline.subcommands.Eth1SubCommand;
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
-import tech.pegasys.web3signer.commandline.subcommands.FilecoinSubCommand;
 import tech.pegasys.web3signer.common.ApplicationInfo;
 
 import java.io.PrintWriter;
@@ -45,8 +44,7 @@ public class Web3SignerApp {
     final PrintWriter errorWriter = new PrintWriter(System.err, true, UTF_8);
     final CommandlineParser cmdLineParser =
         new CommandlineParser(baseCommand, outputWriter, errorWriter, environment);
-    cmdLineParser.registerSubCommands(
-        new Eth2SubCommand(), new Eth1SubCommand(), new FilecoinSubCommand());
+    cmdLineParser.registerSubCommands(new Eth2SubCommand(), new Eth1SubCommand());
     final int result = cmdLineParser.parseCommandLine(args);
 
     if (result != 0) {
