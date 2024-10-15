@@ -1,6 +1,8 @@
 # Changelog
 
 ## Next Release
+### Breaking Changes
+- Filecoin mode has been removed.
 
 ### Features Added
 - Java 21 for build and runtime. [#995](https://github.com/Consensys/web3signer/pull/995)

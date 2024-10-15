@@ -37,12 +37,6 @@ public class SigningAcceptanceTestBase extends AcceptanceTestBase {
     startSigner(builder.build());
   }
 
-  protected void setupFilecoinSigner() {
-    final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
-    builder.withKeyStoreDirectory(testDirectory).withMode("filecoin");
-    startSigner(builder.build());
-  }
-
   protected void setupEth2Signer(final Eth2Network eth2Network, final SpecMilestone specMilestone) {
     final SignerConfigurationBuilder builder = new SignerConfigurationBuilder();
     builder
