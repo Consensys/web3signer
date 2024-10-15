@@ -27,25 +27,6 @@ executors:
       JAVA_TOOL_OPTIONS: -Xmx4096m
       GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -Xmx4096m
 
-  executor_large_with_fc_devnet: # 4cpu, 8G ram
-    docker:
-      # Primary container
-      - image: cimg/openjdk:21.0
-        auth:
-          <<: *docker-auth     
-      # Secondary container running lotus as devnet on port 7777
-      - image: textile/lotus-devnet
-        auth:
-          <<: *docker-auth       
-        environment:
-          TEXLOTUSDEVNET_BIGSECTORS: false
-    resource_class: large
-    working_directory: ~/project
-    environment:
-      JAVA_TOOL_OPTIONS: -Xmx4096m
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4 -Xmx4096m
-      LOTUS_PORT: 7777
-
   executor_node:
     docker:
       - image: cimg/node:17.1.0
@@ -203,7 +184,7 @@ jobs:
             - ./
 
   acceptanceTests:
-    executor: executor_large_with_fc_devnet
+    executor: executor_large
     steps:
       - prepare
       - attach_workspace:
