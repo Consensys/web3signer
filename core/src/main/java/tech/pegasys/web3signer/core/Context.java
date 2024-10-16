@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.core;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
+import java.util.List;
+
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -24,14 +26,14 @@ public class Context {
   private final MetricsSystem metricsSystem;
   private final LogErrorHandler errorHandler;
   private final Vertx vertx;
-  private final ArtifactSignerProvider artifactSignerProvider;
+  private final List<ArtifactSignerProvider> artifactSignerProvider;
 
   public Context(
       final Router router,
       final MetricsSystem metricsSystem,
       final LogErrorHandler errorHandler,
       final Vertx vertx,
-      final ArtifactSignerProvider artifactSignerProvider) {
+      final List<ArtifactSignerProvider> artifactSignerProvider) {
     this.router = router;
     this.metricsSystem = metricsSystem;
     this.errorHandler = errorHandler;
@@ -55,7 +57,7 @@ public class Context {
     return vertx;
   }
 
-  public ArtifactSignerProvider getArtifactSignerProvider() {
+  public List<ArtifactSignerProvider> getArtifactSignerProvider() {
     return artifactSignerProvider;
   }
 }

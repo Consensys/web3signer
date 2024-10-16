@@ -27,7 +27,7 @@ import io.vertx.core.net.PfxOptions;
 import io.vertx.core.net.ProxyOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 
-class WebClientOptionsFactory {
+public class WebClientOptionsFactory {
 
   public WebClientOptions createWebClientOptions(final Eth1Config eth1Config) {
     final WebClientOptions clientOptions =

@@ -12,9 +12,9 @@
  */
 package tech.pegasys.web3signer.dsl.tls.support;
 
-import static tech.pegasys.web3signer.core.Eth1Runner.createJsonDecoder;
 import static tech.pegasys.web3signer.dsl.tls.support.CertificateHelpers.populateFingerprintFile;
 
+import tech.pegasys.web3signer.core.service.jsonrpc.Eth1JsonDecoderFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonDecoder;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.HttpResponseFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.JsonRpcErrorHandler;
@@ -81,7 +81,7 @@ public class TlsEnabledHttpServerFactory {
               .setPassword(serverCert.getPassword()));
 
       final Router router = Router.router(vertx);
-      final JsonDecoder jsonDecoder = createJsonDecoder();
+      final JsonDecoder jsonDecoder = Eth1JsonDecoderFactory.create();
       final RequestMapper requestMapper = new RequestMapper(new MockBalanceReporter());
       router
           .route(HttpMethod.POST, "/")

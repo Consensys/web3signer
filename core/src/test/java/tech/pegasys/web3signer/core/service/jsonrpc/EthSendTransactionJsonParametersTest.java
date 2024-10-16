@@ -14,7 +14,6 @@ package tech.pegasys.web3signer.core.service.jsonrpc;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
 
 import java.math.BigInteger;
@@ -31,7 +30,7 @@ public class EthSendTransactionJsonParametersTest {
   @BeforeEach
   public void setup() {
     // NOTE: the factory has been configured as per its use in the application.
-    factory = new TransactionFactory(1337L, Eth1Runner.createJsonDecoder(), null);
+    factory = new TransactionFactory(1337L, Eth1JsonDecoderFactory.create(), null);
   }
 
   private Optional<BigInteger> getStringAsOptionalBigInteger(

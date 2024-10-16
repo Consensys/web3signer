@@ -16,7 +16,6 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import tech.pegasys.web3signer.core.Eth1Runner;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
 
 import java.math.BigInteger;
@@ -35,7 +34,7 @@ public class EeaSendTransactionJsonParametersTest {
   @BeforeEach
   public void setup() {
     // NOTE: the factory has been configured as per its use in the application.
-    factory = new TransactionFactory(1337L, Eth1Runner.createJsonDecoder(), null);
+    factory = new TransactionFactory(1337L, Eth1JsonDecoderFactory.create(), null);
   }
 
   @Test
