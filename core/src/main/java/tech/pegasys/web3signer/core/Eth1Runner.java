@@ -22,7 +22,6 @@ import tech.pegasys.web3signer.core.routes.PublicKeysListRoute;
 import tech.pegasys.web3signer.core.routes.ReloadRoute;
 import tech.pegasys.web3signer.core.routes.eth1.Eth1SignRoute;
 import tech.pegasys.web3signer.core.routes.eth1.JsonRpcRoute;
-import tech.pegasys.web3signer.core.service.jsonrpc.handlers.HttpResponseFactory;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
@@ -71,12 +70,8 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
  *     address to primary key.
  */
 public class Eth1Runner extends Runner {
-  public static final String PUBLIC_KEYS_PATH = "/api/v1/eth1/publicKeys";
-  public static final String ROOT_PATH = "/";
-  public static final String SIGN_PATH = "/api/v1/eth1/sign/:identifier";
   private static final Logger LOG = LogManager.getLogger();
   private final Eth1Config eth1Config;
-  private final HttpResponseFactory responseFactory = new HttpResponseFactory();
 
   public Eth1Runner(final BaseConfig baseConfig, final Eth1Config eth1Config) {
     super(baseConfig);

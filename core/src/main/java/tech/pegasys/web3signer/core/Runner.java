@@ -21,8 +21,8 @@ import tech.pegasys.web3signer.core.config.ClientAuthConstraints;
 import tech.pegasys.web3signer.core.config.MetricsPushOptions;
 import tech.pegasys.web3signer.core.config.TlsOptions;
 import tech.pegasys.web3signer.core.metrics.vertx.VertxMetricsAdapterFactory;
+import tech.pegasys.web3signer.core.routes.SwaggerUIRoute;
 import tech.pegasys.web3signer.core.service.http.HostAllowListHandler;
-import tech.pegasys.web3signer.core.service.http.SwaggerUIRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
 import tech.pegasys.web3signer.core.service.http.handlers.UpcheckHandler;
 import tech.pegasys.web3signer.core.util.FileUtil;
@@ -78,7 +78,6 @@ public abstract class Runner implements Runnable, AutoCloseable {
   public static final String TEXT_PLAIN = HttpHeaderValues.TEXT_PLAIN.toString();
   public static final String HEALTHCHECK_PATH = "/healthcheck";
   public static final String UPCHECK_PATH = "/upcheck";
-  public static final String RELOAD_PATH = "/reload";
 
   private static final Logger LOG = LogManager.getLogger();
 

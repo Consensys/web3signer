@@ -10,7 +10,7 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  */
-package tech.pegasys.web3signer.core.service.http;
+package tech.pegasys.web3signer.core.routes;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -30,7 +30,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class SwaggerUIRoute {
+public class SwaggerUIRoute implements Web3SignerRoute {
   private static final Logger LOG = LogManager.getLogger();
   private static final String CONTENT_TYPE_TEXT_HTML = "text/html; charset=utf-8";
   private static final String SWAGGER_ENDPOINT = "/swagger-ui";
@@ -40,13 +40,19 @@ public class SwaggerUIRoute {
     this.router = router;
   }
 
-  public void register() throws IOException {
+  @Override
+  public void register() {
     LOG.info("Registering /swagger-ui routes ...");
-    final OpenApiSpecsExtractor openApiSpecsExtractor =
-        new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
-            .withConvertRelativeRefToAbsoluteRef(false)
-            .withForceDeleteOnJvmExit(true)
-            .build();
+    final OpenApiSpecsExtractor openApiSpecsExtractor;
+    try {
+      openApiSpecsExtractor =
+          new OpenApiSpecsExtractor.OpenApiSpecsExtractorBuilder()
+              .withConvertRelativeRefToAbsoluteRef(false)
+              .withForceDeleteOnJvmExit(true)
+              .build();
+    } catch (final IOException e) {
+      throw new UncheckedIOException(e);
+    }
 
     final Map<Path, String> swaggerUIWebRoot;
     swaggerUIWebRoot = loadSwaggerUIStaticContent(openApiSpecsExtractor);
