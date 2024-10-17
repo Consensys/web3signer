@@ -74,14 +74,19 @@ public class JsonRpcRoute implements Web3SignerRoute {
       throw new IllegalStateException(
           "No SecpArtifactSignerProviderAdapter found in Context for eth1 mode");
     }
+    // use same instance of downstreamHttpClient and path calculator for all requests
+    final HttpClient downstreamHttpClient =
+        createDownstreamHttpClient(eth1Config, context.getVertx());
+    final DownstreamPathCalculator downstreamPathCalculator =
+        new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath());
 
     transmitterFactory =
         responseBodyHandler ->
             new VertxRequestTransmitter(
                 context.getVertx(),
-                createDownstreamHttpClient(eth1Config, context.getVertx()),
+                downstreamHttpClient,
                 eth1Config.getDownstreamHttpRequestTimeout(),
-                new DownstreamPathCalculator(eth1Config.getDownstreamHttpPath()),
+                downstreamPathCalculator,
                 responseBodyHandler);
 
     requestMapper =
