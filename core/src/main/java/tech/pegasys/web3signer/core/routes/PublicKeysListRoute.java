@@ -20,14 +20,21 @@ import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 
 public class PublicKeysListRoute implements Web3SignerRoute {
 
-  private static final String PATH_FORMAT = "/api/v1/%s/publicKeys";
+  private static final String ETH1_PATH = "/api/v1/eth1/publicKeys";
+  private static final String ETH2_PATH = "/api/v1/eth2/publicKeys";
 
   private final Context context;
   private final String path;
 
   public PublicKeysListRoute(final Context context, final String mode) {
     this.context = context;
-    this.path = String.format(PATH_FORMAT, mode);
+    this.path =
+        switch (mode) {
+          case "eth1" -> ETH1_PATH;
+          case "eth2" -> ETH2_PATH;
+          default ->
+              throw new IllegalArgumentException("Unsupported mode for Public Key Route: " + mode);
+        };
   }
 
   @Override

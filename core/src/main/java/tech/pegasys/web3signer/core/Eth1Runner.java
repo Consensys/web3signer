@@ -28,7 +28,6 @@ import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
-import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.bulkloading.SecpAwsBulkLoader;
 import tech.pegasys.web3signer.signing.bulkloading.SecpAzureBulkLoader;
 import tech.pegasys.web3signer.signing.bulkloading.SecpV3KeystoresBulkLoader;
@@ -237,10 +236,6 @@ public class Eth1Runner extends Runner {
         walletResults.getErrorCount());
     registerSignerLoadingHealthCheck(KEYS_CHECK_V3_KEYSTORES_BULK_LOADING, walletResults);
     return walletResults;
-  }
-
-  private String formatSecpSignature(final SecpArtifactSignature signature) {
-    return SecpArtifactSignature.toBytes(signature).toHexString();
   }
 
   private void registerSignerLoadingHealthCheck(
