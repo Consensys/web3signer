@@ -3,6 +3,17 @@
     <!-- See https://jeremylong.github.io/DependencyCheck/general/suppression.html for examples -->
     <suppress>
         <notes><![CDATA[
+          FALSE POSITIVE
+          file name: azure-json-1.1.0.jar
+          As per https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43591
+          this vulnerability is applicable on Azure Service Connector and Azure CLI.
+          We are not using these libraries in our code.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.azure/azure-json@.*$</packageUrl>
+        <cve>CVE-2024-43591</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
           file name: azure-identity-1.13.1.jar
           As per https://msrc.microsoft.com/update-guide/vulnerability/CVE-2023-36415 this was fixed in 1.10.2. We are on fixed version.
         ]]></notes>
