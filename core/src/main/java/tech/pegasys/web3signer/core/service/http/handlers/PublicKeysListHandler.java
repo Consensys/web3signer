@@ -16,25 +16,32 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
 
 public class PublicKeysListHandler implements Handler<RoutingContext> {
-  private final ArtifactSignerProvider artifactSignerProvider;
+  private final List<ArtifactSignerProvider> artifactSignerProviders;
 
-  public PublicKeysListHandler(final ArtifactSignerProvider artifactSignerProvider) {
-    this.artifactSignerProvider = artifactSignerProvider;
+  public PublicKeysListHandler(final List<ArtifactSignerProvider> artifactSignerProviders) {
+    this.artifactSignerProviders = artifactSignerProviders;
   }
 
   @Override
   public void handle(final RoutingContext context) {
+    // at the moment, we only support DefaultArtifactSignerProvider subclass that contains primary
+    // key as identifiers
     final List<String> availableIdentifiers =
-        new ArrayList<>(artifactSignerProvider.availableIdentifiers());
+        artifactSignerProviders.stream()
+            .filter(provider -> provider instanceof DefaultArtifactSignerProvider)
+            .flatMap(provider -> provider.availableIdentifiers().stream())
+            .collect(Collectors.toList());
+
     final String jsonEncodedKeys = new JsonArray(availableIdentifiers).encode();
     context.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonEncodedKeys);
   }

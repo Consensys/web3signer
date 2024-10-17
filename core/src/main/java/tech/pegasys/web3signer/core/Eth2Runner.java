@@ -18,34 +18,24 @@ import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_CO
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_GCP_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.KEYS_CHECK_KEYSTORE_BULK_LOADING;
 import static tech.pegasys.web3signer.core.config.HealthCheckNames.SLASHING_PROTECTION_DB;
-import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
 import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.config.BaseConfig;
-import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
-import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
-import tech.pegasys.web3signer.core.service.http.handlers.HighWatermarkHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.LogErrorHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.keymanager.delete.DeleteKeystoresHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.keymanager.imports.ImportKeystoresHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.keymanager.list.ListKeystoresHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.SigningExtensionHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SignForIdentifierHandler;
-import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
+import tech.pegasys.web3signer.core.routes.PublicKeysListRoute;
+import tech.pegasys.web3signer.core.routes.ReloadRoute;
+import tech.pegasys.web3signer.core.routes.eth2.Eth2SignExtensionRoute;
+import tech.pegasys.web3signer.core.routes.eth2.Eth2SignRoute;
+import tech.pegasys.web3signer.core.routes.eth2.HighWatermarkRoute;
+import tech.pegasys.web3signer.core.routes.eth2.KeyManagerApiRoute;
 import tech.pegasys.web3signer.keystorage.aws.AwsSecretsManagerProvider;
 import tech.pegasys.web3signer.keystorage.azure.AzureKeyVault;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.keystorage.hashicorp.HashicorpConnectionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.signing.FileValidatorManager;
-import tech.pegasys.web3signer.signing.KeystoreFileManager;
-import tech.pegasys.web3signer.signing.ValidatorManager;
 import tech.pegasys.web3signer.signing.bulkloading.BlsAwsBulkLoader;
 import tech.pegasys.web3signer.signing.bulkloading.BlsGcpBulkLoader;
 import tech.pegasys.web3signer.signing.bulkloading.BlsKeystoreBulkLoader;
@@ -65,11 +55,9 @@ import tech.pegasys.web3signer.signing.config.metadata.parser.YamlSignerParser;
 import tech.pegasys.web3signer.signing.config.metadata.yubihsm.YubiHsmOpaqueDataProvider;
 import tech.pegasys.web3signer.slashingprotection.DbHealthCheck;
 import tech.pegasys.web3signer.slashingprotection.DbPrunerRunner;
-import tech.pegasys.web3signer.slashingprotection.DbValidatorManager;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContext;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContextFactory;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
-import tech.pegasys.web3signer.slashingprotection.dao.ValidatorsDao;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,13 +66,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.healthchecks.Status;
-import io.vertx.ext.web.Router;
-import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -92,11 +76,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 public class Eth2Runner extends Runner {
-  public static final String KEYSTORES_PATH = "/eth/v1/keystores";
-  public static final String PUBLIC_KEYS_PATH = "/api/v1/eth2/publicKeys";
-  public static final String SIGN_PATH = "/api/v1/eth2/sign/:identifier";
-  public static final String SIGN_EXT_PATH = "/api/v1/eth2/ext/sign/:identifier";
-  public static final String HIGH_WATERMARK_PATH = "/api/v1/eth2/highWatermark";
   private static final Logger LOG = LogManager.getLogger();
 
   private final Optional<SlashingProtectionContext> slashingProtectionContext;
@@ -148,138 +127,46 @@ public class Eth2Runner extends Runner {
 
   @Override
   public void populateRouter(final Context context) {
-    registerEth2Routes(
-        context.getRouter(),
-        context.getArtifactSignerProvider(),
-        context.getErrorHandler(),
-        context.getMetricsSystem(),
-        slashingProtectionContext);
-  }
-
-  private void registerEth2Routes(
-      final Router router,
-      final ArtifactSignerProvider blsSignerProvider,
-      final LogErrorHandler errorHandler,
-      final MetricsSystem metricsSystem,
-      final Optional<SlashingProtectionContext> slashingProtectionContext) {
-    final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
-
-    addPublicKeysListHandler(router, blsSignerProvider, PUBLIC_KEYS_PATH, errorHandler);
-
-    final SignerForIdentifier<BlsArtifactSignature> blsSigner =
-        new SignerForIdentifier<>(blsSignerProvider, this::formatBlsSignature, BLS);
-    router
-        .route(HttpMethod.POST, SIGN_PATH)
-        .handler(
-            new BlockingHandlerDecorator(
-                new Eth2SignForIdentifierHandler(
-                    blsSigner,
-                    new HttpApiMetrics(metricsSystem, BLS, blsSignerProvider),
-                    new SlashingProtectionMetrics(metricsSystem),
-                    slashingProtectionContext.map(SlashingProtectionContext::getSlashingProtection),
-                    objectMapper,
-                    eth2Spec),
-                false))
-        .failureHandler(errorHandler);
-
-    addReloadHandler(router, List.of(blsSignerProvider), errorHandler);
-
-    slashingProtectionContext.ifPresent(
-        protectionContext ->
-            router
-                .route(HttpMethod.GET, HIGH_WATERMARK_PATH)
-                .handler(new HighWatermarkHandler(protectionContext.getSlashingProtection()))
-                .failureHandler(errorHandler));
-
-    addSigningExtHandler(router, errorHandler, blsSigner);
-
-    if (isKeyManagerApiEnabled) {
-      router
-          .route(HttpMethod.GET, KEYSTORES_PATH)
-          .handler(
-              new BlockingHandlerDecorator(
-                  new ListKeystoresHandler(blsSignerProvider, objectMapper), false))
-          .failureHandler(errorHandler);
-
-      final ValidatorManager validatorManager =
-          createValidatorManager(blsSignerProvider, objectMapper);
-
-      router
-          .route(HttpMethod.POST, KEYSTORES_PATH)
-          .blockingHandler(
-              new ImportKeystoresHandler(
-                  objectMapper,
-                  baseConfig.getKeyConfigPath(),
-                  slashingProtectionContext.map(SlashingProtectionContext::getSlashingProtection),
-                  blsSignerProvider,
-                  validatorManager),
-              false)
-          .failureHandler(errorHandler);
-
-      router
-          .route(HttpMethod.DELETE, KEYSTORES_PATH)
-          .handler(
-              new BlockingHandlerDecorator(
-                  new DeleteKeystoresHandler(
-                      objectMapper,
-                      slashingProtectionContext.map(
-                          SlashingProtectionContext::getSlashingProtection),
-                      blsSignerProvider,
-                      validatorManager),
-                  false))
-          .failureHandler(errorHandler);
+    new PublicKeysListRoute(context, "eth2").register();
+    new Eth2SignRoute(context, eth2Spec, slashingProtectionContext).register();
+    new ReloadRoute(context).register();
+    new HighWatermarkRoute(context, slashingProtectionContext).register();
+    if (signingExtEnabled) {
+      new Eth2SignExtensionRoute(context).register();
     }
-  }
-
-  private ValidatorManager createValidatorManager(
-      final ArtifactSignerProvider artifactSignerProvider, final ObjectMapper objectMapper) {
-    final FileValidatorManager fileValidatorManager =
-        new FileValidatorManager(
-            artifactSignerProvider,
-            new KeystoreFileManager(
-                baseConfig.getKeyConfigPath(),
-                YamlMapperFactory.createYamlMapper(baseConfig.getKeyStoreConfigFileMaxSize())),
-            objectMapper);
-    if (slashingProtectionContext.isPresent()) {
-      final SlashingProtectionContext slashingProtectionContext =
-          this.slashingProtectionContext.get();
-      return new DbValidatorManager(
-          fileValidatorManager,
-          slashingProtectionContext.getRegisteredValidators(),
-          slashingProtectionContext.getSlashingProtectionJdbi(),
-          new ValidatorsDao());
-    } else {
-      return fileValidatorManager;
+    if (isKeyManagerApiEnabled) {
+      new KeyManagerApiRoute(context, baseConfig, slashingProtectionContext).register();
     }
   }
 
   @Override
-  protected ArtifactSignerProvider createArtifactSignerProvider(
+  protected List<ArtifactSignerProvider> createArtifactSignerProvider(
       final Vertx vertx, final MetricsSystem metricsSystem) {
-    return new DefaultArtifactSignerProvider(
-        () -> {
-          try (final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory()) {
-            final List<ArtifactSigner> signers = new ArrayList<>();
-            signers.addAll(
-                loadSignersFromKeyConfigFiles(vertx, azureKeyVaultFactory, metricsSystem)
-                    .getValues());
-            signers.addAll(bulkLoadSigners(azureKeyVaultFactory).getValues());
+    return List.of(
+        new DefaultArtifactSignerProvider(
+            () -> {
+              try (final AzureKeyVaultFactory azureKeyVaultFactory = new AzureKeyVaultFactory()) {
+                final List<ArtifactSigner> signers = new ArrayList<>();
+                signers.addAll(
+                    loadSignersFromKeyConfigFiles(vertx, azureKeyVaultFactory, metricsSystem)
+                        .getValues());
+                signers.addAll(bulkLoadSigners(azureKeyVaultFactory).getValues());
 
-            final List<Bytes> validators =
-                signers.stream()
-                    .map(ArtifactSigner::getIdentifier)
-                    .map(Bytes::fromHexString)
-                    .collect(Collectors.toList());
-            if (validators.isEmpty()) {
-              LOG.warn("No BLS keys loaded. Check that the key store has BLS key config files");
-            } else {
-              slashingProtectionContext.ifPresent(
-                  context -> context.getRegisteredValidators().registerValidators(validators));
-            }
+                final List<Bytes> validators =
+                    signers.stream()
+                        .map(ArtifactSigner::getIdentifier)
+                        .map(Bytes::fromHexString)
+                        .collect(Collectors.toList());
+                if (validators.isEmpty()) {
+                  LOG.warn("No BLS keys loaded. Check that the key store has BLS key config files");
+                } else {
+                  slashingProtectionContext.ifPresent(
+                      context -> context.getRegisteredValidators().registerValidators(validators));
+                }
 
-            return signers;
-          }
-        });
+                return signers;
+              }
+            }));
   }
 
   private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
@@ -401,35 +288,6 @@ public class Eth2Runner extends Runner {
         });
   }
 
-  private void addSigningExtHandler(
-      final Router router,
-      final LogErrorHandler errorHandler,
-      final SignerForIdentifier<?> signer) {
-    if (!signingExtEnabled) {
-      return;
-    }
-
-    router
-        .route(HttpMethod.POST, SIGN_EXT_PATH)
-        .blockingHandler(new SigningExtensionHandler(signer), false)
-        .failureHandler(errorHandler)
-        .failureHandler(
-            ctx -> {
-              final int statusCode = ctx.statusCode();
-              if (statusCode == 400) {
-                ctx.response()
-                    .setStatusCode(statusCode)
-                    .end(new JsonObject().put("error", "Bad Request").encode());
-              } else if (statusCode == 404) {
-                ctx.response()
-                    .setStatusCode(statusCode)
-                    .end(new JsonObject().put("error", "Identifier not found.").encode());
-              } else {
-                ctx.next(); // go to global failure handler
-              }
-            });
-  }
-
   @Override
   public void run() {
     super.run();
@@ -489,9 +347,5 @@ public class Eth2Runner extends Runner {
           }
         },
         azureKeyVaultParameters.getTags());
-  }
-
-  private String formatBlsSignature(final BlsArtifactSignature signature) {
-    return signature.getSignatureData().toString();
   }
 }

@@ -36,6 +36,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
@@ -643,9 +644,9 @@ class CommandlineParserTest {
     public void run() {}
 
     @Override
-    protected ArtifactSignerProvider createArtifactSignerProvider(
+    protected List<ArtifactSignerProvider> createArtifactSignerProvider(
         final Vertx vertx, final MetricsSystem metricsSystem) {
-      return new DefaultArtifactSignerProvider(Collections::emptyList);
+      return List.of(new DefaultArtifactSignerProvider(Collections::emptyList));
     }
 
     @Override
