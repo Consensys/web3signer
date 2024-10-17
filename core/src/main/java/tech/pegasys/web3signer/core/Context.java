@@ -26,19 +26,19 @@ public class Context {
   private final MetricsSystem metricsSystem;
   private final LogErrorHandler errorHandler;
   private final Vertx vertx;
-  private final List<ArtifactSignerProvider> artifactSignerProvider;
+  private final List<ArtifactSignerProvider> artifactSignerProviders;
 
   public Context(
       final Router router,
       final MetricsSystem metricsSystem,
       final LogErrorHandler errorHandler,
       final Vertx vertx,
-      final List<ArtifactSignerProvider> artifactSignerProvider) {
+      final List<ArtifactSignerProvider> artifactSignerProviders) {
     this.router = router;
     this.metricsSystem = metricsSystem;
     this.errorHandler = errorHandler;
     this.vertx = vertx;
-    this.artifactSignerProvider = artifactSignerProvider;
+    this.artifactSignerProviders = artifactSignerProviders;
   }
 
   public Router getRouter() {
@@ -57,7 +57,7 @@ public class Context {
     return vertx;
   }
 
-  public List<ArtifactSignerProvider> getArtifactSignerProvider() {
-    return artifactSignerProvider;
+  public List<ArtifactSignerProvider> getArtifactSignerProviders() {
+    return artifactSignerProviders;
   }
 }

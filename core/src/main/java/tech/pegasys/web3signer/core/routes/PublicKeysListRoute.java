@@ -45,7 +45,7 @@ public class PublicKeysListRoute implements Web3SignerRoute {
         .produces(JSON_HEADER)
         .handler(
             new BlockingHandlerDecorator(
-                new PublicKeysListHandler(context.getArtifactSignerProvider()), false))
+                new PublicKeysListHandler(context.getArtifactSignerProviders()), false))
         .failureHandler(context.getErrorHandler());
   }
 }

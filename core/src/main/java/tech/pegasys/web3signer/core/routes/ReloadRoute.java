@@ -31,7 +31,7 @@ public class ReloadRoute implements Web3SignerRoute {
         .getRouter()
         .route(HttpMethod.POST, RELOAD_PATH)
         .produces(JSON_HEADER)
-        .handler(new ReloadHandler(context.getArtifactSignerProvider()))
+        .handler(new ReloadHandler(context.getArtifactSignerProviders()))
         .failureHandler(context.getErrorHandler());
   }
 }

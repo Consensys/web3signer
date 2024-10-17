@@ -56,7 +56,7 @@ public class KeyManagerApiRoute implements Web3SignerRoute {
         slashingProtectionContext.map(SlashingProtectionContext::getSlashingProtection);
     // there should be only one ArtifactSignerProvider in eth2 mode at the moment which is of BLS
     // types.
-    blsSignerProvider = context.getArtifactSignerProvider().stream().findFirst().orElseThrow();
+    blsSignerProvider = context.getArtifactSignerProviders().stream().findFirst().orElseThrow();
   }
 
   @Override

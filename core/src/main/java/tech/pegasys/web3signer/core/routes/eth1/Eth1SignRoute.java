@@ -40,7 +40,7 @@ public class Eth1SignRoute implements Web3SignerRoute {
 
     // we need signerProvider which is an instance of DefaultArtifactSignerProvider
     final Optional<ArtifactSignerProvider> first =
-        context.getArtifactSignerProvider().stream()
+        context.getArtifactSignerProviders().stream()
             .filter(provider -> provider instanceof DefaultArtifactSignerProvider)
             .findFirst();
 

@@ -64,7 +64,7 @@ public class JsonRpcRoute implements Web3SignerRoute {
 
     // we need signerProvider which is an instance of SecpArtifactSignerProviderAdapter
     final Optional<ArtifactSignerProvider> first =
-        context.getArtifactSignerProvider().stream()
+        context.getArtifactSignerProviders().stream()
             .filter(provider -> provider instanceof SecpArtifactSignerProviderAdapter)
             .findFirst();
     final ArtifactSignerProvider signerProvider;

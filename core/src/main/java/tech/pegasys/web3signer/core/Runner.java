@@ -111,7 +111,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
     final LogErrorHandler errorHandler = new LogErrorHandler();
     healthCheckHandler = HealthCheckHandler.create(vertx);
 
-    final List<ArtifactSignerProvider> artifactSignerProvider =
+    final List<ArtifactSignerProvider> artifactSignerProviders =
         Optional.ofNullable(createArtifactSignerProvider(vertx, metricsSystem)).orElse(List.of());
 
     try {
@@ -120,7 +120,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
       metricsService.ifPresent(MetricsService::start);
 
       // load the artifact signer providers in order ...
-      artifactSignerProvider.forEach(
+      artifactSignerProviders.forEach(
           provider -> {
             try {
               provider.load().get(); // wait for signers to get loaded ...
@@ -163,7 +163,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
       registerHealthCheckProcedure(DEFAULT_CHECK, promise -> promise.complete(Status.OK()));
 
       final Context context =
-          new Context(router, metricsSystem, errorHandler, vertx, artifactSignerProvider);
+          new Context(router, metricsSystem, errorHandler, vertx, artifactSignerProviders);
 
       populateRouter(context);
       if (baseConfig.isSwaggerUIEnabled()) {
@@ -183,7 +183,7 @@ public abstract class Runner implements Runnable, AutoCloseable {
 
       closeables.add(() -> shutdownVertx(vertx));
     } catch (final Throwable e) {
-      artifactSignerProvider.forEach(ArtifactSignerProvider::close);
+      artifactSignerProviders.forEach(ArtifactSignerProvider::close);
       shutdownVertx(vertx);
       metricsService.ifPresent(MetricsService::stop);
       LOG.error("Failed to initialise application", e);
