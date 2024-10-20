@@ -12,10 +12,15 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.bulkloading.BlsKeystoreBulkLoader;
+import tech.pegasys.web3signer.signing.bulkloading.SecpV3KeystoresBulkLoader;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -39,10 +44,13 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
   private final Map<String, List<ArtifactSigner>> proxySigners = new HashMap<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+  private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
 
   public DefaultArtifactSignerProvider(
-      final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {
+      final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier,
+      final Optional<KeystoresParameters> commitBoostKeystoresParameters) {
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
+    this.commitBoostKeystoresParameters = commitBoostKeystoresParameters;
   }
 
   @Override
@@ -63,7 +71,48 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                       }))
               .forEach(signers::putIfAbsent);
 
-          // TODO: for each loaded signer, load proxy signers (if any)
+          // for each loaded signer, load commit boost proxy signers (if any)
+          commitBoostKeystoresParameters.ifPresent(
+              keystoreParameter -> {
+                if (!keystoreParameter.isEnabled()) {
+                  return;
+                }
+                signers.forEach(
+                    (identifier, __) -> {
+                      final Path identifierPath =
+                          keystoreParameter.getKeystoresPath().resolve(identifier);
+                      if (identifierPath.toFile().canRead()
+                          && identifierPath.toFile().isDirectory()) {
+                        final Path v4Dir = identifierPath.resolve("v4");
+
+                        if (v4Dir.toFile().canRead() && v4Dir.toFile().isDirectory()) {
+                          // load v4 proxy signers
+                          final BlsKeystoreBulkLoader v4Loader = new BlsKeystoreBulkLoader();
+                          final MappedResults<ArtifactSigner> blsSignersResult =
+                              v4Loader.loadKeystoresUsingPasswordFile(
+                                  v4Dir, keystoreParameter.getKeystoresPasswordFile());
+                          final Collection<ArtifactSigner> blsSigners =
+                              blsSignersResult.getValues();
+                          proxySigners
+                              .computeIfAbsent(identifier, k -> new ArrayList<>())
+                              .addAll(blsSigners);
+                        }
+
+                        final Path v3Dir = identifierPath.resolve("v3");
+                        if (v3Dir.toFile().canRead() && v3Dir.toFile().isDirectory()) {
+                          // load v3 proxy signers
+                          final MappedResults<ArtifactSigner> secpSignersResults =
+                              SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
+                                  v3Dir, keystoreParameter.getKeystoresPasswordFile());
+                          final Collection<ArtifactSigner> secpSigners =
+                              secpSignersResults.getValues();
+                          proxySigners
+                              .computeIfAbsent(identifier, k -> new ArrayList<>())
+                              .addAll(secpSigners);
+                        }
+                      }
+                    });
+              });
 
           LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
           return null;

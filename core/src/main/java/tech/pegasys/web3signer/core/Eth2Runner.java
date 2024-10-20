@@ -89,6 +89,7 @@ public class Eth2Runner extends Runner {
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
   private final boolean signingExtEnabled;
+  private final KeystoresParameters commitBoostApiParameters;
 
   public Eth2Runner(
       final BaseConfig baseConfig,
@@ -99,7 +100,8 @@ public class Eth2Runner extends Runner {
       final GcpSecretManagerParameters gcpSecretManagerParameters,
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled,
-      final boolean signingExtEnabled) {
+      final boolean signingExtEnabled,
+      final KeystoresParameters commitBoostApiParameters) {
     super(baseConfig);
     this.slashingProtectionContext = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
@@ -111,6 +113,7 @@ public class Eth2Runner extends Runner {
     this.awsVaultParameters = awsVaultParameters;
     this.gcpSecretManagerParameters = gcpSecretManagerParameters;
     this.signingExtEnabled = signingExtEnabled;
+    this.commitBoostApiParameters = commitBoostApiParameters;
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -138,7 +141,9 @@ public class Eth2Runner extends Runner {
     if (isKeyManagerApiEnabled) {
       new KeyManagerApiRoute(context, baseConfig, slashingProtectionContext).register();
     }
-    new CommitBoostPublicKeysRoute(context).register();
+    if (commitBoostApiParameters.isEnabled()) {
+      new CommitBoostPublicKeysRoute(context).register();
+    }
   }
 
   @Override
@@ -168,7 +173,8 @@ public class Eth2Runner extends Runner {
 
                 return signers;
               }
-            }));
+            },
+            Optional.of(commitBoostApiParameters)));
   }
 
   private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
