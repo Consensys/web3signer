@@ -14,9 +14,11 @@ package tech.pegasys.web3signer.signing.config;
 
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -35,6 +37,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
+  private final Map<String, List<ArtifactSigner>> proxySigners = new HashMap<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   public DefaultArtifactSignerProvider(
@@ -60,6 +63,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                       }))
               .forEach(signers::putIfAbsent);
 
+          // TODO: for each loaded signer, load proxy signers (if any)
+
           LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
           return null;
         });
@@ -78,6 +83,17 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   @Override
   public Set<String> availableIdentifiers() {
     return Set.copyOf(signers.keySet());
+  }
+
+  @Override
+  public Map<KeyType, List<String>> getProxyIdentifiers(final String identifier) {
+    final List<ArtifactSigner> artifactSigners =
+        proxySigners.computeIfAbsent(identifier, k -> List.of());
+    return artifactSigners.stream()
+        .collect(
+            Collectors.groupingBy(
+                ArtifactSigner::getKeyType,
+                Collectors.mapping(ArtifactSigner::getIdentifier, Collectors.toList())));
   }
 
   @Override

@@ -25,6 +25,7 @@ import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.routes.PublicKeysListRoute;
 import tech.pegasys.web3signer.core.routes.ReloadRoute;
+import tech.pegasys.web3signer.core.routes.eth2.CommitBoostPublicKeysRoute;
 import tech.pegasys.web3signer.core.routes.eth2.Eth2SignExtensionRoute;
 import tech.pegasys.web3signer.core.routes.eth2.Eth2SignRoute;
 import tech.pegasys.web3signer.core.routes.eth2.HighWatermarkRoute;
@@ -137,6 +138,7 @@ public class Eth2Runner extends Runner {
     if (isKeyManagerApiEnabled) {
       new KeyManagerApiRoute(context, baseConfig, slashingProtectionContext).register();
     }
+    new CommitBoostPublicKeysRoute(context).register();
   }
 
   @Override

@@ -39,6 +39,11 @@ public class EthSecpArtifactSigner implements ArtifactSigner {
   }
 
   @Override
+  public KeyType getKeyType() {
+    return KeyType.SECP256K1;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
