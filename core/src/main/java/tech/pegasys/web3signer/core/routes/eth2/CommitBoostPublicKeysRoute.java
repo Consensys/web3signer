@@ -44,7 +44,11 @@ public class CommitBoostPublicKeysRoute implements Web3SignerRoute {
               if (statusCode == 500) {
                 ctx.response()
                     .setStatusCode(statusCode)
-                    .end(new JsonObject().put("error", "Internal Server Error").encode());
+                    .end(
+                        new JsonObject()
+                            .put("code", statusCode)
+                            .put("message", "Internal Server Error")
+                            .encode());
               } else {
                 ctx.next(); // go to global failure handler
               }
