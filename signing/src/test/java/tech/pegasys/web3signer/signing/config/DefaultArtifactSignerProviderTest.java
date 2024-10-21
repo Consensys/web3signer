@@ -154,6 +154,32 @@ class DefaultArtifactSignerProviderTest {
         .containsExactlyInAnyOrder(getSecpPublicKeysArray(key2SecpKeyPairs));
   }
 
+  @Test
+  void emptyProxySignersAreLoadedSuccessfully() {
+    // enable commit boose without existing proxy keys
+    final KeystoresParameters commitBoostParameters =
+        new TestCommitBoostParameters(commitBoostKeystoresPath, commitBoostPasswordDir);
+
+    // set up mock signers
+    final ArtifactSigner mockSigner1 = mock(ArtifactSigner.class);
+    when(mockSigner1.getIdentifier()).thenReturn(PUBLIC_KEY1);
+    final ArtifactSigner mockSigner2 = mock(ArtifactSigner.class);
+    when(mockSigner2.getIdentifier()).thenReturn(PUBLIC_KEY2);
+
+    signerProvider =
+        new DefaultArtifactSignerProvider(
+            () -> List.of(mockSigner1, mockSigner2), Optional.of(commitBoostParameters));
+
+    // methods under test
+    assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
+
+    for (String identifier : List.of(PUBLIC_KEY1, PUBLIC_KEY2)) {
+      final Map<KeyType, List<String>> keyProxyPublicKeys =
+          signerProvider.getProxyIdentifiers(identifier);
+      assertThat(keyProxyPublicKeys).isEmpty();
+    }
+  }
+
   private List<BLSKeyPair> randomBLSV4Keystores(SecureRandom secureRandom, String identifier)
       throws IOException {
     final Path v4Dir =
