@@ -17,8 +17,13 @@ import static org.bouncycastle.util.BigIntegers.asUnsignedByteArray;
 
 import java.math.BigInteger;
 import java.security.AlgorithmParameters;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECParameterSpec;
@@ -29,10 +34,23 @@ import java.security.spec.InvalidParameterSpecException;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.web3j.utils.Numeric;
 
 public class EthPublicKeyUtils {
   private static final int PUBLIC_KEY_SIZE = 64;
+  private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
+  private static final ECDomainParameters SECP256K1_DOMAIN_PARAMS;
+
+  static {
+    final ECNamedCurveParameterSpec params = ECNamedCurveTable.getParameterSpec("secp256k1");
+    SECP256K1_DOMAIN_PARAMS =
+        new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
+  }
 
   public static ECPublicKey createPublicKey(final ECPoint publicPoint) {
     try {
@@ -70,5 +88,35 @@ public class EthPublicKeyUtils {
 
   public static String toHexString(final ECPublicKey publicKey) {
     return Bytes.wrap(toByteArray(publicKey)).toHexString();
+  }
+
+  public static Bytes getEncoded(final ECPublicKey publicKey, boolean encodeCompressed) {
+    // Check if it's already a Bouncy Castle ECPublicKey
+    if (publicKey instanceof BCECPublicKey) {
+      return Bytes.wrap(((BCECPublicKey) publicKey).getQ().getEncoded(encodeCompressed));
+    }
+
+    // Convert java.security.spec.ECPoint to org.bouncycastle.math.ec.ECPoint
+    java.security.spec.ECPoint javaECPoint = publicKey.getW();
+    org.bouncycastle.math.ec.ECPoint bcEcPoint =
+        SECP256K1_DOMAIN_PARAMS
+            .getCurve()
+            .createPoint(javaECPoint.getAffineX(), javaECPoint.getAffineY());
+
+    // Return the encoding
+    return Bytes.wrap(bcEcPoint.getEncoded(encodeCompressed));
+  }
+
+  public static KeyPair createSecp256k1KeyPair(final SecureRandom random)
+      throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+    final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", BC_PROVIDER);
+    final ECGenParameterSpec ecGenParameterSpec = new ECGenParameterSpec("secp256k1");
+    if (random != null) {
+      keyPairGenerator.initialize(ecGenParameterSpec, random);
+    } else {
+      keyPairGenerator.initialize(ecGenParameterSpec);
+    }
+
+    return keyPairGenerator.generateKeyPair();
   }
 }

@@ -16,11 +16,19 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
+import tech.pegasys.teku.bls.BLSPublicKey;
+import tech.pegasys.teku.infrastructure.bytes.Bytes4;
+import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.BlsProxyKeyMessage;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.BlsProxyKeySchema;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.GenerateProxyKeyBody;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.GenerateProxyKeyResponse;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeyMessage;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeySignatureScheme;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
+import tech.pegasys.web3signer.core.util.CommitBoostSigningRootUtil;
+import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -33,6 +41,7 @@ import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
@@ -43,12 +52,18 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
 
   private final SignerForIdentifier<?> signerForIdentifier;
   private final ProxyKeyGenerator proxyKeyGenerator;
+  private final Spec eth2Spec;
+  private final Bytes32 genesisValidatorsRoot;
 
   public CommitBoostGenerateProxyKeyHandler(
       final SignerForIdentifier<?> signerForIdentifier,
-      final KeystoresParameters commitBoostApiParameters) {
+      final KeystoresParameters commitBoostApiParameters,
+      final Spec eth2Spec,
+      final Bytes32 genesisValidatorsRoot) {
     this.signerForIdentifier = signerForIdentifier;
-    proxyKeyGenerator = new ProxyKeyGenerator(commitBoostApiParameters);
+    this.proxyKeyGenerator = new ProxyKeyGenerator(commitBoostApiParameters);
+    this.eth2Spec = eth2Spec;
+    this.genesisValidatorsRoot = genesisValidatorsRoot;
   }
 
   @Override
@@ -86,12 +101,11 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
       return;
     }
 
-    // TODO: Generate actual signature. This involves custom domain and zzs classes
-    // TODO: Use actual Bytes/instance of public key for calculating signing root??
     final ProxyKeyMessage proxyKeyMessage =
         new ProxyKeyMessage(identifier, artifactSigner.getIdentifier());
     final Optional<String> optionalSig =
-        signerForIdentifier.sign(identifier, computeSigningRoot(proxyKeyMessage));
+        signerForIdentifier.sign(
+            identifier, computeSigningRoot(proxyKeyMessage, proxyKeyBody.scheme()));
     if (optionalSig.isEmpty()) {
       context.fail(NOT_FOUND);
       return;
@@ -111,8 +125,26 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
     }
   }
 
-  private Bytes computeSigningRoot(final ProxyKeyMessage proxyKeyMessage) {
+  private Bytes computeSigningRoot(
+      final ProxyKeyMessage proxyKeyMessage, final ProxyKeySignatureScheme scheme) {
+    final Bytes4 genesisForkVersion = eth2Spec.getGenesisSpec().getConfig().getGenesisForkVersion();
 
-    return Bytes.EMPTY; // TODO: Fix me
+    final Bytes32 domain =
+        DepositSigningRootUtil.computeDomain(
+            CommitBoostSigningRootUtil.COMMIT_BOOST_DOMAIN,
+            genesisForkVersion,
+            genesisValidatorsRoot);
+
+    final BLSPublicKey delegator = BLSPublicKey.fromHexString(proxyKeyMessage.blsPublicKey());
+    if (scheme == ProxyKeySignatureScheme.BLS) {
+      final BLSPublicKey proxy = BLSPublicKey.fromHexString(proxyKeyMessage.proxyPublicKey());
+      final BlsProxyKeyMessage blsProxyKeyMessage =
+          new BlsProxyKeySchema().create(delegator, proxy);
+
+      return DepositSigningRootUtil.computeSigningRoot(blsProxyKeyMessage, domain);
+    } else {
+      // TODO: Implement ECDSA signing root
+      throw new UnsupportedOperationException("ECDSA signing root not implemented");
+    }
   }
 }

@@ -14,6 +14,7 @@ package tech.pegasys.web3signer.core.routes.eth2;
 
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
+import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.routes.Web3SignerRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.CommitBoostGenerateProxyKeyHandler;
@@ -25,17 +26,25 @@ import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
   private static final String PATH = "/signer/v1/generate_proxy_key";
   private final Context context;
   private final SignerForIdentifier<BlsArtifactSignature> blsSigner;
   private final KeystoresParameters commitBoostApiParameters;
+  private final Spec eth2Spec;
+  private final Bytes32 genesisValidatorsRoot;
 
   public CommitBoostGenerateProxyKeyRoute(
-      final Context context, final KeystoresParameters commitBoostApiParameters) {
+      final Context context,
+      final KeystoresParameters commitBoostApiParameters,
+      final Spec eth2Spec,
+      final Bytes32 genesisValidatorsRoot) {
     this.context = context;
     this.commitBoostApiParameters = commitBoostApiParameters;
+    this.eth2Spec = eth2Spec;
+    this.genesisValidatorsRoot = genesisValidatorsRoot;
 
     // there should be only one DefaultArtifactSignerProvider in eth2 mode
     final ArtifactSignerProvider artifactSignerProvider =
@@ -55,7 +64,9 @@ public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
         .getRouter()
         .route(HttpMethod.POST, PATH)
         .blockingHandler(
-            new CommitBoostGenerateProxyKeyHandler(blsSigner, commitBoostApiParameters), false)
+            new CommitBoostGenerateProxyKeyHandler(
+                blsSigner, commitBoostApiParameters, eth2Spec, genesisValidatorsRoot),
+            false)
         .failureHandler(context.getErrorHandler())
         .failureHandler(
             ctx -> {

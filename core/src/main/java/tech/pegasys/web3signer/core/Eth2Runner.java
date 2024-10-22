@@ -88,6 +88,7 @@ public class Eth2Runner extends Runner {
   private final boolean pruningEnabled;
   private final KeystoresParameters keystoresParameters;
   private final Spec eth2Spec;
+  private final Bytes32 genesisValidatorsRoot;
   private final boolean isKeyManagerApiEnabled;
   private final boolean signingExtEnabled;
   private final KeystoresParameters commitBoostApiParameters;
@@ -100,6 +101,7 @@ public class Eth2Runner extends Runner {
       final AwsVaultParameters awsVaultParameters,
       final GcpSecretManagerParameters gcpSecretManagerParameters,
       final Spec eth2Spec,
+      final Bytes32 genesisValidatorsRoot,
       final boolean isKeyManagerApiEnabled,
       final boolean signingExtEnabled,
       final KeystoresParameters commitBoostApiParameters) {
@@ -110,6 +112,7 @@ public class Eth2Runner extends Runner {
     this.pruningEnabled = slashingProtectionParameters.isPruningEnabled();
     this.keystoresParameters = keystoresParameters;
     this.eth2Spec = eth2Spec;
+    this.genesisValidatorsRoot = genesisValidatorsRoot;
     this.isKeyManagerApiEnabled = isKeyManagerApiEnabled;
     this.awsVaultParameters = awsVaultParameters;
     this.gcpSecretManagerParameters = gcpSecretManagerParameters;
@@ -144,7 +147,9 @@ public class Eth2Runner extends Runner {
     }
     if (commitBoostApiParameters.isEnabled()) {
       new CommitBoostPublicKeysRoute(context).register();
-      new CommitBoostGenerateProxyKeyRoute(context, commitBoostApiParameters).register();
+      new CommitBoostGenerateProxyKeyRoute(
+              context, commitBoostApiParameters, eth2Spec, genesisValidatorsRoot)
+          .register();
     }
   }
 
