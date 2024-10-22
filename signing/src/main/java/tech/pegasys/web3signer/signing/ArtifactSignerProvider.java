@@ -67,6 +67,17 @@ public interface ArtifactSignerProvider extends Closeable {
    */
   Future<Void> removeSigner(final String identifier);
 
+  /**
+   * Add a proxy signer to the signer provider.
+   *
+   * @param signer Instance of ArtifactSigner
+   * @param identifier Identifier of the signer for which proxy signer is being added
+   * @return a future that completes when the proxy signer is added
+   */
+  default Future<Void> addProxySigner(final ArtifactSigner signer, final String identifier) {
+    throw new UnsupportedOperationException("Proxy signers are not supported by this provider");
+  }
+
   /** Close the executor service and release any resources. */
   @Override
   void close();

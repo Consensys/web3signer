@@ -160,7 +160,19 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
     return executorService.submit(
         () -> {
           signers.remove(identifier);
+          proxySigners.remove(identifier);
           LOG.info("Removed signer with identifier '{}'", identifier);
+          return null;
+        });
+  }
+
+  @Override
+  public Future<Void> addProxySigner(final ArtifactSigner signer, final String identifier) {
+    return executorService.submit(
+        () -> {
+          proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).add(signer);
+          LOG.info(
+              "Loaded new proxy signer {} for identifier '{}'", signer.getIdentifier(), identifier);
           return null;
         });
   }

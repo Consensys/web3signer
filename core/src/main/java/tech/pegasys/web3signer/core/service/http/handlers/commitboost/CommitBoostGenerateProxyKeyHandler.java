@@ -21,6 +21,8 @@ import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.Gener
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.GenerateProxyKeyResponse;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeyMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
+import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,15 +33,19 @@ import org.apache.logging.log4j.Logger;
 
 public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
-
   private static final ObjectMapper JSON_MAPPER = SigningObjectMapperFactory.createObjectMapper();
-  public static final int NOT_FOUND = 404;
-  public static final int BAD_REQUEST = 400;
+  private static final int NOT_FOUND = 404;
+  private static final int BAD_REQUEST = 400;
   private static final int INTERNAL_ERROR = 500;
-  private final SignerForIdentifier<?> signerForIdentifier;
 
-  public CommitBoostGenerateProxyKeyHandler(final SignerForIdentifier<?> signerForIdentifier) {
+  private final SignerForIdentifier<?> signerForIdentifier;
+  private final ProxyKeyGenerator proxyKeyGenerator;
+
+  public CommitBoostGenerateProxyKeyHandler(
+      final SignerForIdentifier<?> signerForIdentifier,
+      final KeystoresParameters commitBoostApiParameters) {
     this.signerForIdentifier = signerForIdentifier;
+    proxyKeyGenerator = new ProxyKeyGenerator(commitBoostApiParameters);
   }
 
   @Override
@@ -62,17 +68,29 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
       return;
     }
 
-    // TODO: Generate actual proxy key based on signature scheme
-    // TODO: Add generated proxy key to DefaultArtifactSignerProvider
-
-    final ProxyKeyMessage proxyKeyMessage = new ProxyKeyMessage(identifier, "");
+    // Generate actual proxy key and encrypted keystore based on signature scheme
+    final ArtifactSigner artifactSigner;
+    try {
+      artifactSigner =
+          switch (proxyKeyBody.scheme()) {
+            case BLS -> proxyKeyGenerator.generateBLSProxyKey(identifier);
+            case ECDSA -> proxyKeyGenerator.generateECProxyKey(identifier);
+          };
+      // Add generated proxy key to DefaultArtifactSignerProvider
+      signerForIdentifier.getSignerProvider().addProxySigner(artifactSigner, identifier).get();
+    } catch (final Exception e) {
+      context.fail(INTERNAL_ERROR, e);
+      return;
+    }
 
     // TODO: Generate actual signature. This involves custom domain and zzs classes
+    final ProxyKeyMessage proxyKeyMessage = new ProxyKeyMessage(identifier, artifactSigner.getIdentifier());
     final String signature = ""; // need tree-hash-root of ProxyKeyMessage
 
     final GenerateProxyKeyResponse generateProxyKeyResponse =
         new GenerateProxyKeyResponse(proxyKeyMessage, signature);
 
+    // Encode and send response
     try {
       final String jsonEncoded = JSON_MAPPER.writeValueAsString(generateProxyKeyResponse);
       context.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonEncoded);

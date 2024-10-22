@@ -21,6 +21,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -29,9 +30,12 @@ public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
   private static final String PATH = "/signer/v1/generate_proxy_key";
   private final Context context;
   private final SignerForIdentifier<BlsArtifactSignature> blsSigner;
+  private final KeystoresParameters commitBoostApiParameters;
 
-  public CommitBoostGenerateProxyKeyRoute(final Context context) {
+  public CommitBoostGenerateProxyKeyRoute(
+      final Context context, final KeystoresParameters commitBoostApiParameters) {
     this.context = context;
+    this.commitBoostApiParameters = commitBoostApiParameters;
 
     // there should be only one DefaultArtifactSignerProvider in eth2 mode
     final ArtifactSignerProvider artifactSignerProvider =
@@ -50,7 +54,8 @@ public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
     context
         .getRouter()
         .route(HttpMethod.POST, PATH)
-        .blockingHandler(new CommitBoostGenerateProxyKeyHandler(blsSigner), false)
+        .blockingHandler(
+            new CommitBoostGenerateProxyKeyHandler(blsSigner, commitBoostApiParameters), false)
         .failureHandler(context.getErrorHandler())
         .failureHandler(
             ctx -> {

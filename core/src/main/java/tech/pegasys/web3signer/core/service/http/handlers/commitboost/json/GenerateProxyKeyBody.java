@@ -16,4 +16,4 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record GenerateProxyKeyBody(
     @JsonProperty(value = "pubkey", required = true) String blsPublicKey,
-    @JsonProperty(value = "scheme", required = true) String ProxyKeySignatureScheme) {}
+    @JsonProperty(value = "scheme", required = true) ProxyKeySignatureScheme scheme) {}
