@@ -24,12 +24,15 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
@@ -84,12 +87,18 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
     }
 
     // TODO: Generate actual signature. This involves custom domain and zzs classes
+    // TODO: Use actual Bytes/instance of public key for calculating signing root??
     final ProxyKeyMessage proxyKeyMessage =
         new ProxyKeyMessage(identifier, artifactSigner.getIdentifier());
-    final String signature = ""; // need tree-hash-root of ProxyKeyMessage
+    final Optional<String> optionalSig =
+        signerForIdentifier.sign(identifier, computeSigningRoot(proxyKeyMessage));
+    if (optionalSig.isEmpty()) {
+      context.fail(NOT_FOUND);
+      return;
+    }
 
     final GenerateProxyKeyResponse generateProxyKeyResponse =
-        new GenerateProxyKeyResponse(proxyKeyMessage, signature);
+        new GenerateProxyKeyResponse(proxyKeyMessage, optionalSig.get());
 
     // Encode and send response
     try {
@@ -100,5 +109,10 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
       LOG.error("Failed to encode GenerateProxyKeyResponse to JSON", e);
       context.fail(INTERNAL_ERROR);
     }
+  }
+
+  private Bytes computeSigningRoot(final ProxyKeyMessage proxyKeyMessage) {
+
+    return Bytes.EMPTY; // TODO: Fix me
   }
 }
