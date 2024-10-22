@@ -84,7 +84,8 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
     }
 
     // TODO: Generate actual signature. This involves custom domain and zzs classes
-    final ProxyKeyMessage proxyKeyMessage = new ProxyKeyMessage(identifier, artifactSigner.getIdentifier());
+    final ProxyKeyMessage proxyKeyMessage =
+        new ProxyKeyMessage(identifier, artifactSigner.getIdentifier());
     final String signature = ""; // need tree-hash-root of ProxyKeyMessage
 
     final GenerateProxyKeyResponse generateProxyKeyResponse =
