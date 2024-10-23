@@ -38,8 +38,8 @@ import org.bouncycastle.math.ec.ECPoint;
 public class EthPublicKeyUtils {
   private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
   private static final ECDomainParameters SECP256K1_DOMAIN;
-  private static final ECParameterSpec SECP256K1_SPEC;
-  private static final java.security.spec.ECParameterSpec JAVA_SECP256K1_PARAM_SPEC;
+  private static final ECParameterSpec BC_SECP256K1_SPEC;
+  private static final java.security.spec.ECParameterSpec JAVA_SECP256K1_SPEC;
   private static final String SECP256K1_CURVE = "secp256k1";
   private static final String EC_ALGORITHM = "EC";
 
@@ -47,20 +47,20 @@ public class EthPublicKeyUtils {
     final X9ECParameters params = CustomNamedCurves.getByName(SECP256K1_CURVE);
     SECP256K1_DOMAIN =
         new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
-    SECP256K1_SPEC =
+    BC_SECP256K1_SPEC =
         new ECParameterSpec(params.getCurve(), params.getG(), params.getN(), params.getH());
-    final ECCurve bcCurve = SECP256K1_SPEC.getCurve();
-    JAVA_SECP256K1_PARAM_SPEC =
+    final ECCurve bcCurve = BC_SECP256K1_SPEC.getCurve();
+    JAVA_SECP256K1_SPEC =
         new java.security.spec.ECParameterSpec(
             new EllipticCurve(
                 new java.security.spec.ECFieldFp(bcCurve.getField().getCharacteristic()),
                 bcCurve.getA().toBigInteger(),
                 bcCurve.getB().toBigInteger()),
             new java.security.spec.ECPoint(
-                SECP256K1_SPEC.getG().getAffineXCoord().toBigInteger(),
-                SECP256K1_SPEC.getG().getAffineYCoord().toBigInteger()),
-            SECP256K1_SPEC.getN(),
-            SECP256K1_SPEC.getH().intValue());
+                BC_SECP256K1_SPEC.getG().getAffineXCoord().toBigInteger(),
+                BC_SECP256K1_SPEC.getG().getAffineYCoord().toBigInteger()),
+            BC_SECP256K1_SPEC.getN(),
+            BC_SECP256K1_SPEC.getH().intValue());
   }
 
   /**
@@ -112,7 +112,7 @@ public class EthPublicKeyUtils {
               point.getAffineXCoord().toBigInteger(), point.getAffineYCoord().toBigInteger());
 
       final java.security.spec.ECPublicKeySpec pubSpec =
-          new java.security.spec.ECPublicKeySpec(ecPoint, JAVA_SECP256K1_PARAM_SPEC);
+          new java.security.spec.ECPublicKeySpec(ecPoint, JAVA_SECP256K1_SPEC);
       return (ECPublicKey)
           KeyFactory.getInstance(EC_ALGORITHM, BC_PROVIDER).generatePublic(pubSpec);
     } catch (final InvalidKeySpecException | NoSuchAlgorithmException e) {
@@ -154,14 +154,28 @@ public class EthPublicKeyUtils {
     return createPublicKey(Bytes.wrap(fullPublicKeyBytes));
   }
 
-  @Deprecated // Use getEncoded
-  public static byte[] toByteArray(final ECPublicKey publicKey) {
-    return getEncoded(publicKey, false, false).toArrayUnsafe();
-  }
-
-  @Deprecated // Use getEncoded
+  /**
+   * Convert a java ECPublicKey to an uncompressed (64 bytes) hex string.
+   *
+   * @param publicKey The public key to convert
+   * @return The public key as a hex string
+   */
   public static String toHexString(final ECPublicKey publicKey) {
     return getEncoded(publicKey, false, false).toHexString();
+  }
+
+  /**
+   * Convert a java ECPublicKey to a BigInteger.
+   *
+   * @param publicKey The public key to convert
+   * @return The public key as a BigInteger
+   */
+  public static BigInteger ecPublicKeyToBigInteger(final ECPublicKey publicKey) {
+    // Get the uncompressed public key without prefix (64 bytes)
+    final Bytes publicKeyBytes = EthPublicKeyUtils.getEncoded(publicKey, false, false);
+
+    // Convert to BigInteger
+    return new BigInteger(1, publicKeyBytes.toArrayUnsafe());
   }
 
   /**
@@ -182,7 +196,7 @@ public class EthPublicKeyUtils {
       // If it's not a BC key, we need to create the ECPoint from the coordinates
       final BigInteger x = publicKey.getW().getAffineX();
       final BigInteger y = publicKey.getW().getAffineY();
-      point = SECP256K1_SPEC.getCurve().createPoint(x, y);
+      point = BC_SECP256K1_SPEC.getCurve().createPoint(x, y);
     }
 
     if (compressed) {

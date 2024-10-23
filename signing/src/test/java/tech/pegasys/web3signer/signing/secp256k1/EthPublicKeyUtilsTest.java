@@ -27,7 +27,6 @@ import java.security.spec.ECPoint;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -35,7 +34,6 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x9.X962Parameters;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.ec.CustomNamedCurves;
-import org.bouncycastle.math.ec.ECFieldElement;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -137,14 +135,14 @@ class EthPublicKeyUtilsTest {
     final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
 
     final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(publicKeyBytes);
-    final Bytes bytes = Bytes.wrap(EthPublicKeyUtils.toByteArray(ecPublicKey));
+    final Bytes bytes = EthPublicKeyUtils.getEncoded(ecPublicKey, false, false);
     assertThat(bytes).isEqualTo(publicKeyBytes);
     assertThat(bytes.size()).isEqualTo(64);
     assertThat(bytes.get(0)).isNotEqualTo(0x4);
   }
 
   @Test
-  public void encodePublicKey() throws GeneralSecurityException {
+  public void encodePublicKey() {
     final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
     final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(publicKeyBytes);
 
@@ -205,45 +203,9 @@ class EthPublicKeyUtilsTest {
     }
   }
 
-  private void verifyPublicKeyOld(
-      final ECPublicKey ecPublicKey, final Bytes publicKeyBytes, final ECPoint ecPoint) {
-    assertThat(ecPublicKey.getW()).isEqualTo(ecPoint);
-    assertThat(ecPublicKey.getAlgorithm()).isEqualTo("EC");
-
-    final ECParameterSpec params = ecPublicKey.getParams();
-    assertThat(params.getCofactor()).isEqualTo(CURVE_PARAMS.getCurve().getCofactor().intValue());
-    assertThat(params.getOrder()).isEqualTo(CURVE_PARAMS.getCurve().getOrder());
-    assertThat(params.getGenerator()).isEqualTo(fromBouncyCastleECPoint(CURVE_PARAMS.getG()));
-
-    assertThat(ecPublicKey.getFormat()).isEqualTo("X.509");
-
-    SubjectPublicKeyInfo subjectPublicKeyInfo =
-        SubjectPublicKeyInfo.getInstance(ASN1Sequence.getInstance(ecPublicKey.getEncoded()));
-    assertThat(subjectPublicKeyInfo.getPublicKeyData().getBytes())
-        .isEqualTo(Bytes.concatenate(Bytes.of(0x4), publicKeyBytes).toArray());
-
-    final AlgorithmIdentifier algorithm = subjectPublicKeyInfo.getAlgorithm();
-    assertThat(algorithm.getAlgorithm().getId()).isEqualTo(EC_OID);
-    assertThat(algorithm.getParameters().toASN1Primitive().toString()).isEqualTo(SECP_OID);
-  }
-
   private ECPoint createEcPoint(final Bytes publicKeyBytes) {
     final Bytes x = publicKeyBytes.slice(0, 32);
     final Bytes y = publicKeyBytes.slice(32, 32);
     return new ECPoint(Numeric.toBigInt(x.toArrayUnsafe()), Numeric.toBigInt(y.toArrayUnsafe()));
-  }
-
-  private ECPoint fromBouncyCastleECPoint(
-      final org.bouncycastle.math.ec.ECPoint bouncyCastleECPoint) {
-    final ECFieldElement xCoord = bouncyCastleECPoint.getAffineXCoord();
-    final ECFieldElement yCoord = bouncyCastleECPoint.getAffineYCoord();
-
-    final Bytes32 xEncoded = Bytes32.wrap(xCoord.getEncoded());
-    final Bytes32 yEncoded = Bytes32.wrap(yCoord.getEncoded());
-
-    final BigInteger x = xEncoded.toUnsignedBigInteger();
-    final BigInteger y = yEncoded.toUnsignedBigInteger();
-
-    return new ECPoint(x, y);
   }
 }
