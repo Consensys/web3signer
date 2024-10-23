@@ -12,105 +12,69 @@
  */
 package tech.pegasys.web3signer.signing.secp256k1;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.bouncycastle.util.BigIntegers.asUnsignedByteArray;
-
 import java.math.BigInteger;
-import java.security.AlgorithmParameters;
-import java.security.InvalidAlgorithmParameterException;
+import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
-import java.security.spec.ECParameterSpec;
-import java.security.spec.ECPoint;
-import java.security.spec.ECPublicKeySpec;
+import java.security.spec.EllipticCurve;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.InvalidParameterSpecException;
+import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
-import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
-import org.web3j.utils.Numeric;
+import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.math.ec.ECPoint;
 
 public class EthPublicKeyUtils {
-  private static final int PUBLIC_KEY_SIZE = 64;
   private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
-  private static final ECDomainParameters SECP256K1_DOMAIN_PARAMS;
+  private static final ECDomainParameters SECP256K1_DOMAIN;
+  private static final ECParameterSpec SECP256K1_SPEC;
+  private static final java.security.spec.ECParameterSpec JAVA_SECP256K1_PARAM_SPEC;
+  private static final String SECP256K1_CURVE = "secp256k1";
+  private static final String EC_ALGORITHM = "EC";
 
   static {
-    final ECNamedCurveParameterSpec params = ECNamedCurveTable.getParameterSpec("secp256k1");
-    SECP256K1_DOMAIN_PARAMS =
+    final X9ECParameters params = CustomNamedCurves.getByName(SECP256K1_CURVE);
+    SECP256K1_DOMAIN =
         new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH());
+    SECP256K1_SPEC =
+        new ECParameterSpec(params.getCurve(), params.getG(), params.getN(), params.getH());
+    final ECCurve bcCurve = SECP256K1_SPEC.getCurve();
+    JAVA_SECP256K1_PARAM_SPEC =
+        new java.security.spec.ECParameterSpec(
+            new EllipticCurve(
+                new java.security.spec.ECFieldFp(bcCurve.getField().getCharacteristic()),
+                bcCurve.getA().toBigInteger(),
+                bcCurve.getB().toBigInteger()),
+            new java.security.spec.ECPoint(
+                SECP256K1_SPEC.getG().getAffineXCoord().toBigInteger(),
+                SECP256K1_SPEC.getG().getAffineYCoord().toBigInteger()),
+            SECP256K1_SPEC.getN(),
+            SECP256K1_SPEC.getH().intValue());
   }
 
-  public static ECPublicKey createPublicKey(final ECPoint publicPoint) {
-    try {
-      final AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC");
-      parameters.init(new ECGenParameterSpec("secp256k1"));
-      final ECParameterSpec ecParameters = parameters.getParameterSpec(ECParameterSpec.class);
-      final ECPublicKeySpec pubSpec = new ECPublicKeySpec(publicPoint, ecParameters);
-      final KeyFactory kf = KeyFactory.getInstance("EC");
-      return (ECPublicKey) kf.generatePublic(pubSpec);
-    } catch (NoSuchAlgorithmException | InvalidParameterSpecException | InvalidKeySpecException e) {
-      throw new IllegalStateException("Unable to create Ethereum public key", e);
-    }
-  }
-
-  public static ECPublicKey createPublicKey(final Bytes value) {
-    checkArgument(value.size() == PUBLIC_KEY_SIZE, "Invalid public key size must be 64 bytes");
-    final Bytes x = value.slice(0, 32);
-    final Bytes y = value.slice(32, 32);
-    final ECPoint ecPoint =
-        new ECPoint(Numeric.toBigInt(x.toArrayUnsafe()), Numeric.toBigInt(y.toArrayUnsafe()));
-    return createPublicKey(ecPoint);
-  }
-
-  public static ECPublicKey createPublicKey(final BigInteger value) {
-    final Bytes ethBytes = Bytes.wrap(Numeric.toBytesPadded(value, PUBLIC_KEY_SIZE));
-    return createPublicKey(ethBytes);
-  }
-
-  public static byte[] toByteArray(final ECPublicKey publicKey) {
-    final ECPoint ecPoint = publicKey.getW();
-    final Bytes xBytes = Bytes32.wrap(asUnsignedByteArray(32, ecPoint.getAffineX()));
-    final Bytes yBytes = Bytes32.wrap(asUnsignedByteArray(32, ecPoint.getAffineY()));
-    return Bytes.concatenate(xBytes, yBytes).toArray();
-  }
-
-  public static String toHexString(final ECPublicKey publicKey) {
-    return Bytes.wrap(toByteArray(publicKey)).toHexString();
-  }
-
-  public static Bytes getEncoded(final ECPublicKey publicKey, boolean encodeCompressed) {
-    // Check if it's already a Bouncy Castle ECPublicKey
-    if (publicKey instanceof BCECPublicKey) {
-      return Bytes.wrap(((BCECPublicKey) publicKey).getQ().getEncoded(encodeCompressed));
-    }
-
-    // Convert java.security.spec.ECPoint to org.bouncycastle.math.ec.ECPoint
-    java.security.spec.ECPoint javaECPoint = publicKey.getW();
-    org.bouncycastle.math.ec.ECPoint bcEcPoint =
-        SECP256K1_DOMAIN_PARAMS
-            .getCurve()
-            .createPoint(javaECPoint.getAffineX(), javaECPoint.getAffineY());
-
-    // Return the encoding
-    return Bytes.wrap(bcEcPoint.getEncoded(encodeCompressed));
-  }
-
+  /**
+   * Create a new secp256k1 key pair.
+   *
+   * @param random The random number generator to use
+   * @return The generated key pair
+   * @throws GeneralSecurityException If there is an issue generating the key pair
+   */
   public static KeyPair createSecp256k1KeyPair(final SecureRandom random)
-      throws NoSuchProviderException, NoSuchAlgorithmException, InvalidAlgorithmParameterException {
-    final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDSA", BC_PROVIDER);
-    final ECGenParameterSpec ecGenParameterSpec = new ECGenParameterSpec("secp256k1");
+      throws GeneralSecurityException {
+    final KeyPairGenerator keyPairGenerator =
+        KeyPairGenerator.getInstance(EC_ALGORITHM, BC_PROVIDER);
+    final ECGenParameterSpec ecGenParameterSpec = new ECGenParameterSpec(SECP256K1_CURVE);
     if (random != null) {
       keyPairGenerator.initialize(ecGenParameterSpec, random);
     } else {
@@ -118,5 +82,115 @@ public class EthPublicKeyUtils {
     }
 
     return keyPairGenerator.generateKeyPair();
+  }
+
+  public static ECPublicKey createPublicKey(final Bytes value) {
+    if (value.size() != 33 && value.size() != 65 && value.size() != 64) {
+      throw new IllegalArgumentException(
+          "Invalid public key length. Expected 33, 64, or 65 bytes.");
+    }
+
+    final ECPoint point;
+    if (value.size() == 64) {
+      // For 64-byte input, we need to prepend the 0x04 prefix for uncompressed format
+      byte[] fullKey = new byte[65];
+      fullKey[0] = 0x04;
+      System.arraycopy(value.toArrayUnsafe(), 0, fullKey, 1, 64);
+      point = SECP256K1_DOMAIN.getCurve().decodePoint(fullKey);
+    } else {
+      point = SECP256K1_DOMAIN.getCurve().decodePoint(value.toArrayUnsafe());
+    }
+
+    return createPublicKeyFromPoint(point);
+  }
+
+  private static ECPublicKey createPublicKeyFromPoint(final ECPoint point) {
+    try {
+      // Convert Bouncy Castle ECPoint to Java ECPoint
+      final java.security.spec.ECPoint ecPoint =
+          new java.security.spec.ECPoint(
+              point.getAffineXCoord().toBigInteger(), point.getAffineYCoord().toBigInteger());
+
+      final java.security.spec.ECPublicKeySpec pubSpec =
+          new java.security.spec.ECPublicKeySpec(ecPoint, JAVA_SECP256K1_PARAM_SPEC);
+      return (ECPublicKey)
+          KeyFactory.getInstance(EC_ALGORITHM, BC_PROVIDER).generatePublic(pubSpec);
+    } catch (final InvalidKeySpecException | NoSuchAlgorithmException e) {
+      throw new IllegalArgumentException("Unable to create EC public key", e);
+    }
+  }
+
+  /**
+   * Create an ECPublicKey from a BigInteger representation of the public key.
+   *
+   * @param publicKeyValue The BigInteger representation of the public key (64 bytes, without
+   *     prefix)
+   * @return The created ECPublicKey
+   * @throws IllegalArgumentException if the input is invalid
+   */
+  public static ECPublicKey createPublicKey(final BigInteger publicKeyValue) {
+    if (publicKeyValue == null) {
+      throw new IllegalArgumentException("Public key value cannot be null");
+    }
+
+    byte[] publicKeyBytes = publicKeyValue.toByteArray();
+
+    // Ensure we have exactly 64 bytes
+    if (publicKeyBytes.length < 64) {
+      byte[] temp = new byte[64];
+      System.arraycopy(publicKeyBytes, 0, temp, 64 - publicKeyBytes.length, publicKeyBytes.length);
+      publicKeyBytes = temp;
+    } else if (publicKeyBytes.length > 64) {
+      publicKeyBytes =
+          Arrays.copyOfRange(publicKeyBytes, publicKeyBytes.length - 64, publicKeyBytes.length);
+    }
+
+    // Create a new byte array with the uncompressed prefix
+    byte[] fullPublicKeyBytes = new byte[65];
+    fullPublicKeyBytes[0] = 0x04; // Uncompressed point prefix
+    System.arraycopy(publicKeyBytes, 0, fullPublicKeyBytes, 1, 64);
+
+    // Use the existing createPublicKey method
+    return createPublicKey(Bytes.wrap(fullPublicKeyBytes));
+  }
+
+  @Deprecated // Use getEncoded
+  public static byte[] toByteArray(final ECPublicKey publicKey) {
+    return getEncoded(publicKey, false, false).toArrayUnsafe();
+  }
+
+  @Deprecated // Use getEncoded
+  public static String toHexString(final ECPublicKey publicKey) {
+    return getEncoded(publicKey, false, false).toHexString();
+  }
+
+  /**
+   * Convert java ECPublicKey to Bytes.
+   *
+   * @param publicKey The public key to convert
+   * @param compressed Whether to return the compressed form
+   * @param withPrefix Whether to include the prefix byte for uncompressed keys
+   * @return The encoded public key
+   */
+  public static Bytes getEncoded(
+      final ECPublicKey publicKey, boolean compressed, boolean withPrefix) {
+    final ECPoint point;
+    if (publicKey instanceof BCECPublicKey) {
+      // If it's already a Bouncy Castle key, we can get the ECPoint directly
+      point = ((BCECPublicKey) publicKey).getQ();
+    } else {
+      // If it's not a BC key, we need to create the ECPoint from the coordinates
+      final BigInteger x = publicKey.getW().getAffineX();
+      final BigInteger y = publicKey.getW().getAffineY();
+      point = SECP256K1_SPEC.getCurve().createPoint(x, y);
+    }
+
+    if (compressed) {
+      return Bytes.wrap(point.getEncoded(true));
+    } else if (withPrefix) {
+      return Bytes.wrap(point.getEncoded(false));
+    } else {
+      return Bytes.wrap(point.getEncoded(false), 1, 64);
+    }
   }
 }
