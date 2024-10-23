@@ -16,24 +16,15 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
-import tech.pegasys.teku.bls.BLSPublicKey;
-import tech.pegasys.teku.infrastructure.bytes.Bytes4;
-import tech.pegasys.teku.infrastructure.ssz.Merkleizable;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.BlsProxyKeySchema;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.SECPProxyKeySchema;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.GenerateProxyKeyBody;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.GenerateProxyKeyResponse;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeyMessage;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeySignatureScheme;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
-import tech.pegasys.web3signer.core.util.Web3SignerSigningRootUtil;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
-import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 
-import java.security.interfaces.ECPublicKey;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -42,7 +33,6 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContext> {
@@ -51,12 +41,10 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
   private static final int NOT_FOUND = 404;
   private static final int BAD_REQUEST = 400;
   private static final int INTERNAL_ERROR = 500;
-  private static final Bytes4 COMMIT_BOOST_DOMAIN = Bytes4.fromHexString("0x6d6d6f43");
 
   private final SignerForIdentifier<?> signerForIdentifier;
   private final ProxyKeyGenerator proxyKeyGenerator;
-  private final Spec eth2Spec;
-  private final Bytes32 genesisValidatorsRoot;
+  private final SigningRootGenerator signingRootGenerator;
 
   public CommitBoostGenerateProxyKeyHandler(
       final SignerForIdentifier<?> signerForIdentifier,
@@ -65,8 +53,7 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
       final Bytes32 genesisValidatorsRoot) {
     this.signerForIdentifier = signerForIdentifier;
     this.proxyKeyGenerator = new ProxyKeyGenerator(commitBoostApiParameters);
-    this.eth2Spec = eth2Spec;
-    this.genesisValidatorsRoot = genesisValidatorsRoot;
+    this.signingRootGenerator = new SigningRootGenerator(eth2Spec, genesisValidatorsRoot);
   }
 
   @Override
@@ -108,7 +95,8 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
         new ProxyKeyMessage(identifier, artifactSigner.getIdentifier());
     final Optional<String> optionalSig =
         signerForIdentifier.sign(
-            identifier, computeSigningRoot(proxyKeyMessage, proxyKeyBody.scheme()));
+            identifier,
+            signingRootGenerator.computeSigningRoot(proxyKeyMessage, proxyKeyBody.scheme()));
     if (optionalSig.isEmpty()) {
       context.fail(NOT_FOUND);
       return;
@@ -126,26 +114,5 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
       LOG.error("Failed to encode GenerateProxyKeyResponse to JSON", e);
       context.fail(INTERNAL_ERROR);
     }
-  }
-
-  private Bytes computeSigningRoot(
-      final ProxyKeyMessage proxyKeyMessage, final ProxyKeySignatureScheme scheme) {
-    final Bytes4 genesisForkVersion = eth2Spec.getGenesisSpec().getConfig().getGenesisForkVersion();
-
-    final Bytes32 domain =
-        Web3SignerSigningRootUtil.computeDomain(
-            COMMIT_BOOST_DOMAIN, genesisForkVersion, genesisValidatorsRoot);
-
-    final BLSPublicKey delegator = BLSPublicKey.fromHexString(proxyKeyMessage.blsPublicKey());
-    final Merkleizable proxyKeyMessageToSign;
-    if (scheme == ProxyKeySignatureScheme.BLS) {
-      final BLSPublicKey proxy = BLSPublicKey.fromHexString(proxyKeyMessage.proxyPublicKey());
-      proxyKeyMessageToSign = new BlsProxyKeySchema().create(delegator, proxy);
-    } else {
-      final ECPublicKey proxy =
-          EthPublicKeyUtils.createPublicKey(Bytes.fromHexString(proxyKeyMessage.proxyPublicKey()));
-      proxyKeyMessageToSign = new SECPProxyKeySchema().create(delegator, proxy);
-    }
-    return Web3SignerSigningRootUtil.computeSigningRoot(proxyKeyMessageToSign, domain);
   }
 }
