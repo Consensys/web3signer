@@ -16,7 +16,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.JSON_UTF_8;
 import static tech.pegasys.web3signer.core.service.http.handlers.ContentTypes.TEXT_PLAIN_UTF_8;
-import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.computeDomain;
+import static tech.pegasys.web3signer.core.util.Web3SignerSigningRootUtil.computeDomain;
 import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIdentifier;
 
 import tech.pegasys.teku.api.schema.AttestationData;
@@ -31,7 +31,7 @@ import tech.pegasys.web3signer.core.metrics.SlashingProtectionMetrics;
 import tech.pegasys.web3signer.core.service.http.ArtifactType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
-import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
+import tech.pegasys.web3signer.core.util.Web3SignerSigningRootUtil;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 
 import java.util.List;
@@ -281,7 +281,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
         checkArgument(body.deposit() != null, "deposit must be specified");
         final Bytes32 depositDomain =
             computeDomain(Domain.DEPOSIT, body.deposit().getGenesisForkVersion(), Bytes32.ZERO);
-        return DepositSigningRootUtil.computeSigningRoot(
+        return Web3SignerSigningRootUtil.computeSigningRoot(
             body.deposit().asInternalDepositMessage(), depositDomain);
       case SYNC_COMMITTEE_MESSAGE:
         final SyncCommitteeMessage syncCommitteeMessage = body.syncCommitteeMessage();

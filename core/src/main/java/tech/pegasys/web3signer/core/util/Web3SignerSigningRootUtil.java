@@ -20,7 +20,7 @@ import tech.pegasys.teku.spec.datastructures.state.SigningData;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class DepositSigningRootUtil {
+public class Web3SignerSigningRootUtil {
   public static Bytes computeSigningRoot(final Merkleizable object, final Bytes32 domain) {
     return new SigningData(object.hashTreeRoot(), domain).hashTreeRoot();
   }

@@ -18,20 +18,22 @@ import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIden
 
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
+import tech.pegasys.teku.infrastructure.ssz.Merkleizable;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.BlsProxyKeyMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.BlsProxyKeySchema;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.SECPProxyKeySchema;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.GenerateProxyKeyBody;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.GenerateProxyKeyResponse;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeyMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeySignatureScheme;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
-import tech.pegasys.web3signer.core.util.CommitBoostSigningRootUtil;
-import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
+import tech.pegasys.web3signer.core.util.Web3SignerSigningRootUtil;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
+import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 
+import java.security.interfaces.ECPublicKey;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -49,6 +51,7 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
   private static final int NOT_FOUND = 404;
   private static final int BAD_REQUEST = 400;
   private static final int INTERNAL_ERROR = 500;
+  private static final Bytes4 COMMIT_BOOST_DOMAIN = Bytes4.fromHexString("0x6d6d6f43");
 
   private final SignerForIdentifier<?> signerForIdentifier;
   private final ProxyKeyGenerator proxyKeyGenerator;
@@ -130,21 +133,19 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
     final Bytes4 genesisForkVersion = eth2Spec.getGenesisSpec().getConfig().getGenesisForkVersion();
 
     final Bytes32 domain =
-        DepositSigningRootUtil.computeDomain(
-            CommitBoostSigningRootUtil.COMMIT_BOOST_DOMAIN,
-            genesisForkVersion,
-            genesisValidatorsRoot);
+        Web3SignerSigningRootUtil.computeDomain(
+            COMMIT_BOOST_DOMAIN, genesisForkVersion, genesisValidatorsRoot);
 
     final BLSPublicKey delegator = BLSPublicKey.fromHexString(proxyKeyMessage.blsPublicKey());
+    final Merkleizable proxyKeyMessageToSign;
     if (scheme == ProxyKeySignatureScheme.BLS) {
       final BLSPublicKey proxy = BLSPublicKey.fromHexString(proxyKeyMessage.proxyPublicKey());
-      final BlsProxyKeyMessage blsProxyKeyMessage =
-          new BlsProxyKeySchema().create(delegator, proxy);
-
-      return DepositSigningRootUtil.computeSigningRoot(blsProxyKeyMessage, domain);
+      proxyKeyMessageToSign = new BlsProxyKeySchema().create(delegator, proxy);
     } else {
-      // TODO: Implement ECDSA signing root
-      throw new UnsupportedOperationException("ECDSA signing root not implemented");
+      final ECPublicKey proxy =
+          EthPublicKeyUtils.createPublicKey(Bytes.fromHexString(proxyKeyMessage.proxyPublicKey()));
+      proxyKeyMessageToSign = new SECPProxyKeySchema().create(delegator, proxy);
     }
+    return Web3SignerSigningRootUtil.computeSigningRoot(proxyKeyMessageToSign, domain);
   }
 }
