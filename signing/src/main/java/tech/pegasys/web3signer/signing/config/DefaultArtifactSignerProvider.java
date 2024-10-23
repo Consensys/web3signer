@@ -77,41 +77,44 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                 if (!keystoreParameter.isEnabled()) {
                   return;
                 }
-                signers.forEach(
-                    (identifier, __) -> {
-                      final Path identifierPath =
-                          keystoreParameter.getKeystoresPath().resolve(identifier);
-                      if (identifierPath.toFile().canRead()
-                          && identifierPath.toFile().isDirectory()) {
-                        final Path v4Dir = identifierPath.resolve("v4");
 
-                        if (v4Dir.toFile().canRead() && v4Dir.toFile().isDirectory()) {
-                          // load v4 proxy signers
-                          final BlsKeystoreBulkLoader v4Loader = new BlsKeystoreBulkLoader();
-                          final MappedResults<ArtifactSigner> blsSignersResult =
-                              v4Loader.loadKeystoresUsingPasswordFile(
-                                  v4Dir, keystoreParameter.getKeystoresPasswordFile());
-                          final Collection<ArtifactSigner> blsSigners =
-                              blsSignersResult.getValues();
-                          proxySigners
-                              .computeIfAbsent(identifier, k -> new ArrayList<>())
-                              .addAll(blsSigners);
-                        }
+                signers
+                    .keySet()
+                    .forEach(
+                        identifier -> {
+                          final Path identifierPath =
+                              keystoreParameter.getKeystoresPath().resolve(identifier);
+                          if (identifierPath.toFile().canRead()
+                              && identifierPath.toFile().isDirectory()) {
+                            final Path v4Dir = identifierPath.resolve("v4");
 
-                        final Path v3Dir = identifierPath.resolve("v3");
-                        if (v3Dir.toFile().canRead() && v3Dir.toFile().isDirectory()) {
-                          // load v3 proxy signers
-                          final MappedResults<ArtifactSigner> secpSignersResults =
-                              SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
-                                  v3Dir, keystoreParameter.getKeystoresPasswordFile());
-                          final Collection<ArtifactSigner> secpSigners =
-                              secpSignersResults.getValues();
-                          proxySigners
-                              .computeIfAbsent(identifier, k -> new ArrayList<>())
-                              .addAll(secpSigners);
-                        }
-                      }
-                    });
+                            if (v4Dir.toFile().canRead() && v4Dir.toFile().isDirectory()) {
+                              // load v4 proxy signers
+                              final BlsKeystoreBulkLoader v4Loader = new BlsKeystoreBulkLoader();
+                              final MappedResults<ArtifactSigner> blsSignersResult =
+                                  v4Loader.loadKeystoresUsingPasswordFile(
+                                      v4Dir, keystoreParameter.getKeystoresPasswordFile());
+                              final Collection<ArtifactSigner> blsSigners =
+                                  blsSignersResult.getValues();
+                              proxySigners
+                                  .computeIfAbsent(identifier, k -> new ArrayList<>())
+                                  .addAll(blsSigners);
+                            }
+
+                            final Path v3Dir = identifierPath.resolve("v3");
+                            if (v3Dir.toFile().canRead() && v3Dir.toFile().isDirectory()) {
+                              // load v3 proxy signers (compressed pub key).
+                              final MappedResults<ArtifactSigner> secpSignersResults =
+                                  SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
+                                      v3Dir, keystoreParameter.getKeystoresPasswordFile(), true);
+                              final Collection<ArtifactSigner> secpSigners =
+                                  secpSignersResults.getValues();
+                              proxySigners
+                                  .computeIfAbsent(identifier, k -> new ArrayList<>())
+                                  .addAll(secpSigners);
+                            }
+                          }
+                        });
               });
 
           LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());

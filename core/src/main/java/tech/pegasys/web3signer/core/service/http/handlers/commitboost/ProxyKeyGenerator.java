@@ -62,7 +62,7 @@ public class ProxyKeyGenerator {
     final ECKeyPair ecKeyPair = Keys.createEcKeyPair(secureRandom);
     final Path ecWalletFile = createECWalletFile(ecKeyPair, identifier);
     LOG.debug("Created proxy EC wallet file {} for identifier: {}", ecWalletFile, identifier);
-    return new EthSecpArtifactSigner(new CredentialSigner(Credentials.create(ecKeyPair)));
+    return new EthSecpArtifactSigner(new CredentialSigner(Credentials.create(ecKeyPair)), true);
   }
 
   public ArtifactSigner generateBLSProxyKey(final String identifier) throws UncheckedIOException {

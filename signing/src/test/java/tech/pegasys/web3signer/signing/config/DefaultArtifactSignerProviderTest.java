@@ -143,7 +143,7 @@ class DefaultArtifactSignerProviderTest {
     assertThat(key1ProxyPublicKeys.get(KeyType.BLS))
         .containsExactlyInAnyOrder(getPublicKeysArray(key1ProxyKeyPairs));
     assertThat(key1ProxyPublicKeys.get(KeyType.SECP256K1))
-        .containsExactlyInAnyOrder(getSecpPublicKeysArray(key1SecpKeyPairs));
+        .containsExactlyInAnyOrder(getCompressedSecpPublicKeysArray(key1SecpKeyPairs));
 
     final Map<KeyType, List<String>> key2ProxyPublicKeys =
         signerProvider.getProxyIdentifiers(PUBLIC_KEY2);
@@ -151,7 +151,7 @@ class DefaultArtifactSignerProviderTest {
     assertThat(key2ProxyPublicKeys.get(KeyType.BLS))
         .containsExactlyInAnyOrder(getPublicKeysArray(key2ProxyKeyPairs));
     assertThat(key2ProxyPublicKeys.get(KeyType.SECP256K1))
-        .containsExactlyInAnyOrder(getSecpPublicKeysArray(key2SecpKeyPairs));
+        .containsExactlyInAnyOrder(getCompressedSecpPublicKeysArray(key2SecpKeyPairs));
   }
 
   @Test
@@ -223,12 +223,16 @@ class DefaultArtifactSignerProviderTest {
         .toArray(String[]::new);
   }
 
-  private static String[] getSecpPublicKeysArray(final List<ECKeyPair> ecKeyPairs) {
+  private static String[] getCompressedSecpPublicKeysArray(final List<ECKeyPair> ecKeyPairs) {
+    // compressed public keys
     return ecKeyPairs.stream()
         .map(
             keyPair ->
-                EthPublicKeyUtils.toHexString(
-                    EthPublicKeyUtils.createPublicKey(keyPair.getPublicKey())))
+                EthPublicKeyUtils.getEncoded(
+                        EthPublicKeyUtils.createPublicKeyFromBigInt(keyPair.getPublicKey()),
+                        true,
+                        false)
+                    .toHexString())
         .toList()
         .toArray(String[]::new);
   }

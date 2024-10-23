@@ -194,7 +194,8 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
     final byte[] s = signature.slice(32, 32).toArray();
     final byte[] v = signature.slice(64).toArray();
     final BigInteger messagePublicKey = recoverPublicKey(new SignatureData(v, r, s));
-    assertThat(EthPublicKeyUtils.createPublicKey(messagePublicKey)).isEqualTo(expectedPublicKey);
+    assertThat(EthPublicKeyUtils.createPublicKeyFromBigInt(messagePublicKey))
+        .isEqualTo(expectedPublicKey);
   }
 
   private BigInteger recoverPublicKey(final SignatureData signature) {

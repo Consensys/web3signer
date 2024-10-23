@@ -60,7 +60,7 @@ class EthPublicKeyUtilsTest {
   @Test
   public void createsPublicKeyFromBigInteger() {
     final BigInteger publicKey = Numeric.toBigInt(PUBLIC_KEY);
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(publicKey);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKeyFromBigInt(publicKey);
 
     final Bytes expectedPublicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
     final ECPoint expectedEcPoint = createEcPoint(expectedPublicKeyBytes);

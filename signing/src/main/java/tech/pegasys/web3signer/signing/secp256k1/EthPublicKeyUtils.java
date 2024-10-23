@@ -128,7 +128,7 @@ public class EthPublicKeyUtils {
    * @return The created ECPublicKey
    * @throws IllegalArgumentException if the input is invalid
    */
-  public static ECPublicKey createPublicKey(final BigInteger publicKeyValue) {
+  public static ECPublicKey createPublicKeyFromBigInt(final BigInteger publicKeyValue) {
     if (publicKeyValue == null) {
       throw new IllegalArgumentException("Public key value cannot be null");
     }

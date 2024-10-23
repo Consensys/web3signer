@@ -36,6 +36,11 @@ public class SecpV3KeystoresBulkLoader {
 
   public static MappedResults<ArtifactSigner> loadV3KeystoresUsingPasswordFileOrDir(
       final Path keystoresPath, final Path pwrdFileOrDirPath) {
+    return loadV3KeystoresUsingPasswordFileOrDir(keystoresPath, pwrdFileOrDirPath, false);
+  }
+
+  public static MappedResults<ArtifactSigner> loadV3KeystoresUsingPasswordFileOrDir(
+      final Path keystoresPath, final Path pwrdFileOrDirPath, final boolean isCompressed) {
     if (!Files.exists(pwrdFileOrDirPath)) {
       LOG.error("Password file or directory doesn't exist.");
       return MappedResults.errorResult();
@@ -67,12 +72,12 @@ public class SecpV3KeystoresBulkLoader {
     }
 
     return keystoresFiles.parallelStream()
-        .map(keystoreFile -> createSecpArtifactSigner(keystoreFile, passwordReader))
+        .map(keystoreFile -> createSecpArtifactSigner(keystoreFile, passwordReader, isCompressed))
         .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
   private static MappedResults<ArtifactSigner> createSecpArtifactSigner(
-      final Path v3KeystorePath, final PasswordReader passwordReader) {
+      final Path v3KeystorePath, final PasswordReader passwordReader, final boolean isCompressed) {
     try {
       final String fileNameWithoutExt =
           FilenameUtils.removeExtension(v3KeystorePath.getFileName().toString());
@@ -82,7 +87,7 @@ public class SecpV3KeystoresBulkLoader {
       final Credentials credentials =
           WalletUtils.loadCredentials(password, v3KeystorePath.toFile());
       final EthSecpArtifactSigner artifactSigner =
-          new EthSecpArtifactSigner(new CredentialSigner(credentials));
+          new EthSecpArtifactSigner(new CredentialSigner(credentials), isCompressed);
       return MappedResults.newInstance(Set.of(artifactSigner), 0);
     } catch (final IOException | CipherException | RuntimeException e) {
       LOG.error("Error loading v3 keystore {}", v3KeystorePath, e);
