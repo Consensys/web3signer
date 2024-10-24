@@ -12,6 +12,7 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.commitboost;
 
+import com.google.common.annotations.VisibleForTesting;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.ssz.Merkleizable;
@@ -53,5 +54,10 @@ public class SigningRootGenerator {
       proxyKeyMessageToSign = new SECPProxyKeySchema().create(delegator, proxy);
     }
     return Web3SignerSigningRootUtil.computeSigningRoot(proxyKeyMessageToSign, domain);
+  }
+
+  @VisibleForTesting
+  Bytes32 getDomain() {
+    return domain;
   }
 }
