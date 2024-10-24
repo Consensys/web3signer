@@ -156,7 +156,7 @@ class DefaultArtifactSignerProviderTest {
 
   @Test
   void emptyProxySignersAreLoadedSuccessfully() {
-    // enable commit boose without existing proxy keys
+    // enable commit boost without existing proxy keys
     final KeystoresParameters commitBoostParameters =
         new TestCommitBoostParameters(commitBoostKeystoresPath, commitBoostPasswordDir);
 
@@ -183,7 +183,8 @@ class DefaultArtifactSignerProviderTest {
   private List<BLSKeyPair> randomBLSV4Keystores(SecureRandom secureRandom, String identifier)
       throws IOException {
     final Path v4Dir =
-        Files.createDirectories(commitBoostKeystoresPath.resolve(identifier).resolve("v4"));
+        Files.createDirectories(
+            commitBoostKeystoresPath.resolve(identifier).resolve(KeyType.BLS.name()));
 
     return IntStream.range(0, 4)
         .mapToObj(
@@ -198,7 +199,8 @@ class DefaultArtifactSignerProviderTest {
   private List<ECKeyPair> randomSecpV3Keystores(
       final SecureRandom secureRandom, final String identifier) throws IOException {
     final Path v3Dir =
-        Files.createDirectories(commitBoostKeystoresPath.resolve(identifier).resolve("v3"));
+        Files.createDirectories(
+            commitBoostKeystoresPath.resolve(identifier).resolve(KeyType.SECP256K1.name()));
     return IntStream.range(0, 4)
         .mapToObj(
             i -> {
