@@ -25,6 +25,7 @@ import tech.pegasys.teku.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
+import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
@@ -85,7 +86,8 @@ public class ProxyKeyGenerator {
             keyPair.getSecretKey().toBytes(), publicKey, password, "", kdfParam, cipher);
     try {
       final Path keystoreDir =
-          createV4Directory(commitBoostApiParameters.getKeystoresPath(), identifier);
+          createSubDirectories(
+              commitBoostApiParameters.getKeystoresPath(), identifier, KeyType.BLS);
       final Path keystoreFile = keystoreDir.resolve(publicKey + ".json");
       KeyStoreLoader.saveToFile(keystoreFile, keyStoreData);
       return keystoreFile;
@@ -96,14 +98,16 @@ public class ProxyKeyGenerator {
 
   private Path createECWalletFile(final ECKeyPair ecKeyPair, final String identifier) {
     final String password = readFile(commitBoostApiParameters.getKeystoresPasswordFile());
-    final Path v3Dir = createV3Directory(commitBoostApiParameters.getKeystoresPath(), identifier);
+    final Path keystoreDir =
+        createSubDirectories(
+            commitBoostApiParameters.getKeystoresPath(), identifier, KeyType.SECP256K1);
     final String fileName;
     try {
-      fileName = WalletUtils.generateWalletFile(password, ecKeyPair, v3Dir.toFile(), true);
-    } catch (CipherException | IOException e) {
+      fileName = WalletUtils.generateWalletFile(password, ecKeyPair, keystoreDir.toFile(), true);
+    } catch (final CipherException | IOException e) {
       throw new RuntimeException(e);
     }
-    return v3Dir.resolve(fileName);
+    return keystoreDir.resolve(fileName);
   }
 
   private static String readFile(final Path file) throws UncheckedIOException {
@@ -116,23 +120,14 @@ public class ProxyKeyGenerator {
     return password;
   }
 
-  private static Path createV4Directory(final Path parentDirectory, final String directoryName) {
-    final Path v4Directory = parentDirectory.resolve(directoryName).resolve("v4");
+  private static Path createSubDirectories(
+      final Path parentDirectory, final String directoryName, final KeyType keyType) {
+    final Path subDirectory = parentDirectory.resolve(directoryName).resolve(keyType.name());
     try {
-      Files.createDirectories(v4Directory);
+      Files.createDirectories(subDirectory);
     } catch (final IOException e) {
-      throw new UncheckedIOException("Unable to create directory: " + v4Directory, e);
+      throw new UncheckedIOException("Unable to create directory: " + subDirectory, e);
     }
-    return v4Directory;
-  }
-
-  private static Path createV3Directory(final Path parentDirectory, final String directoryName) {
-    final Path v3Directory = parentDirectory.resolve(directoryName).resolve("v3");
-    try {
-      Files.createDirectories(v3Directory);
-    } catch (final IOException e) {
-      throw new UncheckedIOException("Unable to create directory: " + v3Directory, e);
-    }
-    return v3Directory;
+    return subDirectory;
   }
 }

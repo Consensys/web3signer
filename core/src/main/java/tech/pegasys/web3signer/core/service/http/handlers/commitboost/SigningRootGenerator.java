@@ -12,7 +12,6 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.commitboost;
 
-import com.google.common.annotations.VisibleForTesting;
 import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.ssz.Merkleizable;
@@ -26,6 +25,7 @@ import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 
 import java.security.interfaces.ECPublicKey;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
