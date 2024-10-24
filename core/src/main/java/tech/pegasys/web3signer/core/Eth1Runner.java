@@ -50,6 +50,7 @@ import tech.pegasys.web3signer.signing.secp256k1.azure.AzureKeyVaultSignerFactor
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -114,7 +115,8 @@ public class Eth1Runner extends Runner {
                           awsKmsSignerFactory)
                       .getValues());
               return signers;
-            });
+            },
+            Optional.empty());
 
     // uses eth1 address as identifier
     final ArtifactSignerProvider secpArtifactSignerProvider =

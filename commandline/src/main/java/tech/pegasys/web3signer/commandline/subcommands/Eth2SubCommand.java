@@ -29,6 +29,7 @@ import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliEth2AzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliGcpSecretManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
+import tech.pegasys.web3signer.commandline.config.PicoCommitBoostApiParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
 import tech.pegasys.web3signer.common.config.AwsAuthenticationMode;
 import tech.pegasys.web3signer.core.Eth2Runner;
@@ -164,6 +165,7 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Mixin private PicoKeystoresParameters keystoreParameters;
   @Mixin private PicoCliAwsSecretsManagerParameters awsSecretsManagerParameters;
   @Mixin private PicoCliGcpSecretManagerParameters gcpSecretManagerParameters;
+  @Mixin private PicoCommitBoostApiParameters commitBoostApiParameters;
   private tech.pegasys.teku.spec.Spec eth2Spec;
 
   public Eth2SubCommand() {
@@ -183,7 +185,8 @@ public class Eth2SubCommand extends ModeSubCommand {
         gcpSecretManagerParameters,
         eth2Spec,
         isKeyManagerApiEnabled,
-        signingExtEnabled);
+        signingExtEnabled,
+        commitBoostApiParameters);
   }
 
   private void logNetworkSpecInformation() {
@@ -261,6 +264,7 @@ public class Eth2SubCommand extends ModeSubCommand {
     validateKeystoreParameters(keystoreParameters);
     validateAwsSecretsManageParameters();
     validateGcpSecretManagerParameters();
+    commitBoostApiParameters.validateParameters();
   }
 
   private void validateGcpSecretManagerParameters() {

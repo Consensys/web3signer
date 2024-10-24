@@ -12,11 +12,22 @@
  */
 package tech.pegasys.web3signer.signing.config;
 
+import static tech.pegasys.web3signer.signing.KeyType.BLS;
+import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
+
+import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.KeyType;
+import tech.pegasys.web3signer.signing.bulkloading.BlsKeystoreBulkLoader;
+import tech.pegasys.web3signer.signing.bulkloading.SecpV3KeystoresBulkLoader;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -35,11 +46,15 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
+  private final Map<String, List<ArtifactSigner>> proxySigners = new HashMap<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+  private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
 
   public DefaultArtifactSignerProvider(
-      final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier) {
+      final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier,
+      final Optional<KeystoresParameters> commitBoostKeystoresParameters) {
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
+    this.commitBoostKeystoresParameters = commitBoostKeystoresParameters;
   }
 
   @Override
@@ -60,6 +75,27 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                       }))
               .forEach(signers::putIfAbsent);
 
+          // for each loaded signer, load commit boost proxy signers (if any)
+          commitBoostKeystoresParameters
+              .filter(KeystoresParameters::isEnabled)
+              .ifPresent(
+                  keystoreParameter ->
+                      signers
+                          .keySet()
+                          .forEach(
+                              signerIdentifier -> {
+                                LOG.trace(
+                                    "Loading proxy signers for signer '{}' ...", signerIdentifier);
+                                final Path identifierPath =
+                                    keystoreParameter.getKeystoresPath().resolve(signerIdentifier);
+                                if (canReadFromDirectory(identifierPath)) {
+                                  loadBlsProxySigners(
+                                      keystoreParameter, signerIdentifier, identifierPath);
+                                  loadSecpProxySigners(
+                                      keystoreParameter, signerIdentifier, identifierPath);
+                                }
+                              }));
+
           LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
           return null;
         });
@@ -78,6 +114,17 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   @Override
   public Set<String> availableIdentifiers() {
     return Set.copyOf(signers.keySet());
+  }
+
+  @Override
+  public Map<KeyType, List<String>> getProxyIdentifiers(final String identifier) {
+    final List<ArtifactSigner> artifactSigners =
+        proxySigners.computeIfAbsent(identifier, k -> List.of());
+    return artifactSigners.stream()
+        .collect(
+            Collectors.groupingBy(
+                ArtifactSigner::getKeyType,
+                Collectors.mapping(ArtifactSigner::getIdentifier, Collectors.toList())));
   }
 
   @Override
@@ -103,5 +150,42 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   @Override
   public void close() {
     executorService.shutdownNow();
+  }
+
+  private static boolean canReadFromDirectory(final Path path) {
+    final File file = path.toFile();
+    return file.canRead() && file.isDirectory();
+  }
+
+  private void loadSecpProxySigners(
+      final KeystoresParameters keystoreParameter,
+      final String identifier,
+      final Path identifierPath) {
+    final Path proxySecpDir = identifierPath.resolve(SECP256K1.name());
+    if (canReadFromDirectory(proxySecpDir)) {
+      // load secp proxy signers
+      final MappedResults<ArtifactSigner> secpSignersResults =
+          SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
+              proxySecpDir, keystoreParameter.getKeystoresPasswordFile());
+      final Collection<ArtifactSigner> secpSigners = secpSignersResults.getValues();
+      proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(secpSigners);
+    }
+  }
+
+  private void loadBlsProxySigners(
+      final KeystoresParameters keystoreParameter,
+      final String identifier,
+      final Path identifierPath) {
+    final Path proxyBlsDir = identifierPath.resolve(BLS.name());
+
+    if (canReadFromDirectory(proxyBlsDir)) {
+      // load bls proxy signers
+      final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
+      final MappedResults<ArtifactSigner> blsSignersResult =
+          blsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
+              proxyBlsDir, keystoreParameter.getKeystoresPasswordFile());
+      final Collection<ArtifactSigner> blsSigners = blsSignersResult.getValues();
+      proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(blsSigners);
+    }
   }
 }

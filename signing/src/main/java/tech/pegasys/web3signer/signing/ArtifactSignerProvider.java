@@ -13,22 +13,61 @@
 package tech.pegasys.web3signer.signing;
 
 import java.io.Closeable;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
 
 public interface ArtifactSignerProvider extends Closeable {
 
+  /**
+   * Load the signers from the underlying providers.
+   *
+   * @return a future that completes when the signers are loaded
+   */
   Future<Void> load();
 
+  /**
+   * Get the signer for the given identifier.
+   *
+   * @param identifier the identifier of the signer
+   * @return the signer or empty if no signer is found
+   */
   Optional<ArtifactSigner> getSigner(final String identifier);
 
+  /**
+   * Get the available identifiers for the loaded signers.
+   *
+   * @return the available identifiers
+   */
   Set<String> availableIdentifiers();
 
+  /**
+   * Get the proxy identifiers for the given identifier. Used for commit boost API.
+   *
+   * @param identifier the identifier of the signer
+   * @return Map of Key Type (BLS, SECP256K1) and corresponding proxy identifiers
+   */
+  Map<KeyType, List<String>> getProxyIdentifiers(final String identifier);
+
+  /**
+   * Add a new signer to the signer provider.
+   *
+   * @param signer the signer to add
+   * @return a future that completes when the signer is added
+   */
   Future<Void> addSigner(final ArtifactSigner signer);
 
+  /**
+   * Remove a signer from the signer provider.
+   *
+   * @param identifier signer to remove
+   * @return a future that completes when the signer is removed
+   */
   Future<Void> removeSigner(final String identifier);
 
+  /** Close the executor service and release any resources. */
   @Override
   void close();
 }
