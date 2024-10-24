@@ -39,7 +39,12 @@ public class SecpV3KeystoresBulkLoader {
     return loadV3KeystoresUsingPasswordFileOrDir(keystoresPath, pwrdFileOrDirPath, false);
   }
 
-  public static MappedResults<ArtifactSigner> loadV3KeystoresUsingPasswordFileOrDir(
+  public static MappedResults<ArtifactSigner> loadKeystoresWithCompressedIdentifier(
+      final Path keystoresPath, final Path pwrdFileOrDirPath) {
+    return loadV3KeystoresUsingPasswordFileOrDir(keystoresPath, pwrdFileOrDirPath, true);
+  }
+
+  private static MappedResults<ArtifactSigner> loadV3KeystoresUsingPasswordFileOrDir(
       final Path keystoresPath, final Path pwrdFileOrDirPath, final boolean isCompressed) {
     if (!Files.exists(pwrdFileOrDirPath)) {
       LOG.error("Password file or directory doesn't exist.");

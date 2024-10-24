@@ -242,13 +242,12 @@ public class Eth2Runner extends Runner {
 
     if (keystoresParameters.isEnabled()) {
       LOG.info("Bulk loading keys from local keystores ... ");
-      final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
       final MappedResults<ArtifactSigner> keystoreSignersResult =
           keystoresParameters.hasKeystoresPasswordsPath()
-              ? blsKeystoreBulkLoader.loadKeystoresUsingPasswordDir(
+              ? BlsKeystoreBulkLoader.loadKeystoresUsingPasswordDir(
                   keystoresParameters.getKeystoresPath(),
                   keystoresParameters.getKeystoresPasswordsPath())
-              : blsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
+              : BlsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
                   keystoresParameters.getKeystoresPath(),
                   keystoresParameters.getKeystoresPasswordFile());
       LOG.info(

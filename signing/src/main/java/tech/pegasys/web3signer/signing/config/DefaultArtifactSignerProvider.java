@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -86,14 +87,18 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                               signerIdentifier -> {
                                 LOG.trace(
                                     "Loading proxy signers for signer '{}' ...", signerIdentifier);
-                                final Path identifierPath =
-                                    keystoreParameter.getKeystoresPath().resolve(signerIdentifier);
-                                if (canReadFromDirectory(identifierPath)) {
-                                  loadBlsProxySigners(
-                                      keystoreParameter, signerIdentifier, identifierPath);
-                                  loadSecpProxySigners(
-                                      keystoreParameter, signerIdentifier, identifierPath);
-                                }
+                                loadProxySigners(
+                                    keystoreParameter,
+                                    signerIdentifier,
+                                    SECP256K1.name(),
+                                    SecpV3KeystoresBulkLoader
+                                        ::loadKeystoresWithCompressedIdentifier);
+
+                                loadProxySigners(
+                                    keystoreParameter,
+                                    signerIdentifier,
+                                    BLS.name(),
+                                    BlsKeystoreBulkLoader::loadKeystoresUsingPasswordFile);
                               }));
 
           LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
@@ -169,35 +174,21 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
     return file.canRead() && file.isDirectory();
   }
 
-  private void loadSecpProxySigners(
+  private void loadProxySigners(
       final KeystoresParameters keystoreParameter,
       final String identifier,
-      final Path identifierPath) {
-    final Path proxySecpDir = identifierPath.resolve(SECP256K1.name());
-    if (canReadFromDirectory(proxySecpDir)) {
-      // load secp proxy signers (compressed)
-      final MappedResults<ArtifactSigner> secpSignersResults =
-          SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
-              proxySecpDir, keystoreParameter.getKeystoresPasswordFile(), true);
-      final Collection<ArtifactSigner> secpSigners = secpSignersResults.getValues();
-      proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(secpSigners);
-    }
-  }
+      final String keyType,
+      final BiFunction<Path, Path, MappedResults<ArtifactSigner>> loaderFunction) {
 
-  private void loadBlsProxySigners(
-      final KeystoresParameters keystoreParameter,
-      final String identifier,
-      final Path identifierPath) {
-    final Path proxyBlsDir = identifierPath.resolve(BLS.name());
+    // Calculate identifierPath from keystoreParameter
+    final Path identifierPath = keystoreParameter.getKeystoresPath().resolve(identifier);
+    final Path proxyDir = identifierPath.resolve(keyType);
 
-    if (canReadFromDirectory(proxyBlsDir)) {
-      // load bls proxy signers
-      final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
-      final MappedResults<ArtifactSigner> blsSignersResult =
-          blsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
-              proxyBlsDir, keystoreParameter.getKeystoresPasswordFile());
-      final Collection<ArtifactSigner> blsSigners = blsSignersResult.getValues();
-      proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(blsSigners);
+    if (canReadFromDirectory(proxyDir)) {
+      final MappedResults<ArtifactSigner> signersResult =
+          loaderFunction.apply(proxyDir, keystoreParameter.getKeystoresPasswordFile());
+      final Collection<ArtifactSigner> signers = signersResult.getValues();
+      proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(signers);
     }
   }
 }
