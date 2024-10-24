@@ -11,7 +11,7 @@ This document contains guidelines (some stricter than others) so we can be consi
 
 The guidelines are intended to facilitate working together not to facilitate reviews that criticize without adding value. 
 
-Some guidelines are personal opinion.  The idea being we make a decision once, document it, and apply it for consistency.  Again, we can then spend more time on the interesting issues and less time discussing coding conventions :-)
+Some guidelines are personal opinion.  The idea is that we make a decision once, document it, and apply it for consistency.  Again, we can then spend more time on the interesting issues and less time discussing coding conventions :-)
 
 # 2 General Design Philosophy 
 
