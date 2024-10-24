@@ -278,8 +278,23 @@ public class Eth2SubCommand extends ModeSubCommand {
     commitBoostApiParameters.validateParameters();
   }
 
+  /**
+   * Validates the genesis state and initializes the genesis validator root. For minimal networks,
+   * which is used in tests, we use 0 as gvr value.
+   *
+   * @param eth2NetworkConfig the network configuration
+   */
   private void validateAndInitGenesisValidatorRoot(
       final Eth2NetworkConfiguration eth2NetworkConfig) {
+
+    if ((Eth2Network.MINIMAL.configName().equals(network)
+            || Eth2Network.SWIFT.configName().equals(network)
+            || Eth2Network.LESS_SWIFT.configName().equals(network))
+        && StringUtils.isBlank(genesisState)) {
+      this.genesisValidatorRoot = Bytes32.ZERO;
+      return;
+    }
+
     final String genesisState =
         eth2NetworkConfig
             .getNetworkBoostrapConfig()
