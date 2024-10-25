@@ -49,13 +49,13 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
   private final Map<String, List<ArtifactSigner>> proxySigners = new HashMap<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-  private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
+  private final Optional<CommitBoostParameters> commitBoostParameters;
 
   public DefaultArtifactSignerProvider(
       final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier,
-      final Optional<KeystoresParameters> commitBoostKeystoresParameters) {
+      final Optional<CommitBoostParameters> commitBoostParameters) {
     this.artifactSignerCollectionSupplier = artifactSignerCollectionSupplier;
-    this.commitBoostKeystoresParameters = commitBoostKeystoresParameters;
+    this.commitBoostParameters = commitBoostParameters;
   }
 
   @Override
@@ -77,8 +77,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
               .forEach(signers::putIfAbsent);
 
           // for each loaded signer, load commit boost proxy signers (if any)
-          commitBoostKeystoresParameters
-              .filter(KeystoresParameters::isEnabled)
+          commitBoostParameters
+              .filter(CommitBoostParameters::isEnabled)
               .ifPresent(
                   keystoreParameter ->
                       signers
@@ -175,18 +175,18 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   private void loadProxySigners(
-      final KeystoresParameters keystoreParameter,
+      final CommitBoostParameters keystoreParameter,
       final String identifier,
       final String keyType,
       final BiFunction<Path, Path, MappedResults<ArtifactSigner>> loaderFunction) {
 
     // Calculate identifierPath from keystoreParameter
-    final Path identifierPath = keystoreParameter.getKeystoresPath().resolve(identifier);
+    final Path identifierPath = keystoreParameter.getProxyKeystoresPath().resolve(identifier);
     final Path proxyDir = identifierPath.resolve(keyType);
 
     if (canReadFromDirectory(proxyDir)) {
       final MappedResults<ArtifactSigner> signersResult =
-          loaderFunction.apply(proxyDir, keystoreParameter.getKeystoresPasswordFile());
+          loaderFunction.apply(proxyDir, keystoreParameter.getProxyKeystoresPath());
       final Collection<ArtifactSigner> signers = signersResult.getValues();
       proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(signers);
     }

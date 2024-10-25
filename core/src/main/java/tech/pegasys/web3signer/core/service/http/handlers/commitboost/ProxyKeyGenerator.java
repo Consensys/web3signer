@@ -26,7 +26,7 @@ import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.KeystoresParameters;
+import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
 
@@ -52,10 +52,10 @@ import org.web3j.crypto.exception.CipherException;
 public class ProxyKeyGenerator {
   private static final Logger LOG = LogManager.getLogger();
   private final SecureRandom secureRandom = new SecureRandom();
-  private final KeystoresParameters commitBoostApiParameters;
+  private final CommitBoostParameters commitBoostParameters;
 
-  public ProxyKeyGenerator(final KeystoresParameters commitBoostApiParameters) {
-    this.commitBoostApiParameters = commitBoostApiParameters;
+  public ProxyKeyGenerator(final CommitBoostParameters commitBoostParameters) {
+    this.commitBoostParameters = commitBoostParameters;
   }
 
   public ArtifactSigner generateECProxyKey(final String identifier)
@@ -80,14 +80,14 @@ public class ProxyKeyGenerator {
     final KdfParam kdfParam = new Pbkdf2Param(32, counter, HMAC_SHA256, salt);
     final Cipher cipher = new Cipher(CipherFunction.AES_128_CTR, iv);
     final Bytes48 publicKey = keyPair.getPublicKey().toBytesCompressed();
-    final String password = readFile(commitBoostApiParameters.getKeystoresPasswordFile());
+    final String password = readFile(commitBoostParameters.getProxyKeystoresPasswordFile());
     final KeyStoreData keyStoreData =
         KeyStore.encrypt(
             keyPair.getSecretKey().toBytes(), publicKey, password, "", kdfParam, cipher);
     try {
       final Path keystoreDir =
           createSubDirectories(
-              commitBoostApiParameters.getKeystoresPath(), identifier, KeyType.BLS);
+              commitBoostParameters.getProxyKeystoresPath(), identifier, KeyType.BLS);
       final Path keystoreFile = keystoreDir.resolve(publicKey + ".json");
       KeyStoreLoader.saveToFile(keystoreFile, keyStoreData);
       return keystoreFile;
@@ -97,10 +97,10 @@ public class ProxyKeyGenerator {
   }
 
   private Path createECWalletFile(final ECKeyPair ecKeyPair, final String identifier) {
-    final String password = readFile(commitBoostApiParameters.getKeystoresPasswordFile());
+    final String password = readFile(commitBoostParameters.getProxyKeystoresPasswordFile());
     final Path keystoreDir =
         createSubDirectories(
-            commitBoostApiParameters.getKeystoresPath(), identifier, KeyType.SECP256K1);
+            commitBoostParameters.getProxyKeystoresPath(), identifier, KeyType.SECP256K1);
     final String fileName;
     try {
       fileName = WalletUtils.generateWalletFile(password, ecKeyPair, keystoreDir.toFile(), true);

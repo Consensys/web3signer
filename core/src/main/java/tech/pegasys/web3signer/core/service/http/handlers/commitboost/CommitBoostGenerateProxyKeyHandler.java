@@ -23,7 +23,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.Gener
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeyMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
-import tech.pegasys.web3signer.signing.config.KeystoresParameters;
+import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 
 import java.util.Optional;
 
@@ -33,7 +33,6 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
@@ -48,12 +47,12 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
 
   public CommitBoostGenerateProxyKeyHandler(
       final SignerForIdentifier<?> signerForIdentifier,
-      final KeystoresParameters commitBoostApiParameters,
-      final Spec eth2Spec,
-      final Bytes32 genesisValidatorsRoot) {
+      final CommitBoostParameters commitBoostParameters,
+      final Spec eth2Spec) {
     this.signerForIdentifier = signerForIdentifier;
-    this.proxyKeyGenerator = new ProxyKeyGenerator(commitBoostApiParameters);
-    this.signingRootGenerator = new SigningRootGenerator(eth2Spec, genesisValidatorsRoot);
+    this.proxyKeyGenerator = new ProxyKeyGenerator(commitBoostParameters);
+    this.signingRootGenerator =
+        new SigningRootGenerator(eth2Spec, commitBoostParameters.getGenesisValidatorsRoot());
   }
 
   @Override

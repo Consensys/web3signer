@@ -21,30 +21,26 @@ import tech.pegasys.web3signer.core.service.http.handlers.commitboost.CommitBoos
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
+import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
-import org.apache.tuweni.bytes.Bytes32;
 
 public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
   private static final String PATH = "/signer/v1/generate_proxy_key";
   private final Context context;
   private final SignerForIdentifier<BlsArtifactSignature> blsSigner;
-  private final KeystoresParameters commitBoostApiParameters;
+  private final CommitBoostParameters commitBoostParameters;
   private final Spec eth2Spec;
-  private final Bytes32 genesisValidatorsRoot;
 
   public CommitBoostGenerateProxyKeyRoute(
       final Context context,
-      final KeystoresParameters commitBoostApiParameters,
-      final Spec eth2Spec,
-      final Bytes32 genesisValidatorsRoot) {
+      final CommitBoostParameters commitBoostParameters,
+      final Spec eth2Spec) {
     this.context = context;
-    this.commitBoostApiParameters = commitBoostApiParameters;
+    this.commitBoostParameters = commitBoostParameters;
     this.eth2Spec = eth2Spec;
-    this.genesisValidatorsRoot = genesisValidatorsRoot;
 
     // there should be only one DefaultArtifactSignerProvider in eth2 mode
     final ArtifactSignerProvider artifactSignerProvider =
@@ -64,8 +60,7 @@ public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
         .getRouter()
         .route(HttpMethod.POST, PATH)
         .blockingHandler(
-            new CommitBoostGenerateProxyKeyHandler(
-                blsSigner, commitBoostApiParameters, eth2Spec, genesisValidatorsRoot),
+            new CommitBoostGenerateProxyKeyHandler(blsSigner, commitBoostParameters, eth2Spec),
             false)
         .failureHandler(context.getErrorHandler())
         .failureHandler(

@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
+import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -112,7 +113,7 @@ class DefaultArtifactSignerProviderTest {
     final SecureRandom secureRandom = new SecureRandom();
 
     // create random proxy signers
-    final KeystoresParameters commitBoostParameters =
+    final CommitBoostParameters commitBoostParameters =
         new TestCommitBoostParameters(commitBoostKeystoresPath, commitBoostPasswordDir);
 
     // create random BLS key pairs as proxy keys for public key1 and public key2
@@ -157,7 +158,7 @@ class DefaultArtifactSignerProviderTest {
   @Test
   void emptyProxySignersAreLoadedSuccessfully() {
     // enable commit boost without existing proxy keys
-    final KeystoresParameters commitBoostParameters =
+    final CommitBoostParameters commitBoostParameters =
         new TestCommitBoostParameters(commitBoostKeystoresPath, commitBoostPasswordDir);
 
     // set up mock signers
@@ -239,7 +240,7 @@ class DefaultArtifactSignerProviderTest {
         .toArray(String[]::new);
   }
 
-  private static class TestCommitBoostParameters implements KeystoresParameters {
+  private static class TestCommitBoostParameters implements CommitBoostParameters {
     private final Path keystorePath;
     private final Path passwordFile;
 
@@ -256,23 +257,23 @@ class DefaultArtifactSignerProviderTest {
     }
 
     @Override
-    public Path getKeystoresPath() {
+    public boolean isEnabled() {
+      return true;
+    }
+
+    @Override
+    public Path getProxyKeystoresPath() {
       return keystorePath;
     }
 
     @Override
-    public Path getKeystoresPasswordsPath() {
-      return null;
-    }
-
-    @Override
-    public Path getKeystoresPasswordFile() {
+    public Path getProxyKeystoresPasswordFile() {
       return passwordFile;
     }
 
     @Override
-    public boolean isEnabled() {
-      return true;
+    public Bytes32 getGenesisValidatorsRoot() {
+      return Bytes32.ZERO;
     }
   }
 }

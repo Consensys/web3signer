@@ -14,17 +14,22 @@ package tech.pegasys.web3signer.commandline.config;
 
 import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PATH_FORMAT_HELP;
 
-import tech.pegasys.web3signer.signing.config.KeystoresParameters;
+import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
+import tech.pegasys.teku.spec.datastructures.state.beaconstate.BeaconState;
+import tech.pegasys.teku.spec.datastructures.util.ChainDataLoader;
+import tech.pegasys.web3signer.commandline.convertor.Bytes32Converter;
+import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 
 import java.nio.file.Path;
 
+import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Spec;
 
-public class PicoCommitBoostApiParameters implements KeystoresParameters {
+public class PicoCommitBoostApiParameters implements CommitBoostParameters {
   @Spec private CommandSpec commandSpec; // injected by picocli
 
   @CommandLine.Option(
@@ -39,50 +44,96 @@ public class PicoCommitBoostApiParameters implements KeystoresParameters {
       description =
           "The path to a writeable directory to store v3 and v4 proxy keystores for commit boost API.",
       paramLabel = PATH_FORMAT_HELP)
-  private Path keystoresPath;
+  private Path proxyKeystoresPath;
 
   @Option(
       names = {"--proxy-keystores-password-file"},
       description =
           "The path to the password file used to encrypt/decrypt proxy keystores for commit boost API.",
       paramLabel = PATH_FORMAT_HELP)
-  private Path keystoresPasswordFile;
+  private Path proxyKeystoresPasswordFile;
 
-  @Override
-  public Path getKeystoresPath() {
-    return keystoresPath;
-  }
-
-  @Override
-  public Path getKeystoresPasswordsPath() {
-    return null;
-  }
-
-  @Override
-  public Path getKeystoresPasswordFile() {
-    return keystoresPasswordFile;
-  }
+  @Option(
+      names = {"-Xgenesis-validators-root"},
+      description =
+          "Override genesis validators root for the network. Use for custom network configurations.",
+      converter = Bytes32Converter.class,
+      paramLabel = "<HEX>")
+  private Bytes32 genesisValidatorsRoot;
 
   @Override
   public boolean isEnabled() {
     return isCommitBoostApiEnabled;
   }
 
-  public void validateParameters() throws ParameterException {
+  @Override
+  public Path getProxyKeystoresPath() {
+    return proxyKeystoresPath;
+  }
+
+  @Override
+  public Path getProxyKeystoresPasswordFile() {
+    return proxyKeystoresPasswordFile;
+  }
+
+  @Override
+  public Bytes32 getGenesisValidatorsRoot() {
+    if (genesisValidatorsRoot == null) {
+      throw new IllegalStateException("Genesis validators root not set");
+    }
+    return genesisValidatorsRoot;
+  }
+
+  /**
+   * Validate the parameters for the commit boost API and initialize parameters which will be used
+   * during run operation.
+   */
+  public void validateParameters(final Eth2NetworkConfiguration eth2NetworkConfig)
+      throws ParameterException {
     if (!isCommitBoostApiEnabled) {
       return;
     }
 
-    if (keystoresPath == null) {
+    if (proxyKeystoresPath == null) {
       throw new ParameterException(
           commandSpec.commandLine(),
           "Commit boost API is enabled, but --proxy-keystores-path not set");
     }
 
-    if (keystoresPasswordFile == null) {
+    if (proxyKeystoresPasswordFile == null) {
       throw new ParameterException(
           commandSpec.commandLine(),
           "Commit boost API is enabled, but --proxy-keystores-password-file not set");
+    }
+
+    loadGenesisValidatorsRoot(eth2NetworkConfig);
+  }
+
+  /** If genesis validators root is not provided, load genesis state and genesis validators root. */
+  private void loadGenesisValidatorsRoot(final Eth2NetworkConfiguration eth2NetworkConfig) {
+    if (genesisValidatorsRoot != null) {
+      return;
+    }
+
+    final String genesisState =
+        eth2NetworkConfig
+            .getNetworkBoostrapConfig()
+            .getGenesisState()
+            .orElseThrow(
+                () ->
+                    new ParameterException(
+                        commandSpec.commandLine(),
+                        "Unable to load genesis state to determine genesis validators root. "
+                            + "Please provide genesis validators root using --Xgenesis-validators-root"));
+    try {
+      final BeaconState beaconState =
+          ChainDataLoader.loadState(eth2NetworkConfig.getSpec(), genesisState);
+      genesisValidatorsRoot = beaconState.getGenesisValidatorsRoot();
+    } catch (final Exception e) {
+      throw new ParameterException(
+          commandSpec.commandLine(),
+          "Unable to load genesis state to determine genesis validators root. "
+              + "Please provide genesis validators root using --Xgenesis-validators-root");
     }
   }
 }

@@ -24,8 +24,6 @@ import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.teku.spec.ForkSchedule;
 import tech.pegasys.teku.spec.SpecMilestone;
-import tech.pegasys.teku.spec.datastructures.state.beaconstate.BeaconState;
-import tech.pegasys.teku.spec.datastructures.util.ChainDataLoader;
 import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliEth2AzureKeyVaultParameters;
@@ -40,7 +38,6 @@ import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionParameters;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -51,7 +48,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
@@ -97,15 +93,6 @@ public class Eth2SubCommand extends ModeSubCommand {
   private String network;
 
   @CommandLine.Option(
-      names = {"--genesis-state"},
-      paramLabel = "<STRING>",
-      description =
-          "The genesis state. This value should be a file or URL pointing to an SSZ-encoded finalized checkpoint "
-              + "state.",
-      arity = "1")
-  private String genesisState;
-
-  @CommandLine.Option(
       names = {"--key-manager-api-enabled", "--enable-key-manager-api"},
       paramLabel = "<BOOL>",
       description = "Enable the key manager API to manage key stores (default: ${DEFAULT-VALUE}).",
@@ -130,7 +117,6 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   // eth2 network configuration is initialized during validation
   private Eth2NetworkConfiguration eth2NetworkConfig;
-  private Bytes32 genesisValidatorRoot;
 
   public Eth2SubCommand() {
     network = "mainnet";
@@ -148,7 +134,6 @@ public class Eth2SubCommand extends ModeSubCommand {
         awsSecretsManagerParameters,
         gcpSecretManagerParameters,
         eth2NetworkConfig.getSpec(),
-        genesisValidatorRoot,
         isKeyManagerApiEnabled,
         signingExtEnabled,
         commitBoostApiParameters);
@@ -193,7 +178,6 @@ public class Eth2SubCommand extends ModeSubCommand {
   @Override
   protected void validateArgs() {
     this.eth2NetworkConfig = createEth2NetworkConfig();
-    this.genesisValidatorRoot = genesisValidatorsRoot();
 
     if (slashingProtectionParameters.isEnabled()
         && slashingProtectionParameters.getDbUrl() == null) {
@@ -211,39 +195,8 @@ public class Eth2SubCommand extends ModeSubCommand {
     validateKeystoreParameters(keystoreParameters);
     validateAwsSecretsManageParameters();
     validateGcpSecretManagerParameters();
-    commitBoostApiParameters.validateParameters();
-  }
 
-  /**
-   * Validates the genesis state and initializes the genesis validator root. For minimal networks,
-   * which is used in tests, we use 0 as gvr value.
-   */
-  private Bytes32 genesisValidatorsRoot() {
-    final String genesisState =
-        eth2NetworkConfig
-            .getNetworkBoostrapConfig()
-            .getGenesisState()
-            .orElseThrow(
-                () ->
-                    new ParameterException(
-                        commandSpec.commandLine(),
-                        "Unable to load genesis state for network "
-                            + network
-                            + ". Please provide a valid genesis state resource."));
-    try {
-      final BeaconState beaconState =
-          ChainDataLoader.loadState(eth2NetworkConfig.getSpec(), genesisState);
-      return beaconState.getGenesisValidatorsRoot();
-    } catch (final IOException | NullPointerException e) {
-      throw new ParameterException(
-          commandSpec.commandLine(),
-          "Unable to load genesis state for network "
-              + network
-              + " from "
-              + genesisState
-              + ": "
-              + e.getMessage());
-    }
+    commitBoostApiParameters.validateParameters(this.eth2NetworkConfig);
   }
 
   private void validateGcpSecretManagerParameters() {
