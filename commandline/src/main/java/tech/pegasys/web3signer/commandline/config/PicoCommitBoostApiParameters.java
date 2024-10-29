@@ -21,6 +21,7 @@ import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 
 import java.nio.file.Path;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine;
 import picocli.CommandLine.Model.CommandSpec;
@@ -92,14 +93,11 @@ public class PicoCommitBoostApiParameters implements CommitBoostParameters {
    * Apply genesis state overrides to the network configuration only if commit boost API is enabled.
    *
    * @param builder The network configuration builder to apply overrides to.
-   * @return The network configuration builder with overrides applied.
    */
-  public Eth2NetworkConfiguration.Builder applyOverrides(
-      final Eth2NetworkConfiguration.Builder builder) {
-    if (isCommitBoostApiEnabled) {
+  public void applyOverrides(final Eth2NetworkConfiguration.Builder builder) {
+    if (isCommitBoostApiEnabled && StringUtils.isNotBlank(genesisState)) {
       builder.customGenesisState(genesisState);
     }
-    return builder;
   }
 
   /**
@@ -127,7 +125,7 @@ public class PicoCommitBoostApiParameters implements CommitBoostParameters {
     loadGenesisValidatorsRoot(eth2NetworkConfig);
   }
 
-  /** If genesis validators root is not provided, load genesis state and genesis validators root. */
+  /** Load genesis state and obtain genesis validators root. */
   private void loadGenesisValidatorsRoot(final Eth2NetworkConfiguration eth2NetworkConfig) {
     final String parameterExceptionMessage =
         "Unable to load genesis state to determine genesis validators root. Please provide custom genesis state using --genesis-state";

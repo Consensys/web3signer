@@ -74,8 +74,7 @@ public class PicoCliNetworkOverrides {
       arity = "1")
   private String trustedSetup = null; // Depends on network configuration
 
-  public Eth2NetworkConfiguration.Builder applyOverrides(
-      final Eth2NetworkConfiguration.Builder builder) {
+  public void applyOverrides(final Eth2NetworkConfiguration.Builder builder) {
     if (altairForkEpoch != null) {
       builder.altairForkEpoch(altairForkEpoch);
     }
@@ -94,6 +93,5 @@ public class PicoCliNetworkOverrides {
     if (trustedSetup != null) {
       builder.trustedSetup(trustedSetup);
     }
-    return builder;
   }
 }
