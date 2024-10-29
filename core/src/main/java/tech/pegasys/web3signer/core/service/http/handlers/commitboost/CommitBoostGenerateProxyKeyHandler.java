@@ -33,6 +33,7 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tuweni.bytes.Bytes;
 
 public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
@@ -85,33 +86,25 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
           };
       // Add generated proxy key to DefaultArtifactSignerProvider
       signerForIdentifier.getSignerProvider().addProxySigner(artifactSigner, identifier).get();
-    } catch (final Exception e) {
-      context.fail(INTERNAL_ERROR, e);
-      return;
-    }
 
-    final ProxyKeyMessage proxyKeyMessage =
-        new ProxyKeyMessage(identifier, artifactSigner.getIdentifier());
-    final Optional<String> optionalSig =
-        signerForIdentifier.sign(
-            identifier,
-            signingRootGenerator.computeSigningRoot(proxyKeyMessage, proxyKeyBody.scheme()));
-    if (optionalSig.isEmpty()) {
-      context.fail(NOT_FOUND);
-      return;
-    }
+      final ProxyKeyMessage proxyKeyMessage =
+          new ProxyKeyMessage(identifier, artifactSigner.getIdentifier());
+      final Bytes signingRoot =
+          signingRootGenerator.computeSigningRoot(proxyKeyMessage, proxyKeyBody.scheme());
+      final Optional<String> optionalSig = signerForIdentifier.sign(identifier, signingRoot);
+      if (optionalSig.isEmpty()) {
+        context.fail(NOT_FOUND);
+        return;
+      }
 
-    final GenerateProxyKeyResponse generateProxyKeyResponse =
-        new GenerateProxyKeyResponse(proxyKeyMessage, optionalSig.get());
+      final GenerateProxyKeyResponse generateProxyKeyResponse =
+          new GenerateProxyKeyResponse(proxyKeyMessage, optionalSig.get());
 
-    // Encode and send response
-    try {
+      // Encode and send response
       final String jsonEncoded = JSON_MAPPER.writeValueAsString(generateProxyKeyResponse);
       context.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonEncoded);
-    } catch (final JsonProcessingException e) {
-      // this is not meant to happen
-      LOG.error("Failed to encode GenerateProxyKeyResponse to JSON", e);
-      context.fail(INTERNAL_ERROR);
+    } catch (final Exception e) {
+      context.fail(INTERNAL_ERROR, e);
     }
   }
 }
