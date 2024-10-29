@@ -186,7 +186,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
     if (canReadFromDirectory(proxyDir)) {
       final MappedResults<ArtifactSigner> signersResult =
-          loaderFunction.apply(proxyDir, keystoreParameter.getProxyKeystoresPath());
+          loaderFunction.apply(proxyDir, keystoreParameter.getProxyKeystoresPasswordFile());
       final Collection<ArtifactSigner> signers = signersResult.getValues();
       proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(signers);
     }

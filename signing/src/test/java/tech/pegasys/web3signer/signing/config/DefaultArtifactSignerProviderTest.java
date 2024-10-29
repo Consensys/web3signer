@@ -116,6 +116,10 @@ class DefaultArtifactSignerProviderTest {
     final CommitBoostParameters commitBoostParameters =
         new TestCommitBoostParameters(commitBoostKeystoresPath, commitBoostPasswordDir);
 
+    assertThat(commitBoostParameters.getProxyKeystoresPasswordFile())
+        .exists()
+        .hasFileName("password.txt");
+
     // create random BLS key pairs as proxy keys for public key1 and public key2
     final List<BLSKeyPair> key1ProxyKeyPairs = randomBLSV4Keystores(secureRandom, PUBLIC_KEY1);
     final List<BLSKeyPair> key2ProxyKeyPairs = randomBLSV4Keystores(secureRandom, PUBLIC_KEY2);
