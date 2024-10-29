@@ -51,7 +51,7 @@ class EthPublicKeyUtilsTest {
   @Test
   public void createsPublicKeyFromBytes() {
     final Bytes expectedPublicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(expectedPublicKeyBytes);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.bytesToECPublicKey(expectedPublicKeyBytes);
 
     final ECPoint expectedEcPoint = createEcPoint(expectedPublicKeyBytes);
     verifyPublicKey(ecPublicKey, expectedPublicKeyBytes, expectedEcPoint);
@@ -60,7 +60,7 @@ class EthPublicKeyUtilsTest {
   @Test
   public void createsPublicKeyFromBigInteger() {
     final BigInteger publicKey = Numeric.toBigInt(PUBLIC_KEY);
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKeyFromBigInt(publicKey);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.bigIntegerToECPublicKey(publicKey);
 
     final Bytes expectedPublicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
     final ECPoint expectedEcPoint = createEcPoint(expectedPublicKeyBytes);
@@ -86,13 +86,14 @@ class EthPublicKeyUtilsTest {
   @ParameterizedTest
   @MethodSource("validPublicKeys")
   void acceptsValidPublicKeySizes(final Bytes publicKey) {
-    assertThatCode(() -> EthPublicKeyUtils.createPublicKey(publicKey)).doesNotThrowAnyException();
+    assertThatCode(() -> EthPublicKeyUtils.bytesToECPublicKey(publicKey))
+        .doesNotThrowAnyException();
   }
 
   @ParameterizedTest
   @ValueSource(ints = {0, 32, 34, 63, 66})
   void throwsIllegalArgumentExceptionForInvalidPublicKeySize(final int size) {
-    assertThatThrownBy(() -> EthPublicKeyUtils.createPublicKey(Bytes.random(size)))
+    assertThatThrownBy(() -> EthPublicKeyUtils.bytesToECPublicKey(Bytes.random(size)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Invalid public key length. Expected 33, 64, or 65 bytes.");
   }
@@ -100,7 +101,7 @@ class EthPublicKeyUtilsTest {
   @Test
   void throwsIllegalArgumentExceptionForInvalid33ByteKey() {
     Bytes invalidCompressedKey = Bytes.concatenate(Bytes.of(0x00), Bytes.random(32));
-    assertThatThrownBy(() -> EthPublicKeyUtils.createPublicKey(invalidCompressedKey))
+    assertThatThrownBy(() -> EthPublicKeyUtils.bytesToECPublicKey(invalidCompressedKey))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Incorrect length for infinity encoding");
   }
@@ -108,7 +109,7 @@ class EthPublicKeyUtilsTest {
   @Test
   void throwsIllegalArgumentExceptionForInvalid65ByteKey() {
     Bytes invalidUncompressedKey = Bytes.concatenate(Bytes.of(0x00), Bytes.random(64));
-    assertThatThrownBy(() -> EthPublicKeyUtils.createPublicKey(invalidUncompressedKey))
+    assertThatThrownBy(() -> EthPublicKeyUtils.bytesToECPublicKey(invalidUncompressedKey))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Incorrect length for infinity encoding");
   }
@@ -116,7 +117,7 @@ class EthPublicKeyUtilsTest {
   @Test
   void throwsIllegalArgumentExceptionForInvalidCompressedKeyPrefix() {
     Bytes invalidCompressedKey = Bytes.concatenate(Bytes.of(0x04), Bytes.random(32));
-    assertThatThrownBy(() -> EthPublicKeyUtils.createPublicKey(invalidCompressedKey))
+    assertThatThrownBy(() -> EthPublicKeyUtils.bytesToECPublicKey(invalidCompressedKey))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Incorrect length for uncompressed encoding");
   }
@@ -125,7 +126,7 @@ class EthPublicKeyUtilsTest {
   public void publicKeyIsConvertedToEthHexString() {
     final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
 
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(publicKeyBytes);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.bytesToECPublicKey(publicKeyBytes);
     final String hexString = EthPublicKeyUtils.toHexString(ecPublicKey);
     assertThat(hexString).isEqualTo(PUBLIC_KEY);
   }
@@ -134,7 +135,7 @@ class EthPublicKeyUtilsTest {
   public void publicKeyIsConvertedToEthBytes() {
     final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
 
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(publicKeyBytes);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.bytesToECPublicKey(publicKeyBytes);
     final Bytes bytes = EthPublicKeyUtils.getEncoded(ecPublicKey, false, false);
     assertThat(bytes).isEqualTo(publicKeyBytes);
     assertThat(bytes.size()).isEqualTo(64);
@@ -144,7 +145,7 @@ class EthPublicKeyUtilsTest {
   @Test
   public void encodePublicKey() {
     final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(publicKeyBytes);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.bytesToECPublicKey(publicKeyBytes);
 
     final Bytes uncompressedWithoutPrefix = EthPublicKeyUtils.getEncoded(ecPublicKey, false, false);
     final Bytes uncompressedWithPrefix = EthPublicKeyUtils.getEncoded(ecPublicKey, false, true);

@@ -188,13 +188,13 @@ public class SecpSigningAcceptanceTest extends SigningAcceptanceTestBase {
 
   void verifySignature(final Bytes signature, final String publicKeyHex) {
     final ECPublicKey expectedPublicKey =
-        EthPublicKeyUtils.createPublicKey(Bytes.fromHexString(publicKeyHex));
+        EthPublicKeyUtils.bytesToECPublicKey(Bytes.fromHexString(publicKeyHex));
 
     final byte[] r = signature.slice(0, 32).toArray();
     final byte[] s = signature.slice(32, 32).toArray();
     final byte[] v = signature.slice(64).toArray();
     final BigInteger messagePublicKey = recoverPublicKey(new SignatureData(v, r, s));
-    assertThat(EthPublicKeyUtils.createPublicKeyFromBigInt(messagePublicKey))
+    assertThat(EthPublicKeyUtils.bigIntegerToECPublicKey(messagePublicKey))
         .isEqualTo(expectedPublicKey);
   }
 

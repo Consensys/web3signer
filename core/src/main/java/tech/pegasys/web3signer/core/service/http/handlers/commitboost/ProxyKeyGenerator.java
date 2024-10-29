@@ -22,12 +22,14 @@ import tech.pegasys.teku.bls.keystore.model.CipherFunction;
 import tech.pegasys.teku.bls.keystore.model.KdfParam;
 import tech.pegasys.teku.bls.keystore.model.KeyStoreData;
 import tech.pegasys.teku.bls.keystore.model.Pbkdf2Param;
+import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
+import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
 
 import java.io.IOException;
@@ -37,7 +39,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
+import java.security.interfaces.ECPublicKey;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
@@ -45,12 +49,15 @@ import org.apache.tuweni.bytes.Bytes48;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Keys;
-import org.web3j.crypto.WalletUtils;
+import org.web3j.crypto.Wallet;
+import org.web3j.crypto.WalletFile;
 import org.web3j.crypto.exception.CipherException;
 
 /** Proxy Key Generator class to generate proxy keys for CommitBoost API */
 public class ProxyKeyGenerator {
   private static final Logger LOG = LogManager.getLogger();
+  private static final ObjectMapper JSON_MAPPER = SigningObjectMapperFactory.createObjectMapper();
+
   private final SecureRandom secureRandom = new SecureRandom();
   private final CommitBoostParameters commitBoostParameters;
 
@@ -58,12 +65,15 @@ public class ProxyKeyGenerator {
     this.commitBoostParameters = commitBoostParameters;
   }
 
-  public ArtifactSigner generateECProxyKey(final String identifier)
-      throws GeneralSecurityException, UncheckedIOException {
-    final ECKeyPair ecKeyPair = Keys.createEcKeyPair(secureRandom);
-    final Path ecWalletFile = createECWalletFile(ecKeyPair, identifier);
-    LOG.debug("Created proxy EC wallet file {} for identifier: {}", ecWalletFile, identifier);
-    return new EthSecpArtifactSigner(new CredentialSigner(Credentials.create(ecKeyPair)), true);
+  public ArtifactSigner generateECProxyKey(final String identifier) {
+    try {
+      final ECKeyPair ecKeyPair = Keys.createEcKeyPair(secureRandom);
+      final Path ecWalletFile = createECWalletFile(ecKeyPair, identifier);
+      LOG.debug("Created proxy EC wallet file {} for identifier: {}", ecWalletFile, identifier);
+      return new EthSecpArtifactSigner(new CredentialSigner(Credentials.create(ecKeyPair)), true);
+    } catch (final GeneralSecurityException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public ArtifactSigner generateBLSProxyKey(final String identifier) throws UncheckedIOException {
@@ -101,13 +111,19 @@ public class ProxyKeyGenerator {
     final Path keystoreDir =
         createSubDirectories(
             commitBoostParameters.getProxyKeystoresPath(), identifier, KeyType.SECP256K1);
-    final String fileName;
+    final ECPublicKey ecPublicKey =
+        EthPublicKeyUtils.bigIntegerToECPublicKey(ecKeyPair.getPublicKey());
+    final String compressedPubHex =
+        EthPublicKeyUtils.getEncoded(ecPublicKey, true, false).toHexString();
+
+    final Path keystoreFile = keystoreDir.resolve(compressedPubHex + ".json");
     try {
-      fileName = WalletUtils.generateWalletFile(password, ecKeyPair, keystoreDir.toFile(), true);
+      final WalletFile walletFile = Wallet.createStandard(password, ecKeyPair);
+      JSON_MAPPER.writeValue(keystoreFile.toFile(), walletFile);
+      return keystoreFile;
     } catch (final CipherException | IOException e) {
       throw new RuntimeException(e);
     }
-    return keystoreDir.resolve(fileName);
   }
 
   private static String readFile(final Path file) throws UncheckedIOException {

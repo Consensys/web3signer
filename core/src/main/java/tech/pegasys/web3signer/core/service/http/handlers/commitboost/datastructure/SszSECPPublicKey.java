@@ -28,7 +28,7 @@ public class SszSECPPublicKey extends SszByteVectorImpl {
 
   public SszSECPPublicKey(final Bytes publicKeyBytes) {
     super(SszSECPPublicKeySchema.INSTANCE, publicKeyBytes);
-    this.publicKey = Suppliers.memoize(() -> EthPublicKeyUtils.createPublicKey(publicKeyBytes));
+    this.publicKey = Suppliers.memoize(() -> EthPublicKeyUtils.bytesToECPublicKey(publicKeyBytes));
   }
 
   public SszSECPPublicKey(final ECPublicKey publicKey) {
@@ -38,7 +38,7 @@ public class SszSECPPublicKey extends SszByteVectorImpl {
 
   SszSECPPublicKey(final TreeNode backingNode) {
     super(SszSECPPublicKeySchema.INSTANCE, backingNode);
-    this.publicKey = Suppliers.memoize(() -> EthPublicKeyUtils.createPublicKey(getBytes()));
+    this.publicKey = Suppliers.memoize(() -> EthPublicKeyUtils.bytesToECPublicKey(getBytes()));
   }
 
   public ECPublicKey getECPublicKey() {

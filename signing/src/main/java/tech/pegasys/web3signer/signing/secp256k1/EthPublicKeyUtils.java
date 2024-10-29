@@ -84,7 +84,13 @@ public class EthPublicKeyUtils {
     return keyPairGenerator.generateKeyPair();
   }
 
-  public static ECPublicKey createPublicKey(final Bytes value) {
+  /**
+   * Convert a public key in bytes format to an ECPublicKey.
+   *
+   * @param value The public key in bytes format
+   * @return The ECPublicKey
+   */
+  public static ECPublicKey bytesToECPublicKey(final Bytes value) {
     if (value.size() != 33 && value.size() != 65 && value.size() != 64) {
       throw new IllegalArgumentException(
           "Invalid public key length. Expected 33, 64, or 65 bytes.");
@@ -101,10 +107,10 @@ public class EthPublicKeyUtils {
       point = SECP256K1_DOMAIN.getCurve().decodePoint(value.toArrayUnsafe());
     }
 
-    return createPublicKeyFromPoint(point);
+    return bcECPointToECPublicKey(point);
   }
 
-  private static ECPublicKey createPublicKeyFromPoint(final ECPoint point) {
+  private static ECPublicKey bcECPointToECPublicKey(final ECPoint point) {
     try {
       // Convert Bouncy Castle ECPoint to Java ECPoint
       final java.security.spec.ECPoint ecPoint =
@@ -128,7 +134,7 @@ public class EthPublicKeyUtils {
    * @return The created ECPublicKey
    * @throws IllegalArgumentException if the input is invalid
    */
-  public static ECPublicKey createPublicKeyFromBigInt(final BigInteger publicKeyValue) {
+  public static ECPublicKey bigIntegerToECPublicKey(final BigInteger publicKeyValue) {
     if (publicKeyValue == null) {
       throw new IllegalArgumentException("Public key value cannot be null");
     }
@@ -151,7 +157,7 @@ public class EthPublicKeyUtils {
     System.arraycopy(publicKeyBytes, 0, fullPublicKeyBytes, 1, 64);
 
     // Use the existing createPublicKey method
-    return createPublicKey(Bytes.wrap(fullPublicKeyBytes));
+    return bytesToECPublicKey(Bytes.wrap(fullPublicKeyBytes));
   }
 
   /**

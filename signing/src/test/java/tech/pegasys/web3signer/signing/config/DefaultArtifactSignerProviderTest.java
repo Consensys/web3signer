@@ -236,7 +236,7 @@ class DefaultArtifactSignerProviderTest {
         .map(
             keyPair ->
                 EthPublicKeyUtils.getEncoded(
-                        EthPublicKeyUtils.createPublicKeyFromBigInt(keyPair.getPublicKey()),
+                        EthPublicKeyUtils.bigIntegerToECPublicKey(keyPair.getPublicKey()),
                         true,
                         false)
                     .toHexString())

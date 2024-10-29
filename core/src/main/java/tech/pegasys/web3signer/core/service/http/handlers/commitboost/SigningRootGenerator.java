@@ -50,7 +50,8 @@ public class SigningRootGenerator {
       proxyKeyMessageToSign = new BlsProxyKeySchema().create(delegator, proxy);
     } else {
       final ECPublicKey proxy =
-          EthPublicKeyUtils.createPublicKey(Bytes.fromHexString(proxyKeyMessage.proxyPublicKey()));
+          EthPublicKeyUtils.bytesToECPublicKey(
+              Bytes.fromHexString(proxyKeyMessage.proxyPublicKey()));
       proxyKeyMessageToSign = new SECPProxyKeySchema().create(delegator, proxy);
     }
     return Web3SignerSigningRootUtil.computeSigningRoot(proxyKeyMessageToSign, domain);
