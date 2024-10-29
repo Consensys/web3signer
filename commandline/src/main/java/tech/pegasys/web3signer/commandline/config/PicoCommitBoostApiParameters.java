@@ -17,7 +17,6 @@ import static tech.pegasys.web3signer.commandline.DefaultCommandValues.PATH_FORM
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.teku.spec.datastructures.state.beaconstate.BeaconState;
 import tech.pegasys.teku.spec.datastructures.util.ChainDataLoader;
-import tech.pegasys.web3signer.commandline.convertor.Bytes32Converter;
 import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 
 import java.nio.file.Path;
@@ -53,12 +52,17 @@ public class PicoCommitBoostApiParameters implements CommitBoostParameters {
       paramLabel = PATH_FORMAT_HELP)
   private Path proxyKeystoresPasswordFile;
 
+  // note: In the future, this can be moved to PicoCliNetworkOverrides if we want to determine gvr
+  // for slashing protection etc. in advance before getting the first signing call from CL.
   @Option(
-      names = {"-Xgenesis-validators-root"},
+      names = {"--genesis-state"},
+      paramLabel = "<STRING>",
       description =
-          "Override genesis validators root for the network. Use for custom network configurations.",
-      converter = Bytes32Converter.class,
-      paramLabel = "<HEX>")
+          "The genesis state. This value should be a file or URL pointing to an SSZ-encoded finalized checkpoint "
+              + "state. It is used to determine the value of genesis validators root for Commit Boost API.",
+      arity = "1")
+  private String genesisState;
+
   private Bytes32 genesisValidatorsRoot;
 
   @Override
@@ -82,6 +86,20 @@ public class PicoCommitBoostApiParameters implements CommitBoostParameters {
       throw new IllegalStateException("Genesis validators root not set");
     }
     return genesisValidatorsRoot;
+  }
+
+  /**
+   * Apply genesis state overrides to the network configuration only if commit boost API is enabled.
+   *
+   * @param builder The network configuration builder to apply overrides to.
+   * @return The network configuration builder with overrides applied.
+   */
+  public Eth2NetworkConfiguration.Builder applyOverrides(
+      final Eth2NetworkConfiguration.Builder builder) {
+    if (isCommitBoostApiEnabled) {
+      builder.customGenesisState(genesisState);
+    }
+    return builder;
   }
 
   /**
@@ -111,29 +129,20 @@ public class PicoCommitBoostApiParameters implements CommitBoostParameters {
 
   /** If genesis validators root is not provided, load genesis state and genesis validators root. */
   private void loadGenesisValidatorsRoot(final Eth2NetworkConfiguration eth2NetworkConfig) {
-    if (genesisValidatorsRoot != null) {
-      return;
-    }
-
+    final String parameterExceptionMessage =
+        "Unable to load genesis state to determine genesis validators root. Please provide custom genesis state using --genesis-state";
     final String genesisState =
         eth2NetworkConfig
             .getNetworkBoostrapConfig()
             .getGenesisState()
             .orElseThrow(
-                () ->
-                    new ParameterException(
-                        commandSpec.commandLine(),
-                        "Unable to load genesis state to determine genesis validators root. "
-                            + "Please provide genesis validators root using --Xgenesis-validators-root"));
+                () -> new ParameterException(commandSpec.commandLine(), parameterExceptionMessage));
     try {
       final BeaconState beaconState =
           ChainDataLoader.loadState(eth2NetworkConfig.getSpec(), genesisState);
       genesisValidatorsRoot = beaconState.getGenesisValidatorsRoot();
     } catch (final Exception e) {
-      throw new ParameterException(
-          commandSpec.commandLine(),
-          "Unable to load genesis state to determine genesis validators root. "
-              + "Please provide genesis validators root using --Xgenesis-validators-root");
+      throw new ParameterException(commandSpec.commandLine(), parameterExceptionMessage);
     }
   }
 }

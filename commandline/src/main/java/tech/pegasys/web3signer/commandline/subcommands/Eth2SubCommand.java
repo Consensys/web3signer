@@ -162,22 +162,11 @@ public class Eth2SubCommand extends ModeSubCommand {
     LOG.info(logString);
   }
 
-  private Eth2NetworkConfiguration createEth2NetworkConfig() throws ParameterException {
-    try {
-      final Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
-      builder.applyNetworkDefaults(network);
-      return networkOverrides.applyOverrides(builder).build();
-    } catch (final IllegalArgumentException e) {
-      throw new ParameterException(
-          commandSpec.commandLine(),
-          "Failed to load network " + network + " due to " + e.getMessage(),
-          e);
-    }
-  }
-
   @Override
   protected void validateArgs() {
-    this.eth2NetworkConfig = createEth2NetworkConfig();
+    final Eth2NetworkConfiguration.Builder eth2NetworkConfigBuilder =
+        createEth2NetworkConfigBuilder();
+    this.eth2NetworkConfig = createEth2NetworkConfig(eth2NetworkConfigBuilder);
 
     if (slashingProtectionParameters.isEnabled()
         && slashingProtectionParameters.getDbUrl() == null) {
@@ -197,6 +186,33 @@ public class Eth2SubCommand extends ModeSubCommand {
     validateGcpSecretManagerParameters();
 
     commitBoostApiParameters.validateParameters(this.eth2NetworkConfig);
+  }
+
+  private Eth2NetworkConfiguration.Builder createEth2NetworkConfigBuilder() {
+    try {
+      final Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
+      builder.applyNetworkDefaults(network);
+      networkOverrides.applyOverrides(builder); // custom fork epochs
+      commitBoostApiParameters.applyOverrides(builder); // genesis state
+      return builder;
+    } catch (final IllegalArgumentException e) {
+      throw new ParameterException(
+          commandSpec.commandLine(),
+          "Failed to load network " + network + " due to " + e.getMessage(),
+          e);
+    }
+  }
+
+  private Eth2NetworkConfiguration createEth2NetworkConfig(
+      final Eth2NetworkConfiguration.Builder builder) throws ParameterException {
+    try {
+      return builder.build();
+    } catch (final IllegalArgumentException e) {
+      throw new ParameterException(
+          commandSpec.commandLine(),
+          "Failed to load network " + network + " due to " + e.getMessage(),
+          e);
+    }
   }
 
   private void validateGcpSecretManagerParameters() {
