@@ -14,6 +14,6 @@ package tech.pegasys.web3signer.core.service.http.handlers.commitboost.json;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record ProxyKeyMessage(
-    @JsonProperty(value = "delegator", required = true) String blsPublicKey,
-    @JsonProperty(value = "proxy", required = true) String proxyPublicKey) {}
+public record SignedProxyDelegation(
+    @JsonProperty(value = "message") ProxyDelegation proxyDelegation,
+    @JsonProperty(value = "signature") String signature) {}

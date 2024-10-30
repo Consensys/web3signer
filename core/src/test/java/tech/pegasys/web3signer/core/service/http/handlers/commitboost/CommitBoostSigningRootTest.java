@@ -20,7 +20,7 @@ import tech.pegasys.teku.bls.BLSSecretKey;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.networks.Eth2Network;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeyMessage;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyDelegation;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeySignatureScheme;
 import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
@@ -65,7 +65,7 @@ class CommitBoostSigningRootTest {
   private static final ECPublicKey SECP_PROXY_EC_PUB_KEY =
       EthPublicKeyUtils.bigIntegerToECPublicKey(SECP_PROXY_KEY_PAIR.getPublicKey());
   private static final Bytes SECP_PROXY_PUB_KEY_ENC =
-      EthPublicKeyUtils.getEncoded(SECP_PROXY_EC_PUB_KEY, true, false);
+      EthPublicKeyUtils.getEncoded(SECP_PROXY_EC_PUB_KEY, true);
 
   @BeforeAll
   static void initExpectedSigningRoots() {
@@ -145,10 +145,10 @@ class CommitBoostSigningRootTest {
     final Spec spec = getSpec(network);
     final SigningRootGenerator signingRootGenerator = new SigningRootGenerator(spec, GVR);
 
-    final ProxyKeyMessage proxyKeyMessage =
-        new ProxyKeyMessage(DELEGATOR_PUB_KEY.toHexString(), BLS_PROXY_PUB_KEY.toHexString());
+    final ProxyDelegation proxyDelegation =
+        new ProxyDelegation(DELEGATOR_PUB_KEY.toHexString(), BLS_PROXY_PUB_KEY.toHexString());
     final Bytes signingRoot =
-        signingRootGenerator.computeSigningRoot(proxyKeyMessage, ProxyKeySignatureScheme.BLS);
+        signingRootGenerator.computeSigningRoot(proxyDelegation, ProxyKeySignatureScheme.BLS);
 
     assertThat(signingRoot).isEqualTo(BLS_PROXY_ROOT_MAP.get(network));
 
@@ -165,11 +165,11 @@ class CommitBoostSigningRootTest {
     final Spec spec = getSpec(network);
     final SigningRootGenerator signingRootGenerator = new SigningRootGenerator(spec, GVR);
 
-    final ProxyKeyMessage proxyKeyMessage =
-        new ProxyKeyMessage(DELEGATOR_PUB_KEY.toHexString(), SECP_PROXY_PUB_KEY_ENC.toHexString());
+    final ProxyDelegation proxyDelegation =
+        new ProxyDelegation(DELEGATOR_PUB_KEY.toHexString(), SECP_PROXY_PUB_KEY_ENC.toHexString());
 
     final Bytes signingRoot =
-        signingRootGenerator.computeSigningRoot(proxyKeyMessage, ProxyKeySignatureScheme.ECDSA);
+        signingRootGenerator.computeSigningRoot(proxyDelegation, ProxyKeySignatureScheme.ECDSA);
 
     assertThat(signingRoot).isEqualTo(SECP_PROXY_ROOT_MAP.get(network));
 

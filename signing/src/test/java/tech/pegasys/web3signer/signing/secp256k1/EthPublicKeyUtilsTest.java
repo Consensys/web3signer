@@ -68,7 +68,7 @@ class EthPublicKeyUtilsTest {
   }
 
   private static Stream<Bytes> validPublicKeys() {
-    KeyPair keyPair = null;
+    final KeyPair keyPair;
     try {
       keyPair = EthPublicKeyUtils.createSecp256k1KeyPair(new SecureRandom());
     } catch (GeneralSecurityException e) {
@@ -76,11 +76,13 @@ class EthPublicKeyUtilsTest {
     }
     return Stream.of(
         // Compressed (33 bytes)
-        EthPublicKeyUtils.getEncoded((ECPublicKey) keyPair.getPublic(), true, true),
+        EthPublicKeyUtils.getEncoded((ECPublicKey) keyPair.getPublic(), true),
         // Uncompressed without prefix (64 bytes)
-        EthPublicKeyUtils.getEncoded((ECPublicKey) keyPair.getPublic(), false, false),
+        EthPublicKeyUtils.getEncoded((ECPublicKey) keyPair.getPublic(), false),
         // Uncompressed with prefix (65 bytes)
-        EthPublicKeyUtils.getEncoded((ECPublicKey) keyPair.getPublic(), false, true));
+        Bytes.concatenate(
+            Bytes.of(0x04),
+            EthPublicKeyUtils.getEncoded((ECPublicKey) keyPair.getPublic(), false)));
   }
 
   @ParameterizedTest
@@ -136,7 +138,7 @@ class EthPublicKeyUtilsTest {
     final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
 
     final ECPublicKey ecPublicKey = EthPublicKeyUtils.bytesToECPublicKey(publicKeyBytes);
-    final Bytes bytes = EthPublicKeyUtils.getEncoded(ecPublicKey, false, false);
+    final Bytes bytes = EthPublicKeyUtils.getEncoded(ecPublicKey, false);
     assertThat(bytes).isEqualTo(publicKeyBytes);
     assertThat(bytes.size()).isEqualTo(64);
     assertThat(bytes.get(0)).isNotEqualTo(0x4);
@@ -147,12 +149,10 @@ class EthPublicKeyUtilsTest {
     final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
     final ECPublicKey ecPublicKey = EthPublicKeyUtils.bytesToECPublicKey(publicKeyBytes);
 
-    final Bytes uncompressedWithoutPrefix = EthPublicKeyUtils.getEncoded(ecPublicKey, false, false);
-    final Bytes uncompressedWithPrefix = EthPublicKeyUtils.getEncoded(ecPublicKey, false, true);
-    final Bytes compressed = EthPublicKeyUtils.getEncoded(ecPublicKey, true, true);
+    final Bytes uncompressedWithoutPrefix = EthPublicKeyUtils.getEncoded(ecPublicKey, false);
+    final Bytes compressed = EthPublicKeyUtils.getEncoded(ecPublicKey, true);
 
     assertThat(uncompressedWithoutPrefix.size()).isEqualTo(64);
-    assertThat(uncompressedWithPrefix.size()).isEqualTo(65);
     assertThat(compressed.size()).isEqualTo(33);
   }
 

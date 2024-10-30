@@ -20,19 +20,13 @@ import java.security.interfaces.ECPublicKey;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
 
 public class SszSECPPublicKey extends SszByteVectorImpl {
 
   private final Supplier<ECPublicKey> publicKey;
 
-  public SszSECPPublicKey(final Bytes publicKeyBytes) {
-    super(SszSECPPublicKeySchema.INSTANCE, publicKeyBytes);
-    this.publicKey = Suppliers.memoize(() -> EthPublicKeyUtils.bytesToECPublicKey(publicKeyBytes));
-  }
-
   public SszSECPPublicKey(final ECPublicKey publicKey) {
-    super(SszSECPPublicKeySchema.INSTANCE, EthPublicKeyUtils.getEncoded(publicKey, true, true));
+    super(SszSECPPublicKeySchema.INSTANCE, EthPublicKeyUtils.getEncoded(publicKey, true));
     this.publicKey = () -> publicKey;
   }
 

@@ -37,7 +37,7 @@ public class EthSecpArtifactSigner implements ArtifactSigner {
   @Override
   public String getIdentifier() {
     final String hexString =
-        EthPublicKeyUtils.getEncoded(signer.getPublicKey(), isCompressed, false).toHexString();
+        EthPublicKeyUtils.getEncoded(signer.getPublicKey(), isCompressed).toHexString();
     return IdentifierUtils.normaliseIdentifier(hexString);
   }
 

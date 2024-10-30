@@ -12,8 +12,19 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.commitboost.json;
 
+import tech.pegasys.teku.infrastructure.ssz.Merkleizable;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.BLSProxyDelegationSchema;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.SECPProxyDelegationSchema;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record GenerateProxyKeyResponse(
-    @JsonProperty(value = "message") ProxyKeyMessage proxyKeyMessage,
-    @JsonProperty(value = "signature") String signature) {}
+public record ProxyDelegation(
+    @JsonProperty(value = "delegator", required = true) String blsPublicKey,
+    @JsonProperty(value = "proxy", required = true) String proxyPublicKey) {
+
+  public Merkleizable toMerkleizable(final ProxyKeySignatureScheme scheme) {
+    return scheme == ProxyKeySignatureScheme.BLS
+        ? new BLSProxyDelegationSchema().create(this)
+        : new SECPProxyDelegationSchema().create(this);
+  }
+}

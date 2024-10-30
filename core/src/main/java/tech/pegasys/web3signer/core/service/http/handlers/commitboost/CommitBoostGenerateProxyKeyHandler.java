@@ -19,8 +19,8 @@ import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIden
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.GenerateProxyKeyBody;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.GenerateProxyKeyResponse;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeyMessage;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyDelegation;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.SignedProxyDelegation;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
@@ -87,21 +87,21 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
       // Add generated proxy key to DefaultArtifactSignerProvider
       signerForIdentifier.getSignerProvider().addProxySigner(artifactSigner, identifier).get();
 
-      final ProxyKeyMessage proxyKeyMessage =
-          new ProxyKeyMessage(identifier, artifactSigner.getIdentifier());
+      final ProxyDelegation proxyDelegation =
+          new ProxyDelegation(identifier, artifactSigner.getIdentifier());
       final Bytes signingRoot =
-          signingRootGenerator.computeSigningRoot(proxyKeyMessage, proxyKeyBody.scheme());
+          signingRootGenerator.computeSigningRoot(proxyDelegation, proxyKeyBody.scheme());
       final Optional<String> optionalSig = signerForIdentifier.sign(identifier, signingRoot);
       if (optionalSig.isEmpty()) {
         context.fail(NOT_FOUND);
         return;
       }
 
-      final GenerateProxyKeyResponse generateProxyKeyResponse =
-          new GenerateProxyKeyResponse(proxyKeyMessage, optionalSig.get());
+      final SignedProxyDelegation signedProxyDelegation =
+          new SignedProxyDelegation(proxyDelegation, optionalSig.get());
 
       // Encode and send response
-      final String jsonEncoded = JSON_MAPPER.writeValueAsString(generateProxyKeyResponse);
+      final String jsonEncoded = JSON_MAPPER.writeValueAsString(signedProxyDelegation);
       context.response().putHeader(CONTENT_TYPE, JSON_UTF_8).end(jsonEncoded);
     } catch (final Exception e) {
       context.fail(INTERNAL_ERROR, e);

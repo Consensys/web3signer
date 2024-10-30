@@ -113,8 +113,7 @@ public class ProxyKeyGenerator {
             commitBoostParameters.getProxyKeystoresPath(), identifier, KeyType.SECP256K1);
     final ECPublicKey ecPublicKey =
         EthPublicKeyUtils.bigIntegerToECPublicKey(ecKeyPair.getPublicKey());
-    final String compressedPubHex =
-        EthPublicKeyUtils.getEncoded(ecPublicKey, true, false).toHexString();
+    final String compressedPubHex = EthPublicKeyUtils.getEncoded(ecPublicKey, true).toHexString();
 
     final Path keystoreFile = keystoreDir.resolve(compressedPubHex + ".json");
     try {

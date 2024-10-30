@@ -167,7 +167,7 @@ public class EthPublicKeyUtils {
    * @return The public key as a hex string
    */
   public static String toHexString(final ECPublicKey publicKey) {
-    return getEncoded(publicKey, false, false).toHexString();
+    return getEncoded(publicKey, false).toHexString();
   }
 
   /**
@@ -178,7 +178,7 @@ public class EthPublicKeyUtils {
    */
   public static BigInteger ecPublicKeyToBigInteger(final ECPublicKey publicKey) {
     // Get the uncompressed public key without prefix (64 bytes)
-    final Bytes publicKeyBytes = EthPublicKeyUtils.getEncoded(publicKey, false, false);
+    final Bytes publicKeyBytes = EthPublicKeyUtils.getEncoded(publicKey, false);
 
     // Convert to BigInteger
     return new BigInteger(1, publicKeyBytes.toArrayUnsafe());
@@ -188,13 +188,11 @@ public class EthPublicKeyUtils {
    * Convert java ECPublicKey to Bytes.
    *
    * @param publicKey The public key to convert
-   * @param compressed Whether to return the compressed form
-   * @param withPrefix Used when compressed flag is false. Set to true to include the prefix byte
-   *     for uncompressed keys making the size 65 bytes.
+   * @param compressed Whether to return the compressed form 33 bytes or the uncompressed form 64
+   *     bytes
    * @return The encoded public key.
    */
-  public static Bytes getEncoded(
-      final ECPublicKey publicKey, boolean compressed, boolean withPrefix) {
+  public static Bytes getEncoded(final ECPublicKey publicKey, boolean compressed) {
     final ECPoint point;
     if (publicKey instanceof BCECPublicKey) {
       // If it's already a Bouncy Castle key, we can get the ECPoint directly
@@ -206,12 +204,8 @@ public class EthPublicKeyUtils {
       point = BC_SECP256K1_SPEC.getCurve().createPoint(x, y);
     }
 
-    if (compressed) {
-      return Bytes.wrap(point.getEncoded(true));
-    } else if (withPrefix) {
-      return Bytes.wrap(point.getEncoded(false));
-    } else {
-      return Bytes.wrap(point.getEncoded(false), 1, 64);
-    }
+    return compressed
+        ? Bytes.wrap(point.getEncoded(true))
+        : Bytes.wrap(point.getEncoded(false), 1, 64);
   }
 }

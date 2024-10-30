@@ -12,18 +12,12 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.commitboost;
 
-import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
 import tech.pegasys.teku.infrastructure.ssz.Merkleizable;
 import tech.pegasys.teku.spec.Spec;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.BlsProxyKeySchema;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.datastructure.SECPProxyKeySchema;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeyMessage;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyDelegation;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeySignatureScheme;
 import tech.pegasys.web3signer.core.util.Web3SignerSigningRootUtil;
-import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
-
-import java.security.interfaces.ECPublicKey;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
@@ -41,20 +35,10 @@ public class SigningRootGenerator {
   }
 
   public Bytes computeSigningRoot(
-      final ProxyKeyMessage proxyKeyMessage, final ProxyKeySignatureScheme scheme) {
+      final ProxyDelegation proxyDelegation, final ProxyKeySignatureScheme scheme) {
+    final Merkleizable proxyDelegationMerkleizable = proxyDelegation.toMerkleizable(scheme);
 
-    final BLSPublicKey delegator = BLSPublicKey.fromHexString(proxyKeyMessage.blsPublicKey());
-    final Merkleizable proxyKeyMessageToSign;
-    if (scheme == ProxyKeySignatureScheme.BLS) {
-      final BLSPublicKey proxy = BLSPublicKey.fromHexString(proxyKeyMessage.proxyPublicKey());
-      proxyKeyMessageToSign = new BlsProxyKeySchema().create(delegator, proxy);
-    } else {
-      final ECPublicKey proxy =
-          EthPublicKeyUtils.bytesToECPublicKey(
-              Bytes.fromHexString(proxyKeyMessage.proxyPublicKey()));
-      proxyKeyMessageToSign = new SECPProxyKeySchema().create(delegator, proxy);
-    }
-    return Web3SignerSigningRootUtil.computeSigningRoot(proxyKeyMessageToSign, domain);
+    return Web3SignerSigningRootUtil.computeSigningRoot(proxyDelegationMerkleizable, domain);
   }
 
   @VisibleForTesting

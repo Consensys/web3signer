@@ -17,19 +17,24 @@ import tech.pegasys.teku.infrastructure.ssz.containers.Container2;
 import tech.pegasys.teku.infrastructure.ssz.tree.TreeNode;
 import tech.pegasys.teku.spec.datastructures.type.SszPublicKey;
 
-public class BlsProxyKeyMessage extends Container2<BlsProxyKeyMessage, SszPublicKey, SszPublicKey> {
+import java.security.interfaces.ECPublicKey;
 
-  public BlsProxyKeyMessage(
-      final BlsProxyKeySchema schema, final BLSPublicKey delegator, final BLSPublicKey proxy) {
-    super(schema, new SszPublicKey(delegator), new SszPublicKey(proxy));
+public class SECPProxyDelegation
+    extends Container2<SECPProxyDelegation, SszPublicKey, SszSECPPublicKey> {
+
+  public SECPProxyDelegation(
+      final SECPProxyDelegationSchema schema,
+      final BLSPublicKey delegator,
+      final ECPublicKey proxy) {
+    super(schema, new SszPublicKey(delegator), new SszSECPPublicKey(proxy));
   }
 
-  BlsProxyKeyMessage(final BlsProxyKeySchema type, final TreeNode backingNode) {
-    super(type, backingNode);
+  SECPProxyDelegation(final SECPProxyDelegationSchema schema, final TreeNode backingNode) {
+    super(schema, backingNode);
   }
 
   @Override
-  public BlsProxyKeySchema getSchema() {
-    return (BlsProxyKeySchema) super.getSchema();
+  public SECPProxyDelegationSchema getSchema() {
+    return (SECPProxyDelegationSchema) super.getSchema();
   }
 }

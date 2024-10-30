@@ -17,22 +17,25 @@ import tech.pegasys.teku.infrastructure.ssz.containers.ContainerSchema2;
 import tech.pegasys.teku.infrastructure.ssz.tree.TreeNode;
 import tech.pegasys.teku.spec.datastructures.type.SszPublicKey;
 import tech.pegasys.teku.spec.datastructures.type.SszPublicKeySchema;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyDelegation;
 
-public class BlsProxyKeySchema
-    extends ContainerSchema2<BlsProxyKeyMessage, SszPublicKey, SszPublicKey> {
-  public BlsProxyKeySchema() {
+public class BLSProxyDelegationSchema
+    extends ContainerSchema2<BLSProxyDelegation, SszPublicKey, SszPublicKey> {
+  public BLSProxyDelegationSchema() {
     super(
-        "BlsProxyKeyMessage",
+        "BLSProxyDelegationSchema",
         namedSchema("delegator", SszPublicKeySchema.INSTANCE),
         namedSchema("proxy", SszPublicKeySchema.INSTANCE));
   }
 
-  public BlsProxyKeyMessage create(final BLSPublicKey delegator, final BLSPublicKey proxy) {
-    return new BlsProxyKeyMessage(this, delegator, proxy);
+  public BLSProxyDelegation create(final ProxyDelegation proxyDelegation) {
+    final BLSPublicKey delegator = BLSPublicKey.fromHexString(proxyDelegation.blsPublicKey());
+    final BLSPublicKey proxy = BLSPublicKey.fromHexString(proxyDelegation.proxyPublicKey());
+    return new BLSProxyDelegation(this, delegator, proxy);
   }
 
   @Override
-  public BlsProxyKeyMessage createFromBackingNode(TreeNode treeNode) {
-    return new BlsProxyKeyMessage(this, treeNode);
+  public BLSProxyDelegation createFromBackingNode(TreeNode treeNode) {
+    return new BLSProxyDelegation(this, treeNode);
   }
 }
