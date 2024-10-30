@@ -38,7 +38,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.utils.Numeric;
 
-class SigningRootGeneratorTest {
+class CommitBoostSigningRootTest {
   private static final Bytes32 GVR = Bytes32.ZERO;
   private static final Map<Eth2Network, Bytes32> DOMAIN_MAP = new HashMap<>();
   private static final Map<Eth2Network, Bytes32> BLS_PROXY_ROOT_MAP = new HashMap<>();
@@ -47,16 +47,29 @@ class SigningRootGeneratorTest {
   private static final Map<Eth2Network, String> BLS_PROXY_MESSAGE_SIGNATURE_MAP = new HashMap<>();
   private static final Map<Eth2Network, String> SECP_PROXY_MESSAGE_SIGNATURE_MAP = new HashMap<>();
 
-  private static final String BLS_PRIVATE_KEY_1 =
+  private static final String BLS_DELEGATOR_PRIVATE_KEY =
       "3ee2224386c82ffea477e2adf28a2929f5c349165a4196158c7f3a2ecca40f35";
-  private static final String BLS_PRIVATE_KEY_2 =
+  private static final String BLS_PROXY_PRIVATE_KEY =
       "32ae313afff2daa2ef7005a7f834bdf291855608fe82c24d30be6ac2017093a8";
   private static final String SECP_PROXY_PRIVATE_KEY =
       "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63";
 
+  private static final BLSKeyPair DELEGATOR_KEY_PAIR =
+      new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(BLS_DELEGATOR_PRIVATE_KEY)));
+  private static final BLSPublicKey DELEGATOR_PUB_KEY = DELEGATOR_KEY_PAIR.getPublicKey();
+  private static final BLSPublicKey BLS_PROXY_PUB_KEY =
+      new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(BLS_PROXY_PRIVATE_KEY)))
+          .getPublicKey();
+  private static final ECKeyPair SECP_PROXY_KEY_PAIR =
+      ECKeyPair.create(Numeric.toBigInt(Bytes.fromHexString(SECP_PROXY_PRIVATE_KEY).toArray()));
+  private static final ECPublicKey SECP_PROXY_EC_PUB_KEY =
+      EthPublicKeyUtils.bigIntegerToECPublicKey(SECP_PROXY_KEY_PAIR.getPublicKey());
+  private static final Bytes SECP_PROXY_PUB_KEY_ENC =
+      EthPublicKeyUtils.getEncoded(SECP_PROXY_EC_PUB_KEY, true, false);
+
   @BeforeAll
   static void initExpectedSigningRoots() {
-    // precalculated Domain values from Commit Boost client implementation
+    // precalculated values from Commit Boost client implementation
     DOMAIN_MAP.put(
         Eth2Network.MAINNET,
         Bytes32.fromHexString(
@@ -70,7 +83,6 @@ class SigningRootGeneratorTest {
         Bytes32.fromHexString(
             "0x6d6d6f43d3010778cd08ee514b08fe67b6c503b510987a4ce43f42306d97c67c"));
 
-    // precalculated Proxy Message Signing Root values from Commit Boost client implementation
     BLS_PROXY_ROOT_MAP.put(
         Eth2Network.MAINNET,
         Bytes32.fromHexString(
@@ -84,6 +96,19 @@ class SigningRootGeneratorTest {
         Bytes32.fromHexString(
             "0x99615a149344fc1beffc2085ae98b676bff384b92b45dd28bc1f62127c41505e"));
 
+    SECP_PROXY_ROOT_MAP.put(
+        Eth2Network.MAINNET,
+        Bytes32.fromHexString(
+            "0x419a4f6b748659b3ac4fc3534f3767fffe78127d210af0b2e1c1c8e7b345cf64"));
+    SECP_PROXY_ROOT_MAP.put(
+        Eth2Network.HOLESKY,
+        Bytes32.fromHexString(
+            "0xcc0cd2144f8b1c775eda156524e0a26ab794fdf39121ec902e51a4aff477fb74"));
+    SECP_PROXY_ROOT_MAP.put(
+        Eth2Network.SEPOLIA,
+        Bytes32.fromHexString(
+            "0xcc773c9f0ca058178f5b65b9c5fe9857c39e667f64f4b09a4e75731ac56fee41"));
+
     // precalculated Proxy Message Signature values from Commit Boost client implementation
     BLS_PROXY_MESSAGE_SIGNATURE_MAP.put(
         Eth2Network.MAINNET,
@@ -94,6 +119,16 @@ class SigningRootGeneratorTest {
     BLS_PROXY_MESSAGE_SIGNATURE_MAP.put(
         Eth2Network.SEPOLIA,
         "0x8fd1736684a3eee3a4deea5785d41ddc7a96faf1dd4ff9778fb58db465a206571fff0ca9e55cd3654a28cfc0b0e065411633deb9cb8b9263f7189b73c013a61d6518a5aa2b40066a230a5cb1705bd9a80894badc7bfc65e3e2dd459e9fa9d7fc");
+
+    SECP_PROXY_MESSAGE_SIGNATURE_MAP.put(
+        Eth2Network.MAINNET,
+        "0x8cd715641bb61bca8ba50a5f7e5faf06da1aedb074d59b9fce0ab69e8840501975f5c0008de6625b7d343b5bd362e3220ef5be03c1b32842cddcd5073c3d25e22e9746144b8ff2361391af1b681520c111b5ea69f11097991cccb43b9b6fb0e9");
+    SECP_PROXY_MESSAGE_SIGNATURE_MAP.put(
+        Eth2Network.HOLESKY,
+        "0x8f3c546da13ad082e2818b75b4662e4f28d38e193a5c4e24231233df454f26f15c8ab1fd4cc4772321ab7a4ac16acaf300a78c5fc1ac96c4009413ad7f9c6c5cd99cb9d7c92120177d828bd8f6e77b9ffb93c37f6f6b3cb264969fa4fea179d5");
+    SECP_PROXY_MESSAGE_SIGNATURE_MAP.put(
+        Eth2Network.SEPOLIA,
+        "0x90000272c0a751852d28b953c9d30df31fd9eeb846fb3b575c8fdeee0325ee5dcc6f91bdf3d5d0f0814b707d088ab3af047977464cbe3b9eded66202c2ae70fbe478860cbcf4fc31d10a81aac7c682a6e422686a7cfa7cab272903f9cabf73bb");
   }
 
   @ParameterizedTest
@@ -109,24 +144,17 @@ class SigningRootGeneratorTest {
   void computeSigningRootForBLSProxyKey(final Eth2Network network) {
     final Spec spec = getSpec(network);
     final SigningRootGenerator signingRootGenerator = new SigningRootGenerator(spec, GVR);
-    BLSKeyPair delegatorBLSKeyPair =
-        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(BLS_PRIVATE_KEY_1)));
-    final BLSPublicKey delegator = delegatorBLSKeyPair.getPublicKey();
-    final BLSPublicKey proxy =
-        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(BLS_PRIVATE_KEY_2)))
-            .getPublicKey();
 
     final ProxyKeyMessage proxyKeyMessage =
-        new ProxyKeyMessage(delegator.toHexString(), proxy.toHexString());
+        new ProxyKeyMessage(DELEGATOR_PUB_KEY.toHexString(), BLS_PROXY_PUB_KEY.toHexString());
     final Bytes signingRoot =
         signingRootGenerator.computeSigningRoot(proxyKeyMessage, ProxyKeySignatureScheme.BLS);
-    // the expected value is calculated using the Commit Boost client implementation
+
     assertThat(signingRoot).isEqualTo(BLS_PROXY_ROOT_MAP.get(network));
 
     // verify BLS Signature matching Commit Boost client implementation as well
-    final BlsArtifactSigner artifactSigner = new BlsArtifactSigner(delegatorBLSKeyPair, null);
-    BlsArtifactSignature blsArtifactSignature = artifactSigner.sign(signingRoot);
-    String signature = blsArtifactSignature.getSignatureData().toString();
+    final BlsArtifactSigner artifactSigner = new BlsArtifactSigner(DELEGATOR_KEY_PAIR, null);
+    final String signature = artifactSigner.sign(signingRoot).getSignatureData().toString();
 
     assertThat(signature).isEqualTo(BLS_PROXY_MESSAGE_SIGNATURE_MAP.get(network));
   }
@@ -136,33 +164,21 @@ class SigningRootGeneratorTest {
   void computeSigningRootforSECPProxyKey(final Eth2Network network) {
     final Spec spec = getSpec(network);
     final SigningRootGenerator signingRootGenerator = new SigningRootGenerator(spec, GVR);
-    // delegator BLS Key Pair
-    final BLSKeyPair delegatorBLSKeyPair =
-        new BLSKeyPair(BLSSecretKey.fromBytes(Bytes32.fromHexString(BLS_PRIVATE_KEY_1)));
-    final BLSPublicKey delegator = delegatorBLSKeyPair.getPublicKey();
-
-    // proxy SECP Key Pair
-    final ECKeyPair ecKeyPair =
-        ECKeyPair.create(Numeric.toBigInt(Bytes.fromHexString(SECP_PROXY_PRIVATE_KEY).toArray()));
-    final ECPublicKey ecPublicKey =
-        EthPublicKeyUtils.bigIntegerToECPublicKey(ecKeyPair.getPublicKey());
-    final Bytes proxy = EthPublicKeyUtils.getEncoded(ecPublicKey, true, false);
 
     final ProxyKeyMessage proxyKeyMessage =
-        new ProxyKeyMessage(delegator.toHexString(), proxy.toHexString());
+        new ProxyKeyMessage(DELEGATOR_PUB_KEY.toHexString(), SECP_PROXY_PUB_KEY_ENC.toHexString());
 
     final Bytes signingRoot =
         signingRootGenerator.computeSigningRoot(proxyKeyMessage, ProxyKeySignatureScheme.ECDSA);
 
-    // the expected value is calculated using the Commit Boost client implementation
     assertThat(signingRoot).isEqualTo(SECP_PROXY_ROOT_MAP.get(network));
 
     // verify BLS Signature matching Commit Boost client implementation as well
-    final BlsArtifactSigner artifactSigner = new BlsArtifactSigner(delegatorBLSKeyPair, null);
+    final BlsArtifactSigner artifactSigner = new BlsArtifactSigner(DELEGATOR_KEY_PAIR, null);
     BlsArtifactSignature blsArtifactSignature = artifactSigner.sign(signingRoot);
     String signature = blsArtifactSignature.getSignatureData().toString();
 
-    assertThat(signature).isEqualTo(BLS_PROXY_MESSAGE_SIGNATURE_MAP.get(network));
+    assertThat(signature).isEqualTo(SECP_PROXY_MESSAGE_SIGNATURE_MAP.get(network));
   }
 
   private static Spec getSpec(final Eth2Network network) {
