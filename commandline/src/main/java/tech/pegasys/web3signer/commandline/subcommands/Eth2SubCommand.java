@@ -164,9 +164,7 @@ public class Eth2SubCommand extends ModeSubCommand {
 
   @Override
   protected void validateArgs() {
-    final Eth2NetworkConfiguration.Builder eth2NetworkConfigBuilder =
-        createEth2NetworkConfigBuilder();
-    this.eth2NetworkConfig = createEth2NetworkConfig(eth2NetworkConfigBuilder);
+    this.eth2NetworkConfig = createEth2NetworkConfiguration();
 
     if (slashingProtectionParameters.isEnabled()
         && slashingProtectionParameters.getDbUrl() == null) {
@@ -188,23 +186,11 @@ public class Eth2SubCommand extends ModeSubCommand {
     commitBoostApiParameters.validateParameters(this.eth2NetworkConfig);
   }
 
-  private Eth2NetworkConfiguration.Builder createEth2NetworkConfigBuilder() {
+  private Eth2NetworkConfiguration createEth2NetworkConfiguration() {
     try {
       final Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
       builder.applyNetworkDefaults(network);
       networkOverrides.applyOverrides(builder); // custom fork epochs
-      return builder;
-    } catch (final IllegalArgumentException e) {
-      throw new ParameterException(
-          commandSpec.commandLine(),
-          "Failed to load network " + network + " due to " + e.getMessage(),
-          e);
-    }
-  }
-
-  private Eth2NetworkConfiguration createEth2NetworkConfig(
-      final Eth2NetworkConfiguration.Builder builder) throws ParameterException {
-    try {
       return builder.build();
     } catch (final IllegalArgumentException e) {
       throw new ParameterException(
