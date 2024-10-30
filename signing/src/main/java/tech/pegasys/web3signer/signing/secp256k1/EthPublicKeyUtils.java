@@ -189,8 +189,9 @@ public class EthPublicKeyUtils {
    *
    * @param publicKey The public key to convert
    * @param compressed Whether to return the compressed form
-   * @param withPrefix Whether to include the prefix byte for uncompressed keys
-   * @return The encoded public key
+   * @param withPrefix Used when compressed flag is false. Set to true to include the prefix byte
+   *     for uncompressed keys making the size 65 bytes.
+   * @return The encoded public key.
    */
   public static Bytes getEncoded(
       final ECPublicKey publicKey, boolean compressed, boolean withPrefix) {
