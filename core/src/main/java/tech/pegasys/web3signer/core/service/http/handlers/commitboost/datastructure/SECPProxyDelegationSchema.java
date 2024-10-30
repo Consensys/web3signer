@@ -28,7 +28,7 @@ public class SECPProxyDelegationSchema
     extends ContainerSchema2<SECPProxyDelegation, SszPublicKey, SszSECPPublicKey> {
   public SECPProxyDelegationSchema() {
     super(
-        "SECPProxyKeyMessage",
+        "SECPProxyDelegationSchema",
         namedSchema("delegator", SszPublicKeySchema.INSTANCE),
         namedSchema("proxy", SszSECPPublicKeySchema.INSTANCE));
   }
