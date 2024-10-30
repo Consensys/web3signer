@@ -51,6 +51,11 @@ public class BlsArtifactSigner implements ArtifactSigner {
     return new BlsArtifactSignature(BLS.sign(keyPair.getSecretKey(), data));
   }
 
+  @Override
+  public KeyType getKeyType() {
+    return KeyType.BLS;
+  }
+
   public Optional<String> getPath() {
     return path;
   }

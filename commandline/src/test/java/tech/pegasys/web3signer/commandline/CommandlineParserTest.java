@@ -37,6 +37,7 @@ import java.io.StringWriter;
 import java.net.InetAddress;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import io.vertx.core.Vertx;
@@ -612,6 +613,47 @@ class CommandlineParserTest {
     assertThat(mockEth2SubCommand.getConfig().getVertxWorkerPoolSize()).isEqualTo(40);
   }
 
+  @Test
+  void commitBoostApiEnabledWithoutKeystorePathFailsToParse() {
+    String cmdline = validBaseCommandOptions();
+    cmdline += "eth2 --slashing-protection-enabled=false --commit-boost-api-enabled=true";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: Commit boost API is enabled, but --proxy-keystores-path not set");
+  }
+
+  @Test
+  void commitBoostApiEnabledWithoutKeystorePasswordFileFailsToParse() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        "eth2 --slashing-protection-enabled=false --commit-boost-api-enabled=true --proxy-keystores-path=./keystore";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isNotZero();
+    assertThat(commandError.toString())
+        .contains(
+            "Error parsing parameters: Commit boost API is enabled, but --proxy-keystores-password-file not set");
+  }
+
+  @Test
+  void commitBoostApiEnabledWithKeystorePathAndKeystorePasswordFileParsesSuccessfully() {
+    String cmdline = validBaseCommandOptions();
+    cmdline +=
+        "eth2 --slashing-protection-enabled=false --commit-boost-api-enabled=true --proxy-keystores-path=./keystore --proxy-keystores-password-file=./password";
+
+    parser.registerSubCommands(new MockEth2SubCommand());
+    final int result = parser.parseCommandLine(cmdline.split(" "));
+
+    assertThat(result).isZero();
+  }
+
   private <T> void missingOptionalParameterIsValidAndMeetsDefault(
       final String paramToRemove, final Supplier<T> actualValueGetter, final T expectedValue) {
 
@@ -646,7 +688,7 @@ class CommandlineParserTest {
     @Override
     protected List<ArtifactSignerProvider> createArtifactSignerProvider(
         final Vertx vertx, final MetricsSystem metricsSystem) {
-      return List.of(new DefaultArtifactSignerProvider(Collections::emptyList));
+      return List.of(new DefaultArtifactSignerProvider(Collections::emptyList, Optional.empty()));
     }
 
     @Override
