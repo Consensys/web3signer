@@ -16,6 +16,7 @@ import tech.pegasys.teku.infrastructure.unsigned.UInt64;
 import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.web3signer.commandline.subcommands.Eth2SubCommand;
 
+import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine;
 
 /** Mixin class to hold network overrides for the PicoCLI parser. */
@@ -74,6 +75,16 @@ public class PicoCliNetworkOverrides {
       arity = "1")
   private String trustedSetup = null; // Depends on network configuration
 
+  @CommandLine.Option(
+      names = {"--Xgenesis-state"},
+      paramLabel = "<STRING>",
+      hidden = true,
+      description =
+          "Override the genesis state. This value should be a file or URL pointing to an SSZ-encoded finalized checkpoint "
+              + "state.",
+      arity = "1")
+  private String genesisState;
+
   public void applyOverrides(final Eth2NetworkConfiguration.Builder builder) {
     if (altairForkEpoch != null) {
       builder.altairForkEpoch(altairForkEpoch);
@@ -92,6 +103,9 @@ public class PicoCliNetworkOverrides {
     }
     if (trustedSetup != null) {
       builder.trustedSetup(trustedSetup);
+    }
+    if (StringUtils.isNotBlank(genesisState)) {
+      builder.customGenesisState(genesisState);
     }
   }
 }

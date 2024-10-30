@@ -23,7 +23,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -93,11 +92,6 @@ class ProxyKeyGeneratorTest {
     @Override
     public Path getProxyKeystoresPasswordFile() {
       return passwordFile;
-    }
-
-    @Override
-    public Bytes32 getGenesisValidatorsRoot() {
-      return Bytes32.ZERO;
     }
   }
 }

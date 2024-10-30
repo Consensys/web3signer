@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -273,11 +272,6 @@ class DefaultArtifactSignerProviderTest {
     @Override
     public Path getProxyKeystoresPasswordFile() {
       return passwordFile;
-    }
-
-    @Override
-    public Bytes32 getGenesisValidatorsRoot() {
-      return Bytes32.ZERO;
     }
   }
 }

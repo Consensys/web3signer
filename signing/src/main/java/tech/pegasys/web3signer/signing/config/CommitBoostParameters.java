@@ -40,9 +40,12 @@ public interface CommitBoostParameters {
   Path getProxyKeystoresPasswordFile();
 
   /**
-   * The Genesis Validators Root for the network used by the commit boost signing operations.
+   * The Genesis Validators Root for the network used by the commit boost signing operations. The
+   * Commit Boost Client implementation uses ZERO as the default value.
    *
    * @return Genesis Validators Root as Bytes32
    */
-  Bytes32 getGenesisValidatorsRoot();
+  default Bytes32 getGenesisValidatorsRoot() {
+    return Bytes32.ZERO;
+  }
 }

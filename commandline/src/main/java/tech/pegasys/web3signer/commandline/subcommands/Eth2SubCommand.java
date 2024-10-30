@@ -193,7 +193,6 @@ public class Eth2SubCommand extends ModeSubCommand {
       final Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
       builder.applyNetworkDefaults(network);
       networkOverrides.applyOverrides(builder); // custom fork epochs
-      commitBoostApiParameters.applyOverrides(builder); // genesis state
       return builder;
     } catch (final IllegalArgumentException e) {
       throw new ParameterException(
