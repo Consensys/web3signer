@@ -13,7 +13,6 @@
 package tech.pegasys.web3signer.signing;
 
 import java.io.Closeable;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -37,6 +36,16 @@ public interface ArtifactSignerProvider extends Closeable {
   Optional<ArtifactSigner> getSigner(final String identifier);
 
   /**
+   * Get the proxy signer for the given identifier.
+   *
+   * @param identifier the identifier of the signer
+   * @return the signer or empty if no signer is found
+   */
+  default Optional<ArtifactSigner> getProxySigner(final String identifier) {
+    throw new UnsupportedOperationException("Proxy signers are not supported by this provider");
+  }
+
+  /**
    * Get the available identifiers for the loaded signers.
    *
    * @return the available identifiers
@@ -49,7 +58,9 @@ public interface ArtifactSignerProvider extends Closeable {
    * @param identifier the identifier of the signer
    * @return Map of Key Type (BLS, SECP256K1) and corresponding proxy identifiers
    */
-  Map<KeyType, List<String>> getProxyIdentifiers(final String identifier);
+  default Map<KeyType, Set<String>> getProxyIdentifiers(final String identifier) {
+    throw new UnsupportedOperationException("Proxy signers are not supported by this provider");
+  }
 
   /**
    * Add a new signer to the signer provider.

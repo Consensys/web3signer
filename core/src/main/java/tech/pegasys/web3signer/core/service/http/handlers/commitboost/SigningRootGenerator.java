@@ -20,7 +20,6 @@ import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.Proxy
 import tech.pegasys.web3signer.core.util.Web3SignerSigningRootUtil;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class SigningRootGenerator {
@@ -34,11 +33,15 @@ public class SigningRootGenerator {
             COMMIT_BOOST_DOMAIN, genesisForkVersion, genesisValidatorsRoot);
   }
 
-  public Bytes computeSigningRoot(
+  public Bytes32 computeSigningRoot(
       final ProxyDelegation proxyDelegation, final ProxyKeySignatureScheme scheme) {
     final Merkleizable proxyDelegationMerkleizable = proxyDelegation.toMerkleizable(scheme);
 
     return Web3SignerSigningRootUtil.computeSigningRoot(proxyDelegationMerkleizable, domain);
+  }
+
+  public Bytes32 computeSigningRoot(final Bytes32 objectRoot) {
+    return Web3SignerSigningRootUtil.computeSigningRoot(objectRoot, domain);
   }
 
   @VisibleForTesting

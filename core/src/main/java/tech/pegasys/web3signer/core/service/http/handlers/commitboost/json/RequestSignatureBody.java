@@ -12,18 +12,10 @@
  */
 package tech.pegasys.web3signer.core.service.http.handlers.commitboost.json;
 
-import java.util.Set;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.tuweni.bytes.Bytes32;
 
-/**
- * Represents the public key mappings for get_pubkeys API
- *
- * @param consensus BLS Public Key in hex string format
- * @param proxyBlsPublicKeys Set of Proxy BLS Public Key in hex string format
- * @param proxyEcdsaPublicKeys Set of Proxy ECDSA (SECP256K1) Public Key in hex string format
- */
-public record PublicKeyMappings(
-    @JsonProperty(value = "consensus") String consensus,
-    @JsonProperty(value = "proxy_bls") Set<String> proxyBlsPublicKeys,
-    @JsonProperty(value = "proxy_ecdsa") Set<String> proxyEcdsaPublicKeys) {}
+public record RequestSignatureBody(
+    @JsonProperty(value = "type", required = true) SignRequestType type,
+    @JsonProperty(value = "pubkey", required = true) String publicKey,
+    @JsonProperty(value = "object_root", required = true) Bytes32 objectRoot) {}

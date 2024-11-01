@@ -24,6 +24,7 @@ import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -71,11 +72,11 @@ public class CommitBoostPublicKeysHandler implements Handler<RoutingContext> {
 
   private static PublicKeyMappings toPublicKeyMappings(
       final ArtifactSignerProvider provider, final String identifier) {
-    final Map<KeyType, List<String>> proxyIdentifiers = provider.getProxyIdentifiers(identifier);
-    final List<String> proxyBlsPublicKeys =
-        proxyIdentifiers.computeIfAbsent(KeyType.BLS, k -> List.of());
-    final List<String> proxyEcdsaPublicKeys =
-        proxyIdentifiers.computeIfAbsent(KeyType.SECP256K1, k -> List.of());
+    final Map<KeyType, Set<String>> proxyIdentifiers = provider.getProxyIdentifiers(identifier);
+    final Set<String> proxyBlsPublicKeys =
+        proxyIdentifiers.computeIfAbsent(KeyType.BLS, k -> Set.of());
+    final Set<String> proxyEcdsaPublicKeys =
+        proxyIdentifiers.computeIfAbsent(KeyType.SECP256K1, k -> Set.of());
     return new PublicKeyMappings(identifier, proxyBlsPublicKeys, proxyEcdsaPublicKeys);
   }
 }

@@ -24,10 +24,9 @@ import tech.pegasys.web3signer.signing.bulkloading.SecpV3KeystoresBulkLoader;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -47,7 +46,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
-  private final Map<String, List<ArtifactSigner>> proxySigners = new HashMap<>();
+  private final Map<String, Set<ArtifactSigner>> proxySigners = new HashMap<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Optional<CommitBoostParameters> commitBoostParameters;
 
@@ -117,19 +116,27 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
+  public Optional<ArtifactSigner> getProxySigner(final String identifier) {
+    return proxySigners.values().stream()
+        .flatMap(Set::stream)
+        .filter(signer -> signer.getIdentifier().equals(identifier))
+        .findFirst();
+  }
+
+  @Override
   public Set<String> availableIdentifiers() {
     return Set.copyOf(signers.keySet());
   }
 
   @Override
-  public Map<KeyType, List<String>> getProxyIdentifiers(final String identifier) {
-    final List<ArtifactSigner> artifactSigners =
-        proxySigners.computeIfAbsent(identifier, k -> List.of());
+  public Map<KeyType, Set<String>> getProxyIdentifiers(final String identifier) {
+    final Set<ArtifactSigner> artifactSigners =
+        proxySigners.computeIfAbsent(identifier, k -> Set.of());
     return artifactSigners.stream()
         .collect(
             Collectors.groupingBy(
                 ArtifactSigner::getKeyType,
-                Collectors.mapping(ArtifactSigner::getIdentifier, Collectors.toList())));
+                Collectors.mapping(ArtifactSigner::getIdentifier, Collectors.toSet())));
   }
 
   @Override
@@ -157,7 +164,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   public Future<Void> addProxySigner(final ArtifactSigner signer, final String identifier) {
     return executorService.submit(
         () -> {
-          proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).add(signer);
+          proxySigners.computeIfAbsent(identifier, k -> new HashSet<>()).add(signer);
           LOG.info(
               "Loaded new proxy signer {} for identifier '{}'", signer.getIdentifier(), identifier);
           return null;
@@ -188,7 +195,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
       final MappedResults<ArtifactSigner> signersResult =
           loaderFunction.apply(proxyDir, keystoreParameter.getProxyKeystoresPasswordFile());
       final Collection<ArtifactSigner> signers = signersResult.getValues();
-      proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(signers);
+      proxySigners.computeIfAbsent(identifier, k -> new HashSet<>()).addAll(signers);
     }
   }
 }

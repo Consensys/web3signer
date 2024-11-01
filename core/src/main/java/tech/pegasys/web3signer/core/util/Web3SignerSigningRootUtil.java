@@ -21,8 +21,12 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class Web3SignerSigningRootUtil {
-  public static Bytes computeSigningRoot(final Merkleizable object, final Bytes32 domain) {
+  public static Bytes32 computeSigningRoot(final Merkleizable object, final Bytes32 domain) {
     return new SigningData(object.hashTreeRoot(), domain).hashTreeRoot();
+  }
+
+  public static Bytes32 computeSigningRoot(final Bytes32 objectRoot, final Bytes32 domain) {
+    return new SigningData(objectRoot, domain).hashTreeRoot();
   }
 
   public static Bytes32 computeDomain(

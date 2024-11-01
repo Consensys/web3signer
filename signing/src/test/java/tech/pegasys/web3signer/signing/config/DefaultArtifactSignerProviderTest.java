@@ -34,6 +34,7 @@ import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -141,7 +142,7 @@ class DefaultArtifactSignerProviderTest {
     assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
 
     // assert that the proxy keys are loaded correctly
-    final Map<KeyType, List<String>> key1ProxyPublicKeys =
+    final Map<KeyType, Set<String>> key1ProxyPublicKeys =
         signerProvider.getProxyIdentifiers(PUBLIC_KEY1);
 
     assertThat(key1ProxyPublicKeys.get(KeyType.BLS))
@@ -149,7 +150,7 @@ class DefaultArtifactSignerProviderTest {
     assertThat(key1ProxyPublicKeys.get(KeyType.SECP256K1))
         .containsExactlyInAnyOrder(getCompressedSecpPublicKeysArray(key1SecpKeyPairs));
 
-    final Map<KeyType, List<String>> key2ProxyPublicKeys =
+    final Map<KeyType, Set<String>> key2ProxyPublicKeys =
         signerProvider.getProxyIdentifiers(PUBLIC_KEY2);
 
     assertThat(key2ProxyPublicKeys.get(KeyType.BLS))
@@ -178,7 +179,7 @@ class DefaultArtifactSignerProviderTest {
     assertThatCode(() -> signerProvider.load().get()).doesNotThrowAnyException();
 
     for (String identifier : List.of(PUBLIC_KEY1, PUBLIC_KEY2)) {
-      final Map<KeyType, List<String>> keyProxyPublicKeys =
+      final Map<KeyType, Set<String>> keyProxyPublicKeys =
           signerProvider.getProxyIdentifiers(identifier);
       assertThat(keyProxyPublicKeys).isEmpty();
     }
