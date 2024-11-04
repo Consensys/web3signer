@@ -15,6 +15,8 @@ package tech.pegasys.web3signer.core.routes.eth2;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.routes.Web3SignerRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.CommitBoostPublicKeysHandler;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
@@ -23,9 +25,16 @@ import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 public class CommitBoostPublicKeysRoute implements Web3SignerRoute {
   private static final String PATH = "/signer/v1/get_pubkeys";
   private final Context context;
+  private final ArtifactSignerProvider artifactSignerProvider;
 
   public CommitBoostPublicKeysRoute(final Context context) {
     this.context = context;
+    // there should be only one DefaultArtifactSignerProvider in eth2 mode
+    artifactSignerProvider =
+        context.getArtifactSignerProviders().stream()
+            .filter(p -> p instanceof DefaultArtifactSignerProvider)
+            .findFirst()
+            .orElseThrow();
   }
 
   @Override
@@ -36,7 +45,7 @@ public class CommitBoostPublicKeysRoute implements Web3SignerRoute {
         .produces(JSON_HEADER)
         .handler(
             new BlockingHandlerDecorator(
-                new CommitBoostPublicKeysHandler(context.getArtifactSignerProviders()), false))
+                new CommitBoostPublicKeysHandler(artifactSignerProvider), false))
         .failureHandler(context.getErrorHandler())
         .failureHandler(
             ctx -> {
