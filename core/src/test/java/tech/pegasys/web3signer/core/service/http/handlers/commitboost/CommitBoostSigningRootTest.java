@@ -148,7 +148,8 @@ class CommitBoostSigningRootTest {
     final ProxyDelegation proxyDelegation =
         new ProxyDelegation(DELEGATOR_PUB_KEY.toHexString(), BLS_PROXY_PUB_KEY.toHexString());
     final Bytes signingRoot =
-        signingRootGenerator.computeSigningRoot(proxyDelegation, ProxyKeySignatureScheme.BLS);
+        signingRootGenerator.computeSigningRoot(
+            proxyDelegation.toMerkleizable(ProxyKeySignatureScheme.BLS).hashTreeRoot());
 
     assertThat(signingRoot).isEqualTo(BLS_PROXY_ROOT_MAP.get(network));
 
@@ -169,7 +170,8 @@ class CommitBoostSigningRootTest {
         new ProxyDelegation(DELEGATOR_PUB_KEY.toHexString(), SECP_PROXY_PUB_KEY_ENC.toHexString());
 
     final Bytes signingRoot =
-        signingRootGenerator.computeSigningRoot(proxyDelegation, ProxyKeySignatureScheme.ECDSA);
+        signingRootGenerator.computeSigningRoot(
+            proxyDelegation.toMerkleizable(ProxyKeySignatureScheme.ECDSA).hashTreeRoot());
 
     assertThat(signingRoot).isEqualTo(SECP_PROXY_ROOT_MAP.get(network));
 

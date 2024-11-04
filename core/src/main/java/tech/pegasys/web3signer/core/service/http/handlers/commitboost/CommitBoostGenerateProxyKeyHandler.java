@@ -90,7 +90,8 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
       final ProxyDelegation proxyDelegation =
           new ProxyDelegation(identifier, artifactSigner.getIdentifier());
       final Bytes signingRoot =
-          signingRootGenerator.computeSigningRoot(proxyDelegation, proxyKeyBody.scheme());
+          signingRootGenerator.computeSigningRoot(
+              proxyDelegation.toMerkleizable(proxyKeyBody.scheme()).hashTreeRoot());
       final Optional<String> optionalSig = signerForIdentifier.sign(identifier, signingRoot);
       if (optionalSig.isEmpty()) {
         context.fail(NOT_FOUND);

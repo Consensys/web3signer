@@ -44,7 +44,7 @@ public class CommitBoostRequestSignatureHandler implements Handler<RoutingContex
       final CommitBoostParameters commitBoostParameters,
       final Spec eth2Spec) {
     commitBoostSigner = new CommitBoostSigner(artifactSignerProvider);
-    this.signingRootGenerator =
+    signingRootGenerator =
         new SigningRootGenerator(eth2Spec, commitBoostParameters.getGenesisValidatorsRoot());
   }
 

@@ -13,15 +13,18 @@
 package tech.pegasys.web3signer.core.service.http.handlers.commitboost;
 
 import tech.pegasys.teku.infrastructure.bytes.Bytes4;
-import tech.pegasys.teku.infrastructure.ssz.Merkleizable;
 import tech.pegasys.teku.spec.Spec;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyDelegation;
-import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeySignatureScheme;
 import tech.pegasys.web3signer.core.util.Web3SignerSigningRootUtil;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes32;
 
+/**
+ * Generates the signing root for a given object root using the commit boost domain.
+ *
+ * <p>The commit boost domain is computed using the genesis validators root and the genesis fork
+ * version.
+ */
 public class SigningRootGenerator {
   private static final Bytes4 COMMIT_BOOST_DOMAIN = Bytes4.fromHexString("0x6d6d6f43");
   private final Bytes32 domain;
@@ -33,13 +36,12 @@ public class SigningRootGenerator {
             COMMIT_BOOST_DOMAIN, genesisForkVersion, genesisValidatorsRoot);
   }
 
-  public Bytes32 computeSigningRoot(
-      final ProxyDelegation proxyDelegation, final ProxyKeySignatureScheme scheme) {
-    final Merkleizable proxyDelegationMerkleizable = proxyDelegation.toMerkleizable(scheme);
-
-    return Web3SignerSigningRootUtil.computeSigningRoot(proxyDelegationMerkleizable, domain);
-  }
-
+  /**
+   * Computes the signing root for a given object root using commit boost domain.
+   *
+   * @param objectRoot the object root to compute the signing root for
+   * @return the signing root
+   */
   public Bytes32 computeSigningRoot(final Bytes32 objectRoot) {
     return Web3SignerSigningRootUtil.computeSigningRoot(objectRoot, domain);
   }
