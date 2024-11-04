@@ -36,14 +36,14 @@ public class CommitBoostRequestSignatureHandler implements Handler<RoutingContex
   private static final int BAD_REQUEST = 400;
   private static final int INTERNAL_ERROR = 500;
 
-  private final CommitBoostSigner commitBoostSigner;
+  private final CommitBoostSignerProvider commitBoostSigner;
   private final SigningRootGenerator signingRootGenerator;
 
   public CommitBoostRequestSignatureHandler(
       final ArtifactSignerProvider artifactSignerProvider,
       final CommitBoostParameters commitBoostParameters,
       final Spec eth2Spec) {
-    commitBoostSigner = new CommitBoostSigner(artifactSignerProvider);
+    commitBoostSigner = new CommitBoostSignerProvider(artifactSignerProvider);
     signingRootGenerator =
         new SigningRootGenerator(eth2Spec, commitBoostParameters.getGenesisValidatorsRoot());
   }

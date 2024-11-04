@@ -30,10 +30,10 @@ import org.apache.tuweni.bytes.Bytes32;
  * This class wraps the {@link ArtifactSignerProvider} and provides a way to check if a signer is
  * available, consensus or proxy,and to sign a message.
  */
-public class CommitBoostSigner {
+public class CommitBoostSignerProvider {
   private final ArtifactSignerProvider artifactSignerProvider;
 
-  public CommitBoostSigner(final ArtifactSignerProvider artifactSignerProvider) {
+  public CommitBoostSignerProvider(final ArtifactSignerProvider artifactSignerProvider) {
     this.artifactSignerProvider = artifactSignerProvider;
   }
 
