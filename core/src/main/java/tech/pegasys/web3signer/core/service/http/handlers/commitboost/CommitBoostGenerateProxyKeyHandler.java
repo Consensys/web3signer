@@ -20,9 +20,10 @@ import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.GenerateProxyKeyBody;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyDelegation;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.SignRequestType;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.SignedProxyDelegation;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
+import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 
 import java.util.Optional;
@@ -33,7 +34,7 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
@@ -42,17 +43,17 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
   private static final int BAD_REQUEST = 400;
   private static final int INTERNAL_ERROR = 500;
 
-  private final SignerForIdentifier<?> signerForIdentifier;
   private final ProxyKeyGenerator proxyKeyGenerator;
   private final SigningRootGenerator signingRootGenerator;
+  private final CommitBoostSignerProvider commitBoostSignerProvider;
 
   public CommitBoostGenerateProxyKeyHandler(
-      final SignerForIdentifier<?> signerForIdentifier,
+      final ArtifactSignerProvider artifactSignerProvider,
       final CommitBoostParameters commitBoostParameters,
       final Spec eth2Spec) {
-    this.signerForIdentifier = signerForIdentifier;
-    this.proxyKeyGenerator = new ProxyKeyGenerator(commitBoostParameters);
-    this.signingRootGenerator =
+    commitBoostSignerProvider = new CommitBoostSignerProvider(artifactSignerProvider);
+    proxyKeyGenerator = new ProxyKeyGenerator(commitBoostParameters);
+    signingRootGenerator =
         new SigningRootGenerator(eth2Spec, commitBoostParameters.getGenesisValidatorsRoot());
   }
 
@@ -71,28 +72,31 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
 
     // Check for identifier, if not exist, fail with 404
     final String identifier = normaliseIdentifier(proxyKeyBody.blsPublicKey());
-    if (!signerForIdentifier.isSignerAvailable(identifier)) {
+    final boolean signerAvailable =
+        commitBoostSignerProvider.isSignerAvailable(identifier, SignRequestType.CONSENSUS);
+    if (!signerAvailable) {
       context.fail(NOT_FOUND);
       return;
     }
 
-    // Generate actual proxy key and encrypted keystore based on signature scheme
-    final ArtifactSigner artifactSigner;
     try {
-      artifactSigner =
+      // Generate actual proxy key and encrypted keystore based on signature scheme
+      final ArtifactSigner proxyArtifactSigner =
           switch (proxyKeyBody.scheme()) {
             case BLS -> proxyKeyGenerator.generateBLSProxyKey(identifier);
             case ECDSA -> proxyKeyGenerator.generateECProxyKey(identifier);
           };
-      // Add generated proxy key to DefaultArtifactSignerProvider
-      signerForIdentifier.getSignerProvider().addProxySigner(artifactSigner, identifier).get();
+
+      // Add generated proxy ArtifactSigner to ArtifactSignerProvider
+      commitBoostSignerProvider.addProxySigner(proxyArtifactSigner, identifier);
 
       final ProxyDelegation proxyDelegation =
-          new ProxyDelegation(identifier, artifactSigner.getIdentifier());
-      final Bytes signingRoot =
+          new ProxyDelegation(identifier, proxyArtifactSigner.getIdentifier());
+      final Bytes32 signingRoot =
           signingRootGenerator.computeSigningRoot(
               proxyDelegation.toMerkleizable(proxyKeyBody.scheme()).hashTreeRoot());
-      final Optional<String> optionalSig = signerForIdentifier.sign(identifier, signingRoot);
+      final Optional<String> optionalSig =
+          commitBoostSignerProvider.sign(identifier, SignRequestType.CONSENSUS, signingRoot);
       if (optionalSig.isEmpty()) {
         context.fail(NOT_FOUND);
         return;

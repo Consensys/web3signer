@@ -33,10 +33,22 @@ import org.apache.tuweni.bytes.Bytes32;
 public class CommitBoostSignerProvider {
   private final ArtifactSignerProvider artifactSignerProvider;
 
+  /**
+   * Constructor for the CommitBoostSignerProvider
+   *
+   * @param artifactSignerProvider The {@link ArtifactSignerProvider} to use for signing
+   */
   public CommitBoostSignerProvider(final ArtifactSignerProvider artifactSignerProvider) {
     this.artifactSignerProvider = artifactSignerProvider;
   }
 
+  /**
+   * Check if a signer is available for the given identifier and type
+   *
+   * @param identifier The identifier to check
+   * @param type The type of signer to check
+   * @return true if a signer is available, false otherwise
+   */
   public boolean isSignerAvailable(final String identifier, final SignRequestType type) {
     return switch (type) {
       case CONSENSUS -> artifactSignerProvider.availableIdentifiers().contains(identifier);
@@ -55,6 +67,15 @@ public class CommitBoostSignerProvider {
     };
   }
 
+  /**
+   * Sign a message with the given identifier and type
+   *
+   * @param identifier The identifier to sign with
+   * @param type The type of signer to use
+   * @param signingRoot The root to sign
+   * @return An optional string of the signature in hex format. Empty if no signer available for
+   *     given identifier
+   */
   public Optional<String> sign(
       final String identifier, final SignRequestType type, final Bytes32 signingRoot) {
     final Optional<ArtifactSigner> optionalArtifactSigner =
@@ -77,5 +98,9 @@ public class CommitBoostSignerProvider {
               };
             })
         .orElse(Optional.empty());
+  }
+
+  public void addProxySigner(final ArtifactSigner artifactSigner, final String identifier) {
+    artifactSignerProvider.addProxySigner(artifactSigner, identifier);
   }
 }

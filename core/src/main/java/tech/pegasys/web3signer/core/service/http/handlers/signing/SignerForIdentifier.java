@@ -57,15 +57,6 @@ public class SignerForIdentifier<T extends ArtifactSignature> {
   }
 
   /**
-   * Get the signer provider
-   *
-   * @return signer provider
-   */
-  public ArtifactSignerProvider getSignerProvider() {
-    return signerProvider;
-  }
-
-  /**
    * Converts hex string to bytes
    *
    * @param data hex string

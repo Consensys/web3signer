@@ -12,15 +12,11 @@
  */
 package tech.pegasys.web3signer.core.routes.eth2;
 
-import static tech.pegasys.web3signer.signing.KeyType.BLS;
-
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.routes.Web3SignerRoute;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.CommitBoostGenerateProxyKeyHandler;
-import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 
@@ -30,7 +26,7 @@ import io.vertx.core.json.JsonObject;
 public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
   private static final String PATH = "/signer/v1/generate_proxy_key";
   private final Context context;
-  private final SignerForIdentifier<BlsArtifactSignature> blsSigner;
+  private final ArtifactSignerProvider artifactSignerProvider;
   private final CommitBoostParameters commitBoostParameters;
   private final Spec eth2Spec;
 
@@ -43,15 +39,11 @@ public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
     this.eth2Spec = eth2Spec;
 
     // there should be only one DefaultArtifactSignerProvider in eth2 mode
-    final ArtifactSignerProvider artifactSignerProvider =
+    artifactSignerProvider =
         context.getArtifactSignerProviders().stream()
             .filter(p -> p instanceof DefaultArtifactSignerProvider)
             .findFirst()
             .orElseThrow();
-
-    blsSigner =
-        new SignerForIdentifier<>(
-            artifactSignerProvider, sig -> sig.getSignatureData().toString(), BLS);
   }
 
   @Override
@@ -60,7 +52,8 @@ public class CommitBoostGenerateProxyKeyRoute implements Web3SignerRoute {
         .getRouter()
         .route(HttpMethod.POST, PATH)
         .blockingHandler(
-            new CommitBoostGenerateProxyKeyHandler(blsSigner, commitBoostParameters, eth2Spec),
+            new CommitBoostGenerateProxyKeyHandler(
+                artifactSignerProvider, commitBoostParameters, eth2Spec),
             false)
         .failureHandler(context.getErrorHandler())
         .failureHandler(
