@@ -43,7 +43,10 @@ public class CommitBoostRequestSignatureRoute implements Web3SignerRoute {
         context.getArtifactSignerProviders().stream()
             .filter(p -> p instanceof DefaultArtifactSignerProvider)
             .findFirst()
-            .orElseThrow();
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "No DefaultArtifactSignerProvider found in Context for eth2 mode"));
   }
 
   @Override
