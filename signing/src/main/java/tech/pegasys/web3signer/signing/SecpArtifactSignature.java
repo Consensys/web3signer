@@ -35,6 +35,15 @@ public class SecpArtifactSignature implements ArtifactSignature {
     return signature;
   }
 
+  @Override
+  public String asHex() {
+    return Bytes.concatenate(
+            Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signature.getR()))),
+            Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signature.getS()))),
+            Bytes.wrap(ByteUtils.bigIntegerToBytes(signature.getV())))
+        .toHexString();
+  }
+
   public static SecpArtifactSignature fromBytes(final Bytes signature) {
     final Bytes r = signature.slice(0, 32);
     final Bytes s = signature.slice(32, 32);
@@ -46,6 +55,7 @@ public class SecpArtifactSignature implements ArtifactSignature {
             Numeric.toBigInt(s.toArrayUnsafe())));
   }
 
+  @Deprecated // use asHex instead
   public static Bytes toBytes(final SecpArtifactSignature signature) {
     final Signature signatureData = signature.getSignatureData();
     return Bytes.concatenate(

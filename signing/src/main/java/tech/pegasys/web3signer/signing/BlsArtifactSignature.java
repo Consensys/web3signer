@@ -29,4 +29,8 @@ public class BlsArtifactSignature implements ArtifactSignature {
   public BLSSignature getSignatureData() {
     return blsSignature;
   }
+
+  public String asHex() {
+    return blsSignature.toString();
+  }
 }
