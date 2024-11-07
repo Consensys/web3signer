@@ -13,12 +13,9 @@
 package tech.pegasys.web3signer.core.service.http.handlers.commitboost;
 
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.SignRequestType;
-import tech.pegasys.web3signer.signing.ArtifactSignature;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 
 import java.util.Map;
 import java.util.Optional;
@@ -83,21 +80,7 @@ public class CommitBoostSignerProvider {
             ? artifactSignerProvider.getSigner(identifier)
             : artifactSignerProvider.getProxySigner(identifier);
 
-    return optionalArtifactSigner
-        .map(
-            signer -> {
-              final ArtifactSignature artifactSignature = signer.sign(signingRoot);
-              return switch (artifactSignature.getType()) {
-                case BLS ->
-                    Optional.of(
-                        ((BlsArtifactSignature) artifactSignature).getSignatureData().toString());
-                case SECP256K1 ->
-                    Optional.of(
-                        SecpArtifactSignature.toBytes((SecpArtifactSignature) artifactSignature)
-                            .toHexString());
-              };
-            })
-        .orElse(Optional.empty());
+    return optionalArtifactSigner.map(signer -> signer.sign(signingRoot).asHex());
   }
 
   public void addProxySigner(final ArtifactSigner artifactSigner, final String identifier) {

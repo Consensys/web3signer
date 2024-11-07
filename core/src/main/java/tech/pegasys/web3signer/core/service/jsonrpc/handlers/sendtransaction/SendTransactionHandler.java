@@ -41,14 +41,14 @@ public class SendTransactionHandler implements JsonRpcRequestHandler {
   private final TransactionFactory transactionFactory;
   private final VertxRequestTransmitterFactory vertxTransmitterFactory;
 
-  private final SignerForIdentifier<SecpArtifactSignature> secpSigner;
+  private final SignerForIdentifier secpSigner;
   private static final int MAX_NONCE_RETRIES = 10;
 
   public SendTransactionHandler(
       final long chainId,
       final TransactionFactory transactionFactory,
       final VertxRequestTransmitterFactory vertxTransmitterFactory,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner) {
+      final SignerForIdentifier secpSigner) {
     this.chainId = chainId;
     this.transactionFactory = transactionFactory;
     this.vertxTransmitterFactory = vertxTransmitterFactory;
@@ -89,7 +89,7 @@ public class SendTransactionHandler implements JsonRpcRequestHandler {
   private void sendTransaction(
       final Transaction transaction,
       final RoutingContext routingContext,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
+      final SignerForIdentifier secpSigner,
       final JsonRpcRequest request) {
 
     final TransactionSerializer transactionSerializer =

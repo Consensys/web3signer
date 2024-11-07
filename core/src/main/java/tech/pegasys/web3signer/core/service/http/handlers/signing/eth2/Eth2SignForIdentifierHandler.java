@@ -56,7 +56,7 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext
 public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
-  private final SignerForIdentifier<?> signerForIdentifier;
+  private final SignerForIdentifier signerForIdentifier;
   private final HttpApiMetrics httpMetrics;
   private final SlashingProtectionMetrics slashingMetrics;
   private final Optional<SlashingProtection> slashingProtection;
@@ -69,7 +69,7 @@ public class Eth2SignForIdentifierHandler implements Handler<RoutingContext> {
   public static final int SLASHING_PROTECTION_ENFORCED = 412;
 
   public Eth2SignForIdentifierHandler(
-      final SignerForIdentifier<?> signerForIdentifier,
+      final SignerForIdentifier signerForIdentifier,
       final HttpApiMetrics httpMetrics,
       final SlashingProtectionMetrics slashingMetrics,
       final Optional<SlashingProtection> slashingProtection,

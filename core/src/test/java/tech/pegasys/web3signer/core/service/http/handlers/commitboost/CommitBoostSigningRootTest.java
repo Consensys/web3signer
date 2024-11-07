@@ -155,7 +155,7 @@ class CommitBoostSigningRootTest {
 
     // verify BLS Signature matching Commit Boost client implementation as well
     final BlsArtifactSigner artifactSigner = new BlsArtifactSigner(DELEGATOR_KEY_PAIR, null);
-    final String signature = artifactSigner.sign(signingRoot).getSignatureData().toString();
+    final String signature = artifactSigner.sign(signingRoot).asHex();
 
     assertThat(signature).isEqualTo(BLS_PROXY_MESSAGE_SIGNATURE_MAP.get(network));
   }
@@ -178,7 +178,7 @@ class CommitBoostSigningRootTest {
     // verify BLS Signature matching Commit Boost client implementation as well
     final BlsArtifactSigner artifactSigner = new BlsArtifactSigner(DELEGATOR_KEY_PAIR, null);
     BlsArtifactSignature blsArtifactSignature = artifactSigner.sign(signingRoot);
-    String signature = blsArtifactSignature.getSignatureData().toString();
+    String signature = blsArtifactSignature.asHex();
 
     assertThat(signature).isEqualTo(SECP_PROXY_MESSAGE_SIGNATURE_MAP.get(network));
   }

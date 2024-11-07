@@ -40,11 +40,11 @@ public class EthSignTransactionResultProvider implements ResultProvider<String> 
 
   private final long chainId;
   private final JsonDecoder decoder;
-  private final SignerForIdentifier<SecpArtifactSignature> secpSigner;
+  private final SignerForIdentifier secpSigner;
 
   public EthSignTransactionResultProvider(
       final long chainId,
-      final SignerForIdentifier<SecpArtifactSignature> secpSigner,
+      final SignerForIdentifier secpSigner,
       final JsonDecoder decoder) {
     this.chainId = chainId;
     this.decoder = decoder;

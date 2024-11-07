@@ -31,11 +31,11 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer.TimingContext
 public class Eth1SignForIdentifierHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LogManager.getLogger();
-  private final SignerForIdentifier<?> signerForIdentifier;
+  private final SignerForIdentifier signerForIdentifier;
   private final HttpApiMetrics metrics;
 
   public Eth1SignForIdentifierHandler(
-      final SignerForIdentifier<?> signerForIdentifier, final HttpApiMetrics metrics) {
+      final SignerForIdentifier signerForIdentifier, final HttpApiMetrics metrics) {
     this.signerForIdentifier = signerForIdentifier;
     this.metrics = metrics;
   }

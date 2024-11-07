@@ -54,13 +54,4 @@ public class SecpArtifactSignature implements ArtifactSignature {
             Numeric.toBigInt(r.toArrayUnsafe()),
             Numeric.toBigInt(s.toArrayUnsafe())));
   }
-
-  @Deprecated // use asHex instead
-  public static Bytes toBytes(final SecpArtifactSignature signature) {
-    final Signature signatureData = signature.getSignatureData();
-    return Bytes.concatenate(
-        Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getR()))),
-        Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getS()))),
-        Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getV())));
-  }
 }

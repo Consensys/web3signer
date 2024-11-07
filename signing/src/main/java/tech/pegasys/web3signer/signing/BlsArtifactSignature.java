@@ -30,6 +30,7 @@ public class BlsArtifactSignature implements ArtifactSignature {
     return blsSignature;
   }
 
+  @Override
   public String asHex() {
     return blsSignature.toString();
   }

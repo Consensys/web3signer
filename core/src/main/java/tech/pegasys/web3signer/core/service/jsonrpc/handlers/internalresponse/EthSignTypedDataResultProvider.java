@@ -34,10 +34,10 @@ public class EthSignTypedDataResultProvider implements ResultProvider<String> {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider;
+  private final SignerForIdentifier transactionSignerProvider;
 
   public EthSignTypedDataResultProvider(
-      final SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider) {
+      final SignerForIdentifier transactionSignerProvider) {
     this.transactionSignerProvider = transactionSignerProvider;
   }
 

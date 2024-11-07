@@ -37,7 +37,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContext> {
-  private static final Logger LOG = LogManager.getLogger();
   private static final ObjectMapper JSON_MAPPER = SigningObjectMapperFactory.createObjectMapper();
   private static final int NOT_FOUND = 404;
   private static final int BAD_REQUEST = 400;

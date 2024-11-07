@@ -71,7 +71,7 @@ public class EthSignTypedDataResultProviderTest {
 
   private static final ECKeyPair KEY_PAIR = new ECKeyPair(PRIVATE_KEY, PUBLIC_KEY);
 
-  @Mock SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider;
+  @Mock SignerForIdentifier transactionSignerProvider;
 
   @ParameterizedTest
   @ArgumentsSource(InvalidParamsProvider.class)
@@ -147,12 +147,11 @@ public class EthSignTypedDataResultProviderTest {
   }
 
   private String hexFromSignatureData(Sign.SignatureData signature) {
-    return SecpArtifactSignature.toBytes(
-            new SecpArtifactSignature(
-                new Signature(
-                    new BigInteger(signature.getV()),
-                    new BigInteger(1, signature.getR()),
-                    new BigInteger(1, signature.getS()))))
-        .toHexString();
+    return new SecpArtifactSignature(
+            new Signature(
+                new BigInteger(signature.getV()),
+                new BigInteger(1, signature.getR()),
+                new BigInteger(1, signature.getS())))
+        .asHex();
   }
 }
