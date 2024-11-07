@@ -26,7 +26,6 @@ import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.Transaction;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.TransactionSerializer;
-import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 
 import io.vertx.core.json.DecodeException;
 import io.vertx.ext.web.RoutingContext;

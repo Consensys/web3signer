@@ -17,9 +17,6 @@ import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -27,7 +24,6 @@ import org.apache.tuweni.bytes.Bytes;
  * available for a given identifier and to sign a message.
  */
 public class SignerForIdentifier {
-  private static final Logger LOG = LogManager.getLogger();
   private final ArtifactSignerProvider signerProvider;
 
   public SignerForIdentifier(final ArtifactSignerProvider signerProvider) {
@@ -47,30 +43,16 @@ public class SignerForIdentifier {
     return signerProvider.getSigner(identifier).map(signer -> signer.sign(data).asHex());
   }
 
+  /**
+   * Sign data for given identifier and return ArtifactSignature. Useful for SECP signing.
+   *
+   * @param identifier The identifier for which to sign data.
+   * @param data Bytes which is signed
+   * @return Optional ArtifactSignature. Empty if no signer available for given identifier
+   */
   public Optional<ArtifactSignature> signAndGetArtifactSignature(
       final String identifier, final Bytes data) {
     return signerProvider.getSigner(identifier).map(signer -> signer.sign(data));
-  }
-
-  /**
-   * Converts hex string to bytes
-   *
-   * @param data hex string
-   * @return Bytes
-   * @throws IllegalArgumentException if data is invalid i.e. not a valid hex string, null or empty
-   */
-  public static Bytes toBytes(final String data) {
-    final Bytes dataToSign;
-    try {
-      if (StringUtils.isBlank(data)) {
-        throw new IllegalArgumentException("Blank data");
-      }
-      dataToSign = Bytes.fromHexString(data);
-    } catch (final IllegalArgumentException e) {
-      LOG.debug("Invalid hex string {}", data, e);
-      throw e;
-    }
-    return dataToSign;
   }
 
   /**

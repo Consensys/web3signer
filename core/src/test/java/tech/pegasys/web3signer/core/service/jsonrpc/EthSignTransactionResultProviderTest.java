@@ -61,7 +61,7 @@ public class EthSignTransactionResultProviderTest {
   private static JsonDecoder jsonDecoder;
   private static long chainId;
 
-  @Mock SignerForIdentifier<SecpArtifactSignature> mockSignerForIdentifier;
+  @Mock SignerForIdentifier mockSignerForIdentifier;
 
   @BeforeAll
   static void beforeAll() {
