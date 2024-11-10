@@ -18,9 +18,11 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.EllipticCurve;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
@@ -34,6 +36,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
+import org.web3j.crypto.ECKeyPair;
 
 public class EthPublicKeyUtils {
   private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
@@ -82,6 +85,18 @@ public class EthPublicKeyUtils {
     }
 
     return keyPairGenerator.generateKeyPair();
+  }
+
+  public static KeyPair web3JECKeypairToJavaKeyPair(final ECKeyPair web3JECKeypair) {
+    try {
+      PrivateKey ecPrivateKey =
+          KeyFactory.getInstance("EC", BC_PROVIDER)
+              .generatePrivate(
+                  new ECPrivateKeySpec(web3JECKeypair.getPrivateKey(), JAVA_SECP256K1_SPEC));
+      return new KeyPair(bigIntegerToECPublicKey(web3JECKeypair.getPublicKey()), ecPrivateKey);
+    } catch (final Exception e) {
+      throw new RuntimeException("Unable to convert web3j to Java EC keypair", e);
+    }
   }
 
   /**
