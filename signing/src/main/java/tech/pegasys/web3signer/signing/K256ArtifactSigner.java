@@ -18,10 +18,8 @@ import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Objects;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.MutableBytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -30,24 +28,22 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
-import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
-import org.bouncycastle.math.ec.ECPoint;
 import org.web3j.crypto.ECDSASignature;
 import org.web3j.crypto.ECKeyPair;
-import org.web3j.crypto.Sign;
 
 /**
- * An artifact signer for SECP256K1 keys used specifically for Commit Boost API ECDSA proxy keys.
+ * An artifact signer for SECP256K1 keys used specifically for Commit Boost API ECDSA proxy keys. It
+ * uses compressed public key as identifier and signs the message with just sha256 digest. The
+ * signature complies with RFC-6979.
  */
 public class K256ArtifactSigner implements ArtifactSigner {
   private final ECKeyPair ecKeyPair;
   public static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
-  static final ECDomainParameters CURVE =
+  public static final ECDomainParameters CURVE =
       new ECDomainParameters(
           CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(), CURVE_PARAMS.getN(), CURVE_PARAMS.getH());
-  static final BigInteger HALF_CURVE_ORDER = CURVE_PARAMS.getN().shiftRight(1);
 
   public K256ArtifactSigner(final ECKeyPair web3JECKeypair) {
     this.ecKeyPair = web3JECKeypair;
@@ -74,10 +70,11 @@ public class K256ArtifactSigner implements ArtifactSigner {
       // apply sha256 digest to the message before sending it to signing
       final BigInteger[] components = signer.generateSignature(calculateSHA256(message.toArray()));
 
-      // create a canonicalised compact signature (R+S)
+      // create a canonicalised signature using Web3J ECDSASignature class
       final ECDSASignature signature =
           new ECDSASignature(components[0], components[1]).toCanonicalised();
 
+      // convert to compact signature format
       final MutableBytes concatenated = MutableBytes.create(64);
       UInt256.valueOf(signature.r).copyTo(concatenated, 0);
       UInt256.valueOf(signature.s).copyTo(concatenated, 32);
@@ -85,31 +82,6 @@ public class K256ArtifactSigner implements ArtifactSigner {
       return new K256ArtifactSignature(concatenated.toArray());
     } catch (final Exception e) {
       throw new RuntimeException("Error signing message", e);
-    }
-  }
-
-  @VisibleForTesting
-  public boolean verify(final Bytes message, final ArtifactSignature signature) {
-    try {
-      // we are assuming that we got 64 bytes signature in R+S format
-      byte[] concatenated = Bytes.fromHexString(signature.asHex()).toArray();
-      byte[] rBytes = Arrays.copyOfRange(concatenated, 0, 32);
-      byte[] sBytes = Arrays.copyOfRange(concatenated, 32, 64);
-
-      BigInteger r = new BigInteger(1, rBytes);
-      BigInteger s = new BigInteger(1, sBytes);
-
-      final ECPoint pubECPoint = Sign.publicPointFromPrivate(ecKeyPair.getPrivateKey());
-      final ECPublicKeyParameters ecPublicKeyParameters =
-          new ECPublicKeyParameters(pubECPoint, CURVE);
-
-      // Use BouncyCastle's ECDSASigner with HMacDSAKCalculator for deterministic ECDSA
-      final ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
-      signer.init(false, ecPublicKeyParameters);
-      // apply sha-256 before verification
-      return signer.verifySignature(calculateSHA256(message.toArray()), r, s);
-    } catch (Exception e) {
-      throw new RuntimeException("Error verifying signature", e);
     }
   }
 
