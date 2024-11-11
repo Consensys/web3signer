@@ -16,20 +16,25 @@ import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.util.IdentifierUtils;
 
 import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Objects;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
+import org.apache.tuweni.units.bigints.UInt256;
+import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
-import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.math.ec.ECPoint;
+import org.web3j.crypto.ECDSASignature;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Sign;
 
@@ -38,13 +43,11 @@ import org.web3j.crypto.Sign;
  */
 public class K256ArtifactSigner implements ArtifactSigner {
   private final ECKeyPair ecKeyPair;
-  private static final BigInteger CURVE_ORDER =
-      new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16);
-  private static final BigInteger HALF_CURVE_ORDER = CURVE_ORDER.shiftRight(1);
-  private static final ECParameterSpec EC_SPEC = ECNamedCurveTable.getParameterSpec("secp256k1");
-  private static final ECDomainParameters DOMAIN_PARAMETERS =
+  public static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
+  static final ECDomainParameters CURVE =
       new ECDomainParameters(
-          EC_SPEC.getCurve(), EC_SPEC.getG(), EC_SPEC.getN(), EC_SPEC.getH(), EC_SPEC.getSeed());
+          CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(), CURVE_PARAMS.getN(), CURVE_PARAMS.getH());
+  static final BigInteger HALF_CURVE_ORDER = CURVE_PARAMS.getN().shiftRight(1);
 
   public K256ArtifactSigner(final ECKeyPair web3JECKeypair) {
     this.ecKeyPair = web3JECKeypair;
@@ -62,32 +65,25 @@ public class K256ArtifactSigner implements ArtifactSigner {
   @Override
   public ArtifactSignature sign(final Bytes message) {
     try {
-
       // Use BouncyCastle's ECDSASigner with HMacDSAKCalculator for deterministic ECDSA
-      ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
-      ECPrivateKeyParameters privKey =
-          new ECPrivateKeyParameters(ecKeyPair.getPrivateKey(), DOMAIN_PARAMETERS);
+      final ECPrivateKeyParameters privKey =
+          new ECPrivateKeyParameters(ecKeyPair.getPrivateKey(), CURVE);
+      final ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
       signer.init(true, privKey);
-      BigInteger[] components = signer.generateSignature(message.toArrayUnsafe());
 
-      // Canonicalize the signature
-      BigInteger r = components[0];
-      BigInteger s = components[1];
-      if (s.compareTo(HALF_CURVE_ORDER) > 0) {
-        s = CURVE_ORDER.subtract(s);
-      }
+      // apply sha256 digest to the message before sending it to signing
+      final BigInteger[] components = signer.generateSignature(calculateSHA256(message.toArray()));
 
-      // Ensure r and s are 32 bytes each
-      byte[] rBytes = ensureLength(r.toByteArray(), 32);
-      byte[] sBytes = ensureLength(s.toByteArray(), 32);
+      // create a canonicalised compact signature (R+S)
+      final ECDSASignature signature =
+          new ECDSASignature(components[0], components[1]).toCanonicalised();
 
-      // Concatenate r and s
-      byte[] concatenated = new byte[64];
-      System.arraycopy(rBytes, 0, concatenated, 0, 32);
-      System.arraycopy(sBytes, 0, concatenated, 32, 32);
+      final MutableBytes concatenated = MutableBytes.create(64);
+      UInt256.valueOf(signature.r).copyTo(concatenated, 0);
+      UInt256.valueOf(signature.s).copyTo(concatenated, 32);
 
-      return new K256ArtifactSignature(concatenated);
-    } catch (Exception e) {
+      return new K256ArtifactSignature(concatenated.toArray());
+    } catch (final Exception e) {
       throw new RuntimeException("Error signing message", e);
     }
   }
@@ -95,6 +91,7 @@ public class K256ArtifactSigner implements ArtifactSigner {
   @VisibleForTesting
   public boolean verify(final Bytes message, final ArtifactSignature signature) {
     try {
+      // we are assuming that we got 64 bytes signature in R+S format
       byte[] concatenated = Bytes.fromHexString(signature.asHex()).toArray();
       byte[] rBytes = Arrays.copyOfRange(concatenated, 0, 32);
       byte[] sBytes = Arrays.copyOfRange(concatenated, 32, 64);
@@ -102,14 +99,15 @@ public class K256ArtifactSigner implements ArtifactSigner {
       BigInteger r = new BigInteger(1, rBytes);
       BigInteger s = new BigInteger(1, sBytes);
 
-      ECPoint pubECPoint = Sign.publicPointFromPrivate(ecKeyPair.getPrivateKey());
-      ECPublicKeyParameters ecPublicKeyParameters =
-          new ECPublicKeyParameters(pubECPoint, DOMAIN_PARAMETERS);
+      final ECPoint pubECPoint = Sign.publicPointFromPrivate(ecKeyPair.getPrivateKey());
+      final ECPublicKeyParameters ecPublicKeyParameters =
+          new ECPublicKeyParameters(pubECPoint, CURVE);
 
       // Use BouncyCastle's ECDSASigner with HMacDSAKCalculator for deterministic ECDSA
-      ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
+      final ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
       signer.init(false, ecPublicKeyParameters);
-      return signer.verifySignature(message.toArray(), r, s);
+      // apply sha-256 before verification
+      return signer.verifySignature(calculateSHA256(message.toArray()), r, s);
     } catch (Exception e) {
       throw new RuntimeException("Error verifying signature", e);
     }
@@ -120,19 +118,19 @@ public class K256ArtifactSigner implements ArtifactSigner {
     return KeyType.SECP256K1;
   }
 
-  private static byte[] ensureLength(final byte[] array, final int length) {
-    if (array.length == length) {
-      return array;
-    } else if (array.length > length) {
-      return Arrays.copyOfRange(array, array.length - length, array.length);
-    } else {
-      byte[] padded = new byte[length];
-      System.arraycopy(array, 0, padded, length - array.length, array.length);
-      return padded;
+  public static byte[] calculateSHA256(byte[] message) {
+    try {
+      // Create a MessageDigest instance for SHA-256
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+      // Update the MessageDigest with the message bytes
+      return digest.digest(message);
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException("SHA-256 algorithm not found", e);
     }
   }
 
-  private static class K256ArtifactSignature implements ArtifactSignature {
+  public static class K256ArtifactSignature implements ArtifactSignature {
     final Bytes signature;
 
     public K256ArtifactSignature(final byte[] signature) {
