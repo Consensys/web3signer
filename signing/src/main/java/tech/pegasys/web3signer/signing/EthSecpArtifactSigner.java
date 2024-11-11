@@ -22,23 +22,15 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class EthSecpArtifactSigner implements ArtifactSigner {
   private final Signer signer;
-  private final boolean isCompressed;
 
   public EthSecpArtifactSigner(final Signer signer) {
     this.signer = signer;
-    this.isCompressed = false;
-  }
-
-  public EthSecpArtifactSigner(final Signer signer, final boolean isCompressed) {
-    this.signer = signer;
-    this.isCompressed = isCompressed;
   }
 
   @Override
   public String getIdentifier() {
-    final String hexString =
-        EthPublicKeyUtils.getEncoded(signer.getPublicKey(), isCompressed).toHexString();
-    return IdentifierUtils.normaliseIdentifier(hexString);
+    return IdentifierUtils.normaliseIdentifier(
+        EthPublicKeyUtils.toHexString(signer.getPublicKey()));
   }
 
   @Override

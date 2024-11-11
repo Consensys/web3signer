@@ -90,8 +90,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                                     keystoreParameter,
                                     signerIdentifier,
                                     SECP256K1.name(),
-                                    SecpV3KeystoresBulkLoader
-                                        ::loadKeystoresWithCompressedIdentifier);
+                                    SecpV3KeystoresBulkLoader::loadECDSAProxyKeystores);
 
                                 loadProxySigners(
                                     keystoreParameter,

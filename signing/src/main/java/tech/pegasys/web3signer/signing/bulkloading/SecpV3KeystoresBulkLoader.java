@@ -15,6 +15,7 @@ package tech.pegasys.web3signer.signing.bulkloading;
 import tech.pegasys.web3signer.keystorage.common.MappedResults;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
+import tech.pegasys.web3signer.signing.K256ArtifactSigner;
 import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
 import tech.pegasys.web3signer.signing.secp256k1.util.JsonFilesUtil;
 
@@ -39,7 +40,16 @@ public class SecpV3KeystoresBulkLoader {
     return loadV3KeystoresUsingPasswordFileOrDir(keystoresPath, pwrdFileOrDirPath, false);
   }
 
-  public static MappedResults<ArtifactSigner> loadKeystoresWithCompressedIdentifier(
+  /**
+   * Loads K256ArtifactSigners that are used in Commit Boost API. It uses compressed identifier and
+   * perform SHA256-SECP256K1 digest signing.
+   *
+   * @param keystoresPath Path to the directory containing the v3 keystores
+   * @param pwrdFileOrDirPath Path to the password file or directory containing the passwords for
+   *     the v3 keystores
+   * @return MappedResults containing the loaded ArtifactSigners
+   */
+  public static MappedResults<ArtifactSigner> loadECDSAProxyKeystores(
       final Path keystoresPath, final Path pwrdFileOrDirPath) {
     return loadV3KeystoresUsingPasswordFileOrDir(keystoresPath, pwrdFileOrDirPath, true);
   }
@@ -91,8 +101,10 @@ public class SecpV3KeystoresBulkLoader {
 
       final Credentials credentials =
           WalletUtils.loadCredentials(password, v3KeystorePath.toFile());
-      final EthSecpArtifactSigner artifactSigner =
-          new EthSecpArtifactSigner(new CredentialSigner(credentials), isCompressed);
+      final ArtifactSigner artifactSigner =
+          isCompressed
+              ? new K256ArtifactSigner(credentials.getEcKeyPair())
+              : new EthSecpArtifactSigner(new CredentialSigner(credentials));
       return MappedResults.newInstance(Set.of(artifactSigner), 0);
     } catch (final IOException | CipherException | RuntimeException e) {
       LOG.error("Error loading v3 keystore {}", v3KeystorePath, e);

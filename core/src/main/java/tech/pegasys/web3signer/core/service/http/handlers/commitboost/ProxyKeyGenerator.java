@@ -25,12 +25,11 @@ import tech.pegasys.teku.bls.keystore.model.Pbkdf2Param;
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.BlsArtifactSigner;
-import tech.pegasys.web3signer.signing.EthSecpArtifactSigner;
+import tech.pegasys.web3signer.signing.K256ArtifactSigner;
 import tech.pegasys.web3signer.signing.KeyType;
 import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 import tech.pegasys.web3signer.signing.config.metadata.SignerOrigin;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
-import tech.pegasys.web3signer.signing.secp256k1.filebased.CredentialSigner;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -46,7 +45,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
-import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Keys;
 import org.web3j.crypto.Wallet;
@@ -70,7 +68,7 @@ public class ProxyKeyGenerator {
       final ECKeyPair ecKeyPair = Keys.createEcKeyPair(secureRandom);
       final Path ecWalletFile = createECWalletFile(ecKeyPair, identifier);
       LOG.debug("Created proxy EC wallet file {} for identifier: {}", ecWalletFile, identifier);
-      return new EthSecpArtifactSigner(new CredentialSigner(Credentials.create(ecKeyPair)), true);
+      return new K256ArtifactSigner(ecKeyPair);
     } catch (final GeneralSecurityException e) {
       throw new RuntimeException(e);
     }
