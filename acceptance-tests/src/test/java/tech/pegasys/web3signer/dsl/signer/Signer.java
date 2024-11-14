@@ -187,6 +187,18 @@ public class Signer {
     return given().baseUri(getUrl()).get(publicKeysPath(keyType));
   }
 
+  public Response callCommitBoostGetPubKeys() {
+    return given().baseUri(getUrl()).get("/signer/v1/get_pubkeys");
+  }
+
+  public Response callCommitBoostGenerateProxyKey(final String pubkey, final String scheme) {
+    return given()
+        .baseUri(getUrl())
+        .contentType(ContentType.JSON)
+        .body(new JsonObject().put("pubkey", pubkey).put("scheme", scheme).toString())
+        .post("/signer/v1/generate_proxy_key");
+  }
+
   public List<String> listPublicKeys(final KeyType keyType) {
     return callApiPublicKeys(keyType).as(new TypeRef<>() {});
   }

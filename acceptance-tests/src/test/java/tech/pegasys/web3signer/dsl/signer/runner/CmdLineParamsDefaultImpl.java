@@ -41,6 +41,7 @@ import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -53,6 +54,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
+import org.jetbrains.annotations.NotNull;
 
 public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
   private final SignerConfiguration signerConfig;
@@ -138,6 +140,12 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
       if (signerConfig.isSigningExtEnabled()) {
         params.add("--Xsigning-ext-enabled=true");
       }
+
+      signerConfig
+          .getCommitBoostParameters()
+          .ifPresent(
+              commitBoostParameters -> params.addAll(commitBoostOptions(commitBoostParameters)));
+
     } else if (signerConfig.getMode().equals("eth1")) {
       params.add("--downstream-http-port");
       params.add(Integer.toString(signerConfig.getDownstreamHttpPort()));
@@ -158,6 +166,16 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     }
 
     return params;
+  }
+
+  private static @NotNull List<String> commitBoostOptions(
+      CommitBoostParameters commitBoostParameters) {
+    return List.of(
+        "--commit-boost-api-enabled=" + commitBoostParameters.isEnabled(),
+        "--proxy-keystores-path",
+        commitBoostParameters.getProxyKeystoresPath().toAbsolutePath().toString(),
+        "--proxy-keystores-password-file",
+        commitBoostParameters.getProxyKeystoresPasswordFile().toAbsolutePath().toString());
   }
 
   private static Consumer<KeystoresParameters> setV3KeystoresBulkloadParameters(
