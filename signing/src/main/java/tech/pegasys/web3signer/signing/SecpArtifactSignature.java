@@ -44,13 +44,6 @@ public class SecpArtifactSignature implements ArtifactSignature {
         .toHexString();
   }
 
-  public String asEncodedHex() {
-    return Bytes.concatenate(
-            Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signature.getR()))),
-            Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signature.getS()))))
-        .toHexString();
-  }
-
   public static SecpArtifactSignature fromBytes(final Bytes signature) {
     final Bytes r = signature.slice(0, 32);
     final Bytes s = signature.slice(32, 32);

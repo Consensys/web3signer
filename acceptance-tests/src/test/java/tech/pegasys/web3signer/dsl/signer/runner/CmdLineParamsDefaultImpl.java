@@ -54,7 +54,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
-import org.jetbrains.annotations.NotNull;
 
 public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
   private final SignerConfiguration signerConfig;
@@ -168,8 +167,7 @@ public class CmdLineParamsDefaultImpl implements CmdLineParamsBuilder {
     return params;
   }
 
-  private static @NotNull List<String> commitBoostOptions(
-      CommitBoostParameters commitBoostParameters) {
+  private static List<String> commitBoostOptions(CommitBoostParameters commitBoostParameters) {
     return List.of(
         "--commit-boost-api-enabled=" + commitBoostParameters.isEnabled(),
         "--proxy-keystores-path",

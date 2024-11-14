@@ -36,12 +36,12 @@ public interface ArtifactSignerProvider extends Closeable {
   Optional<ArtifactSigner> getSigner(final String identifier);
 
   /**
-   * Get the proxy signer for the given identifier.
+   * Get the proxy signer for the given proxy public key.
    *
-   * @param identifier the identifier of the signer
+   * @param proxyPubKey the public key of the proxy signer
    * @return the signer or empty if no signer is found
    */
-  default Optional<ArtifactSigner> getProxySigner(final String identifier) {
+  default Optional<ArtifactSigner> getProxySigner(final String proxyPubKey) {
     throw new UnsupportedOperationException("Proxy signers are not supported by this provider");
   }
 

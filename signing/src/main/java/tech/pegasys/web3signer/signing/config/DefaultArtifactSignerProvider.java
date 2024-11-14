@@ -115,10 +115,10 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
-  public Optional<ArtifactSigner> getProxySigner(final String identifier) {
+  public Optional<ArtifactSigner> getProxySigner(final String proxyPubKey) {
     return proxySigners.values().stream()
         .flatMap(Set::stream)
-        .filter(signer -> signer.getIdentifier().equals(identifier))
+        .filter(signer -> signer.getIdentifier().equals(proxyPubKey))
         .findFirst();
   }
 
