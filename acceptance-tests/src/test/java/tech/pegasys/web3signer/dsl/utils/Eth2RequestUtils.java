@@ -13,7 +13,7 @@
 package tech.pegasys.web3signer.dsl.utils;
 
 import static java.util.Collections.emptyList;
-import static tech.pegasys.web3signer.core.util.DepositSigningRootUtil.computeDomain;
+import static tech.pegasys.web3signer.core.util.Web3SignerSigningRootUtil.computeDomain;
 
 import tech.pegasys.teku.api.schema.AggregateAndProof;
 import tech.pegasys.teku.api.schema.Attestation;
@@ -48,7 +48,7 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ForkInfo;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.RandaoReveal;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.SyncCommitteeMessage;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.ValidatorRegistration;
-import tech.pegasys.web3signer.core.util.DepositSigningRootUtil;
+import tech.pegasys.web3signer.core.util.Web3SignerSigningRootUtil;
 
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -216,7 +216,7 @@ public class Eth2RequestUtils {
             genesisForkVersion);
     final Bytes32 depositDomain = computeDomain(Domain.DEPOSIT, genesisForkVersion, Bytes32.ZERO);
     final Bytes signingRoot =
-        DepositSigningRootUtil.computeSigningRoot(
+        Web3SignerSigningRootUtil.computeSigningRoot(
             depositMessage.asInternalDepositMessage(), depositDomain);
     return Eth2SigningRequestBodyBuilder.anEth2SigningRequestBody()
         .withType(ArtifactType.DEPOSIT)

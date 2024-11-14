@@ -51,7 +51,7 @@ public class AzureKeyVaultSigner implements Signer {
       final AzureKeyVault azureKeyVault,
       final AzureHttpClientFactory azureHttpClientFactory) {
     this.config = config;
-    this.publicKey = EthPublicKeyUtils.createPublicKey(publicKey);
+    this.publicKey = EthPublicKeyUtils.bytesToECPublicKey(publicKey);
     this.needsToHash = needsToHash;
     this.signingAlgo =
         useDeprecatedSignatureAlgorithm

@@ -23,7 +23,6 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SignForIdentifierHandler;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.BlsArtifactSignature;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtection;
 import tech.pegasys.web3signer.slashingprotection.SlashingProtectionContext;
 
@@ -36,7 +35,7 @@ import io.vertx.ext.web.impl.BlockingHandlerDecorator;
 public class Eth2SignRoute implements Web3SignerRoute {
   private static final String SIGN_PATH = "/api/v1/eth2/sign/:identifier";
   private final Context context;
-  private final SignerForIdentifier<BlsArtifactSignature> blsSigner;
+  private final SignerForIdentifier blsSigner;
   private final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
   private final Spec eth2Spec;
   private final Optional<SlashingProtection> slashingProtection;
@@ -52,11 +51,14 @@ public class Eth2SignRoute implements Web3SignerRoute {
     // there should be only one ArtifactSignerProvider in eth2 mode at the moment which is of BLS
     // types.
     final ArtifactSignerProvider artifactSignerProvider =
-        context.getArtifactSignerProviders().stream().findFirst().orElseThrow();
+        context.getArtifactSignerProviders().stream()
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "No ArtifactSignerProvider found in Context for eth2 mode"));
 
-    blsSigner =
-        new SignerForIdentifier<>(
-            artifactSignerProvider, sig -> sig.getSignatureData().toString(), BLS);
+    blsSigner = new SignerForIdentifier(artifactSignerProvider);
   }
 
   @Override

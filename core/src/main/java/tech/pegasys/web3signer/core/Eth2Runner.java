@@ -25,7 +25,9 @@ import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.web3signer.core.config.BaseConfig;
 import tech.pegasys.web3signer.core.routes.PublicKeysListRoute;
 import tech.pegasys.web3signer.core.routes.ReloadRoute;
+import tech.pegasys.web3signer.core.routes.eth2.CommitBoostGenerateProxyKeyRoute;
 import tech.pegasys.web3signer.core.routes.eth2.CommitBoostPublicKeysRoute;
+import tech.pegasys.web3signer.core.routes.eth2.CommitBoostRequestSignatureRoute;
 import tech.pegasys.web3signer.core.routes.eth2.Eth2SignExtensionRoute;
 import tech.pegasys.web3signer.core.routes.eth2.Eth2SignRoute;
 import tech.pegasys.web3signer.core.routes.eth2.HighWatermarkRoute;
@@ -43,6 +45,7 @@ import tech.pegasys.web3signer.signing.bulkloading.BlsKeystoreBulkLoader;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultFactory;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
@@ -89,7 +92,7 @@ public class Eth2Runner extends Runner {
   private final Spec eth2Spec;
   private final boolean isKeyManagerApiEnabled;
   private final boolean signingExtEnabled;
-  private final KeystoresParameters commitBoostApiParameters;
+  private final CommitBoostParameters commitBoostParameters;
 
   public Eth2Runner(
       final BaseConfig baseConfig,
@@ -101,7 +104,7 @@ public class Eth2Runner extends Runner {
       final Spec eth2Spec,
       final boolean isKeyManagerApiEnabled,
       final boolean signingExtEnabled,
-      final KeystoresParameters commitBoostApiParameters) {
+      final CommitBoostParameters commitBoostParameters) {
     super(baseConfig);
     this.slashingProtectionContext = createSlashingProtection(slashingProtectionParameters);
     this.azureKeyVaultParameters = azureKeyVaultParameters;
@@ -113,7 +116,7 @@ public class Eth2Runner extends Runner {
     this.awsVaultParameters = awsVaultParameters;
     this.gcpSecretManagerParameters = gcpSecretManagerParameters;
     this.signingExtEnabled = signingExtEnabled;
-    this.commitBoostApiParameters = commitBoostApiParameters;
+    this.commitBoostParameters = commitBoostParameters;
   }
 
   private Optional<SlashingProtectionContext> createSlashingProtection(
@@ -141,8 +144,10 @@ public class Eth2Runner extends Runner {
     if (isKeyManagerApiEnabled) {
       new KeyManagerApiRoute(context, baseConfig, slashingProtectionContext).register();
     }
-    if (commitBoostApiParameters.isEnabled()) {
+    if (commitBoostParameters.isEnabled()) {
       new CommitBoostPublicKeysRoute(context).register();
+      new CommitBoostGenerateProxyKeyRoute(context, commitBoostParameters, eth2Spec).register();
+      new CommitBoostRequestSignatureRoute(context, commitBoostParameters, eth2Spec).register();
     }
   }
 
@@ -174,7 +179,7 @@ public class Eth2Runner extends Runner {
                 return signers;
               }
             },
-            Optional.of(commitBoostApiParameters)));
+            Optional.of(commitBoostParameters)));
   }
 
   private MappedResults<ArtifactSigner> loadSignersFromKeyConfigFiles(
@@ -235,13 +240,12 @@ public class Eth2Runner extends Runner {
 
     if (keystoresParameters.isEnabled()) {
       LOG.info("Bulk loading keys from local keystores ... ");
-      final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
       final MappedResults<ArtifactSigner> keystoreSignersResult =
           keystoresParameters.hasKeystoresPasswordsPath()
-              ? blsKeystoreBulkLoader.loadKeystoresUsingPasswordDir(
+              ? BlsKeystoreBulkLoader.loadKeystoresUsingPasswordDir(
                   keystoresParameters.getKeystoresPath(),
                   keystoresParameters.getKeystoresPasswordsPath())
-              : blsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
+              : BlsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
                   keystoresParameters.getKeystoresPath(),
                   keystoresParameters.getKeystoresPasswordFile());
       LOG.info(

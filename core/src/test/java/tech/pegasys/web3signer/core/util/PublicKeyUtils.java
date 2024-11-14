@@ -22,6 +22,6 @@ public class PublicKeyUtils {
 
   public static ECPublicKey createKeyFrom(final String hexString) {
     Bytes bytes = Bytes.fromHexString(hexString, 64);
-    return EthPublicKeyUtils.createPublicKey(bytes);
+    return EthPublicKeyUtils.bytesToECPublicKey(bytes);
   }
 }

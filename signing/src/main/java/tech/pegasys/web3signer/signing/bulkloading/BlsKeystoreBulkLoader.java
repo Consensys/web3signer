@@ -39,7 +39,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BlsKeystoreBulkLoader {
   private static final Logger LOG = LogManager.getLogger();
 
-  public MappedResults<ArtifactSigner> loadKeystoresUsingPasswordDir(
+  public static MappedResults<ArtifactSigner> loadKeystoresUsingPasswordDir(
       final Path keystoresDirectory, final Path passwordsDirectory) {
     final List<Path> keystoreFiles;
     try {
@@ -59,7 +59,7 @@ public class BlsKeystoreBulkLoader {
         .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
-  public MappedResults<ArtifactSigner> loadKeystoresUsingPasswordFile(
+  public static MappedResults<ArtifactSigner> loadKeystoresUsingPasswordFile(
       final Path keystoresDirectory, final Path passwordFile) {
     final List<Path> keystoreFiles;
     try {
@@ -82,7 +82,7 @@ public class BlsKeystoreBulkLoader {
         .reduce(MappedResults.newSetInstance(), MappedResults::merge);
   }
 
-  private MappedResults<ArtifactSigner> createSignerForKeystore(
+  private static MappedResults<ArtifactSigner> createSignerForKeystore(
       final Path keystoreFile, final PasswordReader passwordReader) {
     try {
       LOG.debug("Loading keystore {}", keystoreFile);

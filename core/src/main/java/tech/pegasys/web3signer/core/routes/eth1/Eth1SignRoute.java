@@ -20,7 +20,6 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.Eth1SignForIde
 import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdentifier;
 import tech.pegasys.web3signer.core.service.http.metrics.HttpApiMetrics;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 
 import java.util.Optional;
@@ -33,7 +32,7 @@ public class Eth1SignRoute implements Web3SignerRoute {
 
   private final Context context;
   private final ArtifactSignerProvider signerProvider;
-  private final SignerForIdentifier<SecpArtifactSignature> secpSigner;
+  private final SignerForIdentifier secpSigner;
 
   public Eth1SignRoute(final Context context) {
     this.context = context;
@@ -46,9 +45,7 @@ public class Eth1SignRoute implements Web3SignerRoute {
 
     if (first.isPresent()) {
       signerProvider = first.get();
-      secpSigner =
-          new SignerForIdentifier<>(
-              signerProvider, sig -> SecpArtifactSignature.toBytes(sig).toHexString(), SECP256K1);
+      secpSigner = new SignerForIdentifier(signerProvider);
     } else {
       throw new IllegalStateException(
           "No DefaultArtifactSignerProvider found in Context for eth1 mode");

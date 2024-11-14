@@ -28,6 +28,7 @@ import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.commandline.PicoCliAwsSecretsManagerParameters;
 import tech.pegasys.web3signer.commandline.PicoCliEth2AzureKeyVaultParameters;
 import tech.pegasys.web3signer.commandline.PicoCliGcpSecretManagerParameters;
+import tech.pegasys.web3signer.commandline.PicoCliNetworkOverrides;
 import tech.pegasys.web3signer.commandline.PicoCliSlashingProtectionParameters;
 import tech.pegasys.web3signer.commandline.config.PicoCommitBoostApiParameters;
 import tech.pegasys.web3signer.commandline.config.PicoKeystoresParameters;
@@ -92,60 +93,6 @@ public class Eth2SubCommand extends ModeSubCommand {
   private String network;
 
   @CommandLine.Option(
-      names = {"--Xnetwork-altair-fork-epoch"},
-      hidden = true,
-      paramLabel = "<epoch>",
-      description = "Override the Altair fork activation epoch.",
-      arity = "1",
-      converter = UInt64Converter.class)
-  private UInt64 altairForkEpoch;
-
-  @CommandLine.Option(
-      names = {"--Xnetwork-bellatrix-fork-epoch"},
-      hidden = true,
-      paramLabel = "<epoch>",
-      description = "Override the Bellatrix fork activation epoch.",
-      arity = "1",
-      converter = UInt64Converter.class)
-  private UInt64 bellatrixForkEpoch;
-
-  @CommandLine.Option(
-      names = {"--Xnetwork-capella-fork-epoch"},
-      hidden = true,
-      paramLabel = "<epoch>",
-      description = "Override the Capella fork activation epoch.",
-      arity = "1",
-      converter = UInt64Converter.class)
-  private UInt64 capellaForkEpoch;
-
-  @CommandLine.Option(
-      names = {"--Xnetwork-deneb-fork-epoch"},
-      hidden = true,
-      paramLabel = "<epoch>",
-      description = "Override the Deneb fork activation epoch.",
-      arity = "1",
-      converter = UInt64Converter.class)
-  private UInt64 denebForkEpoch;
-
-  @CommandLine.Option(
-      names = {"--Xnetwork-electra-fork-epoch"},
-      hidden = true,
-      paramLabel = "<epoch>",
-      description = "Override the Electra fork activation epoch.",
-      arity = "1",
-      converter = UInt64Converter.class)
-  private UInt64 electraForkEpoch;
-
-  @CommandLine.Option(
-      names = {"--Xtrusted-setup"},
-      hidden = true,
-      paramLabel = "<STRING>",
-      description =
-          "The trusted setup which is needed for KZG commitments. Only required when creating a custom network. This value should be a file or URL pointing to a trusted setup.",
-      arity = "1")
-  private String trustedSetup = null; // Depends on network configuration
-
-  @CommandLine.Option(
       names = {"--key-manager-api-enabled", "--enable-key-manager-api"},
       paramLabel = "<BOOL>",
       description = "Enable the key manager API to manage key stores (default: ${DEFAULT-VALUE}).",
@@ -160,13 +107,16 @@ public class Eth2SubCommand extends ModeSubCommand {
       hidden = true)
   private boolean signingExtEnabled = false;
 
+  @Mixin private PicoCliNetworkOverrides networkOverrides;
   @Mixin private PicoCliSlashingProtectionParameters slashingProtectionParameters;
   @Mixin private PicoCliEth2AzureKeyVaultParameters azureKeyVaultParameters;
   @Mixin private PicoKeystoresParameters keystoreParameters;
   @Mixin private PicoCliAwsSecretsManagerParameters awsSecretsManagerParameters;
   @Mixin private PicoCliGcpSecretManagerParameters gcpSecretManagerParameters;
   @Mixin private PicoCommitBoostApiParameters commitBoostApiParameters;
-  private tech.pegasys.teku.spec.Spec eth2Spec;
+
+  // eth2 network configuration is initialized during validation
+  private Eth2NetworkConfiguration eth2NetworkConfig;
 
   public Eth2SubCommand() {
     network = "mainnet";
@@ -183,14 +133,14 @@ public class Eth2SubCommand extends ModeSubCommand {
         keystoreParameters,
         awsSecretsManagerParameters,
         gcpSecretManagerParameters,
-        eth2Spec,
+        eth2NetworkConfig.getSpec(),
         isKeyManagerApiEnabled,
         signingExtEnabled,
         commitBoostApiParameters);
   }
 
   private void logNetworkSpecInformation() {
-    final ForkSchedule forkSchedule = eth2Spec.getForkSchedule();
+    final ForkSchedule forkSchedule = eth2NetworkConfig.getSpec().getForkSchedule();
     final Map<SpecMilestone, UInt64> milestoneSlotMap =
         forkSchedule
             .streamMilestoneBoundarySlots()
@@ -212,41 +162,9 @@ public class Eth2SubCommand extends ModeSubCommand {
     LOG.info(logString);
   }
 
-  private Eth2NetworkConfiguration createEth2NetworkConfig() {
-    Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
-    builder.applyNetworkDefaults(network);
-    if (altairForkEpoch != null) {
-      builder.altairForkEpoch(altairForkEpoch);
-    }
-    if (bellatrixForkEpoch != null) {
-      builder.bellatrixForkEpoch(bellatrixForkEpoch);
-    }
-    if (capellaForkEpoch != null) {
-      builder.capellaForkEpoch(capellaForkEpoch);
-    }
-    if (denebForkEpoch != null) {
-      builder.denebForkEpoch(denebForkEpoch);
-    }
-    if (electraForkEpoch != null) {
-      builder.electraForkEpoch(electraForkEpoch);
-    }
-    if (trustedSetup != null) {
-      builder.trustedSetup(trustedSetup);
-    }
-    return builder.build();
-  }
-
   @Override
   protected void validateArgs() {
-    try {
-      Eth2NetworkConfiguration eth2NetworkConfig = createEth2NetworkConfig();
-      eth2Spec = eth2NetworkConfig.getSpec();
-    } catch (final IllegalArgumentException e) {
-      throw new ParameterException(
-          commandSpec.commandLine(),
-          "Failed to load network " + network + " due to " + e.getMessage(),
-          e);
-    }
+    this.eth2NetworkConfig = createEth2NetworkConfiguration();
 
     if (slashingProtectionParameters.isEnabled()
         && slashingProtectionParameters.getDbUrl() == null) {
@@ -264,7 +182,22 @@ public class Eth2SubCommand extends ModeSubCommand {
     validateKeystoreParameters(keystoreParameters);
     validateAwsSecretsManageParameters();
     validateGcpSecretManagerParameters();
-    commitBoostApiParameters.validateParameters();
+
+    commitBoostApiParameters.validateParameters(this.eth2NetworkConfig);
+  }
+
+  private Eth2NetworkConfiguration createEth2NetworkConfiguration() {
+    try {
+      final Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
+      builder.applyNetworkDefaults(network);
+      networkOverrides.applyOverrides(builder); // custom fork epochs
+      return builder.build();
+    } catch (final IllegalArgumentException e) {
+      throw new ParameterException(
+          commandSpec.commandLine(),
+          "Failed to load network " + network + " due to " + e.getMessage(),
+          e);
+    }
   }
 
   private void validateGcpSecretManagerParameters() {

@@ -18,6 +18,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.ChainIdProv
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -81,6 +82,7 @@ public class SignerConfiguration {
   private final Optional<KeystoresParameters> v3KeystoresBulkloadParameters;
 
   private final boolean signingExtEnabled;
+  private final CommitBoostParameters commitBoostParameters;
 
   public SignerConfiguration(
       final String hostname,
@@ -128,7 +130,8 @@ public class SignerConfiguration {
       final Optional<ClientTlsOptions> downstreamTlsOptions,
       final ChainIdProvider chainIdProvider,
       final Optional<KeystoresParameters> v3KeystoresBulkloadParameters,
-      final boolean signingExtEnabled) {
+      final boolean signingExtEnabled,
+      final CommitBoostParameters commitBoostParameters) {
     this.hostname = hostname;
     this.logLevel = logLevel;
     this.httpRpcPort = httpRpcPort;
@@ -175,6 +178,7 @@ public class SignerConfiguration {
     this.chainIdProvider = chainIdProvider;
     this.v3KeystoresBulkloadParameters = v3KeystoresBulkloadParameters;
     this.signingExtEnabled = signingExtEnabled;
+    this.commitBoostParameters = commitBoostParameters;
   }
 
   public String hostname() {
@@ -367,5 +371,9 @@ public class SignerConfiguration {
 
   public boolean isSigningExtEnabled() {
     return signingExtEnabled;
+  }
+
+  public Optional<CommitBoostParameters> getCommitBoostParameters() {
+    return Optional.ofNullable(commitBoostParameters);
   }
 }

@@ -20,10 +20,9 @@ import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.Publi
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.PublicKeysResponse;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.KeyType;
-import tech.pegasys.web3signer.signing.config.DefaultArtifactSignerProvider;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -35,22 +34,15 @@ import org.apache.logging.log4j.Logger;
 
 public class CommitBoostPublicKeysHandler implements Handler<RoutingContext> {
   private static final Logger LOG = LogManager.getLogger();
-  private final List<ArtifactSignerProvider> artifactSignerProviders;
+  private final ArtifactSignerProvider artifactSignerProvider;
   private final ObjectMapper objectMapper = SigningObjectMapperFactory.createObjectMapper();
 
-  public CommitBoostPublicKeysHandler(final List<ArtifactSignerProvider> artifactSignerProviders) {
-    this.artifactSignerProviders = artifactSignerProviders;
+  public CommitBoostPublicKeysHandler(final ArtifactSignerProvider artifactSignerProvider) {
+    this.artifactSignerProvider = artifactSignerProvider;
   }
 
   @Override
   public void handle(final RoutingContext context) {
-    // obtain DefaultArtifactSignerProvider as that is the only one we are dealing in eth2 mode.
-    final ArtifactSignerProvider artifactSignerProvider =
-        artifactSignerProviders.stream()
-            .filter(provider -> provider instanceof DefaultArtifactSignerProvider)
-            .findFirst()
-            .orElseThrow();
-
     final PublicKeysResponse publicKeysResponse = toPublicKeysResponse(artifactSignerProvider);
     try {
       final String jsonEncoded = objectMapper.writeValueAsString(publicKeysResponse);
@@ -65,17 +57,18 @@ public class CommitBoostPublicKeysHandler implements Handler<RoutingContext> {
   private PublicKeysResponse toPublicKeysResponse(final ArtifactSignerProvider provider) {
     return new PublicKeysResponse(
         provider.availableIdentifiers().stream()
-            .map(identifier -> toPublicKeyMappings(provider, identifier))
+            .map(consensusPubKey -> toPublicKeyMappings(provider, consensusPubKey))
             .collect(Collectors.toList()));
   }
 
   private static PublicKeyMappings toPublicKeyMappings(
-      final ArtifactSignerProvider provider, final String identifier) {
-    final Map<KeyType, List<String>> proxyIdentifiers = provider.getProxyIdentifiers(identifier);
-    final List<String> proxyBlsPublicKeys =
-        proxyIdentifiers.computeIfAbsent(KeyType.BLS, k -> List.of());
-    final List<String> proxyEcdsaPublicKeys =
-        proxyIdentifiers.computeIfAbsent(KeyType.SECP256K1, k -> List.of());
-    return new PublicKeyMappings(identifier, proxyBlsPublicKeys, proxyEcdsaPublicKeys);
+      final ArtifactSignerProvider provider, final String consensusPubKey) {
+    final Map<KeyType, Set<String>> proxyIdentifiers =
+        provider.getProxyIdentifiers(consensusPubKey);
+    final Set<String> proxyBlsPublicKeys =
+        proxyIdentifiers.computeIfAbsent(KeyType.BLS, k -> Set.of());
+    final Set<String> proxyEcdsaPublicKeys =
+        proxyIdentifiers.computeIfAbsent(KeyType.SECP256K1, k -> Set.of());
+    return new PublicKeyMappings(consensusPubKey, proxyBlsPublicKeys, proxyEcdsaPublicKeys);
   }
 }

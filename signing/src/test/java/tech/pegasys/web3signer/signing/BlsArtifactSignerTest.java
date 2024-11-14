@@ -45,6 +45,6 @@ class BlsArtifactSignerTest {
         new BlsArtifactSigner(keyPair, SignerOrigin.FILE_RAW);
     final BlsArtifactSignature signature = blsArtifactSigner.sign(message);
 
-    assertThat(signature.getSignatureData().toString()).isEqualTo(expectedSignature.toString());
+    assertThat(signature.asHex()).isEqualTo(expectedSignature.toString());
   }
 }

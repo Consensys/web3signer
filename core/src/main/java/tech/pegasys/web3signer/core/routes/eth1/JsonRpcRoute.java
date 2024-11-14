@@ -12,8 +12,6 @@
  */
 package tech.pegasys.web3signer.core.routes.eth1;
 
-import static tech.pegasys.web3signer.signing.KeyType.SECP256K1;
-
 import tech.pegasys.web3signer.core.Context;
 import tech.pegasys.web3signer.core.Runner;
 import tech.pegasys.web3signer.core.WebClientOptionsFactory;
@@ -38,10 +36,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.In
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.SendTransactionHandler;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.sendtransaction.transaction.TransactionFactory;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 import tech.pegasys.web3signer.signing.config.SecpArtifactSignerProviderAdapter;
-
-import java.util.Optional;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
@@ -62,18 +57,17 @@ public class JsonRpcRoute implements Web3SignerRoute {
   public JsonRpcRoute(final Context context, final Eth1Config eth1Config) {
     this.context = context;
 
-    // we need signerProvider which is an instance of SecpArtifactSignerProviderAdapter
-    final Optional<ArtifactSignerProvider> first =
+    // we need signerProvider which is an instance of SecpArtifactSignerProviderAdapter which uses
+    // eth1 address as identifier
+    final ArtifactSignerProvider signerProvider =
         context.getArtifactSignerProviders().stream()
             .filter(provider -> provider instanceof SecpArtifactSignerProviderAdapter)
-            .findFirst();
-    final ArtifactSignerProvider signerProvider;
-    if (first.isPresent()) {
-      signerProvider = first.get();
-    } else {
-      throw new IllegalStateException(
-          "No SecpArtifactSignerProviderAdapter found in Context for eth1 mode");
-    }
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "No SecpArtifactSignerProviderAdapter found in Context for eth1 mode"));
+
     // use same instance of downstreamHttpClient and path calculator for all requests
     final HttpClient downstreamHttpClient =
         createDownstreamHttpClient(eth1Config, context.getVertx());
@@ -126,11 +120,8 @@ public class JsonRpcRoute implements Web3SignerRoute {
       final long chainId) {
     final PassThroughHandler defaultHandler =
         new PassThroughHandler(transmitterFactory, JSON_DECODER);
-    final SignerForIdentifier<SecpArtifactSignature> secpSigner =
-        new SignerForIdentifier<>(
-            signerProviderMappedToEth1Address,
-            sig -> SecpArtifactSignature.toBytes(sig).toHexString(),
-            SECP256K1);
+    final SignerForIdentifier secpSigner =
+        new SignerForIdentifier(signerProviderMappedToEth1Address);
     final TransactionFactory transactionFactory =
         new TransactionFactory(chainId, JSON_DECODER, transmitterFactory);
     final SendTransactionHandler sendTransactionHandler =

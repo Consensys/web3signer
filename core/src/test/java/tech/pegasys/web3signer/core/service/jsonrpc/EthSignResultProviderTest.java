@@ -55,7 +55,7 @@ import org.web3j.utils.Numeric;
 @ExtendWith(MockitoExtension.class)
 public class EthSignResultProviderTest {
 
-  @Mock SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider;
+  @Mock SignerForIdentifier transactionSignerProvider;
 
   @ParameterizedTest
   @ArgumentsSource(InvalidParamsProvider.class)
@@ -97,7 +97,7 @@ public class EthSignResultProviderTest {
     final SecpArtifactSignature secpArtifactSignature =
         new SecpArtifactSignature(new Signature(v, r, s));
 
-    doReturn(Optional.of(SecpArtifactSignature.toBytes(secpArtifactSignature).toHexString()))
+    doReturn(Optional.of(secpArtifactSignature.asHex()))
         .when(transactionSignerProvider)
         .sign(any(), any(Bytes.class));
 
@@ -138,13 +138,12 @@ public class EthSignResultProviderTest {
               Bytes data = answer.getArgument(1, Bytes.class);
               final Sign.SignatureData signature = Sign.signMessage(data.toArrayUnsafe(), keyPair);
               return Optional.of(
-                  SecpArtifactSignature.toBytes(
-                          new SecpArtifactSignature(
-                              new Signature(
-                                  new BigInteger(signature.getV()),
-                                  new BigInteger(1, signature.getR()),
-                                  new BigInteger(1, signature.getS()))))
-                      .toHexString());
+                  new SecpArtifactSignature(
+                          new Signature(
+                              new BigInteger(signature.getV()),
+                              new BigInteger(1, signature.getR()),
+                              new BigInteger(1, signature.getS())))
+                      .asHex());
             })
         .when(transactionSignerProvider)
         .sign(anyString(), any(Bytes.class));

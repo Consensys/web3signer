@@ -28,7 +28,7 @@ class BlsArtifactSignatureTest {
     final BLSSignature blsSignature =
         BLSSignature.fromBytesCompressed(Bytes.fromHexString(SIGNATURE));
     final BlsArtifactSignature blsArtifactSignature = new BlsArtifactSignature(blsSignature);
-    assertThat(blsArtifactSignature.getSignatureData().toString()).isEqualTo(SIGNATURE);
+    assertThat(blsArtifactSignature.asHex()).isEqualTo(SIGNATURE);
     assertThat(blsSignature.toBytesCompressed().toHexString()).isEqualTo(SIGNATURE);
     assertThat(blsSignature.toString()).isEqualTo(SIGNATURE);
   }

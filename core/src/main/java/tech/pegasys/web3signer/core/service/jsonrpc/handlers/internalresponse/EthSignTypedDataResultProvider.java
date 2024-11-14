@@ -20,7 +20,6 @@ import tech.pegasys.web3signer.core.service.http.handlers.signing.SignerForIdent
 import tech.pegasys.web3signer.core.service.jsonrpc.JsonRpcRequest;
 import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.ResultProvider;
-import tech.pegasys.web3signer.signing.SecpArtifactSignature;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,10 +33,9 @@ public class EthSignTypedDataResultProvider implements ResultProvider<String> {
 
   private static final Logger LOG = LogManager.getLogger();
 
-  private final SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider;
+  private final SignerForIdentifier transactionSignerProvider;
 
-  public EthSignTypedDataResultProvider(
-      final SignerForIdentifier<SecpArtifactSignature> transactionSignerProvider) {
+  public EthSignTypedDataResultProvider(final SignerForIdentifier transactionSignerProvider) {
     this.transactionSignerProvider = transactionSignerProvider;
   }
 

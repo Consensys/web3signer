@@ -22,6 +22,7 @@ import tech.pegasys.web3signer.core.service.jsonrpc.handlers.signing.Configurati
 import tech.pegasys.web3signer.dsl.tls.TlsCertificateDefinition;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -85,6 +86,7 @@ public class SignerConfigurationBuilder {
   private KeystoresParameters v3KeystoresBulkloadParameters;
 
   private boolean signingExtEnabled;
+  private CommitBoostParameters commitBoostParameters;
 
   public SignerConfigurationBuilder withLogLevel(final Level logLevel) {
     this.logLevel = logLevel;
@@ -331,6 +333,12 @@ public class SignerConfigurationBuilder {
     return this;
   }
 
+  public SignerConfigurationBuilder withCommitBoostParameters(
+      final CommitBoostParameters commitBoostParameters) {
+    this.commitBoostParameters = commitBoostParameters;
+    return this;
+  }
+
   public SignerConfiguration build() {
     if (mode == null) {
       throw new IllegalArgumentException("Mode cannot be null");
@@ -381,6 +389,7 @@ public class SignerConfigurationBuilder {
         Optional.ofNullable(downstreamTlsOptions),
         chainIdProvider,
         Optional.ofNullable(v3KeystoresBulkloadParameters),
-        signingExtEnabled);
+        signingExtEnabled,
+        commitBoostParameters);
   }
 }

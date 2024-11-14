@@ -41,6 +41,7 @@ import tech.pegasys.web3signer.dsl.signer.WatermarkRepairParameters;
 import tech.pegasys.web3signer.dsl.utils.DatabaseUtil;
 import tech.pegasys.web3signer.signing.config.AwsVaultParameters;
 import tech.pegasys.web3signer.signing.config.AzureKeyVaultParameters;
+import tech.pegasys.web3signer.signing.config.CommitBoostParameters;
 import tech.pegasys.web3signer.signing.config.GcpSecretManagerParameters;
 import tech.pegasys.web3signer.signing.config.KeystoresParameters;
 
@@ -163,6 +164,12 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
             String.format(YAML_BOOLEAN_FMT, "eth2.Xsigning-ext-enabled", Boolean.TRUE));
       }
 
+      signerConfig
+          .getCommitBoostParameters()
+          .ifPresent(
+              commitBoostParameters ->
+                  appendCommitBoostParameters(commitBoostParameters, yamlConfig));
+
       final CommandArgs subCommandArgs = createSubCommandArgs();
       params.addAll(subCommandArgs.params);
       yamlConfig.append(subCommandArgs.yamlConfig);
@@ -202,6 +209,23 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     }
 
     return params;
+  }
+
+  private static void appendCommitBoostParameters(
+      final CommitBoostParameters commitBoostParameters, final StringBuilder yamlConfig) {
+    yamlConfig.append(
+        String.format(
+            YAML_BOOLEAN_FMT, "eth2.commit-boost-api-enabled", commitBoostParameters.isEnabled()));
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth2.proxy-keystores-path",
+            commitBoostParameters.getProxyKeystoresPath().toAbsolutePath()));
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth2.proxy-keystores-password-file",
+            commitBoostParameters.getProxyKeystoresPasswordFile().toAbsolutePath()));
   }
 
   private Consumer<? super KeystoresParameters> setV3KeystoresBulkloadParameters(
