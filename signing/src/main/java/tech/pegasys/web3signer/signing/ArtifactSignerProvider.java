@@ -53,12 +53,12 @@ public interface ArtifactSignerProvider extends Closeable {
   Set<String> availableIdentifiers();
 
   /**
-   * Get the proxy identifiers for the given identifier. Used for commit boost API.
+   * Get the proxy public keys for the given consensus public key. Used for commit boost API.
    *
-   * @param identifier the identifier of the signer
+   * @param consensusPubKey the identifier of the consensus signer
    * @return Map of Key Type (BLS, SECP256K1) and corresponding proxy identifiers
    */
-  default Map<KeyType, Set<String>> getProxyIdentifiers(final String identifier) {
+  default Map<KeyType, Set<String>> getProxyIdentifiers(final String consensusPubKey) {
     throw new UnsupportedOperationException("Proxy signers are not supported by this provider");
   }
 
@@ -82,10 +82,10 @@ public interface ArtifactSignerProvider extends Closeable {
    * Add a proxy signer to the signer provider.
    *
    * @param signer Instance of ArtifactSigner
-   * @param identifier Identifier of the signer for which proxy signer is being added
+   * @param consensusPubKey Public Key of the consensus signer for which proxy signer is being added
    * @return a future that completes when the proxy signer is added
    */
-  default Future<Void> addProxySigner(final ArtifactSigner signer, final String identifier) {
+  default Future<Void> addProxySigner(final ArtifactSigner signer, final String consensusPubKey) {
     throw new UnsupportedOperationException("Proxy signers are not supported by this provider");
   }
 

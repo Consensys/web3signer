@@ -128,9 +128,9 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
-  public Map<KeyType, Set<String>> getProxyIdentifiers(final String identifier) {
+  public Map<KeyType, Set<String>> getProxyIdentifiers(final String consensusPubKey) {
     final Set<ArtifactSigner> artifactSigners =
-        proxySigners.computeIfAbsent(identifier, k -> Set.of());
+        proxySigners.computeIfAbsent(consensusPubKey, k -> Set.of());
     return artifactSigners.stream()
         .collect(
             Collectors.groupingBy(
@@ -160,12 +160,14 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
-  public Future<Void> addProxySigner(final ArtifactSigner signer, final String identifier) {
+  public Future<Void> addProxySigner(final ArtifactSigner signer, final String consensusPubKey) {
     return executorService.submit(
         () -> {
-          proxySigners.computeIfAbsent(identifier, k -> new HashSet<>()).add(signer);
+          proxySigners.computeIfAbsent(consensusPubKey, k -> new HashSet<>()).add(signer);
           LOG.info(
-              "Loaded new proxy signer {} for identifier '{}'", signer.getIdentifier(), identifier);
+              "Loaded new proxy signer {} for consensus public key '{}'",
+              signer.getIdentifier(),
+              consensusPubKey);
           return null;
         });
   }

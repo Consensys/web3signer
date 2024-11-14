@@ -13,18 +13,10 @@
 package tech.pegasys.web3signer.signing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.pegasys.web3signer.signing.K256ArtifactSigner.CURVE;
-import static tech.pegasys.web3signer.signing.K256ArtifactSigner.calculateSHA256;
 
-import java.math.BigInteger;
-import java.util.Arrays;
+import tech.pegasys.web3signer.K256TestUtil;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.bouncycastle.crypto.signers.ECDSASigner;
-import org.bouncycastle.crypto.signers.HMacDSAKCalculator;
-import org.bouncycastle.math.ec.ECPoint;
 import org.junit.jupiter.api.Test;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Sign;
@@ -42,37 +34,20 @@ class K256ArtifactSignerTest {
     // generate using K256ArtifactSigner
     final K256ArtifactSigner k256ArtifactSigner = new K256ArtifactSigner(EC_KEY_PAIR);
     final ArtifactSignature artifactSignature = k256ArtifactSigner.sign(OBJECT_ROOT);
+    final byte[] signature = Bytes.fromHexString(artifactSignature.asHex()).toArray();
 
     // Verify the signature against public key
-    assertThat(verifySignature(artifactSignature)).isTrue();
+    assertThat(
+            K256TestUtil.verifySignature(
+                Sign.publicPointFromPrivate(EC_KEY_PAIR.getPrivateKey()),
+                OBJECT_ROOT.toArray(),
+                signature))
+        .isTrue();
 
     // copied from Rust K-256 and Python ecdsa module
     final Bytes expectedSignature =
         Bytes.fromHexString(
             "8C32902BE980399CA59FCC222CCF0A5FE355A159122DEA58789A3938E29D89797FC6C9C0ECCCD29705915729F5326BB7D245F8E54D3A793A06DE3C92ABA85057");
     assertThat(Bytes.fromHexString(artifactSignature.asHex())).isEqualTo(expectedSignature);
-  }
-
-  boolean verifySignature(final ArtifactSignature signature) {
-    try {
-      // we are assuming that we got 64 bytes signature in R+S format
-      byte[] concatenated = Bytes.fromHexString(signature.asHex()).toArray();
-      byte[] rBytes = Arrays.copyOfRange(concatenated, 0, 32);
-      byte[] sBytes = Arrays.copyOfRange(concatenated, 32, 64);
-
-      final BigInteger r = new BigInteger(1, rBytes);
-      final BigInteger s = new BigInteger(1, sBytes);
-
-      final ECPoint pubECPoint = Sign.publicPointFromPrivate(EC_KEY_PAIR.getPrivateKey());
-      final ECPublicKeyParameters ecPublicKeyParameters =
-          new ECPublicKeyParameters(pubECPoint, CURVE);
-
-      final ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
-      signer.init(false, ecPublicKeyParameters);
-      // apply sha-256 before verification
-      return signer.verifySignature(calculateSHA256(OBJECT_ROOT.toArray()), r, s);
-    } catch (Exception e) {
-      throw new RuntimeException("Error verifying signature", e);
-    }
   }
 }

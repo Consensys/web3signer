@@ -25,10 +25,12 @@ import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
 import tech.pegasys.teku.spec.Spec;
 import tech.pegasys.teku.spec.networks.Eth2Network;
 import tech.pegasys.web3signer.BLSTestUtil;
+import tech.pegasys.web3signer.K256TestUtil;
 import tech.pegasys.web3signer.KeystoreUtil;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.SigningRootGenerator;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyDelegation;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.ProxyKeySignatureScheme;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.SignRequestType;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.CommitBoostATParameters;
 import tech.pegasys.web3signer.dsl.utils.DefaultKeystoresParameters;
@@ -42,11 +44,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.math.ec.ECPoint;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -152,7 +156,7 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
                       .toMerkleizable(scheme)
                       .hashTreeRoot();
               final Bytes32 signingRoot = SIGNING_ROOT_GENERATOR.computeSigningRoot(hashTreeRoot);
-              return new ValidBLSSignatureMatcher(KEY_PAIR_1.getPublicKey(), signingRoot);
+              return new ValidBLSSignatureMatcher(delegator, signingRoot);
             });
 
     // the number of (scheme) proxy public keys should've increased
@@ -169,6 +173,40 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
         .statusCode(200)
         .contentType(ContentType.JSON)
         .body(jsonMatch, containsInAnyOrder(updatedProxyKeys.toArray()));
+  }
+
+  @ParameterizedTest
+  @EnumSource(SignRequestType.class)
+  void requestCommitBoostSignature(final SignRequestType signRequestType) {
+    final String pubKey =
+        switch (signRequestType) {
+          case CONSENSUS -> KEY_PAIR_1.getPublicKey().toHexString();
+          case PROXY_BLS ->
+              PROXYY_BLS_KEYS.stream().findFirst().orElseThrow().getPublicKey().toHexString();
+          case PROXY_ECDSA ->
+              EthPublicKeyUtils.getEncoded(
+                      EthPublicKeyUtils.bigIntegerToECPublicKey(
+                          PROXY_SECP_KEYS.stream().findFirst().orElseThrow().getPublicKey()),
+                      true)
+                  .toHexString();
+        };
+
+    // object root is data to sign
+    final Bytes32 objectRoot = Bytes32.random(new Random(0));
+    // signature is calculated on signing root
+    final Bytes32 signingRoot = SIGNING_ROOT_GENERATOR.computeSigningRoot(objectRoot);
+
+    final Response response =
+        signer.callCommitBoostReqeustForSignature(signRequestType, pubKey, objectRoot);
+
+    response
+        .then()
+        .statusCode(200)
+        .contentType(ContentType.JSON)
+        .body(
+            signRequestType == SignRequestType.PROXY_ECDSA
+                ? new ValidK256K1SignatureMatcher(pubKey, signingRoot)
+                : new ValidBLSSignatureMatcher(pubKey, signingRoot));
   }
 
   private static Spec getSpec() {
@@ -233,21 +271,42 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
     private final BLSPublicKey blsPublicKey;
     private final Bytes32 signingRoot;
 
-    public ValidBLSSignatureMatcher(final BLSPublicKey blsPublicKey, final Bytes32 signingRoot) {
-      this.blsPublicKey = blsPublicKey;
+    public ValidBLSSignatureMatcher(final String blsPublicKey, final Bytes32 signingRoot) {
+      this.blsPublicKey = BLSPublicKey.fromHexString(blsPublicKey);
       this.signingRoot = signingRoot;
     }
 
     @Override
     protected boolean matchesSafely(final String signature) {
       final BLSSignature blsSignature =
-          BLSSignature.fromBytesCompressed(Bytes.fromHexString(signature));
+          BLSSignature.fromBytesCompressed(Bytes.fromHexString(signature.replace("\"", "")));
       return BLS.verify(blsPublicKey, signingRoot, blsSignature);
     }
 
     @Override
     public void describeTo(final org.hamcrest.Description description) {
       description.appendText("a valid BLS signature");
+    }
+  }
+
+  static class ValidK256K1SignatureMatcher extends TypeSafeMatcher<String> {
+    private final ECPoint ecPoint;
+    private final Bytes32 signingRoot;
+
+    public ValidK256K1SignatureMatcher(final String ecPubKeyHex, final Bytes32 signingRoot) {
+      this.ecPoint = EthPublicKeyUtils.bytesToBCECPoint(Bytes.fromHexString(ecPubKeyHex));
+      this.signingRoot = signingRoot;
+    }
+
+    @Override
+    protected boolean matchesSafely(final String signature) {
+      final byte[] sig = Bytes.fromHexString(signature.replace("\"", "")).toArray();
+      return K256TestUtil.verifySignature(ecPoint, signingRoot.toArray(), sig);
+    }
+
+    @Override
+    public void describeTo(final org.hamcrest.Description description) {
+      description.appendText("a valid K256 signature");
     }
   }
 }

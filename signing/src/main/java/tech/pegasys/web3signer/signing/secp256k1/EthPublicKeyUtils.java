@@ -106,23 +106,28 @@ public class EthPublicKeyUtils {
    * @return The ECPublicKey
    */
   public static ECPublicKey bytesToECPublicKey(final Bytes value) {
+    return bcECPointToECPublicKey(bytesToBCECPoint(value));
+  }
+
+  public static ECPoint bytesToBCECPoint(final Bytes value) {
     if (value.size() != 33 && value.size() != 65 && value.size() != 64) {
       throw new IllegalArgumentException(
           "Invalid public key length. Expected 33, 64, or 65 bytes.");
     }
 
     final ECPoint point;
+    final byte[] key;
     if (value.size() == 64) {
       // For 64-byte input, we need to prepend the 0x04 prefix for uncompressed format
-      byte[] fullKey = new byte[65];
-      fullKey[0] = 0x04;
-      System.arraycopy(value.toArrayUnsafe(), 0, fullKey, 1, 64);
-      point = SECP256K1_DOMAIN.getCurve().decodePoint(fullKey);
+      key = new byte[65];
+      key[0] = 0x04;
+      System.arraycopy(value.toArrayUnsafe(), 0, key, 1, 64);
     } else {
-      point = SECP256K1_DOMAIN.getCurve().decodePoint(value.toArrayUnsafe());
+      key = value.toArrayUnsafe();
     }
+    point = SECP256K1_DOMAIN.getCurve().decodePoint(key);
 
-    return bcECPointToECPublicKey(point);
+    return point;
   }
 
   private static ECPublicKey bcECPointToECPublicKey(final ECPoint point) {

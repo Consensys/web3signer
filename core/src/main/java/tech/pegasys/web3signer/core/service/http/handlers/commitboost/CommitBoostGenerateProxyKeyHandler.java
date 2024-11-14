@@ -68,9 +68,9 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
     }
 
     // Check for identifier, if not exist, fail with 404
-    final String identifier = normaliseIdentifier(proxyKeyBody.blsPublicKey());
+    final String consensusPubKey = normaliseIdentifier(proxyKeyBody.blsPublicKey());
     final boolean signerAvailable =
-        commitBoostSignerProvider.isSignerAvailable(identifier, SignRequestType.CONSENSUS);
+        commitBoostSignerProvider.isSignerAvailable(consensusPubKey, SignRequestType.CONSENSUS);
     if (!signerAvailable) {
       context.fail(NOT_FOUND);
       return;
@@ -80,20 +80,20 @@ public class CommitBoostGenerateProxyKeyHandler implements Handler<RoutingContex
       // Generate actual proxy key and encrypted keystore based on signature scheme
       final ArtifactSigner proxyArtifactSigner =
           switch (proxyKeyBody.scheme()) {
-            case BLS -> proxyKeyGenerator.generateBLSProxyKey(identifier);
-            case ECDSA -> proxyKeyGenerator.generateECProxyKey(identifier);
+            case BLS -> proxyKeyGenerator.generateBLSProxyKey(consensusPubKey);
+            case ECDSA -> proxyKeyGenerator.generateECProxyKey(consensusPubKey);
           };
 
       // Add generated proxy ArtifactSigner to ArtifactSignerProvider
-      commitBoostSignerProvider.addProxySigner(proxyArtifactSigner, identifier);
+      commitBoostSignerProvider.addProxySigner(proxyArtifactSigner, consensusPubKey);
 
       final ProxyDelegation proxyDelegation =
-          new ProxyDelegation(identifier, proxyArtifactSigner.getIdentifier());
+          new ProxyDelegation(consensusPubKey, proxyArtifactSigner.getIdentifier());
       final Bytes32 signingRoot =
           signingRootGenerator.computeSigningRoot(
               proxyDelegation.toMerkleizable(proxyKeyBody.scheme()).hashTreeRoot());
       final Optional<String> optionalSig =
-          commitBoostSignerProvider.sign(identifier, SignRequestType.CONSENSUS, signingRoot);
+          commitBoostSignerProvider.sign(consensusPubKey, SignRequestType.CONSENSUS, signingRoot);
       if (optionalSig.isEmpty()) {
         context.fail(NOT_FOUND);
         return;

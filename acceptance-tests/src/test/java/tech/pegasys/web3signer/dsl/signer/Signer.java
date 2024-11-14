@@ -19,6 +19,7 @@ import static tech.pegasys.web3signer.dsl.utils.WaitUtils.waitFor;
 import static tech.pegasys.web3signer.signing.KeyType.BLS;
 
 import tech.pegasys.web3signer.core.service.http.SigningObjectMapperFactory;
+import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.SignRequestType;
 import tech.pegasys.web3signer.core.service.http.handlers.signing.eth2.Eth2SigningRequestBody;
 import tech.pegasys.web3signer.dsl.Accounts;
 import tech.pegasys.web3signer.dsl.Eth;
@@ -47,6 +48,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.Ethereum;
 import org.web3j.protocol.core.JsonRpc2_0Web3j;
@@ -197,6 +199,22 @@ public class Signer {
         .contentType(ContentType.JSON)
         .body(new JsonObject().put("pubkey", pubkey).put("scheme", scheme).toString())
         .post("/signer/v1/generate_proxy_key");
+  }
+
+  public Response callCommitBoostReqeustForSignature(
+      final SignRequestType type, final String pubkey, final Bytes32 objectRoot) {
+    return given()
+        .baseUri(getUrl())
+        .contentType(ContentType.JSON)
+        .log()
+        .all()
+        .body(
+            new JsonObject()
+                .put("type", type.name().toLowerCase())
+                .put("pubkey", pubkey)
+                .put("object_root", objectRoot.toHexString())
+                .toString())
+        .post("/signer/v1/request_signature");
   }
 
   public List<String> listPublicKeys(final KeyType keyType) {

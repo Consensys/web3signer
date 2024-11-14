@@ -15,11 +15,8 @@ package tech.pegasys.web3signer.core.service.http.handlers.commitboost;
 import tech.pegasys.web3signer.core.service.http.handlers.commitboost.json.SignRequestType;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
-import tech.pegasys.web3signer.signing.KeyType;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -49,18 +46,7 @@ public class CommitBoostSignerProvider {
   public boolean isSignerAvailable(final String identifier, final SignRequestType type) {
     return switch (type) {
       case CONSENSUS -> artifactSignerProvider.availableIdentifiers().contains(identifier);
-      case PROXY_BLS -> {
-        final Map<KeyType, Set<String>> proxyIdentifiers =
-            artifactSignerProvider.getProxyIdentifiers(identifier);
-        yield proxyIdentifiers.containsKey(KeyType.BLS)
-            && proxyIdentifiers.get(KeyType.BLS).contains(identifier);
-      }
-      case PROXY_ECDSA -> {
-        final Map<KeyType, Set<String>> proxyIdentifiers =
-            artifactSignerProvider.getProxyIdentifiers(identifier);
-        yield proxyIdentifiers.containsKey(KeyType.SECP256K1)
-            && proxyIdentifiers.get(KeyType.SECP256K1).contains(identifier);
-      }
+      case PROXY_BLS, PROXY_ECDSA -> artifactSignerProvider.getProxySigner(identifier).isPresent();
     };
   }
 
@@ -83,7 +69,13 @@ public class CommitBoostSignerProvider {
     return optionalArtifactSigner.map(signer -> signer.sign(signingRoot).asHex());
   }
 
-  public void addProxySigner(final ArtifactSigner artifactSigner, final String identifier) {
-    artifactSignerProvider.addProxySigner(artifactSigner, identifier);
+  /**
+   * Add a proxy signer to the provider
+   *
+   * @param artifactSigner The proxy signer to add
+   * @param consensusPubKey The consensus public key to associate with the proxy signer
+   */
+  public void addProxySigner(final ArtifactSigner artifactSigner, final String consensusPubKey) {
+    artifactSignerProvider.addProxySigner(artifactSigner, consensusPubKey);
   }
 }
