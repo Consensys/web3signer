@@ -254,7 +254,7 @@ public class EthPublicKeyUtils {
    *     bytes
    * @return The encoded public key.
    */
-  private static Bytes getEncoded(final ECPublicKey publicKey, boolean compressed) {
+  private static Bytes getEncoded(final ECPublicKey publicKey, final boolean compressed) {
     final ECPoint point;
     if (publicKey instanceof BCECPublicKey) {
       // If it's already a Bouncy Castle key, we can get the ECPoint directly
