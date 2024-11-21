@@ -19,7 +19,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.utils.Numeric;
 
-public class SecpArtifactSignature implements ArtifactSignature {
+public class SecpArtifactSignature implements ArtifactSignature<Signature> {
   private final Signature signature;
 
   public SecpArtifactSignature(final Signature signature) {
@@ -31,6 +31,7 @@ public class SecpArtifactSignature implements ArtifactSignature {
     return KeyType.SECP256K1;
   }
 
+  @Override
   public Signature getSignatureData() {
     return signature;
   }

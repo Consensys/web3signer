@@ -48,9 +48,7 @@ public interface ArtifactSignerProvider extends Closeable {
    * @param consensusPubKey the identifier of the consensus signer
    * @return Map of Key Type (BLS, SECP256K1) and corresponding proxy identifiers
    */
-  default Map<KeyType, Set<String>> getProxyIdentifiers(final String consensusPubKey) {
-    throw new UnsupportedOperationException("Proxy signers are not supported by this provider");
-  }
+  Map<KeyType, Set<String>> getProxyIdentifiers(final String consensusPubKey);
 
   /**
    * Add a new signer to the signer provider.

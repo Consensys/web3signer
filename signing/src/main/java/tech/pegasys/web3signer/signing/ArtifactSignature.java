@@ -12,7 +12,7 @@
  */
 package tech.pegasys.web3signer.signing;
 
-public interface ArtifactSignature {
+public interface ArtifactSignature<T> {
 
   /**
    * Returns the type of key used to sign the artifact
@@ -27,4 +27,11 @@ public interface ArtifactSignature {
    * @return the signature data in hex format
    */
   String asHex();
+
+  /**
+   * Returns the signature data
+   *
+   * @return the signature data
+   */
+  T getSignatureData();
 }

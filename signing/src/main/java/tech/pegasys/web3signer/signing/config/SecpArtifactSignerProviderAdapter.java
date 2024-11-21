@@ -17,6 +17,7 @@ import static tech.pegasys.web3signer.signing.util.IdentifierUtils.normaliseIden
 
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
+import tech.pegasys.web3signer.signing.KeyType;
 
 import java.util.HashMap;
 import java.util.Map;
