@@ -56,9 +56,9 @@ class EthPublicKeyUtilsTest {
   }
 
   @Test
-  public void createsPublicKeyFromBigInteger() {
+  public void createsPublicKeyFromWeb3JBigInteger() {
     final BigInteger publicKey = Numeric.toBigInt(PUBLIC_KEY);
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.bigIntegerToECPublicKey(publicKey);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.web3JPublicKeyToECPublicKey(publicKey);
 
     final Bytes expectedPublicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
     final ECPoint expectedEcPoint = createEcPoint(expectedPublicKeyBytes);

@@ -225,7 +225,7 @@ class DefaultArtifactSignerProviderTest {
         .map(
             keyPair ->
                 EthPublicKeyUtils.toHexString(
-                    EthPublicKeyUtils.bigIntegerToECPublicKey(keyPair.getPublicKey())))
+                    EthPublicKeyUtils.web3JPublicKeyToECPublicKey(keyPair.getPublicKey())))
         .toList()
         .toArray(String[]::new);
   }

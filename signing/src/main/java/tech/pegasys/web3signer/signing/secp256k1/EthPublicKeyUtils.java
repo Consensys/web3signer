@@ -25,7 +25,6 @@ import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECPrivateKeySpec;
 import java.security.spec.EllipticCurve;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.bouncycastle.asn1.x9.X9ECParameters;
@@ -81,7 +80,7 @@ public class EthPublicKeyUtils {
     try {
       final KeyPairGenerator keyPairGenerator =
           KeyPairGenerator.getInstance(EC_ALGORITHM, BC_PROVIDER);
-      keyPairGenerator.initialize(EC_KEYGEN_PARAM);
+      keyPairGenerator.initialize(EC_KEYGEN_PARAM, SECURE_RANDOM);
       return keyPairGenerator.generateKeyPair();
     } catch (final GeneralSecurityException e) {
       throw new RuntimeException(e);
@@ -100,7 +99,7 @@ public class EthPublicKeyUtils {
           KeyFactory.getInstance("EC", BC_PROVIDER)
               .generatePrivate(
                   new ECPrivateKeySpec(web3JECKeypair.getPrivateKey(), JAVA_SECP256K1_SPEC));
-      return new KeyPair(bigIntegerToECPublicKey(web3JECKeypair.getPublicKey()), ecPrivateKey);
+      return new KeyPair(web3JPublicKeyToECPublicKey(web3JECKeypair.getPublicKey()), ecPrivateKey);
     } catch (final Exception e) {
       throw new RuntimeException("Unable to convert web3j to Java EC keypair", e);
     }
@@ -168,37 +167,49 @@ public class EthPublicKeyUtils {
   }
 
   /**
-   * Create a java security ECPublicKey from a BigInteger representation of the public key.
+   * Create a java security ECPublicKey from Web3J representation of public key as BigInteger. Web3J
+   * uses Bouncy castle ECPoint getEncoded with false to get uncompressed public key and then create
+   * BigInteger from it without using the prefix byte.
    *
    * @param publicKeyValue The BigInteger representation of the public key (64 bytes, without
    *     prefix)
    * @return The created ECPublicKey
    * @throws IllegalArgumentException if the input is invalid
    */
-  public static ECPublicKey bigIntegerToECPublicKey(final BigInteger publicKeyValue) {
+  public static ECPublicKey web3JPublicKeyToECPublicKey(final BigInteger publicKeyValue) {
     if (publicKeyValue == null) {
       throw new IllegalArgumentException("Public key value cannot be null");
     }
 
-    byte[] publicKeyBytes = publicKeyValue.toByteArray();
+    byte[] publicKeyBytes = ensure64Bytes(publicKeyValue.toByteArray());
 
-    // Ensure we have exactly 64 bytes
-    if (publicKeyBytes.length < 64) {
-      byte[] temp = new byte[64];
-      System.arraycopy(publicKeyBytes, 0, temp, 64 - publicKeyBytes.length, publicKeyBytes.length);
-      publicKeyBytes = temp;
-    } else if (publicKeyBytes.length > 64) {
-      publicKeyBytes =
-          Arrays.copyOfRange(publicKeyBytes, publicKeyBytes.length - 64, publicKeyBytes.length);
+    // Use the existing bytesToECPublicKey method
+    return bytesToECPublicKey(Bytes.wrap(publicKeyBytes));
+  }
+
+  /**
+   * Ensures that the given byte array is exactly 64 bytes long. If the input array is shorter than
+   * 64 bytes, it pads the array with leading zeros. If the input array is longer than 64 bytes, it
+   * trims the excess leading bytes.
+   *
+   * @param publicKeyBytes The input byte array representing the public key.
+   * @return A byte array of exactly 64 bytes.
+   */
+  private static byte[] ensure64Bytes(final byte[] publicKeyBytes) {
+    if (publicKeyBytes.length == 64) {
+      return publicKeyBytes;
     }
 
-    // Create a new byte array with the uncompressed prefix
-    byte[] fullPublicKeyBytes = new byte[65];
-    fullPublicKeyBytes[0] = 0x04; // Uncompressed point prefix
-    System.arraycopy(publicKeyBytes, 0, fullPublicKeyBytes, 1, 64);
-
-    // Use the existing createPublicKey method
-    return bytesToECPublicKey(Bytes.wrap(fullPublicKeyBytes));
+    final byte[] result = new byte[64];
+    if (publicKeyBytes.length < 64) {
+      // pad with leading 0s
+      System.arraycopy(
+          publicKeyBytes, 0, result, 64 - publicKeyBytes.length, publicKeyBytes.length);
+    } else {
+      // trim excess bytes
+      System.arraycopy(publicKeyBytes, publicKeyBytes.length - 64, result, 0, 64);
+    }
+    return result;
   }
 
   /**

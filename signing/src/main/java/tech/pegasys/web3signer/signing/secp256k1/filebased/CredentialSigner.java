@@ -32,7 +32,7 @@ public class CredentialSigner implements Signer {
   public CredentialSigner(final Credentials credentials, final boolean needToHash) {
     this.credentials = credentials;
     this.publicKey =
-        EthPublicKeyUtils.bigIntegerToECPublicKey(credentials.getEcKeyPair().getPublicKey());
+        EthPublicKeyUtils.web3JPublicKeyToECPublicKey(credentials.getEcKeyPair().getPublicKey());
     this.needToHash = needToHash;
   }
 

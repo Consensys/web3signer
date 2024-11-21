@@ -109,7 +109,7 @@ public class EthSignTransactionResultProviderTest {
     final Credentials cs =
         Credentials.create("0x1618fc3e47aec7e70451256e033b9edb67f4c469258d8e2fbb105552f141ae41");
     final ECPublicKey key =
-        EthPublicKeyUtils.bigIntegerToECPublicKey(cs.getEcKeyPair().getPublicKey());
+        EthPublicKeyUtils.web3JPublicKeyToECPublicKey(cs.getEcKeyPair().getPublicKey());
     final String addr = Keys.getAddress(EthPublicKeyUtils.toHexString(key));
 
     final BigInteger v = BigInteger.ONE;
@@ -171,7 +171,7 @@ public class EthSignTransactionResultProviderTest {
     final Credentials cs =
         Credentials.create("0x1618fc3e47aec7e70451256e033b9edb67f4c469258d8e2fbb105552f141ae41");
     final ECPublicKey key =
-        EthPublicKeyUtils.bigIntegerToECPublicKey(cs.getEcKeyPair().getPublicKey());
+        EthPublicKeyUtils.web3JPublicKeyToECPublicKey(cs.getEcKeyPair().getPublicKey());
     final String addr = Keys.getAddress(EthPublicKeyUtils.toHexString(key));
 
     doAnswer(
