@@ -22,8 +22,6 @@ import tech.pegasys.web3signer.core.service.jsonrpc.exceptions.JsonRpcException;
 import tech.pegasys.web3signer.core.service.jsonrpc.handlers.internalresponse.EthAccountsResultProvider;
 import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
 import java.util.List;
 import java.util.Set;
@@ -37,8 +35,6 @@ import org.junit.jupiter.api.Test;
 import org.web3j.crypto.Keys;
 
 public class EthAccountsResultProviderTest {
-  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-
   private static ECPublicKey publicKeyA;
   private static ECPublicKey publicKeyB;
   private static ECPublicKey publicKeyC;
@@ -48,10 +44,10 @@ public class EthAccountsResultProviderTest {
   private static String addressC;
 
   @BeforeAll
-  static void init() throws GeneralSecurityException {
-    publicKeyA = (ECPublicKey) EthPublicKeyUtils.createSecp256k1KeyPair(SECURE_RANDOM).getPublic();
-    publicKeyB = (ECPublicKey) EthPublicKeyUtils.createSecp256k1KeyPair(SECURE_RANDOM).getPublic();
-    publicKeyC = (ECPublicKey) EthPublicKeyUtils.createSecp256k1KeyPair(SECURE_RANDOM).getPublic();
+  static void init() {
+    publicKeyA = (ECPublicKey) EthPublicKeyUtils.generateK256KeyPair().getPublic();
+    publicKeyB = (ECPublicKey) EthPublicKeyUtils.generateK256KeyPair().getPublic();
+    publicKeyC = (ECPublicKey) EthPublicKeyUtils.generateK256KeyPair().getPublic();
 
     addressA = Keys.getAddress(EthPublicKeyUtils.toHexString(publicKeyA));
     addressB = Keys.getAddress(EthPublicKeyUtils.toHexString(publicKeyB));

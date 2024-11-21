@@ -18,9 +18,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 import static org.assertj.core.api.Fail.fail;
 
 import java.math.BigInteger;
-import java.security.GeneralSecurityException;
 import java.security.KeyPair;
-import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
@@ -68,12 +66,7 @@ class EthPublicKeyUtilsTest {
   }
 
   private static Stream<Bytes> validPublicKeys() {
-    final KeyPair keyPair;
-    try {
-      keyPair = EthPublicKeyUtils.createSecp256k1KeyPair(new SecureRandom());
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    }
+    final KeyPair keyPair = EthPublicKeyUtils.generateK256KeyPair();
     return Stream.of(
         // Compressed (33 bytes)
         Bytes.fromHexString(

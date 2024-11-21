@@ -18,6 +18,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
+import tech.pegasys.web3signer.BLSTestUtil;
 import tech.pegasys.web3signer.KeystoreUtil;
 import tech.pegasys.web3signer.signing.ArtifactSigner;
 import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
@@ -28,9 +29,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
 import java.security.KeyPair;
-import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -109,19 +108,18 @@ class DefaultArtifactSignerProviderTest {
 
   @Test
   void proxySignersAreLoadedCorrectly() throws IOException {
-    final SecureRandom secureRandom = new SecureRandom();
 
     // create random proxy signers
     final KeystoresParameters commitBoostParameters =
         new TestCommitBoostParameters(commitBoostKeystoresPath, commitBoostPasswordDir);
 
     // create random BLS key pairs as proxy keys for public key1 and public key2
-    final List<BLSKeyPair> key1ProxyKeyPairs = randomBLSV4Keystores(secureRandom, PUBLIC_KEY1);
-    final List<BLSKeyPair> key2ProxyKeyPairs = randomBLSV4Keystores(secureRandom, PUBLIC_KEY2);
+    final List<BLSKeyPair> key1ProxyKeyPairs = randomBLSV4Keystores(PUBLIC_KEY1);
+    final List<BLSKeyPair> key2ProxyKeyPairs = randomBLSV4Keystores(PUBLIC_KEY2);
 
     // create random secp key pairs as proxy keys for public key1 and public key2
-    final List<ECKeyPair> key1SecpKeyPairs = randomSecpV3Keystores(secureRandom, PUBLIC_KEY1);
-    final List<ECKeyPair> key2SecpKeyPairs = randomSecpV3Keystores(secureRandom, PUBLIC_KEY2);
+    final List<ECKeyPair> key1SecpKeyPairs = randomSecpV3Keystores(PUBLIC_KEY1);
+    final List<ECKeyPair> key2SecpKeyPairs = randomSecpV3Keystores(PUBLIC_KEY2);
 
     // set up mock signers
     final ArtifactSigner mockSigner1 = mock(ArtifactSigner.class);
@@ -180,8 +178,7 @@ class DefaultArtifactSignerProviderTest {
     }
   }
 
-  private List<BLSKeyPair> randomBLSV4Keystores(SecureRandom secureRandom, String identifier)
-      throws IOException {
+  private List<BLSKeyPair> randomBLSV4Keystores(final String identifier) throws IOException {
     final Path v4Dir =
         Files.createDirectories(
             commitBoostKeystoresPath.resolve(identifier).resolve(KeyType.BLS.name()));
@@ -189,15 +186,14 @@ class DefaultArtifactSignerProviderTest {
     return IntStream.range(0, 4)
         .mapToObj(
             i -> {
-              final BLSKeyPair blsKeyPair = BLSKeyPair.random(secureRandom);
+              final BLSKeyPair blsKeyPair = BLSTestUtil.randomKeyPair(i);
               KeystoreUtil.createKeystoreFile(blsKeyPair, v4Dir, "password");
               return blsKeyPair;
             })
         .toList();
   }
 
-  private List<ECKeyPair> randomSecpV3Keystores(
-      final SecureRandom secureRandom, final String identifier) throws IOException {
+  private List<ECKeyPair> randomSecpV3Keystores(final String identifier) throws IOException {
     final Path v3Dir =
         Files.createDirectories(
             commitBoostKeystoresPath.resolve(identifier).resolve(KeyType.SECP256K1.name()));
@@ -205,13 +201,12 @@ class DefaultArtifactSignerProviderTest {
         .mapToObj(
             i -> {
               try {
-                final KeyPair secp256k1KeyPair =
-                    EthPublicKeyUtils.createSecp256k1KeyPair(secureRandom);
+                final KeyPair secp256k1KeyPair = EthPublicKeyUtils.generateK256KeyPair();
                 final ECKeyPair ecKeyPair = ECKeyPair.create(secp256k1KeyPair);
 
                 WalletUtils.generateWalletFile("password", ecKeyPair, v3Dir.toFile(), false);
                 return ecKeyPair;
-              } catch (GeneralSecurityException | CipherException | IOException e) {
+              } catch (final CipherException | IOException e) {
                 throw new RuntimeException(e);
               }
             })

@@ -44,10 +44,12 @@ import org.web3j.crypto.ECKeyPair;
  */
 public class EthPublicKeyUtils {
   private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private static final ECDomainParameters SECP256K1_DOMAIN;
   private static final ECParameterSpec BC_SECP256K1_SPEC;
   private static final java.security.spec.ECParameterSpec JAVA_SECP256K1_SPEC;
   private static final String SECP256K1_CURVE = "secp256k1";
+  private static final ECGenParameterSpec EC_KEYGEN_PARAM = new ECGenParameterSpec(SECP256K1_CURVE);
   private static final String EC_ALGORITHM = "EC";
 
   static {
@@ -73,22 +75,17 @@ public class EthPublicKeyUtils {
   /**
    * Create a new secp256k1 key pair.
    *
-   * @param random The random number generator to use
    * @return The generated java security key pair
-   * @throws GeneralSecurityException If there is an issue generating the key pair
    */
-  public static KeyPair createSecp256k1KeyPair(final SecureRandom random)
-      throws GeneralSecurityException {
-    final KeyPairGenerator keyPairGenerator =
-        KeyPairGenerator.getInstance(EC_ALGORITHM, BC_PROVIDER);
-    final ECGenParameterSpec ecGenParameterSpec = new ECGenParameterSpec(SECP256K1_CURVE);
-    if (random != null) {
-      keyPairGenerator.initialize(ecGenParameterSpec, random);
-    } else {
-      keyPairGenerator.initialize(ecGenParameterSpec);
+  public static KeyPair generateK256KeyPair() {
+    try {
+      final KeyPairGenerator keyPairGenerator =
+          KeyPairGenerator.getInstance(EC_ALGORITHM, BC_PROVIDER);
+      keyPairGenerator.initialize(EC_KEYGEN_PARAM);
+      return keyPairGenerator.generateKeyPair();
+    } catch (final GeneralSecurityException e) {
+      throw new RuntimeException(e);
     }
-
-    return keyPairGenerator.generateKeyPair();
   }
 
   /**

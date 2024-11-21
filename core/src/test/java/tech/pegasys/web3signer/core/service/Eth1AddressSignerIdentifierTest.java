@@ -19,7 +19,6 @@ import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.signing.secp256k1.SignerIdentifier;
 
 import java.security.KeyPair;
-import java.security.SecureRandom;
 import java.security.interfaces.ECPublicKey;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -31,10 +30,9 @@ class Eth1AddressSignerIdentifierTest {
   private static KeyPair secp256k1KeyPair2;
 
   @BeforeAll
-  static void generateKeyPair() throws Exception {
-    final SecureRandom random = new SecureRandom();
-    secp256k1KeyPair = EthPublicKeyUtils.createSecp256k1KeyPair(random);
-    secp256k1KeyPair2 = EthPublicKeyUtils.createSecp256k1KeyPair(random);
+  static void generateKeyPair() {
+    secp256k1KeyPair = EthPublicKeyUtils.generateK256KeyPair();
+    secp256k1KeyPair2 = EthPublicKeyUtils.generateK256KeyPair();
   }
 
   @Test
@@ -44,7 +42,7 @@ class Eth1AddressSignerIdentifierTest {
         Keys.getAddress(
             EthPublicKeyUtils.ecPublicKeyToBigInteger((ECPublicKey) secp256k1KeyPair.getPublic()));
     // forcefully convert first two alphabets to uppercase and add prefix
-    final String mixCaseAddress = "0X" + convertAlphabetsToUpperCase(address);
+    final String mixCaseAddress = "0X" + convertHexToMixCase(address);
 
     final Eth1AddressSignerIdentifier signerIdentifier =
         new Eth1AddressSignerIdentifier(mixCaseAddress);
@@ -87,7 +85,14 @@ class Eth1AddressSignerIdentifierTest {
     assertThat(signerIdentifier.toStringIdentifier()).isLowerCase();
   }
 
-  public static String convertAlphabetsToUpperCase(final String input) {
+  /**
+   * Converts first two alphabets to uppercase that can be used to test the case sensitivity of the
+   * address
+   *
+   * @param input address string in hex, assuming all characters are lowercase.
+   * @return address with first two alphabets converted to uppercase
+   */
+  private static String convertHexToMixCase(final String input) {
     final char[] chars = input.toCharArray();
     int count = 0;
 
