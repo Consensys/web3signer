@@ -19,7 +19,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.web3j.utils.Numeric;
 
-public class SecpArtifactSignature implements ArtifactSignature {
+public class SecpArtifactSignature implements ArtifactSignature<Signature> {
   private final Signature signature;
 
   public SecpArtifactSignature(final Signature signature) {
@@ -31,8 +31,18 @@ public class SecpArtifactSignature implements ArtifactSignature {
     return KeyType.SECP256K1;
   }
 
+  @Override
   public Signature getSignatureData() {
     return signature;
+  }
+
+  @Override
+  public String asHex() {
+    return Bytes.concatenate(
+            Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signature.getR()))),
+            Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signature.getS()))),
+            Bytes.wrap(ByteUtils.bigIntegerToBytes(signature.getV())))
+        .toHexString();
   }
 
   public static SecpArtifactSignature fromBytes(final Bytes signature) {
@@ -44,13 +54,5 @@ public class SecpArtifactSignature implements ArtifactSignature {
             Numeric.toBigInt(v.toArrayUnsafe()),
             Numeric.toBigInt(r.toArrayUnsafe()),
             Numeric.toBigInt(s.toArrayUnsafe())));
-  }
-
-  public static Bytes toBytes(final SecpArtifactSignature signature) {
-    final Signature signatureData = signature.getSignatureData();
-    return Bytes.concatenate(
-        Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getR()))),
-        Bytes32.leftPad(Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getS()))),
-        Bytes.wrap(ByteUtils.bigIntegerToBytes(signatureData.getV())));
   }
 }
