@@ -96,7 +96,7 @@ public class EthPublicKeyUtils {
   public static KeyPair web3JECKeypairToJavaKeyPair(final ECKeyPair web3JECKeypair) {
     try {
       final PrivateKey ecPrivateKey =
-          KeyFactory.getInstance("EC", BC_PROVIDER)
+          KeyFactory.getInstance(EC_ALGORITHM, BC_PROVIDER)
               .generatePrivate(
                   new ECPrivateKeySpec(web3JECKeypair.getPrivateKey(), JAVA_SECP256K1_SPEC));
       return new KeyPair(web3JPublicKeyToECPublicKey(web3JECKeypair.getPublicKey()), ecPrivateKey);
@@ -233,17 +233,14 @@ public class EthPublicKeyUtils {
   }
 
   /**
-   * Convert a java ECPublicKey to a BigInteger.
+   * Convert a java ECPublicKey to a Web3J public key as BigInteger.
    *
    * @param publicKey The public key to convert
-   * @return The public key as a BigInteger
+   * @return The Web3J public key as a BigInteger
    */
-  public static BigInteger ecPublicKeyToBigInteger(final ECPublicKey publicKey) {
-    // Get the uncompressed public key without prefix (64 bytes)
-    final Bytes publicKeyBytes = getEncoded(publicKey, false);
-
-    // Convert to BigInteger
-    return new BigInteger(1, publicKeyBytes.toArrayUnsafe());
+  public static BigInteger ecPublicKeyToWeb3JPublicKey(final ECPublicKey publicKey) {
+    // Convert to BigInteger from uncompressed public key (64 bytes)
+    return new BigInteger(1, getEncoded(publicKey, false).toArrayUnsafe());
   }
 
   /**

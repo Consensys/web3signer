@@ -40,7 +40,8 @@ class Eth1AddressSignerIdentifierTest {
     // web3j.crypto.Keys.getAddress() returns lower case address without 0x prefix
     final String address =
         Keys.getAddress(
-            EthPublicKeyUtils.ecPublicKeyToBigInteger((ECPublicKey) secp256k1KeyPair.getPublic()));
+            EthPublicKeyUtils.ecPublicKeyToWeb3JPublicKey(
+                (ECPublicKey) secp256k1KeyPair.getPublic()));
     // forcefully convert first two alphabets to uppercase and add prefix
     final String mixCaseAddress = "0X" + convertHexToMixCase(address);
 
@@ -79,7 +80,7 @@ class Eth1AddressSignerIdentifierTest {
 
     // web3j.crypto.Keys.getAddress() returns lower case address without 0x prefix
     final String expectedAddress =
-        Keys.getAddress(EthPublicKeyUtils.ecPublicKeyToBigInteger(publicKey));
+        Keys.getAddress(EthPublicKeyUtils.ecPublicKeyToWeb3JPublicKey(publicKey));
     assertThat(signerIdentifier.toStringIdentifier()).isEqualTo(expectedAddress);
     assertThat(signerIdentifier.toStringIdentifier()).doesNotStartWithIgnoringCase("0x");
     assertThat(signerIdentifier.toStringIdentifier()).isLowerCase();

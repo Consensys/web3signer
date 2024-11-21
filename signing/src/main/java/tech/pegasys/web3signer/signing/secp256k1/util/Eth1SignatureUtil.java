@@ -91,7 +91,7 @@ public class Eth1SignatureUtil {
 
   private static int recoverKeyIndex(
       final ECPublicKey ecPublicKey, final ECDSASignature sig, final byte[] hash) {
-    final BigInteger publicKey = EthPublicKeyUtils.ecPublicKeyToBigInteger(ecPublicKey);
+    final BigInteger publicKey = EthPublicKeyUtils.ecPublicKeyToWeb3JPublicKey(ecPublicKey);
     for (int i = 0; i < 4; i++) {
       final BigInteger k = Sign.recoverFromSignature(i, sig, hash);
       LOG.trace("recovered key: {}", k);

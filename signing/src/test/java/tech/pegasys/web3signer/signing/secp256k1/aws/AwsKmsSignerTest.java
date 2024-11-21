@@ -116,7 +116,8 @@ public class AwsKmsSignerTest {
     final Signer signer =
         new AwsKmsSignerFactory(cachedAwsKmsClientFactory, applySha3Hash)
             .createSigner(awsKmsMetadata);
-    final BigInteger publicKey = EthPublicKeyUtils.ecPublicKeyToBigInteger(signer.getPublicKey());
+    final BigInteger publicKey =
+        EthPublicKeyUtils.ecPublicKeyToWeb3JPublicKey(signer.getPublicKey());
 
     final byte[] dataToSign = "Hello".getBytes(UTF_8);
 

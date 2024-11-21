@@ -71,7 +71,7 @@ public class AzureKeyVaultSignerTest {
         new AzureKeyVaultSignerFactory(new AzureKeyVaultFactory(), new AzureHttpClientFactory())
             .createSigner(config);
     final BigInteger publicKey =
-        EthPublicKeyUtils.ecPublicKeyToBigInteger(azureNonHashedDataSigner.getPublicKey());
+        EthPublicKeyUtils.ecPublicKeyToWeb3JPublicKey(azureNonHashedDataSigner.getPublicKey());
 
     final byte[] dataToSign = "Hello World".getBytes(UTF_8);
 
