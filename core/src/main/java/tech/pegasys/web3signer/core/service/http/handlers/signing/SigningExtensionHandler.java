@@ -36,9 +36,9 @@ public class SigningExtensionHandler implements Handler<RoutingContext> {
           .copy()
           .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-  private final SignerForIdentifier<?> signerForIdentifier;
+  private final SignerForIdentifier signerForIdentifier;
 
-  public SigningExtensionHandler(final SignerForIdentifier<?> signerForIdentifier) {
+  public SigningExtensionHandler(final SignerForIdentifier signerForIdentifier) {
     this.signerForIdentifier = signerForIdentifier;
   }
 
