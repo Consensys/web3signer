@@ -72,7 +72,11 @@ class EthPublicKeyUtilsTest {
         Bytes.fromHexString(
             EthPublicKeyUtils.toHexStringCompressed((ECPublicKey) keyPair.getPublic())),
         // Uncompressed without prefix (64 bytes)
-        Bytes.fromHexString(EthPublicKeyUtils.toHexString((ECPublicKey) keyPair.getPublic())));
+        Bytes.fromHexString(EthPublicKeyUtils.toHexString((ECPublicKey) keyPair.getPublic())),
+        // Uncompressed with prefix (65 bytes)
+        Bytes.concatenate(
+            Bytes.of(0x04),
+            Bytes.fromHexString(EthPublicKeyUtils.toHexString((ECPublicKey) keyPair.getPublic()))));
   }
 
   @ParameterizedTest
