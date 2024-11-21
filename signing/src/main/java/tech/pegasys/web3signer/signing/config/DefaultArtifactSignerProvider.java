@@ -180,9 +180,8 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
 
     if (canReadFromDirectory(proxyBlsDir)) {
       // load bls proxy signers
-      final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
       final MappedResults<ArtifactSigner> blsSignersResult =
-          blsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
+          BlsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
               proxyBlsDir, keystoreParameter.getKeystoresPasswordFile());
       final Collection<ArtifactSigner> blsSigners = blsSignersResult.getValues();
       proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(blsSigners);
