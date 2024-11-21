@@ -24,9 +24,10 @@ import tech.pegasys.web3signer.signing.bulkloading.SecpV3KeystoresBulkLoader;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -45,7 +46,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
-  private final Map<String, Set<ArtifactSigner>> proxySigners = new HashMap<>();
+  private final Map<String, List<ArtifactSigner>> proxySigners = new HashMap<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
 
@@ -116,14 +117,14 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
-  public Map<KeyType, Set<String>> getProxyIdentifiers(final String consensusPubKey) {
-    final Set<ArtifactSigner> artifactSigners =
-        proxySigners.computeIfAbsent(consensusPubKey, k -> Set.of());
+  public Map<KeyType, List<String>> getProxyIdentifiers(final String identifier) {
+    final List<ArtifactSigner> artifactSigners =
+        proxySigners.computeIfAbsent(identifier, k -> List.of());
     return artifactSigners.stream()
         .collect(
             Collectors.groupingBy(
                 ArtifactSigner::getKeyType,
-                Collectors.mapping(ArtifactSigner::getIdentifier, Collectors.toSet())));
+                Collectors.mapping(ArtifactSigner::getIdentifier, Collectors.toList())));
   }
 
   @Override
@@ -141,7 +142,6 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
     return executorService.submit(
         () -> {
           signers.remove(identifier);
-          proxySigners.remove(identifier);
           LOG.info("Removed signer with identifier '{}'", identifier);
           return null;
         });
@@ -168,7 +168,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
           SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
               proxySecpDir, keystoreParameter.getKeystoresPasswordFile());
       final Collection<ArtifactSigner> secpSigners = secpSignersResults.getValues();
-      proxySigners.computeIfAbsent(identifier, k -> new HashSet<>()).addAll(secpSigners);
+      proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(secpSigners);
     }
   }
 
@@ -184,7 +184,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
           BlsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
               proxyBlsDir, keystoreParameter.getKeystoresPasswordFile());
       final Collection<ArtifactSigner> blsSigners = blsSignersResult.getValues();
-      proxySigners.computeIfAbsent(identifier, k -> new HashSet<>()).addAll(blsSigners);
+      proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(blsSigners);
     }
   }
 }

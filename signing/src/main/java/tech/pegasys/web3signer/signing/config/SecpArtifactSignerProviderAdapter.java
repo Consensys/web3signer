@@ -20,6 +20,7 @@ import tech.pegasys.web3signer.signing.ArtifactSignerProvider;
 import tech.pegasys.web3signer.signing.KeyType;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -68,7 +69,7 @@ public class SecpArtifactSignerProviderAdapter implements ArtifactSignerProvider
   }
 
   @Override
-  public Map<KeyType, Set<String>> getProxyIdentifiers(final String identifier) {
+  public Map<KeyType, List<String>> getProxyIdentifiers(final String identifier) {
     throw new NotImplementedException();
   }
 

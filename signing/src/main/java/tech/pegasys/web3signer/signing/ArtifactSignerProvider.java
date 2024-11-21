@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.signing;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -43,12 +44,12 @@ public interface ArtifactSignerProvider extends Closeable {
   Set<String> availableIdentifiers();
 
   /**
-   * Get the proxy public keys for the given consensus public key. Used for commit boost API.
+   * Get the proxy identifiers for the given identifier. Used for commit boost API.
    *
-   * @param consensusPubKey the identifier of the consensus signer
+   * @param identifier the identifier of the signer
    * @return Map of Key Type (BLS, SECP256K1) and corresponding proxy identifiers
    */
-  Map<KeyType, Set<String>> getProxyIdentifiers(final String consensusPubKey);
+  Map<KeyType, List<String>> getProxyIdentifiers(final String identifier);
 
   /**
    * Add a new signer to the signer provider.
