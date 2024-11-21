@@ -29,6 +29,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.security.KeyPair;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.web3j.crypto.ECKeyPair;
-import org.web3j.crypto.Keys;
 import org.web3j.crypto.WalletUtils;
 import org.web3j.crypto.exception.CipherException;
 
@@ -205,7 +205,10 @@ class DefaultArtifactSignerProviderTest {
         .mapToObj(
             i -> {
               try {
-                final ECKeyPair ecKeyPair = Keys.createEcKeyPair(secureRandom);
+                final KeyPair secp256k1KeyPair =
+                    EthPublicKeyUtils.createSecp256k1KeyPair(secureRandom);
+                final ECKeyPair ecKeyPair = ECKeyPair.create(secp256k1KeyPair);
+
                 WalletUtils.generateWalletFile("password", ecKeyPair, v3Dir.toFile(), false);
                 return ecKeyPair;
               } catch (GeneralSecurityException | CipherException | IOException e) {
@@ -227,7 +230,7 @@ class DefaultArtifactSignerProviderTest {
         .map(
             keyPair ->
                 EthPublicKeyUtils.toHexString(
-                    EthPublicKeyUtils.createPublicKey(keyPair.getPublicKey())))
+                    EthPublicKeyUtils.bigIntegerToECPublicKey(keyPair.getPublicKey())))
         .toList()
         .toArray(String[]::new);
   }
