@@ -32,25 +32,26 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Sets;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.web3j.crypto.Keys;
 
 public class EthAccountsResultProviderTest {
-  private ECPublicKey publicKeyA;
-  private ECPublicKey publicKeyB;
-  private ECPublicKey publicKeyC;
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-  private String addressA;
-  private String addressB;
-  private String addressC;
+  private static ECPublicKey publicKeyA;
+  private static ECPublicKey publicKeyB;
+  private static ECPublicKey publicKeyC;
 
-  @BeforeEach
-  public void init() throws GeneralSecurityException {
-    SecureRandom secureRandom = new SecureRandom();
-    publicKeyA = (ECPublicKey) EthPublicKeyUtils.createSecp256k1KeyPair(secureRandom).getPublic();
-    publicKeyB = (ECPublicKey) EthPublicKeyUtils.createSecp256k1KeyPair(secureRandom).getPublic();
-    publicKeyC = (ECPublicKey) EthPublicKeyUtils.createSecp256k1KeyPair(secureRandom).getPublic();
+  private static String addressA;
+  private static String addressB;
+  private static String addressC;
+
+  @BeforeAll
+  static void init() throws GeneralSecurityException {
+    publicKeyA = (ECPublicKey) EthPublicKeyUtils.createSecp256k1KeyPair(SECURE_RANDOM).getPublic();
+    publicKeyB = (ECPublicKey) EthPublicKeyUtils.createSecp256k1KeyPair(SECURE_RANDOM).getPublic();
+    publicKeyC = (ECPublicKey) EthPublicKeyUtils.createSecp256k1KeyPair(SECURE_RANDOM).getPublic();
 
     addressA = Keys.getAddress(EthPublicKeyUtils.toHexString(publicKeyA));
     addressB = Keys.getAddress(EthPublicKeyUtils.toHexString(publicKeyB));
