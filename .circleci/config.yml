@@ -273,6 +273,8 @@ jobs:
           name: Scan with trivy
           shell: /bin/sh
           command: |
+            export TRIVY_DB_REPOSITORY="ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db"
+            export TRIVY_JAVA_DB_REPOSITORY="ghcr.io/aquasecurity/trivy-java-db,public.ecr.aws/aquasecurity/trivy-java-db"
             $HOME/bin/trivy image consensys/web3signer:develop-arm64 --image-src remote --exit-code 1 --quiet --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m
             $HOME/bin/trivy image consensys/web3signer:develop-amd64 --image-src remote --exit-code 1 --quiet --no-progress --severity HIGH,CRITICAL --ignorefile "gradle/trivyignore.txt" --timeout 10m
 

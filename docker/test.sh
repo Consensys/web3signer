@@ -27,7 +27,10 @@ eth2 \
 docker image rm ${DOCKER_TEST_IMAGE}
 
 # also check for security vulns with trivy
-docker run aquasec/trivy image $DOCKER_IMAGE
+docker run \
+ -e "TRIVY_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db" \
+ -e "TRIVY_JAVA_DB_REPOSITORY=ghcr.io/aquasecurity/trivy-java-db,public.ecr.aws/aquasecurity/trivy-java-db" \
+ aquasec/trivy image $DOCKER_IMAGE
 
 echo "test.sh Exit code: $i"
 exit $i
