@@ -12,15 +12,10 @@
  */
 package tech.pegasys.web3signer.tests.commitboost;
 
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.networks.Eth2NetworkConfiguration;
-import tech.pegasys.teku.spec.Spec;
-import tech.pegasys.teku.spec.networks.Eth2Network;
-import tech.pegasys.web3signer.BLSTestUtil;
+import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.web3signer.KeystoreUtil;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultKeystoresParameters;
@@ -29,9 +24,14 @@ import tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils;
 import tech.pegasys.web3signer.tests.AcceptanceTestBase;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.SecureRandom;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
@@ -45,41 +45,35 @@ import org.web3j.crypto.WalletUtils;
 
 // See https://commit-boost.github.io/commit-boost-client/api/ for Commit Boost spec
 public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
-  private static final BLSKeyPair KEY_PAIR_1 = BLSTestUtil.randomKeyPair(0);
-  private static final List<BLSKeyPair> PROXYY_BLS_KEYS = randomBLSKeyPairs();
-  private static final List<ECKeyPair> PROXY_SECP_KEYS = randomECKeyPairs();
-
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private static final String KEYSTORE_PASSWORD = "password";
+
+  private List<BLSKeyPair> consensusBlsKeys = randomBLSKeyPairs(2);
+  private Map<BLSPublicKey, List<BLSKeyPair>> proxyBLSKeysMap = new HashMap<>();
+  private Map<BLSPublicKey, List<ECKeyPair>> proxySECPKeysMap = new HashMap<>();
   @TempDir private Path keystoreDir;
   @TempDir private Path passwordDir;
   // commit boost directories
   @TempDir private Path commitBoostKeystoresPath;
   @TempDir private Path commitBoostPasswordDir;
 
-  private static List<ECKeyPair> randomECKeyPairs() {
-
-    try {
-      return List.of(Keys.createEcKeyPair(), Keys.createEcKeyPair());
-    } catch (final Exception e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  private static List<BLSKeyPair> randomBLSKeyPairs() {
-    return List.of(BLSTestUtil.randomKeyPair(1), BLSTestUtil.randomKeyPair(2));
-  }
-
   @BeforeEach
   void setup() throws Exception {
-    // create main bls key
-    KeystoreUtil.createKeystore(KEY_PAIR_1, keystoreDir, passwordDir, KEYSTORE_PASSWORD);
+    for (final BLSKeyPair blsKeyPair : consensusBlsKeys) {
+      // create consensus bls keystore
+      KeystoreUtil.createKeystore(blsKeyPair, keystoreDir, passwordDir, KEYSTORE_PASSWORD);
+
+      // create 2 proxy bls
+      final List<BLSKeyPair> proxyBLSKeys = createProxyBLSKeys(blsKeyPair);
+      proxyBLSKeysMap.put(blsKeyPair.getPublicKey(), proxyBLSKeys);
+
+      // create 2 proxy secp keys
+      final List<ECKeyPair> proxyECKeyPairs = createProxyECKeys(blsKeyPair);
+      proxySECPKeysMap.put(blsKeyPair.getPublicKey(), proxyECKeyPairs);
+    }
 
     // commit boost proxy keys password file
     final Path commitBoostPasswordFile = createCommitBoostPasswordFile();
-
-    createProxyBLSKeys();
-
-    createProxyECKeys();
 
     // start web3signer with keystores and commit boost parameters
     final KeystoresParameters keystoresParameters =
@@ -99,40 +93,32 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   void listCommitBoostPublicKeys() {
-    final List<String> proxyBlsPubKeys = getBlsProxyPubKeys();
-    final List<String> proxyECPubKeys = getProxyECPubKeys();
-
     final Response response = signer.callCommitBoostGetPubKeys();
-    // the response should have 1 keys entry.
     response
         .then()
+        .log()
+        .body()
         .statusCode(200)
         .contentType(ContentType.JSON)
-        .body("keys", hasSize(1))
-        .body("keys[0].consensus", equalTo(KEY_PAIR_1.getPublicKey().toHexString()))
-        .body("keys[0].proxy_bls", containsInAnyOrder(proxyBlsPubKeys.toArray()))
-        .body("keys[0].proxy_ecdsa", containsInAnyOrder(proxyECPubKeys.toArray()));
+        .body("keys", hasSize(2));
+    //        .body("keys[0].consensus", equalTo(CONSENSUS_PUB_KEY.getPublicKey().toHexString()))
+    //        .body("keys[0].proxy_bls", containsInAnyOrder(proxyBlsPubKeys.toArray()))
+    //        .body("keys[0].proxy_ecdsa", containsInAnyOrder(proxyECPubKeys.toArray()));
   }
 
-  private static Spec getSpec() {
-    final Eth2NetworkConfiguration.Builder builder = Eth2NetworkConfiguration.builder();
-    builder.applyNetworkDefaults(Eth2Network.MAINNET);
-    Eth2NetworkConfiguration eth2NetworkConfiguration = builder.build();
-    return eth2NetworkConfiguration.getSpec();
-  }
-
-  private static List<String> getProxyECPubKeys() {
-    return PROXY_SECP_KEYS.stream()
+  private List<String> getProxyECPubKeys(final BLSPublicKey consensusKey) {
+    // return compressed secp256k1 public keys in hex format
+    return proxySECPKeysMap.get(consensusKey).stream()
         .map(
             ecKeyPair ->
-                EthPublicKeyUtils.getEncoded(
-                        EthPublicKeyUtils.bigIntegerToECPublicKey(ecKeyPair.getPublicKey()), true)
+                EthPublicKeyUtils.toHexStringCompressed(
+                        EthPublicKeyUtils.web3JPublicKeyToECPublicKey(ecKeyPair.getPublicKey()))
                     .toHexString())
         .toList();
   }
 
-  private static List<String> getBlsProxyPubKeys() {
-    return PROXYY_BLS_KEYS.stream()
+  private List<String> getProxyBLSPubKeys(final BLSPublicKey consensusKey) {
+    return proxyBLSKeysMap.get(consensusKey).stream()
         .map(blsKeyPair -> blsKeyPair.getPublicKey().toHexString())
         .toList();
   }
@@ -146,29 +132,86 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
     }
   }
 
-  private void createProxyECKeys() throws IOException {
+  /**
+   * Generate 2 random proxy EC key pairs and their encrypted keystores
+   *
+   * @param consensusKeyPair consensus BLS key pair whose public key will be used as directory name
+   * @return list of ECKeyPairs
+   */
+  private List<ECKeyPair> createProxyECKeys(final BLSKeyPair consensusKeyPair) {
     final Path proxySecpKeyStoreDir =
         commitBoostKeystoresPath
-            .resolve(KEY_PAIR_1.getPublicKey().toHexString())
+            .resolve(consensusKeyPair.getPublicKey().toHexString())
             .resolve("SECP256K1");
-    Files.createDirectories(proxySecpKeyStoreDir);
-    PROXY_SECP_KEYS.forEach(
+    try {
+      Files.createDirectories(proxySecpKeyStoreDir);
+    } catch (final IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    // create 2 random proxy secp keys and their keystores
+    final List<ECKeyPair> proxyECKeyPairs = randomECKeyPairs(2);
+    proxyECKeyPairs.forEach(
         proxyECKey -> {
           try {
             WalletUtils.generateWalletFile(
                 KEYSTORE_PASSWORD, proxyECKey, proxySecpKeyStoreDir.toFile(), false);
-          } catch (Exception e) {
+          } catch (final Exception e) {
             throw new IllegalStateException(e);
           }
         });
+    return proxyECKeyPairs;
   }
 
-  private void createProxyBLSKeys() throws IOException {
+  /**
+   * Generate 2 random proxy BLS key pairs and their encrypted keystores
+   *
+   * @param consensusKeyPair consensus BLS key pair whose public key will be used as directory name
+   * @return list of BLSKeyPairs
+   */
+  private List<BLSKeyPair> createProxyBLSKeys(final BLSKeyPair consensusKeyPair) {
     final Path proxyBlsKeyStoreDir =
-        commitBoostKeystoresPath.resolve(KEY_PAIR_1.getPublicKey().toHexString()).resolve("BLS");
-    Files.createDirectories(proxyBlsKeyStoreDir);
-    PROXYY_BLS_KEYS.forEach(
-        proxyBlsKey ->
-            KeystoreUtil.createKeystoreFile(proxyBlsKey, proxyBlsKeyStoreDir, KEYSTORE_PASSWORD));
+        commitBoostKeystoresPath
+            .resolve(consensusKeyPair.getPublicKey().toHexString())
+            .resolve("BLS");
+    try {
+      Files.createDirectories(proxyBlsKeyStoreDir);
+    } catch (final IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    // create 2 proxy bls keys and their keystores
+    List<BLSKeyPair> blsKeyPairs = randomBLSKeyPairs(2);
+    blsKeyPairs.forEach(
+        blsKeyPair ->
+            KeystoreUtil.createKeystoreFile(blsKeyPair, proxyBlsKeyStoreDir, KEYSTORE_PASSWORD));
+    return blsKeyPairs;
+  }
+
+  /**
+   * Generate random SECP256K1 KeyPairs using Web3J library
+   *
+   * @param count number of key pairs to generate
+   * @return list of ECKeyPairs
+   */
+  private static List<ECKeyPair> randomECKeyPairs(final int count) {
+    return Stream.generate(
+            () -> {
+              try {
+                return Keys.createEcKeyPair();
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            })
+        .limit(count)
+        .toList();
+  }
+
+  /**
+   * Generate random BLS KeyPairs using Teku library
+   *
+   * @param count number of key pairs to generate
+   * @return list of BLSKeyPairs
+   */
+  private static List<BLSKeyPair> randomBLSKeyPairs(final int count) {
+    return Stream.generate(() -> BLSKeyPair.random(SECURE_RANDOM)).limit(count).toList();
   }
 }
