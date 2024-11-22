@@ -49,8 +49,8 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
   private static final String KEYSTORE_PASSWORD = "password";
 
   private List<BLSKeyPair> consensusBlsKeys = randomBLSKeyPairs(2);
-  private Map<BLSPublicKey, List<BLSKeyPair>> proxyBLSKeysMap = new HashMap<>();
-  private Map<BLSPublicKey, List<ECKeyPair>> proxySECPKeysMap = new HashMap<>();
+  private Map<String, List<BLSKeyPair>> proxyBLSKeysMap = new HashMap<>();
+  private Map<String, List<ECKeyPair>> proxySECPKeysMap = new HashMap<>();
   @TempDir private Path keystoreDir;
   @TempDir private Path passwordDir;
   // commit boost directories
@@ -65,11 +65,11 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
 
       // create 2 proxy bls
       final List<BLSKeyPair> proxyBLSKeys = createProxyBLSKeys(blsKeyPair);
-      proxyBLSKeysMap.put(blsKeyPair.getPublicKey(), proxyBLSKeys);
+      proxyBLSKeysMap.put(blsKeyPair.getPublicKey().toHexString(), proxyBLSKeys);
 
       // create 2 proxy secp keys
       final List<ECKeyPair> proxyECKeyPairs = createProxyECKeys(blsKeyPair);
-      proxySECPKeysMap.put(blsKeyPair.getPublicKey(), proxyECKeyPairs);
+      proxySECPKeysMap.put(blsKeyPair.getPublicKey().toHexString(), proxyECKeyPairs);
     }
 
     // commit boost proxy keys password file
@@ -106,9 +106,9 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
     //        .body("keys[0].proxy_ecdsa", containsInAnyOrder(proxyECPubKeys.toArray()));
   }
 
-  private List<String> getProxyECPubKeys(final BLSPublicKey consensusKey) {
+  private List<String> getProxyECPubKeys(final String consensusKeyHex) {
     // return compressed secp256k1 public keys in hex format
-    return proxySECPKeysMap.get(consensusKey).stream()
+    return proxySECPKeysMap.get(consensusKeyHex).stream()
         .map(
             ecKeyPair ->
                 EthPublicKeyUtils.toHexStringCompressed(
@@ -117,8 +117,8 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
         .toList();
   }
 
-  private List<String> getProxyBLSPubKeys(final BLSPublicKey consensusKey) {
-    return proxyBLSKeysMap.get(consensusKey).stream()
+  private List<String> getProxyBLSPubKeys(final String consensusKeyHex) {
+    return proxyBLSKeysMap.get(consensusKeyHex).stream()
         .map(blsKeyPair -> blsKeyPair.getPublicKey().toHexString())
         .toList();
   }
