@@ -46,15 +46,13 @@ public class SignerForIdentifier {
   /**
    * Sign data for given identifier and return ArtifactSignature. Useful for SECP signing usages.
    *
-   * @param <T> The specific type of ArtifactSignature
    * @param identifier The identifier for which to sign data.
    * @param data Bytes which is signed
    * @return Optional ArtifactSignature of type T. Empty if no signer available for given identifier
    */
-  @SuppressWarnings("unchecked")
-  public <T extends ArtifactSignature<?>> Optional<T> signAndGetArtifactSignature(
+  public Optional<ArtifactSignature> signAndGetArtifactSignature(
       final String identifier, final Bytes data) {
-    return signerProvider.getSigner(identifier).map(signer -> (T) signer.sign(data));
+    return signerProvider.getSigner(identifier).map(signer -> signer.sign(data));
   }
 
   /**
