@@ -13,6 +13,7 @@
 package tech.pegasys.web3signer.core;
 
 import static org.web3j.crypto.Keys.getAddress;
+import static tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils.ecPublicKeyToWeb3JPublicKey;
 import static tech.pegasys.web3signer.signing.secp256k1.EthPublicKeyUtils.toHexString;
 import static tech.pegasys.web3signer.signing.secp256k1.util.AddressUtil.remove0xPrefix;
 
@@ -31,11 +32,7 @@ public class Eth1AddressSignerIdentifier implements SignerIdentifier {
   }
 
   public static SignerIdentifier fromPublicKey(final ECPublicKey publicKey) {
-    return new Eth1AddressSignerIdentifier(getAddress(toHexString(publicKey)));
-  }
-
-  public static SignerIdentifier fromPublicKey(final String publicKey) {
-    return new Eth1AddressSignerIdentifier(getAddress(publicKey));
+    return new Eth1AddressSignerIdentifier(getAddress(ecPublicKeyToWeb3JPublicKey(publicKey)));
   }
 
   @Override

@@ -60,7 +60,8 @@ public class SecpV3KeystoresBulkLoadAcceptanceTest extends AcceptanceTestBase {
     publicKeys = new ArrayList<>();
     for (int i = 0; i < 4; i++) {
       final ECKeyPair ecKeyPair = Keys.createEcKeyPair();
-      final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(ecKeyPair.getPublicKey());
+      final ECPublicKey ecPublicKey =
+          EthPublicKeyUtils.web3JPublicKeyToECPublicKey(ecKeyPair.getPublicKey());
       final String publicKeyHex =
           IdentifierUtils.normaliseIdentifier(EthPublicKeyUtils.toHexString(ecPublicKey));
       publicKeys.add(publicKeyHex);
