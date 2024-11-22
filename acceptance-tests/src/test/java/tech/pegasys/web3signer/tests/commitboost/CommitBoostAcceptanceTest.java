@@ -12,10 +12,10 @@
  */
 package tech.pegasys.web3signer.tests.commitboost;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
 import tech.pegasys.teku.bls.BLSKeyPair;
-import tech.pegasys.teku.bls.BLSPublicKey;
 import tech.pegasys.web3signer.KeystoreUtil;
 import tech.pegasys.web3signer.dsl.signer.SignerConfigurationBuilder;
 import tech.pegasys.web3signer.dsl.utils.DefaultKeystoresParameters;
@@ -101,9 +101,26 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
         .statusCode(200)
         .contentType(ContentType.JSON)
         .body("keys", hasSize(2));
-    //        .body("keys[0].consensus", equalTo(CONSENSUS_PUB_KEY.getPublicKey().toHexString()))
-    //        .body("keys[0].proxy_bls", containsInAnyOrder(proxyBlsPubKeys.toArray()))
-    //        .body("keys[0].proxy_ecdsa", containsInAnyOrder(proxyECPubKeys.toArray()));
+
+    // extract consensus public keys from response
+    final List<Map<String, Object>> responseKeys = response.jsonPath().getList("keys");
+    for (final Map<String, Object> responseKeyMap : responseKeys) {
+      final String consensusKeyHex = (String) responseKeyMap.get("consensus");
+      // verify if consensus public key is present in the map
+      assertThat(proxyBLSKeysMap.keySet()).contains(consensusKeyHex);
+
+      // verify if proxy BLS keys are present in the response
+      final List<String> responseProxyBlsKeys = (List<String>) responseKeyMap.get("proxy_bls");
+      final List<String> expectedProxyBLSKeys = getProxyBLSPubKeys(consensusKeyHex);
+      assertThat(responseProxyBlsKeys)
+          .containsExactlyInAnyOrder(expectedProxyBLSKeys.toArray(String[]::new));
+
+      // verify if proxy SECP keys are present in the response
+      final List<String> responseProxySECPKeys = (List<String>) responseKeyMap.get("proxy_ecdsa");
+      final List<String> expectedProxySECPKeys = getProxyECPubKeys(consensusKeyHex);
+      assertThat(responseProxySECPKeys)
+          .containsExactlyInAnyOrder(expectedProxySECPKeys.toArray(String[]::new));
+    }
   }
 
   private List<String> getProxyECPubKeys(final String consensusKeyHex) {
@@ -112,8 +129,7 @@ public class CommitBoostAcceptanceTest extends AcceptanceTestBase {
         .map(
             ecKeyPair ->
                 EthPublicKeyUtils.toHexStringCompressed(
-                        EthPublicKeyUtils.web3JPublicKeyToECPublicKey(ecKeyPair.getPublicKey()))
-                    .toHexString())
+                    EthPublicKeyUtils.web3JPublicKeyToECPublicKey(ecKeyPair.getPublicKey())))
         .toList();
   }
 
