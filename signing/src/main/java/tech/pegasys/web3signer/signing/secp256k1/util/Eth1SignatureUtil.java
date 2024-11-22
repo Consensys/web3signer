@@ -28,7 +28,6 @@ import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.DLSequence;
 import org.web3j.crypto.ECDSASignature;
 import org.web3j.crypto.Sign;
-import org.web3j.utils.Numeric;
 
 public class Eth1SignatureUtil {
   private static final Logger LOG = LogManager.getLogger();
@@ -92,7 +91,7 @@ public class Eth1SignatureUtil {
 
   private static int recoverKeyIndex(
       final ECPublicKey ecPublicKey, final ECDSASignature sig, final byte[] hash) {
-    final BigInteger publicKey = Numeric.toBigInt(EthPublicKeyUtils.toByteArray(ecPublicKey));
+    final BigInteger publicKey = EthPublicKeyUtils.ecPublicKeyToWeb3JPublicKey(ecPublicKey);
     for (int i = 0; i < 4; i++) {
       final BigInteger k = Sign.recoverFromSignature(i, sig, hash);
       LOG.trace("recovered key: {}", k);
