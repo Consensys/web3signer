@@ -14,22 +14,27 @@ package tech.pegasys.web3signer.signing.secp256k1;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
+import static org.assertj.core.api.Fail.fail;
 
 import java.math.BigInteger;
+import java.security.KeyPair;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPoint;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.asn1.x9.X962Parameters;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.ec.CustomNamedCurves;
-import org.bouncycastle.math.ec.ECFieldElement;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.web3j.utils.Numeric;
 
@@ -42,46 +47,82 @@ class EthPublicKeyUtilsTest {
   private static final X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
 
   @Test
-  public void createsPublicKeyFromECPoint() {
-    final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
-    final ECPoint expectedEcPoint = createEcPoint(publicKeyBytes);
-
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(expectedEcPoint);
-    verifyPublicKey(ecPublicKey, publicKeyBytes, expectedEcPoint);
-  }
-
-  @Test
   public void createsPublicKeyFromBytes() {
     final Bytes expectedPublicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(expectedPublicKeyBytes);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.bytesToECPublicKey(expectedPublicKeyBytes);
 
     final ECPoint expectedEcPoint = createEcPoint(expectedPublicKeyBytes);
     verifyPublicKey(ecPublicKey, expectedPublicKeyBytes, expectedEcPoint);
   }
 
   @Test
-  public void createsPublicKeyFromBigInteger() {
+  public void createsPublicKeyFromWeb3JBigInteger() {
     final BigInteger publicKey = Numeric.toBigInt(PUBLIC_KEY);
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(publicKey);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.web3JPublicKeyToECPublicKey(publicKey);
 
     final Bytes expectedPublicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
     final ECPoint expectedEcPoint = createEcPoint(expectedPublicKeyBytes);
     verifyPublicKey(ecPublicKey, expectedPublicKeyBytes, expectedEcPoint);
+  }
+
+  private static Stream<Bytes> validPublicKeys() {
+    final KeyPair keyPair = EthPublicKeyUtils.generateK256KeyPair();
+    return Stream.of(
+        // Compressed (33 bytes)
+        Bytes.fromHexString(
+            EthPublicKeyUtils.toHexStringCompressed((ECPublicKey) keyPair.getPublic())),
+        // Uncompressed without prefix (64 bytes)
+        Bytes.fromHexString(EthPublicKeyUtils.toHexString((ECPublicKey) keyPair.getPublic())),
+        // Uncompressed with prefix (65 bytes)
+        Bytes.concatenate(
+            Bytes.of(0x04),
+            Bytes.fromHexString(EthPublicKeyUtils.toHexString((ECPublicKey) keyPair.getPublic()))));
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {0, 63, 65})
-  public void throwsInvalidArgumentExceptionForInvalidPublicKeySize(final int size) {
-    assertThatThrownBy(() -> EthPublicKeyUtils.createPublicKey(Bytes.random(size)))
+  @MethodSource("validPublicKeys")
+  void acceptsValidPublicKeySizes(final Bytes publicKey) {
+    assertThatCode(() -> EthPublicKeyUtils.bytesToECPublicKey(publicKey))
+        .doesNotThrowAnyException();
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {0, 32, 34, 63, 66})
+  void throwsIllegalArgumentExceptionForInvalidPublicKeySize(final int size) {
+    assertThatThrownBy(() -> EthPublicKeyUtils.bytesToECPublicKey(Bytes.random(size)))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid public key size must be 64 bytes");
+        .hasMessage("Invalid public key length. Expected 33, 64, or 65 bytes.");
+  }
+
+  @Test
+  void throwsIllegalArgumentExceptionForInvalid33ByteKey() {
+    Bytes invalidCompressedKey = Bytes.concatenate(Bytes.of(0x00), Bytes.random(32));
+    assertThatThrownBy(() -> EthPublicKeyUtils.bytesToECPublicKey(invalidCompressedKey))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Incorrect length for infinity encoding");
+  }
+
+  @Test
+  void throwsIllegalArgumentExceptionForInvalid65ByteKey() {
+    Bytes invalidUncompressedKey = Bytes.concatenate(Bytes.of(0x00), Bytes.random(64));
+    assertThatThrownBy(() -> EthPublicKeyUtils.bytesToECPublicKey(invalidUncompressedKey))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Incorrect length for infinity encoding");
+  }
+
+  @Test
+  void throwsIllegalArgumentExceptionForInvalidCompressedKeyPrefix() {
+    Bytes invalidCompressedKey = Bytes.concatenate(Bytes.of(0x04), Bytes.random(32));
+    assertThatThrownBy(() -> EthPublicKeyUtils.bytesToECPublicKey(invalidCompressedKey))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Incorrect length for uncompressed encoding");
   }
 
   @Test
   public void publicKeyIsConvertedToEthHexString() {
     final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
 
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(publicKeyBytes);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.bytesToECPublicKey(publicKeyBytes);
     final String hexString = EthPublicKeyUtils.toHexString(ecPublicKey);
     assertThat(hexString).isEqualTo(PUBLIC_KEY);
   }
@@ -90,52 +131,78 @@ class EthPublicKeyUtilsTest {
   public void publicKeyIsConvertedToEthBytes() {
     final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
 
-    final ECPublicKey ecPublicKey = EthPublicKeyUtils.createPublicKey(publicKeyBytes);
-    final Bytes bytes = Bytes.wrap(EthPublicKeyUtils.toByteArray(ecPublicKey));
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.bytesToECPublicKey(publicKeyBytes);
+    final Bytes bytes = Bytes.fromHexString(EthPublicKeyUtils.toHexString(ecPublicKey));
     assertThat(bytes).isEqualTo(publicKeyBytes);
     assertThat(bytes.size()).isEqualTo(64);
     assertThat(bytes.get(0)).isNotEqualTo(0x4);
   }
 
+  @Test
+  public void encodePublicKey() {
+    final Bytes publicKeyBytes = Bytes.fromHexString(PUBLIC_KEY);
+    final ECPublicKey ecPublicKey = EthPublicKeyUtils.bytesToECPublicKey(publicKeyBytes);
+
+    final Bytes uncompressedWithoutPrefix =
+        Bytes.fromHexString(EthPublicKeyUtils.toHexString(ecPublicKey));
+    final Bytes compressed =
+        Bytes.fromHexString(EthPublicKeyUtils.toHexStringCompressed(ecPublicKey));
+
+    assertThat(uncompressedWithoutPrefix.size()).isEqualTo(64);
+    assertThat(compressed.size()).isEqualTo(33);
+  }
+
   private void verifyPublicKey(
       final ECPublicKey ecPublicKey, final Bytes publicKeyBytes, final ECPoint ecPoint) {
+    // verify public point
     assertThat(ecPublicKey.getW()).isEqualTo(ecPoint);
+
+    // verify algorithm
     assertThat(ecPublicKey.getAlgorithm()).isEqualTo("EC");
 
+    // verify curve parameters
     final ECParameterSpec params = ecPublicKey.getParams();
     assertThat(params.getCofactor()).isEqualTo(CURVE_PARAMS.getCurve().getCofactor().intValue());
-    assertThat(params.getOrder()).isEqualTo(CURVE_PARAMS.getCurve().getOrder());
-    assertThat(params.getGenerator()).isEqualTo(fromBouncyCastleECPoint(CURVE_PARAMS.getG()));
+    assertThat(params.getOrder()).isEqualTo(CURVE_PARAMS.getN());
+    assertThat(params.getGenerator().getAffineX())
+        .isEqualTo(CURVE_PARAMS.getG().getAffineXCoord().toBigInteger());
+    assertThat(params.getGenerator().getAffineY())
+        .isEqualTo(CURVE_PARAMS.getG().getAffineYCoord().toBigInteger());
+    assertThat(params.getCurve().getA()).isEqualTo(CURVE_PARAMS.getCurve().getA().toBigInteger());
+    assertThat(params.getCurve().getB()).isEqualTo(CURVE_PARAMS.getCurve().getB().toBigInteger());
+    assertThat(params.getCurve().getField().getFieldSize()).isEqualTo(256);
 
+    // Verify format
     assertThat(ecPublicKey.getFormat()).isEqualTo("X.509");
 
+    // Verify encoded form
     SubjectPublicKeyInfo subjectPublicKeyInfo =
         SubjectPublicKeyInfo.getInstance(ASN1Sequence.getInstance(ecPublicKey.getEncoded()));
     assertThat(subjectPublicKeyInfo.getPublicKeyData().getBytes())
         .isEqualTo(Bytes.concatenate(Bytes.of(0x4), publicKeyBytes).toArray());
 
+    // Verify algorithm identifier
     final AlgorithmIdentifier algorithm = subjectPublicKeyInfo.getAlgorithm();
     assertThat(algorithm.getAlgorithm().getId()).isEqualTo(EC_OID);
-    assertThat(algorithm.getParameters().toASN1Primitive().toString()).isEqualTo(SECP_OID);
+
+    // Verify curve identifier
+    X962Parameters x962Params = X962Parameters.getInstance(algorithm.getParameters());
+    if (x962Params.isNamedCurve()) {
+      assertThat(x962Params.getParameters()).isEqualTo(new ASN1ObjectIdentifier(SECP_OID));
+    } else if (x962Params.isImplicitlyCA()) {
+      fail("Implicitly CA parameters are not expected for secp256k1");
+    } else {
+      X9ECParameters ecParams = X9ECParameters.getInstance(x962Params.getParameters());
+      assertThat(ecParams.getCurve()).isEqualTo(CURVE_PARAMS.getCurve());
+      assertThat(ecParams.getG()).isEqualTo(CURVE_PARAMS.getG());
+      assertThat(ecParams.getN()).isEqualTo(CURVE_PARAMS.getN());
+      assertThat(ecParams.getH()).isEqualTo(CURVE_PARAMS.getH());
+    }
   }
 
   private ECPoint createEcPoint(final Bytes publicKeyBytes) {
     final Bytes x = publicKeyBytes.slice(0, 32);
     final Bytes y = publicKeyBytes.slice(32, 32);
     return new ECPoint(Numeric.toBigInt(x.toArrayUnsafe()), Numeric.toBigInt(y.toArrayUnsafe()));
-  }
-
-  private ECPoint fromBouncyCastleECPoint(
-      final org.bouncycastle.math.ec.ECPoint bouncyCastleECPoint) {
-    final ECFieldElement xCoord = bouncyCastleECPoint.getAffineXCoord();
-    final ECFieldElement yCoord = bouncyCastleECPoint.getAffineYCoord();
-
-    final Bytes32 xEncoded = Bytes32.wrap(xCoord.getEncoded());
-    final Bytes32 yEncoded = Bytes32.wrap(yCoord.getEncoded());
-
-    final BigInteger x = xEncoded.toUnsignedBigInteger();
-    final BigInteger y = yEncoded.toUnsignedBigInteger();
-
-    return new ECPoint(x, y);
   }
 }

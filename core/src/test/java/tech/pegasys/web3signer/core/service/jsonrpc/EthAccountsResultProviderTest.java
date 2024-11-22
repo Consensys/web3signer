@@ -27,25 +27,31 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.common.collect.Sets;
-import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.web3j.crypto.Keys;
 
-@SuppressWarnings("unchecked")
 public class EthAccountsResultProviderTest {
+  private static ECPublicKey publicKeyA;
+  private static ECPublicKey publicKeyB;
+  private static ECPublicKey publicKeyC;
 
-  final ECPublicKey publicKeyA = createKeyFrom("A".repeat(128));
-  final ECPublicKey publicKeyB = createKeyFrom("B".repeat(128));
-  final ECPublicKey publicKeyC = createKeyFrom("C".repeat(128));
+  private static String addressA;
+  private static String addressB;
+  private static String addressC;
 
-  final String addressA = Keys.getAddress(EthPublicKeyUtils.toHexString(publicKeyA));
-  final String addressB = Keys.getAddress(EthPublicKeyUtils.toHexString(publicKeyB));
-  final String addressC = Keys.getAddress(EthPublicKeyUtils.toHexString(publicKeyC));
+  @BeforeAll
+  static void init() {
+    publicKeyA = (ECPublicKey) EthPublicKeyUtils.generateK256KeyPair().getPublic();
+    publicKeyB = (ECPublicKey) EthPublicKeyUtils.generateK256KeyPair().getPublic();
+    publicKeyC = (ECPublicKey) EthPublicKeyUtils.generateK256KeyPair().getPublic();
 
-  final ECPublicKey createKeyFrom(final String hexString) {
-    return EthPublicKeyUtils.createPublicKey(Bytes.fromHexString(hexString));
+    addressA = Keys.getAddress(EthPublicKeyUtils.toHexString(publicKeyA));
+    addressB = Keys.getAddress(EthPublicKeyUtils.toHexString(publicKeyB));
+    addressC = Keys.getAddress(EthPublicKeyUtils.toHexString(publicKeyC));
   }
 
   @Test
@@ -103,9 +109,7 @@ public class EthAccountsResultProviderTest {
     final JsonRpcRequest request = new JsonRpcRequest("2.0", "eth_accounts");
     request.setId(new JsonRpcRequestId(id));
 
-    final Object body = resultProvider.createResponseResult(request);
-    assertThat(body).isInstanceOf(List.class);
-    final List<String> addressses = (List<String>) body;
+    final List<String> addressses = resultProvider.createResponseResult(request);
     assertThat(addressses).containsExactly("0x" + addressA);
   }
 
@@ -120,10 +124,7 @@ public class EthAccountsResultProviderTest {
     request.setId(new JsonRpcRequestId(id));
     request.setParams(emptyList());
 
-    final Object body = resultProvider.createResponseResult(request);
-
-    assertThat(body).isInstanceOf(List.class);
-    final List<String> reportedAddresses = (List<String>) body;
+    final List<String> reportedAddresses = resultProvider.createResponseResult(request);
     assertThat(reportedAddresses)
         .containsExactlyInAnyOrder("0x" + addressA, "0x" + addressB, "0x" + addressC);
   }
@@ -139,25 +140,19 @@ public class EthAccountsResultProviderTest {
     request.setId(new JsonRpcRequestId(1));
     request.setParams(emptyList());
 
-    Object body = resultProvider.createResponseResult(request);
-    assertThat(body).isInstanceOf(List.class);
-    List<String> reportedAddresses = (List<String>) body;
+    List<String> reportedAddresses = resultProvider.createResponseResult(request);
     assertThat(reportedAddresses)
         .containsExactlyElementsOf(
-            List.of("0x" + addressA, "0x" + addressB, "0x" + addressC).stream()
+            Stream.of("0x" + addressA, "0x" + addressB, "0x" + addressC)
                 .sorted()
                 .collect(Collectors.toList()));
 
     addresses.remove(publicKeyA);
 
-    body = resultProvider.createResponseResult(request);
-    assertThat(body).isInstanceOf(List.class);
-    reportedAddresses = (List<String>) body;
+    reportedAddresses = resultProvider.createResponseResult(request);
     assertThat(reportedAddresses)
         .containsExactlyElementsOf(
-            List.of("0x" + addressB, "0x" + addressC).stream()
-                .sorted()
-                .collect(Collectors.toList()));
+            Stream.of("0x" + addressB, "0x" + addressC).sorted().collect(Collectors.toList()));
   }
 
   @Test
@@ -169,12 +164,10 @@ public class EthAccountsResultProviderTest {
     request.setId(new JsonRpcRequestId(1));
     request.setParams(emptyList());
 
-    final Object body = resultProvider.createResponseResult(request);
-    assertThat(body).isInstanceOf(List.class);
-    List<String> reportedAddresses = (List<String>) body;
+    List<String> reportedAddresses = resultProvider.createResponseResult(request);
     assertThat(reportedAddresses)
         .containsExactlyElementsOf(
-            List.of("0x" + addressA, "0x" + addressB, "0x" + addressC).stream()
+            Stream.of("0x" + addressA, "0x" + addressB, "0x" + addressC)
                 .sorted()
                 .collect(Collectors.toList()));
   }

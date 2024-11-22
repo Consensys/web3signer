@@ -121,7 +121,7 @@ public class YubiHsmKeysAcceptanceTest extends KeyIdentifiersAcceptanceTestBase 
   private String getPublicKey(final String key) {
     return normaliseIdentifier(
         EthPublicKeyUtils.toHexString(
-            EthPublicKeyUtils.createPublicKey(
+            EthPublicKeyUtils.web3JPublicKeyToECPublicKey(
                 Credentials.create(key).getEcKeyPair().getPublicKey())));
   }
 }
