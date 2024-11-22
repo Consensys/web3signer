@@ -24,16 +24,16 @@ import tech.pegasys.web3signer.signing.bulkloading.SecpV3KeystoresBulkLoader;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -46,7 +46,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   private static final Logger LOG = LogManager.getLogger();
   private final Supplier<Collection<ArtifactSigner>> artifactSignerCollectionSupplier;
   private final Map<String, ArtifactSigner> signers = new HashMap<>();
-  private final Map<String, List<ArtifactSigner>> proxySigners = new HashMap<>();
+  private final Map<String, Set<ArtifactSigner>> proxySigners = new HashMap<>();
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Optional<KeystoresParameters> commitBoostKeystoresParameters;
 
@@ -83,17 +83,20 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
                       signers
                           .keySet()
                           .forEach(
-                              signerIdentifier -> {
+                              consensusPubKey -> {
                                 LOG.trace(
-                                    "Loading proxy signers for signer '{}' ...", signerIdentifier);
-                                final Path identifierPath =
-                                    keystoreParameter.getKeystoresPath().resolve(signerIdentifier);
-                                if (canReadFromDirectory(identifierPath)) {
-                                  loadBlsProxySigners(
-                                      keystoreParameter, signerIdentifier, identifierPath);
-                                  loadSecpProxySigners(
-                                      keystoreParameter, signerIdentifier, identifierPath);
-                                }
+                                    "Loading proxy signers for signer '{}' ...", consensusPubKey);
+                                loadProxySigners(
+                                    keystoreParameter,
+                                    consensusPubKey,
+                                    SECP256K1.name(),
+                                    SecpV3KeystoresBulkLoader::loadECDSAProxyKeystores);
+
+                                loadProxySigners(
+                                    keystoreParameter,
+                                    consensusPubKey,
+                                    BLS.name(),
+                                    BlsKeystoreBulkLoader::loadKeystoresUsingPasswordFile);
                               }));
 
           LOG.info("Total signers (keys) currently loaded in memory: {}", signers.size());
@@ -117,14 +120,14 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
   }
 
   @Override
-  public Map<KeyType, List<String>> getProxyIdentifiers(final String identifier) {
-    final List<ArtifactSigner> artifactSigners =
-        proxySigners.computeIfAbsent(identifier, k -> List.of());
+  public Map<KeyType, Set<String>> getProxyIdentifiers(final String consensusPubKey) {
+    final Set<ArtifactSigner> artifactSigners =
+        proxySigners.computeIfAbsent(consensusPubKey, k -> Set.of());
     return artifactSigners.stream()
         .collect(
             Collectors.groupingBy(
                 ArtifactSigner::getKeyType,
-                Collectors.mapping(ArtifactSigner::getIdentifier, Collectors.toList())));
+                Collectors.mapping(ArtifactSigner::getIdentifier, Collectors.toSet())));
   }
 
   @Override
@@ -142,6 +145,7 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
     return executorService.submit(
         () -> {
           signers.remove(identifier);
+          proxySigners.remove(identifier);
           LOG.info("Removed signer with identifier '{}'", identifier);
           return null;
         });
@@ -157,35 +161,29 @@ public class DefaultArtifactSignerProvider implements ArtifactSignerProvider {
     return file.canRead() && file.isDirectory();
   }
 
-  private void loadSecpProxySigners(
+  /**
+   * Load proxy signers for given consensus public key and add it to internal proxy signers map.
+   *
+   * @param keystoreParameter location of proxy keystores and password file
+   * @param consensusPubKey Consensus public key
+   * @param keyType BLS or SECP256K1
+   * @param loaderFunction Bulkloading method reference
+   */
+  private void loadProxySigners(
       final KeystoresParameters keystoreParameter,
-      final String identifier,
-      final Path identifierPath) {
-    final Path proxySecpDir = identifierPath.resolve(SECP256K1.name());
-    if (canReadFromDirectory(proxySecpDir)) {
-      // load secp proxy signers
-      final MappedResults<ArtifactSigner> secpSignersResults =
-          SecpV3KeystoresBulkLoader.loadV3KeystoresUsingPasswordFileOrDir(
-              proxySecpDir, keystoreParameter.getKeystoresPasswordFile());
-      final Collection<ArtifactSigner> secpSigners = secpSignersResults.getValues();
-      proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(secpSigners);
-    }
-  }
+      final String consensusPubKey,
+      final String keyType,
+      final BiFunction<Path, Path, MappedResults<ArtifactSigner>> loaderFunction) {
 
-  private void loadBlsProxySigners(
-      final KeystoresParameters keystoreParameter,
-      final String identifier,
-      final Path identifierPath) {
-    final Path proxyBlsDir = identifierPath.resolve(BLS.name());
+    // Calculate identifierPath from keystoreParameter
+    final Path identifierPath = keystoreParameter.getKeystoresPath().resolve(consensusPubKey);
+    final Path proxyDir = identifierPath.resolve(keyType);
 
-    if (canReadFromDirectory(proxyBlsDir)) {
-      // load bls proxy signers
-      final BlsKeystoreBulkLoader blsKeystoreBulkLoader = new BlsKeystoreBulkLoader();
-      final MappedResults<ArtifactSigner> blsSignersResult =
-          blsKeystoreBulkLoader.loadKeystoresUsingPasswordFile(
-              proxyBlsDir, keystoreParameter.getKeystoresPasswordFile());
-      final Collection<ArtifactSigner> blsSigners = blsSignersResult.getValues();
-      proxySigners.computeIfAbsent(identifier, k -> new ArrayList<>()).addAll(blsSigners);
+    if (canReadFromDirectory(proxyDir)) {
+      final MappedResults<ArtifactSigner> signersResult =
+          loaderFunction.apply(proxyDir, keystoreParameter.getKeystoresPasswordFile());
+      final Collection<ArtifactSigner> signers = signersResult.getValues();
+      proxySigners.computeIfAbsent(consensusPubKey, k -> new HashSet<>()).addAll(signers);
     }
   }
 }

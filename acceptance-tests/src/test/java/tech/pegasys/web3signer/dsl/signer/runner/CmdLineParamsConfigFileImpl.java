@@ -54,6 +54,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
   private final SignerConfiguration signerConfig;
@@ -163,6 +164,12 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
             String.format(YAML_BOOLEAN_FMT, "eth2.Xsigning-ext-enabled", Boolean.TRUE));
       }
 
+      signerConfig
+          .getCommitBoostParameters()
+          .ifPresent(
+              commitBoostParameters ->
+                  appendCommitBoostParameters(commitBoostParameters, yamlConfig));
+
       final CommandArgs subCommandArgs = createSubCommandArgs();
       params.addAll(subCommandArgs.params);
       yamlConfig.append(subCommandArgs.yamlConfig);
@@ -202,6 +209,22 @@ public class CmdLineParamsConfigFileImpl implements CmdLineParamsBuilder {
     }
 
     return params;
+  }
+
+  private static void appendCommitBoostParameters(
+      final Pair<Path, Path> commitBoostParameters, final StringBuilder yamlConfig) {
+    yamlConfig.append(
+        String.format(YAML_BOOLEAN_FMT, "eth2.commit-boost-api-enabled", Boolean.TRUE));
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth2.proxy-keystores-path",
+            commitBoostParameters.getLeft().toAbsolutePath()));
+    yamlConfig.append(
+        String.format(
+            YAML_STRING_FMT,
+            "eth2.proxy-keystores-password-file",
+            commitBoostParameters.getRight().toAbsolutePath()));
   }
 
   private Consumer<? super KeystoresParameters> setV3KeystoresBulkloadParameters(
