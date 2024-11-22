@@ -60,6 +60,9 @@ commands:
     description: "Prepare"
     steps:
       - checkout
+      - run:
+          name: Update Git Submodules
+          command: git submodule update --init --recursive
       - restore_cache:
           name: Restore cached gradle dependencies
           keys:
@@ -150,16 +153,10 @@ jobs:
       - run:
           name: Build
           command: |
-            git submodule update --init --recursive
             ./gradlew --no-daemon --parallel build
       - store_artifacts:
           path: build/distributions
           destination: distributions
-      - run:
-          name: Dependency vulnerability scan
-          no_output_timeout: 40m
-          command: |
-            ./gradlew --no-daemon -Dorg.gradle.parallel=false dependencyCheckAggregate -DnvdApiDelay=6000
       - run:
           name: Test
           no_output_timeout: 20m
@@ -182,6 +179,19 @@ jobs:
           root: ~/project
           paths:
             - ./
+  depScan:
+    executor: executor_med
+    steps:
+      - prepare
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Dependency vulnerability scan
+          no_output_timeout: 40m
+          command: |
+            ./gradlew --no-daemon -Dorg.gradle.parallel=false dependencyCheckAggregate -DnvdApiDelay=6000
+      - capture_test_results
+      - capture_test_reports
 
   acceptanceTests:
     executor: executor_large
@@ -316,6 +326,11 @@ workflows:
       - build:
           context:
             - protocols-signers
+      - depScan:
+          requires:
+            - build
+          context:
+            - protocols-signers
       - dockerScan
       - acceptanceTests:
           requires:
@@ -329,6 +344,17 @@ workflows:
           filters:
             tags: &filters-release-tags
               only: /^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?/
+          context:
+            - protocols-signers
+      - depScan:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+            tags:
+              <<: *filters-release-tags
           context:
             - protocols-signers
       - acceptanceTests:
