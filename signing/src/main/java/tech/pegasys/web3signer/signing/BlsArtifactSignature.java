@@ -14,7 +14,7 @@ package tech.pegasys.web3signer.signing;
 
 import tech.pegasys.teku.bls.BLSSignature;
 
-public class BlsArtifactSignature implements ArtifactSignature {
+public class BlsArtifactSignature implements ArtifactSignature<BLSSignature> {
   private final BLSSignature blsSignature;
 
   public BlsArtifactSignature(final BLSSignature blsSignature) {
@@ -26,7 +26,13 @@ public class BlsArtifactSignature implements ArtifactSignature {
     return KeyType.BLS;
   }
 
+  @Override
   public BLSSignature getSignatureData() {
     return blsSignature;
+  }
+
+  @Override
+  public String asHex() {
+    return blsSignature.toString();
   }
 }
