@@ -177,8 +177,8 @@ dependencyManagement {
     // addresses CVE-2023-3635
     dependency 'com.squareup.okio:okio:3.4.0'
 
-    // addressing CVE-2023-44487
-    dependencySet(group: 'io.netty', version: '4.1.101.Final') {
+    // addressing CVE-2023-44487, CVE-2024-47535
+    dependencySet(group: 'io.netty', version: '4.1.115.Final') {
       entry 'netty-all'
       entry 'netty-codec-http2'
       entry 'netty-handler'
